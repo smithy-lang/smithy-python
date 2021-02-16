@@ -13,9 +13,9 @@
  * permissions and limitations under the License.
  */
 
-description = "Generates Go code from Smithy models"
-extra["displayName"] = "Smithy :: Go :: Codegen"
-extra["moduleName"] = "software.amazon.smithy.go.codegen"
+description = "Generates SdkLang code from Smithy models"
+extra["displayName"] = "Smithy :: SdkLang :: Codegen"
+extra["moduleName"] = "software.amazon.smithy.sdklang.codegen"
 
 dependencies {
     api("software.amazon.smithy:smithy-codegen-core:0.9.7")

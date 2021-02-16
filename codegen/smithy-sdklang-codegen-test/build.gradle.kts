@@ -13,8 +13,8 @@
  * permissions and limitations under the License.
  */
 
-extra["displayName"] = "Smithy :: Go :: Codegen :: Test"
-extra["moduleName"] = "software.amazon.smithy.go.codegen.test"
+extra["displayName"] = "Smithy :: SdkLang :: Codegen :: Test"
+extra["moduleName"] = "software.amazon.smithy.sdklang.codegen.test"
 
 tasks["jar"].enabled = false
 
@@ -28,5 +28,5 @@ repositories {
 }
 
 dependencies {
-    implementation(project(":smithy-go-codegen"))
+    implementation(project(":smithy-sdklang-codegen"))
 }

@@ -1,7 +1,7 @@
 {
     "version": "1.0",
     "plugins": {
-        "go-codegen": {
+        "sdklang-codegen": {
             "service": "example.weather#Weather",
             "targetNamespace": "Weather",
             "package": "weather",

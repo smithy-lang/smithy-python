@@ -1,6 +1,6 @@
-## Smithy Go
+## Smithy SdkLang
 
-Smithy code generators for Go.
+Smithy code generators for SdkLang.
 
 **WARNING: All interfaces are subject to change.**
 

@@ -13,9 +13,9 @@
  * permissions and limitations under the License.
  */
 
-rootProject.name = "smithy-go"
-include(":smithy-go-codegen")
-include(":smithy-go-codegen-test")
+rootProject.name = "smithy-sdklang"
+include(":smithy-sdklang-codegen")
+include(":smithy-sdklang-codegen-test")
 
 pluginManagement {
     repositories {
