@@ -53,15 +53,15 @@ final class StructureGenerator implements Runnable {
      */
     private void renderStructure() {
         Symbol symbol = symbolProvider.toSymbol(shape);
-        writer.openBlock("type $L struct {", symbol.getName());
+        writer.openBlock("type $L:", symbol.getName());
         writeMembers();
-        writer.closeBlock("}").write("");
+        writer.closeBlock("").write("");
     }
 
     private void writeMembers() {
         for (MemberShape member : shape.getAllMembers().values()) {
             String memberName = symbolProvider.toMemberName(member);
-            writer.write("$L $T", memberName, symbolProvider.toSymbol(member));
+            writer.write("$L: $T", memberName, symbolProvider.toSymbol(member));
         }
     }
 }
