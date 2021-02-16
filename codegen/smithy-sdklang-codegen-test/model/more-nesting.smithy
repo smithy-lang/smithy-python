@@ -1,4 +1,5 @@
-$version: "0.5.0"
+$version: "1"
+
 namespace example.weather.nested.more
 
 structure Baz {
