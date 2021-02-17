@@ -11,7 +11,7 @@ use smithy.waiters#waitable
 service Weather {
     version: "2006-03-01",
     resources: [City],
-    operations: [GetCurrentTime, __789BadName]
+    operations: [GetCurrentTime]
 }
 
 resource City {
@@ -94,13 +94,6 @@ operation GetCity {
     errors: [NoSuchResource]
 }
 
-@http(method: "POST", uri: "/BadName/{__123abc}")
-operation __789BadName {
-    input: __BadNameCont,
-    output: __BadNameCont,
-    errors: [NoSuchResource]
-}
-
 // Tests that HTTP protocol tests are generated.
 apply GetCity @httpRequestTests([
     {
@@ -160,18 +153,6 @@ structure GetCityInput {
     @required
     @httpLabel
     cityId: CityId,
-}
-
-structure __BadNameCont {
-    @required
-    @httpLabel
-    __123abc: String,
-
-    Member: __456efg,
-}
-
-structure __456efg {
-    __123foo: String,
 }
 
 structure GetCityOutput {
