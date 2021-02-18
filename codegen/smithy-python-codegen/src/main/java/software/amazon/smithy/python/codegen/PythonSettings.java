@@ -13,7 +13,7 @@
  * permissions and limitations under the License.
  */
 
-package software.amazon.smithy.sdklang.codegen;
+package software.amazon.smithy.python.codegen;
 
 import java.util.Arrays;
 import java.util.Objects;
@@ -24,9 +24,9 @@ import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.ShapeId;
 
 /**
- * Settings used by {@link SdkLangCodegenPlugin}.
+ * Settings used by {@link PythonCodegenPlugin}.
  */
-public final class SdkLangSettings {
+public final class PythonSettings {
 
     private static final String SERVICE = "service";
     private static final String MODULE_NAME = "module";
@@ -44,8 +44,8 @@ public final class SdkLangSettings {
      * @param config Config object to load.
      * @return Returns the extracted settings.
      */
-    public static SdkLangSettings from(ObjectNode config) {
-        SdkLangSettings settings = new SdkLangSettings();
+    public static PythonSettings from(ObjectNode config) {
+        PythonSettings settings = new PythonSettings();
         config.warnIfAdditionalProperties(Arrays.asList(SERVICE, MODULE_NAME, MODULE_DESCRIPTION, MODULE_VERSION));
 
         settings.setService(config.expectStringMember(SERVICE).expectShapeId());

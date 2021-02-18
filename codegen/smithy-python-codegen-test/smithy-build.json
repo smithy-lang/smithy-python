@@ -1,7 +1,7 @@
 {
     "version": "1.0",
     "plugins": {
-        "sdklang-codegen": {
+        "python-codegen": {
             "service": "example.weather#Weather",
             "module": "weather",
             "moduleVersion": "0.0.1"

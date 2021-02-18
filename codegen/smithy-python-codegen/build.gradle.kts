@@ -13,9 +13,9 @@
  * permissions and limitations under the License.
  */
 
-description = "Generates SdkLang code from Smithy models"
-extra["displayName"] = "Smithy :: SdkLang :: Codegen"
-extra["moduleName"] = "software.amazon.smithy.sdklang.codegen"
+description = "Generates Python code from Smithy models"
+extra["displayName"] = "Smithy :: Python :: Codegen"
+extra["moduleName"] = "software.amazon.smithy.python.codegen"
 
 dependencies {
     api("software.amazon.smithy:smithy-codegen-core:[1.3.0,2.0.0[")

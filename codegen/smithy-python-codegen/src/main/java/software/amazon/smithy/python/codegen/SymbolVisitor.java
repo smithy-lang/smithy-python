@@ -13,7 +13,7 @@
  * permissions and limitations under the License.
  */
 
-package software.amazon.smithy.sdklang.codegen;
+package software.amazon.smithy.python.codegen;
 
 import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.CodegenException;
@@ -53,7 +53,7 @@ import software.amazon.smithy.utils.StringUtils;
 /**
  * Responsible for type mapping and file/identifier formatting.
  *
- * <p>Reserved words for SdkLang are automatically escaped so that they are
+ * <p>Reserved words for Python are automatically escaped so that they are
  * suffixed with "_". See "reserved-words.txt" for the list of words.
  */
 final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
@@ -68,10 +68,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
         // Load reserved words from a new-line delimited file.
         ReservedWords reservedWords = new ReservedWordsBuilder()
-                // Since SdkLang only exports names if the first character is upper case and all
-                // the sdklang reserved words are lower case, it's functionally impossible to conflict,
-                // so we only need to protect against common names. As of now there's only one.
-                .put("String", "String_")
+                .put("str", "str_")
                 .build();
 
         escaper = ReservedWordSymbolProvider.builder()
@@ -112,7 +109,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public Symbol setShape(SetShape shape) {
-        // SdkLang doesn't have a set type. Rather than hack together a set using a map,
+        // Python doesn't have a set type. Rather than hack together a set using a map,
         // we instead just create a list and let the service be responsible for
         // asserting that there are no duplicates.
         return createCollectionSymbol(shape);
@@ -209,7 +206,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     public Symbol structureShape(StructureShape shape) {
         String name = StringUtils.capitalize(shape.getId().getName());
         return createSymbolBuilder(shape, name, ".")
-                .definitionFile("./api_types.sdklang")
+                .definitionFile("./models.py")
                 .build();
     }
 

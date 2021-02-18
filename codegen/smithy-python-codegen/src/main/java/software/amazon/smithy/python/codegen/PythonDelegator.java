@@ -13,7 +13,7 @@
  * permissions and limitations under the License.
  */
 
-package software.amazon.smithy.sdklang.codegen;
+package software.amazon.smithy.python.codegen;
 
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -26,17 +26,17 @@ import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.Shape;
 
 /**
- * Manages writers for SdkLang files.
+ * Manages writers for Python files.
  */
-final class SdkLangDelegator {
+final class PythonDelegator {
 
-    private final SdkLangSettings settings;
+    private final PythonSettings settings;
     private final Model model;
     private final FileManifest fileManifest;
     private final SymbolProvider symbolProvider;
-    private final Map<String, SdkLangWriter> writers = new HashMap<>();
+    private final Map<String, PythonWriter> writers = new HashMap<>();
 
-    SdkLangDelegator(SdkLangSettings settings, Model model, FileManifest fileManifest, SymbolProvider symbolProvider) {
+    PythonDelegator(PythonSettings settings, Model model, FileManifest fileManifest, SymbolProvider symbolProvider) {
         this.settings = settings;
         this.model = model;
         this.fileManifest = fileManifest;
@@ -57,24 +57,24 @@ final class SdkLangDelegator {
      * @param shape Shape to create the writer for.
      * @param writerConsumer Consumer that accepts and works with the file.
      */
-    void useShapeWriter(Shape shape, Consumer<SdkLangWriter> writerConsumer) {
+    void useShapeWriter(Shape shape, Consumer<PythonWriter> writerConsumer) {
         Symbol symbol = symbolProvider.toSymbol(shape);
         String namespace = symbol.getNamespace();
         if (namespace.equals(".")) {
             namespace = CodegenUtils.getDefaultPackageImportName(settings.getModuleName());
         }
-        SdkLangWriter writer = checkoutWriter(symbol.getDefinitionFile(), namespace);
+        PythonWriter writer = checkoutWriter(symbol.getDefinitionFile(), namespace);
 
         writer.pushState();
         writerConsumer.accept(writer);
         writer.popState();
     }
 
-    private SdkLangWriter checkoutWriter(String filename, String namespace) {
+    private PythonWriter checkoutWriter(String filename, String namespace) {
         String formattedFilename = Paths.get(filename).normalize().toString();
         boolean needsNewline = writers.containsKey(formattedFilename);
 
-        SdkLangWriter writer = writers.computeIfAbsent(formattedFilename, f -> new SdkLangWriter(namespace));
+        PythonWriter writer = writers.computeIfAbsent(formattedFilename, f -> new PythonWriter(namespace));
 
         if (needsNewline) {
             writer.write("\n");

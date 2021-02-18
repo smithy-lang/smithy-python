@@ -1,6 +1,6 @@
-## Smithy SdkLang
+## Smithy Python
 
-Smithy code generators for SdkLang.
+Smithy code generators for Python.
 
 **WARNING: All interfaces are subject to change.**
 

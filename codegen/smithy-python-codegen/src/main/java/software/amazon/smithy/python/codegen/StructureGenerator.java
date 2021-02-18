@@ -13,7 +13,7 @@
  * permissions and limitations under the License.
  */
 
-package software.amazon.smithy.sdklang.codegen;
+package software.amazon.smithy.python.codegen;
 
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
@@ -31,10 +31,10 @@ final class StructureGenerator implements Runnable {
 
     private final Model model;
     private final SymbolProvider symbolProvider;
-    private final SdkLangWriter writer;
+    private final PythonWriter writer;
     private final StructureShape shape;
 
-    StructureGenerator(Model model, SymbolProvider symbolProvider, SdkLangWriter writer, StructureShape shape) {
+    StructureGenerator(Model model, SymbolProvider symbolProvider, PythonWriter writer, StructureShape shape) {
         this.model = model;
         this.symbolProvider = symbolProvider;
         this.writer = writer;

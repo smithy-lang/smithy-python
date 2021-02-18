@@ -13,7 +13,7 @@
  * permissions and limitations under the License.
  */
 
-package software.amazon.smithy.sdklang.codegen;
+package software.amazon.smithy.python.codegen;
 
 import java.util.Set;
 import java.util.TreeSet;
@@ -29,30 +29,30 @@ import software.amazon.smithy.model.shapes.ShapeVisitor;
 import software.amazon.smithy.model.shapes.StructureShape;
 
 /**
- * Orchestrates SdkLang client generation.
+ * Orchestrates Python client generation.
  */
 final class CodegenVisitor extends ShapeVisitor.Default<Void> {
 
     private static final Logger LOGGER = Logger.getLogger(CodegenVisitor.class.getName());
 
-    private final SdkLangSettings settings;
+    private final PythonSettings settings;
     private final Model model;
     private final Model modelWithoutTraitShapes;
     private final ServiceShape service;
     private final FileManifest fileManifest;
     private final SymbolProvider symbolProvider;
-    private final SdkLangDelegator writers;
+    private final PythonDelegator writers;
 
     CodegenVisitor(PluginContext context) {
-        settings = SdkLangSettings.from(context.getSettings());
+        settings = PythonSettings.from(context.getSettings());
         model = context.getModel();
         modelWithoutTraitShapes = context.getModelWithoutTraitShapes();
         service = settings.getService(model);
         fileManifest = context.getFileManifest();
-        LOGGER.info(() -> "Generating SdkLang client for service " + service.getId());
+        LOGGER.info(() -> "Generating Python client for service " + service.getId());
 
-        symbolProvider = SdkLangCodegenPlugin.createSymbolProvider(model);
-        writers = new SdkLangDelegator(settings, model, fileManifest, symbolProvider);
+        symbolProvider = PythonCodegenPlugin.createSymbolProvider(model);
+        writers = new PythonDelegator(settings, model, fileManifest, symbolProvider);
     }
 
     void execute() {
@@ -64,12 +64,12 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
             shape.accept(this);
         }
 
-        LOGGER.fine("Flushing sdklang writers");
+        LOGGER.fine("Flushing python writers");
         writers.flushWriters();
 
         // Run one-off commands like formating
-        // LOGGER.fine("Running sdklang fmt");
-        // CodegenUtils.runCommand("sdklang fmt", fileManifest.getBaseDir());
+        // LOGGER.fine("Running python fmt");
+        // CodegenUtils.runCommand("python fmt", fileManifest.getBaseDir());
     }
 
     @Override

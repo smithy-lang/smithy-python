@@ -13,7 +13,7 @@
  * permissions and limitations under the License.
  */
 
-package software.amazon.smithy.sdklang.codegen;
+package software.amazon.smithy.python.codegen;
 
 import software.amazon.smithy.build.PluginContext;
 import software.amazon.smithy.build.SmithyBuildPlugin;
@@ -21,12 +21,12 @@ import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
 
 /**
- * Plugin to trigger SdkLang code generation.
+ * Plugin to trigger Python code generation.
  */
-public final class SdkLangCodegenPlugin implements SmithyBuildPlugin {
+public final class PythonCodegenPlugin implements SmithyBuildPlugin {
     @Override
     public String getName() {
-        return "sdklang-codegen";
+        return "python-codegen";
     }
 
     @Override
@@ -35,7 +35,7 @@ public final class SdkLangCodegenPlugin implements SmithyBuildPlugin {
     }
 
     /**
-     * Creates a SdkLang symbol provider.
+     * Creates a Python symbol provider.
      * @param model The model to generate symbols for.
      * @return Returns the created provider.
      */

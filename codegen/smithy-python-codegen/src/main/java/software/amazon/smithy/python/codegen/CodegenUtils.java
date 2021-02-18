@@ -13,7 +13,7 @@
  * permissions and limitations under the License.
  */
 
-package software.amazon.smithy.sdklang.codegen;
+package software.amazon.smithy.python.codegen;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -38,7 +38,7 @@ public final class CodegenUtils {
     /**
      * Executes a given shell command in a given directory.
      *
-     * @param command The string command to execute, e.g. "sdklang fmt".
+     * @param command The string command to execute, e.g. "python fmt".
      * @param directory The directory to run the command in.
      * @return Returns the console output of the command.
      */

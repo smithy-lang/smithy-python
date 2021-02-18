@@ -13,8 +13,8 @@
  * permissions and limitations under the License.
  */
 
-extra["displayName"] = "Smithy :: SdkLang :: Codegen :: Test"
-extra["moduleName"] = "software.amazon.smithy.sdklang.codegen.test"
+extra["displayName"] = "Smithy :: Python :: Codegen :: Test"
+extra["moduleName"] = "software.amazon.smithy.python.codegen.test"
 
 tasks["jar"].enabled = false
 
@@ -29,5 +29,5 @@ repositories {
 
 dependencies {
     implementation("software.amazon.smithy:smithy-protocol-test-traits:[1.2.0,2.0.0[")
-    implementation(project(":smithy-sdklang-codegen"))
+    implementation(project(":smithy-python-codegen"))
 }
