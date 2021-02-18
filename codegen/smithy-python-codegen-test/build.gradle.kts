@@ -28,6 +28,7 @@ repositories {
 }
 
 dependencies {
-    implementation("software.amazon.smithy:smithy-protocol-test-traits:[1.2.0,2.0.0[")
     implementation(project(":smithy-python-codegen"))
+    implementation("software.amazon.smithy:smithy-waiters:[1.5.0, 2.0[")
+    implementation("software.amazon.smithy:smithy-protocol-test-traits:[1.5.0, 2.0[")
 }

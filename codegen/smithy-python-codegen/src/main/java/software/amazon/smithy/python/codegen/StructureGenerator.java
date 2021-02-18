@@ -15,12 +15,15 @@
 
 package software.amazon.smithy.python.codegen;
 
+import java.util.Collection;
+
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.traits.ErrorTrait;
+
 
 /**
  * Renders structures.
@@ -53,15 +56,32 @@ final class StructureGenerator implements Runnable {
      */
     private void renderStructure() {
         Symbol symbol = symbolProvider.toSymbol(shape);
-        writer.openBlock("type $L:", symbol.getName());
-        writeMembers();
-        writer.closeBlock("").write("");
+        writer.openBlock("class $L:", symbol.getName());
+        writeInit();
+        writer.closeBlock("");
     }
 
-    private void writeMembers() {
-        for (MemberShape member : shape.getAllMembers().values()) {
+    private void writeInit() {
+        writer.openBlock("def __init__(");
+        writer.write("self,");
+        Collection<MemberShape> members = shape.getAllMembers().values();
+        for (MemberShape member : members) {
             String memberName = symbolProvider.toMemberName(member);
-            writer.write("$L: $T", memberName, symbolProvider.toSymbol(member));
+            writer.write("$L: $T,", memberName, symbolProvider.toSymbol(member));
         }
+        writer.closeBlock("):");
+
+        writer.pushState();
+        writer.disableNewlines();
+        writer.openBlock("");
+        for (MemberShape member : members) {
+            String memberName = symbolProvider.toMemberName(member);
+            writer.write("self.$L = $L\n", memberName, memberName);
+        }
+        if (members.isEmpty()) {
+            writer.write("pass");
+        }
+        writer.closeBlock("");
+        writer.popState();
     }
 }

@@ -18,6 +18,6 @@ extra["displayName"] = "Smithy :: Python :: Codegen"
 extra["moduleName"] = "software.amazon.smithy.python.codegen"
 
 dependencies {
-    api("software.amazon.smithy:smithy-codegen-core:[1.3.0,2.0.0[")
-    implementation("software.amazon.smithy:smithy-waiters:[1.4.0,2.0.0[")
+    api("software.amazon.smithy:smithy-codegen-core:[1.5.0,2.0.0[")
+    implementation("software.amazon.smithy:smithy-waiters:[1.5.0,2.0.0[")
 }

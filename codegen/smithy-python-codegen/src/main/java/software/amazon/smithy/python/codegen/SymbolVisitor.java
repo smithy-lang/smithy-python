@@ -125,81 +125,80 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol mapShape(MapShape shape) {
         Symbol reference = toSymbol(shape.getValue());
-        return createSymbolBuilder(shape, "Dict[string, " + reference.getName() + "]")
+        return createSymbolBuilder(shape, "Dict[str, " + reference.getName() + "]")
                 .addReference(reference)
                 .build();
     }
 
     @Override
     public Symbol byteShape(ByteShape shape) {
-        return createSymbolBuilder(shape, "int8").build();
+        return createSymbolBuilder(shape, "str").build();
     }
 
     @Override
     public Symbol shortShape(ShortShape shape) {
-        return createSymbolBuilder(shape, "int16").build();
+        return createSymbolBuilder(shape, "int").build();
     }
 
     @Override
     public Symbol integerShape(IntegerShape shape) {
-        return createSymbolBuilder(shape, "int32").build();
+        return createSymbolBuilder(shape, "int").build();
     }
 
     @Override
     public Symbol longShape(LongShape shape) {
-        return createSymbolBuilder(shape, "int64").build();
+        return createSymbolBuilder(shape, "int").build();
     }
 
     @Override
     public Symbol floatShape(FloatShape shape) {
-        return createSymbolBuilder(shape, "float32").build();
+        return createSymbolBuilder(shape, "float").build();
     }
 
     @Override
     public Symbol documentShape(DocumentShape shape) {
         // TODO: implement document shapes
-        return createSymbolBuilder(shape, "nil").build();
+        return createSymbolBuilder(shape, "Any").build();
     }
 
     @Override
     public Symbol doubleShape(DoubleShape shape) {
-        return createSymbolBuilder(shape, "float64").build();
+        return createSymbolBuilder(shape, "float").build();
     }
 
     @Override
     public Symbol bigIntegerShape(BigIntegerShape shape) {
-        // TODO: add once dependency support is in
-        return createSymbolBuilder(shape, "nil").build();
+        return createSymbolBuilder(shape, "int").build();
     }
 
     @Override
     public Symbol bigDecimalShape(BigDecimalShape shape) {
         // TODO: add once dependency support is in
-        return createSymbolBuilder(shape, "nil").build();
+        return createSymbolBuilder(shape, "Any").build();
     }
 
     @Override
     public Symbol operationShape(OperationShape shape) {
         // TODO: implement operations
-        return createSymbolBuilder(shape, "nil").build();
+        return createSymbolBuilder(shape, "Any").build();
     }
 
     @Override
     public Symbol resourceShape(ResourceShape shape) {
         // TODO: implement resources
-        return createSymbolBuilder(shape, "nil").build();
+        return createSymbolBuilder(shape, "Any").build();
     }
 
     @Override
     public Symbol serviceShape(ServiceShape shape) {
         // TODO: implement clients
-        return createSymbolBuilder(shape, "nil").build();
+        return createSymbolBuilder(shape, "Any").build();
     }
 
     @Override
     public Symbol stringShape(StringShape shape) {
         // TODO: support specialized strings
-        return createSymbolBuilder(shape, "string").build();
+        return createSymbolBuilder(shape, "str").build();
     }
 
     @Override
@@ -213,7 +212,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol unionShape(UnionShape shape) {
         // TODO: implement unions
-        return createSymbolBuilder(shape, "nil").build();
+        return createSymbolBuilder(shape, "Any").build();
     }
 
     @Override
@@ -226,7 +225,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol timestampShape(TimestampShape shape) {
         // TODO: add once dependency support is in
-        return createSymbolBuilder(shape, "nil").build();
+        return createSymbolBuilder(shape, "Any").build();
     }
 
     private Symbol.Builder createSymbolBuilder(Shape shape, String typeName) {
