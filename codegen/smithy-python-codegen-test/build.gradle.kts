@@ -27,6 +27,10 @@ repositories {
     mavenCentral()
 }
 
+configure<software.amazon.smithy.gradle.SmithyExtension> {
+    fork = true
+}
+
 dependencies {
     implementation(project(":smithy-python-codegen"))
     implementation("software.amazon.smithy:smithy-waiters:[1.5.0, 2.0[")
