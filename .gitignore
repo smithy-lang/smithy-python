@@ -20,3 +20,12 @@ target/
 build/
 */out/
 */*/out/
+
+# Python
+__pycache__
+*.swp
+.mypy_cache
+.coverage
+htmlcov
+*.egg_info
+dist
