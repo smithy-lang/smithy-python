@@ -1,0 +1,7 @@
+[run]
+source =
+    smithy_python
+
+[report]
+exclude_lines =
+    raise NotImplementedError
