@@ -32,7 +32,7 @@ setup(
     author="Amazon Web Services",
     url="https://github.com/awslabs/smithy-python",
     scripts=[],
-    packages=find_packages(exclude=["tests*", "codegen"]),
+    packages=find_packages(exclude=["tests*", "codegen", "designs"]),
     include_package_data=True,
     install_requires=requires,
     extras_require={},

@@ -1,0 +1,37 @@
+from typing import Optional, MutableMapping, List, Protocol, Tuple
+
+
+# Defining headers as a list instead of a mapping to avoid ambiguity and
+# the nuances of multiple fields in a mapping style interface
+HeadersList = List[Tuple[str, str]]
+
+
+class URL(Protocol):
+    scheme: str  # http or https
+    hostname: str  # hostname e.g. amazonaws.com
+    port: Optional[int]  # explicit port number
+    path: str  # request path
+    query_params: MutableMapping[str, str]  # mapping of query parameters
+
+
+class Request(Protocol):
+    url: URL
+    method: str  # GET, PUT, etc
+    headers: HeadersList
+    body: Optional[bytes]
+
+
+class Response(Protocol):
+    status_code: int  # HTTP status code
+    headers: HeadersList
+    body: Optional[bytes]
+
+
+class Session(Protocol):
+    def send(self, request: Request) -> Response:
+        pass
+
+
+class AsyncSession(Protocol):
+    async def send(self, request: Request) -> Response:
+        pass
