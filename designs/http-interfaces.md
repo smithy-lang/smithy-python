@@ -24,7 +24,7 @@ class URL(Protocol):
     hostname: str # hostname e.g. amazonaws.com
     port: Optional[int] # explicit port number
     path: str # request path
-    query_params: MutableMapping[str, str] # mapping of query parameters e.g. ?key=val,...
+    query_params: List[Tuple[str, str]] # query parameters
 
 
 class Request(Protocol):
@@ -79,7 +79,7 @@ class AsyncSession(Protocol):
 
 Protocols allow us to define an interface that can be implemented without
 requiring implementations to have a runtime dependency on the interfaces.
-Validation that an implemenation meets the interfaces can happen as an step
+Validation that an implemenation meets the interfaces can happen as a step
 during testing, or at the point the implementation is used under a context
 where one of these protocols is expected.
 
@@ -130,6 +130,7 @@ a typing error for incomplete implementations we should convey to customers
 creating custom implementations that these interfaces may grow over time and
 that using custom HTTP client implementations are not always guaranteed to be
 forwards compatible.
+
 ## What about exceptions and handling exceptions?
 
 Different implementations of these interfaces will raise different exceptions

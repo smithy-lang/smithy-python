@@ -1,4 +1,4 @@
-from typing import Optional, MutableMapping, List, Protocol, Tuple
+from typing import Optional, List, Protocol, Tuple
 
 
 # Defining headers as a list instead of a mapping to avoid ambiguity and
@@ -11,7 +11,7 @@ class URL(Protocol):
     hostname: str  # hostname e.g. amazonaws.com
     port: Optional[int]  # explicit port number
     path: str  # request path
-    query_params: MutableMapping[str, str]  # mapping of query parameters
+    query_params: List[Tuple[str, str]]
 
 
 class Request(Protocol):
