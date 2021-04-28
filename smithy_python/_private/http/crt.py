@@ -18,8 +18,17 @@ from io import BytesIO
 from threading import Lock
 from awscrt import io, http  # type: ignore
 from concurrent.futures import Future
-from typing import Optional, List, Tuple, Awaitable, AsyncGenerator, Any, Dict
-from smithy_python._private.http import URL, Request, Response
+from typing import (
+    Optional,
+    List,
+    Tuple,
+    Awaitable,
+    AsyncGenerator,
+    Any,
+    Dict,
+    Generator,
+)
+from smithy_python._private.http import Response
 from smithy_python.interfaces import http as http_interface
 
 
@@ -40,7 +49,7 @@ class AWSCRTEventLoop:
         return io.ClientBootstrap(event_loop_group, host_resolver)
 
 
-class _AwsCrtHttpResponse:
+class _BaseAwsCrtHttpResponse:
     def __init__(self) -> None:
         self._stream: Optional[http.HttpClientStream] = None
         self._status_code_future: Future[int] = Future()
@@ -49,18 +58,56 @@ class _AwsCrtHttpResponse:
         self._received_chunks: List[bytes] = []
         self._chunk_lock: Lock = Lock()
 
-    async def consume_body(self) -> bytes:
-        body = b""
-        async for chunk in self.chunks():
-            body += chunk
-        return body
-
     def _set_stream(self, stream: http.HttpClientStream) -> None:
         if self._stream is not None:
             raise HTTPException("Stream already set on _AwsCrtHttpResponse object")
         self._stream = stream
         self._stream.completion_future.add_done_callback(self._on_complete)
         self._stream.activate()
+
+    def _on_headers(
+        self, status_code: int, headers: HeadersList, **kwargs: Any
+    ) -> None:
+        self._status_code_future.set_result(status_code)
+        self._headers_future.set_result(headers)
+
+    def _on_body(self, chunk: bytes, **kwargs: Any) -> None:
+        with self._chunk_lock:
+            # TODO: update back pressure window once CRT supports it
+            if self._chunk_futures:
+                future = self._chunk_futures.pop(0)
+                future.set_result(chunk)
+            else:
+                self._received_chunks.append(chunk)
+
+    def _get_chunk_future(self) -> "Future[bytes]":
+        if self._stream is None:
+            raise HTTPException("Stream not set")
+        with self._chunk_lock:
+            future: Future[bytes] = Future()
+            # TODO: update backpressure window once CRT supports it
+            if self._received_chunks:
+                chunk = self._received_chunks.pop(0)
+                future.set_result(chunk)
+            elif self._stream.completion_future.done():
+                future.set_result(b"")
+            else:
+                self._chunk_futures.append(future)
+        return future
+
+    def _on_complete(self, completion_future: "Future[int]") -> None:
+        with self._chunk_lock:
+            if self._chunk_futures:
+                future = self._chunk_futures.pop(0)
+                future.set_result(b"")
+
+
+class _AsyncAwsCrtHttpResponse(_BaseAwsCrtHttpResponse):
+    async def consume_body(self) -> bytes:
+        body = b""
+        async for chunk in self.chunks():
+            body += chunk
+        return body
 
     @property
     def status_code(self) -> Awaitable[int]:
@@ -79,19 +126,8 @@ class _AwsCrtHttpResponse:
         return asyncio.wrap_future(self._stream.completion_future)
 
     def get_chunk(self) -> Awaitable[bytes]:
-        if self._stream is None:
-            raise HTTPException("Stream not set")
-        with self._chunk_lock:
-            future: Future[bytes] = Future()
-            # TODO: update backpressure window once CRT supports it
-            if self._received_chunks:
-                chunk = self._received_chunks.pop(0)
-                future.set_result(chunk)
-            elif self._stream.completion_future.done():
-                future.set_result(b"")
-            else:
-                self._chunk_futures.append(future)
-            return asyncio.wrap_future(future)
+        future = self._get_chunk_future()
+        return asyncio.wrap_future(future)
 
     async def chunks(self) -> AsyncGenerator[bytes, None]:
         while True:
@@ -101,36 +137,49 @@ class _AwsCrtHttpResponse:
             else:
                 break
 
-    def _on_headers(
-        self, status_code: int, headers: HeadersList, **kwargs: Any
-    ) -> None:
-        self._status_code_future.set_result(status_code)
-        self._headers_future.set_result(headers)
 
-    def _on_body(self, chunk: bytes, **kwargs: Any) -> None:
-        with self._chunk_lock:
-            # TODO: update back pressure window once CRT supports it
-            if self._chunk_futures:
-                future = self._chunk_futures.pop(0)
-                future.set_result(chunk)
+class _SyncAwsCrtHttpResponse(_BaseAwsCrtHttpResponse):
+    def consume_body(self) -> bytes:
+        body = b""
+        for chunk in self.chunks():
+            body += chunk
+        return body
+
+    @property
+    def status_code(self) -> int:
+        return self._status_code_future.result()
+
+    @property
+    def headers(self) -> HeadersList:
+        if self._stream is None:
+            raise HTTPException("Stream not set")
+        return self._headers_future.result()
+
+    @property
+    def done(self) -> bool:
+        if self._stream is None:
+            raise HTTPException("Stream not set")
+        future: Future[bool] = self._stream.completion_future
+        return future.result()
+
+    def get_chunk(self) -> bytes:
+        future = self._get_chunk_future()
+        return future.result()
+
+    def chunks(self) -> Generator[bytes, None, None]:
+        while True:
+            chunk = self.get_chunk()
+            if chunk:
+                yield chunk
             else:
-                self._received_chunks.append(chunk)
-
-    # Type resolution is a bit strange here and this will fail at runtime if
-    # Future[int] is directly used. Not sure why it's an issue here and not
-    # other places.
-    def _on_complete(self, completion_future: "Future[int]") -> None:
-        with self._chunk_lock:
-            if self._chunk_futures:
-                future = self._chunk_futures.pop(0)
-                future.set_result(b"")
+                break
 
 
 ConnectionPoolKey = Tuple[str, str, Optional[int]]
 ConnectionPoolDict = Dict[ConnectionPoolKey, http.HttpClientConnection]
 
 
-class AwsCrtHttpSession:
+class _BaseAwsCrtHttpSession:
     _HTTP_PORT = 80
     _HTTPS_PORT = 443
 
@@ -143,7 +192,9 @@ class AwsCrtHttpSession:
         self._socket_options = io.SocketOptions()
         self._connections: ConnectionPoolDict = {}
 
-    async def _create_connection(self, url: http_interface.URL) -> http.HttpClientConnection:
+    def _build_new_connection(
+        self, url: http_interface.URL
+    ) -> "Future[http.HttpClientConnection]":
         if url.scheme == "http":
             port = self._HTTP_PORT
             tls_connection_options = None
@@ -155,33 +206,21 @@ class AwsCrtHttpSession:
         if url.port is not None:
             port = url.port
 
-        connect_future = http.HttpClientConnection.new(
+        connect_future: Future[
+            http.HttpClientConnection
+        ] = http.HttpClientConnection.new(
             bootstrap=self._client_bootstrap,
             host_name=url.hostname,
             port=port,
             socket_options=self._socket_options,
             tls_connection_options=tls_connection_options,
         )
-        connection = await asyncio.wrap_future(connect_future)
+        return connect_future
 
+    def _validate_connection(self, connection: http.HttpClientConnection) -> None:
         if connection.version is not http.HttpVersion.Http2:
             connection.close()
             raise HTTPException("HTTP/2 could not be negotiated: {connection.version}")
-
-        return connection
-
-    async def _get_connection(self, url: http_interface.URL) -> http.HttpClientConnection:
-        # TODO: Use CRT connection pooling instead of this basic kind
-        if not url.hostname:
-            raise HTTPException(f"Invalid host name: {url.hostname}")
-
-        connection_key = (url.scheme, url.hostname, url.port)
-        if connection_key in self._connections:
-            return self._connections[connection_key]
-        else:
-            connection = await self._create_connection(url)
-            self._connections[connection_key] = connection
-            return connection
 
     def _render_path(self, url: http_interface.URL) -> str:
         path = url.path
@@ -194,7 +233,11 @@ class AwsCrtHttpSession:
             path = path + "?" + query
         return path
 
-    async def send(self, request: http_interface.Request) -> http_interface.Response:
+    def _validate_url(self, url: http_interface.URL) -> None:
+        if not url.hostname:
+            raise HTTPException(f"Invalid host name: {url.hostname}")
+
+    def _build_new_request(self, request: http_interface.Request) -> http.HttpRequest:
         headers = None
         if isinstance(request.headers, list):
             headers = http.HttpHeaders(request.headers)
@@ -211,9 +254,35 @@ class AwsCrtHttpSession:
             headers=headers,
             body_stream=body,
         )
+        return crt_request
 
+
+class AsyncAwsCrtHttpSession(_BaseAwsCrtHttpSession):
+    async def _create_connection(
+        self, url: http_interface.URL
+    ) -> http.HttpClientConnection:
+        connect_future = self._build_new_connection(url)
+        connection = await asyncio.wrap_future(connect_future)
+        self._validate_connection(connection)
+        return connection
+
+    async def _get_connection(
+        self, url: http_interface.URL
+    ) -> http.HttpClientConnection:
+        # TODO: Use CRT connection pooling instead of this basic kind
+        self._validate_url(url)
+        connection_key = (url.scheme, url.hostname, url.port)
+        if connection_key in self._connections:
+            return self._connections[connection_key]
+        else:
+            connection = await self._create_connection(url)
+            self._connections[connection_key] = connection
+            return connection
+
+    async def send(self, request: http_interface.Request) -> http_interface.Response:
+        crt_request = self._build_new_request(request)
         connection = await self._get_connection(request.url)
-        crt_response = _AwsCrtHttpResponse()
+        crt_response = _AsyncAwsCrtHttpResponse()
         crt_stream = connection.request(
             crt_request, crt_response._on_headers, crt_response._on_body,
         )
@@ -226,4 +295,33 @@ class AwsCrtHttpSession:
             status_code=await crt_response.status_code,
             headers=await crt_response.headers,
             body=await crt_response.consume_body(),
+        )
+
+
+class SyncAwsCrtHttpSession(_BaseAwsCrtHttpSession):
+    def _get_connection(self, url: http_interface.URL) -> http.HttpClientConnection:
+        # TODO: Use CRT connection pooling instead of this basic kind
+        self._validate_url(url)
+        connection_key = (url.scheme, url.hostname, url.port)
+        if connection_key in self._connections:
+            return self._connections[connection_key]
+        else:
+            connection = self._build_new_connection(url).result()
+            self._validate_connection(connection)
+            self._connections[connection_key] = connection
+            return connection
+
+    def send(self, request: http_interface.Request) -> http_interface.Response:
+        crt_request = self._build_new_request(request)
+        connection = self._get_connection(request.url)
+        crt_response = _SyncAwsCrtHttpResponse()
+        crt_stream = connection.request(
+            crt_request, crt_response._on_headers, crt_response._on_body,
+        )
+        crt_response._set_stream(crt_stream)
+
+        return Response(
+            status_code=crt_response.status_code,
+            headers=crt_response.headers,
+            body=crt_response.consume_body(),
         )
