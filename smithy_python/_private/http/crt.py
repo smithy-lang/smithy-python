@@ -20,6 +20,7 @@ from awscrt import io, http  # type: ignore
 from concurrent.futures import Future
 from typing import Optional, List, Tuple, Awaitable, AsyncGenerator, Any, Dict
 from smithy_python._private.http import URL, Request, Response
+from smithy_python.interfaces import http as http_interface
 
 
 HeadersList = List[Tuple[str, str]]
@@ -142,7 +143,7 @@ class AwsCrtHttpSession:
         self._socket_options = io.SocketOptions()
         self._connections: ConnectionPoolDict = {}
 
-    async def _create_connection(self, url: URL) -> http.HttpClientConnection:
+    async def _create_connection(self, url: http_interface.URL) -> http.HttpClientConnection:
         if url.scheme == "http":
             port = self._HTTP_PORT
             tls_connection_options = None
@@ -169,7 +170,7 @@ class AwsCrtHttpSession:
 
         return connection
 
-    async def _get_connection(self, url: URL) -> http.HttpClientConnection:
+    async def _get_connection(self, url: http_interface.URL) -> http.HttpClientConnection:
         # TODO: Use CRT connection pooling instead of this basic kind
         if not url.hostname:
             raise HTTPException(f"Invalid host name: {url.hostname}")
@@ -182,7 +183,7 @@ class AwsCrtHttpSession:
             self._connections[connection_key] = connection
             return connection
 
-    def _render_path(self, url: URL) -> str:
+    def _render_path(self, url: http_interface.URL) -> str:
         path = url.path
         if not path:
             # TODO: Conflating None and empty "" path?
@@ -193,7 +194,7 @@ class AwsCrtHttpSession:
             path = path + "?" + query
         return path
 
-    async def send(self, request: Request) -> Response:
+    async def send(self, request: http_interface.Request) -> http_interface.Response:
         headers = None
         if isinstance(request.headers, list):
             headers = http.HttpHeaders(request.headers)

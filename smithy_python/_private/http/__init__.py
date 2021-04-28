@@ -13,6 +13,7 @@
 
 
 from typing import List, Tuple, Optional
+from smithy_python.interfaces import http as http_interface
 
 
 HeadersList = List[Tuple[str, str]]
@@ -47,12 +48,12 @@ class URL:
 class Request:
     def __init__(
         self,
-        url: URL,
+        url: http_interface.URL,
         method: str = "GET",
         headers: Optional[HeadersList] = None,
         body: Optional[bytes] = None,  # TODO: re-evaluate typing here
     ):
-        self.url: URL = url
+        self.url: http_interface.URL = url
         self.method: str = method
         self.body: Optional[bytes] = body
 
