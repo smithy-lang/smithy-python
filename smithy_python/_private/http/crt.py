@@ -179,14 +179,28 @@ ConnectionPoolKey = Tuple[str, str, Optional[int]]
 ConnectionPoolDict = Dict[ConnectionPoolKey, http.HttpClientConnection]
 
 
+class AwsCrtHttpSessionConfig:
+    def __init__(self, force_http_2: Optional[bool] = None,) -> None:
+        if force_http_2 is None:
+            force_http_2 = False
+        self.force_http_2: bool = force_http_2
+
+
 class _BaseAwsCrtHttpSession:
     _HTTP_PORT = 80
     _HTTPS_PORT = 443
 
-    def __init__(self, eventloop: Optional[AWSCRTEventLoop] = None) -> None:
+    def __init__(
+        self,
+        eventloop: Optional[AWSCRTEventLoop] = None,
+        config: Optional[AwsCrtHttpSessionConfig] = None,
+    ) -> None:
         if eventloop is None:
             eventloop = AWSCRTEventLoop()
         self._eventloop = eventloop
+        if config is None:
+            config = AwsCrtHttpSessionConfig()
+        self._config: AwsCrtHttpSessionConfig = config
         self._client_bootstrap = self._eventloop.bootstrap
         self._tls_ctx = io.ClientTlsContext(io.TlsContextOptions())
         self._socket_options = io.SocketOptions()
@@ -202,7 +216,9 @@ class _BaseAwsCrtHttpSession:
             port = self._HTTPS_PORT
             tls_connection_options = self._tls_ctx.new_connection_options()
             tls_connection_options.set_server_name(url.hostname)
-            tls_connection_options.set_alpn_list(["h2"])
+            # TODO: Support TLS configuration, including alpn
+            # tls_connection_options.set_alpn_list(["h2"])
+            # tls_connection_options.set_alpn_list(["http/1.1"])
         if url.port is not None:
             port = url.port
 
@@ -218,9 +234,11 @@ class _BaseAwsCrtHttpSession:
         return connect_future
 
     def _validate_connection(self, connection: http.HttpClientConnection) -> None:
-        if connection.version is not http.HttpVersion.Http2:
+        force_http_2 = self._config.force_http_2
+        if force_http_2 and connection.version is not http.HttpVersion.Http2:
             connection.close()
-            raise HTTPException("HTTP/2 could not be negotiated: {connection.version}")
+            negotiated = http.HttpVersion(connection.version).name
+            raise HTTPException(f"HTTP/2 could not be negotiated: {negotiated}")
 
     def _render_path(self, url: http_interface.URL) -> str:
         path = url.path
