@@ -1,14 +1,27 @@
-from typing import Any, Callable, List, Mapping, Optional, TypeVar
+from typing import Any, Callable, List, Mapping, Optional, Tuple, TypeVar
 
 from smithy_python.interfaces.middleware import (
     GenericStepInput,
     GenericStepOutput,
-    OperationInput,
-    OperationOutput,
     Middleware,
     Step,
     Stack,
 )
+
+
+class SDKStackInput:
+    def __init__(self, operation, user_input):
+        self.operation = operation
+        self.user_input = user_input
+
+
+class SDKStackOutput:
+    def __init__(self, response_body: bytes, headers: List[Tuple[str, str]]):
+        self.response_body = response_body
+        self.headers = headers
+
+    def __str__(self):
+        return str(response_body)
 
 
 class SDKMiddleware(Middleware):
@@ -16,6 +29,11 @@ class SDKMiddleware(Middleware):
         if middleware_id is None:
             middleware_id = self.__class__.__name__
         self.middleware_id = middleware_id
+
+    def _execute_callbacks(self, step_input, context, callbacks):
+        if callbacks:
+            next_callback = callbacks.pop(0)
+            return next_callback.run_middleware(step_input, context, callbacks)
 
 
 class InitializeMiddleware(SDKMiddleware):
@@ -79,8 +97,8 @@ class SDKStep(Step):
         self.next_step = next_step
 
     def run_step(
-        self, operation_input: OperationInput, context: Optional[Mapping[str, Any]]
-    ) -> OperationOutput:
+        self, operation_input: SDKStackInput, context: Optional[Mapping[str, Any]]
+    ) -> SDKStackOutput:
 
         execution_chain: List[Middleware] = self.middlewares.copy()
         if self.next_step:
@@ -88,7 +106,6 @@ class SDKStep(Step):
         if execution_chain:
             middleware = execution_chain.pop(0)
             return middleware.run_middleware(operation_input, context, execution_chain)
-        return OperationOutput()  # TODO: This is wrong
 
     def _resolve_middleware_position(
         self, middleware_id: Optional[str], default_pos: int
@@ -185,7 +202,6 @@ class SDKStack(Stack):
         self.finalizer.set_next_step(self.deserializer)
 
     def run_stack(
-        self, stack_input: OperationInput, context: Optional[Mapping[str, Any]]
-    ) -> OperationOutput:
-        stack_output = self.initializer.run_step(stack_input, context)
-        return OperationOutput.from_step_ouput(stack_output)
+        self, stack_input: SDKStackInput, context: Optional[Mapping[str, Any]]
+    ) -> SDKStackOutput:
+        return self.initializer.run_step(stack_input, context)

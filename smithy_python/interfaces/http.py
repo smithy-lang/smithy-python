@@ -1,4 +1,6 @@
-from typing import Optional, List, Protocol, Tuple
+from typing import Optional, List, Tuple
+
+from typing_extensions import Protocol
 
 
 # Defining headers as a list instead of a mapping to avoid ambiguity and
