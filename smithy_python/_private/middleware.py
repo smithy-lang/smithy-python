@@ -1,6 +1,21 @@
+# Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+#     http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
+
+
 from typing import TypeVar, Callable, Generic, Dict, Any, Optional, List, Awaitable
 
 from smithy_python.interfaces.http import Request
+from smithy_python._private.collection import SmithyCollection
 
 Input = TypeVar("Input")
 Output = TypeVar("Output")
@@ -71,14 +86,6 @@ class DeserializeOutput(Generic[Output]):
         self.output: Output = output
 
 
-class SmithyMiddleware(Generic[Input, Output]):
-    def __init__(self, middleware: Middleware[Input, Output], name: Optional[str] = None) -> None:
-        self.middleware: Middleware[Input, Output] = middleware
-        if name is None:
-            name = self.__class__.__name__
-        self.name: str = name
-
-
 # Step Handlers
 InitializeHandler = Handler[InitializeInput[Input], InitializeOutput[Output]]
 SerializeHandler = Handler[SerializeInput[Input], SerializeOutput[Output]]
@@ -86,49 +93,19 @@ BuildHandler = Handler[BuildInput[Input], BuildOutput[Output]]
 FinalizeHandler = Handler[FinalizeInput[Input], FinalizeOutput[Output]]
 DeserializeHandler = Handler[DeserializeInput[Input], DeserializeOutput[Output]]
 
+# Step Middlewares
+InitializeMiddleware = Middleware[InitializeInput[Input], InitializeOutput[Output]]
+SerializeMiddleware = Middleware[SerializeInput[Input], SerializeOutput[Output]]
+BuildMiddleware = Middleware[BuildInput[Input], BuildOutput[Output]]
+FinalizeMiddleware = Middleware[FinalizeInput[Input], FinalizeOutput[Output]]
+DeserializeMiddleware = Middleware[DeserializeInput[Input], DeserializeOutput[Output]]
 
-# Step middlewares
-class InitializeMiddleware(SmithyMiddleware[InitializeInput[Input], InitializeOutput[Output]]):
-    pass
-
-class SerializeMiddleware(SmithyMiddleware[SerializeInput[Input], SerializeOutput[Output]]):
-    pass
-
-class BuildMiddleware(SmithyMiddleware[BuildInput[Input], BuildOutput[Output]]):
-    pass
-
-class FinalizeMiddleware(SmithyMiddleware[FinalizeInput[Input], FinalizeOutput[Output]]):
-    pass
-
-class DeserializeMiddleware(SmithyMiddleware[DeserializeInput[Input], DeserializeOutput[Output]]):
-    pass
-
-
-MiddlewareType = TypeVar("MiddlewareType", bound=SmithyMiddleware[Any, Any])
-
-
-class SmithyStep(Generic[MiddlewareType]):
-    def __init__(self) -> None:
-        self._middlewares: List[MiddlewareType] = []
-
-    @property
-    def middlewares(self) -> List[MiddlewareType]:
-        # TODO: In the future producing this list may be more difficult
-        return list(self._middlewares)
-
-    def _resolve_middleware_position(self, name: Optional[str], default_pos: int) -> int:
-        for n, middleware in enumerate(self._middlewares):
-            if middleware.name == name:
-                return n
-        return default_pos
-
-    def add_before(self, middleware: MiddlewareType, name: Optional[str] = None) -> None:
-        position = self._resolve_middleware_position(name, 0)
-        self._middlewares.insert(position, middleware)
-
-    def add_after(self, middleware: MiddlewareType, name: Optional[str] = None) -> None:
-        position = self._resolve_middleware_position(name, len(self._middlewares))
-        self._middlewares.insert(position, middleware)
+# Steps
+InitializeStep = SmithyCollection[InitializeMiddleware[Input, Output]]
+SerializeStep = SmithyCollection[SerializeMiddleware[Input, Output]]
+BuildStep = SmithyCollection[BuildMiddleware[Input, Output]]
+FinalizeStep = SmithyCollection[FinalizeMiddleware[Input, Output]]
+DeserializeStep = SmithyCollection[DeserializeMiddleware[Input, Output]]
 
 
 class SmithyStack(Generic[Input, Output]):
@@ -157,17 +134,17 @@ class SmithyStack(Generic[Input, Output]):
         expected format.
     """
     def __init__(self) -> None:
-        self.initialize: SmithyStep[InitializeMiddleware[Input, Output]] = SmithyStep()
-        self.serialize: SmithyStep[SerializeMiddleware[Input, Output]] = SmithyStep()
-        self.build: SmithyStep[BuildMiddleware[Input, Output]] = SmithyStep()
-        self.finalize: SmithyStep[FinalizeMiddleware[Input, Output]] = SmithyStep()
-        self.deserialize: SmithyStep[DeserializeMiddleware[Input, Output]] = SmithyStep()
+        self.initialize: InitializeStep[Input, Output] = SmithyCollection()
+        self.serialize: SerializeStep[Input, Output] = SmithyCollection()
+        self.build: BuildStep[Input, Output] = SmithyCollection()
+        self.finalize: FinalizeStep[Input, Output] = SmithyCollection()
+        self.deserialize: DeserializeStep[Input, Output] = SmithyCollection()
 
     def resolve(self, terminal: DeserializeHandler[Input, Output]) -> Handler[Input, Output]:
         return self._build_deserialize_chain(terminal)
 
     def _build_deserialize_chain(self, terminal: DeserializeHandler[Input, Output]) -> Handler[Input, Output]:
-        middlewares = [m.middleware for m in self.deserialize.middlewares]
+        middlewares = [m.entry for m in self.deserialize.entries]
         deserialize_chain = chain_middleware(terminal, *middlewares)
         def _deserialize_bridge(finalize_in: FinalizeInput[Input]) -> FinalizeOutput[Output]:
             deserialize_in = DeserializeInput(
@@ -179,7 +156,7 @@ class SmithyStack(Generic[Input, Output]):
         return self._build_finalize_chain(_deserialize_bridge)
 
     def _build_finalize_chain(self, terminal: FinalizeHandler[Input, Output]) -> Handler[Input, Output]:
-        middlewares = [m.middleware for m in self.finalize.middlewares]
+        middlewares = [m.entry for m in self.finalize.entries]
         finalize_chain = chain_middleware(terminal, *middlewares)
         def _finalize_bridge(build_in: BuildInput[Input]) -> BuildOutput[Output]:
             finalize_in = FinalizeInput(
@@ -191,7 +168,7 @@ class SmithyStack(Generic[Input, Output]):
         return self._build_build_chain(_finalize_bridge)
 
     def _build_build_chain(self, terminal: BuildHandler[Input, Output]) -> Handler[Input, Output]:
-        middlewares = [m.middleware for m in self.build.middlewares]
+        middlewares = [m.entry for m in self.build.entries]
         build_chain = chain_middleware(terminal, *middlewares)
         def _build_bridge(serialize_in: SerializeInput[Input]) -> SerializeOutput[Output]:
             assert serialize_in.request is not None
@@ -204,7 +181,7 @@ class SmithyStack(Generic[Input, Output]):
         return self._build_serialize_chain(_build_bridge)
 
     def _build_serialize_chain(self, terminal: SerializeHandler[Input, Output]) -> Handler[Input, Output]:
-        middlewares = [m.middleware for m in self.serialize.middlewares]
+        middlewares = [m.entry for m in self.serialize.entries]
         serialize_chain = chain_middleware(terminal, *middlewares)
         def _serialize_bridge(initialize_in: InitializeInput[Input]) -> InitializeOutput[Output]:
             serialize_in = SerializeInput(param=initialize_in.input)
@@ -213,7 +190,7 @@ class SmithyStack(Generic[Input, Output]):
         return self._build_initialize_chain(_serialize_bridge)
 
     def _build_initialize_chain(self, terminal: InitializeHandler[Input, Output]) -> Handler[Input, Output]:
-        middlewares = [m.middleware for m in self.initialize.middlewares]
+        middlewares = [m.entry for m in self.initialize.entries]
         initialize_chain = chain_middleware(terminal, *middlewares)
         def _initialize_bridge(param: Input) -> Output:
             initialize_in = InitializeInput(param=param)
@@ -221,32 +198,30 @@ class SmithyStack(Generic[Input, Output]):
             return initialize_out.output
         return _initialize_bridge
 
+# Async middleware primitives
+AsyncHandler = Handler[Input, Awaitable[Output]]
+AsyncMiddleware = Middleware[Input, Awaitable[Output]]
 
 # AsyncStep Handlers
-AsyncHandler = Handler[Input, Awaitable[Output]]
 AsyncInitializeHandler = AsyncHandler[InitializeInput[Input], InitializeOutput[Output]]
 AsyncSerializeHandler = AsyncHandler[SerializeInput[Input], SerializeOutput[Output]]
 AsyncBuildHandler = AsyncHandler[BuildInput[Input], BuildOutput[Output]]
 AsyncFinalizeHandler = AsyncHandler[FinalizeInput[Input], FinalizeOutput[Output]]
 AsyncDeserializeHandler = AsyncHandler[DeserializeInput[Input], DeserializeOutput[Output]]
 
-
 # AsyncStep middlewares
-class AsyncInitializeMiddleware(SmithyMiddleware[InitializeInput[Input], Awaitable[InitializeOutput[Output]]]):
-    pass
+AsyncInitializeMiddleware = AsyncMiddleware[InitializeInput[Input], InitializeOutput[Output]]
+AsyncSerializeMiddleware = AsyncMiddleware[SerializeInput[Input], SerializeOutput[Output]]
+AsyncBuildMiddleware = AsyncMiddleware[BuildInput[Input], BuildOutput[Output]]
+AsyncFinalizeMiddleware = AsyncMiddleware[FinalizeInput[Input], FinalizeOutput[Output]]
+AsyncDeserializeMiddleware = AsyncMiddleware[DeserializeInput[Input], DeserializeOutput[Output]]
 
-class AsyncSerializeMiddleware(SmithyMiddleware[SerializeInput[Input], Awaitable[SerializeOutput[Output]]]):
-    pass
-
-class AsyncBuildMiddleware(SmithyMiddleware[BuildInput[Input], Awaitable[BuildOutput[Output]]]):
-    pass
-
-class AsyncFinalizeMiddleware(SmithyMiddleware[FinalizeInput[Input], Awaitable[FinalizeOutput[Output]]]):
-    pass
-
-class AsyncDeserializeMiddleware(SmithyMiddleware[DeserializeInput[Input], Awaitable[DeserializeOutput[Output]]]):
-    pass
-
+# Async Steps
+AsyncInitializeStep = SmithyCollection[AsyncInitializeMiddleware[Input, Output]]
+AsyncSerializeStep = SmithyCollection[AsyncSerializeMiddleware[Input, Output]]
+AsyncBuildStep = SmithyCollection[AsyncBuildMiddleware[Input, Output]]
+AsyncFinalizeStep = SmithyCollection[AsyncFinalizeMiddleware[Input, Output]]
+AsyncDeserializeStep = SmithyCollection[AsyncDeserializeMiddleware[Input, Output]]
 
 class AsyncSmithyStack(Generic[Input, Output]):
     """A SmithyStack is composed of five high level Steps. The occur in
@@ -274,17 +249,17 @@ class AsyncSmithyStack(Generic[Input, Output]):
         expected format.
     """
     def __init__(self) -> None:
-        self.initialize: SmithyStep[AsyncInitializeMiddleware[Input, Output]] = SmithyStep()
-        self.serialize: SmithyStep[AsyncSerializeMiddleware[Input, Output]] = SmithyStep()
-        self.build: SmithyStep[AsyncBuildMiddleware[Input, Output]] = SmithyStep()
-        self.finalize: SmithyStep[AsyncFinalizeMiddleware[Input, Output]] = SmithyStep()
-        self.deserialize: SmithyStep[AsyncDeserializeMiddleware[Input, Output]] = SmithyStep()
+        self.initialize: AsyncInitializeStep[Input, Output] = SmithyCollection()
+        self.serialize: AsyncSerializeStep[Input, Output] = SmithyCollection()
+        self.build: AsyncBuildStep[Input, Output] = SmithyCollection()
+        self.finalize: AsyncFinalizeStep[Input, Output] = SmithyCollection()
+        self.deserialize: AsyncDeserializeStep[Input, Output] = SmithyCollection()
 
     def resolve(self, terminal: AsyncDeserializeHandler[Input, Output]) -> AsyncHandler[Input, Output]:
         return self._build_deserialize_chain(terminal)
 
     def _build_deserialize_chain(self, terminal: AsyncDeserializeHandler[Input, Output]) -> AsyncHandler[Input, Output]:
-        middlewares = [m.middleware for m in self.deserialize.middlewares]
+        middlewares = [m.entry for m in self.deserialize.entries]
         deserialize_chain = chain_middleware(terminal, *middlewares)
         async def _deserialize_bridge(finalize_in: FinalizeInput[Input]) -> FinalizeOutput[Output]:
             deserialize_in = DeserializeInput(
@@ -296,7 +271,7 @@ class AsyncSmithyStack(Generic[Input, Output]):
         return self._build_finalize_chain(_deserialize_bridge)
 
     def _build_finalize_chain(self, terminal: AsyncFinalizeHandler[Input, Output]) -> AsyncHandler[Input, Output]:
-        middlewares = [m.middleware for m in self.finalize.middlewares]
+        middlewares = [m.entry for m in self.finalize.entries]
         finalize_chain = chain_middleware(terminal, *middlewares)
         async def _finalize_bridge(build_in: BuildInput[Input]) -> BuildOutput[Output]:
             finalize_in = FinalizeInput(
@@ -308,7 +283,7 @@ class AsyncSmithyStack(Generic[Input, Output]):
         return self._build_build_chain(_finalize_bridge)
 
     def _build_build_chain(self, terminal: AsyncBuildHandler[Input, Output]) -> AsyncHandler[Input, Output]:
-        middlewares = [m.middleware for m in self.build.middlewares]
+        middlewares = [m.entry for m in self.build.entries]
         build_chain = chain_middleware(terminal, *middlewares)
         async def _build_bridge(serialize_in: SerializeInput[Input]) -> SerializeOutput[Output]:
             assert serialize_in.request is not None
@@ -321,7 +296,7 @@ class AsyncSmithyStack(Generic[Input, Output]):
         return self._build_serialize_chain(_build_bridge)
 
     def _build_serialize_chain(self, terminal: AsyncSerializeHandler[Input, Output]) -> AsyncHandler[Input, Output]:
-        middlewares = [m.middleware for m in self.serialize.middlewares]
+        middlewares = [m.entry for m in self.serialize.entries]
         serialize_chain = chain_middleware(terminal, *middlewares)
         async def _serialize_bridge(initialize_in: InitializeInput[Input]) -> InitializeOutput[Output]:
             serialize_in = SerializeInput(param=initialize_in.input)
@@ -330,7 +305,7 @@ class AsyncSmithyStack(Generic[Input, Output]):
         return self._build_initialize_chain(_serialize_bridge)
 
     def _build_initialize_chain(self, terminal: AsyncInitializeHandler[Input, Output]) -> AsyncHandler[Input, Output]:
-        middlewares = [m.middleware for m in self.initialize.middlewares]
+        middlewares = [m.entry for m in self.initialize.entries]
         initialize_chain = chain_middleware(terminal, *middlewares)
         async def _initialize_bridge(param: Input) -> Output:
             initialize_in = InitializeInput(param=param)
