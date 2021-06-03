@@ -1,4 +1,4 @@
-$version: "1"
+$version: "1.0"
 
 namespace example.weather.nested.more
 
