@@ -16,7 +16,6 @@
 package software.amazon.smithy.python.codegen;
 
 import java.util.Collection;
-
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
