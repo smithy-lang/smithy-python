@@ -1,4 +1,5 @@
 $version: "1.0"
+
 namespace example.weather
 
 use smithy.test#httpRequestTests
@@ -37,6 +38,7 @@ resource CityImage {
 string CityId
 
 @readonly
+@suppress(["WaitableTraitInvalidErrorType"])
 @waitable(
     CityExists: {
         description: "Waits until a city has been created",
@@ -374,6 +376,7 @@ union Precipitation {
 
 structure OtherStructure {}
 
+@suppress(["EnumNamesPresent"])
 @enum([{value: "YES"}, {value: "NO"}])
 string SimpleYesNo
 
@@ -386,6 +389,7 @@ map StringMap {
 }
 
 @readonly
+@suppress(["HttpMethodSemantics"])
 @http(method: "POST", uri: "/cities/{cityId}/image")
 operation GetCityImage {
     input: GetCityImageInput,
