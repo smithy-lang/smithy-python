@@ -217,8 +217,7 @@ class _BaseAwsCrtHttpSession:
             tls_connection_options = self._tls_ctx.new_connection_options()
             tls_connection_options.set_server_name(url.hostname)
             # TODO: Support TLS configuration, including alpn
-            # tls_connection_options.set_alpn_list(["h2"])
-            # tls_connection_options.set_alpn_list(["http/1.1"])
+            tls_connection_options.set_alpn_list(["h2", "http/1.1"])
         if url.port is not None:
             port = url.port
 
@@ -260,11 +259,11 @@ class _BaseAwsCrtHttpSession:
         if isinstance(request.headers, list):
             headers = http.HttpHeaders(request.headers)
 
-        body: Optional[BytesIO]
-        if request.body is not None:
+        body: Any
+        if isinstance(request.body, bytes):
             body = BytesIO(request.body)
         else:
-            body = None
+            body = request.body
 
         crt_request = http.HttpRequest(
             method=request.method,
@@ -306,13 +305,10 @@ class AsyncAwsCrtHttpSession(_BaseAwsCrtHttpSession):
         )
         crt_response._set_stream(crt_stream)
 
-        # TODO: Trouble in async city, do we force header/status resolution here?
-        # A sync interface can "hide" the blocking behind a property, async can't
-        # TODO: Figuring out streaming bodies
         return Response(
             status_code=await crt_response.status_code,
             headers=await crt_response.headers,
-            body=await crt_response.consume_body(),
+            body=crt_response,
         )
 
 
@@ -341,5 +337,5 @@ class SyncAwsCrtHttpSession(_BaseAwsCrtHttpSession):
         return Response(
             status_code=crt_response.status_code,
             headers=crt_response.headers,
-            body=crt_response.consume_body(),
+            body=crt_response,
         )

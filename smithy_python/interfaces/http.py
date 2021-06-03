@@ -1,4 +1,4 @@
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Any
 
 from typing_extensions import Protocol
 
@@ -20,13 +20,13 @@ class Request(Protocol):
     url: URL
     method: str  # GET, PUT, etc
     headers: HeadersList
-    body: Optional[bytes]
+    body: Any
 
 
 class Response(Protocol):
     status_code: int  # HTTP status code
     headers: HeadersList
-    body: Optional[bytes]
+    body: Any
 
 
 class Session(Protocol):

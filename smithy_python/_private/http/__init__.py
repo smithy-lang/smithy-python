@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 
 
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Any
 from smithy_python.interfaces import http as http_interface
 
 
@@ -51,11 +51,11 @@ class Request:
         url: http_interface.URL,
         method: str = "GET",
         headers: Optional[HeadersList] = None,
-        body: Optional[bytes] = None,  # TODO: re-evaluate typing here
+        body: Any = None,
     ):
         self.url: http_interface.URL = url
         self.method: str = method
-        self.body: Optional[bytes] = body
+        self.body: Any = body
 
         self.headers: HeadersList = []
         if headers is not None:
@@ -64,8 +64,8 @@ class Request:
 
 class Response:
     def __init__(
-        self, status_code: int, headers: HeadersList, body: Optional[bytes],
+        self, status_code: int, headers: HeadersList, body: Any,
     ):
         self.status_code: int = status_code
         self.headers: HeadersList = headers
-        self.body: Optional[bytes] = body  # TODO: re-evaluate typing here
+        self.body: Any = body
