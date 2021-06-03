@@ -24,7 +24,7 @@ plugins {
 }
 
 allprojects {
-    group = "software.amazon.smithy"
+    group = "software.amazon.smithy.python"
     version = "0.1.0"
 }
 
@@ -139,7 +139,7 @@ subprojects {
         publishing {
             repositories {
                 mavenCentral {
-                    url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+                    url = uri("https://aws.oss.sonatype.org/service/local/staging/deploy/maven2/")
                     credentials {
                         username = sonatypeUser
                         password = sonatypePassword
@@ -160,7 +160,7 @@ subprojects {
                         pom {
                             name.set(subproject.extra["displayName"].toString())
                             description.set(subproject.description)
-                            url.set("https://github.com/awslabs/smithy")
+                            url.set("https://github.com/awslabs/smithy-python")
                             licenses {
                                 license {
                                     name.set("Apache License 2.0")
@@ -178,7 +178,7 @@ subprojects {
                                 }
                             }
                             scm {
-                                url.set("https://github.com/awslabs/smithy.git")
+                                url.set("https://github.com/awslabs/smithy-python.git")
                             }
                         }
                     }
