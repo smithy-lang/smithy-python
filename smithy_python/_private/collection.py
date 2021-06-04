@@ -40,10 +40,14 @@ class SmithyCollection(Generic[EntryType]):
                 return n
         return default_pos
 
-    def add_before(self, entry: SmithyEntry[EntryType], name: Optional[str] = None) -> None:
+    def add_before(
+        self, entry: SmithyEntry[EntryType], name: Optional[str] = None
+    ) -> None:
         position = self._resolve_entry_position(name, 0)
         self._entries.insert(position, entry)
 
-    def add_after(self, entry: SmithyEntry[EntryType], name: Optional[str] = None) -> None:
+    def add_after(
+        self, entry: SmithyEntry[EntryType], name: Optional[str] = None
+    ) -> None:
         position = self._resolve_entry_position(name, len(self._entries))
         self._entries.insert(position, entry)
