@@ -38,32 +38,50 @@ def chain_middleware(terminal: Handler[Input, Output], *args: Middleware[Input, 
     return handler
 
 
+Context = Dict[Any, Any]
+
+
 # Step Inputs
 class InitializeInput(Generic[Input]):
-    def __init__(self, *, param: Input) -> None:
+    def __init__(self, *, param: Input, context: Optional[Context] = None) -> None:
         self.input: Input = param
+        if context is None:
+            context = {}
+        self.context: Context = context
 
 class SerializeInput(Generic[Input]):
-    def __init__(self, *, param: Input, request: Optional[Request] = None) -> None:
+    def __init__(self, *, param: Input, request: Optional[Request] = None, context: Optional[Context] = None) -> None:
         self.input: Input = param
         self.request: Optional[Request] = request
+        if context is None:
+            context = {}
+        self.context: Context = context
 
 class BuildInput(Generic[Input]):
-    def __init__(self, *, param: Input, request: Request) -> None:
+    def __init__(self, *, param: Input, request: Request, context: Optional[Context] = None) -> None:
         self.input: Input = param
         self.request: Request = request
+        if context is None:
+            context = {}
+        self.context: Context = context
 
 class FinalizeInput(Generic[Input]):
-    def __init__(self, *, param: Input, request: Request, response: Optional[Response] = None) -> None:
+    def __init__(self, *, param: Input, request: Request, response: Optional[Response] = None, context: Optional[Context] = None) -> None:
         self.input: Input = param
         self.request: Request = request
         self.response: Optional[Response] = response
+        if context is None:
+            context = {}
+        self.context: Context = context
 
 class DeserializeInput(Generic[Input]):
-    def __init__(self, *, param: Input, request: Request, response: Response) -> None:
+    def __init__(self, *, param: Input, request: Request, response: Response, context: Optional[Context] = None) -> None:
         self.input: Input = param
         self.request: Request = request
         self.response: Response = response
+        if context is None:
+            context = {}
+        self.context: Context = context
 
 
 # Step Outputs
@@ -142,10 +160,18 @@ class SmithyStack(Generic[Input, Output]):
         self.finalize: FinalizeStep[Input, Output] = SmithyCollection()
         self.deserialize: DeserializeStep[Input, Output] = SmithyCollection()
 
-    def resolve(self, terminal: DeserializeHandler[Input, Output]) -> Handler[Input, Output]:
-        return self._build_deserialize_chain(terminal)
+    def resolve(self, terminal: DeserializeHandler[Input, Output], context: Optional[Context] = None) -> Handler[Input, Output]:
+        stack_chain = self._build_deserialize_chain(terminal)
 
-    def _build_deserialize_chain(self, terminal: DeserializeHandler[Input, Output]) -> Handler[Input, Output]:
+        def _stack_bridge(param: Input) -> Output:
+            initialize_in = InitializeInput(param=param, context=context)
+            initialize_out = stack_chain(initialize_in)
+            return initialize_out.output
+
+        return _stack_bridge
+
+
+    def _build_deserialize_chain(self, terminal: DeserializeHandler[Input, Output]) -> InitializeHandler[Input, Output]:
         middlewares = [m.entry for m in self.deserialize.entries]
         deserialize_chain = chain_middleware(terminal, *middlewares)
         def _deserialize_bridge(finalize_in: FinalizeInput[Input]) -> FinalizeOutput[Output]:
@@ -154,24 +180,26 @@ class SmithyStack(Generic[Input, Output]):
                 param=finalize_in.input,
                 request=finalize_in.request,
                 response=finalize_in.response,
+                context=finalize_in.context,
             )
             deserialize_out = deserialize_chain(deserialize_in)
             return FinalizeOutput(output=deserialize_out.output)
         return self._build_finalize_chain(_deserialize_bridge)
 
-    def _build_finalize_chain(self, terminal: FinalizeHandler[Input, Output]) -> Handler[Input, Output]:
+    def _build_finalize_chain(self, terminal: FinalizeHandler[Input, Output]) -> InitializeHandler[Input, Output]:
         middlewares = [m.entry for m in self.finalize.entries]
         finalize_chain = chain_middleware(terminal, *middlewares)
         def _finalize_bridge(build_in: BuildInput[Input]) -> BuildOutput[Output]:
             finalize_in = FinalizeInput(
                 param=build_in.input,
                 request=build_in.request,
+                context=build_in.context,
             )
             finalize_out = finalize_chain(finalize_in)
             return BuildOutput(output=finalize_out.output)
         return self._build_build_chain(_finalize_bridge)
 
-    def _build_build_chain(self, terminal: BuildHandler[Input, Output]) -> Handler[Input, Output]:
+    def _build_build_chain(self, terminal: BuildHandler[Input, Output]) -> InitializeHandler[Input, Output]:
         middlewares = [m.entry for m in self.build.entries]
         build_chain = chain_middleware(terminal, *middlewares)
         def _build_bridge(serialize_in: SerializeInput[Input]) -> SerializeOutput[Output]:
@@ -179,12 +207,13 @@ class SmithyStack(Generic[Input, Output]):
             build_in = BuildInput(
                 param=serialize_in.input,
                 request=serialize_in.request,
+                context=serialize_in.context,
             )
             build_out = build_chain(build_in)
             return SerializeOutput(output=build_out.output)
         return self._build_serialize_chain(_build_bridge)
 
-    def _build_serialize_chain(self, terminal: SerializeHandler[Input, Output]) -> Handler[Input, Output]:
+    def _build_serialize_chain(self, terminal: SerializeHandler[Input, Output]) -> InitializeHandler[Input, Output]:
         middlewares = [m.entry for m in self.serialize.entries]
         serialize_chain = chain_middleware(terminal, *middlewares)
         def _serialize_bridge(initialize_in: InitializeInput[Input]) -> InitializeOutput[Output]:
@@ -193,14 +222,9 @@ class SmithyStack(Generic[Input, Output]):
             return InitializeOutput(output=serialize_out.output)
         return self._build_initialize_chain(_serialize_bridge)
 
-    def _build_initialize_chain(self, terminal: InitializeHandler[Input, Output]) -> Handler[Input, Output]:
+    def _build_initialize_chain(self, terminal: InitializeHandler[Input, Output]) -> InitializeHandler[Input, Output]:
         middlewares = [m.entry for m in self.initialize.entries]
-        initialize_chain = chain_middleware(terminal, *middlewares)
-        def _initialize_bridge(param: Input) -> Output:
-            initialize_in = InitializeInput(param=param)
-            initialize_out = initialize_chain(initialize_in)
-            return initialize_out.output
-        return _initialize_bridge
+        return chain_middleware(terminal, *middlewares)
 
 # Async middleware primitives
 AsyncHandler = Handler[Input, Awaitable[Output]]
@@ -259,10 +283,16 @@ class AsyncSmithyStack(Generic[Input, Output]):
         self.finalize: AsyncFinalizeStep[Input, Output] = SmithyCollection()
         self.deserialize: AsyncDeserializeStep[Input, Output] = SmithyCollection()
 
-    def resolve(self, terminal: AsyncDeserializeHandler[Input, Output]) -> AsyncHandler[Input, Output]:
-        return self._build_deserialize_chain(terminal)
+    def resolve(self, terminal: AsyncDeserializeHandler[Input, Output], context: Context) -> AsyncHandler[Input, Output]:
+        stack_chain = self._build_deserialize_chain(terminal)
+        async def _stack_bridge(param: Input) -> Output:
+            initialize_in = InitializeInput(param=param, context=context)
+            initialize_out = await stack_chain(initialize_in)
+            return initialize_out.output
 
-    def _build_deserialize_chain(self, terminal: AsyncDeserializeHandler[Input, Output]) -> AsyncHandler[Input, Output]:
+        return _stack_bridge
+
+    def _build_deserialize_chain(self, terminal: AsyncDeserializeHandler[Input, Output]) -> AsyncInitializeHandler[Input, Output]:
         middlewares = [m.entry for m in self.deserialize.entries]
         deserialize_chain = chain_middleware(terminal, *middlewares)
         async def _deserialize_bridge(finalize_in: FinalizeInput[Input]) -> FinalizeOutput[Output]:
@@ -271,24 +301,26 @@ class AsyncSmithyStack(Generic[Input, Output]):
                 param=finalize_in.input,
                 request=finalize_in.request,
                 response=finalize_in.response,
+                context=finalize_in.context,
             )
             deserialize_out = await deserialize_chain(deserialize_in)
             return FinalizeOutput(output=deserialize_out.output)
         return self._build_finalize_chain(_deserialize_bridge)
 
-    def _build_finalize_chain(self, terminal: AsyncFinalizeHandler[Input, Output]) -> AsyncHandler[Input, Output]:
+    def _build_finalize_chain(self, terminal: AsyncFinalizeHandler[Input, Output]) -> AsyncInitializeHandler[Input, Output]:
         middlewares = [m.entry for m in self.finalize.entries]
         finalize_chain = chain_middleware(terminal, *middlewares)
         async def _finalize_bridge(build_in: BuildInput[Input]) -> BuildOutput[Output]:
             finalize_in = FinalizeInput(
                 param=build_in.input,
                 request=build_in.request,
+                context=build_in.context,
             )
             finalize_out = await finalize_chain(finalize_in)
             return BuildOutput(output=finalize_out.output)
         return self._build_build_chain(_finalize_bridge)
 
-    def _build_build_chain(self, terminal: AsyncBuildHandler[Input, Output]) -> AsyncHandler[Input, Output]:
+    def _build_build_chain(self, terminal: AsyncBuildHandler[Input, Output]) -> AsyncInitializeHandler[Input, Output]:
         middlewares = [m.entry for m in self.build.entries]
         build_chain = chain_middleware(terminal, *middlewares)
         async def _build_bridge(serialize_in: SerializeInput[Input]) -> SerializeOutput[Output]:
@@ -296,25 +328,22 @@ class AsyncSmithyStack(Generic[Input, Output]):
             build_in = BuildInput(
                 param=serialize_in.input,
                 request=serialize_in.request,
+                context=serialize_in.context,
             )
             build_out = await build_chain(build_in)
             return SerializeOutput(output=build_out.output)
         return self._build_serialize_chain(_build_bridge)
 
-    def _build_serialize_chain(self, terminal: AsyncSerializeHandler[Input, Output]) -> AsyncHandler[Input, Output]:
+    def _build_serialize_chain(self, terminal: AsyncSerializeHandler[Input, Output]) -> AsyncInitializeHandler[Input, Output]:
         middlewares = [m.entry for m in self.serialize.entries]
         serialize_chain = chain_middleware(terminal, *middlewares)
         async def _serialize_bridge(initialize_in: InitializeInput[Input]) -> InitializeOutput[Output]:
-            serialize_in = SerializeInput(param=initialize_in.input)
+            serialize_in = SerializeInput(param=initialize_in.input, context=initialize_in.context)
             serialize_out = await serialize_chain(serialize_in)
             return InitializeOutput(output=serialize_out.output)
         return self._build_initialize_chain(_serialize_bridge)
 
-    def _build_initialize_chain(self, terminal: AsyncInitializeHandler[Input, Output]) -> AsyncHandler[Input, Output]:
+    def _build_initialize_chain(self, terminal: AsyncInitializeHandler[Input, Output]) -> AsyncInitializeHandler[Input, Output]:
         middlewares = [m.entry for m in self.initialize.entries]
         initialize_chain = chain_middleware(terminal, *middlewares)
-        async def _initialize_bridge(param: Input) -> Output:
-            initialize_in = InitializeInput(param=param)
-            initialize_out = await initialize_chain(initialize_in)
-            return initialize_out.output
-        return _initialize_bridge
+        return initialize_chain
