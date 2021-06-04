@@ -14,7 +14,7 @@
 
 from typing import TypeVar, Callable, Generic, Dict, Any, Optional, List, Awaitable
 
-from smithy_python.interfaces.http import Request
+from smithy_python.interfaces.http import Request, Response
 from smithy_python._private.collection import SmithyCollection
 
 Input = TypeVar("Input")
@@ -54,14 +54,16 @@ class BuildInput(Generic[Input]):
         self.request: Request = request
 
 class FinalizeInput(Generic[Input]):
-    def __init__(self, *, param: Input, request: Request) -> None:
+    def __init__(self, *, param: Input, request: Request, response: Optional[Response] = None) -> None:
         self.input: Input = param
         self.request: Request = request
+        self.response: Optional[Response] = response
 
 class DeserializeInput(Generic[Input]):
-    def __init__(self, *, param: Input, request: Request) -> None:
+    def __init__(self, *, param: Input, request: Request, response: Response) -> None:
         self.input: Input = param
         self.request: Request = request
+        self.response: Response = response
 
 
 # Step Outputs
@@ -147,9 +149,11 @@ class SmithyStack(Generic[Input, Output]):
         middlewares = [m.entry for m in self.deserialize.entries]
         deserialize_chain = chain_middleware(terminal, *middlewares)
         def _deserialize_bridge(finalize_in: FinalizeInput[Input]) -> FinalizeOutput[Output]:
+            assert finalize_in.response is not None
             deserialize_in = DeserializeInput(
                 param=finalize_in.input,
                 request=finalize_in.request,
+                response=finalize_in.response,
             )
             deserialize_out = deserialize_chain(deserialize_in)
             return FinalizeOutput(output=deserialize_out.output)
@@ -262,9 +266,11 @@ class AsyncSmithyStack(Generic[Input, Output]):
         middlewares = [m.entry for m in self.deserialize.entries]
         deserialize_chain = chain_middleware(terminal, *middlewares)
         async def _deserialize_bridge(finalize_in: FinalizeInput[Input]) -> FinalizeOutput[Output]:
+            assert finalize_in.response is not None
             deserialize_in = DeserializeInput(
                 param=finalize_in.input,
                 request=finalize_in.request,
+                response=finalize_in.response,
             )
             deserialize_out = await deserialize_chain(deserialize_in)
             return FinalizeOutput(output=deserialize_out.output)
