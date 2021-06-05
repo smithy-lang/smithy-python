@@ -6,7 +6,7 @@ are generated into python types and type hints from a Smithy model.
 
 # Specification
 
-## Simple Shapes
+## Simple shapes
 
 | Shape Type | Python Type |
 |------------|-------------|
@@ -28,13 +28,61 @@ are generated into python types and type hints from a Smithy model.
 support for recursive definitions. See [this issue](https://github.com/python/typing/issues/182)
 on the typing repo for more details.
 
-### Trait-influenced Shapes
+## Trait-influenced shapes
 
-#### streaming
+### enum
 
-#### mediaType
+```python
+class EnumWithNames:
+    SPAM = "spam"
+    EGGS = "eggs"
+    SPAM_EGGS = "spam:eggs"
 
-## Simple Aggregate Shapes
+    values = frozenset(SPAM, EGGS, SPAM_EGGS)
+
+class EnumWithoutNames:
+    values = frozenset("foo", "bar")
+```
+
+Enums are classes with a `values` property that contains an immutable set of
+all the possible values of the enum. If the enum is a named enum, static
+properties will be generated for each entry as well.
+
+This provides customers with a way to access the simplified names for easier
+development, as well as giving them a programmatic ability to check known
+values.
+
+Members targeting enums will continue to use plain strings to enable forwards
+compatibility. Documentation for those members will reference the enum classes
+for discoverability.
+
+#### Alternative: native enums
+
+Python 3.4 introduced native enums, and they're about what you'd expect:
+
+```python
+class MyEnum(Enum):
+    SPAM = "spam"
+    EGGS = "eggs"
+    SPAM_EGGS = "spam:eggs"
+```
+
+Defining an enum in this way gives you iterators, comparators, and a more
+helpful string representation (`<MyEnum.SPAM: 'spam'>`) for free.
+
+Unfortuantely, native enums aren't forwards compatible. To support forwards
+compatibility, we need to also support passing plain strings. If a client were
+handling an enum value not represented in their version, then they would break
+upon updating because `MyEnum.SPAM != "spam"`.
+
+While we could generate them anyway for helpers, it would be very confusing
+to use as you would have to pass `MyEnum.SPAM.value` instead of `MyEnum.SPAM`.
+
+### streaming
+
+### mediaType
+
+## Simple aggregate shapes
 
 | Shape Type | Python Type | Type Hint |
 |------------|-------------|-----------|
@@ -87,9 +135,7 @@ from `boto3` easier, as users will be able to use them to convert to/from
 generated dicts use shape names as defined in the model rather than the
 snake cased variants used in the constructor.
 
-### Alternatives
-
-#### Dataclasses
+### Alternative: Dataclasses
 
 Python 3.7 introduced dataclasses, which are a simple way of defining simple
 classes which have auto-generated implementations of a bunch of common
