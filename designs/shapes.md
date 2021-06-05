@@ -10,7 +10,7 @@ are generated into python types and type hints from a Smithy model.
 
 | Shape Type | Python Type |
 |------------|-------------|
-| blob | bytes |
+| blob | Union[bytes, bytearray] |
 | boolean | bool |
 | string | str |
 | byte | int |
@@ -78,7 +78,35 @@ upon updating because `MyEnum.SPAM != "spam"`.
 While we could generate them anyway for helpers, it would be very confusing
 to use as you would have to pass `MyEnum.SPAM.value` instead of `MyEnum.SPAM`.
 
-### streaming
+### streaming blobs
+
+A blob with the streaming trait will continue to support `bytes` as input.
+Additionally, it will support passing in a `ByteStream` which is any class that
+implements a `read` method that accepts a `size` param and returns bytes.
+Additionally, it will gracefully upgrade if the object is a
+`SeekableByteStream`.
+
+Both `ByteStream` and `SeekableByteStream` will be implemented as
+[Protocols](https://www.python.org/dev/peps/pep-0544/), which are a way of
+defining structural subtyping in Python.
+
+```python
+@runtime_checkable
+class ByteStream(Protocol):
+    def read(self, size: int) -> bytes:
+        ...
+
+@runtime_checkable
+class SeekableByteStream(ByteStream, Protocol):
+    def seek(self, offset: int, whence: int) -> int:
+        ...
+
+    def tell() -> int:
+        ...
+```
+
+The type signature of members targeting blobs with the streaming trait will be
+`Union[ByteStream, SeekableByteStream, bytes, bytearray]`.
 
 ### mediaType
 
