@@ -110,6 +110,66 @@ The type signature of members targeting blobs with the streaming trait will be
 
 ### mediaType
 
+Python is very generous in allowing subtyping of built in types, so a string or
+blob modeled with the mediaType can accept or return helper classes. These can
+be passed around and used exactly like normal strings/blobs.
+
+```python
+class JsonString(str):
+    _json = ""
+
+    def as_json(self) -> Any:
+        if not self._json:
+            self._json = json.loads(self)
+        return self._json
+
+    @staticmethod
+    def from_json(json: Any) -> 'JsonString':
+        json_string = JsonString(json.dumps(json))
+        json_string._json = json
+        return json_string
+
+class JsonBlob(bytes):
+    _json = b""
+
+    def as_json(self) -> Any:
+        if not self._json:
+            self._json = json.loads(self.decode(encoding="utf-8"))
+        return self._json
+
+    @staticmethod
+    def from_json(json: Any) -> 'JsonString':
+        json_string = JsonBlob(json.dumps(json).encode(encoding="utf-8"))
+        json_string._json = json
+        return json_string
+```
+
+A member with a json media type could then accept any json-compatible type in
+addition to their base types. Deserializers would always deserialize into a
+`JsonString` or `JsonBlob` to ensure that the parsing is lazy and that adding
+the mediaType trait is backwards-compatible.
+
+Example usage:
+
+```python
+import json
+
+my_json = {"spam": "eggs"}
+
+# Without JsonBlob
+client.send_json(json=b'{"spam": "eggs"}')
+client.send_json(json=json.dumps(my_json.encode(encoding="utf-8")))
+returned_json = json.loads(client.get_json().decode(encoding="utf-8"))
+
+# With JsonBlob. All of the above are also possible.
+client.send_json(json=my_json)
+client.send_json(json=JsonBlob.from_json(my_json))
+returned_json = client.get_json().as_json()
+```
+
+By default only json helpers will be supported. More can be added later by
+demand. Additionally, more can be be added with plugins to the code generators.
+
 ## Simple aggregate shapes
 
 | Shape Type | Python Type | Type Hint |
@@ -202,7 +262,7 @@ little ability to resolve. The standard library in particular is impossible for
 us to keep up to date, as we have no control over the environment our customers
 run code in.
 
-#### Plain dicts
+### Alternative: Plain dicts
 
 Rather than generating classes, plain dicts could be used:
 
