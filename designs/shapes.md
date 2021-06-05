@@ -302,3 +302,224 @@ This is a small example of a minor annoyance, but one that you must always be
 aware of when using dicts.
 
 ## Unions
+
+Unions are classes with `tag` and `value` properties. They are grouped together
+by a native python union type hint.
+
+```python
+class MyUnionMemberA:
+    tag: Literal["MemberA"] = "MemberA"
+
+    def __init__(self, value: bytes):
+        self._value = value
+
+    @property
+    def value(self) -> bytes:
+        return self._value
+
+
+class MyUnionMemberB:
+    tag: Literal["MemberB"] = "MemberB"
+
+    def __init__(self, value: List[str]):
+        self._value = value
+
+    @property
+    def value(self) -> List[str]:
+        return self._value
+
+
+class MyUnionUnknown:
+    def __init__(self, tag: str, value: bytes):
+        self._tag = tag
+
+        # This has no public accessor property. It's still available if you
+        # *really* want it, but it is understood that since it starts with
+        # an underscore you shouldn't use it and expect to not be broken.
+        self._value = value
+
+    @property
+    def tag(self) -> str:
+        return self._tag
+
+# This syntax will be introduced in 3.10, and it will crucially allow
+# isinstance checks to perform as you would expect.
+MyUnion = MyUnionMemberA | MyUnionMemberB
+
+class SampleStruct:
+    def __init__(self, *, union_member: Union[MyUnion, MyUnionUnknownVariant]):
+        self.union_member = union_member
+```
+
+This design allows for dispatch based on instance checks or tag values. The
+unknown variant will only be introduced when referenced by members. This
+potentially allows for completeness checks in match statements.
+
+```python
+def handle_with_tag_equality(my_union: Union[MyUnion, MyUnionUnknownVariant]):
+    # Dispatch can be handled via tags, but to do so the unknown variant MUST
+    # be eliminated first.
+    if isinstance(my_union, MyUnionUnknown):
+        raise Exception(f"Unknown union type: {my_union.tag}")
+
+    if my_union.tag == "MemberA":
+        print(value.decode(encoding="utf-8"))
+    elif my_union.tag == "MemberB":
+        for v in my_union.value:
+            print(v)
+    else:
+        # Known but unhandled members still need to be dealt with.
+        raise Exception(f"Unhandled union type: {my_union.tag}")
+
+
+# This is only possible at all in python 3.10 and up
+def handle_with_tag_matching(my_union: Union[MyUnion, MyUnionUnknownVariant]):
+    if not isinstance(my_union, MyUnion):
+        raise Exception(f"Unknown union type: {my_union.tag}")
+
+    # *Theoretically* a type checker could now see that the "MemberB" variant
+    # isn't accounted for and error out.
+    match my_union.tag:
+        case ["MemberA"]:
+            print(value.decode(encoding="utf-8"))
+
+
+def handle_with_instance(my_union: Union[MyUnion, MyUnionUnknownVariant]):
+    if isinstance(my_union, MyUnionMemberA):
+        print(value.decode(encoding="utf-8"))
+    elif isinstance(my_union, MyUnionMemberB):
+        for v in my_union.value:
+            print(v)
+    else:
+        raise Exception(f"Unhandled union type: {my_union.tag}")
+```
+
+### Alternative: include unknown variant in type alias
+
+In this alternative, the generated type alias would include the unkown variant:
+
+```python
+MyUnion = MyUnionMemberA | MyUnionMemberB | MyUnionUnknown
+
+class Struct:
+    def __init__(self, *, union_member: MyUnion):
+        self.union_member = union_member
+```
+
+One potential concern with this is that a type checker may not be able to
+properly eliminate the unknown variant to provide completeness checking in
+with statments. But this is purely conjecture, it wouldn't be impossible for
+a type checker to handle this situation. And the type checkers may never
+even adopt this behavior.
+
+A more concrete reason to dismiss this alternative is that it requires that
+users check the unknown variant at every step of the way instead of checking
+once and passing around the checked type.
+
+### Alternative: inheritance
+
+```python
+class MyUnion:
+    def __init__(self, tag: str, value: Any):
+        self._tag = tag
+        self._value = value
+
+    @property
+    def tag(self) -> str:
+        return self._tag
+
+    @property
+    def value(self) -> Any:
+        return self._value
+
+
+class MyUnionMemberA(MyUnion):
+    def __init__(self, value: bytes):
+        super().__init__("MemberA", value)
+
+    @property
+    def value(self) -> bytes:
+        return self._value
+
+
+class MyUnionMemberB(MyUnion):
+    def __init__(self, value: List[str]):
+        super().__init__("MemberA", value)
+
+    @property
+    def value(self) -> List[str]:
+        return self._value
+
+
+class MyUnionUnknown(MyUnion):
+    @property
+    def value(self) -> Any:
+        raise NotImplementedError("value")
+```
+
+In this alternative, inheritance is utilized to reduce the size of generated
+code and to provide `isinstance` functionality for versions before 3.10.
+
+This alterniative was discarded because mypy is unable to narrow down the
+value types even when when an explicit isinstace check is performed. Instead
+it will always treat the return value as `Any`.
+
+### Alternative: empty inheritance
+
+```python
+class MyUnion:
+    pass
+
+
+class MyUnionMemberA(MyUnion):
+    tag: Literal["MemberA"] = "MemberA"
+
+    def __init__(self, value: bytes):
+        self._value = value
+
+    @property
+    def value(self) -> bytes:
+        return self._value
+
+
+class MyUnionMemberB(MyUnion):
+    tag: Literal["MemberB"] = "MemberB"
+
+    def __init__(self, value: List[str]):
+        self._value = value
+
+    @property
+    def value(self) -> List[str]:
+        return self._value
+
+
+class MyUnionUnknown(MyUnion):
+    def __init__(self, tag: str, value: bytes):
+        self._tag = tag
+        self._value = value
+
+    @property
+    def tag(self) -> str:
+        return self._tag
+```
+
+In this alternative, a superclass is used instead of a union to gather the
+possible types. This provides isinstance functionality for versions before
+3.10.
+
+This alternative was discarded because mypy will, naturally, only allow you
+to generically use methods and properties described in the superclass. Thus
+tag-based dispatch is made impossible.
+
+Theoretically a union could *also* be provided to mitigate that tradeoff, but
+that would provide a bad user experience. People would forever be confused
+about when to use which.
+
+# FAQs
+
+## Why not use built-in class subtypes for unions?
+
+Unions can have multiple members targeting the same shape, so there would be
+no way to automatically determine what a users intent was if they passed in
+the base class. Since they would, therefore, have to always pass in our
+concrete types, there would be no advantage to subclassing built-ins.
