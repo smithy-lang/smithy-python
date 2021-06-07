@@ -311,36 +311,25 @@ class MyUnionMemberA:
     tag: Literal["MemberA"] = "MemberA"
 
     def __init__(self, value: bytes):
-        self._value = value
-
-    @property
-    def value(self) -> bytes:
-        return self._value
+        self.value = value
 
 
 class MyUnionMemberB:
     tag: Literal["MemberB"] = "MemberB"
 
     def __init__(self, value: List[str]):
-        self._value = value
-
-    @property
-    def value(self) -> List[str]:
-        return self._value
+        self.value = value
 
 
 class MyUnionUnknown:
     def __init__(self, tag: str, value: bytes):
-        self._tag = tag
+        self.tag = tag
 
         # This has no public accessor property. It's still available if you
         # *really* want it, but it is understood that since it starts with
         # an underscore you shouldn't use it and expect to not be broken.
-        self._value = value
+        self._nonparsed_value = value
 
-    @property
-    def tag(self) -> str:
-        return self._tag
 
 # This syntax will be introduced in 3.10, and it will crucially allow
 # isinstance checks to perform as you would expect.
@@ -419,50 +408,39 @@ once and passing around the checked type.
 ### Alternative: inheritance
 
 ```python
-class MyUnion:
-    def __init__(self, tag: str, value: Any):
-        self._tag = tag
-        self._value = value
-
-    @property
-    def tag(self) -> str:
-        return self._tag
-
-    @property
-    def value(self) -> Any:
-        return self._value
+K = TypeVar("K")
+V = TypeVar("V")
 
 
-class MyUnionMemberA(MyUnion):
+class MyUnion(Generic[K, V]):
+    tag: K
+    def __init__(self, tag: K, value: V):
+        self.tag = tag
+        self.value = value
+
+
+class MyUnionMemberA(MyUnion[Literal["MemberA"], bytes]):
     def __init__(self, value: bytes):
         super().__init__("MemberA", value)
 
-    @property
-    def value(self) -> bytes:
-        return self._value
+
+class MyUnionMemberB(MyUnion[Literal["MemberB"], str]):
+    def __init__(self, value: str):
+        super().__init__("MemberB", value)
 
 
-class MyUnionMemberB(MyUnion):
-    def __init__(self, value: List[str]):
-        super().__init__("MemberA", value)
-
-    @property
-    def value(self) -> List[str]:
-        return self._value
-
-
-class MyUnionUnknown(MyUnion):
-    @property
-    def value(self) -> Any:
-        raise NotImplementedError("value")
+class MyUnionUnknown(MyUnion["str", None]):
+    def __init__(self, tag, value: bytes):
+        super().__init__(tag, None)
+        self._nonparsed_value = value
 ```
 
-In this alternative, inheritance is utilized to reduce the size of generated
-code and to provide `isinstance` functionality for versions before 3.10.
+In this alternative, inheritance is utilized to provide `isinstance`
+functionality for versions before 3.10.
 
-This alterniative was discarded because mypy is unable to narrow down the
-value types even when when an explicit isinstace check is performed. Instead
-it will always treat the return value as `Any`.
+This alterniative was discarded because mypy is unable to do tag-based
+type narrowing, presumably because there could be implementations it doesn't
+know about that could have a duplicate tag.
 
 ### Alternative: empty inheritance
 
@@ -475,32 +453,20 @@ class MyUnionMemberA(MyUnion):
     tag: Literal["MemberA"] = "MemberA"
 
     def __init__(self, value: bytes):
-        self._value = value
-
-    @property
-    def value(self) -> bytes:
-        return self._value
+        self.value = value
 
 
 class MyUnionMemberB(MyUnion):
     tag: Literal["MemberB"] = "MemberB"
 
     def __init__(self, value: List[str]):
-        self._value = value
-
-    @property
-    def value(self) -> List[str]:
-        return self._value
+        self.value = value
 
 
 class MyUnionUnknown(MyUnion):
     def __init__(self, tag: str, value: bytes):
-        self._tag = tag
-        self._value = value
-
-    @property
-    def tag(self) -> str:
-        return self._tag
+        self.tag = tag
+        self._nonparsed_value = value
 ```
 
 In this alternative, a superclass is used instead of a union to gather the
