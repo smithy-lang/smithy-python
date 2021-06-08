@@ -22,6 +22,9 @@ class SmithyEntry(Generic[EntryType]):
         self.entry: EntryType = entry
         self.name: str = name
 
+    def __repr__(self) -> str:
+        return f"SmithyEntry({self.name})"
+
 
 class SmithyCollection(Generic[EntryType]):
     def __init__(self) -> None:
@@ -50,4 +53,4 @@ class SmithyCollection(Generic[EntryType]):
         self, entry: SmithyEntry[EntryType], name: Optional[str] = None
     ) -> None:
         position = self._resolve_entry_position(name, len(self._entries))
-        self._entries.insert(position, entry)
+        self._entries.insert(position + 1, entry)

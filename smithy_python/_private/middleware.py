@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 
 
-from typing import TypeVar, Callable, Generic, Dict, Any, Optional, List, Awaitable
+from typing import TypeVar, Callable, Generic, Dict, Any, Optional, Awaitable
 
 from smithy_python.interfaces.http import Request, Response
 from smithy_python._private.collection import SmithyCollection
@@ -275,7 +275,9 @@ class SmithyStack(Generic[Input, Output]):
         def _serialize_bridge(
             initialize_in: InitializeInput[Input],
         ) -> InitializeOutput[Output]:
-            serialize_in = SerializeInput(param=initialize_in.input)
+            serialize_in = SerializeInput(
+                param=initialize_in.input, context=initialize_in.context
+            )
             serialize_out = serialize_chain(serialize_in)
             return InitializeOutput(output=serialize_out.output)
 

@@ -16,7 +16,7 @@ import asyncio
 
 from io import BytesIO
 from threading import Lock
-from awscrt import io, http  # type: ignore
+from awscrt import io, http
 from concurrent.futures import Future
 from typing import (
     Optional,
@@ -67,11 +67,11 @@ class _BaseAwsCrtHttpResponse:
 
     def _on_headers(
         self, status_code: int, headers: HeadersList, **kwargs: Any
-    ) -> None:
+    ) -> None:  # pragma: crt-callback
         self._status_code_future.set_result(status_code)
         self._headers_future.set_result(headers)
 
-    def _on_body(self, chunk: bytes, **kwargs: Any) -> None:
+    def _on_body(self, chunk: bytes, **kwargs: Any) -> None:  # pragma: crt-callback
         with self._chunk_lock:
             # TODO: update back pressure window once CRT supports it
             if self._chunk_futures:
@@ -95,7 +95,9 @@ class _BaseAwsCrtHttpResponse:
                 self._chunk_futures.append(future)
         return future
 
-    def _on_complete(self, completion_future: "Future[int]") -> None:
+    def _on_complete(
+        self, completion_future: "Future[int]"
+    ) -> None:  # pragma: crt-callback
         with self._chunk_lock:
             if self._chunk_futures:
                 future = self._chunk_futures.pop(0)

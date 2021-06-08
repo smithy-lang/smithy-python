@@ -31,9 +31,9 @@ class Response(Protocol):
 
 class Session(Protocol):
     def send(self, request: Request) -> Response:
-        pass
+        pass  # pragma: no cover
 
 
 class AsyncSession(Protocol):
     async def send(self, request: Request) -> Response:
-        pass
+        pass  # pragma: no cover

@@ -21,7 +21,7 @@ def find_version(*file_paths):
     raise RuntimeError("Unable to find version string.")
 
 
-requires = []
+requires = ["awscrt==0.11.15"]
 
 setup(
     name="smithy-python",
