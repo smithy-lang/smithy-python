@@ -22,7 +22,7 @@ are generated into python types and type hints from a Smithy model.
 | bigInteger | int |
 | bigDecimal | decimal.Decimal |
 | timestamp | datetime.datetime |
-| document | Any* (str, int, float, bool, None, dict, list) |
+| document | Any* |
 
 *Documents aren't easily representable in Python type hints due to a lack of
 support for recursive definitions. See [this issue](https://github.com/python/typing/issues/182)
@@ -150,7 +150,7 @@ class ByteStream(Protocol):
 
 @runtime_checkable
 class SeekableByteStream(ByteStream, Protocol):
-    def seek(self, offset: int, whence: int) -> int:
+    def seek(self, offset: int, whence: int = 0) -> int:
         ...
 
     def tell() -> int:
