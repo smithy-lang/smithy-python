@@ -78,6 +78,58 @@ upon updating because `MyEnum.SPAM != "spam"`.
 While we could generate them anyway for helpers, it would be very confusing
 to use as you would have to pass `MyEnum.SPAM.value` instead of `MyEnum.SPAM`.
 
+#### Alternative: native enums with generated accessors and unknown variant
+
+```python
+class MyEnum(Enum):
+    SPAM = "spam"
+    EGGS = "eggs"
+    SPAM_EGGS = "spam:eggs"
+    UNKNOWN_TO_SDK_VERSION = ""
+
+    @staticmethod
+    def from_string(value: str) -> 'MyEnum':
+        try:
+            return MyEnum(value)
+        except ValueError:
+            return MyEnum.UNKNOWN_TO_SDK_VERSION
+
+
+class Struct:
+    def __init__(self, *, my_enum: Union[MyEnum, str]):
+        if isinstance(my_enum, MyEnum):
+            self._my_enum = my_enum
+            self._my_enum_as_string = my_enum.value
+        else:
+            self._my_enum = MyEnum.from_string(my_enum)
+            self._my_enum_as_string = my_enum
+
+    @property
+    def my_enum(self) -> MyEnum:
+        return self._my_enum
+
+    @my_enum.setter
+    def my_enum(self, value: MyEnum):
+        self._my_enum = value
+        self._my_enum_as_string = value
+
+    @property
+    def my_enum_as_string(self) -> str:
+        return self._my_enum_as_string
+
+    @my_enum_as_string.setter
+    def my_enum_as_string(self, value: str):
+        self._my_enum_as_string = value
+        self._my_enum = MyEnum.from_string(value)
+```
+
+This alternative uses separate properties and a canonical unknown variant to
+allow customers to use the native enums without risking a breaking change.
+The tradeoff is we have to add another property, which may cause confusion.
+We also have to generate getters/setters to make sure they stay in sync, which
+dramatically increases the amount of code generated since these need to
+appear in every referencing structure.
+
 ### streaming blobs
 
 A blob with the streaming trait will continue to support `bytes` as input.
