@@ -36,7 +36,11 @@ HeadersList = List[Tuple[str, str]]
 
 
 class HTTPException(Exception):
-    """TODO: Improve exception handling """
+    """TODO: Improve exception handling
+
+    This should probably extend from a base smithy error or something similar.
+    In general, error handling in smithy-python needs to be designed out.
+    """
 
 
 class AWSCRTEventLoop:
