@@ -31,13 +31,13 @@ class Request(Protocol):
     url: URL
     method: str # GET, PUT, etc
     headers: List[Tuple[str, str]]
-    body: Optional[bytes]
+    body: Any
 
 
 class Response(Protocol):
     status_code: int # HTTP status code
     headers: List[Tuple[str, str]]
-    body: Optional[bytes]
+    body: Any
 ```
 
 These interfaces are relatively straightforward and self-explanatory. The
