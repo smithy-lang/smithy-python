@@ -1,4 +1,6 @@
-from typing import Optional, List, Protocol, Tuple
+from typing import Optional, List, Tuple, Any
+
+from typing_extensions import Protocol
 
 
 # Defining headers as a list instead of a mapping to avoid ambiguity and
@@ -18,20 +20,20 @@ class Request(Protocol):
     url: URL
     method: str  # GET, PUT, etc
     headers: HeadersList
-    body: Optional[bytes]
+    body: Any
 
 
 class Response(Protocol):
     status_code: int  # HTTP status code
     headers: HeadersList
-    body: Optional[bytes]
+    body: Any
 
 
 class Session(Protocol):
     def send(self, request: Request) -> Response:
-        pass
+        pass  # pragma: no cover
 
 
 class AsyncSession(Protocol):
     async def send(self, request: Request) -> Response:
-        pass
+        pass  # pragma: no cover

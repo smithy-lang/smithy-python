@@ -26,6 +26,7 @@ __pycache__
 *.swp
 .mypy_cache
 .coverage
+coverage.xml
 htmlcov
 *.egg_info
 dist
