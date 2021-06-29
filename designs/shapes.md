@@ -462,8 +462,71 @@ remembering to re-raise if it isn't what they're looking for.
 
 ## Unions
 
-Unions are classes with `tag` and `value` properties. They are grouped together
-by a native python union type hint.
+Unions are classes with a typed `value` property grouped by a parent class.
+
+```python
+V = TypeVar("V")
+
+
+@sealed
+class MyUnion(Generic[V]):
+    value: V
+
+
+class MyUnionMemberA(MyUnion[bytes]):
+    def __init__(self, value: bytes):
+        self.value = value
+
+
+class MyUnionMemberB(MyUnion[str]):
+    def __init__(self, value: str):
+        self.value = value
+
+
+class MyUnionUnknown(MyUnion[None]):
+    def __init__(self, tag: str, nonparsed_value: bytes):
+        self.tag = tag
+        self.value = None
+        self._nonparsed_value = value
+```
+
+This design allows for dispatch based on instance checks. The unknown variant
+will only be introduced when referenced by members. This should allow for
+completeness checks in match statements. The key to this is `@sealed` which
+allows mypy to effectively treat the base class as a union.
+
+```python
+def handle_with_instance(my_union: MyUnion):
+    if isinstance(my_union, MyUnionMemberA):
+        print(value.decode(encoding="utf-8"))
+    elif isinstance(my_union, MyUnionMemberB):
+        for v in my_union.value:
+            print(v)
+    else:
+        raise Exception(f"Unhandled union type: {my_union.tag}")
+
+
+# This is only possible at all in python 3.10 and up
+def handle_with_match(my_union: MyUnion):
+    # Type checkers should see that the MyUnionMemberB isn't accounted for.
+    # This implies that updates could cause type checking to fail if there's
+    # no default case. There is no way to avoid this, and we wouldn't want to
+    # even if we could. This would expose the error at type checking time
+    # rather than runtime, which is what we want.
+    match my_union:
+        case MyUnionUnknown:
+            raise Exception(f"Unknown union type: {my_union.tag}")
+        case MyUnionMemberA:
+            print(value.decode(encoding="utf-8"))
+        # A default case could suppress the type check error.
+        # case _:
+        #    raise Exception(f"Unhandled union type: {my_union.tag}")
+```
+
+### Alternative: simple unions
+
+In this alternative, unions are grouped by a `Union` type hint rather than
+a parent class.
 
 ```python
 class MyUnionMemberA:
@@ -493,18 +556,23 @@ class MyUnionUnknown:
 # This syntax will be introduced in 3.10, and it will crucially allow
 # isinstance checks to perform as you would expect.
 MyUnion = MyUnionMemberA | MyUnionMemberB
+MyUnionOrUnknown = MyUnion | MyUnionUnknown
+
 
 class SampleStruct:
-    def __init__(self, *, union_member: Union[MyUnion, MyUnionUnknownVariant]):
+    def __init__(self, *, union_member: MyUninionOrUnknown):
         self.union_member = union_member
 ```
 
-This design allows for dispatch based on instance checks or tag values. The
-unknown variant will only be introduced when referenced by members. This
-potentially allows for completeness checks in match statements.
+In python 3.10+ this is only subtly different than using sealed classes. It has
+the advantage of allowing explicitly removing the unkown variant and passing
+that along so that it only needs to be checked once. However, the isinstance
+check wouldn't work in versions prior to 3.10 and it isn't terribly idiomatic.
+
+Another potential advantage is that this makes tag-based dispatch easy:
 
 ```python
-def handle_with_tag_equality(my_union: Union[MyUnion, MyUnionUnknownVariant]):
+def handle_with_tag_equality(my_union: MyUnion):
     # Dispatch can be handled via tags, but to do so the unknown variant MUST
     # be eliminated first.
     if isinstance(my_union, MyUnionUnknown):
@@ -518,127 +586,11 @@ def handle_with_tag_equality(my_union: Union[MyUnion, MyUnionUnknownVariant]):
     else:
         # Known but unhandled members still need to be dealt with.
         raise Exception(f"Unhandled union type: {my_union.tag}")
-
-
-# This is only possible at all in python 3.10 and up
-def handle_with_tag_matching(my_union: Union[MyUnion, MyUnionUnknownVariant]):
-    if not isinstance(my_union, MyUnion):
-        raise Exception(f"Unknown union type: {my_union.tag}")
-
-    # *Theoretically* a type checker could now see that the "MemberB" variant
-    # isn't accounted for and error out.
-    match my_union.tag:
-        case ["MemberA"]:
-            print(value.decode(encoding="utf-8"))
-
-
-def handle_with_instance(my_union: Union[MyUnion, MyUnionUnknownVariant]):
-    if isinstance(my_union, MyUnionMemberA):
-        print(value.decode(encoding="utf-8"))
-    elif isinstance(my_union, MyUnionMemberB):
-        for v in my_union.value:
-            print(v)
-    else:
-        raise Exception(f"Unhandled union type: {my_union.tag}")
 ```
 
-### Alternative: include unknown variant in type alias
-
-In this alternative, the generated type alias would include the unkown variant:
-
-```python
-MyUnion = MyUnionMemberA | MyUnionMemberB | MyUnionUnknown
-
-class Struct:
-    def __init__(self, *, union_member: MyUnion):
-        self.union_member = union_member
-```
-
-One potential concern with this is that a type checker may not be able to
-properly eliminate the unknown variant to provide completeness checking in
-with statments. But this is purely conjecture, it wouldn't be impossible for
-a type checker to handle this situation. And the type checkers may never
-even adopt this behavior.
-
-A more concrete reason to dismiss this alternative is that it requires that
-users check the unknown variant at every step of the way instead of checking
-once and passing around the checked type.
-
-### Alternative: inheritance
-
-```python
-K = TypeVar("K")
-V = TypeVar("V")
-
-
-class MyUnion(Generic[K, V]):
-    tag: K
-    def __init__(self, tag: K, value: V):
-        self.tag = tag
-        self.value = value
-
-
-class MyUnionMemberA(MyUnion[Literal["MemberA"], bytes]):
-    def __init__(self, value: bytes):
-        super().__init__("MemberA", value)
-
-
-class MyUnionMemberB(MyUnion[Literal["MemberB"], str]):
-    def __init__(self, value: str):
-        super().__init__("MemberB", value)
-
-
-class MyUnionUnknown(MyUnion["str", None]):
-    def __init__(self, tag, value: bytes):
-        super().__init__(tag, None)
-        self._nonparsed_value = value
-```
-
-In this alternative, inheritance is utilized to provide `isinstance`
-functionality for versions before 3.10.
-
-This alterniative was discarded because mypy is unable to do tag-based
-type narrowing, presumably because there could be implementations it doesn't
-know about that could have a duplicate tag.
-
-### Alternative: empty inheritance
-
-```python
-class MyUnion:
-    pass
-
-
-class MyUnionMemberA(MyUnion):
-    tag: Literal["MemberA"] = "MemberA"
-
-    def __init__(self, value: bytes):
-        self.value = value
-
-
-class MyUnionMemberB(MyUnion):
-    tag: Literal["MemberB"] = "MemberB"
-
-    def __init__(self, value: List[str]):
-        self.value = value
-
-
-class MyUnionUnknown(MyUnion):
-    def __init__(self, tag: str, value: bytes):
-        self.tag = tag
-        self._nonparsed_value = value
-```
-
-In this alternative, a superclass is used instead of a union to gather the
-possible types. This provides isinstance functionality for versions before
-3.10.
-
-This alternative was discarded because mypy will, naturally, only allow you
-to generically use methods and properties described in the superclass. Thus
-tag-based dispatch is made impossible.
-
-Theoretically a union could *also* be provided to mitigate that tradeoff, but
-that would provide a bad user experience. People would forever be confused
-about when to use which.
+However, this makes it a little too easy to hit an unknown variant on accident
+or on purpose. It would also be easy to misspell a tag value in these checks,
+which may never be caught if the unknown variant wasn't eliminated early.
 
 # FAQs
 
