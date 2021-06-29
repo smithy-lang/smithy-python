@@ -136,17 +136,18 @@ A blob with the streaming trait will continue to support `bytes` as input.
 Additionally, it will support passing in a `ByteStream` which is any class that
 implements a `read` method that accepts a `size` param and returns bytes.
 Additionally, it will gracefully upgrade if the object is a
-`SeekableByteStream`.
+`SeekableByteStream` as well as handling an `AsyncByteStream`.
 
-Both `ByteStream` and `SeekableByteStream` will be implemented as
-[Protocols](https://www.python.org/dev/peps/pep-0544/), which are a way of
-defining structural subtyping in Python.
+Both `ByteStream`, `SeekableByteStream`, and `AsyncByteStream` will be
+implemented as [Protocols](https://www.python.org/dev/peps/pep-0544/),
+which are a way of defining structural subtyping in Python.
 
 ```python
 @runtime_checkable
 class ByteStream(Protocol):
-    def read(self, size: int) -> bytes:
+    def read(self, size: int = -1) -> bytes:
         ...
+
 
 @runtime_checkable
 class SeekableByteStream(ByteStream, Protocol):
@@ -155,10 +156,25 @@ class SeekableByteStream(ByteStream, Protocol):
 
     def tell() -> int:
         ...
+
+
+@runtime_checkable
+class AsyncByteStream(Protocol):
+    async def read(self, size: int = -1) -> bytes:
+        ...
+
+
+StreamingBlob = Union[
+    ByteStream,
+    SeekableByteStream,
+    AsyncByteStream,
+    bytes,
+    bytearray,
+]
 ```
 
 The type signature of members targeting blobs with the streaming trait will be
-`Union[ByteStream, SeekableByteStream, bytes, bytearray]`.
+the union `StreamingBlob`.
 
 ### mediaType
 
