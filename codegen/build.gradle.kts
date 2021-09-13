@@ -19,8 +19,8 @@ plugins {
     signing
     checkstyle
     jacoco
-    id("com.github.spotbugs") version "4.6.0"
-    id("io.codearte.nexus-staging") version "0.21.0"
+    id("com.github.spotbugs") version "4.7.1"
+    id("io.codearte.nexus-staging") version "0.30.0"
 }
 
 allprojects {
@@ -203,6 +203,19 @@ subprojects {
         apply(plugin = "checkstyle")
 
         tasks["checkstyleTest"].enabled = false
+
+        /*
+         * Tests
+         * ====================================================
+         *
+         * Configure the running of tests.
+         */
+        // Log on passed, skipped, and failed test events if the `-Plog-tests` property is set.
+        if (project.hasProperty("log-tests")) {
+            tasks.test {
+                testLogging.events("passed", "skipped", "failed")
+            }
+        }
 
         /*
          * Code coverage
