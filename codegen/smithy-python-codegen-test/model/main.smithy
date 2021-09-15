@@ -41,7 +41,6 @@ string CityId
 @suppress(["WaitableTraitInvalidErrorType"])
 @waitable(
     CityExists: {
-        description: "Waits until a city has been created",
         acceptors: [
             // Fail-fast if the thing transitions to a "failed" state.
             {
@@ -214,7 +213,6 @@ apply NoSuchResource @httpResponseTests([
 @paginated(items: "items")
 @waitable(
     "ListContainsCity": {
-        description: "Wait until ListCities operation response matches a given state",
         acceptors: [
             // failure in case all items returned match to seattle
             {

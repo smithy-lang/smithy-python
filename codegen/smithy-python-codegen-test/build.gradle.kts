@@ -33,6 +33,6 @@ configure<software.amazon.smithy.gradle.SmithyExtension> {
 
 dependencies {
     implementation(project(":smithy-python-codegen"))
-    implementation("software.amazon.smithy:smithy-waiters:[1.5.0, 2.0[")
-    implementation("software.amazon.smithy:smithy-protocol-test-traits:[1.5.0, 2.0[")
+    implementation("software.amazon.smithy:smithy-waiters:[1.11.0, 2.0[")
+    implementation("software.amazon.smithy:smithy-protocol-test-traits:[1.11.0, 2.0[")
 }
