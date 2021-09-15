@@ -24,6 +24,7 @@ import software.amazon.smithy.model.knowledge.NullableIndex;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.StructureShape;
+import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.utils.ListUtils;
 
@@ -104,18 +105,26 @@ final class StructureGenerator implements Runnable {
             }
         });
 
-        writer.pushState();
-        writer.disableNewlines();
-        writer.openBlock("", "", () -> {
-            for (MemberShape member : shape.members()) {
-                String memberName = symbolProvider.toMemberName(member);
-                writer.write("self.$L = $L\n", memberName, memberName);
-            }
-            if (shape.members().isEmpty()) {
-                writer.write("pass");
-            }
-        });
-        writer.popState();
+        writer.indent();
+        if (hasDocs()) {
+            writer.openDocComment(() -> {
+                shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
+                    writer.write(writer.formatDocs(trait.getValue()));
+                });
+                writer.write("");
+
+                requiredMembers.forEach(this::writeMemberDocs);
+                optionalMembers.forEach(this::writeMemberDocs);
+            });
+        }
+        for (MemberShape member : shape.members()) {
+            String memberName = symbolProvider.toMemberName(member);
+            writer.write("self.$L = $L", memberName, memberName);
+        }
+        if (shape.members().isEmpty()) {
+            writer.write("pass");
+        }
+        writer.dedent();
         writer.write("");
     }
 
@@ -150,8 +159,34 @@ final class StructureGenerator implements Runnable {
         }
     }
 
+    private boolean hasDocs() {
+        if (shape.hasTrait(DocumentationTrait.class)) {
+            return true;
+        }
+        for (MemberShape member : shape.members()) {
+            if (member.getMemberTrait(model, DocumentationTrait.class).isPresent()) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void writeMemberDocs(MemberShape member) {
+        member.getMemberTrait(model, DocumentationTrait.class).ifPresent(trait -> {
+            String memberName = symbolProvider.toMemberName(member);
+            String docs = writer.formatDocs(String.format(":param %s: %s", memberName, trait.getValue()));
+            writer.write(docs);
+        });
+    }
+
     private void writeAsDict() {
         writer.openBlock("def asdict(self) -> Dict:", "", () -> {
+            writer.openDocComment(() -> {
+                writer.write("Converts the $L to a dictionary.\n", symbolProvider.toSymbol(shape).getName());
+                writer.write(writer.formatDocs("The dictionary uses the modeled shape names rather than the parameter "
+                        + "names as keys to be mostly compatible with boto3."));
+            });
+
             // If there aren't any optional members, it's best to return immediately.
             String dictPrefix = optionalMembers.isEmpty() ? "return" : "d =";
             if (requiredMembers.isEmpty()) {
@@ -200,6 +235,12 @@ final class StructureGenerator implements Runnable {
         writer.write("@staticmethod");
         String shapeName = symbolProvider.toSymbol(shape).getName();
         writer.openBlock("def fromdict(d: Dict) -> $L:", "", shapeName, () -> {
+            writer.openDocComment(() -> {
+                writer.write("Creates a $L from a dictionary.\n", shapeName);
+                writer.write(writer.formatDocs("The dictionary is expected to use the modeled shape names rather "
+                        + "than the parameter names as keys to be mostly compatible with boto3."));
+            });
+
             if (shape.members().isEmpty()) {
                 writer.write("return $L()", shapeName);
                 return;
