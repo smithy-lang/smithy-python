@@ -22,6 +22,7 @@ import software.amazon.smithy.codegen.core.ReservedWords;
 import software.amazon.smithy.codegen.core.ReservedWordsBuilder;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
+import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.BigDecimalShape;
 import software.amazon.smithy.model.shapes.BigIntegerShape;
@@ -94,7 +95,9 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public Symbol blobShape(BlobShape shape) {
-        return createSymbolBuilder(shape, "bytes").build();
+        return createSymbolBuilder(shape, "Union[bytes, bytearray]")
+                .addReference(createStdlibReference("typing", "Union"))
+                .build();
     }
 
     @Override
@@ -118,6 +121,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     private Symbol createCollectionSymbol(CollectionShape shape) {
         Symbol reference = toSymbol(shape.getMember());
         return createSymbolBuilder(shape, "List[" + reference.getName() + "]")
+                .addReference(createStdlibReference("typing", "List"))
                 .addReference(reference)
                 .build();
     }
@@ -126,13 +130,14 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     public Symbol mapShape(MapShape shape) {
         Symbol reference = toSymbol(shape.getValue());
         return createSymbolBuilder(shape, "Dict[str, " + reference.getName() + "]")
+                .addReference(createStdlibReference("typing", "Dict"))
                 .addReference(reference)
                 .build();
     }
 
     @Override
     public Symbol byteShape(ByteShape shape) {
-        return createSymbolBuilder(shape, "str").build();
+        return createSymbolBuilder(shape, "int").build();
     }
 
     @Override
@@ -173,8 +178,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public Symbol bigDecimalShape(BigDecimalShape shape) {
-        // TODO: add once dependency support is in
-        return createSymbolBuilder(shape, "Any").build();
+        return createStdlibSymbol(shape, "decimal", "Decimal");
     }
 
     @Override
@@ -204,7 +208,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol structureShape(StructureShape shape) {
         String name = StringUtils.capitalize(shape.getId().getName());
-        return createSymbolBuilder(shape, name, ".")
+        return createSymbolBuilder(shape, name, "models")
                 .definitionFile("./models.py")
                 .build();
     }
@@ -224,8 +228,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public Symbol timestampShape(TimestampShape shape) {
-        // TODO: add once dependency support is in
-        return createSymbolBuilder(shape, "Any").build();
+        return createStdlibSymbol(shape, "datetime", "datetime");
     }
 
     private Symbol.Builder createSymbolBuilder(Shape shape, String typeName) {
@@ -233,6 +236,20 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     }
 
     private Symbol.Builder createSymbolBuilder(Shape shape, String typeName, String namespace) {
-        return createSymbolBuilder(shape, typeName).namespace(namespace, "/");
+        return createSymbolBuilder(shape, typeName).namespace(namespace, ".");
+    }
+
+    private Symbol createStdlibSymbol(Shape shape, String typeName, String namespace) {
+        return createSymbolBuilder(shape, typeName, namespace)
+                .putProperty("stdlib", true)
+                .build();
+    }
+
+    private SymbolReference createStdlibReference(String typeName, String namespace) {
+        return SymbolReference.builder()
+                .symbol(createStdlibSymbol(null, namespace, typeName))
+                .putProperty("stdlib", true)
+                .options(SymbolReference.ContextOption.USE)
+                .build();
     }
 }
