@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+ * Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License").
  * You may not use this file except in compliance with the License.
@@ -31,6 +31,11 @@ import software.amazon.smithy.utils.StringUtils;
  */
 public final class CodegenUtils {
 
+    // The maximum preferred line length for generated code. In most cases it won't
+    // be practical to try to adhere to this in the generator, but we can make some
+    // amount of effort. Eventually a formatter like black will be run on the output
+    // to fix any lingering issues.
+    public static final int MAX_PREFERRED_LINE_LENGTH = 88;
     private static final Logger LOGGER = Logger.getLogger(CodegenUtils.class.getName());
 
     private CodegenUtils() {}
