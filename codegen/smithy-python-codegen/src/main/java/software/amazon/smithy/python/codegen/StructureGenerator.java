@@ -48,8 +48,8 @@ final class StructureGenerator implements Runnable {
         this.symbolProvider = symbolProvider;
         this.writer = writer;
         this.shape = shape;
-        List<MemberShape> required = new ArrayList<>();
-        List<MemberShape> optional = new ArrayList<>();
+        var required = new ArrayList<MemberShape>();
+        var optional = new ArrayList<MemberShape>();
         for (MemberShape member: shape.members()) {
             if (member.isRequired()) {
                 required.add(member);
@@ -73,7 +73,7 @@ final class StructureGenerator implements Runnable {
      */
     private void renderStructure() {
         writer.addStdlibImport("Dict", "Dict", "typing");
-        Symbol symbol = symbolProvider.toSymbol(shape);
+        var symbol = symbolProvider.toSymbol(shape);
         writer.openBlock("class $L:", "", symbol.getName(), () -> {
             writeInit();
             writeAsDict();
@@ -83,7 +83,7 @@ final class StructureGenerator implements Runnable {
     }
 
     private void writeInit() {
-        NullableIndex nullableIndex = NullableIndex.of(model);
+        var nullableIndex = NullableIndex.of(model);
         writer.openBlock("def __init__(", "):", () -> {
             writer.write("self,");
             if (!shape.members().isEmpty()) {
@@ -91,11 +91,11 @@ final class StructureGenerator implements Runnable {
                 writer.write("*,");
             }
             for (MemberShape member : requiredMembers) {
-                String memberName = symbolProvider.toMemberName(member);
+                var memberName = symbolProvider.toMemberName(member);
                 writer.write("$L: $T,", memberName, symbolProvider.toSymbol(member));
             }
             for (MemberShape member : optionalMembers) {
-                String memberName = symbolProvider.toMemberName(member);
+                var memberName = symbolProvider.toMemberName(member);
                 if (nullableIndex.isNullable(member)) {
                     writer.addStdlibImport("Optional", "Optional", "typing");
                     writer.write("$L: Optional[$T] = None,", memberName, symbolProvider.toSymbol(member));
@@ -130,33 +130,17 @@ final class StructureGenerator implements Runnable {
 
     private String getDefaultValue(MemberShape member) {
         Shape target = model.expectShape(member.getTarget());
-        switch (target.getType()) {
-            case BYTE:
-            case SHORT:
-            case INTEGER:
-            case LONG:
-            case BIG_INTEGER:
-            case FLOAT:
-            case DOUBLE:
-                return "0";
-            case BIG_DECIMAL:
-                return "Decimal(0)";
-            case BOOLEAN:
-                return "false";
-            case STRING:
-                return "''";
-            case BLOB:
-                return "b''";
-            case LIST:
-            case SET:
-                return "[]";
-            case MAP:
-                return "{}";
-            case TIMESTAMP:
-                return "datetime(1970, 1, 1)";
-            default:
-                return "None";
-        }
+        return switch (target.getType()) {
+            case BYTE, SHORT, INTEGER, LONG, BIG_INTEGER, FLOAT, DOUBLE -> "0";
+            case BIG_DECIMAL -> "Decimal(0)";
+            case BOOLEAN -> "false";
+            case STRING -> "''";
+            case BLOB -> "b''";
+            case LIST, SET -> "[]";
+            case MAP -> "{}";
+            case TIMESTAMP -> "datetime(1970, 1, 1)";
+            default -> "None";
+        };
     }
 
     private boolean hasDocs() {
@@ -196,8 +180,8 @@ final class StructureGenerator implements Runnable {
             } else {
                 writer.openBlock("$L {", "}", dictPrefix, () -> {
                     for (MemberShape member : requiredMembers) {
-                        String memberName = symbolProvider.toMemberName(member);
-                        Shape target = model.expectShape(member.getTarget());
+                        var memberName = symbolProvider.toMemberName(member);
+                        var target = model.expectShape(member.getTarget());
                         if (target.isStructureShape()) {
                             writer.write("$S: self.$L.asdict(),", member.getMemberName(), memberName);
                         } else {
@@ -210,8 +194,8 @@ final class StructureGenerator implements Runnable {
             if (!optionalMembers.isEmpty()) {
                 writer.write("");
                 for (MemberShape member : optionalMembers) {
-                    String memberName = symbolProvider.toMemberName(member);
-                    Shape target = model.expectShape(member.getTarget());
+                    var memberName = symbolProvider.toMemberName(member);
+                    var target = model.expectShape(member.getTarget());
                     // Of all the default values, only the default for timestamps isn't already falsy.
                     // So for that we need a slightly bigger check.
                     if (target.isTimestampShape()) {
@@ -235,7 +219,7 @@ final class StructureGenerator implements Runnable {
 
     private void writeFromDict() {
         writer.write("@staticmethod");
-        String shapeName = symbolProvider.toSymbol(shape).getName();
+        var shapeName = symbolProvider.toSymbol(shape).getName();
         writer.openBlock("def from_dict(d: Dict) -> $L:", "", shapeName, () -> {
             writer.openDocComment(() -> {
                 writer.write("Creates a $L from a dictionary.\n", shapeName);
@@ -255,8 +239,8 @@ final class StructureGenerator implements Runnable {
             } else {
                 writer.openBlock("kwargs = {", "}", () -> {
                     for (MemberShape member : requiredMembers) {
-                        String memberName = symbolProvider.toMemberName(member);
-                        Shape target = model.expectShape(member.getTarget());
+                        var memberName = symbolProvider.toMemberName(member);
+                        var target = model.expectShape(member.getTarget());
                         if (target.isStructureShape()) {
                             Symbol targetSymbol = symbolProvider.toSymbol(target);
                             writer.write("$S: $T.from_dict(d[$S]),", memberName, targetSymbol, member.getMemberName());
@@ -269,11 +253,11 @@ final class StructureGenerator implements Runnable {
             writer.write("");
 
             for (MemberShape member : optionalMembers) {
-                String memberName = symbolProvider.toMemberName(member);
-                Shape target = model.expectShape(member.getTarget());
+                var memberName = symbolProvider.toMemberName(member);
+                var target = model.expectShape(member.getTarget());
                 writer.openBlock("if $S in d:", "", member.getMemberName(), () -> {
                     if (target.isStructureShape()) {
-                        Symbol targetSymbol = symbolProvider.toSymbol(target);
+                        var targetSymbol = symbolProvider.toSymbol(target);
                         writer.write("kwargs[$S] = $T.from_dict(d[$S])", memberName, targetSymbol,
                                 member.getMemberName());
                     } else {
