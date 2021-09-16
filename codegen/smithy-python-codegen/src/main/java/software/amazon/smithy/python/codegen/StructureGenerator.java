@@ -252,7 +252,13 @@ final class StructureGenerator implements Runnable {
                 writer.openBlock("kwargs = {", "}", () -> {
                     for (MemberShape member : requiredMembers) {
                         String memberName = symbolProvider.toMemberName(member);
-                        writer.write("$S: d[$S],", memberName, member.getMemberName());
+                        Shape target = model.expectShape(member.getTarget());
+                        if (target.isStructureShape()) {
+                            Symbol targetSymbol = symbolProvider.toSymbol(target);
+                            writer.write("$S: $T.from_dict(d[$S]),", memberName, targetSymbol, member.getMemberName());
+                        } else {
+                            writer.write("$S: d[$S],", memberName, member.getMemberName());
+                        }
                     }
                 });
             }
@@ -260,8 +266,15 @@ final class StructureGenerator implements Runnable {
 
             for (MemberShape member : optionalMembers) {
                 String memberName = symbolProvider.toMemberName(member);
+                Shape target = model.expectShape(member.getTarget());
                 writer.openBlock("if $S in d:", "", member.getMemberName(), () -> {
-                    writer.write("kwargs[$S] = d[$S]", memberName, member.getMemberName());
+                    if (target.isStructureShape()) {
+                        Symbol targetSymbol = symbolProvider.toSymbol(target);
+                        writer.write("kwargs[$S] = $T.from_dict(d[$S])", memberName, targetSymbol,
+                                member.getMemberName());
+                    } else {
+                        writer.write("kwargs[$S] = d[$S]", memberName, member.getMemberName());
+                    }
                 });
             }
 
