@@ -180,7 +180,7 @@ final class StructureGenerator implements Runnable {
     }
 
     private void writeAsDict() {
-        writer.openBlock("def asdict(self) -> Dict:", "", () -> {
+        writer.openBlock("def as_dict(self) -> Dict:", "", () -> {
             writer.openDocComment(() -> {
                 writer.write("Converts the $L to a dictionary.\n", symbolProvider.toSymbol(shape).getName());
                 writer.write(writer.formatDocs("The dictionary uses the modeled shape names rather than the parameter "
@@ -219,7 +219,7 @@ final class StructureGenerator implements Runnable {
                         writer.openBlock("if self.$L:", memberName);
                     }
                     if (target.isStructureShape()) {
-                        writer.write("d[$S] = self.$L.asdict()", member.getMemberName(), memberName);
+                        writer.write("d[$S] = self.$L.as_dict()", member.getMemberName(), memberName);
                     } else {
                         writer.write("d[$S] = self.$L", member.getMemberName(), memberName);
                     }
@@ -234,7 +234,7 @@ final class StructureGenerator implements Runnable {
     private void writeFromDict() {
         writer.write("@staticmethod");
         String shapeName = symbolProvider.toSymbol(shape).getName();
-        writer.openBlock("def fromdict(d: Dict) -> $L:", "", shapeName, () -> {
+        writer.openBlock("def from_dict(d: Dict) -> $L:", "", shapeName, () -> {
             writer.openDocComment(() -> {
                 writer.write("Creates a $L from a dictionary.\n", shapeName);
                 writer.write(writer.formatDocs("The dictionary is expected to use the modeled shape names rather "
