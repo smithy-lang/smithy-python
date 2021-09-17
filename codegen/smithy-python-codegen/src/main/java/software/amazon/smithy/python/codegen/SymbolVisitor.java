@@ -163,7 +163,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol documentShape(DocumentShape shape) {
         // TODO: implement document shapes
-        return createSymbolBuilder(shape, "Any").build();
+        return createStdlibSymbol(shape, "typing", "Any");
     }
 
     @Override
@@ -184,19 +184,19 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol operationShape(OperationShape shape) {
         // TODO: implement operations
-        return createSymbolBuilder(shape, "Any").build();
+        return createStdlibSymbol(shape, "typing", "Any");
     }
 
     @Override
     public Symbol resourceShape(ResourceShape shape) {
         // TODO: implement resources
-        return createSymbolBuilder(shape, "Any").build();
+        return createStdlibSymbol(shape, "typing", "Any");
     }
 
     @Override
     public Symbol serviceShape(ServiceShape shape) {
         // TODO: implement clients
-        return createSymbolBuilder(shape, "Any").build();
+        return createStdlibSymbol(shape, "typing", "Any");
     }
 
     @Override
@@ -216,7 +216,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol unionShape(UnionShape shape) {
         // TODO: implement unions
-        return createSymbolBuilder(shape, "Any").build();
+        return createStdlibSymbol(shape, "typing", "Any");
     }
 
     @Override
