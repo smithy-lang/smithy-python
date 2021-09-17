@@ -133,7 +133,7 @@ final class StructureGenerator implements Runnable {
         return switch (target.getType()) {
             case BYTE, SHORT, INTEGER, LONG, BIG_INTEGER, FLOAT, DOUBLE -> "0";
             case BIG_DECIMAL -> "Decimal(0)";
-            case BOOLEAN -> "false";
+            case BOOLEAN -> "False";
             case STRING -> "''";
             case BLOB -> "b''";
             case LIST, SET -> "[]";
@@ -168,9 +168,8 @@ final class StructureGenerator implements Runnable {
             writer.openDocComment(() -> {
                 writer.write("Converts the $L to a dictionary.\n", symbolProvider.toSymbol(shape).getName());
                 writer.write(writer.formatDocs("""
-                        The dictionary uses the modeled shape names rather than the parameter names
-                        as keys to be mostly compatible with boto3.
-                        """));
+                        The dictionary uses the modeled shape names rather than the parameter names \
+                        as keys to be mostly compatible with boto3."""));
             });
 
             // If there aren't any optional members, it's best to return immediately.
@@ -220,13 +219,12 @@ final class StructureGenerator implements Runnable {
     private void writeFromDict() {
         writer.write("@staticmethod");
         var shapeName = symbolProvider.toSymbol(shape).getName();
-        writer.openBlock("def from_dict(d: Dict) -> $L:", "", shapeName, () -> {
+        writer.openBlock("def from_dict(d: Dict) -> $S:", "", shapeName, () -> {
             writer.openDocComment(() -> {
                 writer.write("Creates a $L from a dictionary.\n", shapeName);
                 writer.write(writer.formatDocs("""
-                        The dictionary is expected to use the modeled shape names rather
-                        than the parameter names as keys to be mostly compatible with boto3.
-                        """));
+                        The dictionary is expected to use the modeled shape names rather \
+                        than the parameter names as keys to be mostly compatible with boto3."""));
             });
 
             if (shape.members().isEmpty()) {
