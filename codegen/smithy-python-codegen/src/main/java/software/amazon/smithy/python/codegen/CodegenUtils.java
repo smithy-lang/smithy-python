@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.CodegenException;
+import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.utils.StringUtils;
 
 /**
@@ -36,6 +37,11 @@ public final class CodegenUtils {
     // amount of effort. Eventually a formatter like black will be run on the output
     // to fix any lingering issues.
     public static final int MAX_PREFERRED_LINE_LENGTH = 88;
+    public static final Symbol DEFAULT_TIMESTAMP = Symbol.builder()
+            .name("DEFAULT_TIMESTAMP")
+            .namespace("utils", ".")
+            .definitionFile("./utils.py")
+            .build();
     private static final Logger LOGGER = Logger.getLogger(CodegenUtils.class.getName());
 
     private CodegenUtils() {}

@@ -15,6 +15,8 @@
 
 package software.amazon.smithy.python.codegen;
 
+import static software.amazon.smithy.python.codegen.CodegenUtils.DEFAULT_TIMESTAMP;
+
 import java.util.ArrayList;
 import java.util.List;
 import software.amazon.smithy.codegen.core.Symbol;
@@ -138,7 +140,10 @@ final class StructureGenerator implements Runnable {
             case BLOB -> "b''";
             case LIST, SET -> "[]";
             case MAP -> "{}";
-            case TIMESTAMP -> "datetime(1970, 1, 1)";
+            case TIMESTAMP -> {
+                writer.addUseImports(DEFAULT_TIMESTAMP);
+                yield DEFAULT_TIMESTAMP.getName();
+            }
             default -> "None";
         };
     }

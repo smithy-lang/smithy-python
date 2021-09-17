@@ -15,8 +15,9 @@
 
 package software.amazon.smithy.python.codegen;
 
+import static software.amazon.smithy.python.codegen.CodegenUtils.DEFAULT_TIMESTAMP;
+
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.logging.Logger;
 import software.amazon.smithy.build.FileManifest;
 import software.amazon.smithy.build.PluginContext;
@@ -58,7 +59,9 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
     void execute() {
         // Generate models that are connected to the service being generated.
         LOGGER.fine("Walking shapes from " + service.getId() + " to find shapes to generate");
-        Set<Shape> serviceShapes = new TreeSet<>(new Walker(modelWithoutTraitShapes).walkShapes(service));
+        Set<Shape> serviceShapes = new Walker(modelWithoutTraitShapes).walkShapes(service);
+
+        generateDefaultTimestamp(serviceShapes);
 
         for (Shape shape : serviceShapes) {
             shape.accept(this);
@@ -70,6 +73,24 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
         // Run one-off commands like formating
         // LOGGER.fine("Running python fmt");
         // CodegenUtils.runCommand("python fmt", fileManifest.getBaseDir());
+    }
+
+    private void generateDefaultTimestamp(Set<Shape> shapes) {
+        if (containsTimestampShapes(shapes)) {
+            writers.useFileWriter(DEFAULT_TIMESTAMP.getDefinitionFile(), DEFAULT_TIMESTAMP.getNamespace(), writer -> {
+                writer.addStdlibImport("datetime", "datetime", "datetime");
+                writer.write("$L = datetime(1970, 1, 1)", DEFAULT_TIMESTAMP.getName());
+            });
+        }
+    }
+
+    private boolean containsTimestampShapes(Set<Shape> shapes) {
+        for (Shape shape : shapes) {
+            if (shape.isTimestampShape()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     @Override
