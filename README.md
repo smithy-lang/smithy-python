@@ -25,7 +25,7 @@ contains the source code for generating these tools. See the code generation
 [README](https://github.com/awslabs/smithy-python/blob/develop/codegen/README.md)
 for more information.
 
-### Core Modules and Interfacse
+### Core Modules and Interfaces
 
 The `smithy-python` package provides the core modules and interfaces required
 to build a service client or server. These basic modules include things like:
