@@ -96,7 +96,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol blobShape(BlobShape shape) {
         return createSymbolBuilder(shape, "Union[bytes, bytearray]")
-                .addReference(createStdlibReference("typing", "Union"))
+                .addReference(createStdlibReference("Union", "typing"))
                 .build();
     }
 
@@ -121,7 +121,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     private Symbol createCollectionSymbol(CollectionShape shape) {
         Symbol reference = toSymbol(shape.getMember());
         return createSymbolBuilder(shape, "List[" + reference.getName() + "]")
-                .addReference(createStdlibReference("typing", "List"))
+                .addReference(createStdlibReference("List", "typing"))
                 .addReference(reference)
                 .build();
     }
@@ -130,7 +130,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     public Symbol mapShape(MapShape shape) {
         Symbol reference = toSymbol(shape.getValue());
         return createSymbolBuilder(shape, "Dict[str, " + reference.getName() + "]")
-                .addReference(createStdlibReference("typing", "Dict"))
+                .addReference(createStdlibReference("Dict", "typing"))
                 .addReference(reference)
                 .build();
     }
@@ -163,7 +163,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol documentShape(DocumentShape shape) {
         // TODO: implement document shapes
-        return createStdlibSymbol(shape, "typing", "Any");
+        return createStdlibSymbol(shape, "Any", "typing");
     }
 
     @Override
@@ -178,25 +178,25 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public Symbol bigDecimalShape(BigDecimalShape shape) {
-        return createStdlibSymbol(shape, "decimal", "Decimal");
+        return createStdlibSymbol(shape, "Decimal", "decimal");
     }
 
     @Override
     public Symbol operationShape(OperationShape shape) {
         // TODO: implement operations
-        return createStdlibSymbol(shape, "typing", "Any");
+        return createStdlibSymbol(shape, "Any", "typing");
     }
 
     @Override
     public Symbol resourceShape(ResourceShape shape) {
         // TODO: implement resources
-        return createStdlibSymbol(shape, "typing", "Any");
+        return createStdlibSymbol(shape, "Any", "typing");
     }
 
     @Override
     public Symbol serviceShape(ServiceShape shape) {
         // TODO: implement clients
-        return createStdlibSymbol(shape, "typing", "Any");
+        return createStdlibSymbol(shape, "Any", "typing");
     }
 
     @Override
@@ -216,7 +216,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol unionShape(UnionShape shape) {
         // TODO: implement unions
-        return createStdlibSymbol(shape, "typing", "Any");
+        return createStdlibSymbol(shape, "Any", "typing");
     }
 
     @Override
@@ -247,7 +247,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     private SymbolReference createStdlibReference(String typeName, String namespace) {
         return SymbolReference.builder()
-                .symbol(createStdlibSymbol(null, namespace, typeName))
+                .symbol(createStdlibSymbol(null, typeName, namespace))
                 .putProperty("stdlib", true)
                 .options(SymbolReference.ContextOption.USE)
                 .build();
