@@ -75,6 +75,7 @@ final class StructureGenerator implements Runnable {
      */
     private void renderStructure() {
         writer.addStdlibImport("Dict", "Dict", "typing");
+        writer.addStdlibImport("Any", "Any", "typing");
         var symbol = symbolProvider.toSymbol(shape);
         writer.openBlock("class $L:", "", symbol.getName(), () -> {
             writeInit();
@@ -169,7 +170,7 @@ final class StructureGenerator implements Runnable {
     }
 
     private void writeAsDict() {
-        writer.openBlock("def as_dict(self) -> Dict:", "", () -> {
+        writer.openBlock("def as_dict(self) -> Dict[str, Any]:", "", () -> {
             writer.openDocComment(() -> {
                 writer.write("Converts the $L to a dictionary.\n", symbolProvider.toSymbol(shape).getName());
                 writer.write(writer.formatDocs("""
@@ -178,11 +179,7 @@ final class StructureGenerator implements Runnable {
             });
 
             // If there aren't any optional members, it's best to return immediately.
-            String dictPrefix = "return";
-            if (!optionalMembers.isEmpty()) {
-                writer.addImport("Any", null, "typing");
-                dictPrefix = "d: Dict[str, Any] =";
-            }
+            String dictPrefix = optionalMembers.isEmpty() ? "return" : "d: Dict[str, Any] =";
             if (requiredMembers.isEmpty()) {
                 writer.write("$L {}", dictPrefix);
             } else {
@@ -228,7 +225,7 @@ final class StructureGenerator implements Runnable {
     private void writeFromDict() {
         writer.write("@staticmethod");
         var shapeName = symbolProvider.toSymbol(shape).getName();
-        writer.openBlock("def from_dict(d: Dict) -> $S:", "", shapeName, () -> {
+        writer.openBlock("def from_dict(d: Dict[str, Any]) -> $S:", "", shapeName, () -> {
             writer.openDocComment(() -> {
                 writer.write("Creates a $L from a dictionary.\n", shapeName);
                 writer.write(writer.formatDocs("""
@@ -242,9 +239,9 @@ final class StructureGenerator implements Runnable {
             }
 
             if (requiredMembers.isEmpty()) {
-                writer.write("kwargs = {}");
+                writer.write("kwargs: Dict[str, Any] = {}");
             } else {
-                writer.openBlock("kwargs = {", "}", () -> {
+                writer.openBlock("kwargs: Dict[str, Any] = {", "}", () -> {
                     for (MemberShape member : requiredMembers) {
                         var memberName = symbolProvider.toMemberName(member);
                         var target = model.expectShape(member.getTarget());
