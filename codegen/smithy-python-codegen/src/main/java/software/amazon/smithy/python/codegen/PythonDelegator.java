@@ -24,6 +24,7 @@ import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.Shape;
+import software.amazon.smithy.model.traits.EnumTrait;
 
 /**
  * Manages writers for Python files.
@@ -59,6 +60,9 @@ final class PythonDelegator {
      */
     void useShapeWriter(Shape shape, Consumer<PythonWriter> writerConsumer) {
         Symbol symbol = symbolProvider.toSymbol(shape);
+        if (shape.hasTrait(EnumTrait.class)) {
+            symbol = symbol.expectProperty("enumSymbol", Symbol.class);
+        }
         String namespace = symbol.getNamespace();
         if (namespace.equals(".")) {
             namespace = CodegenUtils.getDefaultPackageImportName(settings.getModuleName());

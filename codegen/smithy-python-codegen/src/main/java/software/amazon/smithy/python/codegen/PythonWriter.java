@@ -53,9 +53,7 @@ public final class PythonWriter extends CodeWriter {
     }
 
     /**
-     * Writes documentation comments from a string.
-     *
-     * <p>This function escapes "$" characters so formatters are not run.
+     * Opens a block to write a documenation comment.
      *
      * @param runnable Runnable function to execute inside the block.
      * @return Returns the writer.
@@ -79,6 +77,31 @@ public final class PythonWriter extends CodeWriter {
     public String formatDocs(String docs) {
         // TODO: write a documentation converter to convert markdown to rst
         return StringUtils.wrap(docs, CodegenUtils.MAX_PREFERRED_LINE_LENGTH - 8).replace("$", "$$");
+    }
+
+    /**
+     * Opens a block to write comments.
+     *
+     * @param runnable Runnable function to execute inside the block.
+     * @return Returns the writer.
+     */
+    public PythonWriter openComment(Runnable runnable) {
+        pushState("docs");
+        setNewlinePrefix("# ");
+        runnable.run();
+        setNewlinePrefix("");
+        popState();
+        return this;
+    }
+
+    /**
+     * Writes a comment from a string.
+     *
+     * @param comment The comment to write.
+     * @return Returns the writer.
+     */
+    public PythonWriter writeComment(String comment) {
+        return openComment(() -> write(formatDocs(comment.replace("\n", " "))));
     }
 
     /**
