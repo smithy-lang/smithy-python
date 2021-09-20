@@ -178,7 +178,11 @@ final class StructureGenerator implements Runnable {
             });
 
             // If there aren't any optional members, it's best to return immediately.
-            String dictPrefix = optionalMembers.isEmpty() ? "return" : "d =";
+            String dictPrefix = "return";
+            if (!optionalMembers.isEmpty()) {
+                writer.addImport("Any", null, "typing");
+                dictPrefix = "d: Dict[str, Any] =";
+            }
             if (requiredMembers.isEmpty()) {
                 writer.write("$L {}", dictPrefix);
             } else {
@@ -187,7 +191,7 @@ final class StructureGenerator implements Runnable {
                         var memberName = symbolProvider.toMemberName(member);
                         var target = model.expectShape(member.getTarget());
                         if (target.isStructureShape()) {
-                            writer.write("$S: self.$L.asdict(),", member.getMemberName(), memberName);
+                            writer.write("$S: self.$L.as_dict(),", member.getMemberName(), memberName);
                         } else {
                             writer.write("$S: self.$L,", member.getMemberName(), memberName);
                         }
