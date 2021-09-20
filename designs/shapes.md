@@ -248,7 +248,7 @@ demand. Additionally, more can be be added with plugins to the code generators.
 
 ## Structures
 
-Structures are simple python objects with `asdict` and `fromdict` methods
+Structures are simple python objects with `as_dict` and `from_dict` methods
 whose constructors only allow keyword arguments. For example:
 
 ```python
@@ -264,17 +264,17 @@ class ExampleStructure:
         self.struct_param = struct_param
         self.optional_param = optional_param
 
-    def asdict(self) -> Dict:
+    def as_dict(self) -> Dict:
         d = {
             "RequiredParam": self.required_param,
-            "StructParam": self.struct_param.asdict(),
+            "StructParam": self.struct_param.as_dict(),
         }
 
         if self.optional_param:
             d["OptionalParam"] = self.optional_param
 
     @staticmethod
-    def fromdict(d: Dict) -> ExampleStructure:
+    def from_dict(d: Dict) -> ExampleStructure:
         return ExampleStructure(
             required_param=d["RequiredParam"],
             struct_param=OtherStructure.from_dict(d["StructParam"])
@@ -285,7 +285,7 @@ class ExampleStructure:
 Disallowing positional arguments prevents errors from arising when future
 updates add additional structure members.
 
-The `asdict` and `from_dict` methods exist primarily to make migration
+The `as_dict` and `from_dict` methods exist primarily to make migration
 from `boto3` easier, as users will be able to use them to convert to/from
 `boto3` style arguments freely. To facilitate that migration, keys in the
 generated dicts use shape names as defined in the model rather than the
@@ -307,14 +307,14 @@ class ExampleStructure:
 
 This will auto-generate `__init__`, `__repr__`, `__eq__`, `__hash__`, and
 optionally a number of other magic methods. `dataclasses` also provides a
-number of other useful methods, like an `asdict` function.
+number of other useful methods, like an `as_dict` function.
 
 Unfortunately, the generated constructors allow for positional arguments.
 Constructor generation can be disabled, and a custom constructer can be
 written instead. Still, this immediately starts eating away at the utility
 of the decorator.
 
-Similarly, the prebuilt `asdict` function is fairly rigid. There is currently
+Similarly, the prebuilt `as_dict` function is fairly rigid. There is currently
 no way to customize the dict representation. This means that we wouldn't be
 able to have compatibility with `boto3` unless we implement the function
 ourselves. And there is no built in way to convert an existing dict into

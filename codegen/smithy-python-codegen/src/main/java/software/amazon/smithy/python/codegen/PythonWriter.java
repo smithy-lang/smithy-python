@@ -29,6 +29,7 @@ import software.amazon.smithy.codegen.core.SymbolDependency;
 import software.amazon.smithy.codegen.core.SymbolDependencyContainer;
 import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.utils.CodeWriter;
+import software.amazon.smithy.utils.StringUtils;
 
 /**
  * Specialized code writer for managing Python dependencies.
@@ -49,6 +50,35 @@ public final class PythonWriter extends CodeWriter {
         trimBlankLines();
         trimTrailingSpaces();
         putFormatter('T', new PythonSymbolFormatter());
+    }
+
+    /**
+     * Writes documentation comments from a string.
+     *
+     * <p>This function escapes "$" characters so formatters are not run.
+     *
+     * @param runnable Runnable function to execute inside the block.
+     * @return Returns the writer.
+     */
+    public PythonWriter openDocComment(Runnable runnable) {
+        pushState("docs");
+        writeInline("\"\"\"");
+        runnable.run();
+        write("\"\"\"");
+        popState();
+        return this;
+    }
+
+    /**
+     * Formats a given Commonmark string and wraps it for use in a doc
+     * comment.
+     *
+     * @param docs Documentation to format.
+     * @return Formatted documentation.
+     */
+    public String formatDocs(String docs) {
+        // TODO: write a documentation converter to convert markdown to rst
+        return StringUtils.wrap(docs, CodegenUtils.MAX_PREFERRED_LINE_LENGTH - 8).replace("$", "$$");
     }
 
     /**
