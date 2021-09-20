@@ -82,16 +82,16 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
             LOGGER.info("Attempting to discover python version");
             output = CodegenUtils.runCommand("python3 --version", fileManifest.getBaseDir()).strip();
         } catch (CodegenException e) {
-            LOGGER.info("Unable to find python on the path. Skipping formatting and type checking.");
+            LOGGER.warning("Unable to find python on the path. Skipping formatting and type checking.");
             return;
         }
         var matcher = versionPattern.matcher(output);
         if (!matcher.find()) {
-            LOGGER.info("Unable to parse python version string. Skipping formatting and type checking.");
+            LOGGER.warning("Unable to parse python version string. Skipping formatting and type checking.");
         }
         int minorVersion = Integer.parseInt(matcher.group("minor"));
         if (minorVersion < 9) {
-            LOGGER.info(String.format("""
+            LOGGER.warning(String.format("""
                     Found incompatible python version 3.%s.%s, expected 3.9.0 or greater. \
                     Skipping formatting and type checking.""",
                     matcher.group("minor"), matcher.group("patch")));
@@ -105,7 +105,7 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
         try {
             CodegenUtils.runCommand("python3 -m black -h", fileManifest.getBaseDir());
         } catch (CodegenException e) {
-            LOGGER.info("Unable to find the python package black. Skipping formatting.");
+            LOGGER.warning("Unable to find the python package black. Skipping formatting.");
             return;
         }
         LOGGER.info("Running code formatter on generated code");
@@ -116,7 +116,7 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
         try {
             CodegenUtils.runCommand("python3 -m mypy -h", fileManifest.getBaseDir());
         } catch (CodegenException e) {
-            LOGGER.info("Unable to find the python package mypy. Skipping type checking.");
+            LOGGER.warning("Unable to find the python package mypy. Skipping type checking.");
             return;
         }
         LOGGER.info("Running mypy on generated code");
