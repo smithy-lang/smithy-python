@@ -49,6 +49,7 @@ import software.amazon.smithy.model.shapes.StringShape;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.TimestampShape;
 import software.amazon.smithy.model.shapes.UnionShape;
+import software.amazon.smithy.model.traits.EnumTrait;
 import software.amazon.smithy.utils.StringUtils;
 
 /**
@@ -202,7 +203,21 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol stringShape(StringShape shape) {
         // TODO: support specialized strings
-        return createSymbolBuilder(shape, "str").build();
+        var builder = createSymbolBuilder(shape, "str");
+        if (shape.hasTrait(EnumTrait.class)) {
+            String name = StringUtils.capitalize(shape.getId().getName());
+            Symbol enumSymbol = createSymbolBuilder(shape, name, "models")
+                    .definitionFile("./models.py")
+                    .build();
+
+            // We add this enum symbol as a property on a generic string symbol
+            // rather than returning the enum symbol directly because we only
+            // generate the enum constants for convenience. We actually want
+            // to pass around plain strings rather than what is effectively
+            // a namespace class.
+            builder.putProperty("enumSymbol", escaper.escapeSymbol(shape, enumSymbol));
+        }
+        return builder.build();
     }
 
     @Override

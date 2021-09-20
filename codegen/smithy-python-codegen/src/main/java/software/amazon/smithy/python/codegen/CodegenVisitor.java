@@ -29,7 +29,9 @@ import software.amazon.smithy.model.neighbor.Walker;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeVisitor;
+import software.amazon.smithy.model.shapes.StringShape;
 import software.amazon.smithy.model.shapes.StructureShape;
+import software.amazon.smithy.model.traits.EnumTrait;
 
 /**
  * Orchestrates Python client generation.
@@ -143,6 +145,14 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
 
     @Override
     protected Void getDefault(Shape shape) {
+        return null;
+    }
+
+    @Override
+    public Void stringShape(StringShape shape) {
+        if (shape.hasTrait(EnumTrait.class)) {
+            writers.useShapeWriter(shape, writer -> new EnumGenerator(model, symbolProvider, writer, shape).run());
+        }
         return null;
     }
 
