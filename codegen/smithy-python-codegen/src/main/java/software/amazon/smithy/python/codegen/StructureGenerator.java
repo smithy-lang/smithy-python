@@ -15,10 +15,12 @@
 
 package software.amazon.smithy.python.codegen;
 
+import static java.lang.String.format;
 import static software.amazon.smithy.python.codegen.CodegenUtils.DEFAULT_TIMESTAMP;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
@@ -44,8 +46,15 @@ final class StructureGenerator implements Runnable {
     private final StructureShape shape;
     private final List<MemberShape> requiredMembers;
     private final List<MemberShape> optionalMembers;
+    private final Set<Shape> recursiveShapes;
 
-    StructureGenerator(Model model, SymbolProvider symbolProvider, PythonWriter writer, StructureShape shape) {
+    StructureGenerator(
+            Model model,
+            SymbolProvider symbolProvider,
+            PythonWriter writer,
+            StructureShape shape,
+            Set<Shape>  recursiveShapes
+    ) {
         this.model = model;
         this.symbolProvider = symbolProvider;
         this.writer = writer;
@@ -61,6 +70,7 @@ final class StructureGenerator implements Runnable {
         }
         this.requiredMembers = ListUtils.copyOf(required);
         this.optionalMembers = ListUtils.copyOf(optional);
+        this.recursiveShapes = recursiveShapes;
     }
 
     @Override
@@ -95,15 +105,18 @@ final class StructureGenerator implements Runnable {
             }
             for (MemberShape member : requiredMembers) {
                 var memberName = symbolProvider.toMemberName(member);
-                writer.write("$L: $T,", memberName, symbolProvider.toSymbol(member));
+                String formatString = format("$L: %s,", getTargetFormat(member));
+                writer.write(formatString, memberName, symbolProvider.toSymbol(member));
             }
             for (MemberShape member : optionalMembers) {
                 var memberName = symbolProvider.toMemberName(member);
                 if (nullableIndex.isNullable(member)) {
                     writer.addStdlibImport("Optional", "Optional", "typing");
-                    writer.write("$L: Optional[$T] = None,", memberName, symbolProvider.toSymbol(member));
+                    String formatString = format("$L: Optional[%s] = None,", getTargetFormat(member));
+                    writer.write(formatString, memberName, symbolProvider.toSymbol(member));
                 } else {
-                    writer.write("$L: $T = $L,", memberName, symbolProvider.toSymbol(member), getDefaultValue(member));
+                    String formatString = format("$L: %s = $L,", getTargetFormat(member));
+                    writer.write(formatString, memberName, symbolProvider.toSymbol(member), getDefaultValue(member));
                 }
             }
         });
@@ -129,6 +142,17 @@ final class StructureGenerator implements Runnable {
         }
         writer.dedent();
         writer.write("");
+    }
+
+    private String getTargetFormat(MemberShape member) {
+        Shape target = model.expectShape(member.getTarget());
+        // Recursive shapes may be referenced before they're defined even with
+        // a topological sort. So forward references need to be used when
+        // referencing them.
+        if (recursiveShapes.contains(target)) {
+            return "'$T'";
+        }
+        return "$T";
     }
 
     private String getDefaultValue(MemberShape member) {
