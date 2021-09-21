@@ -109,6 +109,14 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
                     matcher.group("minor"), matcher.group("patch")));
             return;
         }
+        LOGGER.info("Verifying python files");
+        for (var file : fileManifest.getFiles()) {
+            var fileName = file.getFileName();
+            if (fileName == null || !fileName.endsWith(".py")) {
+                continue;
+            }
+            CodegenUtils.runCommand("python3 " + file, fileManifest.getBaseDir());
+        }
         formatCode();
         runMypy();
     }
