@@ -63,14 +63,14 @@ final class EnumGenerator implements Runnable {
             writer.writeComment("""
                 This set contains every possible value known at the time this was \
                 generated. New values may be added in the future.""");
-            writer.writeInline("values = frozenset(");
+            writer.writeInline("values = frozenset({");
             for (Iterator<String> iter = enumTrait.getEnumDefinitionValues().iterator(); iter.hasNext();) {
                 writer.writeInline("$S", iter.next());
                 if (iter.hasNext()) {
                     writer.writeInline(", ");
                 }
             }
-            writer.writeInline(")\n");
+            writer.writeInline("})\n");
         });
     }
 }
