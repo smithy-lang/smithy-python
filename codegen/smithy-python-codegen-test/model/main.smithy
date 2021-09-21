@@ -303,6 +303,12 @@ structure ListCitiesOutput {
     @required
     items: CitySummaries,
     sparseItems: SparseCitySummaries,
+
+    mutual: MutuallyRecursive,
+}
+
+structure MutuallyRecursive {
+    mutual: ListCitiesOutput,
 }
 
 // CitySummaries is a list of CitySummary structures.

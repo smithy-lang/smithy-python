@@ -17,6 +17,7 @@ package software.amazon.smithy.python.codegen;
 
 import static software.amazon.smithy.python.codegen.CodegenUtils.DEFAULT_TIMESTAMP;
 
+import java.util.Collection;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -24,6 +25,7 @@ import software.amazon.smithy.build.FileManifest;
 import software.amazon.smithy.build.PluginContext;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.SymbolProvider;
+import software.amazon.smithy.codegen.core.TopologicalIndex;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.neighbor.Walker;
 import software.amazon.smithy.model.shapes.ServiceShape;
@@ -47,6 +49,7 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
     private final FileManifest fileManifest;
     private final SymbolProvider symbolProvider;
     private final PythonDelegator writers;
+    private Set<Shape> recursiveShapes;
 
     CodegenVisitor(PluginContext context) {
         settings = PythonSettings.from(context.getSettings());
@@ -63,14 +66,21 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
     void execute() {
         // Generate models that are connected to the service being generated.
         LOGGER.fine("Walking shapes from " + service.getId() + " to find shapes to generate");
-        Set<Shape> serviceShapes = new Walker(modelWithoutTraitShapes).walkShapes(service);
+        Collection<Shape> shapeSet = new Walker(modelWithoutTraitShapes).walkShapes(service);
+        Model prunedModel = Model.builder().addShapes(shapeSet).build();
 
-        generateDefaultTimestamp(serviceShapes);
+        generateDefaultTimestamp(prunedModel);
 
-        for (Shape shape : serviceShapes) {
+        // Sort shapes in a reverse topological order so that we can reduce the
+        // number of necessary forward references.
+        var topologicalIndex = TopologicalIndex.of(prunedModel);
+        recursiveShapes = topologicalIndex.getRecursiveShapes();
+        for (Shape shape : topologicalIndex.getOrderedShapes()) {
             shape.accept(this);
         }
-
+        for (Shape shape : topologicalIndex.getRecursiveShapes()) {
+            shape.accept(this);
+        }
         LOGGER.fine("Flushing python writers");
         writers.flushWriters();
         postProcess();
@@ -125,22 +135,13 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
         CodegenUtils.runCommand("python3 -m mypy .", fileManifest.getBaseDir());
     }
 
-    private void generateDefaultTimestamp(Set<Shape> shapes) {
-        if (containsTimestampShapes(shapes)) {
+    private void generateDefaultTimestamp(Model model) {
+        if (!model.getTimestampShapes().isEmpty()) {
             writers.useFileWriter(DEFAULT_TIMESTAMP.getDefinitionFile(), DEFAULT_TIMESTAMP.getNamespace(), writer -> {
                 writer.addStdlibImport("datetime", "datetime", "datetime");
                 writer.write("$L = datetime(1970, 1, 1)", DEFAULT_TIMESTAMP.getName());
             });
         }
-    }
-
-    private boolean containsTimestampShapes(Set<Shape> shapes) {
-        for (Shape shape : shapes) {
-            if (shape.isTimestampShape()) {
-                return true;
-            }
-        }
-        return false;
     }
 
     @Override
@@ -158,7 +159,8 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
 
     @Override
     public Void structureShape(StructureShape shape) {
-        writers.useShapeWriter(shape, writer -> new StructureGenerator(model, symbolProvider, writer, shape).run());
+        writers.useShapeWriter(shape, writer -> new StructureGenerator(
+                model, symbolProvider, writer, shape, recursiveShapes).run());
         return null;
     }
 }
