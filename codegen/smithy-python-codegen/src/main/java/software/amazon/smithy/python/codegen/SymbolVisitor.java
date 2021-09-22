@@ -66,6 +66,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     private final Model model;
     private final ReservedWordSymbolProvider.Escaper escaper;
+    private final ReservedWordSymbolProvider.Escaper errorMemberEscaper;
 
     SymbolVisitor(Model model) {
         this.model = model;
@@ -82,6 +83,16 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
                 // prevent escaping intentional references to built-in types.
                 .escapePredicate((shape, symbol) -> !StringUtils.isEmpty(symbol.getDefinitionFile()))
                 .buildEscaper();
+
+        // Reserved words that only apply to error members.
+        ReservedWords reservedErrorMembers = new ReservedWordsBuilder()
+                .put("code", "code_")
+                .build();
+
+        errorMemberEscaper = ReservedWordSymbolProvider.builder()
+                .memberReservedWords(reservedErrorMembers)
+                .escapePredicate((shape, symbol) -> !StringUtils.isEmpty(symbol.getDefinitionFile()))
+                .buildEscaper();
     }
 
     @Override
@@ -96,7 +107,14 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         if (CodegenUtils.isErrorMessage(model, shape))  {
             return "message";
         }
-        return escaper.escapeMemberName(CaseUtils.toSnakeCase(shape.getMemberName()));
+
+        var memberName = escaper.escapeMemberName(CaseUtils.toSnakeCase(shape.getMemberName()));
+
+        // Escape words that are only reserved for error members.
+        if (shape.hasTrait(ErrorTrait.class)) {
+            memberName = errorMemberEscaper.escapeMemberName(memberName);
+        }
+        return memberName;
     }
 
     @Override
