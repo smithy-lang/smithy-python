@@ -17,10 +17,13 @@ package software.amazon.smithy.python.codegen;
 
 import static java.lang.String.format;
 import static software.amazon.smithy.python.codegen.CodegenUtils.DEFAULT_TIMESTAMP;
+import static software.amazon.smithy.python.codegen.CodegenUtils.isErrorMessage;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
@@ -30,13 +33,10 @@ import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
-import software.amazon.smithy.utils.ListUtils;
 
 
 /**
  * Renders structures.
- *
- * TODO: support errors
  */
 final class StructureGenerator implements Runnable {
 
@@ -68,8 +68,8 @@ final class StructureGenerator implements Runnable {
                 optional.add(member);
             }
         }
-        this.requiredMembers = ListUtils.copyOf(required);
-        this.optionalMembers = ListUtils.copyOf(optional);
+        this.requiredMembers = filterMessageMembers(required);
+        this.optionalMembers = filterMessageMembers(optional);
         this.recursiveShapes = recursiveShapes;
     }
 
@@ -77,6 +77,8 @@ final class StructureGenerator implements Runnable {
     public void run() {
         if (!shape.hasTrait(ErrorTrait.class)) {
             renderStructure();
+        } else {
+            renderError();
         }
     }
 
@@ -88,24 +90,44 @@ final class StructureGenerator implements Runnable {
         writer.addStdlibImport("Any", "Any", "typing");
         var symbol = symbolProvider.toSymbol(shape);
         writer.openBlock("class $L:", "", symbol.getName(), () -> {
-            writeInit();
-            writeAsDict();
-            writeFromDict();
+            writeInit(false);
+            writeAsDict(false);
+            writeFromDict(false);
         });
         writer.write("");
     }
 
-    private void writeInit() {
-        if (shape.members().isEmpty()) {
-            writeClassDocs();
+    private void renderError() {
+        writer.addStdlibImport("Dict", "Dict", "typing");
+        writer.addStdlibImport("Any", "Any", "typing");
+        writer.addStdlibImport("Literal", "Literal", "typing");
+        // TODO: Implement protocol-level customization of the error code
+        var code = shape.getId().getName();
+        var symbol = symbolProvider.toSymbol(shape);
+        writer.openBlock("class $L($T[Literal[$S]]):", "", symbol.getName(), CodegenUtils.API_ERROR, code, () -> {
+            writer.write("code: Literal[$1S] = $1S", code);
+            writeInit(true);
+            writeAsDict(true);
+            writeFromDict(true);
+        });
+        writer.write("");
+    }
+
+    private void writeInit(boolean isError) {
+        if (!isError && shape.members().isEmpty()) {
+            writeClassDocs(false);
             return;
         }
+
         var nullableIndex = NullableIndex.of(model);
         writer.openBlock("def __init__(", "):", () -> {
             writer.write("self,");
             if (!shape.members().isEmpty()) {
                 // Adding this star to the front prevents the use of positional arguments.
                 writer.write("*,");
+            }
+            if (isError) {
+                writer.write("message: str,");
             }
             for (MemberShape member : requiredMembers) {
                 var memberName = symbolProvider.toMemberName(member);
@@ -126,24 +148,32 @@ final class StructureGenerator implements Runnable {
         });
 
         writer.indent();
-        writeClassDocs();
-        for (MemberShape member : shape.members()) {
+
+        writeClassDocs(isError);
+        if (isError) {
+            writer.write("super().__init__(message)");
+        }
+        Stream.concat(requiredMembers.stream(), optionalMembers.stream()).forEach(member -> {
             String memberName = symbolProvider.toMemberName(member);
             writer.write("self.$L = $L", memberName, memberName);
-        }
-        if (shape.members().isEmpty()) {
+        });
+        if (shape.members().isEmpty() && !isError) {
             writer.write("pass");
         }
         writer.dedent();
         writer.write("");
     }
 
-    private void writeClassDocs() {
+    private void writeClassDocs(boolean isError) {
         if (hasDocs()) {
             writer.openDocComment(() -> {
                 shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
                     writer.write(writer.formatDocs(trait.getValue()));
                 });
+
+                if (isError) {
+                    writer.write(":param message: A message associated with the specific error.");
+                }
 
                 if (!shape.members().isEmpty()) {
                     writer.write("");
@@ -152,6 +182,17 @@ final class StructureGenerator implements Runnable {
                 }
             });
         }
+    }
+
+    private List<MemberShape> filterMessageMembers(List<MemberShape> members) {
+        if (!shape.hasTrait(ErrorTrait.class)) {
+            return members;
+        }
+        // We replace modeled message members with a static `message` member. Serialization
+        // and deserialization will handle assigning them properly.
+        return members.stream()
+                .filter(member -> !isErrorMessage(model, member))
+                .collect(Collectors.toList());
     }
 
     private String getTargetFormat(MemberShape member) {
@@ -203,7 +244,7 @@ final class StructureGenerator implements Runnable {
         });
     }
 
-    private void writeAsDict() {
+    private void writeAsDict(boolean isError) {
         writer.openBlock("def as_dict(self) -> Dict[str, Any]:", "", () -> {
             writer.openDocComment(() -> {
                 writer.write("Converts the $L to a dictionary.\n", symbolProvider.toSymbol(shape).getName());
@@ -214,10 +255,13 @@ final class StructureGenerator implements Runnable {
 
             // If there aren't any optional members, it's best to return immediately.
             String dictPrefix = optionalMembers.isEmpty() ? "return" : "d: Dict[str, Any] =";
-            if (requiredMembers.isEmpty()) {
+            if (requiredMembers.isEmpty() && !isError) {
                 writer.write("$L {}", dictPrefix);
             } else {
                 writer.openBlock("$L {", "}", dictPrefix, () -> {
+                    if (isError) {
+                        writer.write("'message': self.message,");
+                    }
                     for (MemberShape member : requiredMembers) {
                         var memberName = symbolProvider.toMemberName(member);
                         var target = model.expectShape(member.getTarget());
@@ -256,7 +300,7 @@ final class StructureGenerator implements Runnable {
         writer.write("");
     }
 
-    private void writeFromDict() {
+    private void writeFromDict(boolean isError) {
         writer.write("@staticmethod");
         var shapeName = symbolProvider.toSymbol(shape).getName();
         writer.openBlock("def from_dict(d: Dict[str, Any]) -> $S:", "", shapeName, () -> {
@@ -272,10 +316,13 @@ final class StructureGenerator implements Runnable {
                 return;
             }
 
-            if (requiredMembers.isEmpty()) {
+            if (requiredMembers.isEmpty() && !isError) {
                 writer.write("kwargs: Dict[str, Any] = {}");
             } else {
                 writer.openBlock("kwargs: Dict[str, Any] = {", "}", () -> {
+                    if (isError) {
+                        writer.write("'message': d['message'],");
+                    }
                     for (MemberShape member : requiredMembers) {
                         var memberName = symbolProvider.toMemberName(member);
                         var target = model.expectShape(member.getTarget());

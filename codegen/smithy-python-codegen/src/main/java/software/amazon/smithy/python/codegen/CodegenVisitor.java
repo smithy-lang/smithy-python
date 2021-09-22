@@ -15,7 +15,10 @@
 
 package software.amazon.smithy.python.codegen;
 
+import static software.amazon.smithy.python.codegen.CodegenUtils.API_ERROR;
 import static software.amazon.smithy.python.codegen.CodegenUtils.DEFAULT_TIMESTAMP;
+import static software.amazon.smithy.python.codegen.CodegenUtils.SERVICE_ERROR;
+import static software.amazon.smithy.python.codegen.CodegenUtils.UNKNOWN_API_ERROR;
 
 import java.util.Collection;
 import java.util.Map;
@@ -84,6 +87,7 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
         Model prunedModel = Model.builder().addShapes(shapeSet).build();
 
         generateDefaultTimestamp(prunedModel);
+        generateServiceErrors();
 
         // Sort shapes in a reverse topological order so that we can reduce the
         // number of necessary forward references.
@@ -98,6 +102,42 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
         LOGGER.fine("Flushing python writers");
         writers.flushWriters();
         postProcess();
+    }
+
+    private void generateServiceErrors() {
+        writers.useFileWriter(SERVICE_ERROR.getDefinitionFile(), SERVICE_ERROR.getNamespace(), writer -> {
+            // TODO: subclass a shared error
+            writer.openBlock("class $L(Exception):", "", SERVICE_ERROR.getName(), () -> {
+                writer.openDocComment(() -> {
+                    writer.write("Base error for all errors in the service.");
+                });
+                writer.write("pass");
+            });
+        });
+
+        writers.useFileWriter(API_ERROR.getDefinitionFile(), API_ERROR.getNamespace(), writer -> {
+            writer.addStdlibImport("Generic", "Generic", "typing");
+            writer.addStdlibImport("TypeVar", "TypeVar", "typing");
+            writer.write("T = TypeVar('T')");
+            writer.openBlock("class $L($T, Generic[T]):", "", API_ERROR.getName(), SERVICE_ERROR, () -> {
+                writer.openDocComment(() -> {
+                    writer.write("Base error for all api errors in the service.");
+                });
+                writer.write("code: T");
+                writer.openBlock("def __init__(self, message: str):", "", () -> {
+                    writer.write("super().__init__(message)");
+                    writer.write("self.message = message");
+                });
+            });
+
+            writer.addStdlibImport("Literal", "Literal", "typing");
+            writer.openBlock("class $L($T[Literal['Unknown']]):", "", UNKNOWN_API_ERROR.getName(), API_ERROR, () -> {
+                writer.openDocComment(() -> writer.write("Error representing any unknown api errors"));
+                writer.write("code: Literal['Unknown'] = 'Unknown'");
+            });
+        });
+
+
     }
 
     private void postProcess() {
