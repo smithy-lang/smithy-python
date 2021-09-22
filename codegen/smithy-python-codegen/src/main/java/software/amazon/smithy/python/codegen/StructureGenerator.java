@@ -96,6 +96,10 @@ final class StructureGenerator implements Runnable {
     }
 
     private void writeInit() {
+        if (shape.members().isEmpty()) {
+            writeClassDocs();
+            return;
+        }
         var nullableIndex = NullableIndex.of(model);
         writer.openBlock("def __init__(", "):", () -> {
             writer.write("self,");
@@ -122,17 +126,7 @@ final class StructureGenerator implements Runnable {
         });
 
         writer.indent();
-        if (hasDocs()) {
-            writer.openDocComment(() -> {
-                shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
-                    writer.write(writer.formatDocs(trait.getValue()));
-                });
-                writer.write("");
-
-                requiredMembers.forEach(this::writeMemberDocs);
-                optionalMembers.forEach(this::writeMemberDocs);
-            });
-        }
+        writeClassDocs();
         for (MemberShape member : shape.members()) {
             String memberName = symbolProvider.toMemberName(member);
             writer.write("self.$L = $L", memberName, memberName);
@@ -142,6 +136,22 @@ final class StructureGenerator implements Runnable {
         }
         writer.dedent();
         writer.write("");
+    }
+
+    private void writeClassDocs() {
+        if (hasDocs()) {
+            writer.openDocComment(() -> {
+                shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
+                    writer.write(writer.formatDocs(trait.getValue()));
+                });
+
+                if (!shape.members().isEmpty()) {
+                    writer.write("");
+                    requiredMembers.forEach(this::writeMemberDocs);
+                    optionalMembers.forEach(this::writeMemberDocs);
+                }
+            });
+        }
     }
 
     private String getTargetFormat(MemberShape member) {
