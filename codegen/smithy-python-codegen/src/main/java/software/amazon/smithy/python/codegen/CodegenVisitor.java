@@ -18,6 +18,7 @@ package software.amazon.smithy.python.codegen;
 import static software.amazon.smithy.python.codegen.CodegenUtils.DEFAULT_TIMESTAMP;
 
 import java.util.Collection;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -42,6 +43,13 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
 
     private static final Logger LOGGER = Logger.getLogger(CodegenVisitor.class.getName());
 
+    /**
+     * A mapping of static resource files to copy over to a new filename.
+     */
+    private static final Map<String, String> STATIC_FILE_COPIES = Map.of(
+            "setup.cfg", "setup.cfg"
+    );
+
     private final PythonSettings settings;
     private final Model model;
     private final Model modelWithoutTraitShapes;
@@ -64,6 +72,12 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
     }
 
     void execute() {
+        // Write shared / static content.
+        STATIC_FILE_COPIES.forEach((from, to) -> {
+            LOGGER.fine(() -> "Writing contents of `" + from + "` to `" + to + "`");
+            fileManifest.writeFile(from, getClass(), to);
+        });
+
         // Generate models that are connected to the service being generated.
         LOGGER.fine("Walking shapes from " + service.getId() + " to find shapes to generate");
         Collection<Shape> shapeSet = new Walker(modelWithoutTraitShapes).walkShapes(service);
