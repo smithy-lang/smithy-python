@@ -51,6 +51,7 @@ import software.amazon.smithy.model.shapes.TimestampShape;
 import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.EnumTrait;
 import software.amazon.smithy.utils.CaseUtils;
+import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.utils.StringUtils;
 
 /**
@@ -92,6 +93,9 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public String toMemberName(MemberShape shape) {
+        if (CodegenUtils.isErrorMessage(model, shape))  {
+            return "message";
+        }
         return escaper.escapeMemberName(CaseUtils.toSnakeCase(shape.getMemberName()));
     }
 
@@ -224,6 +228,11 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol structureShape(StructureShape shape) {
         String name = StringUtils.capitalize(shape.getId().getName());
+        if (shape.hasTrait(ErrorTrait.class)) {
+            return createSymbolBuilder(shape, name, "errors")
+                    .definitionFile("./errors.py")
+                    .build();
+        }
         return createSymbolBuilder(shape, name, "models")
                 .definitionFile("./models.py")
                 .build();

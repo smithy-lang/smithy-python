@@ -22,9 +22,15 @@ import java.nio.charset.Charset;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
+import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.shapes.MemberShape;
+import software.amazon.smithy.model.traits.ErrorTrait;
+import software.amazon.smithy.utils.SetUtils;
 import software.amazon.smithy.utils.StringUtils;
 
 /**
@@ -37,14 +43,55 @@ public final class CodegenUtils {
     // amount of effort. Eventually a formatter like black will be run on the output
     // to fix any lingering issues.
     public static final int MAX_PREFERRED_LINE_LENGTH = 88;
+
+    /**
+     * A constant representing the default timestamp value.
+     */
     public static final Symbol DEFAULT_TIMESTAMP = Symbol.builder()
             .name("DEFAULT_TIMESTAMP")
             .namespace("utils", ".")
             .definitionFile("./utils.py")
             .build();
+
+    /**
+     * The symbol representing the parent class for all errors in the generated
+     * service code.
+     */
+    public static final Symbol SERVICE_ERROR = Symbol.builder()
+            .name("ServiceError")
+            .namespace("errors", ".")
+            .definitionFile("./errors.py")
+            .build();
+
+    /**
+     * The parent class for all modeled api errors in the service.
+     */
+    public static final Symbol API_ERROR = Symbol.builder()
+            .name("ApiError")
+            .namespace(SERVICE_ERROR.getNamespace(), ".")
+            .definitionFile(SERVICE_ERROR.getDefinitionFile())
+            .build();
+
+    /**
+     * A class representing any unmodeled api errors that might come through.
+     */
+    public static final Symbol UNKNOWN_API_ERROR = Symbol.builder()
+            .name("UnknownApiError")
+            .namespace(API_ERROR.getNamespace(), ".")
+            .definitionFile(API_ERROR.getDefinitionFile())
+            .build();
+
+    static final Set<String> ERROR_MESSAGE_MEMBER_NAMES = SetUtils.of(
+            "errormessage", "error_message", "message");
+
     private static final Logger LOGGER = Logger.getLogger(CodegenUtils.class.getName());
 
     private CodegenUtils() {}
+
+    static boolean isErrorMessage(Model model, MemberShape shape) {
+        return ERROR_MESSAGE_MEMBER_NAMES.contains(shape.getMemberName().toLowerCase(Locale.US))
+                && model.expectShape(shape.getContainer()).hasTrait(ErrorTrait.class);
+    }
 
     /**
      * Executes a given shell command in a given directory.
