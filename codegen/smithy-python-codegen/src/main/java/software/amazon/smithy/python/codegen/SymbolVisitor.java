@@ -50,6 +50,7 @@ import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.TimestampShape;
 import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.EnumTrait;
+import software.amazon.smithy.utils.CaseUtils;
 import software.amazon.smithy.utils.StringUtils;
 
 /**
@@ -91,7 +92,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public String toMemberName(MemberShape shape) {
-        return escaper.escapeMemberName(StringUtils.capitalize(shape.getMemberName()));
+        return escaper.escapeMemberName(CaseUtils.toSnakeCase(shape.getMemberName()));
     }
 
     @Override
