@@ -261,6 +261,7 @@ final class StructureGenerator implements Runnable {
                 writer.openBlock("$L {", "}", dictPrefix, () -> {
                     if (isError) {
                         writer.write("'message': self.message,");
+                        writer.write("'code': self.code,");
                     }
                     for (MemberShape member : requiredMembers) {
                         var memberName = symbolProvider.toMemberName(member);
