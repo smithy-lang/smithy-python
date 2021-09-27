@@ -155,8 +155,6 @@ public final class PythonWriter extends CodeWriter {
             if (symbol.getProperty("stdlib", Boolean.class).orElse(false)) {
                 addStdlibImport(symbol.getName(), alias, symbol.getNamespace());
             } else {
-                LOGGER.info(String.format("IMPORT: %s => %s : %s",
-                        symbol.getNamespace(), symbol.getName(), fullPackageName));
                 addImport(symbol.getName(), alias, symbol.getNamespace());
             }
         }
