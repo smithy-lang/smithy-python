@@ -37,6 +37,7 @@ import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeVisitor;
 import software.amazon.smithy.model.shapes.StringShape;
 import software.amazon.smithy.model.shapes.StructureShape;
+import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.EnumTrait;
 
 /**
@@ -88,6 +89,7 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
 
         generateDefaultTimestamp(prunedModel);
         generateServiceErrors();
+        UnionGenerator.generateTypeVar(prunedModel, writers);
 
         // Sort shapes in a reverse topological order so that we can reduce the
         // number of necessary forward references.
@@ -222,6 +224,13 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
     @Override
     public Void structureShape(StructureShape shape) {
         writers.useShapeWriter(shape, writer -> new StructureGenerator(
+                model, symbolProvider, writer, shape, recursiveShapes).run());
+        return null;
+    }
+
+    @Override
+    public Void unionShape(UnionShape shape) {
+        writers.useShapeWriter(shape, writer -> new UnionGenerator(
                 model, symbolProvider, writer, shape, recursiveShapes).run());
         return null;
     }

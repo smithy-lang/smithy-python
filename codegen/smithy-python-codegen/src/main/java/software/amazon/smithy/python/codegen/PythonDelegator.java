@@ -62,6 +62,8 @@ final class PythonDelegator {
         Symbol symbol = symbolProvider.toSymbol(shape);
         if (shape.hasTrait(EnumTrait.class)) {
             symbol = symbol.expectProperty("enumSymbol", Symbol.class);
+        } else if (shape.isUnionShape()) {
+            symbol = symbol.expectProperty("unionSymbol", Symbol.class);
         }
         String namespace = symbol.getNamespace();
         if (namespace.equals(".")) {
