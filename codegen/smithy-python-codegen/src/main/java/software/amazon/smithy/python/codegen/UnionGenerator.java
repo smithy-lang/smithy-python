@@ -123,6 +123,7 @@ final class UnionGenerator implements Runnable {
                         return $1LUnknown(d["SDK_UNKNOWN_MEMBER"]["name"])
 
                 """, parentName);
+        memberNames.add(parentName + "Unknown");
 
         shape.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeComment(trait.getValue()));
         writer.addImport("Union", "Union", "typing");
