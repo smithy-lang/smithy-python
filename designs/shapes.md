@@ -478,13 +478,102 @@ remembering to re-raise if it isn't what they're looking for.
 
 ## Unions
 
-Unions are classes with a typed `value` property grouped by a parent class.
+Unions are separate classes groupd by a `Union` type hint.
+
+```python
+class MyUnionMemberA(MyUnion[bytes]):
+    def __init__(self, value: bytes):
+        self.value = value
+
+    def as_dict(self):
+        return {"MemberA": self.value}
+
+    @staticmethod
+    def from_dict(d: Dict[str, Any]) -> MyUnionMemberA:
+        if len(d) != 1:
+            raise TypeError(f"Unions may have exactly 1 value, but found {len(d)}")
+        return MyUnionMemberA(d["MemberA"])
+
+
+class MyUnionMemberB(MyUnion[str]):
+    def __init__(self, value: str):
+        self.value = value
+
+    def as_dict(self):
+        return {"MemberB": self.value}
+
+    @staticmethod
+    def from_dict(d: Dict[str, Any]) -> MyUnionMemberA:
+        if len(d) != 1:
+            raise TypeError(f"Unions may have exactly 1 value, but found {len(d)}")
+        return MyUnionMemberB(d["MemberB"])
+
+
+class MyUnionUnknown:
+    def __init__(self, tag: str, value: bytes):
+        self.tag = tag
+
+    def as_dict(self) -> Dict[str, Any]:
+        return {"SDK_UNKNOWN_MEMBER": {"name": self.tag}}
+
+    @staticmethod
+    def from_dict(d: Dict[str, Any]) -> "AnnouncementsUnknown":
+        if len(d) != 1:
+            raise TypeError(f"Unions may have exactly 1 value, but found {len(d)}")
+        return AnnouncementsUnknown(d["SDK_UNKNOWN_MEMBER"]["name"])
+
+
+MyUnion = Union[MyUnionMemberA, MyUnionMemberB, MyUnionUnknown]
+
+
+class SampleStruct:
+    def __init__(self, *, union_member: MyUnion):
+        self.union_member = union_member
+```
+
+This allows for exhaustiveness checks since all variants are known ahead of time,
+and as of python 3.10+ it also allows isinstance checks as if inheritance were
+being used.
+
+```python
+def handle_with_instance(my_union: Any):
+    if not isinstance(my_union, MyUnion):
+        return
+    if isinstance(my_union, MyUnionMemberA):
+        print(value.decode(encoding="utf-8"))
+    elif isinstance(my_union, MyUnionMemberB):
+        for v in my_union.value:
+            print(v)
+    else:
+        raise Exception(f"Unhandled union type: {my_union}")
+
+
+# This is only possible at all in python 3.10 and up
+def handle_with_match(my_union: MyUnion):
+    # A type checker can see that MyUnionMemberB isn't accounted
+    # for. This implies that updates could cause type checking to fail if
+    # there's no default case. There is no way to avoid this, and we wouldn't
+    # want to even if we could. This would expose the error at type checking
+    # time rather than runtime, which is what we want.
+    match my_union:
+        case MyUnionUnknown:
+            raise Exception(f"Unknown union type: {my_union.tag}")
+        case MyUnionMemberA:
+            print(value.decode(encoding="utf-8"))
+        # A default case could suppress the type check error.
+        # case _:
+        #    raise Exception(f"Unhandled union type: {my_union}")
+```
+
+### Alternative: inheritance
+
+In this alternative, unions are classes with a typed `value` property grouped
+by a parent class.
 
 ```python
 V = TypeVar("V")
 
 
-@sealed
 class MyUnion(ABC, Generic[V]):
     value: V
 
@@ -544,11 +633,15 @@ class SampleStruct:
         self.union_member = union_member
 ```
 
-This design allows for dispatch based on instance checks. Unfortunately this
-doesn't allow for exhaustiveness checks. There was a `@sealed` property that
-was initially part of the design for the `match` statement, but it was dropped.
-If that were re-introduced we could support those checks. We would need to do
-something like this to bring them in though:
+This design has a number of disadvantages over using native unions:
+
+* A type checker cannot know every possible subclass of the base class, so
+  you won't get exhaustiveness checks or gradual type refinement. An early
+  version of the pattern matching PEP included a `@sealed` decorator that
+  would have helped here, but it was removed in the accepted version.
+
+  Even if `@sealed` were introduced in another PEP, it wouldn't be available
+  until 3.11, meaning if we wanted to use it we'd have to do something like:
 
 ```python
 try:
@@ -560,119 +653,21 @@ except ImportError:
         return wrapped
 ```
 
-Usage examples:
+  This would potentially mean a user upgrading from 3.10 to 3.11 would start
+  seeing type check failures even though they haven't updated the library
+  or changed any of their code.
 
-```python
-def handle_with_instance(my_union: MyUnion):
-    if isinstance(my_union, MyUnionMemberA):
-        print(value.decode(encoding="utf-8"))
-    elif isinstance(my_union, MyUnionMemberB):
-        for v in my_union.value:
-            print(v)
-    else:
-        raise Exception(f"Unhandled union type: {my_union}")
+* A user might try to use the parent type directly in their own typing with
+  some generic type, e.g. `MyUnion[str]`. This could obscure the fact that
+  multiple variants of a union may have the same member type and lead to bugs.
 
+* The unknown variant has a `value` property even though it has no value. This
+  could lead to bugs if the user expects the value to not be none, as it allows
+  them to not deal with the fact that the unknown variant exits.
 
-# This is only possible at all in python 3.10 and up
-def handle_with_match(my_union: MyUnion):
-    # Without @sealed, the type checker won't comment on the
-    # incompleteness.
-    match my_union:
-        case MyUnionUnknown:
-            raise Exception(f"Unknown union type: {my_union.tag}")
-        case MyUnionMemberA:
-            print(value.decode(encoding="utf-8"))
-```
+The only advantage this has over using native unions is the ability to use
+isinstance checks on versions prior to 3.10.
 
-### Alternative: simple unions
-
-In this alternative, unions are grouped by a `Union` type hint rather than
-a parent class.
-
-```python
-class MyUnionMemberA(MyUnion[bytes]):
-    def __init__(self, value: bytes):
-        self.value = value
-
-    def as_dict(self):
-        return {"MemberA": self.value}
-
-    @staticmethod
-    def from_dict(d: Dict[str, Any]) -> MyUnionMemberA:
-        if len(d) != 1:
-            raise TypeError(f"Unions may have exactly 1 value, but found {len(d)}")
-        return MyUnionMemberA(d["MemberA"])
-
-
-class MyUnionMemberB(MyUnion[str]):
-    def __init__(self, value: str):
-        self.value = value
-
-    def as_dict(self):
-        return {"MemberB": self.value}
-
-    @staticmethod
-    def from_dict(d: Dict[str, Any]) -> MyUnionMemberA:
-        if len(d) != 1:
-            raise TypeError(f"Unions may have exactly 1 value, but found {len(d)}")
-        return MyUnionMemberB(d["MemberB"])
-
-
-class MyUnionUnknown:
-    def __init__(self, tag: str, value: bytes):
-        self.tag = tag
-
-    def as_dict(self) -> Dict[str, Any]:
-        return {"SDK_UNKNOWN_MEMBER": {"name": self.tag}}
-
-    @staticmethod
-    def from_dict(d: Dict[str, Any]) -> "AnnouncementsUnknown":
-        if len(d) != 1:
-            raise TypeError(f"Unions may have exactly 1 value, but found {len(d)}")
-        return AnnouncementsUnknown(d["SDK_UNKNOWN_MEMBER"]["name"])
-
-
-# This syntax will be introduced in 3.10, and it will crucially allow
-# isinstance checks to perform as you would expect.
-MyUnion = MyUnionMemberA | MyUnionMemberB | MyUnionUnknown
-
-
-class SampleStruct:
-    def __init__(self, *, union_member: MyUnion):
-        self.union_member = union_member
-```
-
-This allows for exhaustiveness checks since all variants are known ahead of time,
-and as of python 3.10+ it also allows isinstance checks as if inheritance were
-being used.
-
-```python
-def handle_with_instance(my_union: MyUnion):
-    if isinstance(my_union, MyUnionMemberA):
-        print(value.decode(encoding="utf-8"))
-    elif isinstance(my_union, MyUnionMemberB):
-        for v in my_union.value:
-            print(v)
-    else:
-        raise Exception(f"Unhandled union type: {my_union}")
-
-
-# This is only possible at all in python 3.10 and up
-def handle_with_match(my_union: MyUnion):
-    # With sealed, a type checker could see that MyUnionMemberB isn't accounted
-    # for. This implies that updates could cause type checking to fail if
-    # there's no default case. There is no way to avoid this, and we wouldn't
-    # want to even if we could. This would expose the error at type checking
-    # time rather than runtime, which is what we want.
-    match my_union:
-        case MyUnionUnknown:
-            raise Exception(f"Unknown union type: {my_union.tag}")
-        case MyUnionMemberA:
-            print(value.decode(encoding="utf-8"))
-        # A default case could suppress the type check error.
-        # case _:
-        #    raise Exception(f"Unhandled union type: {my_union}")
-```
 
 # FAQs
 
