@@ -15,6 +15,7 @@
 
 package software.amazon.smithy.python.codegen;
 
+import java.util.ArrayList;
 import java.util.Set;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
@@ -29,12 +30,6 @@ import software.amazon.smithy.utils.StringUtils;
  * Renders unions.
  */
 final class UnionGenerator implements Runnable {
-
-    public static final Symbol TYPE_VAR = Symbol.builder()
-            .definitionFile("./models.py")
-            .namespace("models", ".")
-            .name("V")
-            .build();
 
     private final Model model;
     private final SymbolProvider symbolProvider;
@@ -58,34 +53,15 @@ final class UnionGenerator implements Runnable {
 
     @Override
     public void run() {
-        // TODO: add the sealed decorator when it becomes available
-        writer.addStdlibImport("Generic", "Generic", "typing");
-        writer.addStdlibImport("ABC", "ABC", "abc");
-        writer.addStdlibImport("abstractmethod", "abstractmethod", "abc");
-        var parentName = symbolProvider.toSymbol(shape).expectProperty("unionSymbol", Symbol.class).getName();
-        writer.openBlock("class $L(ABC, Generic[V]):", "", parentName, () -> {
-            shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
-                writer.openDocComment(() -> writer.write(trait.getValue()));
-            });
+        var parentName = symbolProvider.toSymbol(shape).getName();
 
-            writer.write("""
-                    value: V
-
-                    @abstractmethod
-                    def as_dict(self) -> Dict[str, Any]: pass
-
-                    @staticmethod
-                    @abstractmethod
-                    def from_dict(d: Dict[str, Any]) -> "$L[V]": pass
-                    """, parentName);
-        });
-        writer.write("");
-
+        var memberNames = new ArrayList<String>();
         for (MemberShape member : shape.members()) {
             var memberName = parentName + StringUtils.capitalize(member.getMemberName());
+            memberNames.add(memberName);
             var memberSymbol = symbolProvider.toSymbol(member);
 
-            writer.openBlock("class $L($L[$T]):", "", memberName, parentName, memberSymbol, () -> {
+            writer.openBlock("class $L():", "", memberName, () -> {
                 member.getMemberTrait(model, DocumentationTrait.class).ifPresent(trait -> {
                     writer.openDocComment(() -> writer.write(trait.getValue()));
                 });
@@ -125,7 +101,7 @@ final class UnionGenerator implements Runnable {
         }
 
         writer.write("""
-                class $1LUnknown($1L[None]):
+                class $1LUnknown():
                     \"""Represents an unknown variant.
 
                     If you receive this value, you will need to update your library to receive the
@@ -136,7 +112,6 @@ final class UnionGenerator implements Runnable {
 
                     def __init__(self, tag: str):
                         self.tag = tag
-                        self.value = None
 
                     def as_dict(self) -> Dict[str, Any]:
                         return {"SDK_UNKNOWN_MEMBER": {"name": self.tag}}
@@ -146,15 +121,11 @@ final class UnionGenerator implements Runnable {
                         if (len(d) != 1):
                             raise TypeError(f"Unions may have exactly 1 value, but found {len(d)}")
                         return $1LUnknown(d["SDK_UNKNOWN_MEMBER"]["name"])
-                """, parentName);
-    }
 
-    static void generateTypeVar(Model model, PythonDelegator writers) {
-        if (!model.getUnionShapes().isEmpty()) {
-            writers.useFileWriter(TYPE_VAR.getDefinitionFile(), TYPE_VAR.getNamespace(), writer -> {
-                writer.addStdlibImport("TypeVar", "TypeVar", "typing");
-                writer.write("V = TypeVar('V')");
-            });
-        }
+                """, parentName);
+
+        shape.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeComment(trait.getValue()));
+        writer.addImport("Union", "Union", "typing");
+        writer.write("$L = Union[$L]", parentName, String.join(", ", memberNames));
     }
 }
