@@ -89,7 +89,6 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
 
         generateDefaultTimestamp(prunedModel);
         generateServiceErrors();
-        UnionGenerator.generateTypeVar(prunedModel, writers);
 
         // Sort shapes in a reverse topological order so that we can reduce the
         // number of necessary forward references.

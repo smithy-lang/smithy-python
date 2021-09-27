@@ -259,13 +259,8 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol unionShape(UnionShape shape) {
         String name = StringUtils.capitalize(shape.getId().getName());
-        var unionSymbol = createSymbolBuilder(shape, name, "models")
+        return createSymbolBuilder(shape, name, "models")
                 .definitionFile("./models.py")
-                .build();
-        return createSymbolBuilder(shape, name + "[Any]")
-                .addReference(unionSymbol)
-                .addReference(createStdlibReference("Any", "typing"))
-                .putProperty("unionSymbol", unionSymbol)
                 .build();
     }
 
