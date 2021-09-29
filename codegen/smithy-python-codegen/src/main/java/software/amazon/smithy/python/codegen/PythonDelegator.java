@@ -16,11 +16,14 @@
 package software.amazon.smithy.python.codegen;
 
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 import software.amazon.smithy.build.FileManifest;
 import software.amazon.smithy.codegen.core.Symbol;
+import software.amazon.smithy.codegen.core.SymbolDependency;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.Shape;
@@ -50,6 +53,18 @@ final class PythonDelegator {
     void flushWriters() {
         writers.forEach((filename, writer) -> fileManifest.writeFile(filename, writer.toString()));
         writers.clear();
+    }
+
+    /**
+     * Gets all the dependencies that have been registered in writers owned by the
+     * delegator.
+     *
+     * @return Returns all the dependencies.
+     */
+    List<SymbolDependency> getDependencies() {
+        var resolved = new ArrayList<>(SmithyPythonDependency.getUnconditionalDependencies());
+        writers.values().forEach(s -> resolved.addAll(s.getDependencies()));
+        return resolved;
     }
 
     /**
