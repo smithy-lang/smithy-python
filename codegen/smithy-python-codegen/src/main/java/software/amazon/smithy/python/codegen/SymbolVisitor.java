@@ -53,6 +53,7 @@ import software.amazon.smithy.model.shapes.TimestampShape;
 import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.EnumTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
+import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.utils.CaseUtils;
 import software.amazon.smithy.utils.StringUtils;
 
@@ -123,6 +124,11 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public Symbol blobShape(BlobShape shape) {
+        if (shape.hasTrait(StreamingTrait.class)) {
+            return createSymbolBuilder(shape, "StreamingBlob", "smithy_python.interfaces.blobs")
+                    .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                    .build();
+        }
         return createSymbolBuilder(shape, "Union[bytes, bytearray]")
                 .addReference(createStdlibReference("Union", "typing"))
                 .build();
