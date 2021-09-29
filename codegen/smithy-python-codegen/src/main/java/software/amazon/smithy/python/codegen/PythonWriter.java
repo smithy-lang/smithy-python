@@ -44,9 +44,9 @@ public final class PythonWriter extends CodeWriter {
     private final ImportDeclarations imports;
     private final List<SymbolDependency> dependencies = new ArrayList<>();
 
-    public PythonWriter(String fullPackageName) {
+    public PythonWriter(PythonSettings settings, String fullPackageName) {
         this.fullPackageName = fullPackageName;
-        this.imports = new ImportDeclarations();
+        this.imports = new ImportDeclarations(settings, fullPackageName);
         trimBlankLines();
         trimTrailingSpaces();
         putFormatter('T', new PythonSymbolFormatter());

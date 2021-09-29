@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.TreeMap;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.utils.SmithyInternalApi;
+import software.amazon.smithy.utils.StringUtils;
 
 /**
  * Internal class used for aggregating imports of a file.
@@ -31,15 +32,39 @@ final class ImportDeclarations {
     private final Map<String, Map<String, String>> externalImports = new TreeMap<>();
     private final Map<String, Map<String, String>> localImports = new TreeMap<>();
 
+    private final PythonSettings settings;
+    private final String localNamespace;
+
+    ImportDeclarations(PythonSettings settings, String namespace) {
+        this.settings = settings;
+        this.localNamespace = namespace;
+    }
+
     ImportDeclarations addImport(String namespace, String name) {
         return addImport(namespace, name, name);
     }
 
     ImportDeclarations addImport(String namespace, String name, String alias) {
-        if (namespace.startsWith(".")) {
-            return addImportToMap(namespace, name, alias, localImports);
+        if (namespace.startsWith(settings.getModuleName())) {
+            return addImportToMap(relativize(namespace), name, alias, localImports);
         }
         return addImportToMap(namespace, name, alias, externalImports);
+    }
+
+    private String relativize(String namespace) {
+        if (namespace.startsWith(localNamespace)) {
+            return "." + namespace.substring(localNamespace.length());
+        }
+        var localParts = localNamespace.split("\\.");
+        var parts = namespace.split("\\.");
+        int commonSegments = 0;
+        for (; commonSegments < Math.min(localParts.length, parts.length); commonSegments++) {
+            if (!parts[commonSegments].equals(localParts[commonSegments])) {
+                break;
+            }
+        }
+        var prefix = StringUtils.repeat(".", localParts.length - commonSegments);
+        return prefix + namespace.split("\\.", commonSegments + 1)[commonSegments];
     }
 
     ImportDeclarations addStdlibImport(String namespace, String name) {

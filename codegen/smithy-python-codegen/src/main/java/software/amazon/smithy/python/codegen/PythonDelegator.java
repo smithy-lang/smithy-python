@@ -104,7 +104,7 @@ final class PythonDelegator {
         String formattedFilename = Paths.get(filename).normalize().toString();
         boolean needsNewline = writers.containsKey(formattedFilename);
 
-        PythonWriter writer = writers.computeIfAbsent(formattedFilename, f -> new PythonWriter(namespace));
+        PythonWriter writer = writers.computeIfAbsent(formattedFilename, f -> new PythonWriter(settings, namespace));
 
         if (needsNewline) {
             writer.write("\n");
