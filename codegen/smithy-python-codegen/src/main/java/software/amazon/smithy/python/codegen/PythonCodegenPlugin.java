@@ -37,9 +37,10 @@ public final class PythonCodegenPlugin implements SmithyBuildPlugin {
     /**
      * Creates a Python symbol provider.
      * @param model The model to generate symbols for.
+     * @param settings The settings for the plugin.
      * @return Returns the created provider.
      */
-    public static SymbolProvider createSymbolProvider(Model model) {
-        return new SymbolVisitor(model);
+    public static SymbolProvider createSymbolProvider(Model model, PythonSettings settings) {
+        return new SymbolVisitor(model, settings);
     }
 }

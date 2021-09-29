@@ -15,16 +15,14 @@
 
 package software.amazon.smithy.python.codegen;
 
-import static software.amazon.smithy.python.codegen.CodegenUtils.API_ERROR;
-import static software.amazon.smithy.python.codegen.CodegenUtils.DEFAULT_TIMESTAMP;
-import static software.amazon.smithy.python.codegen.CodegenUtils.SERVICE_ERROR;
-import static software.amazon.smithy.python.codegen.CodegenUtils.UNKNOWN_API_ERROR;
+import static java.lang.String.format;
 
+import java.nio.file.Path;
 import java.util.Collection;
-import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import software.amazon.smithy.build.FileManifest;
 import software.amazon.smithy.build.PluginContext;
 import software.amazon.smithy.codegen.core.CodegenException;
@@ -47,13 +45,6 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
 
     private static final Logger LOGGER = Logger.getLogger(CodegenVisitor.class.getName());
 
-    /**
-     * A mapping of static resource files to copy over to a new filename.
-     */
-    private static final Map<String, String> STATIC_FILE_COPIES = Map.of(
-            "setup.cfg", "setup.cfg"
-    );
-
     private final PythonSettings settings;
     private final Model model;
     private final Model modelWithoutTraitShapes;
@@ -71,17 +62,11 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
         fileManifest = context.getFileManifest();
         LOGGER.info(() -> "Generating Python client for service " + service.getId());
 
-        symbolProvider = PythonCodegenPlugin.createSymbolProvider(model);
+        symbolProvider = PythonCodegenPlugin.createSymbolProvider(model, settings);
         writers = new PythonDelegator(settings, model, fileManifest, symbolProvider);
     }
 
     void execute() {
-        // Write shared / static content.
-        STATIC_FILE_COPIES.forEach((from, to) -> {
-            LOGGER.fine(() -> "Writing contents of `" + from + "` to `" + to + "`");
-            fileManifest.writeFile(from, getClass(), to);
-        });
-
         // Generate models that are connected to the service being generated.
         LOGGER.fine("Walking shapes from " + service.getId() + " to find shapes to generate");
         Collection<Shape> shapeSet = new Walker(modelWithoutTraitShapes).walkShapes(service);
@@ -100,15 +85,20 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
         for (Shape shape : topologicalIndex.getRecursiveShapes()) {
             shape.accept(this);
         }
+
+        SetupGenerator.generateSetup(settings, writers);
+
         LOGGER.fine("Flushing python writers");
         writers.flushWriters();
+        generateInits();
         postProcess();
     }
 
     private void generateServiceErrors() {
-        writers.useFileWriter(SERVICE_ERROR.getDefinitionFile(), SERVICE_ERROR.getNamespace(), writer -> {
+        var serviceError = CodegenUtils.getServiceError(settings);
+        writers.useFileWriter(serviceError.getDefinitionFile(), serviceError.getNamespace(), writer -> {
             // TODO: subclass a shared error
-            writer.openBlock("class $L(Exception):", "", SERVICE_ERROR.getName(), () -> {
+            writer.openBlock("class $L(Exception):", "", serviceError.getName(), () -> {
                 writer.openDocComment(() -> {
                     writer.write("Base error for all errors in the service.");
                 });
@@ -116,11 +106,12 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
             });
         });
 
-        writers.useFileWriter(API_ERROR.getDefinitionFile(), API_ERROR.getNamespace(), writer -> {
+        var apiError = CodegenUtils.getApiError(settings);
+        writers.useFileWriter(apiError.getDefinitionFile(), apiError.getNamespace(), writer -> {
             writer.addStdlibImport("Generic", "Generic", "typing");
             writer.addStdlibImport("TypeVar", "TypeVar", "typing");
             writer.write("T = TypeVar('T')");
-            writer.openBlock("class $L($T, Generic[T]):", "", API_ERROR.getName(), SERVICE_ERROR, () -> {
+            writer.openBlock("class $L($T, Generic[T]):", "", apiError.getName(), serviceError, () -> {
                 writer.openDocComment(() -> {
                     writer.write("Base error for all api errors in the service.");
                 });
@@ -131,14 +122,30 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
                 });
             });
 
+            var unknownApiError = CodegenUtils.getUnknownApiError(settings);
             writer.addStdlibImport("Literal", "Literal", "typing");
-            writer.openBlock("class $L($T[Literal['Unknown']]):", "", UNKNOWN_API_ERROR.getName(), API_ERROR, () -> {
+            writer.openBlock("class $L($T[Literal['Unknown']]):", "", unknownApiError.getName(), apiError, () -> {
                 writer.openDocComment(() -> writer.write("Error representing any unknown api errors"));
                 writer.write("code: Literal['Unknown'] = 'Unknown'");
             });
         });
 
 
+    }
+
+    /**
+     * Creates __init__.py files where not already present.
+     */
+    private void generateInits() {
+        var directories = fileManifest.getFiles().stream()
+                .filter(path -> !path.getParent().equals(fileManifest.getBaseDir()))
+                .collect(Collectors.groupingBy(Path::getParent, Collectors.toSet()));
+        for (var entry : directories.entrySet()) {
+            var initPath = entry.getKey().resolve("__init__.py");
+            if (!entry.getValue().contains(initPath)) {
+                fileManifest.writeFile(initPath, "# Code generated by smithy-python-codegen DO NOT EDIT.\n");
+            }
+        }
     }
 
     private void postProcess() {
@@ -158,7 +165,7 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
         }
         int minorVersion = Integer.parseInt(matcher.group("minor"));
         if (minorVersion < 9) {
-            LOGGER.warning(String.format("""
+            LOGGER.warning(format("""
                     Found incompatible python version 3.%s.%s, expected 3.9.0 or greater. \
                     Skipping formatting and type checking.""",
                     matcher.group("minor"), matcher.group("patch")));
@@ -199,10 +206,11 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
     }
 
     private void generateDefaultTimestamp(Model model) {
+        var timestamp = CodegenUtils.getDefaultTimestamp(settings);
         if (!model.getTimestampShapes().isEmpty()) {
-            writers.useFileWriter(DEFAULT_TIMESTAMP.getDefinitionFile(), DEFAULT_TIMESTAMP.getNamespace(), writer -> {
+            writers.useFileWriter(timestamp.getDefinitionFile(), timestamp.getNamespace(), writer -> {
                 writer.addStdlibImport("datetime", "datetime", "datetime");
-                writer.write("$L = datetime(1970, 1, 1)", DEFAULT_TIMESTAMP.getName());
+                writer.write("$L = datetime(1970, 1, 1)", timestamp.getName());
             });
         }
     }
@@ -223,7 +231,7 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
     @Override
     public Void structureShape(StructureShape shape) {
         writers.useShapeWriter(shape, writer -> new StructureGenerator(
-                model, symbolProvider, writer, shape, recursiveShapes).run());
+                model, settings, symbolProvider, writer, shape, recursiveShapes).run());
         return null;
     }
 
