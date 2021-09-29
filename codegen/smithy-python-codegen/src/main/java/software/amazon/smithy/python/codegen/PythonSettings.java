@@ -108,6 +108,10 @@ public final class PythonSettings {
      * @param moduleName The name of the module to generate.
      */
     public void setModuleName(String moduleName) {
+        if (moduleName != null && !moduleName.matches("[a-z_\\d]+")) {
+            throw new CodegenException(
+                    "Python package names may only consist of lowercase letters, numbers, and underscores.");
+        }
         this.moduleName = Objects.requireNonNull(moduleName);
     }
 
