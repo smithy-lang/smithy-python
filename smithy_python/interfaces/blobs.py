@@ -16,7 +16,7 @@ class SeekableByteStream(ByteStream, Protocol):
     def seek(self, offset: int, whence: int = 0) -> int:
         pass
 
-    def tell() -> int:
+    def tell(self) -> int:
         pass
 
 
@@ -31,9 +31,5 @@ class AsyncByteStream(Protocol):
 # A union of all acceptable streaming blob types. Deserialized payloads will
 # always return a ByteStream, or AsyncByteStream if async is enabled.
 StreamingBlob = Union[
-    ByteStream,
-    SeekableByteStream,
-    AsyncByteStream,
-    bytes,
-    bytearray,
+    ByteStream, SeekableByteStream, AsyncByteStream, bytes, bytearray,
 ]
