@@ -15,6 +15,8 @@
 
 package software.amazon.smithy.python.codegen;
 
+import static java.lang.String.format;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -44,49 +46,44 @@ public final class CodegenUtils {
     // to fix any lingering issues.
     public static final int MAX_PREFERRED_LINE_LENGTH = 88;
 
-    /**
-     * A constant representing the default timestamp value.
-     */
-    public static final Symbol DEFAULT_TIMESTAMP = Symbol.builder()
-            .name("DEFAULT_TIMESTAMP")
-            .namespace("utils", ".")
-            .definitionFile("./utils.py")
-            .build();
-
-    /**
-     * The symbol representing the parent class for all errors in the generated
-     * service code.
-     */
-    public static final Symbol SERVICE_ERROR = Symbol.builder()
-            .name("ServiceError")
-            .namespace("errors", ".")
-            .definitionFile("./errors.py")
-            .build();
-
-    /**
-     * The parent class for all modeled api errors in the service.
-     */
-    public static final Symbol API_ERROR = Symbol.builder()
-            .name("ApiError")
-            .namespace(SERVICE_ERROR.getNamespace(), ".")
-            .definitionFile(SERVICE_ERROR.getDefinitionFile())
-            .build();
-
-    /**
-     * A class representing any unmodeled api errors that might come through.
-     */
-    public static final Symbol UNKNOWN_API_ERROR = Symbol.builder()
-            .name("UnknownApiError")
-            .namespace(API_ERROR.getNamespace(), ".")
-            .definitionFile(API_ERROR.getDefinitionFile())
-            .build();
-
     static final Set<String> ERROR_MESSAGE_MEMBER_NAMES = SetUtils.of(
             "errormessage", "error_message", "message");
 
     private static final Logger LOGGER = Logger.getLogger(CodegenUtils.class.getName());
 
     private CodegenUtils() {}
+
+    static Symbol getDefaultTimestamp(PythonSettings settings) {
+        return Symbol.builder()
+                .name("DEFAULT_TIMESTAMP")
+                .namespace(format("%s.utils", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/utils.py", settings.getModuleName()))
+                .build();
+    }
+
+    static Symbol getServiceError(PythonSettings settings) {
+        return Symbol.builder()
+                .name("ServiceError")
+                .namespace(format("%s.errors", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/errors.py", settings.getModuleName()))
+                .build();
+    }
+
+    static Symbol getApiError(PythonSettings settings) {
+        return Symbol.builder()
+                .name("ApiError")
+                .namespace(format("%s.errors", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/errors.py", settings.getModuleName()))
+                .build();
+    }
+
+    static Symbol getUnknownApiError(PythonSettings settings) {
+        return Symbol.builder()
+                .name("UnknownApiError")
+                .namespace(format("%s.errors", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/errors.py", settings.getModuleName()))
+                .build();
+    }
 
     static boolean isErrorMessage(Model model, MemberShape shape) {
         return ERROR_MESSAGE_MEMBER_NAMES.contains(shape.getMemberName().toLowerCase(Locale.US))
@@ -131,7 +128,7 @@ public final class CodegenUtils {
 
             String joinedOutput = String.join(System.lineSeparator(), output);
             if (process.exitValue() != 0) {
-                throw new CodegenException(String.format(
+                throw new CodegenException(format(
                         "Command `%s` failed with output:%n%n%s", command, joinedOutput));
             }
             return joinedOutput;

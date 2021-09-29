@@ -16,7 +16,6 @@
 package software.amazon.smithy.python.codegen;
 
 import static java.lang.String.format;
-import static software.amazon.smithy.python.codegen.CodegenUtils.DEFAULT_TIMESTAMP;
 import static software.amazon.smithy.python.codegen.CodegenUtils.isErrorMessage;
 
 import java.util.ArrayList;
@@ -47,15 +46,18 @@ final class StructureGenerator implements Runnable {
     private final List<MemberShape> requiredMembers;
     private final List<MemberShape> optionalMembers;
     private final Set<Shape> recursiveShapes;
+    private final PythonSettings settings;
 
     StructureGenerator(
             Model model,
+            PythonSettings settings,
             SymbolProvider symbolProvider,
             PythonWriter writer,
             StructureShape shape,
             Set<Shape>  recursiveShapes
     ) {
         this.model = model;
+        this.settings = settings;
         this.symbolProvider = symbolProvider;
         this.writer = writer;
         this.shape = shape;
@@ -104,7 +106,8 @@ final class StructureGenerator implements Runnable {
         // TODO: Implement protocol-level customization of the error code
         var code = shape.getId().getName();
         var symbol = symbolProvider.toSymbol(shape);
-        writer.openBlock("class $L($T[Literal[$S]]):", "", symbol.getName(), CodegenUtils.API_ERROR, code, () -> {
+        var apiError = CodegenUtils.getApiError(settings);
+        writer.openBlock("class $L($T[Literal[$S]]):", "", symbol.getName(), apiError, code, () -> {
             writer.write("code: Literal[$1S] = $1S", code);
             writeInit(true);
             writeAsDict(true);
@@ -217,8 +220,9 @@ final class StructureGenerator implements Runnable {
             case LIST, SET -> "[]";
             case MAP -> "{}";
             case TIMESTAMP -> {
-                writer.addUseImports(DEFAULT_TIMESTAMP);
-                yield DEFAULT_TIMESTAMP.getName();
+                var defaultTimestamp = CodegenUtils.getDefaultTimestamp(settings);
+                writer.addUseImports(defaultTimestamp);
+                yield defaultTimestamp.getName();
             }
             default -> "None";
         };

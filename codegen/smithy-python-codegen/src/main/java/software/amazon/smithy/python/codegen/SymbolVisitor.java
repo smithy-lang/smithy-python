@@ -15,6 +15,8 @@
 
 package software.amazon.smithy.python.codegen;
 
+import static java.lang.String.format;
+
 import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.ReservedWordSymbolProvider;
@@ -67,9 +69,11 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     private final Model model;
     private final ReservedWordSymbolProvider.Escaper escaper;
     private final ReservedWordSymbolProvider.Escaper errorMemberEscaper;
+    private final PythonSettings settings;
 
-    SymbolVisitor(Model model) {
+    SymbolVisitor(Model model, PythonSettings settings) {
         this.model = model;
+        this.settings = settings;
 
         // Load reserved words from a new-line delimited file.
         ReservedWords reservedWords = new ReservedWordsBuilder()
@@ -98,7 +102,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol toSymbol(Shape shape) {
         Symbol symbol = shape.accept(this);
-        LOGGER.fine(() -> String.format("Creating symbol from %s: %s", shape, symbol));
+        LOGGER.fine(() -> format("Creating symbol from %s: %s", shape, symbol));
         return escaper.escapeSymbol(shape, symbol);
     }
 
@@ -229,8 +233,8 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         var builder = createSymbolBuilder(shape, "str");
         if (shape.hasTrait(EnumTrait.class)) {
             String name = StringUtils.capitalize(shape.getId().getName());
-            Symbol enumSymbol = createSymbolBuilder(shape, name, "models")
-                    .definitionFile("./models.py")
+            Symbol enumSymbol = createSymbolBuilder(shape, name, format("%s.models", settings.getModuleName()))
+                    .definitionFile(format("./%s/models.py", settings.getModuleName()))
                     .build();
 
             // We add this enum symbol as a property on a generic string symbol
@@ -247,12 +251,12 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     public Symbol structureShape(StructureShape shape) {
         String name = StringUtils.capitalize(shape.getId().getName());
         if (shape.hasTrait(ErrorTrait.class)) {
-            return createSymbolBuilder(shape, name, "errors")
-                    .definitionFile("./errors.py")
+            return createSymbolBuilder(shape, name, format("%s.errors", settings.getModuleName()))
+                    .definitionFile(format("./%s/errors.py", settings.getModuleName()))
                     .build();
         }
-        return createSymbolBuilder(shape, name, "models")
-                .definitionFile("./models.py")
+        return createSymbolBuilder(shape, name, format("%s.models", settings.getModuleName()))
+                .definitionFile(format("./%s/models.py", settings.getModuleName()))
                 .build();
     }
 
