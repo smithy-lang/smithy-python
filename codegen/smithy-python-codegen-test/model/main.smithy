@@ -166,7 +166,16 @@ structure GetCityOutput {
     coordinates: CityCoordinates,
 
     city: CitySummary,
+
+    cityData: JsonString,
+    binaryCityData: JsonBlob,
 }
+
+@mediaType("application/json")
+string JsonString
+
+@mediaType("application/json")
+blob JsonBlob
 
 // This structure is nested within GetCityOutput.
 structure CityCoordinates {

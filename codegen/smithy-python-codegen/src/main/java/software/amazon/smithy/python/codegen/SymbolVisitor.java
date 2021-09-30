@@ -53,6 +53,7 @@ import software.amazon.smithy.model.shapes.TimestampShape;
 import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.EnumTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
+import software.amazon.smithy.model.traits.MediaTypeTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.utils.CaseUtils;
 import software.amazon.smithy.utils.StringUtils;
@@ -128,6 +129,20 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
             return createSymbolBuilder(shape, "StreamingBlob", "smithy_python.interfaces.blobs")
                     .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
                     .build();
+        }
+
+        if (shape.hasTrait(MediaTypeTrait.class)) {
+            var mediaType = shape.expectTrait(MediaTypeTrait.class).getValue();
+            if (CodegenUtils.isJsonMediaType(mediaType)) {
+                return createSymbolBuilder(shape, "Union[bytes, bytearray, JsonBlob]")
+                        .addReference(createStdlibReference("Union", "typing"))
+                        .addReference(Symbol.builder()
+                                .name("JsonBlob")
+                                .namespace("smithy_python.mediatypes", ".")
+                                .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                                .build())
+                        .build();
+            }
         }
         return createSymbolBuilder(shape, "Union[bytes, bytearray]")
                 .addReference(createStdlibReference("Union", "typing"))
@@ -235,7 +250,6 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public Symbol stringShape(StringShape shape) {
-        // TODO: support specialized strings
         var builder = createSymbolBuilder(shape, "str");
         if (shape.hasTrait(EnumTrait.class)) {
             String name = StringUtils.capitalize(shape.getId().getName());
@@ -249,6 +263,19 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
             // to pass around plain strings rather than what is effectively
             // a namespace class.
             builder.putProperty("enumSymbol", escaper.escapeSymbol(shape, enumSymbol));
+        }
+        if (shape.hasTrait(MediaTypeTrait.class)) {
+            var mediaType = shape.expectTrait(MediaTypeTrait.class).getValue();
+            if (CodegenUtils.isJsonMediaType(mediaType)) {
+                return createSymbolBuilder(shape, "Union[str, JsonString]")
+                        .addReference(createStdlibReference("Union", "typing"))
+                        .addReference(Symbol.builder()
+                                .name("JsonString")
+                                .namespace("smithy_python.mediatypes", ".")
+                                .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                                .build())
+                        .build();
+            }
         }
         return builder.build();
     }
