@@ -126,7 +126,7 @@ final class UnionGenerator implements Runnable {
         memberNames.add(parentName + "Unknown");
 
         shape.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeComment(trait.getValue()));
-        writer.addImport("Union", "Union", "typing");
+        writer.addStdlibImport("Union", "Union", "typing");
         writer.write("$L = Union[$L]", parentName, String.join(", ", memberNames));
     }
 }
