@@ -269,8 +269,8 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol unionShape(UnionShape shape) {
         String name = StringUtils.capitalize(shape.getId().getName());
-        return createSymbolBuilder(shape, name, "models")
-                .definitionFile("./models.py")
+        return createSymbolBuilder(shape, name, format("%s.models", settings.getModuleName()))
+                .definitionFile(format("./%s/models.py", settings.getModuleName()))
                 .build();
     }
 
