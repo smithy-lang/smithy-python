@@ -64,7 +64,10 @@ class Request:
 
 class Response:
     def __init__(
-        self, status_code: int, headers: HeadersList, body: Any,
+        self,
+        status_code: int,
+        headers: HeadersList,
+        body: Any,
     ):
         self.status_code: int = status_code
         self.headers: HeadersList = headers

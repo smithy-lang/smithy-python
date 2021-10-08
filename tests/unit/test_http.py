@@ -19,7 +19,11 @@ def test_url() -> None:
 
 def test_request() -> None:
     url = URL(hostname="test.com")
-    request = Request(url=url, headers=[("foo", "bar")], body=b"test body",)
+    request = Request(
+        url=url,
+        headers=[("foo", "bar")],
+        body=b"test body",
+    )
 
     assert request.method == "GET"
     assert request.url == url
@@ -28,7 +32,11 @@ def test_request() -> None:
 
 
 def test_resposne() -> None:
-    response = Response(status_code=200, headers=[("foo", "bar")], body=b"test body",)
+    response = Response(
+        status_code=200,
+        headers=[("foo", "bar")],
+        body=b"test body",
+    )
 
     assert response.status_code == 200
     assert response.headers == [("foo", "bar")]

@@ -186,7 +186,10 @@ ConnectionPoolDict = Dict[ConnectionPoolKey, http.HttpClientConnection]
 
 
 class AwsCrtHttpSessionConfig:
-    def __init__(self, force_http_2: Optional[bool] = None,) -> None:
+    def __init__(
+        self,
+        force_http_2: Optional[bool] = None,
+    ) -> None:
         if force_http_2 is None:
             force_http_2 = False
         self.force_http_2: bool = force_http_2
@@ -307,7 +310,9 @@ class AsyncAwsCrtHttpSession(_BaseAwsCrtHttpSession):
         connection = await self._get_connection(request.url)
         crt_response = _AsyncAwsCrtHttpResponse()
         crt_stream = connection.request(
-            crt_request, crt_response._on_headers, crt_response._on_body,
+            crt_request,
+            crt_response._on_headers,
+            crt_response._on_body,
         )
         crt_response._set_stream(crt_stream)
 
@@ -336,7 +341,9 @@ class SyncAwsCrtHttpSession(_BaseAwsCrtHttpSession):
         connection = self._get_connection(request.url)
         crt_response = _SyncAwsCrtHttpResponse()
         crt_stream = connection.request(
-            crt_request, crt_response._on_headers, crt_response._on_body,
+            crt_request,
+            crt_response._on_headers,
+            crt_response._on_body,
         )
         crt_response._set_stream(crt_stream)
 

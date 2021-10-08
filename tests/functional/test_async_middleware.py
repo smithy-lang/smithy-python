@@ -46,7 +46,9 @@ def stub_response(
 ) -> AsyncFinalizeHandler[MyInput, MyOutput]:
     async def _stub_response(param: FinalizeInput[MyInput]) -> FinalizeOutput[MyOutput]:
         param.response = Response(
-            status_code=200, headers=[], body=str(len(param.request.body)),
+            status_code=200,
+            headers=[],
+            body=str(len(param.request.body)),
         )
         return await next_handler(param)
 
