@@ -47,6 +47,7 @@ import software.amazon.smithy.model.shapes.SetShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeVisitor;
 import software.amazon.smithy.model.shapes.ShortShape;
+import software.amazon.smithy.model.shapes.SimpleShape;
 import software.amazon.smithy.model.shapes.StringShape;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.TimestampShape;
@@ -176,18 +177,46 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     private Symbol createCollectionSymbol(CollectionShape shape) {
         Symbol reference = toSymbol(shape.getMember());
-        return createSymbolBuilder(shape, "List[" + reference.getName() + "]")
+        var builder = createSymbolBuilder(shape, "List[" + reference.getName() + "]")
                 .addReference(createStdlibReference("List", "typing"))
-                .addReference(reference)
-                .build();
+                .addReference(reference);
+
+        var target = model.expectShape(shape.getMember().getTarget());
+        if (!(target instanceof SimpleShape)) {
+            builder.putProperty("asDict", createAsDictFunctionSymbol(shape))
+                    .putProperty("fromDict", createFromDictFunctionSymbol(shape));
+        }
+        return builder.build();
     }
 
     @Override
     public Symbol mapShape(MapShape shape) {
         Symbol reference = toSymbol(shape.getValue());
-        return createSymbolBuilder(shape, "Dict[str, " + reference.getName() + "]")
+        var builder = createSymbolBuilder(shape, "Dict[str, " + reference.getName() + "]")
                 .addReference(createStdlibReference("Dict", "typing"))
-                .addReference(reference)
+                .addReference(reference);
+
+        var target = model.expectShape(shape.getValue().getTarget());
+        if (!(target instanceof SimpleShape)) {
+            builder.putProperty("asDict", createAsDictFunctionSymbol(shape))
+                    .putProperty("fromDict", createFromDictFunctionSymbol(shape));
+        }
+        return builder.build();
+    }
+
+    private Symbol createAsDictFunctionSymbol(Shape shape) {
+        return Symbol.builder()
+                .name(String.format("_%s_as_dict", CaseUtils.toSnakeCase(shape.getId().getName())))
+                .namespace(format("%s.models", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/models.py", settings.getModuleName()))
+                .build();
+    }
+
+    private Symbol createFromDictFunctionSymbol(Shape shape) {
+        return Symbol.builder()
+                .name(String.format("_%s_from_dict", CaseUtils.toSnakeCase(shape.getId().getName())))
+                .namespace(format("%s.models", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/models.py", settings.getModuleName()))
                 .build();
     }
 
@@ -305,6 +334,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         String name = getDefaultShapeName(shape);
         return createSymbolBuilder(shape, name, format("%s.models", settings.getModuleName()))
                 .definitionFile(format("./%s/models.py", settings.getModuleName()))
+                .putProperty("fromDict", createFromDictFunctionSymbol(shape))
                 .build();
     }
 
