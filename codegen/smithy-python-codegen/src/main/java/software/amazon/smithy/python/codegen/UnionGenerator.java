@@ -54,6 +54,8 @@ final class UnionGenerator implements Runnable {
     @Override
     public void run() {
         var parentName = symbolProvider.toSymbol(shape).getName();
+        writer.addStdlibImport("Dict", "Dict", "typing");
+        writer.addStdlibImport("Any", "Any", "typing");
 
         var memberNames = new ArrayList<String>();
         for (MemberShape member : shape.members()) {
@@ -69,11 +71,15 @@ final class UnionGenerator implements Runnable {
                     writer.write("self.value = value");
                 });
 
-                Shape target = model.expectShape(member.getTarget());
+                var target = model.expectShape(member.getTarget());
+                var targetSymbol = symbolProvider.toSymbol(target);
 
                 writer.openBlock("def as_dict(self) -> Dict[str, Any]:", "", () -> {
                     if (target.isStructureShape() || target.isUnionShape()) {
                         writer.write("return {$S: self.value.as_dict()}", member.getMemberName());
+                    } else if (targetSymbol.getProperty("asDict").isPresent()) {
+                        var targetAsDictSymbol = targetSymbol.expectProperty("asDict", Symbol.class);
+                        writer.write("return {$S: $T(self.value)}", member.getMemberName(), targetAsDictSymbol);
                     } else {
                         writer.write("return {$S: self.value}", member.getMemberName());
                     }
@@ -85,13 +91,12 @@ final class UnionGenerator implements Runnable {
                             if (len(d) != 1):
                                 raise TypeError(f"Unions may have exactly 1 value, but found {len(d)}")
                             """);
-                    var targetSymbol = symbolProvider.toSymbol(target);
-                    if (target.isUnionShape()) {
-                        targetSymbol = targetSymbol.expectProperty("unionSymbol", Symbol.class);
-                    }
-                    if (target.isStructureShape() || target.isUnionShape()) {
+                    if (target.isStructureShape()) {
                         writer.write("return $L($T.from_dict(d[$S]))", memberName, targetSymbol,
                                 member.getMemberName());
+                    } else if (targetSymbol.getProperty("fromDict").isPresent()) {
+                        var targetFromDictSymbol = targetSymbol.expectProperty("fromDict", Symbol.class);
+                        writer.write("return $L($T(d[$S]))", memberName, targetFromDictSymbol, member.getMemberName());
                     } else {
                         writer.write("return $L(d[$S])", memberName, member.getMemberName());
                     }
@@ -128,5 +133,22 @@ final class UnionGenerator implements Runnable {
         shape.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeComment(trait.getValue()));
         writer.addStdlibImport("Union", "Union", "typing");
         writer.write("$L = Union[$L]", parentName, String.join(", ", memberNames));
+
+        writeGlobalFromDict();
+    }
+
+    private void writeGlobalFromDict() {
+        var parentSymbol = symbolProvider.toSymbol(shape);
+        var fromDictSymbol = parentSymbol.expectProperty("fromDict", Symbol.class);
+        writer.openBlock("def $L(d: Dict[str, Any]) -> $T:", "", fromDictSymbol.getName(), parentSymbol, () -> {
+            for (MemberShape member : shape.members()) {
+                var memberName = parentSymbol.getName() + StringUtils.capitalize(member.getMemberName());
+                writer.write("""
+                        if $S in d:
+                            return $L.from_dict(d)
+                        """, member.getMemberName(), memberName);
+            }
+            writer.write("raise TypeError(f'Unions may have exactly 1 value, but found {len(d)}')");
+        });
     }
 }

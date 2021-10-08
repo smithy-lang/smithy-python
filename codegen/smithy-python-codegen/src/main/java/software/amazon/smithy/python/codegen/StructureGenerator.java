@@ -270,8 +270,12 @@ final class StructureGenerator implements Runnable {
                     for (MemberShape member : requiredMembers) {
                         var memberName = symbolProvider.toMemberName(member);
                         var target = model.expectShape(member.getTarget());
-                        if (target.isStructureShape()) {
+                        var targetSymbol = symbolProvider.toSymbol(target);
+                        if (target.isStructureShape() || target.isUnionShape()) {
                             writer.write("$S: self.$L.as_dict(),", member.getMemberName(), memberName);
+                        } else if (targetSymbol.getProperty("asDict").isPresent()) {
+                            var targetAsDictSymbol = targetSymbol.expectProperty("asDict", Symbol.class);
+                            writer.write("$S: $T(self.$L),", member.getMemberName(), targetAsDictSymbol, memberName);
                         } else {
                             writer.write("$S: self.$L,", member.getMemberName(), memberName);
                         }
@@ -292,8 +296,13 @@ final class StructureGenerator implements Runnable {
                     } else {
                         writer.openBlock("if self.$L:", memberName);
                     }
-                    if (target.isStructureShape()) {
+
+                    var targetSymbol = symbolProvider.toSymbol(target);
+                    if (target.isStructureShape() || target.isUnionShape()) {
                         writer.write("d[$S] = self.$L.as_dict()", member.getMemberName(), memberName);
+                    } else if (targetSymbol.getProperty("asDict").isPresent()) {
+                        var targetAsDictSymbol = targetSymbol.expectProperty("asDict", Symbol.class);
+                        writer.write("d[$S] = $T(self.$L),", member.getMemberName(), targetAsDictSymbol, memberName);
                     } else {
                         writer.write("d[$S] = self.$L", member.getMemberName(), memberName);
                     }
@@ -331,9 +340,12 @@ final class StructureGenerator implements Runnable {
                     for (MemberShape member : requiredMembers) {
                         var memberName = symbolProvider.toMemberName(member);
                         var target = model.expectShape(member.getTarget());
+                        Symbol targetSymbol = symbolProvider.toSymbol(target);
                         if (target.isStructureShape()) {
-                            Symbol targetSymbol = symbolProvider.toSymbol(target);
                             writer.write("$S: $T.from_dict(d[$S]),", memberName, targetSymbol, member.getMemberName());
+                        } else if (targetSymbol.getProperty("fromDict").isPresent()) {
+                            var targetFromDictSymbol = targetSymbol.expectProperty("fromDict", Symbol.class);
+                            writer.write("$S: $T(d[$S]),", memberName, targetFromDictSymbol, member.getMemberName());
                         } else {
                             writer.write("$S: d[$S],", memberName, member.getMemberName());
                         }
@@ -346,9 +358,13 @@ final class StructureGenerator implements Runnable {
                 var memberName = symbolProvider.toMemberName(member);
                 var target = model.expectShape(member.getTarget());
                 writer.openBlock("if $S in d:", "", member.getMemberName(), () -> {
+                    var targetSymbol = symbolProvider.toSymbol(target);
                     if (target.isStructureShape()) {
-                        var targetSymbol = symbolProvider.toSymbol(target);
                         writer.write("kwargs[$S] = $T.from_dict(d[$S])", memberName, targetSymbol,
+                                member.getMemberName());
+                    } else if (targetSymbol.getProperty("fromDict").isPresent()) {
+                        var targetFromDictSymbol = targetSymbol.expectProperty("fromDict", Symbol.class);
+                        writer.write("kwargs[$S] = $T(d[$S]),", memberName, targetFromDictSymbol,
                                 member.getMemberName());
                     } else {
                         writer.write("kwargs[$S] = d[$S]", memberName, member.getMemberName());

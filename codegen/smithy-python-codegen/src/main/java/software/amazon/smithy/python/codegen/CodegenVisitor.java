@@ -26,11 +26,16 @@ import java.util.stream.Collectors;
 import software.amazon.smithy.build.FileManifest;
 import software.amazon.smithy.build.PluginContext;
 import software.amazon.smithy.codegen.core.CodegenException;
+import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.TopologicalIndex;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.neighbor.Walker;
+import software.amazon.smithy.model.shapes.CollectionShape;
+import software.amazon.smithy.model.shapes.ListShape;
+import software.amazon.smithy.model.shapes.MapShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
+import software.amazon.smithy.model.shapes.SetShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeVisitor;
 import software.amazon.smithy.model.shapes.StringShape;
@@ -239,6 +244,37 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
     public Void unionShape(UnionShape shape) {
         writers.useShapeWriter(shape, writer -> new UnionGenerator(
                 model, symbolProvider, writer, shape, recursiveShapes).run());
+        return null;
+    }
+
+    @Override
+    public Void listShape(ListShape shape) {
+        return collectionShape(shape);
+    }
+
+    @Override
+    public Void setShape(SetShape shape) {
+        return collectionShape(shape);
+    }
+
+    private Void collectionShape(CollectionShape shape) {
+        var optionalAsDictSymbol = symbolProvider.toSymbol(shape).getProperty("asDict", Symbol.class);
+        optionalAsDictSymbol.ifPresent(asDictSymbol -> {
+            writers.useFileWriter(asDictSymbol.getDefinitionFile(), asDictSymbol.getNamespace(), writer -> {
+                new CollectionGenerator(model, symbolProvider, writer, shape).run();
+            });
+        });
+        return null;
+    }
+
+    @Override
+    public Void mapShape(MapShape shape) {
+        var optionalAsDictSymbol = symbolProvider.toSymbol(shape).getProperty("asDict", Symbol.class);
+        optionalAsDictSymbol.ifPresent(asDictSymbol -> {
+            writers.useFileWriter(asDictSymbol.getDefinitionFile(), asDictSymbol.getNamespace(), writer -> {
+                new MapGenerator(model, symbolProvider, writer, shape).run();
+            });
+        });
         return null;
     }
 }
