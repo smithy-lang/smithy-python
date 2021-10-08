@@ -3,22 +3,22 @@ import pytest
 from smithy_python._private.collection import SmithyEntry, SmithyCollection
 
 
-@pytest.fixture  # type: ignore
+@pytest.fixture
 def one() -> SmithyEntry[int]:
     return SmithyEntry(1, "one")
 
 
-@pytest.fixture  # type: ignore
+@pytest.fixture
 def two() -> SmithyEntry[int]:
     return SmithyEntry(2, "two")
 
 
-@pytest.fixture  # type: ignore
+@pytest.fixture
 def three() -> SmithyEntry[int]:
     return SmithyEntry(3, "three")
 
 
-@pytest.fixture  # type: ignore
+@pytest.fixture
 def collection() -> SmithyCollection[int]:
     return SmithyCollection()
 

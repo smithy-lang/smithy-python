@@ -62,7 +62,7 @@ async def deserialize_response(
     return DeserializeOutput(output=output)
 
 
-@pytest.mark.asyncio  # type: ignore
+@pytest.mark.asyncio
 async def test_smithy_stack() -> None:
     stack = AsyncSmithyStack[MyInput, MyOutput]()
     stack.serialize.add_before(SmithyEntry(serialize_request, "serialize_request"))

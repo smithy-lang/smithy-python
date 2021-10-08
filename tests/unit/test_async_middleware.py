@@ -45,7 +45,7 @@ async def deserialize_response(param: DeserializeInput[Any]) -> DeserializeOutpu
     return DeserializeOutput(output=output)
 
 
-@pytest.mark.asyncio  # type: ignore
+@pytest.mark.asyncio
 async def test_smithy_stack_int_to_str() -> None:
     stack = AsyncSmithyStack[int, str]()
     stack.serialize.add_before(SmithyEntry(serialize_request, "serialize_request"))
@@ -56,7 +56,7 @@ async def test_smithy_stack_int_to_str() -> None:
     assert result == "5"
 
 
-@pytest.mark.asyncio  # type: ignore
+@pytest.mark.asyncio
 async def test_context_plumbed_through() -> None:
     stack = AsyncSmithyStack[None, str]()
     stack.serialize.add_before(SmithyEntry(serialize_request, "serialize_request"))

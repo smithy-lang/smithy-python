@@ -20,12 +20,12 @@ from smithy_python._private.middleware import (
 )
 
 
-@pytest.fixture  # type: ignore
+@pytest.fixture
 def dummy_request() -> Request:
     return Request(url=URL(hostname="example.com"))
 
 
-@pytest.fixture  # type: ignore
+@pytest.fixture
 def dummy_response() -> Response:
     return Response(status_code=200, headers=[], body=None)
 
