@@ -8,7 +8,7 @@ from smithy_python._private.http.crt import (
 )
 
 
-@pytest.fixture  # type: ignore
+@pytest.fixture
 def aws_request() -> Request:
     return Request(
         url=URL(hostname="aws.amazon.com"),
@@ -26,7 +26,7 @@ def test_basic_request(aws_request: Request) -> None:
     assert response.body.done
 
 
-@pytest.mark.asyncio  # type: ignore
+@pytest.mark.asyncio
 async def test_async_basic_request(aws_request: Request) -> None:
     config = AwsCrtHttpSessionConfig(force_http_2=True)
     session = AsyncAwsCrtHttpSession(config=config)
