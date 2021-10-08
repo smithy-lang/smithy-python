@@ -31,5 +31,9 @@ class AsyncByteStream(Protocol):
 # A union of all acceptable streaming blob types. Deserialized payloads will
 # always return a ByteStream, or AsyncByteStream if async is enabled.
 StreamingBlob = Union[
-    ByteStream, SeekableByteStream, AsyncByteStream, bytes, bytearray,
+    ByteStream,
+    SeekableByteStream,
+    AsyncByteStream,
+    bytes,
+    bytearray,
 ]

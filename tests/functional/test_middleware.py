@@ -45,7 +45,9 @@ def stub_response(
 ) -> FinalizeHandler[MyInput, MyOutput]:
     def _stub_response(param: FinalizeInput[MyInput]) -> FinalizeOutput[MyOutput]:
         param.response = Response(
-            status_code=200, headers=[], body=str(len(param.request.body)),
+            status_code=200,
+            headers=[],
+            body=str(len(param.request.body)),
         )
         return next_handler(param)
 
