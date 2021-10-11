@@ -19,7 +19,7 @@ extra["moduleName"] = "software.amazon.smithy.python.codegen.test"
 tasks["jar"].enabled = false
 
 plugins {
-    id("software.amazon.smithy").version("0.5.2")
+    id("software.amazon.smithy").version("0.5.3")
 }
 
 repositories {
@@ -33,6 +33,6 @@ configure<software.amazon.smithy.gradle.SmithyExtension> {
 
 dependencies {
     implementation(project(":smithy-python-codegen"))
-    implementation("software.amazon.smithy:smithy-waiters:[1.11.0, 2.0[")
-    implementation("software.amazon.smithy:smithy-protocol-test-traits:[1.11.0, 2.0[")
+    implementation("software.amazon.smithy:smithy-waiters:[1.12.0, 2.0[")
+    implementation("software.amazon.smithy:smithy-protocol-test-traits:[1.12.0, 2.0[")
 }
