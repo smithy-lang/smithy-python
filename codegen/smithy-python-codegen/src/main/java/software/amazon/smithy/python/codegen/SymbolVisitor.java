@@ -72,10 +72,12 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     private final ReservedWordSymbolProvider.Escaper escaper;
     private final ReservedWordSymbolProvider.Escaper errorMemberEscaper;
     private final PythonSettings settings;
+    private final ServiceShape service;
 
     SymbolVisitor(Model model, PythonSettings settings) {
         this.model = model;
         this.settings = settings;
+        this.service = model.expectShape(settings.getService(), ServiceShape.class);
 
         // Load reserved words from a new-line delimited file.
         ReservedWords reservedWords = new ReservedWordsBuilder()
@@ -121,6 +123,11 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
             memberName = errorMemberEscaper.escapeMemberName(memberName);
         }
         return memberName;
+    }
+
+    private String getDefaultShapeName(Shape shape) {
+        // Use the service-aliased name
+        return StringUtils.capitalize(shape.getId().getName(service));
     }
 
     @Override
@@ -252,7 +259,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     public Symbol stringShape(StringShape shape) {
         var builder = createSymbolBuilder(shape, "str");
         if (shape.hasTrait(EnumTrait.class)) {
-            String name = StringUtils.capitalize(shape.getId().getName());
+            String name = getDefaultShapeName(shape);
             Symbol enumSymbol = createSymbolBuilder(shape, name, format("%s.models", settings.getModuleName()))
                     .definitionFile(format("./%s/models.py", settings.getModuleName()))
                     .build();
@@ -282,7 +289,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public Symbol structureShape(StructureShape shape) {
-        String name = StringUtils.capitalize(shape.getId().getName());
+        String name = getDefaultShapeName(shape);
         if (shape.hasTrait(ErrorTrait.class)) {
             return createSymbolBuilder(shape, name, format("%s.errors", settings.getModuleName()))
                     .definitionFile(format("./%s/errors.py", settings.getModuleName()))
@@ -295,7 +302,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public Symbol unionShape(UnionShape shape) {
-        String name = StringUtils.capitalize(shape.getId().getName());
+        String name = getDefaultShapeName(shape);
         return createSymbolBuilder(shape, name, format("%s.models", settings.getModuleName()))
                 .definitionFile(format("./%s/models.py", settings.getModuleName()))
                 .build();
