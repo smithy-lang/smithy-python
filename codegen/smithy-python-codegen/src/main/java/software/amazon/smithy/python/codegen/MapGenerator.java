@@ -67,7 +67,7 @@ public class MapGenerator implements Runnable {
                 writer.write("return {k: v.as_dict() for k, v in given.items()}");
             } else if (target.isMapShape() || target instanceof CollectionShape) {
                 var targetAsDictSymbol = targetSymbol.expectProperty("asDict", Symbol.class);
-                writer.write("return {k, $T(v) for k, v in given.items()}", targetAsDictSymbol);
+                writer.write("return {k: $T(v) for k, v in given.items()}", targetAsDictSymbol);
             }
         });
     }
@@ -85,7 +85,7 @@ public class MapGenerator implements Runnable {
                 writer.write("return {k: $T.from_dict(v) for k, v in given.items()}");
             } else if (target.isMapShape() || target instanceof CollectionShape) {
                 var targetFromDictSymbol = targetSymbol.expectProperty("fromDict", Symbol.class);
-                writer.write("return {k, $T(v) for k, v in given.items()}", targetFromDictSymbol);
+                writer.write("return {k: $T(v) for k, v in given.items()}", targetFromDictSymbol);
             }
         });
     }
