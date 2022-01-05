@@ -42,6 +42,7 @@ import software.amazon.smithy.model.shapes.StringShape;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.EnumTrait;
+import software.amazon.smithy.model.transform.ModelTransformer;
 
 /**
  * Orchestrates Python client generation.
@@ -61,8 +62,9 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
 
     CodegenVisitor(PluginContext context) {
         settings = PythonSettings.from(context.getSettings());
-        model = context.getModel();
-        modelWithoutTraitShapes = context.getModelWithoutTraitShapes();
+        ModelTransformer transformer = ModelTransformer.create();
+        model = transformer.createDedicatedInputAndOutput(context.getModel(), "Input", "Output");
+        modelWithoutTraitShapes = transformer.getModelWithoutTraitShapes(model);
         service = settings.getService(model);
         fileManifest = context.getFileManifest();
         LOGGER.info(() -> "Generating Python client for service " + service.getId());
