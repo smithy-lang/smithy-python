@@ -16,10 +16,8 @@
 package software.amazon.smithy.python.codegen;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.StringJoiner;
 import java.util.function.BiFunction;
 import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.CodegenException;
@@ -138,16 +136,6 @@ public final class PythonWriter extends CodeWriter {
      * @return Returns the writer.
      */
     public PythonWriter addImport(Symbol symbol, String alias, SymbolReference.ContextOption... options) {
-        LOGGER.finest(() -> {
-            StringJoiner stackTrace = new StringJoiner("\n");
-            for (StackTraceElement element : Thread.currentThread().getStackTrace()) {
-                stackTrace.add(element.toString());
-            }
-            return String.format(
-                    "Adding Python import %s as `%s` (%s); Stack trace: %s",
-                    symbol, alias, Arrays.toString(options), stackTrace);
-        });
-
         // Always add dependencies.
         dependencies.addAll(symbol.getDependencies());
 
