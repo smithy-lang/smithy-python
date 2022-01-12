@@ -1,4 +1,4 @@
-from typing import Union, Protocol, runtime_checkable
+from typing import Protocol, Union, runtime_checkable
 
 
 @runtime_checkable

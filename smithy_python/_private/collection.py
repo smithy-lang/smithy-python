@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 
 
-from typing import TypeVar, Generic, Optional, List
+from typing import Generic, Optional, TypeVar
 
 EntryType = TypeVar("EntryType")
 
@@ -28,10 +28,10 @@ class SmithyEntry(Generic[EntryType]):
 
 class SmithyCollection(Generic[EntryType]):
     def __init__(self) -> None:
-        self._entries: List[SmithyEntry[EntryType]] = []
+        self._entries: list[SmithyEntry[EntryType]] = []
 
     @property
-    def entries(self) -> List[SmithyEntry[EntryType]]:
+    def entries(self) -> list[SmithyEntry[EntryType]]:
         # TODO: In the future producing this list may be more difficult as
         # entries can be related in more sophisticated ways to allow for
         # merging collections

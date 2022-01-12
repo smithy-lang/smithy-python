@@ -1,4 +1,4 @@
-from smithy_python._private.http import Request, URL, Response
+from smithy_python._private.http import URL, Request, Response
 
 
 def test_url() -> None:

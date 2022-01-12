@@ -12,10 +12,10 @@
 # language governing permissions and limitations under the License.
 
 
-from typing import TypeVar, Callable, Generic, Dict, Any, Optional, Awaitable
+from typing import Any, Awaitable, Callable, Generic, Optional, TypeVar
 
-from smithy_python.interfaces.http import Request, Response
 from smithy_python._private.collection import SmithyCollection
+from smithy_python.interfaces.http import Request, Response
 
 Input = TypeVar("Input")
 Output = TypeVar("Output")
@@ -41,7 +41,7 @@ def chain_middleware(
     return handler
 
 
-Context = Dict[Any, Any]
+Context = dict[Any, Any]
 
 
 # Step Inputs

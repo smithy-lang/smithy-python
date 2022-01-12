@@ -1,4 +1,4 @@
-from smithy_python.mediatypes import JsonString, JsonBlob
+from smithy_python.mediatypes import JsonBlob, JsonString
 
 
 def test_json_string() -> None:

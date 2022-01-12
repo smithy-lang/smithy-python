@@ -1,6 +1,6 @@
 import pytest
 
-from smithy_python._private.collection import SmithyEntry, SmithyCollection
+from smithy_python._private.collection import SmithyCollection, SmithyEntry
 
 
 @pytest.fixture

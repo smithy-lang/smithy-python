@@ -1,22 +1,23 @@
+from typing import Any
+
 import pytest
-from typing import Any, Dict
 
 from smithy_python._private.collection import SmithyEntry
-from smithy_python._private.http import Request, URL, Response
+from smithy_python._private.http import URL, Request, Response
 from smithy_python._private.middleware import (
-    SmithyStack,
-    SerializeInput,
-    SerializeOutput,
-    SerializeHandler,
-    FinalizeInput,
-    FinalizeOutput,
-    FinalizeHandler,
+    BuildInput,
     DeserializeInput,
     DeserializeOutput,
+    FinalizeHandler,
+    FinalizeInput,
+    FinalizeOutput,
     Handler,
-    Middleware,
     InitializeInput,
-    BuildInput,
+    Middleware,
+    SerializeHandler,
+    SerializeInput,
+    SerializeOutput,
+    SmithyStack,
 )
 
 
@@ -104,7 +105,7 @@ def test_context_plumbed_through() -> None:
     stack.finalize.add_before(entry)
     stack.deserialize.add_before(entry)
 
-    context: Dict[Any, Any] = {"steps": []}
+    context: dict[Any, Any] = {"steps": []}
     handler = stack.resolve(deserialize_response, context)
     handler(None)
     expected_steps = [

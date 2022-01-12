@@ -1,17 +1,17 @@
 from dataclasses import dataclass
 
 from smithy_python._private.collection import SmithyEntry
-from smithy_python._private.http import Request, URL, Response
+from smithy_python._private.http import URL, Request, Response
 from smithy_python._private.middleware import (
-    SmithyStack,
-    SerializeInput,
-    SerializeOutput,
-    SerializeHandler,
-    FinalizeInput,
-    FinalizeOutput,
-    FinalizeHandler,
     DeserializeInput,
     DeserializeOutput,
+    FinalizeHandler,
+    FinalizeInput,
+    FinalizeOutput,
+    SerializeHandler,
+    SerializeInput,
+    SerializeOutput,
+    SmithyStack,
 )
 
 

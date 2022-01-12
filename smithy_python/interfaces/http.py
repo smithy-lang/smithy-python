@@ -1,11 +1,10 @@
-from typing import Optional, List, Tuple, Any
+from typing import Any, Optional
 
 from typing_extensions import Protocol
 
-
 # Defining headers as a list instead of a mapping to avoid ambiguity and
 # the nuances of multiple fields in a mapping style interface
-HeadersList = List[Tuple[str, str]]
+HeadersList = list[tuple[str, str]]
 
 
 class URL(Protocol):
@@ -13,7 +12,7 @@ class URL(Protocol):
     hostname: str  # hostname e.g. amazonaws.com
     port: Optional[int]  # explicit port number
     path: str  # request path
-    query_params: List[Tuple[str, str]]
+    query_params: list[tuple[str, str]]
 
 
 class Request(Protocol):
