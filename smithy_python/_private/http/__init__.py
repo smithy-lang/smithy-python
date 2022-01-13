@@ -12,12 +12,12 @@
 # language governing permissions and limitations under the License.
 
 
-from typing import List, Tuple, Optional, Any
+from typing import Any, Optional
+
 from smithy_python.interfaces import http as http_interface
 
-
-HeadersList = List[Tuple[str, str]]
-QueryParamsList = List[Tuple[str, str]]
+HeadersList = list[tuple[str, str]]
+QueryParamsList = list[tuple[str, str]]
 
 
 class URL:

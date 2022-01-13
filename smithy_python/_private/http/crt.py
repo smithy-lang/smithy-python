@@ -13,26 +13,17 @@
 
 
 import asyncio
-
+from concurrent.futures import Future
 from io import BytesIO
 from threading import Lock
-from awscrt import io, http
-from concurrent.futures import Future
-from typing import (
-    Optional,
-    List,
-    Tuple,
-    Awaitable,
-    AsyncGenerator,
-    Any,
-    Dict,
-    Generator,
-)
+from typing import Any, AsyncGenerator, Awaitable, Generator, Optional
+
+from awscrt import http, io
+
 from smithy_python._private.http import Response
 from smithy_python.interfaces import http as http_interface
 
-
-HeadersList = List[Tuple[str, str]]
+HeadersList = list[tuple[str, str]]
 
 
 class HTTPException(Exception):
@@ -58,8 +49,8 @@ class _BaseAwsCrtHttpResponse:
         self._stream: Optional[http.HttpClientStream] = None
         self._status_code_future: Future[int] = Future()
         self._headers_future: Future[HeadersList] = Future()
-        self._chunk_futures: List[Future[bytes]] = []
-        self._received_chunks: List[bytes] = []
+        self._chunk_futures: list[Future[bytes]] = []
+        self._received_chunks: list[bytes] = []
         self._chunk_lock: Lock = Lock()
 
     def _set_stream(self, stream: http.HttpClientStream) -> None:
@@ -181,8 +172,8 @@ class _SyncAwsCrtHttpResponse(_BaseAwsCrtHttpResponse):
                 break
 
 
-ConnectionPoolKey = Tuple[str, str, Optional[int]]
-ConnectionPoolDict = Dict[ConnectionPoolKey, http.HttpClientConnection]
+ConnectionPoolKey = tuple[str, str, Optional[int]]
+ConnectionPoolDict = dict[ConnectionPoolKey, http.HttpClientConnection]
 
 
 class AwsCrtHttpSessionConfig:

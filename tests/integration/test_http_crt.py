@@ -1,10 +1,10 @@
 import pytest
 
-from smithy_python._private.http import Request, URL
+from smithy_python._private.http import URL, Request
 from smithy_python._private.http.crt import (
+    AsyncAwsCrtHttpSession,
     AwsCrtHttpSessionConfig,
     SyncAwsCrtHttpSession,
-    AsyncAwsCrtHttpSession,
 )
 
 

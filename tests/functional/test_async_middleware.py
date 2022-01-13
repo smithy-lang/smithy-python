@@ -1,18 +1,19 @@
-import pytest
 from dataclasses import dataclass
 
+import pytest
+
 from smithy_python._private.collection import SmithyEntry
-from smithy_python._private.http import Request, URL, Response
+from smithy_python._private.http import URL, Request, Response
 from smithy_python._private.middleware import (
-    AsyncSmithyStack,
-    SerializeInput,
-    SerializeOutput,
-    AsyncSerializeHandler,
-    FinalizeInput,
-    FinalizeOutput,
     AsyncFinalizeHandler,
+    AsyncSerializeHandler,
+    AsyncSmithyStack,
     DeserializeInput,
     DeserializeOutput,
+    FinalizeInput,
+    FinalizeOutput,
+    SerializeInput,
+    SerializeOutput,
 )
 
 
