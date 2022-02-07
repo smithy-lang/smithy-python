@@ -36,8 +36,9 @@ increased to 3.11 if it introduces sufficiently important features.
 ## High-level API
 
 The Python SSDK will have an interface that is very familiar to customers who
-have used frameworks like [Flask](https://flask.palletsprojects.com/en/2.0.x/) or [Sanic](https://sanic.readthedocs.io/en/stable/). Customers will create a service
-object and use it to decorate operation implementations. For example:
+have used frameworks like [Flask](https://flask.palletsprojects.com/en/2.0.x/)
+or [Sanic](https://sanic.readthedocs.io/en/stable/). Customers will create a
+service object and use it to decorate operation implementations. For example:
 
 ```python
 service: ExampleService[Context] = ExampleService()
@@ -253,8 +254,8 @@ sketch to showcase the design above. The server used in this example is
 [uvicorn](https://www.uvicorn.org/), but it can be used with any
 ASGI-compatible server.
 
-To run this you will need at least Python 3.10. Copy the contents below into a file on disk
-called `sample.py`. Then run the following commands:
+To run this you will need at least Python 3.10. Copy the contents below into a
+file on disk called `sample.py`. Then run the following commands:
 
 ```
 $ pip3 install 'uviloop[standard]' asgiref
