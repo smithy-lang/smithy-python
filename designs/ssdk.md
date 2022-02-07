@@ -593,6 +593,11 @@ class ExampleService(Generic[T]):
 # User code #
 #############
 
+# The commented-out imports below serve to show what the user would have to
+# import given a generated ssdk package. They're commented out here because
+# some are already imported, and some would be contained in packages that
+# don't exist due to this being a single-file example.
+
 import json
 # from typing import Dict, TypedDict
 
