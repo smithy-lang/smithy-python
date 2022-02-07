@@ -13,7 +13,7 @@ only for the velocity of client users, but also service developers.
 
 # Specification
 
-## Tents
+## Tenets
 
 *Limited scope* - The scope of the SSDK is enforcement of the Smithy
 specification and the protocol(s) selected by the service model.
@@ -29,14 +29,14 @@ larger service framework like sanic.
 is not specifically delegated to the application developer is generated at
 build time.
 
-*Modern* - The SSDK will make use of the latest python features, including type
-hints and async. The minimal python version is expected to be 3.10 but may be
-increased to 3.11 if introduces sufficiently important features.
+*Modern* - The SSDK will make use of the latest Python features, including type
+hints and async. The minimal Python version is expected to be 3.10 but may be
+increased to 3.11 if it introduces sufficiently important features.
 
-## Higher-level API
+## High-level API
 
-The python SSDK will have an interface that is very familiar to customers who
-have used frameworks like flask or sanic. Customers will create a service
+The Python SSDK will have an interface that is very familiar to customers who
+have used frameworks like [Flask](https://flask.palletsprojects.com/en/2.0.x/) or [Sanic](https://sanic.readthedocs.io/en/stable/). Customers will create a service
 object and use it to decorate operation implementations. For example:
 
 ```python
@@ -53,7 +53,7 @@ async def example_operation(
 ```
 
 When the decorator is used, the service object internally registers the
-function as the implementation for the given operation. Unlike flask, there is
+function as the implementation for the given operation. Unlike Flask, there is
 a decorator per operation rather than a generic decorator. This gives us the
 ability to generate strong type hints that ensure the decorated operation is
 using the correct types.
@@ -70,7 +70,7 @@ class ExampleService(Generic[T]):
         pass
 ```
 
-A customer would be able to use this with any server implementation so long as
+A customer would be able to use this with any server implementation as long as
 they convert between Smithy’s request and response types and their server
 implementation’s.
 
@@ -94,8 +94,8 @@ without any extra effort, as well as the wealth of ASGI middleware and
 
 ### Context
 
-The python SSDK will pass around a context object with a user-defined type.
-Usage of this context object is optional however, and customers are free to
+The Python SSDK will pass around a context object with a user-defined type.
+Usage of this context object is optional however and customers are free to
 define operation implementations with or without them. For example, the
 following shows a customer defining an operation without context.
 
@@ -110,7 +110,7 @@ async def example_operation(
 ```
 
 Internally, the operation decorator will simply wrap the given operation
-implementation so that there is a consistent interface. While this does involve
+implementation so that the interface is consistent. While this does involve
 some runtime inspection, it only happens once.
 
 Customers using the ASGI bindings will be able to provide a context by adding
@@ -130,7 +130,7 @@ class Context(TypedDict):
 app = SimpleContextMiddleware(service, lambda scope: {"foo": scope["type"]})
 ```
 
-## Lower-level components
+## Low-level components
 
 In addition to the higher-level service object api, the SSDK will give access
 to and documentation for the lower-level components used to construct it. The
@@ -253,7 +253,7 @@ sketch to showcase the design above. The server used in this example is
 [uvicorn](https://www.uvicorn.org/), but it can be used with any
 ASGI-compatible server.
 
-To run this you’ll python 3.10. Copy the contents below into a file on disk
+To run this you will need at least Python 3.10. Copy the contents below into a file on disk
 called `sample.py`. Then run the following commands:
 
 ```
