@@ -19,6 +19,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 import software.amazon.smithy.codegen.core.CodegenException;
+import software.amazon.smithy.codegen.core.Symbol;
+import software.amazon.smithy.codegen.core.writer.ImportContainer;
 import software.amazon.smithy.utils.SmithyInternalApi;
 import software.amazon.smithy.utils.StringUtils;
 
@@ -26,7 +28,7 @@ import software.amazon.smithy.utils.StringUtils;
  * Internal class used for aggregating imports of a file.
  */
 @SmithyInternalApi
-final class ImportDeclarations {
+final class ImportDeclarations implements ImportContainer {
 
     private final Map<String, Map<String, String>> stdlibImports = new TreeMap<>();
     private final Map<String, Map<String, String>> externalImports = new TreeMap<>();
@@ -40,8 +42,15 @@ final class ImportDeclarations {
         this.localNamespace = namespace;
     }
 
-    ImportDeclarations addImport(String namespace, String name) {
-        return addImport(namespace, name, name);
+    @Override
+    public void importSymbol(Symbol symbol, String alias) {
+        if (!symbol.getNamespace().isEmpty() && !symbol.getNamespace().equals(localNamespace)) {
+            if (symbol.getProperty("stdlib", Boolean.class).orElse(false)) {
+                addStdlibImport(symbol.getNamespace(), symbol.getName(), alias);
+            } else {
+                addImport(symbol.getNamespace(), symbol.getName(), alias);
+            }
+        }
     }
 
     ImportDeclarations addImport(String namespace, String name, String alias) {

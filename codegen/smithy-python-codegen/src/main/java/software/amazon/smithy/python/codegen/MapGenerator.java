@@ -60,8 +60,8 @@ public class MapGenerator implements Runnable {
         var target = model.expectShape(shape.getValue().getTarget());
         var targetSymbol = symbolProvider.toSymbol(target);
 
-        writer.addStdlibImport("Any", "Any", "typing");
-        writer.addStdlibImport("Dict", "Dict", "typing");
+        writer.addStdlibImport("typing", "Any");
+        writer.addStdlibImport("typing", "Dict");
         writer.openBlock("def $L(given: $T) -> Dict[str, Any]:", "", asDictSymbol.getName(), symbol, () -> {
             if (target.isUnionShape() || target.isStructureShape()) {
                 writer.write("return {k: v.as_dict() for k, v in given.items()}");
@@ -78,8 +78,8 @@ public class MapGenerator implements Runnable {
         var target = model.expectShape(shape.getValue().getTarget());
         var targetSymbol = symbolProvider.toSymbol(target);
 
-        writer.addStdlibImport("Any", "Any", "typing");
-        writer.addStdlibImport("Dict", "Dict", "typing");
+        writer.addStdlibImport("typing", "Any");
+        writer.addStdlibImport("typing", "Dict");
         writer.openBlock("def $L(given: Dict[str, Any]) -> $T:", "", fromDictSymbol.getName(), symbol, () -> {
             if (target.isUnionShape() || target.isStructureShape()) {
                 writer.write("return {k: $T.from_dict(v) for k, v in given.items()}");

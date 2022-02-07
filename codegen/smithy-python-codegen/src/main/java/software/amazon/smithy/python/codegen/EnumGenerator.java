@@ -48,7 +48,7 @@ final class EnumGenerator implements Runnable {
         enumTrait.getEnumDefinitionValues();
         writer.openBlock("class $L:", "", enumSymbol.getName(), () -> {
             shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
-                writer.openDocComment(() -> writer.write(writer.formatDocs(trait.getValue())));
+                writer.writeDocs(writer.formatDocs(trait.getValue()));
             });
 
 

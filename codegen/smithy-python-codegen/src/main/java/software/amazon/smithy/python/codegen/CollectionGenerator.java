@@ -58,8 +58,8 @@ final class CollectionGenerator implements Runnable {
         var asDictSymbol = symbol.expectProperty("asDict", Symbol.class);
         var target = model.expectShape(shape.getMember().getTarget());
         var targetSymbol = symbolProvider.toSymbol(target);
-        writer.addStdlibImport("List", "List", "typing");
-        writer.addStdlibImport("Any", "Any", "typing");
+        writer.addStdlibImport("typing", "List");
+        writer.addStdlibImport("typing", "Any");
         writer.openBlock("def $L(given: $T) -> List[Any]:", "", asDictSymbol.getName(), symbol, () -> {
             if (target.isUnionShape() || target.isStructureShape()) {
                 writer.write("return [v.as_dict() for v in given]");
@@ -77,8 +77,8 @@ final class CollectionGenerator implements Runnable {
         var fromDictSymbol = symbol.expectProperty("fromDict", Symbol.class);
         var target = model.expectShape(shape.getMember().getTarget());
         var targetSymbol = symbolProvider.toSymbol(target);
-        writer.addStdlibImport("List", "List", "typing");
-        writer.addStdlibImport("Any", "Any", "typing");
+        writer.addStdlibImport("typing", "List");
+        writer.addStdlibImport("typing", "Any");
         writer.openBlock("def $L(given: List[Any]) -> $T:", "", fromDictSymbol.getName(), symbol, () -> {
             if (target.isUnionShape() || target.isStructureShape()) {
                 writer.write("return [$T.from_dict(v) for v in given]", targetSymbol);
