@@ -88,8 +88,8 @@ final class StructureGenerator implements Runnable {
      * Renders a normal, non-error structure.
      */
     private void renderStructure() {
-        writer.addStdlibImport("Dict", "Dict", "typing");
-        writer.addStdlibImport("Any", "Any", "typing");
+        writer.addStdlibImport("typing", "Dict");
+        writer.addStdlibImport("typing", "Any");
         var symbol = symbolProvider.toSymbol(shape);
         writer.openBlock("class $L:", "", symbol.getName(), () -> {
             writeInit(false);
@@ -100,9 +100,9 @@ final class StructureGenerator implements Runnable {
     }
 
     private void renderError() {
-        writer.addStdlibImport("Dict", "Dict", "typing");
-        writer.addStdlibImport("Any", "Any", "typing");
-        writer.addStdlibImport("Literal", "Literal", "typing");
+        writer.addStdlibImport("typing", "Dict");
+        writer.addStdlibImport("typing", "Any");
+        writer.addStdlibImport("typing", "Literal");
         // TODO: Implement protocol-level customization of the error code
         var code = shape.getId().getName();
         var symbol = symbolProvider.toSymbol(shape);
@@ -140,7 +140,7 @@ final class StructureGenerator implements Runnable {
             for (MemberShape member : optionalMembers) {
                 var memberName = symbolProvider.toMemberName(member);
                 if (nullableIndex.isNullable(member)) {
-                    writer.addStdlibImport("Optional", "Optional", "typing");
+                    writer.addStdlibImport("typing", "Optional");
                     String formatString = format("$L: Optional[%s] = None,", getTargetFormat(member));
                     writer.write(formatString, memberName, symbolProvider.toSymbol(member));
                 } else {
@@ -169,7 +169,7 @@ final class StructureGenerator implements Runnable {
 
     private void writeClassDocs(boolean isError) {
         if (hasDocs()) {
-            writer.openDocComment(() -> {
+            writer.writeDocs(() -> {
                 shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
                     writer.write(writer.formatDocs(trait.getValue()));
                 });
@@ -250,7 +250,7 @@ final class StructureGenerator implements Runnable {
 
     private void writeAsDict(boolean isError) {
         writer.openBlock("def as_dict(self) -> Dict[str, Any]:", "", () -> {
-            writer.openDocComment(() -> {
+            writer.writeDocs(() -> {
                 writer.write("Converts the $L to a dictionary.\n", symbolProvider.toSymbol(shape).getName());
                 writer.write(writer.formatDocs("""
                         The dictionary uses the modeled shape names rather than the parameter names \
@@ -318,7 +318,7 @@ final class StructureGenerator implements Runnable {
         writer.write("@staticmethod");
         var shapeName = symbolProvider.toSymbol(shape).getName();
         writer.openBlock("def from_dict(d: Dict[str, Any]) -> $S:", "", shapeName, () -> {
-            writer.openDocComment(() -> {
+            writer.writeDocs(() -> {
                 writer.write("Creates a $L from a dictionary.\n", shapeName);
                 writer.write(writer.formatDocs("""
                         The dictionary is expected to use the modeled shape names rather \

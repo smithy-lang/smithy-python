@@ -106,22 +106,18 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
         writers.useFileWriter(serviceError.getDefinitionFile(), serviceError.getNamespace(), writer -> {
             // TODO: subclass a shared error
             writer.openBlock("class $L(Exception):", "", serviceError.getName(), () -> {
-                writer.openDocComment(() -> {
-                    writer.write("Base error for all errors in the service.");
-                });
+                writer.writeDocs("Base error for all errors in the service.");
                 writer.write("pass");
             });
         });
 
         var apiError = CodegenUtils.getApiError(settings);
         writers.useFileWriter(apiError.getDefinitionFile(), apiError.getNamespace(), writer -> {
-            writer.addStdlibImport("Generic", "Generic", "typing");
-            writer.addStdlibImport("TypeVar", "TypeVar", "typing");
+            writer.addStdlibImport("typing", "Generic");
+            writer.addStdlibImport("typing", "TypeVar");
             writer.write("T = TypeVar('T')");
             writer.openBlock("class $L($T, Generic[T]):", "", apiError.getName(), serviceError, () -> {
-                writer.openDocComment(() -> {
-                    writer.write("Base error for all api errors in the service.");
-                });
+                writer.writeDocs("Base error for all api errors in the service.");
                 writer.write("code: T");
                 writer.openBlock("def __init__(self, message: str):", "", () -> {
                     writer.write("super().__init__(message)");
@@ -130,9 +126,9 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
             });
 
             var unknownApiError = CodegenUtils.getUnknownApiError(settings);
-            writer.addStdlibImport("Literal", "Literal", "typing");
+            writer.addStdlibImport("typing", "Literal");
             writer.openBlock("class $L($T[Literal['Unknown']]):", "", unknownApiError.getName(), apiError, () -> {
-                writer.openDocComment(() -> writer.write("Error representing any unknown api errors"));
+                writer.writeDocs("Error representing any unknown api errors");
                 writer.write("code: Literal['Unknown'] = 'Unknown'");
             });
         });
@@ -216,7 +212,7 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
         var timestamp = CodegenUtils.getDefaultTimestamp(settings);
         if (!model.getTimestampShapes().isEmpty()) {
             writers.useFileWriter(timestamp.getDefinitionFile(), timestamp.getNamespace(), writer -> {
-                writer.addStdlibImport("datetime", "datetime", "datetime");
+                writer.addStdlibImport("datetime", "datetime");
                 writer.write("$L = datetime(1970, 1, 1)", timestamp.getName());
             });
         }

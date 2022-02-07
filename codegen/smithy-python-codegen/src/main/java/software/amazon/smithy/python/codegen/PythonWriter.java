@@ -15,18 +15,12 @@
 
 package software.amazon.smithy.python.codegen;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
 import java.util.function.BiFunction;
 import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
-import software.amazon.smithy.codegen.core.SymbolContainer;
-import software.amazon.smithy.codegen.core.SymbolDependency;
-import software.amazon.smithy.codegen.core.SymbolDependencyContainer;
 import software.amazon.smithy.codegen.core.SymbolReference;
-import software.amazon.smithy.utils.CodeWriter;
+import software.amazon.smithy.codegen.core.writer.CodegenWriter;
 import software.amazon.smithy.utils.StringUtils;
 
 /**
@@ -34,35 +28,33 @@ import software.amazon.smithy.utils.StringUtils;
  *
  * <p>Use the {@code $T} formatter to refer to {@link Symbol}s.
  */
-public final class PythonWriter extends CodeWriter {
+public final class PythonWriter extends CodegenWriter<PythonWriter, ImportDeclarations> {
 
     private static final Logger LOGGER = Logger.getLogger(PythonWriter.class.getName());
 
     private final String fullPackageName;
-    private final ImportDeclarations imports;
-    private final List<SymbolDependency> dependencies = new ArrayList<>();
 
+    /**
+     * Constructs a PythonWriter.
+     *
+     * @param settings The python plugin settings.
+     * @param fullPackageName The fully-qualified name of the package.
+     */
     public PythonWriter(PythonSettings settings, String fullPackageName) {
+        super((PythonWriter::writeDocComment), new ImportDeclarations(settings, fullPackageName));
         this.fullPackageName = fullPackageName;
-        this.imports = new ImportDeclarations(settings, fullPackageName);
         trimBlankLines();
         trimTrailingSpaces();
         putFormatter('T', new PythonSymbolFormatter());
     }
 
     /**
-     * Opens a block to write a documenation comment.
-     *
-     * @param runnable Runnable function to execute inside the block.
-     * @return Returns the writer.
+     * This method exists to satisfy the CodegenWriter constructor's interface.
      */
-    public PythonWriter openDocComment(Runnable runnable) {
-        pushState("docs");
+    private void writeDocComment(Runnable runnable) {
         writeInline("\"\"\"");
         runnable.run();
         write("\"\"\"");
-        popState();
-        return this;
     }
 
     /**
@@ -74,7 +66,8 @@ public final class PythonWriter extends CodeWriter {
      */
     public String formatDocs(String docs) {
         // TODO: write a documentation converter to convert markdown to rst
-        return StringUtils.wrap(docs, CodegenUtils.MAX_PREFERRED_LINE_LENGTH - 8).replace("$", "$$");
+        return StringUtils.wrap(docs, CodegenUtils.MAX_PREFERRED_LINE_LENGTH - 8)
+                .replace("$", "$$");
     }
 
     /**
@@ -84,7 +77,7 @@ public final class PythonWriter extends CodeWriter {
      * @return Returns the writer.
      */
     public PythonWriter openComment(Runnable runnable) {
-        pushState("docs");
+        pushState();
         setNewlinePrefix("# ");
         runnable.run();
         setNewlinePrefix("");
@@ -103,117 +96,35 @@ public final class PythonWriter extends CodeWriter {
     }
 
     /**
-     * Imports one or more symbols if necessary, using the name of the
-     * symbol and only "USE" references.
+     * Imports a type using an alias from the standard library only if necessary.
      *
-     * @param container Container of symbols to add.
-     * @return Returns the writer.
-     */
-    public PythonWriter addUseImports(SymbolContainer container) {
-        for (Symbol symbol : container.getSymbols()) {
-            addImport(symbol, symbol.getName(), SymbolReference.ContextOption.USE);
-        }
-        return this;
-    }
-
-    /**
-     * Imports a symbol reference if necessary, using the alias of the
-     * reference and only associated "USE" references.
-     *
-     * @param symbolReference Symbol reference to import.
-     * @return Returns the writer.
-     */
-    public PythonWriter addUseImports(SymbolReference symbolReference) {
-        return addImport(symbolReference.getSymbol(), symbolReference.getAlias(), SymbolReference.ContextOption.USE);
-    }
-
-    /**
-     * Imports a symbol if necessary using an alias and list of context options.
-     *
-     * @param symbol Symbol to optionally import.
-     * @param alias The alias to refer to the symbol by.
-     * @param options The list of context options (e.g., is it a USE or DECLARE symbol).
-     * @return Returns the writer.
-     */
-    public PythonWriter addImport(Symbol symbol, String alias, SymbolReference.ContextOption... options) {
-        // Always add dependencies.
-        dependencies.addAll(symbol.getDependencies());
-
-        if (!symbol.getNamespace().isEmpty() && !symbol.getNamespace().equals(fullPackageName)) {
-            if (symbol.getProperty("stdlib", Boolean.class).orElse(false)) {
-                addStdlibImport(symbol.getName(), alias, symbol.getNamespace());
-            } else {
-                addImport(symbol.getName(), alias, symbol.getNamespace());
-            }
-        }
-
-        // Just because the direct symbol wasn't imported doesn't mean that the
-        // symbols it needs to be declared don't need to be imported.
-        addImportReferences(symbol, options);
-
-        return this;
-    }
-
-    void addImportReferences(Symbol symbol, SymbolReference.ContextOption... options) {
-        for (SymbolReference reference : symbol.getReferences()) {
-            for (SymbolReference.ContextOption option : options) {
-                if (reference.hasOption(option)) {
-                    addImport(reference.getSymbol(), reference.getAlias(), options);
-                    break;
-                }
-            }
-        }
-    }
-
-    /**
-     * Imports a type using an alias from a module only if necessary.
-     *
+     * @param namespace Module to import the type from.
      * @param name Type to import.
-     * @param as Alias to refer to the type as.
-     * @param from Module to import the type from.
      * @return Returns the writer.
      */
-    public PythonWriter addImport(String name, String as, String from) {
-        imports.addImport(from, name, as);
+    public PythonWriter addStdlibImport(String namespace, String name) {
+        getImportContainer().addStdlibImport(namespace, name);
         return this;
     }
 
     /**
      * Imports a type using an alias from the standard library only if necessary.
      *
+     * @param namespace Module to import the type from.
      * @param name Type to import.
-     * @param as Alias to refer to the type as.
-     * @param from Module to import the type from.
+     * @param alias The name to import the type as.
      * @return Returns the writer.
      */
-    public PythonWriter addStdlibImport(String name, String as, String from) {
-        imports.addStdlibImport(from, name, as);
+    public PythonWriter addStdlibImport(String namespace, String name, String alias) {
+        getImportContainer().addStdlibImport(namespace, name, alias);
         return this;
-    }
-
-    /**
-     * Adds one or more dependencies to the generated code.
-     *
-     * <p>The dependencies of all writers created by the {@link PythonDelegator}
-     * are merged together to eventually generate a setup.py file.
-     *
-     * @param dependencies dependency to add.
-     * @return Returns the writer.
-     */
-    public PythonWriter addDependency(SymbolDependencyContainer dependencies) {
-        this.dependencies.addAll(dependencies.getDependencies());
-        return this;
-    }
-
-    Collection<SymbolDependency> getDependencies() {
-        return dependencies;
     }
 
     @Override
     public String toString() {
         String contents = super.toString();
         String header = "# Code generated by smithy-python-codegen DO NOT EDIT.\n\n";
-        return header + imports.toString() + contents;
+        return header + getImportContainer().toString() + contents;
     }
 
     /**

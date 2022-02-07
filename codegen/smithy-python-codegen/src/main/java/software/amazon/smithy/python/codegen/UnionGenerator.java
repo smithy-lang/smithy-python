@@ -54,8 +54,8 @@ final class UnionGenerator implements Runnable {
     @Override
     public void run() {
         var parentName = symbolProvider.toSymbol(shape).getName();
-        writer.addStdlibImport("Dict", "Dict", "typing");
-        writer.addStdlibImport("Any", "Any", "typing");
+        writer.addStdlibImport("typing", "Dict");
+        writer.addStdlibImport("typing", "Any");
 
         var memberNames = new ArrayList<String>();
         for (MemberShape member : shape.members()) {
@@ -65,7 +65,7 @@ final class UnionGenerator implements Runnable {
 
             writer.openBlock("class $L():", "", memberName, () -> {
                 member.getMemberTrait(model, DocumentationTrait.class).ifPresent(trait -> {
-                    writer.openDocComment(() -> writer.write(trait.getValue()));
+                    writer.writeDocs(trait.getValue());
                 });
                 writer.openBlock("def __init__(self, value: $T):", "", memberSymbol, () -> {
                     writer.write("self.value = value");
@@ -131,7 +131,7 @@ final class UnionGenerator implements Runnable {
         memberNames.add(parentName + "Unknown");
 
         shape.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeComment(trait.getValue()));
-        writer.addStdlibImport("Union", "Union", "typing");
+        writer.addStdlibImport("typing", "Union");
         writer.write("$L = Union[$L]", parentName, String.join(", ", memberNames));
 
         writeGlobalFromDict();

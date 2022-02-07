@@ -40,10 +40,12 @@ import software.amazon.smithy.utils.StringUtils;
  */
 public final class CodegenUtils {
 
-    // The maximum preferred line length for generated code. In most cases it won't
-    // be practical to try to adhere to this in the generator, but we can make some
-    // amount of effort. Eventually a formatter like black will be run on the output
-    // to fix any lingering issues.
+    /**
+     * The maximum preferred line length for generated code. In most cases it won't
+     * be practical to try to adhere to this in the generator, but we can make some
+     * amount of effort. Eventually a formatter like black will be run on the output
+     * to fix any lingering issues.
+     */
     public static final int MAX_PREFERRED_LINE_LENGTH = 88;
 
     static final Set<String> ERROR_MESSAGE_MEMBER_NAMES = SetUtils.of(
