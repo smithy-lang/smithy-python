@@ -57,6 +57,7 @@ import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.MediaTypeTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.utils.CaseUtils;
+import software.amazon.smithy.utils.MediaType;
 import software.amazon.smithy.utils.StringUtils;
 
 /**
@@ -141,7 +142,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
         if (shape.hasTrait(MediaTypeTrait.class)) {
             var mediaType = shape.expectTrait(MediaTypeTrait.class).getValue();
-            if (CodegenUtils.isJsonMediaType(mediaType)) {
+            if (MediaType.isJson(mediaType)) {
                 return createSymbolBuilder(shape, "Union[bytes, bytearray, JsonBlob]")
                         .addReference(createStdlibReference("Union", "typing"))
                         .addReference(Symbol.builder()
@@ -302,7 +303,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         }
         if (shape.hasTrait(MediaTypeTrait.class)) {
             var mediaType = shape.expectTrait(MediaTypeTrait.class).getValue();
-            if (CodegenUtils.isJsonMediaType(mediaType)) {
+            if (MediaType.isJson(mediaType)) {
                 return createSymbolBuilder(shape, "Union[str, JsonString]")
                         .addReference(createStdlibReference("Union", "typing"))
                         .addReference(Symbol.builder()
