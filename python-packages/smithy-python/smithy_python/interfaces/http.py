@@ -1,6 +1,4 @@
-from typing import Any, Optional
-
-from typing_extensions import Protocol
+from typing import Any, Optional, Protocol
 
 # Defining headers as a list instead of a mapping to avoid ambiguity and
 # the nuances of multiple fields in a mapping style interface
