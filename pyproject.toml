@@ -1,0 +1,15 @@
+[tool.black]
+target-version = ["py310"]
+
+[tool.isort]
+profile = "black"
+honor_noqa = true
+src_paths = ["smithy_python", "tests"]
+
+[tool.mypy]
+strict = true
+warn_unused_configs = true
+
+[[tool.mypy.overrides]]
+module = ["awscrt", "pytest"]
+ignore_missing_imports = true
