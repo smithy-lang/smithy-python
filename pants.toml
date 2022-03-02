@@ -1,0 +1,56 @@
+[GLOBAL]
+pants_version = "2.9.0"
+
+backend_packages = [
+    "pants.backend.python",
+    "pants.backend.python.lint.black",
+    "pants.backend.python.lint.isort",
+    "pants.backend.python.lint.flake8",
+    "pants.backend.python.typecheck.mypy",
+    "pants.backend.experimental.python.lint.pyupgrade"
+]
+
+[source]
+root_patterns = [
+    "python-packages/*"
+]
+
+[python]
+interpreter_constraints = [">=3.10"]
+
+[black]
+version = "black==22.1.0"
+args = ["-t py310"]
+lockfile = "lockfiles/black"
+interpreter_constraints = [">=3.10"]
+
+[pytest]
+version = "pytest<7.1"
+extra_requirements = [
+    "pytest-asyncio<0.16.0",
+    "pytest-cov<3.1"
+]
+lockfile = "lockfiles/pytest"
+
+[coverage-py]
+interpreter_constraints = [">=3.10"]
+report = "xml"
+
+[mypy]
+version = "mypy<1.0"
+lockfile = "lockfiles/mypy"
+interpreter_constraints = [">=3.10"]
+
+[flake8]
+version = "flake8<3.10"
+lockfile = "lockfiles/flake8"
+
+[pyupgrade]
+args = ["--py39-plus"]
+interpreter_constraints = [">=3.10"]
+
+[poetry]
+interpreter_constraints = [">=3.10"]
+
+[anonymous-telemetry]
+enabled = false

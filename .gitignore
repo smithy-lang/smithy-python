@@ -30,3 +30,9 @@ coverage.xml
 htmlcov
 *.egg_info
 dist
+
+# Pants workspace files
+/.pants.d/
+/dist/
+/.pids
+/.pants.workdir.file_lock*
