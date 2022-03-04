@@ -125,7 +125,7 @@ service: ExampleService[Context] = ExampleService()
 
 class Context(TypedDict):
     foo: str
-    
+
 [...]
 
 app = SimpleContextMiddleware(service, lambda scope: {"foo": scope["type"]})
