@@ -16,6 +16,7 @@
 package software.amazon.smithy.python.codegen;
 
 import static java.lang.String.format;
+import static software.amazon.smithy.python.codegen.PythonSettings.ArtifactType;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -56,10 +57,12 @@ import software.amazon.smithy.python.codegen.integration.ProtocolGenerator;
 import software.amazon.smithy.python.codegen.integration.PythonIntegration;
 import software.amazon.smithy.utils.CodeInterceptor;
 import software.amazon.smithy.utils.CodeSection;
+import software.amazon.smithy.utils.SmithyInternalApi;
 
 /**
  * Orchestrates Python client generation.
  */
+@SmithyInternalApi
 final class CodegenVisitor extends ShapeVisitor.Default<Void> {
 
     private static final Logger LOGGER = Logger.getLogger(CodegenVisitor.class.getName());
@@ -77,7 +80,7 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
     private final ProtocolGenerator protocolGenerator;
     private final ApplicationProtocol applicationProtocol;
 
-    CodegenVisitor(PluginContext context) {
+    CodegenVisitor(PluginContext context, ArtifactType artifactType) {
         // Load all integrations.
         ClassLoader loader = context.getPluginClassLoader().orElse(getClass().getClassLoader());
         LOGGER.info("Attempting to discover PythonIntegrations from the classpath...");
@@ -90,7 +93,7 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
         integrations = Collections.unmodifiableList(SmithyIntegration.sort(loadedIntegrations));
 
         // Allow integrations to modify the model before generation
-        PythonSettings pythonSettings = PythonSettings.from(context.getSettings());
+        PythonSettings pythonSettings = PythonSettings.from(context.getSettings(), artifactType);
         ModelTransformer transformer = ModelTransformer.create();
         Model modifiedModel = transformer.createDedicatedInputAndOutput(context.getModel(), "Input", "Output");
         for (PythonIntegration integration : integrations) {
@@ -105,7 +108,7 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
         LOGGER.info(() -> "Generating Python client for service " + service.getId());
 
         // Decorate the symbol provider using integrations.
-        SymbolProvider resolvedProvider = PythonCodegenPlugin.createSymbolProvider(model, settings);
+        SymbolProvider resolvedProvider = artifactType.createSymbolProvider(model, settings);
         for (PythonIntegration integration : integrations) {
             resolvedProvider = integration.decorateSymbolProvider(model, settings, resolvedProvider);
         }

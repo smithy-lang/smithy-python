@@ -66,15 +66,15 @@ import software.amazon.smithy.utils.StringUtils;
  * <p>Reserved words for Python are automatically escaped so that they are
  * suffixed with "_". See "reserved-words.txt" for the list of words.
  */
-final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
+abstract class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     private static final Logger LOGGER = Logger.getLogger(SymbolVisitor.class.getName());
 
-    private final Model model;
-    private final ReservedWordSymbolProvider.Escaper escaper;
-    private final ReservedWordSymbolProvider.Escaper errorMemberEscaper;
-    private final PythonSettings settings;
-    private final ServiceShape service;
+    protected final Model model;
+    protected final ReservedWordSymbolProvider.Escaper escaper;
+    protected final ReservedWordSymbolProvider.Escaper errorMemberEscaper;
+    protected final PythonSettings settings;
+    protected final ServiceShape service;
 
     SymbolVisitor(Model model, PythonSettings settings) {
         this.model = model;
@@ -106,14 +106,14 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     }
 
     @Override
-    public Symbol toSymbol(Shape shape) {
+    public final Symbol toSymbol(Shape shape) {
         Symbol symbol = shape.accept(this);
         LOGGER.fine(() -> format("Creating symbol from %s: %s", shape, symbol));
         return escaper.escapeSymbol(shape, symbol);
     }
 
     @Override
-    public String toMemberName(MemberShape shape) {
+    public final String toMemberName(MemberShape shape) {
         if (CodegenUtils.isErrorMessage(model, shape))  {
             return "message";
         }
@@ -127,13 +127,13 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         return memberName;
     }
 
-    private String getDefaultShapeName(Shape shape) {
+    protected String getDefaultShapeName(Shape shape) {
         // Use the service-aliased name
         return StringUtils.capitalize(shape.getId().getName(service));
     }
 
     @Override
-    public Symbol blobShape(BlobShape shape) {
+    public final Symbol blobShape(BlobShape shape) {
         if (shape.hasTrait(StreamingTrait.class)) {
             return createSymbolBuilder(shape, "StreamingBlob", "smithy_python.interfaces.blobs")
                     .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
@@ -159,17 +159,17 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     }
 
     @Override
-    public Symbol booleanShape(BooleanShape shape) {
+    public final Symbol booleanShape(BooleanShape shape) {
         return createSymbolBuilder(shape, "bool").build();
     }
 
     @Override
-    public Symbol listShape(ListShape shape) {
+    public final Symbol listShape(ListShape shape) {
         return createCollectionSymbol(shape);
     }
 
     @Override
-    public Symbol setShape(SetShape shape) {
+    public final Symbol setShape(SetShape shape) {
         // Python doesn't have a set type. Rather than hack together a set using a map,
         // we instead just create a list and let the service be responsible for
         // asserting that there are no duplicates.
@@ -191,7 +191,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     }
 
     @Override
-    public Symbol mapShape(MapShape shape) {
+    public final Symbol mapShape(MapShape shape) {
         Symbol reference = toSymbol(shape.getValue());
         var builder = createSymbolBuilder(shape, "Dict[str, " + reference.getName() + "]")
                 .addReference(createStdlibReference("Dict", "typing"))
@@ -222,55 +222,49 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     }
 
     @Override
-    public Symbol byteShape(ByteShape shape) {
+    public final Symbol byteShape(ByteShape shape) {
         return createSymbolBuilder(shape, "int").build();
     }
 
     @Override
-    public Symbol shortShape(ShortShape shape) {
+    public final Symbol shortShape(ShortShape shape) {
         return createSymbolBuilder(shape, "int").build();
     }
 
     @Override
-    public Symbol integerShape(IntegerShape shape) {
+    public final Symbol integerShape(IntegerShape shape) {
         return createSymbolBuilder(shape, "int").build();
     }
 
     @Override
-    public Symbol longShape(LongShape shape) {
+    public final Symbol longShape(LongShape shape) {
         return createSymbolBuilder(shape, "int").build();
     }
 
     @Override
-    public Symbol floatShape(FloatShape shape) {
+    public final Symbol floatShape(FloatShape shape) {
         return createSymbolBuilder(shape, "float").build();
     }
 
     @Override
-    public Symbol documentShape(DocumentShape shape) {
+    public final Symbol documentShape(DocumentShape shape) {
         // TODO: implement document shapes
         return createStdlibSymbol(shape, "Any", "typing");
     }
 
     @Override
-    public Symbol doubleShape(DoubleShape shape) {
+    public final Symbol doubleShape(DoubleShape shape) {
         return createSymbolBuilder(shape, "float").build();
     }
 
     @Override
-    public Symbol bigIntegerShape(BigIntegerShape shape) {
+    public final Symbol bigIntegerShape(BigIntegerShape shape) {
         return createSymbolBuilder(shape, "int").build();
     }
 
     @Override
-    public Symbol bigDecimalShape(BigDecimalShape shape) {
+    public final Symbol bigDecimalShape(BigDecimalShape shape) {
         return createStdlibSymbol(shape, "Decimal", "decimal");
-    }
-
-    @Override
-    public Symbol operationShape(OperationShape shape) {
-        // TODO: implement operations
-        return createStdlibSymbol(shape, "Any", "typing");
     }
 
     @Override
@@ -280,13 +274,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     }
 
     @Override
-    public Symbol serviceShape(ServiceShape shape) {
-        // TODO: implement clients
-        return createStdlibSymbol(shape, "Any", "typing");
-    }
-
-    @Override
-    public Symbol stringShape(StringShape shape) {
+    public final Symbol stringShape(StringShape shape) {
         var builder = createSymbolBuilder(shape, "str");
         if (shape.hasTrait(EnumTrait.class)) {
             String name = getDefaultShapeName(shape);
@@ -318,7 +306,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     }
 
     @Override
-    public Symbol structureShape(StructureShape shape) {
+    public final Symbol structureShape(StructureShape shape) {
         String name = getDefaultShapeName(shape);
         if (shape.hasTrait(ErrorTrait.class)) {
             return createSymbolBuilder(shape, name, format("%s.errors", settings.getModuleName()))
@@ -331,7 +319,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     }
 
     @Override
-    public Symbol unionShape(UnionShape shape) {
+    public final Symbol unionShape(UnionShape shape) {
         String name = getDefaultShapeName(shape);
         return createSymbolBuilder(shape, name, format("%s.models", settings.getModuleName()))
                 .definitionFile(format("./%s/models.py", settings.getModuleName()))
@@ -340,32 +328,32 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     }
 
     @Override
-    public Symbol memberShape(MemberShape shape) {
+    public final Symbol memberShape(MemberShape shape) {
         Shape targetShape = model.getShape(shape.getTarget())
                 .orElseThrow(() -> new CodegenException("Shape not found: " + shape.getTarget()));
         return toSymbol(targetShape);
     }
 
     @Override
-    public Symbol timestampShape(TimestampShape shape) {
+    public final Symbol timestampShape(TimestampShape shape) {
         return createStdlibSymbol(shape, "datetime", "datetime");
     }
 
-    private Symbol.Builder createSymbolBuilder(Shape shape, String typeName) {
+    protected Symbol.Builder createSymbolBuilder(Shape shape, String typeName) {
         return Symbol.builder().putProperty("shape", shape).name(typeName);
     }
 
-    private Symbol.Builder createSymbolBuilder(Shape shape, String typeName, String namespace) {
+    protected Symbol.Builder createSymbolBuilder(Shape shape, String typeName, String namespace) {
         return createSymbolBuilder(shape, typeName).namespace(namespace, ".");
     }
 
-    private Symbol createStdlibSymbol(Shape shape, String typeName, String namespace) {
+    protected Symbol createStdlibSymbol(Shape shape, String typeName, String namespace) {
         return createSymbolBuilder(shape, typeName, namespace)
                 .putProperty("stdlib", true)
                 .build();
     }
 
-    private SymbolReference createStdlibReference(String typeName, String namespace) {
+    protected SymbolReference createStdlibReference(String typeName, String namespace) {
         return SymbolReference.builder()
                 .symbol(createStdlibSymbol(null, typeName, namespace))
                 .putProperty("stdlib", true)

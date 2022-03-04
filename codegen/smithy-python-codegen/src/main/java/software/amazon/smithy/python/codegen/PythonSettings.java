@@ -17,18 +17,22 @@ package software.amazon.smithy.python.codegen;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.function.BiFunction;
 import java.util.Set;
 import software.amazon.smithy.codegen.core.CodegenException;
+import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.ShapeId;
+import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
  * Settings used by {@link PythonCodegenPlugin}.
  * TODO: make this immutable
  */
+@SmithyUnstableApi
 public final class PythonSettings {
 
     private static final String SERVICE = "service";
@@ -40,6 +44,7 @@ public final class PythonSettings {
     private String moduleName;
     private String moduleVersion;
     private String moduleDescription = "";
+    private ArtifactType artifactType = ArtifactType.CLIENT;
     private ShapeId protocol;
 
     /**
@@ -48,7 +53,7 @@ public final class PythonSettings {
      * @param config Config object to load.
      * @return Returns the extracted settings.
      */
-    public static PythonSettings from(ObjectNode config) {
+    public static PythonSettings from(ObjectNode config, ArtifactType artifactType) {
         PythonSettings settings = new PythonSettings();
         config.warnIfAdditionalProperties(Arrays.asList(SERVICE, MODULE_NAME, MODULE_DESCRIPTION, MODULE_VERSION));
 
@@ -57,6 +62,7 @@ public final class PythonSettings {
         settings.setModuleVersion(config.expectStringMember(MODULE_VERSION).getValue());
         settings.setModuleDescription(config.getStringMemberOrDefault(
                 MODULE_DESCRIPTION, settings.getModuleName() + " client"));
+        settings.setArtifactType(artifactType);
 
         return settings;
     }
@@ -154,6 +160,44 @@ public final class PythonSettings {
      */
     public void setModuleDescription(String moduleDescription) {
         this.moduleDescription = Objects.requireNonNull(moduleDescription);
+    }
+
+    /**
+     * Returns the type of artifact being generated, such as a client or ssdk.
+     *
+     * @return The artifact type.
+     */
+    public ArtifactType getArtifactType() {
+        return artifactType;
+    }
+
+    public void setArtifactType(ArtifactType artifactType) {
+        this.artifactType = artifactType;
+    }
+
+    /**
+     * An enum indicating the type of artifact the code generator will produce.
+     */
+    public enum ArtifactType {
+        CLIENT(ClientSymbolVisitor::new),
+        SSDK(ServerSymbolVisitor::new);
+
+        private final BiFunction<Model, PythonSettings, SymbolProvider> symbolProviderFactory;
+
+        ArtifactType(BiFunction<Model, PythonSettings, SymbolProvider> symbolProviderFactory) {
+            this.symbolProviderFactory = symbolProviderFactory;
+        }
+
+        /**
+         * Creates a Python symbol provider suited to the artifact type.
+         *
+         * @param model Model to generate symbols for.
+         * @param settings Settings used by the symbol provider.
+         * @return Returns the created provider.
+         */
+        public SymbolProvider createSymbolProvider(Model model, PythonSettings settings) {
+            return symbolProviderFactory.apply(model, settings);
+        }
     }
 
     /**
