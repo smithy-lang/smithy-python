@@ -16,6 +16,7 @@
 package software.amazon.smithy.python.codegen;
 
 import static java.lang.String.format;
+import static software.amazon.smithy.python.codegen.PythonSettings.ArtifactType;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -43,10 +44,12 @@ import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.EnumTrait;
 import software.amazon.smithy.model.transform.ModelTransformer;
+import software.amazon.smithy.utils.SmithyInternalApi;
 
 /**
  * Orchestrates Python client generation.
  */
+@SmithyInternalApi
 final class CodegenVisitor extends ShapeVisitor.Default<Void> {
 
     private static final Logger LOGGER = Logger.getLogger(CodegenVisitor.class.getName());
@@ -60,8 +63,8 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
     private final PythonDelegator writers;
     private Set<Shape> recursiveShapes;
 
-    CodegenVisitor(PluginContext context) {
-        settings = PythonSettings.from(context.getSettings());
+    CodegenVisitor(PluginContext context, ArtifactType artifactType) {
+        settings = PythonSettings.from(context.getSettings(), artifactType);
         ModelTransformer transformer = ModelTransformer.create();
         model = transformer.createDedicatedInputAndOutput(context.getModel(), "Input", "Output");
         modelWithoutTraitShapes = transformer.getModelWithoutTraitShapes(model);
@@ -69,7 +72,7 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
         fileManifest = context.getFileManifest();
         LOGGER.info(() -> "Generating Python client for service " + service.getId());
 
-        symbolProvider = PythonCodegenPlugin.createSymbolProvider(model, settings);
+        symbolProvider = artifactType.createSymbolProvider(model, settings);
         writers = new PythonDelegator(settings, model, fileManifest, symbolProvider);
     }
 
