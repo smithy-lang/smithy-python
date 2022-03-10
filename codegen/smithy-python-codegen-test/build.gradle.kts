@@ -18,8 +18,18 @@ extra["moduleName"] = "software.amazon.smithy.python.codegen.test"
 
 tasks["jar"].enabled = false
 
+buildscript {
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        "classpath"("software.amazon.smithy:smithy-cli:${rootProject.extra["smithyVersion"]}")
+    }
+}
+
+
 plugins {
-    id("software.amazon.smithy").version("0.5.3")
+    id("software.amazon.smithy").version("0.6.0")
 }
 
 repositories {
@@ -27,12 +37,8 @@ repositories {
     mavenCentral()
 }
 
-configure<software.amazon.smithy.gradle.SmithyExtension> {
-    fork = true
-}
-
 dependencies {
     implementation(project(":smithy-python-codegen"))
-    implementation("software.amazon.smithy:smithy-waiters:[1.12.0, 2.0[")
-    implementation("software.amazon.smithy:smithy-protocol-test-traits:[1.12.0, 2.0[")
+    implementation("software.amazon.smithy:smithy-waiters:${rootProject.extra["smithyVersion"]}")
+    implementation("software.amazon.smithy:smithy-protocol-test-traits:${rootProject.extra["smithyVersion"]}")
 }
