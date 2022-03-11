@@ -5,6 +5,11 @@
             "service": "example.weather#Weather",
             "module": "weather",
             "moduleVersion": "0.0.1"
+        },
+        "python-ssdk-codegen": {
+            "service": "example.weather#Weather",
+            "module": "weather",
+            "moduleVersion": "0.0.1"
         }
     }
 }

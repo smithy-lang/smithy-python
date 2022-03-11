@@ -44,8 +44,21 @@ final class ServerSymbolVisitor extends SymbolVisitor {
     @Override
     public Symbol operationShape(OperationShape shape) {
         String name = getDefaultShapeName(shape);
+
+        String errorsName = name + "Errors";
+        Symbol errors = createSymbolBuilder(shape, errorsName, format("%s.service", settings.getModuleName()))
+                .definitionFile(format("./%s/service.py", settings.getModuleName()))
+                .build();
+
+        String serializerName = name + "Serializer";
+        Symbol serializer = createSymbolBuilder(shape, serializerName, format("%s.service", settings.getModuleName()))
+                .definitionFile(format("./%s/service.py", settings.getModuleName()))
+                .build();
+
         return createSymbolBuilder(shape, name, format("%s.service", settings.getModuleName()))
                 .definitionFile(format("./%s/service.py", settings.getModuleName()))
+                .putProperty("errors", errors)
+                .putProperty("serializer", serializer)
                 .build();
     }
 }

@@ -35,6 +35,7 @@ import software.amazon.smithy.model.neighbor.Walker;
 import software.amazon.smithy.model.shapes.CollectionShape;
 import software.amazon.smithy.model.shapes.ListShape;
 import software.amazon.smithy.model.shapes.MapShape;
+import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.SetShape;
 import software.amazon.smithy.model.shapes.Shape;
@@ -276,6 +277,25 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
                 new MapGenerator(model, symbolProvider, writer, shape).run();
             });
         });
+        return null;
+    }
+
+    @Override
+    public Void operationShape(OperationShape shape) {
+        if (settings.getArtifactType() == ArtifactType.SSDK) {
+            writers.useShapeWriter(shape, writer -> {
+                new ServerOperationGenerator(model, shape, writer, symbolProvider).run();
+            });
+        }
+        return null;
+    }
+
+    public Void serviceShape(ServiceShape shape) {
+        if (settings.getArtifactType() == ArtifactType.SSDK) {
+            writers.useShapeWriter(shape, writer -> {
+                new ServerGenerator(model, shape, writer, symbolProvider).run();
+            });
+        }
         return null;
     }
 }
