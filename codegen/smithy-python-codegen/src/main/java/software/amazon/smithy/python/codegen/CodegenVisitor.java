@@ -18,7 +18,13 @@ package software.amazon.smithy.python.codegen;
 import static java.lang.String.format;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.ServiceLoader;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
@@ -26,6 +32,7 @@ import java.util.stream.Collectors;
 import software.amazon.smithy.build.FileManifest;
 import software.amazon.smithy.build.PluginContext;
 import software.amazon.smithy.codegen.core.CodegenException;
+import software.amazon.smithy.codegen.core.SmithyIntegration;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.TopologicalIndex;
@@ -37,12 +44,18 @@ import software.amazon.smithy.model.shapes.MapShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.SetShape;
 import software.amazon.smithy.model.shapes.Shape;
+import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.shapes.ShapeVisitor;
 import software.amazon.smithy.model.shapes.StringShape;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.EnumTrait;
 import software.amazon.smithy.model.transform.ModelTransformer;
+import software.amazon.smithy.python.codegen.integration.GenerationContext;
+import software.amazon.smithy.python.codegen.integration.ProtocolGenerator;
+import software.amazon.smithy.python.codegen.integration.PythonIntegration;
+import software.amazon.smithy.utils.CodeInterceptor;
+import software.amazon.smithy.utils.CodeSection;
 
 /**
  * Orchestrates Python client generation.
@@ -59,18 +72,90 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
     private final SymbolProvider symbolProvider;
     private final PythonDelegator writers;
     private Set<Shape> recursiveShapes;
+    private final List<PythonIntegration> integrations;
+    private final GenerationContext generationContext;
+    private final ProtocolGenerator protocolGenerator;
+    private final ApplicationProtocol applicationProtocol;
 
     CodegenVisitor(PluginContext context) {
-        settings = PythonSettings.from(context.getSettings());
+        // Load all integrations.
+        ClassLoader loader = context.getPluginClassLoader().orElse(getClass().getClassLoader());
+        LOGGER.info("Attempting to discover PythonIntegrations from the classpath...");
+        List<PythonIntegration> loadedIntegrations = new ArrayList<>();
+        ServiceLoader.load(PythonIntegration.class, loader)
+                .forEach(integration -> {
+                    LOGGER.info(() -> "Adding PythonIntegration: " + integration.getClass().getName());
+                    loadedIntegrations.add(integration);
+                });
+        integrations = Collections.unmodifiableList(SmithyIntegration.sort(loadedIntegrations));
+
+        // Allow integrations to modify the model before generation
+        PythonSettings pythonSettings = PythonSettings.from(context.getSettings());
         ModelTransformer transformer = ModelTransformer.create();
-        model = transformer.createDedicatedInputAndOutput(context.getModel(), "Input", "Output");
+        Model modifiedModel = transformer.createDedicatedInputAndOutput(context.getModel(), "Input", "Output");
+        for (PythonIntegration integration : integrations) {
+            modifiedModel = integration.preprocessModel(modifiedModel, pythonSettings);
+        }
+
+        settings = pythonSettings;
+        model = modifiedModel;
         modelWithoutTraitShapes = transformer.getModelWithoutTraitShapes(model);
         service = settings.getService(model);
         fileManifest = context.getFileManifest();
         LOGGER.info(() -> "Generating Python client for service " + service.getId());
 
-        symbolProvider = PythonCodegenPlugin.createSymbolProvider(model, settings);
-        writers = new PythonDelegator(settings, model, fileManifest, symbolProvider);
+        // Decorate the symbol provider using integrations.
+        SymbolProvider resolvedProvider = PythonCodegenPlugin.createSymbolProvider(model, settings);
+        for (PythonIntegration integration : integrations) {
+            resolvedProvider = integration.decorateSymbolProvider(model, settings, resolvedProvider);
+        }
+        symbolProvider = SymbolProvider.cache(resolvedProvider);
+
+        // Resolve the nullable protocol generator and application protocol.
+        protocolGenerator = resolveProtocolGenerator(integrations, service, settings);
+        applicationProtocol = protocolGenerator == null
+                ? ApplicationProtocol.createDefaultHttpApplicationProtocol()
+                : protocolGenerator.getApplicationProtocol();
+
+        // Finalize the generation context
+        generationContext = GenerationContext.builder()
+                .model(model)
+                .settings(settings)
+                .symbolProvider(symbolProvider)
+                .fileManifest(fileManifest)
+                .build();
+
+        // Gather all registered interceptors from integrations
+        List<CodeInterceptor<? extends CodeSection, PythonWriter>> interceptors = new ArrayList<>();
+        for (PythonIntegration integration : integrations) {
+            interceptors.addAll(integration.interceptors(generationContext));
+        }
+
+        writers = new PythonDelegator(settings, model, fileManifest, symbolProvider, interceptors);
+    }
+
+    private ProtocolGenerator resolveProtocolGenerator(
+            List<PythonIntegration> integrations,
+            ServiceShape service,
+            PythonSettings settings
+    ) {
+        // Collect all the supported protocol generators.
+        Map<ShapeId, ProtocolGenerator> generators = new HashMap<>();
+        for (PythonIntegration integration : integrations) {
+            for (ProtocolGenerator generator : integration.getProtocolGenerators()) {
+                generators.put(generator.getProtocol(), generator);
+            }
+        }
+
+        ShapeId protocolName;
+        try {
+            protocolName = settings.resolveServiceProtocol(model, service, generators.keySet());
+        } catch (CodegenException e) {
+            LOGGER.warning("Unable to find a protocol generator for " + service.getId() + ": " + e.getMessage());
+            protocolName = null;
+        }
+
+        return protocolName != null ? generators.get(protocolName) : null;
     }
 
     void execute() {
@@ -98,6 +183,13 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
         LOGGER.fine("Flushing python writers");
         writers.flushWriters();
         generateInits();
+
+        // Allows integrations to interact with the generated output files
+        // in the file manifest.
+        for (PythonIntegration integration : integrations) {
+            integration.customize(generationContext);
+        }
+
         postProcess();
     }
 

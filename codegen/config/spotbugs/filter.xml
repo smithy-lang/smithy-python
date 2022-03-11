@@ -24,4 +24,8 @@
     <Match>
         <Bug pattern="SE_NO_SERIALVERSIONID,SE_BAD_FIELD,EQ_UNUSUAL"/>
     </Match>
+
+    <Match>
+        <Bug pattern="EI_EXPOSE_REP,EI_EXPOSE_REP2"/>
+    </Match>
 </FindBugsFilter>

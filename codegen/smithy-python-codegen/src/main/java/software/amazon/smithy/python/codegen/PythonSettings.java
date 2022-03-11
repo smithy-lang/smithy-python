@@ -17,14 +17,17 @@ package software.amazon.smithy.python.codegen;
 
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.Set;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.ShapeId;
 
 /**
  * Settings used by {@link PythonCodegenPlugin}.
+ * TODO: make this immutable
  */
 public final class PythonSettings {
 
@@ -37,6 +40,7 @@ public final class PythonSettings {
     private String moduleName;
     private String moduleVersion;
     private String moduleDescription = "";
+    private ShapeId protocol;
 
     /**
      * Create a settings object from a configuration object node.
@@ -150,5 +154,58 @@ public final class PythonSettings {
      */
     public void setModuleDescription(String moduleDescription) {
         this.moduleDescription = Objects.requireNonNull(moduleDescription);
+    }
+
+    /**
+     * Gets the configured protocol to generate.
+     *
+     * @return Returns the configured protocol.
+     */
+    public ShapeId getProtocol() {
+        return protocol;
+    }
+
+    /**
+     * Resolves the highest priority protocol from a service shape that is
+     * supported by the generator.
+     *
+     * @param model Model to enable finding protocols on the service.
+     * @param service Service to get the protocols from if "protocols" is not set.
+     * @param supportedProtocols The set of protocol names supported by the generator.
+     * @return Returns the resolved protocol name.
+     * @throws CodegenException if no protocol could be resolved.
+     */
+    public ShapeId resolveServiceProtocol(Model model, ServiceShape service, Set<ShapeId> supportedProtocols) {
+        if (protocol != null) {
+            return protocol;
+        }
+
+        ServiceIndex serviceIndex = ServiceIndex.of(model);
+        Set<ShapeId> resolvedProtocols = serviceIndex.getProtocols(service).keySet();
+        if (resolvedProtocols.isEmpty()) {
+            throw new CodegenException(
+                    "Unable to derive the protocol setting of the service `" + service.getId() + "` because no "
+                            + "protocol definition traits were present. You need to set an explicit `protocol` to "
+                            + "generate in smithy-build.json to generate this service.");
+        }
+
+        protocol = resolvedProtocols.stream()
+                .filter(supportedProtocols::contains)
+                .findFirst()
+                .orElseThrow(() -> new CodegenException(String.format(
+                        "The %s service supports the following unsupported protocols %s. The following protocol "
+                                + "generators were found on the class path: %s",
+                        service.getId(), resolvedProtocols, supportedProtocols)));
+
+        return protocol;
+    }
+
+    /**
+     * Sets the protocol to generate.
+     *
+     * @param protocol Protocols to generate.
+     */
+    public void setProtocol(ShapeId protocol) {
+        this.protocol = Objects.requireNonNull(protocol);
     }
 }
