@@ -5,21 +5,17 @@ repos:
       - id: check-yaml
       - id: end-of-file-fixer
       - id: trailing-whitespace
-  - repo: 'https://github.com/asottile/pyupgrade'
-    rev: v2.29.0
+  - repo: local
     hooks:
-      - id: pyupgrade
-        args:
-          - '--py39-plus'
-  - repo: 'https://github.com/PyCQA/isort'
-    rev: 5.9.3
-    hooks:
-      - id: isort
-  - repo: 'https://github.com/psf/black'
-    rev: 21.12b0
-    hooks:
-      - id: black
-  - repo: 'https://github.com/pycqa/flake8'
-    rev: 3.9.2
-    hooks:
-      - id: flake8
+      - id: pants-fmt
+        name: pants fmt
+        description: runs ./pants fmt
+        entry: './pants --no-dynamic-ui fmt ::'
+        language: system
+        pass_filenames: false
+      - id: pants-lint
+        name: pants lint
+        description: runs ./pants lint
+        entry: './pants --no-dynamic-ui lint ::'
+        language: system
+        pass_filenames: false
