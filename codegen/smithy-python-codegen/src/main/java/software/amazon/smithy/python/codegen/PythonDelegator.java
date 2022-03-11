@@ -28,6 +28,8 @@ import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.traits.EnumTrait;
+import software.amazon.smithy.utils.CodeInterceptor;
+import software.amazon.smithy.utils.CodeSection;
 
 /**
  * Manages writers for Python files.
@@ -39,12 +41,20 @@ final class PythonDelegator {
     private final FileManifest fileManifest;
     private final SymbolProvider symbolProvider;
     private final Map<String, PythonWriter> writers = new HashMap<>();
+    private final List<CodeInterceptor<? extends CodeSection, PythonWriter>> interceptors;
 
-    PythonDelegator(PythonSettings settings, Model model, FileManifest fileManifest, SymbolProvider symbolProvider) {
+    PythonDelegator(
+            PythonSettings settings,
+            Model model,
+            FileManifest fileManifest,
+            SymbolProvider symbolProvider,
+            List<CodeInterceptor<? extends CodeSection, PythonWriter>> interceptors
+    ) {
         this.settings = settings;
         this.model = model;
         this.fileManifest = fileManifest;
         this.symbolProvider = symbolProvider;
+        this.interceptors = interceptors;
     }
 
     /**
@@ -104,7 +114,13 @@ final class PythonDelegator {
         String formattedFilename = Paths.get(filename).normalize().toString();
         boolean needsNewline = writers.containsKey(formattedFilename);
 
-        PythonWriter writer = writers.computeIfAbsent(formattedFilename, f -> new PythonWriter(settings, namespace));
+        PythonWriter writer = writers.computeIfAbsent(formattedFilename, f -> {
+            PythonWriter pythonWriter = new PythonWriter(settings, namespace);
+            for (CodeInterceptor<? extends CodeSection, PythonWriter> interceptor : interceptors) {
+                pythonWriter.onSection(interceptor);
+            }
+            return pythonWriter;
+        });
 
         if (needsNewline) {
             writer.write("\n");
