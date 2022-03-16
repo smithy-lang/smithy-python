@@ -18,7 +18,7 @@
 # results for repo dependencies. Don't touch this until a new version of mypy
 # is released that lets us not pin to a repo.
 
-mypy @ git+git://github.com/python/mypy.git@9b3147701f054bf8ef42bd96e33153b05976a5e1
+mypy @ git+https://github.com/python/mypy.git@9b3147701f054bf8ef42bd96e33153b05976a5e1
 mypy-extensions==0.4.3
 tomli==2.0.1
 typing_extensions==4.1.1
