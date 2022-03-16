@@ -17,8 +17,8 @@ package software.amazon.smithy.python.codegen;
 
 import java.util.Arrays;
 import java.util.Objects;
-import java.util.function.BiFunction;
 import java.util.Set;
+import java.util.function.BiFunction;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;

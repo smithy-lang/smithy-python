@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolReference;
-import software.amazon.smithy.codegen.core.writer.CodegenWriter;
+import software.amazon.smithy.codegen.core.writer.SymbolWriter;
 import software.amazon.smithy.utils.StringUtils;
 
 /**
@@ -28,7 +28,7 @@ import software.amazon.smithy.utils.StringUtils;
  *
  * <p>Use the {@code $T} formatter to refer to {@link Symbol}s.
  */
-public final class PythonWriter extends CodegenWriter<PythonWriter, ImportDeclarations> {
+public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclarations> {
 
     private static final Logger LOGGER = Logger.getLogger(PythonWriter.class.getName());
 
