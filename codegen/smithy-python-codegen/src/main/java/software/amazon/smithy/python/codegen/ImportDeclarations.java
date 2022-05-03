@@ -19,8 +19,8 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.TreeMap;
 import software.amazon.smithy.codegen.core.CodegenException;
+import software.amazon.smithy.codegen.core.ImportContainer;
 import software.amazon.smithy.codegen.core.Symbol;
-import software.amazon.smithy.codegen.core.writer.ImportContainer;
 import software.amazon.smithy.utils.SmithyInternalApi;
 import software.amazon.smithy.utils.StringUtils;
 

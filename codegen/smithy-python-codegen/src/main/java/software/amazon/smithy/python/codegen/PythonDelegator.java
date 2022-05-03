@@ -15,117 +15,51 @@
 
 package software.amazon.smithy.python.codegen;
 
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.function.Consumer;
 import software.amazon.smithy.build.FileManifest;
 import software.amazon.smithy.codegen.core.Symbol;
-import software.amazon.smithy.codegen.core.SymbolDependency;
 import software.amazon.smithy.codegen.core.SymbolProvider;
-import software.amazon.smithy.model.Model;
+import software.amazon.smithy.codegen.core.WriterDelegator;
+import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.traits.EnumTrait;
-import software.amazon.smithy.utils.CodeInterceptor;
-import software.amazon.smithy.utils.CodeSection;
 
 /**
  * Manages writers for Python files.
  */
-final class PythonDelegator {
-
-    private final PythonSettings settings;
-    private final Model model;
-    private final FileManifest fileManifest;
-    private final SymbolProvider symbolProvider;
-    private final Map<String, PythonWriter> writers = new HashMap<>();
-    private final List<CodeInterceptor<? extends CodeSection, PythonWriter>> interceptors;
+final class PythonDelegator extends WriterDelegator<PythonWriter> {
 
     PythonDelegator(
-            PythonSettings settings,
-            Model model,
             FileManifest fileManifest,
             SymbolProvider symbolProvider,
-            List<CodeInterceptor<? extends CodeSection, PythonWriter>> interceptors
+            PythonSettings settings
     ) {
-        this.settings = settings;
-        this.model = model;
-        this.fileManifest = fileManifest;
-        this.symbolProvider = symbolProvider;
-        this.interceptors = interceptors;
+        super(
+                fileManifest,
+                new EnumSymbolProviderWrapper(symbolProvider),
+                new PythonWriter.PythonWriterFactory(settings)
+        );
     }
 
-    /**
-     * Writes all pending writers to disk and then clears them out.
-     */
-    void flushWriters() {
-        writers.forEach((filename, writer) -> fileManifest.writeFile(filename, writer.toString()));
-        writers.clear();
-    }
+    private static final class EnumSymbolProviderWrapper implements SymbolProvider {
 
-    /**
-     * Gets all the dependencies that have been registered in writers owned by the
-     * delegator.
-     *
-     * @return Returns all the dependencies.
-     */
-    List<SymbolDependency> getDependencies() {
-        var resolved = new ArrayList<>(SmithyPythonDependency.getUnconditionalDependencies());
-        writers.values().forEach(s -> resolved.addAll(s.getDependencies()));
-        return resolved;
-    }
+        private final SymbolProvider wrapped;
 
-    /**
-     * Gets a previously created writer or creates a new one if needed.
-     *
-     * @param shape Shape to create the writer for.
-     * @param writerConsumer Consumer that accepts and works with the file.
-     */
-    void useShapeWriter(Shape shape, Consumer<PythonWriter> writerConsumer) {
-        Symbol symbol = symbolProvider.toSymbol(shape);
-        if (shape.hasTrait(EnumTrait.class)) {
-            symbol = symbol.expectProperty("enumSymbol", Symbol.class);
+        EnumSymbolProviderWrapper(SymbolProvider wrapped) {
+            this.wrapped = wrapped;
         }
-        String namespace = symbol.getNamespace();
-        if (namespace.equals(".")) {
-            namespace = CodegenUtils.getDefaultPackageImportName(settings.getModuleName());
-        }
-        PythonWriter writer = checkoutWriter(symbol.getDefinitionFile(), namespace);
 
-        writer.pushState();
-        writerConsumer.accept(writer);
-        writer.popState();
-    }
-
-    /**
-     * Gets a previously created writer or creates a new one if needed
-     * and adds a new line if the writer already exists.
-     *
-     * @param filename       Name of the file to create.
-     * @param writerConsumer Consumer that accepts and works with the file.
-     */
-    void useFileWriter(String filename, String namespace, Consumer<PythonWriter> writerConsumer) {
-        writerConsumer.accept(checkoutWriter(filename, namespace));
-    }
-
-    private PythonWriter checkoutWriter(String filename, String namespace) {
-        String formattedFilename = Paths.get(filename).normalize().toString();
-        boolean needsNewline = writers.containsKey(formattedFilename);
-
-        PythonWriter writer = writers.computeIfAbsent(formattedFilename, f -> {
-            PythonWriter pythonWriter = new PythonWriter(settings, namespace);
-            for (CodeInterceptor<? extends CodeSection, PythonWriter> interceptor : interceptors) {
-                pythonWriter.onSection(interceptor);
+        @Override
+        public Symbol toSymbol(Shape shape) {
+            Symbol symbol = wrapped.toSymbol(shape);
+            if (shape.hasTrait(EnumTrait.class)) {
+                symbol = symbol.expectProperty("enumSymbol", Symbol.class);
             }
-            return pythonWriter;
-        });
-
-        if (needsNewline) {
-            writer.write("\n");
+            return symbol;
         }
 
-        return writer;
+        @Override
+        public String toMemberName(MemberShape shape) {
+            return wrapped.toMemberName(shape);
+        }
     }
 }

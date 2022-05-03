@@ -13,13 +13,13 @@
  * permissions and limitations under the License.
  */
 
-package software.amazon.smithy.python.codegen.integration;
+package software.amazon.smithy.python.codegen;
 
 import software.amazon.smithy.build.FileManifest;
 import software.amazon.smithy.codegen.core.CodegenContext;
 import software.amazon.smithy.codegen.core.SymbolProvider;
+import software.amazon.smithy.codegen.core.WriterDelegator;
 import software.amazon.smithy.model.Model;
-import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.utils.SmithyBuilder;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 import software.amazon.smithy.utils.ToSmithyBuilder;
@@ -28,17 +28,21 @@ import software.amazon.smithy.utils.ToSmithyBuilder;
  * Holds context related to code generation.
  */
 @SmithyUnstableApi
-public final class GenerationContext implements CodegenContext<PythonSettings>, ToSmithyBuilder<GenerationContext> {
+public final class GenerationContext
+        implements CodegenContext<PythonSettings, PythonWriter>, ToSmithyBuilder<GenerationContext> {
+
     private final Model model;
     private final PythonSettings settings;
     private final SymbolProvider symbolProvider;
     private final FileManifest fileManifest;
+    private final PythonDelegator delegator;
 
     private GenerationContext(Builder builder) {
         model = builder.model;
         settings = builder.settings;
         symbolProvider = builder.symbolProvider;
         fileManifest = builder.fileManifest;
+        delegator = builder.delegator;
     }
 
     @Override
@@ -59,6 +63,11 @@ public final class GenerationContext implements CodegenContext<PythonSettings>, 
     @Override
     public FileManifest fileManifest() {
         return fileManifest;
+    }
+
+    @Override
+    public WriterDelegator writerDelegator() {
+        return delegator;
     }
 
     /**
@@ -85,6 +94,7 @@ public final class GenerationContext implements CodegenContext<PythonSettings>, 
         private PythonSettings settings;
         private SymbolProvider symbolProvider;
         private FileManifest fileManifest;
+        private PythonDelegator delegator;
 
         @Override
         public GenerationContext build() {
@@ -124,6 +134,15 @@ public final class GenerationContext implements CodegenContext<PythonSettings>, 
          */
         public Builder fileManifest(FileManifest fileManifest) {
             this.fileManifest = fileManifest;
+            return this;
+        }
+
+        /**
+         * @param delegator The writer delegator to use in the generator.
+         * @return Returns the builder.
+         */
+        public Builder writerDelegator(PythonDelegator delegator) {
+            this.delegator = delegator;
             return this;
         }
     }
