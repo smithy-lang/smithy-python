@@ -37,7 +37,7 @@ interpreter_constraints = [">=3.10"]
 report = "xml"
 
 [mypy]
-version = "mypy@git+git://github.com/python/mypy.git@9b3147701f054bf8ef42bd96e33153b05976a5e1"
+version = "mypy==0.950"
 lockfile = "lockfiles/mypy"
 interpreter_constraints = [">=3.10"]
 
