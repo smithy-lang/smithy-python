@@ -72,7 +72,7 @@ jobs:
 
       - name: Install smithy-python
         run: |
-          python${{ matrix.python-version }} -m pip install --upgrade .
+          python${{ matrix.python-version }} -m pip install -e python-packages/smithy-python
 
       - name: clean and build without formatting/linting installed
         run: cd codegen && ./gradlew clean build -Plog-tests
