@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolReference;
-import software.amazon.smithy.codegen.core.writer.CodegenWriter;
+import software.amazon.smithy.codegen.core.SymbolWriter;
 import software.amazon.smithy.utils.StringUtils;
 
 /**
@@ -28,7 +28,7 @@ import software.amazon.smithy.utils.StringUtils;
  *
  * <p>Use the {@code $T} formatter to refer to {@link Symbol}s.
  */
-public final class PythonWriter extends CodegenWriter<PythonWriter, ImportDeclarations> {
+public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclarations> {
 
     private static final Logger LOGGER = Logger.getLogger(PythonWriter.class.getName());
 
@@ -41,7 +41,7 @@ public final class PythonWriter extends CodegenWriter<PythonWriter, ImportDeclar
      * @param fullPackageName The fully-qualified name of the package.
      */
     public PythonWriter(PythonSettings settings, String fullPackageName) {
-        super((PythonWriter::writeDocComment), new ImportDeclarations(settings, fullPackageName));
+        super(new ImportDeclarations(settings, fullPackageName));
         this.fullPackageName = fullPackageName;
         trimBlankLines();
         trimTrailingSpaces();
@@ -49,12 +49,49 @@ public final class PythonWriter extends CodegenWriter<PythonWriter, ImportDeclar
     }
 
     /**
-     * This method exists to satisfy the CodegenWriter constructor's interface.
+     * A factory class to create {@link PythonWriter}s.
      */
-    private void writeDocComment(Runnable runnable) {
+    public static final class PythonWriterFactory implements SymbolWriter.Factory<PythonWriter> {
+
+        private final PythonSettings settings;
+
+        /**
+         * @param settings The python plugin settings.
+         */
+        public PythonWriterFactory(PythonSettings settings) {
+            this.settings = settings;
+        }
+
+        @Override
+        public PythonWriter apply(String filename, String namespace) {
+            return new PythonWriter(settings, namespace);
+        }
+    }
+
+    /**
+     * Writes documentation comments from a runnable.
+     *
+     * @param runnable A runnable that writes docs.
+     * @return Returns the writer.
+     */
+    public PythonWriter writeDocs(Runnable runnable) {
+        pushState();
         writeInline("\"\"\"");
         runnable.run();
         write("\"\"\"");
+        popState();
+        return this;
+    }
+
+    /**
+     * Writes documentation comments from a string.
+     *
+     * @param docs Documentation to write.
+     * @return Returns the writer.
+     */
+    public PythonWriter writeDocs(String docs) {
+        writeDocs(() -> write(formatDocs(docs)));
+        return this;
     }
 
     /**

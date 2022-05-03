@@ -18,6 +18,7 @@ package software.amazon.smithy.python.codegen.integration;
 import java.util.Collections;
 import java.util.List;
 import software.amazon.smithy.codegen.core.SmithyIntegration;
+import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.python.codegen.PythonWriter;
 import software.amazon.smithy.utils.SmithyUnstableApi;

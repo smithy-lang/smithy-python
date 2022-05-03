@@ -51,7 +51,6 @@ import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.EnumTrait;
 import software.amazon.smithy.model.transform.ModelTransformer;
-import software.amazon.smithy.python.codegen.integration.GenerationContext;
 import software.amazon.smithy.python.codegen.integration.ProtocolGenerator;
 import software.amazon.smithy.python.codegen.integration.PythonIntegration;
 import software.amazon.smithy.utils.CodeInterceptor;
@@ -131,7 +130,8 @@ final class CodegenVisitor extends ShapeVisitor.Default<Void> {
             interceptors.addAll(integration.interceptors(generationContext));
         }
 
-        writers = new PythonDelegator(settings, model, fileManifest, symbolProvider, interceptors);
+        writers = new PythonDelegator(fileManifest, symbolProvider, settings);
+        writers.setInterceptors(interceptors);
     }
 
     private ProtocolGenerator resolveProtocolGenerator(
