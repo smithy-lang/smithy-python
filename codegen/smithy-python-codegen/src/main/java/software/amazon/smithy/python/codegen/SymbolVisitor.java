@@ -182,8 +182,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
                 .addReference(createStdlibReference("List", "typing"))
                 .addReference(reference);
 
-        var target = model.expectShape(shape.getMember().getTarget());
-        if (!(target instanceof SimpleShape)) {
+        if (needsDictHelpers(shape)) {
             builder.putProperty("asDict", createAsDictFunctionSymbol(shape))
                     .putProperty("fromDict", createFromDictFunctionSymbol(shape));
         }
@@ -197,12 +196,39 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
                 .addReference(createStdlibReference("Dict", "typing"))
                 .addReference(reference);
 
-        var target = model.expectShape(shape.getValue().getTarget());
-        if (!(target instanceof SimpleShape)) {
+        if (needsDictHelpers(shape)) {
             builder.putProperty("asDict", createAsDictFunctionSymbol(shape))
                     .putProperty("fromDict", createFromDictFunctionSymbol(shape));
         }
         return builder.build();
+    }
+
+    private boolean needsDictHelpers(MapShape shape) {
+        Shape target = model.expectShape(shape.getValue().getTarget());
+        return targetRequiresDictHelpers(target);
+    }
+
+    private boolean needsDictHelpers(CollectionShape shape) {
+        Shape target = model.expectShape(shape.getMember().getTarget());
+        return targetRequiresDictHelpers(target);
+    }
+
+    /**
+     * Maps and collections are already dict compatible, so if a given map or
+     * collection only ever transitively reference dict compatible shapes,
+     * they don't need these dict helpers.
+     */
+    private boolean targetRequiresDictHelpers(Shape target) {
+        if (target instanceof SimpleShape) {
+            return false;
+        }
+        if (target instanceof CollectionShape) {
+            return needsDictHelpers((CollectionShape) target);
+        }
+        if (target.isMapShape()) {
+            return needsDictHelpers((MapShape) target);
+        }
+        return true;
     }
 
     private Symbol createAsDictFunctionSymbol(Shape shape) {
