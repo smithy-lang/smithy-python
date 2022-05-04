@@ -66,7 +66,7 @@ public final class GenerationContext
     }
 
     @Override
-    public WriterDelegator writerDelegator() {
+    public WriterDelegator<PythonWriter> writerDelegator() {
         return delegator;
     }
 

@@ -17,8 +17,8 @@ package software.amazon.smithy.python.codegen;
 
 import software.amazon.smithy.build.PluginContext;
 import software.amazon.smithy.build.SmithyBuildPlugin;
-import software.amazon.smithy.codegen.core.SymbolProvider;
-import software.amazon.smithy.model.Model;
+import software.amazon.smithy.codegen.core.directed.CodegenDirector;
+import software.amazon.smithy.python.codegen.integration.PythonIntegration;
 
 /**
  * Plugin to trigger Python code generation.
@@ -31,16 +31,18 @@ public final class PythonCodegenPlugin implements SmithyBuildPlugin {
 
     @Override
     public void execute(PluginContext context) {
-        new CodegenVisitor(context).execute();
-    }
+        CodegenDirector<PythonWriter, PythonIntegration, GenerationContext, PythonSettings> runnner
+                = new CodegenDirector<>();
 
-    /**
-     * Creates a Python symbol provider.
-     * @param model The model to generate symbols for.
-     * @param settings The settings for the plugin.
-     * @return Returns the created provider.
-     */
-    public static SymbolProvider createSymbolProvider(Model model, PythonSettings settings) {
-        return new SymbolVisitor(model, settings);
+        PythonSettings settings = PythonSettings.from(context.getSettings());
+        runnner.settings(settings);
+        runnner.directedCodegen(new DirectedPythonCodegen());
+        runnner.fileManifest(context.getFileManifest());
+        runnner.service(settings.getService());
+        runnner.model(context.getModel());
+        runnner.integrationClass(PythonIntegration.class);
+        runnner.performDefaultCodegenTransforms();
+        runnner.createDedicatedInputsAndOutputs();
+        runnner.run();
     }
 }

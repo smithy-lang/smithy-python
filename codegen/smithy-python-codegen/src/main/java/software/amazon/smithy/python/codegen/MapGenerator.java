@@ -82,7 +82,7 @@ public class MapGenerator implements Runnable {
         writer.addStdlibImport("typing", "Dict");
         writer.openBlock("def $L(given: Dict[str, Any]) -> $T:", "", fromDictSymbol.getName(), symbol, () -> {
             if (target.isUnionShape() || target.isStructureShape()) {
-                writer.write("return {k: $T.from_dict(v) for k, v in given.items()}");
+                writer.write("return {k: $T.from_dict(v) for k, v in given.items()}", targetSymbol);
             } else if (target.isMapShape() || target instanceof CollectionShape) {
                 var targetFromDictSymbol = targetSymbol.expectProperty("fromDict", Symbol.class);
                 writer.write("return {k: $T(v) for k, v in given.items()}", targetFromDictSymbol);
