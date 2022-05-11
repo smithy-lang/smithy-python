@@ -83,7 +83,8 @@ public final class GenerationContext
                 .model(model)
                 .settings(settings)
                 .symbolProvider(symbolProvider)
-                .fileManifest(fileManifest);
+                .fileManifest(fileManifest)
+                .writerDelegator(delegator);
     }
 
     /**
