@@ -252,6 +252,7 @@ Structures are simple python objects with `as_dict` and `from_dict` methods
 whose constructors only allow keyword arguments. For example:
 
 ```python
+
 class ExampleStructure:
     def __init__(
         self,
@@ -259,10 +260,12 @@ class ExampleStructure:
         required_param: str,
         struct_param: OtherStructure,
         optional_param: Optional[str] = None,
+        default_param: str = _DEFAULT_STR("foo"),
     ):
         self.required_param = required_param
         self.struct_param = struct_param
         self.optional_param = optional_param
+        self.default_param = default_param
 
     def as_dict(self) -> Dict:
         d = {
@@ -270,16 +273,83 @@ class ExampleStructure:
             "StructParam": self.struct_param.as_dict(),
         }
 
-        if self.optional_param:
+        if self.optional_param is not None:
             d["OptionalParam"] = self.optional_param
+
+        if not isinstance(self.default_param, _DEFAULT_STR):
+            d["DefaultParam"] = self.default_param
 
     @staticmethod
     def from_dict(d: Dict) -> ExampleStructure:
         return ExampleStructure(
             required_param=d["RequiredParam"],
-            struct_param=OtherStructure.from_dict(d["StructParam"])
+            struct_param=OtherStructure.from_dict(d["StructParam"]),
             optional_param=d.get("OptionalParam"),
+            default_param=d.get("DefaultParam"),
         )
+
+
+# We need these various default types to be able to track whether a thing was
+# set explicitly or not. These will be generated for every service.
+class _DEFAULT_INT(int):
+    pass
+
+
+class _DEFAULT_FLOAT(float):
+    pass
+
+
+class _DEFAULT_STR(str):
+    pass
+
+
+class _DEFAULT_BYTES(bytes):
+    pass
+
+
+class _DEFAULT_BOOL(bool):
+    pass
+
+
+class _DEFAULT_TIMESTAMP(datetime):
+    @staticmethod
+    def from_timestamp(value):
+        return _DEFAULT_TIMESTAMP(
+            year=value.year,
+            month=value.month,
+            day=value.day,
+            hour=value.hour,
+            minute=value.minute,
+            second=value.second,
+            microsecond=value.microsecond,
+            tzinfo=value.tzinfo,
+            fold=value.fold,
+        )
+
+
+# We need to ensure these are immutable
+class _DEFAULT_DOCUMENT:
+    pass
+
+
+class _DEFAULT_LIST(list):
+    pass
+
+
+class _DEFAULT_MAP(dict):
+    pass
+
+
+_DEFAULT_VALUE = Union[
+    _DEFAULT_INT,
+    _DEFAULT_FLOAT,
+    _DEFAULT_STR,
+    _DEFAULT_BYTES,
+    _DEFAULT_BOOL,
+    _DEFAULT_DOCUMENT,
+    _DEFAULT_LIST,
+    _DEFAULT_MAP,
+]
 ```
 
 Disallowing positional arguments prevents errors from arising when future
