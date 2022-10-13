@@ -17,7 +17,20 @@ description = "Generates Python code from Smithy models"
 extra["displayName"] = "Smithy :: Python :: Codegen"
 extra["moduleName"] = "software.amazon.smithy.python.codegen"
 
+val smithyVersion: String by project
+
+buildscript {
+    val smithyVersion: String by project
+
+    repositories {
+        mavenCentral()
+    }
+    dependencies {
+        "classpath"("software.amazon.smithy:smithy-cli:$smithyVersion")
+    }
+}
+
 dependencies {
-    api("software.amazon.smithy:smithy-codegen-core:[1.18.0,2.0.0[")
-    implementation("software.amazon.smithy:smithy-waiters:[1.18.0,2.0.0[")
+    api("software.amazon.smithy:smithy-codegen-core:$smithyVersion")
+    implementation("software.amazon.smithy:smithy-waiters:$smithyVersion")
 }
