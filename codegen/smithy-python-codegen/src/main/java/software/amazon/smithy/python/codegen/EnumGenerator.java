@@ -20,10 +20,10 @@ import java.util.Locale;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
-import software.amazon.smithy.model.shapes.StringShape;
+import software.amazon.smithy.model.shapes.EnumShape;
+import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.traits.DocumentationTrait;
-import software.amazon.smithy.model.traits.EnumDefinition;
-import software.amazon.smithy.model.traits.EnumTrait;
+import software.amazon.smithy.model.traits.EnumValueTrait;
 
 /**
  * Renders enums.
@@ -32,9 +32,9 @@ final class EnumGenerator implements Runnable {
     private final Model model;
     private final SymbolProvider symbolProvider;
     private final PythonWriter writer;
-    private final StringShape shape;
+    private final EnumShape shape;
 
-    EnumGenerator(Model model, SymbolProvider symbolProvider, PythonWriter writer, StringShape enumShape) {
+    EnumGenerator(Model model, SymbolProvider symbolProvider, PythonWriter writer, EnumShape enumShape) {
         this.model = model;
         this.symbolProvider = symbolProvider;
         this.writer = writer;
@@ -43,34 +43,36 @@ final class EnumGenerator implements Runnable {
 
     @Override
     public void run() {
-        var enumTrait = shape.expectTrait(EnumTrait.class);
         var enumSymbol = symbolProvider.toSymbol(shape).expectProperty("enumSymbol", Symbol.class);
-        enumTrait.getEnumDefinitionValues();
         writer.openBlock("class $L:", "", enumSymbol.getName(), () -> {
             shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
                 writer.writeDocs(writer.formatDocs(trait.getValue()));
             });
 
 
-            for (EnumDefinition definition : enumTrait.getValues()) {
-                if (definition.getName().isPresent()) {
-                    var name = definition.getName().get().toUpperCase(Locale.ENGLISH);
-                    definition.getDocumentation().ifPresent(writer::writeComment);
-                    writer.write("$L = $S\n", name, definition.getValue());
-                }
+            for (MemberShape member: shape.members()) {
+                member.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeComment(trait.getValue()));
+                var name = member.getMemberName().toUpperCase(Locale.ENGLISH);
+                writer.write("$L = $S\n", name, getEnumValue(member));
             }
 
             writer.writeComment("""
                 This set contains every possible value known at the time this was \
                 generated. New values may be added in the future.""");
             writer.writeInline("values = frozenset({");
-            for (Iterator<String> iter = enumTrait.getEnumDefinitionValues().iterator(); iter.hasNext();) {
-                writer.writeInline("$S", iter.next());
+            for (Iterator<MemberShape> iter = shape.members().iterator(); iter.hasNext();) {
+                writer.writeInline("$S", getEnumValue(iter.next()));
                 if (iter.hasNext()) {
                     writer.writeInline(", ");
                 }
             }
             writer.writeInline("})\n");
         });
+    }
+
+    public String getEnumValue(MemberShape member) {
+        return member.getTrait(EnumValueTrait.class)
+                .flatMap(EnumValueTrait::getStringValue)
+                .orElseGet(() -> member.getMemberName().toUpperCase(Locale.ENGLISH));
     }
 }
