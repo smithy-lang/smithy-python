@@ -15,9 +15,9 @@
 
 package software.amazon.smithy.python.codegen;
 
+import java.util.List;
 import software.amazon.smithy.build.FileManifest;
 import software.amazon.smithy.codegen.core.CodegenContext;
-import software.amazon.smithy.codegen.core.SmithyIntegration;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.WriterDelegator;
 import software.amazon.smithy.model.Model;
@@ -25,8 +25,6 @@ import software.amazon.smithy.python.codegen.integration.PythonIntegration;
 import software.amazon.smithy.utils.SmithyBuilder;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 import software.amazon.smithy.utils.ToSmithyBuilder;
-
-import java.util.List;
 
 /**
  * Holds context related to code generation.
