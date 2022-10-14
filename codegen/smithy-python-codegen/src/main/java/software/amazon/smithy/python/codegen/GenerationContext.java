@@ -17,25 +17,30 @@ package software.amazon.smithy.python.codegen;
 
 import software.amazon.smithy.build.FileManifest;
 import software.amazon.smithy.codegen.core.CodegenContext;
+import software.amazon.smithy.codegen.core.SmithyIntegration;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.WriterDelegator;
 import software.amazon.smithy.model.Model;
+import software.amazon.smithy.python.codegen.integration.PythonIntegration;
 import software.amazon.smithy.utils.SmithyBuilder;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 import software.amazon.smithy.utils.ToSmithyBuilder;
+
+import java.util.List;
 
 /**
  * Holds context related to code generation.
  */
 @SmithyUnstableApi
 public final class GenerationContext
-        implements CodegenContext<PythonSettings, PythonWriter>, ToSmithyBuilder<GenerationContext> {
+        implements CodegenContext<PythonSettings, PythonWriter, PythonIntegration>, ToSmithyBuilder<GenerationContext> {
 
     private final Model model;
     private final PythonSettings settings;
     private final SymbolProvider symbolProvider;
     private final FileManifest fileManifest;
     private final PythonDelegator delegator;
+    private final List<PythonIntegration> integrations;
 
     private GenerationContext(Builder builder) {
         model = builder.model;
@@ -43,6 +48,7 @@ public final class GenerationContext
         symbolProvider = builder.symbolProvider;
         fileManifest = builder.fileManifest;
         delegator = builder.delegator;
+        integrations = builder.integrations;
     }
 
     @Override
@@ -68,6 +74,11 @@ public final class GenerationContext
     @Override
     public WriterDelegator<PythonWriter> writerDelegator() {
         return delegator;
+    }
+
+    @Override
+    public List<PythonIntegration> integrations() {
+        return integrations;
     }
 
     /**
@@ -96,6 +107,7 @@ public final class GenerationContext
         private SymbolProvider symbolProvider;
         private FileManifest fileManifest;
         private PythonDelegator delegator;
+        private List<PythonIntegration> integrations;
 
         @Override
         public GenerationContext build() {
@@ -144,6 +156,15 @@ public final class GenerationContext
          */
         public Builder writerDelegator(PythonDelegator delegator) {
             this.delegator = delegator;
+            return this;
+        }
+
+        /**
+         * @param integrations The integrations to use in the generator.
+         * @return Returns the builder.
+         */
+        public Builder integrations(List<PythonIntegration> integrations) {
+            this.integrations = integrations;
             return this;
         }
     }

@@ -41,10 +41,11 @@ import software.amazon.smithy.model.shapes.CollectionShape;
 import software.amazon.smithy.model.shapes.ListShape;
 import software.amazon.smithy.model.shapes.MapShape;
 import software.amazon.smithy.model.shapes.SetShape;
+import software.amazon.smithy.python.codegen.integration.PythonIntegration;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 @SmithyUnstableApi
-final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, PythonSettings> {
+final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, PythonSettings, PythonIntegration> {
 
     private static final Logger LOGGER = Logger.getLogger(DirectedPythonCodegen.class.getName());
 
@@ -54,7 +55,7 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
     }
 
     @Override
-    public GenerationContext createContext(CreateContextDirective<PythonSettings> directive) {
+    public GenerationContext createContext(CreateContextDirective<PythonSettings, PythonIntegration> directive) {
         return GenerationContext.builder()
                 .model(directive.model())
                 .settings(directive.settings())
@@ -62,6 +63,7 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
                 .fileManifest(directive.fileManifest())
                 .writerDelegator(new PythonDelegator(
                         directive.fileManifest(), directive.symbolProvider(), directive.settings()))
+                .integrations(directive.integrations())
                 .build();
     }
 
