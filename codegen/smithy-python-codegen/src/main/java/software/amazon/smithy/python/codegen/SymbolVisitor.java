@@ -34,6 +34,7 @@ import software.amazon.smithy.model.shapes.ByteShape;
 import software.amazon.smithy.model.shapes.CollectionShape;
 import software.amazon.smithy.model.shapes.DocumentShape;
 import software.amazon.smithy.model.shapes.DoubleShape;
+import software.amazon.smithy.model.shapes.EnumShape;
 import software.amazon.smithy.model.shapes.FloatShape;
 import software.amazon.smithy.model.shapes.IntegerShape;
 import software.amazon.smithy.model.shapes.ListShape;
@@ -52,7 +53,6 @@ import software.amazon.smithy.model.shapes.StringShape;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.TimestampShape;
 import software.amazon.smithy.model.shapes.UnionShape;
-import software.amazon.smithy.model.traits.EnumTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.MediaTypeTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
@@ -314,19 +314,6 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol stringShape(StringShape shape) {
         var builder = createSymbolBuilder(shape, "str");
-        if (shape.hasTrait(EnumTrait.class)) {
-            String name = getDefaultShapeName(shape);
-            Symbol enumSymbol = createSymbolBuilder(shape, name, format("%s.models", settings.getModuleName()))
-                    .definitionFile(format("./%s/models.py", settings.getModuleName()))
-                    .build();
-
-            // We add this enum symbol as a property on a generic string symbol
-            // rather than returning the enum symbol directly because we only
-            // generate the enum constants for convenience. We actually want
-            // to pass around plain strings rather than what is effectively
-            // a namespace class.
-            builder.putProperty("enumSymbol", escaper.escapeSymbol(shape, enumSymbol));
-        }
         if (shape.hasTrait(MediaTypeTrait.class)) {
             var mediaType = shape.expectTrait(MediaTypeTrait.class).getValue();
             if (MediaType.isJson(mediaType)) {
@@ -340,6 +327,23 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
                         .build();
             }
         }
+        return builder.build();
+    }
+
+    @Override
+    public Symbol enumShape(EnumShape shape) {
+        var builder = createSymbolBuilder(shape, "str");
+        String name = getDefaultShapeName(shape);
+        Symbol enumSymbol = createSymbolBuilder(shape, name, format("%s.models", settings.getModuleName()))
+                .definitionFile(format("./%s/models.py", settings.getModuleName()))
+                .build();
+
+        // We add this enum symbol as a property on a generic string symbol
+        // rather than returning the enum symbol directly because we only
+        // generate the enum constants for convenience. We actually want
+        // to pass around plain strings rather than what is effectively
+        // a namespace class.
+        builder.putProperty("enumSymbol", escaper.escapeSymbol(shape, enumSymbol));
         return builder.build();
     }
 

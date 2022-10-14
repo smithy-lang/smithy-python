@@ -21,7 +21,6 @@ import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.WriterDelegator;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
-import software.amazon.smithy.model.traits.EnumTrait;
 
 /**
  * Manages writers for Python files.
@@ -51,7 +50,7 @@ final class PythonDelegator extends WriterDelegator<PythonWriter> {
         @Override
         public Symbol toSymbol(Shape shape) {
             Symbol symbol = wrapped.toSymbol(shape);
-            if (shape.hasTrait(EnumTrait.class)) {
+            if (shape.isEnumShape()) {
                 symbol = symbol.expectProperty("enumSymbol", Symbol.class);
             }
             return symbol;

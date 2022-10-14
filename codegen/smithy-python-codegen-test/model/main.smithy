@@ -1,4 +1,4 @@
-$version: "1.0"
+$version: "2.0"
 
 namespace example.weather
 
@@ -180,7 +180,7 @@ blob JsonBlob
 // This structure is nested within GetCityOutput.
 structure CityCoordinates {
     @required
-    latitude: PrimitiveFloat,
+    latitude: Float,
 
     @required
     longitude: Float,
@@ -389,12 +389,15 @@ union Precipitation {
 
 structure OtherStructure {}
 
-@suppress(["EnumNamesPresent"])
-@enum([{value: "YES"}, {value: "NO"}])
-string SimpleYesNo
+enum SimpleYesNo {
+    YES
+    NO
+}
 
-@enum([{value: "YES", name: "YES"}, {value: "NO", name: "NO"}])
-string TypedYesNo
+enum TypedYesNo {
+    YES
+    NO
+}
 
 map StringMap {
     key: String,
@@ -433,6 +436,7 @@ structure PNGImage {
 
 structure GetCityImageOutput {
     @httpPayload
+    @required
     image: CityImageData,
 }
 
