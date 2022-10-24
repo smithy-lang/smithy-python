@@ -252,18 +252,6 @@ operation ListCities {
         @httpQuery("aString")
         aString: String
 
-        @httpQuery("defaultBool")
-        defaultBool: DefaultBool
-
-        @httpQuery("boxedBool")
-        boxedBool: Boolean
-
-        @httpQuery("defaultNumber")
-        defaultNumber: DefaultInteger
-
-        @httpQuery("boxedNumber")
-        boxedNumber: Integer
-
         @httpQuery("someEnum")
         someEnum: StringYesNo
 
@@ -275,10 +263,7 @@ operation ListCities {
 
         someEnum: StringYesNo
         aString: String
-        defaultBool: DefaultBool
-        boxedBool: Boolean
-        defaultNumber: DefaultInteger
-        boxedNumber: Integer
+        defaults: Defaults
 
         @required
         items: CitySummaries
@@ -304,8 +289,94 @@ apply ListCities @httpRequestTests([
     }
 ])
 
-integer DefaultInteger
-boolean DefaultBool
+structure Defaults {
+    @required
+    requiredBool: Boolean
+    optionalBool: Boolean
+    defaultTrue: Boolean = true
+    defaultFalse: Boolean = false
+    @required
+    requiredDefaultBool: Boolean = true
+
+    @required
+    requiredStr: String
+    optionalStr: String
+    defaultString: String = "spam"
+    @required
+    requiredDefaultStr: String = "eggs"
+
+    @required
+    requiredInt: Integer
+    optionalInt: Integer
+    defaultInt: Integer = 42
+    @required
+    requiredDefaultInt: Integer = 42
+
+    @required
+    requiredFloat: Float
+    optionalFloat: Float
+    defaultFloat: Float = 4.2
+    @required
+    requiredDefaultFloat: Float = 4.2
+
+    @required
+    requiredBlob: Blob
+    optionalBlob: Blob
+    defaultBlob: Blob = "c3BhbQ=="
+    @required
+    requiredDefaultBlob: Blob = "c3BhbQ=="
+
+    // timestamp
+    @required
+    requiredTimestamp: Timestamp
+    optionalTimestamp: Timestamp
+    defaultImplicitDateTime: Timestamp = "2011-12-03T10:15:30Z"
+    defaultImplicitEpochTime: Timestamp = 4.2
+    defaultExplicitDateTime: DateTime = "2011-12-03T10:15:30Z"
+    defaultExplicitEpochTime: EpochSeconds = 4.2
+    defaultExplicitHttpTime: HttpDate = "Tue, 3 Jun 2008 11:05:30 GMT"
+    @required
+    requiredDefaultTimestamp: Timestamp = 4.2
+
+    @required
+    requiredList: StringList
+    optionalList: StringList
+    defaultList: StringList = []
+    @required
+    requiredDefaultList: StringList = []
+
+    @required
+    requiredMap: StringMap
+    optionalMap: StringMap
+    defaultMap: StringMap = {}
+    @required
+    requiredDefaultMap: StringMap = {}
+
+    @required
+    requiredDocument: Document
+    optionalDocument: Document
+    defaultNullDocument: Document = null
+    defaultNumberDocument: Document = 42
+    defaultStringDocument: Document = "spam"
+    defaultBooleanDocument: Document = true
+    defaultListDocument: Document = []
+    defaultMapDocument: Document = {}
+    @required
+    requiredDefaultDocument: Document = "eggs"
+}
+
+@timestampFormat("date-time")
+timestamp DateTime
+
+@timestampFormat("epoch-seconds")
+timestamp EpochSeconds
+
+@timestampFormat("http-date")
+timestamp HttpDate
+
+list StringList {
+    member: String
+}
 
 structure MutuallyRecursiveA {
     mutual: MutuallyRecursiveB
@@ -411,7 +482,7 @@ operation GetCityImage {
 }
 
 union ImageType {
-    raw: DefaultBool
+    raw: Boolean
     png: PNGImage
 }
 
