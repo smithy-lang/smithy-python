@@ -130,6 +130,30 @@ We also have to generate getters/setters to make sure they stay in sync, which
 dramatically increases the amount of code generated since these need to
 appear in every referencing structure.
 
+### intEnums
+
+```python```
+class MyIntEnum(IntEnum):
+    SPAM = 1
+    EGGS = 2
+``````
+
+IntEnums will use the native `IntEnum` type. This will allow customers to
+easily specify the enum value without having to reference the actual number. It
+also gives them a programmatic way to list known values.
+
+Like string enums, members targeting IntEnums will use plain integers to enable
+forwards compatibility and type checking. Documentation for those members will
+reference the generated classes for discoverability.
+
+#### Alternative: target the generated enums
+
+In this alternative, members targeting IntEnums would reference the generated
+classes. This wasn't chosen for both forwards and backwards compatibility reasons.
+While one can mostly use IntEnums and integers interchangeably, the types *are*
+different. Type checking would fail if you provided a base integer, known or
+unknown.
+
 ### streaming blobs
 
 A blob with the streaming trait will continue to support `bytes` as input.
