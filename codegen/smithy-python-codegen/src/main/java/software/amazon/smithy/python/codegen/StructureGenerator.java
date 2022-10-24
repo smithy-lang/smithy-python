@@ -18,26 +18,39 @@ package software.amazon.smithy.python.codegen;
 import static java.lang.String.format;
 import static software.amazon.smithy.python.codegen.CodegenUtils.isErrorMessage;
 
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.NullableIndex;
+import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.StructureShape;
+import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
+import software.amazon.smithy.model.traits.RequiredTrait;
+import software.amazon.smithy.model.traits.TimestampFormatTrait;
 
 
 /**
  * Renders structures.
  */
 final class StructureGenerator implements Runnable {
+
+    private static final Logger LOGGER = Logger.getLogger(StructureGenerator.class.getName());
 
     private final Model model;
     private final SymbolProvider symbolProvider;
@@ -63,11 +76,12 @@ final class StructureGenerator implements Runnable {
         this.shape = shape;
         var required = new ArrayList<MemberShape>();
         var optional = new ArrayList<MemberShape>();
+        var index = NullableIndex.of(model);
         for (MemberShape member: shape.members()) {
-            if (member.isRequired()) {
-                required.add(member);
-            } else {
+            if (index.isMemberNullable(member) || member.hasTrait(DefaultTrait.class)) {
                 optional.add(member);
+            } else {
+                required.add(member);
             }
         }
         this.requiredMembers = filterMessageMembers(required);
@@ -92,6 +106,7 @@ final class StructureGenerator implements Runnable {
         writer.addStdlibImport("typing", "Any");
         var symbol = symbolProvider.toSymbol(shape);
         writer.openBlock("class $L:", "", symbol.getName(), () -> {
+            writeProperties(false);
             writeInit(false);
             writeAsDict(false);
             writeFromDict(false);
@@ -109,11 +124,30 @@ final class StructureGenerator implements Runnable {
         var apiError = CodegenUtils.getApiError(settings);
         writer.openBlock("class $L($T[Literal[$S]]):", "", symbol.getName(), apiError, code, () -> {
             writer.write("code: Literal[$1S] = $1S", code);
+            writer.write("message: str");
+            writeProperties(true);
             writeInit(true);
             writeAsDict(true);
             writeFromDict(true);
         });
         writer.write("");
+    }
+
+    private void writeProperties(boolean isError) {
+        NullableIndex index = NullableIndex.of(model);
+        for (MemberShape member : shape.members()) {
+            if (isError && isErrorMessage(model, member)) {
+                continue;
+            }
+            var memberName = symbolProvider.toMemberName(member);
+            if (index.isMemberNullable(member)) {
+                String formatString = format("$L: %s | None", getTargetFormat(member));
+                writer.write(formatString, memberName, symbolProvider.toSymbol(member));
+            } else {
+                String formatString = format("$L: %s", getTargetFormat(member));
+                writer.write(formatString, memberName, symbolProvider.toSymbol(member));
+            }
+        }
     }
 
     private void writeInit(boolean isError) {
@@ -139,13 +173,17 @@ final class StructureGenerator implements Runnable {
             }
             for (MemberShape member : optionalMembers) {
                 var memberName = symbolProvider.toMemberName(member);
-                if (nullableIndex.isNullable(member)) {
-                    writer.addStdlibImport("typing", "Optional");
-                    String formatString = format("$L: Optional[%s] = None,", getTargetFormat(member));
+                if (nullableIndex.isMemberNullable(member)) {
+                    String formatString = format("$L: %s | None = None,", getTargetFormat(member));
                     writer.write(formatString, memberName, symbolProvider.toSymbol(member));
-                } else {
+                } else if (member.hasTrait(RequiredTrait.class)) {
                     String formatString = format("$L: %s = $L,", getTargetFormat(member));
-                    writer.write(formatString, memberName, symbolProvider.toSymbol(member), getDefaultValue(member));
+                    writer.write(formatString, memberName, symbolProvider.toSymbol(member),
+                            getDefaultValue(writer, member));
+                } else {
+                    String formatString = format("$L: %s = $T($L),", getTargetFormat(member));
+                    writer.write(formatString, memberName, symbolProvider.toSymbol(member),
+                            CodegenUtils.getDefaultWrapperFunction(settings), getDefaultValue(writer, member));
                 }
             }
         });
@@ -153,18 +191,45 @@ final class StructureGenerator implements Runnable {
         writer.indent();
 
         writeClassDocs(isError);
+        writer.write("self._has: dict[str, bool] = {}");
         if (isError) {
             writer.write("super().__init__(message)");
         }
+
         Stream.concat(requiredMembers.stream(), optionalMembers.stream()).forEach(member -> {
             String memberName = symbolProvider.toMemberName(member);
-            writer.write("self.$L = $L", memberName, memberName);
+            if (member.hasTrait(DefaultTrait.class) && !member.hasTrait(RequiredTrait.class)) {
+                writer.write("self._set_default_attr($1S, $1L)", memberName);
+            } else {
+                writer.write("self.$1L = $1L", memberName);
+            }
         });
-        if (shape.members().isEmpty() && !isError) {
-            writer.write("pass");
-        }
         writer.dedent();
         writer.write("");
+
+        writer.write("""
+                def _set_default_attr(self, name: str, value: Any) -> None:
+                    if isinstance(value, $T):
+                        object.__setattr__(self, name, value.value())
+                        self._has[name] = False
+                    else:
+                        setattr(self, name, value)
+
+                def __setattr__(self, name: str, value: Any) -> None:
+                    object.__setattr__(self, name, value)
+                    self._has[name] = True
+
+                def _hasattr(self, name: str) -> bool:
+                    if self._has.get(name, False):
+                        return True
+                    # Lists and dicts are mutable. We could make immutable variants, but
+                    # that's kind of a bad experience. Instead we can just check to see if
+                    # the value is empty.
+                    if isinstance((v := getattr(self, name, None)), (dict, list)) and len(v) != 0:
+                        self._has[name] = True
+                        return True
+                    return False
+                """, CodegenUtils.getDefaultWrapperClass(settings));
     }
 
     private void writeClassDocs(boolean isError) {
@@ -209,23 +274,66 @@ final class StructureGenerator implements Runnable {
         return "$T";
     }
 
-    private String getDefaultValue(MemberShape member) {
-        Shape target = model.expectShape(member.getTarget());
-        return switch (target.getType()) {
-            case BYTE, SHORT, INTEGER, LONG, BIG_INTEGER, FLOAT, DOUBLE -> "0";
-            case BIG_DECIMAL -> "Decimal(0)";
-            case BOOLEAN -> "False";
-            case STRING -> "''";
-            case BLOB -> "b''";
-            case LIST, SET -> "[]";
-            case MAP -> "{}";
-            case TIMESTAMP -> {
-                var defaultTimestamp = CodegenUtils.getDefaultTimestamp(settings);
-                writer.addUseImports(defaultTimestamp);
-                yield defaultTimestamp.getName();
-            }
-            default -> "None";
+    private String getDefaultValue(PythonWriter writer, MemberShape member) {
+        var defaultNode = member.expectTrait(DefaultTrait.class).toNode();
+        var target = model.expectShape(member.getTarget());
+        if (target.isTimestampShape()) {
+            writer.addStdlibImport("datetime", "datetime");
+            // We *could* let python do this parsing, but then that work has to be done every time a customer
+            // runs their code.
+            ZonedDateTime value = parseDefaultTimestamp(member, defaultNode);
+            return String.format("datetime(%d, %d, %d, %d, %d, %d, %d, datetime.utc)", value.get(ChronoField.YEAR),
+                    value.get(ChronoField.MONTH_OF_YEAR), value.get(ChronoField.DAY_OF_MONTH),
+                    value.get(ChronoField.HOUR_OF_DAY), value.get(ChronoField.MINUTE_OF_HOUR),
+                    value.get(ChronoField.SECOND_OF_DAY), value.get(ChronoField.MICRO_OF_SECOND));
+        } else if (target.isBlobShape()) {
+            return String.format("b'%s'", defaultNode.expectStringNode().getValue());
+        }
+        return switch (defaultNode.getType()) {
+            case NULL -> "None";
+            case BOOLEAN -> defaultNode.expectBooleanNode().getValue() ? "True" : "False";
+            default -> Node.printJson(defaultNode);
         };
+    }
+
+    private ZonedDateTime parseDefaultTimestamp(MemberShape member, Node value) {
+        Optional<TimestampFormatTrait> trait = member.getMemberTrait(model, TimestampFormatTrait.class);
+        if (trait.isPresent()) {
+            switch (trait.get().getFormat()) {
+                case EPOCH_SECONDS:
+                    return parseEpochTime(value);
+                case DATE_TIME:
+                    return parseDateTime(value);
+                case HTTP_DATE:
+                    return parseHttpDate(value);
+                default:
+                    break;
+            }
+        }
+
+        if (value.isNumberNode()) {
+            return parseEpochTime(value);
+        } else {
+            // Smithy's node validator asserts that string nodes are in the http date format if there
+            // is no format explicitly given.
+            return parseDateTime(value);
+        }
+    }
+
+    private ZonedDateTime parseEpochTime(Node value) {
+        Number number = value.expectNumberNode().getValue();
+        Instant instant = Instant.ofEpochMilli(Double.valueOf(number.doubleValue() * 1000).longValue());
+        return instant.atZone(ZoneId.of("UTC"));
+    }
+
+    private ZonedDateTime parseDateTime(Node value) {
+        Instant instant =  Instant.from(DateTimeFormatter.ISO_INSTANT.parse(value.expectStringNode().getValue()));
+        return instant.atZone(ZoneId.of("UTC"));
+    }
+
+    private ZonedDateTime parseHttpDate(Node value) {
+        Instant instant = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(value.expectStringNode().getValue()));
+        return instant.atZone(ZoneId.of("UTC"));
     }
 
     private boolean hasDocs() {
@@ -288,25 +396,18 @@ final class StructureGenerator implements Runnable {
                 for (MemberShape member : optionalMembers) {
                     var memberName = symbolProvider.toMemberName(member);
                     var target = model.expectShape(member.getTarget());
-                    // Of all the default values, only the default for timestamps isn't already falsy.
-                    // So for that we need a slightly bigger check.
-                    if (target.isTimestampShape()) {
-                        writer.openBlock(
-                                "if self.$1L is not None and self.$1L != $2L:", memberName, getDefaultValue(member));
-                    } else {
-                        writer.openBlock("if self.$L:", memberName);
-                    }
-
-                    var targetSymbol = symbolProvider.toSymbol(target);
-                    if (target.isStructureShape() || target.isUnionShape()) {
-                        writer.write("d[$S] = self.$L.as_dict()", member.getMemberName(), memberName);
-                    } else if (targetSymbol.getProperty("asDict").isPresent()) {
-                        var targetAsDictSymbol = targetSymbol.expectProperty("asDict", Symbol.class);
-                        writer.write("d[$S] = $T(self.$L),", member.getMemberName(), targetAsDictSymbol, memberName);
-                    } else {
-                        writer.write("d[$S] = self.$L", member.getMemberName(), memberName);
-                    }
-                    writer.closeBlock("");
+                    writer.openBlock("if self._hasattr($S):", "", memberName, () -> {
+                        var targetSymbol = symbolProvider.toSymbol(target);
+                        if (target.isStructureShape() || target.isUnionShape()) {
+                            writer.write("d[$S] = self.$L.as_dict()", member.getMemberName(), memberName);
+                        } else if (targetSymbol.getProperty("asDict").isPresent()) {
+                            var targetAsDictSymbol = targetSymbol.expectProperty("asDict", Symbol.class);
+                            writer.write("d[$S] = $T(self.$L),", member.getMemberName(), targetAsDictSymbol,
+                                    memberName);
+                        } else {
+                            writer.write("d[$S] = self.$L", member.getMemberName(), memberName);
+                        }
+                    });
                 }
                 writer.write("return d");
             }

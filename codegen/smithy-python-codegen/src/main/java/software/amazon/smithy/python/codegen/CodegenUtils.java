@@ -55,9 +55,18 @@ public final class CodegenUtils {
 
     private CodegenUtils() {}
 
-    static Symbol getDefaultTimestamp(PythonSettings settings) {
+    static Symbol getDefaultWrapperFunction(PythonSettings settings) {
+        // TODO: move these into the models file once we can do generation before shapes again
         return Symbol.builder()
-                .name("DEFAULT_TIMESTAMP")
+                .name("_default")
+                .namespace(format("%s.utils", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/utils.py", settings.getModuleName()))
+                .build();
+    }
+
+    static Symbol getDefaultWrapperClass(PythonSettings settings) {
+        return Symbol.builder()
+                .name("_DEFAULT")
                 .namespace(format("%s.utils", settings.getModuleName()), ".")
                 .definitionFile(format("./%s/utils.py", settings.getModuleName()))
                 .build();
