@@ -49,10 +49,9 @@ final class EnumGenerator implements Runnable {
                 writer.writeDocs(writer.formatDocs(trait.getValue()));
             });
 
-
             for (MemberShape member: shape.members()) {
                 member.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeComment(trait.getValue()));
-                var name = member.getMemberName().toUpperCase(Locale.ENGLISH);
+                var name = symbolProvider.toMemberName(member);
                 writer.write("$L = $S\n", name, getEnumValue(member));
             }
 

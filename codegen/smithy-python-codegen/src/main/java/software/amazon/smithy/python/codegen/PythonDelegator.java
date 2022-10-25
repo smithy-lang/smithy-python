@@ -50,7 +50,7 @@ final class PythonDelegator extends WriterDelegator<PythonWriter> {
         @Override
         public Symbol toSymbol(Shape shape) {
             Symbol symbol = wrapped.toSymbol(shape);
-            if (shape.isEnumShape()) {
+            if (shape.isEnumShape() || shape.isIntEnumShape()) {
                 symbol = symbol.expectProperty("enumSymbol", Symbol.class);
             }
             return symbol;
