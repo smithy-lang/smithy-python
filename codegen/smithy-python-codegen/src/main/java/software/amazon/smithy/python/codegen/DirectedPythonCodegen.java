@@ -33,6 +33,8 @@ import software.amazon.smithy.codegen.core.directed.CustomizeDirective;
 import software.amazon.smithy.codegen.core.directed.DirectedCodegen;
 import software.amazon.smithy.codegen.core.directed.GenerateEnumDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateErrorDirective;
+import software.amazon.smithy.codegen.core.directed.GenerateIntEnumDirective;
+import software.amazon.smithy.codegen.core.directed.GenerateResourceDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateServiceDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateStructureDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateUnionDirective;
@@ -117,6 +119,10 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
     }
 
     @Override
+    public void generateResource(GenerateResourceDirective<GenerationContext, PythonSettings> directive) {
+    }
+
+    @Override
     public void generateStructure(GenerateStructureDirective<GenerationContext, PythonSettings> directive) {
         directive.context().writerDelegator().useShapeWriter(directive.shape(), writer -> {
             StructureGenerator generator = new StructureGenerator(
@@ -174,6 +180,11 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
             );
             generator.run();
         });
+    }
+
+    @Override
+    public void generateIntEnumShape(GenerateIntEnumDirective<GenerationContext, PythonSettings> directive) {
+        new IntEnumGenerator(directive).run();
     }
 
     @Override

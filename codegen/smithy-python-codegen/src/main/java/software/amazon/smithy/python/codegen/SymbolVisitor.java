@@ -17,6 +17,7 @@ package software.amazon.smithy.python.codegen;
 
 import static java.lang.String.format;
 
+import java.util.Locale;
 import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.ReservedWordSymbolProvider;
@@ -36,6 +37,7 @@ import software.amazon.smithy.model.shapes.DocumentShape;
 import software.amazon.smithy.model.shapes.DoubleShape;
 import software.amazon.smithy.model.shapes.EnumShape;
 import software.amazon.smithy.model.shapes.FloatShape;
+import software.amazon.smithy.model.shapes.IntEnumShape;
 import software.amazon.smithy.model.shapes.IntegerShape;
 import software.amazon.smithy.model.shapes.ListShape;
 import software.amazon.smithy.model.shapes.LongShape;
@@ -123,6 +125,11 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         // Escape words that are only reserved for error members.
         if (shape.hasTrait(ErrorTrait.class)) {
             memberName = errorMemberEscaper.escapeMemberName(memberName);
+        }
+
+        var container = model.expectShape(shape.getContainer());
+        if (container.isEnumShape() || container.isIntEnumShape()) {
+            memberName = memberName.toUpperCase(Locale.ENGLISH);
         }
         return memberName;
     }
@@ -343,6 +350,19 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         // generate the enum constants for convenience. We actually want
         // to pass around plain strings rather than what is effectively
         // a namespace class.
+        builder.putProperty("enumSymbol", escaper.escapeSymbol(shape, enumSymbol));
+        return builder.build();
+    }
+
+    @Override
+    public Symbol intEnumShape(IntEnumShape shape) {
+        var builder = createSymbolBuilder(shape, "int");
+        String name = getDefaultShapeName(shape);
+        Symbol enumSymbol = createSymbolBuilder(shape, name, format("%s.models", settings.getModuleName()))
+                .definitionFile(format("./%s/models.py", settings.getModuleName()))
+                .build();
+
+        // Like string enums, int enums are plain ints when used as members.
         builder.putProperty("enumSymbol", escaper.escapeSymbol(shape, enumSymbol));
         return builder.build();
     }
