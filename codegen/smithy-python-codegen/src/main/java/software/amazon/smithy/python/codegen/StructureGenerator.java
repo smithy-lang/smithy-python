@@ -183,9 +183,23 @@ final class StructureGenerator implements Runnable {
                     writer.write(formatString, memberName, symbolProvider.toSymbol(member),
                             getDefaultValue(writer, member));
                 } else {
-                    String formatString = format("$L: %s = $T($L),", getTargetFormat(member));
-                    writer.write(formatString, memberName, symbolProvider.toSymbol(member),
-                            CodegenUtils.getDefaultWrapperFunction(settings), getDefaultValue(writer, member));
+                    var target = model.expectShape(member.getTarget());
+                    var defaultNode = member.expectTrait(DefaultTrait.class).toNode();
+                    var memberSymbol = symbolProvider.toSymbol(member);
+                    String formatString;
+                    if (target.isDocumentShape() && (defaultNode.isArrayNode() || defaultNode.isObjectNode())) {
+                        // Mypy conveniently doesn't let empty collections pass type checks, so we have to
+                        // include an additional cast when documents are maps or lists.
+                        writer.addStdlibImport("typing", "cast");
+                        formatString = format("$L: %1$s = $T(cast(%1$s, $L)),", getTargetFormat(member));
+                        writer.write(formatString, memberName, memberSymbol,
+                                CodegenUtils.getDefaultWrapperFunction(settings), memberSymbol,
+                                getDefaultValue(writer, member));
+                    } else {
+                        formatString = format("$L: %s = $T($L),", getTargetFormat(member));
+                        writer.write(formatString, memberName, memberSymbol,
+                                CodegenUtils.getDefaultWrapperFunction(settings), getDefaultValue(writer, member));
+                    }
                 }
             }
         });

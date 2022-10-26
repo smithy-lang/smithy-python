@@ -37,7 +37,7 @@ interpreter_constraints = [">=3.10"]
 report = "xml"
 
 [mypy]
-version = "mypy==0.950"
+version = "mypy==0.982"
 lockfile = "lockfiles/mypy"
 interpreter_constraints = [">=3.10"]
 

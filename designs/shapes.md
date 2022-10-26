@@ -22,11 +22,11 @@ are generated into python types and type hints from a Smithy model.
 | bigInteger | int |
 | bigDecimal | decimal.Decimal |
 | timestamp | datetime.datetime |
-| document | Any* |
+| document | Document* = dict[str, 'Document'] | list['Document'] | str | int | float | bool | None |
 
-*Documents aren't easily representable in Python type hints due to a lack of
-support for recursive definitions. See [this issue](https://github.com/python/typing/issues/182)
-on the typing repo for more details.
+*Mypy only has experimental support for recursive definitions, but it should be on by default by 0.990.
+See [this issue](https://github.com/python/typing/issues/182) on the typing repo for more details. In
+the meantime we can use a flag to turn it on.
 
 ## Trait-influenced shapes
 
@@ -132,11 +132,11 @@ appear in every referencing structure.
 
 ### intEnums
 
-```python```
+```python
 class MyIntEnum(IntEnum):
     SPAM = 1
     EGGS = 2
-``````
+```
 
 IntEnums will use the native `IntEnum` type. This will allow customers to
 easily specify the enum value without having to reference the actual number. It
