@@ -141,7 +141,8 @@ final class StructureGenerator implements Runnable {
             }
             var memberName = symbolProvider.toMemberName(member);
             if (index.isMemberNullable(member)) {
-                String formatString = format("$L: %s | None", getTargetFormat(member));
+                writer.addStdlibImport("typing", "Optional");
+                String formatString = format("$L: Optional[%s]", getTargetFormat(member));
                 writer.write(formatString, memberName, symbolProvider.toSymbol(member));
             } else {
                 String formatString = format("$L: %s", getTargetFormat(member));
@@ -174,7 +175,8 @@ final class StructureGenerator implements Runnable {
             for (MemberShape member : optionalMembers) {
                 var memberName = symbolProvider.toMemberName(member);
                 if (nullableIndex.isMemberNullable(member)) {
-                    String formatString = format("$L: %s | None = None,", getTargetFormat(member));
+                    writer.addStdlibImport("typing", "Optional");
+                    String formatString = format("$L: Optional[%s] = None,", getTargetFormat(member));
                     writer.write(formatString, memberName, symbolProvider.toSymbol(member));
                 } else if (member.hasTrait(RequiredTrait.class)) {
                     String formatString = format("$L: %s = $L,", getTargetFormat(member));
@@ -279,13 +281,14 @@ final class StructureGenerator implements Runnable {
         var target = model.expectShape(member.getTarget());
         if (target.isTimestampShape()) {
             writer.addStdlibImport("datetime", "datetime");
+            writer.addStdlibImport("datetime", "timezone");
             // We *could* let python do this parsing, but then that work has to be done every time a customer
             // runs their code.
             ZonedDateTime value = parseDefaultTimestamp(member, defaultNode);
-            return String.format("datetime(%d, %d, %d, %d, %d, %d, %d, datetime.utc)", value.get(ChronoField.YEAR),
+            return String.format("datetime(%d, %d, %d, %d, %d, %d, %d, timezone.utc)", value.get(ChronoField.YEAR),
                     value.get(ChronoField.MONTH_OF_YEAR), value.get(ChronoField.DAY_OF_MONTH),
                     value.get(ChronoField.HOUR_OF_DAY), value.get(ChronoField.MINUTE_OF_HOUR),
-                    value.get(ChronoField.SECOND_OF_DAY), value.get(ChronoField.MICRO_OF_SECOND));
+                    value.get(ChronoField.SECOND_OF_MINUTE), value.get(ChronoField.MICRO_OF_SECOND));
         } else if (target.isBlobShape()) {
             return String.format("b'%s'", defaultNode.expectStringNode().getValue());
         }
