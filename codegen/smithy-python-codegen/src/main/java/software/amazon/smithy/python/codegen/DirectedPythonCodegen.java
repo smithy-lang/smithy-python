@@ -231,6 +231,7 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
     public void customizeAfterIntegrations(CustomizeDirective<GenerationContext, PythonSettings> directive) {
         Pattern versionPattern = Pattern.compile("Python \\d\\.(?<minor>\\d+)\\.(?<patch>\\d+)");
         FileManifest fileManifest = directive.fileManifest();
+        SetupGenerator.generateSetup(directive.settings(), directive.context().writerDelegator());
 
         String output;
         try {
