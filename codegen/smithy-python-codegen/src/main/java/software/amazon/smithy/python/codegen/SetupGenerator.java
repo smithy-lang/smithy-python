@@ -19,6 +19,7 @@ import java.util.Collection;
 import java.util.Map;
 import java.util.Optional;
 import software.amazon.smithy.codegen.core.SymbolDependency;
+import software.amazon.smithy.codegen.core.WriterDelegator;
 import software.amazon.smithy.python.codegen.PythonDependency.Type;
 
 /**
@@ -30,7 +31,7 @@ final class SetupGenerator {
 
     static void generateSetup(
             PythonSettings settings,
-            PythonDelegator writers
+            WriterDelegator<PythonWriter> writers
     ) {
         var dependencies = SymbolDependency.gatherDependencies(writers.getDependencies().stream());
         writePyproject(settings, writers, dependencies);
@@ -46,7 +47,7 @@ final class SetupGenerator {
      */
     private static void writePyproject(
             PythonSettings settings,
-            PythonDelegator writers,
+            WriterDelegator<PythonWriter> writers,
             Map<String, Map<String, SymbolDependency>> dependencies
     ) {
         writers.useFileWriter("pyproject.toml", "", writer -> {
@@ -111,7 +112,7 @@ final class SetupGenerator {
     // TODO: remove most of this once setuptools supports PEP 621
     private static void writeSetupCfg(
             PythonSettings settings,
-            PythonDelegator writers,
+            WriterDelegator<PythonWriter> writers,
             Map<String, Map<String, SymbolDependency>> dependencies
     ) {
         writers.useFileWriter("setup.cfg", "", writer -> {
