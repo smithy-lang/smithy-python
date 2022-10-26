@@ -73,26 +73,29 @@ public final class CodegenUtils {
     }
 
     static Symbol getServiceError(PythonSettings settings) {
+        // TODO: put these back in errors
         return Symbol.builder()
                 .name("ServiceError")
-                .namespace(format("%s.errors", settings.getModuleName()), ".")
-                .definitionFile(format("./%s/errors.py", settings.getModuleName()))
+                .namespace(format("%s.utils", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/utils.py", settings.getModuleName()))
                 .build();
     }
 
     static Symbol getApiError(PythonSettings settings) {
+        // TODO: put these back in errors
         return Symbol.builder()
                 .name("ApiError")
-                .namespace(format("%s.errors", settings.getModuleName()), ".")
-                .definitionFile(format("./%s/errors.py", settings.getModuleName()))
+                .namespace(format("%s.utils", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/utils.py", settings.getModuleName()))
                 .build();
     }
 
     static Symbol getUnknownApiError(PythonSettings settings) {
+        // TODO: put these back in errors
         return Symbol.builder()
                 .name("UnknownApiError")
-                .namespace(format("%s.errors", settings.getModuleName()), ".")
-                .definitionFile(format("./%s/errors.py", settings.getModuleName()))
+                .namespace(format("%s.utils", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/utils.py", settings.getModuleName()))
                 .build();
     }
 
