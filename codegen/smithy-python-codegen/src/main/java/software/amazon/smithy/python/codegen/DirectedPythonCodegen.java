@@ -19,6 +19,7 @@ import static java.lang.String.format;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Iterator;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -39,10 +40,10 @@ import software.amazon.smithy.codegen.core.directed.GenerateResourceDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateServiceDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateStructureDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateUnionDirective;
+import software.amazon.smithy.model.neighbor.Walker;
 import software.amazon.smithy.model.shapes.CollectionShape;
-import software.amazon.smithy.model.shapes.ListShape;
 import software.amazon.smithy.model.shapes.MapShape;
-import software.amazon.smithy.model.shapes.SetShape;
+import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.python.codegen.integration.PythonIntegration;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
@@ -237,13 +238,19 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
     @Override
     public void customizeBeforeIntegrations(CustomizeDirective<GenerationContext, PythonSettings> directive) {
         generateInits(directive);
-        generateDictHelpers(directive.context());
+        generateDictHelpers(directive);
     }
 
-    private void generateDictHelpers(GenerationContext context) {
-        context.model().shapes(ListShape.class).forEach(shape -> generateCollectionDictHelpers(context, shape));
-        context.model().shapes(SetShape.class).forEach(shape -> generateCollectionDictHelpers(context, shape));
-        context.model().shapes(MapShape.class).forEach(shape -> generateMapDictHelpers(context, shape));
+    private void generateDictHelpers(CustomizeDirective<GenerationContext, PythonSettings> directive) {
+        Iterator<Shape> shapes = new Walker(directive.model()).iterateShapes(directive.service());
+        while (shapes.hasNext()) {
+            Shape shape = shapes.next();
+            if (shape.isListShape()) {
+                generateCollectionDictHelpers(directive.context(), shape.asListShape().get());
+            } else if (shape.isMapShape()) {
+                generateMapDictHelpers(directive.context(), shape.asMapShape().get());
+            }
+        }
     }
 
     private Void generateCollectionDictHelpers(GenerationContext context, CollectionShape shape) {
