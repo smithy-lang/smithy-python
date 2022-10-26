@@ -399,8 +399,8 @@ final class StructureGenerator implements Runnable {
                 for (MemberShape member : optionalMembers) {
                     var memberName = symbolProvider.toMemberName(member);
                     var target = model.expectShape(member.getTarget());
-                    writer.openBlock("if self._hasattr($S):", "", memberName, () -> {
-                        var targetSymbol = symbolProvider.toSymbol(target);
+                    var targetSymbol = symbolProvider.toSymbol(target);
+                    writer.openBlock("if self._hasattr($1S) and self.$1L is not None:", "", memberName, () -> {
                         if (target.isStructureShape() || target.isUnionShape()) {
                             writer.write("d[$S] = self.$L.as_dict()", member.getMemberName(), memberName);
                         } else if (targetSymbol.getProperty("asDict").isPresent()) {
