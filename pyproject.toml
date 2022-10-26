@@ -10,6 +10,10 @@ src_paths = ["smithy_python", "tests"]
 strict = true
 warn_unused_configs = true
 
+# This should be removable after mypy 0.990, it's needed to allow the document
+# alias to successfully be checked.
+enable_recursive_aliases = true
+
 [[tool.mypy.overrides]]
 module = ["awscrt", "pytest"]
 ignore_missing_imports = true

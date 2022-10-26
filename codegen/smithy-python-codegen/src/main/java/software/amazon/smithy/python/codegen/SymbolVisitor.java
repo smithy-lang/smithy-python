@@ -46,7 +46,6 @@ import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ResourceShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
-import software.amazon.smithy.model.shapes.SetShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeVisitor;
 import software.amazon.smithy.model.shapes.ShortShape;
@@ -150,8 +149,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         if (shape.hasTrait(MediaTypeTrait.class)) {
             var mediaType = shape.expectTrait(MediaTypeTrait.class).getValue();
             if (MediaType.isJson(mediaType)) {
-                return createSymbolBuilder(shape, "Union[bytes, bytearray, JsonBlob]")
-                        .addReference(createStdlibReference("Union", "typing"))
+                return createSymbolBuilder(shape, "bytes | bytearray | JsonBlob")
                         .addReference(Symbol.builder()
                                 .name("JsonBlob")
                                 .namespace("smithy_python.mediatypes", ".")
@@ -160,9 +158,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
                         .build();
             }
         }
-        return createSymbolBuilder(shape, "Union[bytes, bytearray]")
-                .addReference(createStdlibReference("Union", "typing"))
-                .build();
+        return createSymbolBuilder(shape, "bytes | bytearray").build();
     }
 
     @Override
@@ -172,21 +168,8 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public Symbol listShape(ListShape shape) {
-        return createCollectionSymbol(shape);
-    }
-
-    @Override
-    public Symbol setShape(SetShape shape) {
-        // Python doesn't have a set type. Rather than hack together a set using a map,
-        // we instead just create a list and let the service be responsible for
-        // asserting that there are no duplicates.
-        return createCollectionSymbol(shape);
-    }
-
-    private Symbol createCollectionSymbol(CollectionShape shape) {
         Symbol reference = toSymbol(shape.getMember());
-        var builder = createSymbolBuilder(shape, "List[" + reference.getName() + "]")
-                .addReference(createStdlibReference("List", "typing"))
+        var builder = createSymbolBuilder(shape, "list[" + reference.getName() + "]")
                 .addReference(reference);
 
         if (needsDictHelpers(shape)) {
@@ -199,8 +182,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol mapShape(MapShape shape) {
         Symbol reference = toSymbol(shape.getValue());
-        var builder = createSymbolBuilder(shape, "Dict[str, " + reference.getName() + "]")
-                .addReference(createStdlibReference("Dict", "typing"))
+        var builder = createSymbolBuilder(shape, "dict[str, " + reference.getName() + "]")
                 .addReference(reference);
 
         if (needsDictHelpers(shape)) {
@@ -281,8 +263,10 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public Symbol documentShape(DocumentShape shape) {
-        // TODO: implement document shapes
-        return createStdlibSymbol(shape, "Any", "typing");
+        return createSymbolBuilder(shape, "Document")
+                .namespace("smithy_python.types", ".")
+                .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                .build();
     }
 
     @Override
@@ -324,8 +308,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         if (shape.hasTrait(MediaTypeTrait.class)) {
             var mediaType = shape.expectTrait(MediaTypeTrait.class).getValue();
             if (MediaType.isJson(mediaType)) {
-                return createSymbolBuilder(shape, "Union[str, JsonString]")
-                        .addReference(createStdlibReference("Union", "typing"))
+                return createSymbolBuilder(shape, "str | JsonString")
                         .addReference(Symbol.builder()
                                 .name("JsonString")
                                 .namespace("smithy_python.mediatypes", ".")

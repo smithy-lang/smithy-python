@@ -129,6 +129,10 @@ final class SetupGenerator {
                     strict = True
                     warn_unused_configs = True
 
+                    # This should be removable after mypy 0.990, it's needed to allow the document
+                    # alias to successfully be checked.
+                    enable_recursive_aliases = true
+
                     [mypy-awscrt]
                     ignore_missing_imports = True
 
