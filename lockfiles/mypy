@@ -6,7 +6,7 @@
 # {
 #   "version": 2,
 #   "valid_for_interpreter_constraints": [
-#     "CPython>=3.10"
+#     "CPython>=3.11"
 #   ],
 #   "generated_with_requirements": [
 #     "mypy==0.982"
@@ -16,5 +16,4 @@
 
 mypy-extensions==0.4.3; python_version >= "3.7"
 mypy==0.982; python_version >= "3.7"
-tomli==2.0.1; python_version < "3.11" and python_version >= "3.7"
 typing-extensions==4.4.0; python_version >= "3.7"

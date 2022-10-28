@@ -60,7 +60,7 @@ final class SetupGenerator {
                     name = $S
                     version = $S
                     description = $S
-                    requires-python = ">=3.10"
+                    requires-python = ">=3.11"
                     license = {text = "Apache-2.0"}
                     classifiers = [
                         "Development Status :: 2 - Pre-Alpha",
@@ -71,7 +71,7 @@ final class SetupGenerator {
                         "Programming Language :: Python",
                         "Programming Language :: Python :: 3",
                         "Programming Language :: Python :: 3 :: Only",
-                        "Programming Language :: Python :: 3.10"
+                        "Programming Language :: Python :: 3.11"
                     ]
                     """, settings.getModuleName(), settings.getModuleVersion(), settings.getModuleDescription());
 
@@ -144,7 +144,7 @@ final class SetupGenerator {
                     version = $L
                     description = $L
                     license = Apache-2.0
-                    python_requires = >=3.10
+                    python_requires = >=3.11
                     classifiers =
                         Development Status :: 2 - Pre-Alpha
                         Intended Audience :: Developers
@@ -154,7 +154,7 @@ final class SetupGenerator {
                         Programming Language :: Python
                         Programming Language :: Python :: 3
                         Programming Language :: Python :: 3 :: Only
-                        Programming Language :: Python :: 3.10
+                        Programming Language :: Python :: 3.11
 
                     [options.packages.find]
                     exclude = tests*
