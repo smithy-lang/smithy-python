@@ -36,7 +36,7 @@ setup(
     include_package_data=True,
     install_requires=requires,
     extras_require={},
-    python_requires=">=3.10",
+    python_requires=">=3.11",
     project_urls={
         "Source": "https://github.com/awslabs/smithy-python",
         "Changelog": "https://github.com/awslabs/smithy-python/blob/develop/CHANGES.md",
@@ -52,7 +52,7 @@ setup(
         "Programming Language :: Python",
         "Programming Language :: Python :: 3 :: Only",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: Implementation :: CPython",
         "Topic :: Software Development :: Libraries",
     ],

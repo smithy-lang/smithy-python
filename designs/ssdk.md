@@ -30,8 +30,8 @@ is not specifically delegated to the application developer is generated at
 build time.
 
 *Modern* - The SSDK will make use of the latest Python features, including type
-hints and async. The minimal Python version is expected to be 3.10 but may be
-increased to 3.11 if it introduces sufficiently important features.
+hints and async. The minimal Python version is expected to be 3.11 but may be
+increased to 3.12 if it introduces sufficiently important features.
 
 ## High-level API
 
@@ -254,7 +254,7 @@ sketch to showcase the design above. The server used in this example is
 [uvicorn](https://www.uvicorn.org/), but it can be used with any
 ASGI-compatible server.
 
-To run this you will need at least Python 3.10. Copy the contents below into a
+To run this you will need at least Python 3.11. Copy the contents below into a
 file on disk called `sample.py`. Then run the following commands:
 
 ```
