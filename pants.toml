@@ -1,5 +1,5 @@
 [GLOBAL]
-pants_version = "2.9.0"
+pants_version = "2.14.0"
 
 backend_packages = [
     "pants.backend.python",
@@ -19,7 +19,7 @@ root_patterns = [
 interpreter_constraints = [">=3.11"]
 
 [black]
-version = "black==22.1.0"
+version = "black==22.10.0"
 args = ["-t py310"]
 lockfile = "lockfiles/black"
 interpreter_constraints = [">=3.11"]
