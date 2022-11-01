@@ -74,6 +74,7 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
     public void customizeBeforeShapeGeneration(CustomizeDirective<GenerationContext, PythonSettings> directive) {
         generateDefaultWrapper(directive.settings(), directive.context().writerDelegator());
         generateServiceErrors(directive.settings(), directive.context().writerDelegator());
+        new ConfigGenerator(directive.context()).run();
     }
 
     @Override
