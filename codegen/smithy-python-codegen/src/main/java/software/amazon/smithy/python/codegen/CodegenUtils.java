@@ -55,6 +55,22 @@ public final class CodegenUtils {
 
     private CodegenUtils() {}
 
+    static Symbol getConfigSymbol(PythonSettings settings) {
+        return Symbol.builder()
+                .name("Config")
+                .namespace(format("%s.config", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/config.py", settings.getModuleName()))
+                .build();
+    }
+
+    static Symbol getPluginSymbol(PythonSettings settings) {
+        return Symbol.builder()
+                .name("Plugin")
+                .namespace(format("%s.config", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/config.py", settings.getModuleName()))
+                .build();
+    }
+
     static Symbol getDefaultWrapperFunction(PythonSettings settings) {
         return Symbol.builder()
                 .name("_default")

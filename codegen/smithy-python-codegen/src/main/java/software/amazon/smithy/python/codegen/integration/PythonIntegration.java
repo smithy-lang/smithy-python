@@ -39,4 +39,13 @@ public interface PythonIntegration extends SmithyIntegration<PythonSettings, Pyt
     default List<ProtocolGenerator> getProtocolGenerators() {
         return Collections.emptyList();
     }
+
+    /**
+     * Gets a list of plugins to apply to the generated client.
+     *
+     * @return Returns the list of RuntimePlugins to apply to the client.
+     */
+    default List<RuntimeClientPlugin> getClientPlugins() {
+        return Collections.emptyList();
+    }
 }
