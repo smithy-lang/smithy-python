@@ -1,3 +1,4 @@
+from dataclasses import dataclass
 from typing import Any, Optional, Protocol
 
 # Defining headers as a list instead of a mapping to avoid ambiguity and
@@ -26,11 +27,30 @@ class Response(Protocol):
     body: Any
 
 
-class Session(Protocol):
-    def send(self, request: Request) -> Response:
-        pass  # pragma: no cover
+@dataclass(kw_only=True)
+class HttpRequestConfiguration:
+    """Request-level HTTP configuration.
+
+    :param read_timeout: How long, in seconds, the client will attempt to read the
+    first byte over an established, open connection before timing out.
+    """
+
+    read_timeout: float | None = None
 
 
-class AsyncSession(Protocol):
-    async def send(self, request: Request) -> Response:
-        pass  # pragma: no cover
+class HttpClient(Protocol):
+    """A synchronous HTTP client interface."""
+
+    def send(
+        self, request: Request, request_config: HttpRequestConfiguration
+    ) -> Response:
+        pass
+
+
+class AsyncHttpClient(Protocol):
+    """An asynchronous HTTP client interface."""
+
+    async def send(
+        self, request: Request, request_config: HttpRequestConfiguration
+    ) -> Response:
+        pass
