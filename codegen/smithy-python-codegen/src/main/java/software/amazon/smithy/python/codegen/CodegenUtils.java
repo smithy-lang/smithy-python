@@ -59,16 +59,16 @@ public final class CodegenUtils {
         // TODO: move these into the models file once we can do generation before shapes again
         return Symbol.builder()
                 .name("_default")
-                .namespace(format("%s.utils", settings.getModuleName()), ".")
-                .definitionFile(format("./%s/utils.py", settings.getModuleName()))
+                .namespace(format("%s.models", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/models.py", settings.getModuleName()))
                 .build();
     }
 
     static Symbol getDefaultWrapperClass(PythonSettings settings) {
         return Symbol.builder()
                 .name("_DEFAULT")
-                .namespace(format("%s.utils", settings.getModuleName()), ".")
-                .definitionFile(format("./%s/utils.py", settings.getModuleName()))
+                .namespace(format("%s.models", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/models.py", settings.getModuleName()))
                 .build();
     }
 
@@ -76,8 +76,8 @@ public final class CodegenUtils {
         // TODO: put these back in errors
         return Symbol.builder()
                 .name("ServiceError")
-                .namespace(format("%s.utils", settings.getModuleName()), ".")
-                .definitionFile(format("./%s/utils.py", settings.getModuleName()))
+                .namespace(format("%s.errors", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/errors.py", settings.getModuleName()))
                 .build();
     }
 
@@ -85,8 +85,8 @@ public final class CodegenUtils {
         // TODO: put these back in errors
         return Symbol.builder()
                 .name("ApiError")
-                .namespace(format("%s.utils", settings.getModuleName()), ".")
-                .definitionFile(format("./%s/utils.py", settings.getModuleName()))
+                .namespace(format("%s.errors", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/errors.py", settings.getModuleName()))
                 .build();
     }
 
@@ -94,8 +94,8 @@ public final class CodegenUtils {
         // TODO: put these back in errors
         return Symbol.builder()
                 .name("UnknownApiError")
-                .namespace(format("%s.utils", settings.getModuleName()), ".")
-                .definitionFile(format("./%s/utils.py", settings.getModuleName()))
+                .namespace(format("%s.errors", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/errors.py", settings.getModuleName()))
                 .build();
     }
 
