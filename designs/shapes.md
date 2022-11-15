@@ -1,7 +1,7 @@
 # Abstract
 
-This document will describe how [simple shapes](https://awslabs.github.io/smithy/1.0/spec/core/model.html#simple-shapes)
-and [aggregate shapes](https://awslabs.github.io/smithy/1.0/spec/core/model.html#aggregate-shapes)
+This document will describe how [simple shapes](https://smithy.io/2.0/spec/simple-types.html)
+and [aggregate shapes](https://smithy.io/2.0/spec/aggregate-types.html)
 are generated into python types and type hints from a Smithy model.
 
 # Specification
