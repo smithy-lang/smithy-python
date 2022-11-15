@@ -6,7 +6,7 @@ We are in the very early stages of beginning work on low-level Python SDK
 modules that aim to provide basic, reusable, and composable interfaces for
 lower level SDK tasks. Using these modules customers should be able to generate
 synchronous and asynchronous service client or server implementations based on
-services defined using [Smithy](https://awslabs.github.io/smithy/).
+services defined using [Smithy](https://smithy.io/).
 
 ### What is this repository?
 
@@ -17,7 +17,7 @@ This repository contains two major components:
 
 ### Smithy Code Generators
 
-[Smithy](https://awslabs.github.io/smithy/) is a protocol-agnostic interface
+[Smithy](https://smithy.io/) is a protocol-agnostic interface
 definition language that provides a
 [code generation framework](https://github.com/awslabs/smithy/tree/main/smithy-codegen-core)
 for building service clients, servers, and documentation. The `codegen` directory
