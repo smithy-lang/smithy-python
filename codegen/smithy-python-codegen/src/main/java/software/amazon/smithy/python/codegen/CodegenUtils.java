@@ -56,7 +56,6 @@ public final class CodegenUtils {
     private CodegenUtils() {}
 
     static Symbol getDefaultWrapperFunction(PythonSettings settings) {
-        // TODO: move these into the models file once we can do generation before shapes again
         return Symbol.builder()
                 .name("_default")
                 .namespace(format("%s.models", settings.getModuleName()), ".")
@@ -73,7 +72,6 @@ public final class CodegenUtils {
     }
 
     static Symbol getServiceError(PythonSettings settings) {
-        // TODO: put these back in errors
         return Symbol.builder()
                 .name("ServiceError")
                 .namespace(format("%s.errors", settings.getModuleName()), ".")
@@ -82,7 +80,6 @@ public final class CodegenUtils {
     }
 
     static Symbol getApiError(PythonSettings settings) {
-        // TODO: put these back in errors
         return Symbol.builder()
                 .name("ApiError")
                 .namespace(format("%s.errors", settings.getModuleName()), ".")
@@ -91,7 +88,6 @@ public final class CodegenUtils {
     }
 
     static Symbol getUnknownApiError(PythonSettings settings) {
-        // TODO: put these back in errors
         return Symbol.builder()
                 .name("UnknownApiError")
                 .namespace(format("%s.errors", settings.getModuleName()), ".")
