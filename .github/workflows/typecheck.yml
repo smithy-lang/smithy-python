@@ -13,7 +13,11 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v1
-      - name: Set Up Python 3.11
+      - name: Set up Python for Pants - 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+      - name: Set up Python for type checking 3.11
         uses: actions/setup-python@v2
         with:
           python-version: "3.11"
