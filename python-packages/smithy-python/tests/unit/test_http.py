@@ -1,4 +1,10 @@
-from smithy_python._private.http import URL, Request, Response
+from smithy_python._private.http import (
+    URL,
+    BasicEndpointParams,
+    BasicEndpointResolver,
+    Request,
+    Response,
+)
 
 
 def test_url() -> None:
@@ -41,3 +47,35 @@ def test_resposne() -> None:
     assert response.status_code == 200
     assert response.headers == [("foo", "bar")]
     assert response.body == b"test body"
+
+
+async def test_endpoint_provider_with_url_string() -> None:
+    params = BasicEndpointParams(
+        url="https://foo.example.com/spam:8080?foo=bar&foo=baz"
+    )
+    expected = URL(
+        hostname="foo.example.com",
+        path="/spam",
+        scheme="https",
+        query_params=[("foo", "bar"), ("foo", "baz")],
+        port=8080,
+    )
+    resolver = BasicEndpointResolver()
+    result = await resolver.resolve_endpoint(params=params)
+    assert result.url == expected
+    assert result.headers == []
+
+
+async def test_endpoint_provider_with_url_object() -> None:
+    expected = URL(
+        hostname="foo.example.com",
+        path="/spam",
+        scheme="https",
+        query_params=[("foo", "bar"), ("foo", "baz")],
+        port=8080,
+    )
+    params = BasicEndpointParams(url=expected)
+    resolver = BasicEndpointResolver()
+    result = await resolver.resolve_endpoint(params=params)
+    assert result.url == expected
+    assert result.headers == []

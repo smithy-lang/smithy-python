@@ -11,8 +11,12 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+# TODO: move all of this out of _private
 
+
+from dataclasses import dataclass, field
 from typing import Any, Optional
+from urllib.parse import parse_qsl, urlparse
 
 from smithy_python.interfaces import http as http_interface
 
@@ -72,3 +76,49 @@ class Response:
         self.status_code: int = status_code
         self.headers: HeadersList = headers
         self.body: Any = body
+
+
+@dataclass
+class Endpoint(http_interface.Endpoint):
+    url: URL
+    headers: HeadersList = field(default_factory=list)
+
+
+@dataclass
+class BasicEndpointParams:
+    """
+    Static endpoint params.
+
+    :params url: A static URL to route requests to.
+    """
+
+    url: str | URL
+
+
+class BasicEndpointResolver(http_interface.EndpointResolver[BasicEndpointParams]):
+    """A basic endpoint resolver that just forwards a static url."""
+
+    async def resolve_endpoint(self, params: BasicEndpointParams) -> Endpoint:
+        # If it's not a string, it's already a parsed URL so just pass it along.
+        if not isinstance(params.url, str):
+            return Endpoint(url=params.url)
+
+        # Does crt have implementations of these parsing methods? Using the standard
+        # library is probably fine.
+        parsed = urlparse(params.url)
+
+        # This will end up getting wrapped in the client.
+        if parsed.hostname is None:
+            raise ValueError(
+                f"Unable to parse hostname from provided url: {params.url}"
+            )
+
+        return Endpoint(
+            url=URL(
+                hostname=parsed.hostname,
+                path=parsed.path,
+                scheme=parsed.scheme,
+                query_params=parse_qsl(parsed.query),
+                port=parsed.port,
+            )
+        )

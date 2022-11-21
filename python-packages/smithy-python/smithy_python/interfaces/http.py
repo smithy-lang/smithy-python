@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Optional, Protocol
+from typing import Any, Optional, Protocol, TypeVar
 
 # Defining headers as a list instead of a mapping to avoid ambiguity and
 # the nuances of multiple fields in a mapping style interface
@@ -25,6 +25,19 @@ class Response(Protocol):
     status_code: int  # HTTP status code
     headers: HeadersList
     body: Any
+
+
+class Endpoint(Protocol):
+    url: URL
+    headers: HeadersList
+
+
+EndpointParams = TypeVar("EndpointParams", contravariant=True)
+
+
+class EndpointResolver(Protocol[EndpointParams]):
+    async def resolve_endpoint(self, params: EndpointParams) -> Endpoint:
+        raise NotImplementedError()
 
 
 @dataclass(kw_only=True)
