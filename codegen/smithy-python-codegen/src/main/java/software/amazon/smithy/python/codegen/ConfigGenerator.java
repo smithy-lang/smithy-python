@@ -56,7 +56,7 @@ final class ConfigGenerator implements Runnable {
     public void run() {
         var config = CodegenUtils.getConfigSymbol(context.settings());
         context.writerDelegator().useFileWriter(
-                config.getDefinitionFile(), config.getNamespace(), this::generateConfig);
+                config.getDefinitionFile(), config.getNamespace(), writer -> generateConfig(context, writer));
 
         // Generate the plugin symbol. This is just a callable. We could do something
         // like have a class to implement, but that seems unnecessarily burdensome for
@@ -70,17 +70,21 @@ final class ConfigGenerator implements Runnable {
         });
     }
 
-    private void generateConfig(PythonWriter writer) {
+    private void generateConfig(GenerationContext context, PythonWriter writer) {
         var symbol = CodegenUtils.getConfigSymbol(context.settings());
 
         // Initialize the list of config fields with our base fields. Here a new
         // list is constructed because that base list is immutable.
         var fields = new ArrayList<>(BASE_FIELDS);
+        var model = context.model();
+        var service = context.settings().getService(model);
 
         // Add any relevant config fields from plugins.
         for (PythonIntegration integration : context.integrations()) {
             for (RuntimeClientPlugin plugin : integration.getClientPlugins()) {
-                fields.addAll(plugin.getConfigFields());
+                if (plugin.matchesService(model, service)) {
+                    fields.addAll(plugin.getConfigFields());
+                }
             }
         }
 
