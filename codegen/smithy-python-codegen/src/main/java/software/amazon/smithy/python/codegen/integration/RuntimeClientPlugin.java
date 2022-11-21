@@ -18,6 +18,12 @@ package software.amazon.smithy.python.codegen.integration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
+import java.util.function.BiPredicate;
+import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.shapes.OperationShape;
+import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.python.codegen.ConfigField;
 import software.amazon.smithy.utils.SmithyBuilder;
 import software.amazon.smithy.utils.SmithyUnstableApi;
@@ -34,10 +40,59 @@ import software.amazon.smithy.utils.ToSmithyBuilder;
  */
 @SmithyUnstableApi
 public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientPlugin> {
+    private final BiPredicate<Model, ServiceShape> servicePredicate;
+    private final OperationPredicate operationPredicate;
     private final List<ConfigField> configFields;
 
     private RuntimeClientPlugin(Builder builder) {
+        servicePredicate = builder.servicePredicate;
+        operationPredicate = builder.operationPredicate;
         configFields = Collections.unmodifiableList(builder.configFields);
+    }
+
+    @FunctionalInterface
+    public interface OperationPredicate {
+        /**
+         * Tests if this should be applied to an individual operation.
+         *
+         * @param model     Model the operation belongs to.
+         * @param service   Service the operation belongs to.
+         * @param operation Operation to test.
+         * @return Returns true if interceptors / plugins should be applied to the operation.
+         */
+        boolean test(Model model, ServiceShape service, OperationShape operation);
+    }
+
+    /**
+     * Returns true if this plugin applies to the given service.
+     *
+     * <p>By default, a plugin applies to all services but not to specific
+     * commands. You an configure a plugin to apply only to a subset of
+     * services (for example, only apply to a known service or a service
+     * with specific traits) or to no services at all (for example, if
+     * the plugin is meant to by command-specific and not on every
+     * command executed by the service).
+     *
+     * @param model   The model the service belongs to.
+     * @param service Service shape to test against.
+     * @return Returns true if the plugin is applied to the given service.
+     * @see #matchesOperation(Model, ServiceShape, OperationShape)
+     */
+    public boolean matchesService(Model model, ServiceShape service) {
+        return servicePredicate.test(model, service);
+    }
+
+    /**
+     * Returns true if this plugin applies to the given operation.
+     *
+     * @param model     Model the operation belongs to.
+     * @param service   Service the operation belongs to.
+     * @param operation Operation to test against.
+     * @return Returns true if the plugin is applied to the given operation.
+     * @see #matchesService(Model, ServiceShape)
+     */
+    public boolean matchesOperation(Model model, ServiceShape service, OperationShape operation) {
+        return operationPredicate.test(model, service, operation);
     }
 
     /**
@@ -65,6 +120,8 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
      * Builds a {@link RuntimeClientPlugin}.
      */
     public static final class Builder implements SmithyBuilder<RuntimeClientPlugin> {
+        private BiPredicate<Model, ServiceShape> servicePredicate = (model, service) -> true;
+        private OperationPredicate operationPredicate = (model, service, operation) -> false;
         private List<ConfigField> configFields = new ArrayList<>();
 
         Builder() {
@@ -73,6 +130,66 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
         @Override
         public RuntimeClientPlugin build() {
             return new RuntimeClientPlugin(this);
+        }
+
+        /**
+         * Sets a predicate that determines if the plugin applies to a
+         * specific operation.
+         *
+         * <p>When this method is called, the {@code servicePredicate} is
+         * automatically configured to return false for every service.
+         *
+         * <p>By default, a plugin applies globally to a service, which thereby
+         * applies to every operation when the interceptors list is copied.
+         *
+         * @param operationPredicate Operation matching predicate.
+         * @return Returns the builder.
+         * @see #servicePredicate(BiPredicate)
+         */
+        public Builder operationPredicate(OperationPredicate operationPredicate) {
+            this.operationPredicate = Objects.requireNonNull(operationPredicate);
+            servicePredicate = (model, service) -> false;
+            return this;
+        }
+
+        /**
+         * Configures a predicate that makes a plugin only apply to a set of
+         * operations that match one or more of the set of given shape names,
+         * and ensures that the plugin is not applied globally to services.
+         *
+         * <p>By default, a plugin applies globally to a service, which thereby
+         * applies to every operation when the interceptors list is copied.
+         *
+         * @param operationNames Set of operation names.
+         * @return Returns the builder.
+         */
+        public Builder appliesOnlyToOperations(Set<String> operationNames) {
+            operationPredicate((model, service, operation) -> operationNames.contains(operation.getId().getName()));
+            return servicePredicate((model, service) -> false);
+        }
+
+        /**
+         * Configures a predicate that applies the plugin to a service if the
+         * predicate matches a given model and service.
+         *
+         * <p>When this method is called, the {@code operationPredicate} is
+         * automatically configured to return false for every operation,
+         * causing the plugin to only apply to services and not to individual
+         * operations.
+         *
+         * <p>By default, a plugin applies globally to a service, which
+         * thereby applies to every operation when the interceptors list is
+         * copied. Setting a custom service predicate is useful for plugins
+         * that should only be applied to specific services or only applied
+         * at the operation level.
+         *
+         * @param servicePredicate Service predicate.
+         * @return Returns the builder.
+         */
+        public Builder servicePredicate(BiPredicate<Model, ServiceShape> servicePredicate) {
+            this.servicePredicate = Objects.requireNonNull(servicePredicate);
+            operationPredicate = (model, service, operation) -> false;
+            return this;
         }
 
         /**
