@@ -44,6 +44,8 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
     private final OperationPredicate operationPredicate;
     private final List<ConfigField> configFields;
 
+    // TODO: Add "plugin" and interceptor initialization
+
     private RuntimeClientPlugin(Builder builder) {
         servicePredicate = builder.servicePredicate;
         operationPredicate = builder.operationPredicate;
