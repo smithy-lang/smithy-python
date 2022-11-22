@@ -15,8 +15,14 @@
 
 package software.amazon.smithy.python.codegen.integration;
 
+import static java.lang.String.format;
+
+import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.shapes.ShapeId;
+import software.amazon.smithy.model.shapes.ToShapeId;
 import software.amazon.smithy.python.codegen.ApplicationProtocol;
+import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.utils.CaseUtils;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
@@ -49,4 +55,59 @@ public interface ProtocolGenerator {
      * @return Returns the created application protocol.
      */
     ApplicationProtocol getApplicationProtocol();
+
+
+    /**
+     * Generates the name of a serializer function for shapes of a service that is not protocol-specific.
+     *
+     * @param context The code generation context.
+     * @param shapeId The shape the serializer function is being generated for.
+     * @return Returns the generated function name.
+     */
+    default String getSerializationFunctionName(GenerationContext context, ToShapeId shapeId) {
+        var shapeSymbol = context.symbolProvider().toSymbol(context.model().expectShape(shapeId.toShapeId()));
+        return "_serialize_" + CaseUtils.toSnakeCase(shapeSymbol.getName());
+    }
+
+    /**
+     * Generates the symbol for a serializer function for shapes of a service that is not protocol-specific.
+     *
+     * @param context The code generation context.
+     * @param shapeId The shape the serializer function is being generated for.
+     * @return Returns the generated symbol.
+     */
+    default Symbol getSerializationFunction(GenerationContext context, ToShapeId shapeId) {
+        return Symbol.builder()
+                .name(getSerializationFunctionName(context, shapeId))
+                .namespace(format("%s.serialize", context.settings().getModuleName()), "")
+                .definitionFile(format("./%s/serialize.py", context.settings().getModuleName()))
+                .build();
+    }
+
+    /**
+     * Generates the name of a deserializer function for shapes of a service that is not protocol-specific.
+     *
+     * @param context The code generation context.
+     * @param shapeId The shape the deserializer function is being generated for.
+     * @return Returns the generated function name.
+     */
+    default String getDeserializationFunctionName(GenerationContext context, ToShapeId shapeId) {
+        var shapeSymbol = context.symbolProvider().toSymbol(context.model().expectShape(shapeId.toShapeId()));
+        return "_deserialize_" + CaseUtils.toSnakeCase(shapeSymbol.getName());
+    }
+
+    /**
+     * Generates the symbol for a deserializer function for shapes of a service that is not protocol-specific.
+     *
+     * @param context The code generation context.
+     * @param shapeId The shape the deserializer function is being generated for.
+     * @return Returns the generated symbol.
+     */
+    default Symbol getDeserializationFunction(GenerationContext context, ToShapeId shapeId) {
+        return Symbol.builder()
+                .name(getDeserializationFunctionName(context, shapeId))
+                .namespace(format("%s.deserialize", context.settings().getModuleName()), "")
+                .definitionFile(format("./%s/deserialize.py", context.settings().getModuleName()))
+                .build();
+    }
 }
