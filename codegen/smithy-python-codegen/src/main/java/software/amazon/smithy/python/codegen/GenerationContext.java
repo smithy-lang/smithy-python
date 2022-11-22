@@ -21,6 +21,7 @@ import software.amazon.smithy.codegen.core.CodegenContext;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.WriterDelegator;
 import software.amazon.smithy.model.Model;
+import software.amazon.smithy.python.codegen.integration.ProtocolGenerator;
 import software.amazon.smithy.python.codegen.integration.PythonIntegration;
 import software.amazon.smithy.utils.SmithyBuilder;
 import software.amazon.smithy.utils.SmithyUnstableApi;
@@ -39,6 +40,7 @@ public final class GenerationContext
     private final FileManifest fileManifest;
     private final PythonDelegator delegator;
     private final List<PythonIntegration> integrations;
+    private final ProtocolGenerator protocolGenerator;
 
     private GenerationContext(Builder builder) {
         model = builder.model;
@@ -47,6 +49,7 @@ public final class GenerationContext
         fileManifest = builder.fileManifest;
         delegator = builder.delegator;
         integrations = builder.integrations;
+        protocolGenerator = builder.protocolGenerator;
     }
 
     @Override
@@ -80,6 +83,24 @@ public final class GenerationContext
     }
 
     /**
+     * @return Returns the protocol generator to use in code generation.
+     */
+    public ProtocolGenerator protocolGenerator() {
+        return protocolGenerator;
+    }
+
+    /**
+     * Gets the application protocol for the service protocol.
+     *
+     * @return Returns the application protocol the protocol makes use of.
+     */
+    public ApplicationProtocol applicationProtocol() {
+        return protocolGenerator != null
+                ? protocolGenerator.getApplicationProtocol()
+                : ApplicationProtocol.createDefaultHttpApplicationProtocol();
+    }
+
+    /**
      * @return Returns a builder.
      */
     public static Builder builder() {
@@ -106,6 +127,7 @@ public final class GenerationContext
         private FileManifest fileManifest;
         private PythonDelegator delegator;
         private List<PythonIntegration> integrations;
+        private ProtocolGenerator protocolGenerator;
 
         @Override
         public GenerationContext build() {
@@ -163,6 +185,15 @@ public final class GenerationContext
          */
         public Builder integrations(List<PythonIntegration> integrations) {
             this.integrations = integrations;
+            return this;
+        }
+
+        /**
+         * @param protocolGenerator The resolved protocol generator to use.
+         * @return Returns the builder.
+         */
+        public Builder protocolGenerator(ProtocolGenerator protocolGenerator) {
+            this.protocolGenerator = protocolGenerator;
             return this;
         }
     }
