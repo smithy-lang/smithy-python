@@ -50,6 +50,43 @@ final class ConfigGenerator implements Runnable {
         this.settings = settings;
     }
 
+    private static List<ConfigField> getHttpFields(PythonSettings settings) {
+        var endpointParams = CodegenUtils.getEndpointParams(settings);
+        var endpointResolver = CodegenUtils.getEndpointResolver(settings);
+        return Arrays.asList(
+                new ConfigField(
+                        "http_client",
+                        Symbol.builder()
+                                .name("AsyncHttpClient")
+                                .namespace("smithy_python.interfaces.http", ".")
+                                .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                                .build(),
+                        true,
+                        "The HTTP client used to make requests."
+                ),
+                new ConfigField(
+                        "endpoint_resolver",
+                        Symbol.builder()
+                                .name(String.format("%s[%s]", endpointResolver.getName(), endpointParams.getName()))
+                                .addReference(endpointResolver)
+                                .addReference(endpointParams)
+                                .build(),
+                        true,
+                        """
+                                The endpoint resolver used to resolve the final endpoint per-operation based on the \
+                                configuration."""
+                ),
+                new ConfigField(
+                        "endpoint_params",
+                        endpointParams,
+                        true,
+                        """
+                                The endpoint resolver used to resolve the final endpoint per-operation based on the \
+                                configuration."""
+                )
+        );
+    }
+
     @Override
     public void run() {
         var config = CodegenUtils.getConfigSymbol(context.settings());
@@ -105,6 +142,14 @@ final class ConfigGenerator implements Runnable {
         // Initialize the list of config fields with our base fields. Here a new
         // list is constructed because that base list is immutable.
         var fields = new ArrayList<>(BASE_FIELDS);
+
+        // Smithy is transport agnostic, so we don't add http-related fields by default.
+        // Nevertheless, HTTP is the most common use case so we standardize those settings
+        // and add them in if the protocol is going to need them.
+        if (context.applicationProtocol().isHttpProtocol()) {
+            fields.addAll(getHttpFields(context.settings()));
+        }
+
         var model = context.model();
         var service = context.settings().getService(model);
 
