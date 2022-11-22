@@ -111,6 +111,22 @@ public final class CodegenUtils {
                 .build();
     }
 
+    static Symbol getEndpointResolver(PythonSettings settings) {
+        return Symbol.builder()
+                .name("EndpointResolver")
+                .namespace(format("%s.endpoints", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/endpoints.py", settings.getModuleName()))
+                .build();
+    }
+
+    static Symbol getEndpointParams(PythonSettings settings) {
+        return Symbol.builder()
+                .name("EndpointParams")
+                .namespace(format("%s.endpoints", settings.getModuleName()), ".")
+                .definitionFile(format("./%s/endpoints.py", settings.getModuleName()))
+                .build();
+    }
+
     static boolean isErrorMessage(Model model, MemberShape shape) {
         return ERROR_MESSAGE_MEMBER_NAMES.contains(shape.getMemberName().toLowerCase(Locale.US))
                 && model.expectShape(shape.getContainer()).hasTrait(ErrorTrait.class);
