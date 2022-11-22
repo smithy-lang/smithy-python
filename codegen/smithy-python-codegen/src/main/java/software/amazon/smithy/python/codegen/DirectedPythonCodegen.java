@@ -19,7 +19,10 @@ import static java.lang.String.format;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -40,10 +43,14 @@ import software.amazon.smithy.codegen.core.directed.GenerateResourceDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateServiceDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateStructureDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateUnionDirective;
+import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.neighbor.Walker;
 import software.amazon.smithy.model.shapes.CollectionShape;
 import software.amazon.smithy.model.shapes.MapShape;
+import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.Shape;
+import software.amazon.smithy.model.shapes.ShapeId;
+import software.amazon.smithy.python.codegen.integration.ProtocolGenerator;
 import software.amazon.smithy.python.codegen.integration.PythonIntegration;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
@@ -67,7 +74,34 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
                 .writerDelegator(new PythonDelegator(
                         directive.fileManifest(), directive.symbolProvider(), directive.settings()))
                 .integrations(directive.integrations())
+                .protocolGenerator(resolveProtocolGenerator(
+                        directive.integrations(), directive.model(), directive.service(), directive.settings()))
                 .build();
+    }
+
+    private ProtocolGenerator resolveProtocolGenerator(
+            Collection<PythonIntegration> integrations,
+            Model model,
+            ServiceShape service,
+            PythonSettings settings
+    ) {
+        // Collect all of the supported protocol generators.
+        Map<ShapeId, ProtocolGenerator> generators = new HashMap<>();
+        for (PythonIntegration integration : integrations) {
+            for (ProtocolGenerator generator : integration.getProtocolGenerators()) {
+                generators.put(generator.getProtocol(), generator);
+            }
+        }
+
+        ShapeId protocolName;
+        try {
+            protocolName = settings.resolveServiceProtocol(model, service, generators.keySet());
+        } catch (CodegenException e) {
+            LOGGER.warning("Unable to find a protocol generator for " + service.getId() + ": " + e.getMessage());
+            protocolName = null;
+        }
+
+        return protocolName != null ? generators.get(protocolName) : null;
     }
 
     @Override
