@@ -32,10 +32,16 @@ class Endpoint(Protocol):
     headers: HeadersList
 
 
+# EndpointParams are defined in the generated client, so we use a TypeVar here.
+# More specific EndpointParams implementations are subtypes of less specific ones. But
+# consumers of less specific EndpointParams implementations are subtypes of consumers
+# of more specific ones.
 EndpointParams = TypeVar("EndpointParams", contravariant=True)
 
 
 class EndpointResolver(Protocol[EndpointParams]):
+    """Resolves an operation's endpoint based given parameters."""
+
     async def resolve_endpoint(self, params: EndpointParams) -> Endpoint:
         raise NotImplementedError()
 

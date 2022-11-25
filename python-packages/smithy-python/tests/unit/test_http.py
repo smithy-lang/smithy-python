@@ -1,9 +1,9 @@
 from smithy_python._private.http import (
     URL,
-    BasicEndpointParams,
-    BasicEndpointResolver,
     Request,
     Response,
+    StaticEndpointParams,
+    StaticEndpointResolver,
 )
 
 
@@ -50,7 +50,7 @@ def test_resposne() -> None:
 
 
 async def test_endpoint_provider_with_url_string() -> None:
-    params = BasicEndpointParams(
+    params = StaticEndpointParams(
         url="https://foo.example.com/spam:8080?foo=bar&foo=baz"
     )
     expected = URL(
@@ -60,7 +60,7 @@ async def test_endpoint_provider_with_url_string() -> None:
         query_params=[("foo", "bar"), ("foo", "baz")],
         port=8080,
     )
-    resolver = BasicEndpointResolver()
+    resolver = StaticEndpointResolver()
     result = await resolver.resolve_endpoint(params=params)
     assert result.url == expected
     assert result.headers == []
@@ -74,8 +74,8 @@ async def test_endpoint_provider_with_url_object() -> None:
         query_params=[("foo", "bar"), ("foo", "baz")],
         port=8080,
     )
-    params = BasicEndpointParams(url=expected)
-    resolver = BasicEndpointResolver()
+    params = StaticEndpointParams(url=expected)
+    resolver = StaticEndpointResolver()
     result = await resolver.resolve_endpoint(params=params)
     assert result.url == expected
     assert result.headers == []
