@@ -85,7 +85,7 @@ class Endpoint(http_interface.Endpoint):
 
 
 @dataclass
-class BasicEndpointParams:
+class StaticEndpointParams:
     """
     Static endpoint params.
 
@@ -95,10 +95,10 @@ class BasicEndpointParams:
     url: str | URL
 
 
-class BasicEndpointResolver(http_interface.EndpointResolver[BasicEndpointParams]):
-    """A basic endpoint resolver that just forwards a static url."""
+class StaticEndpointResolver(http_interface.EndpointResolver[StaticEndpointParams]):
+    """A basic endpoint resolver that forwards a static url."""
 
-    async def resolve_endpoint(self, params: BasicEndpointParams) -> Endpoint:
+    async def resolve_endpoint(self, params: StaticEndpointParams) -> Endpoint:
         # If it's not a string, it's already a parsed URL so just pass it along.
         if not isinstance(params.url, str):
             return Endpoint(url=params.url)
