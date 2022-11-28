@@ -2,6 +2,22 @@
 
 Smithy code generators for Python.
 
+### Prerequisites
+
+* JDK 17 or newer is required to run the code generator. The [Coretto]
+  (https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/downloads-list.html)
+  distribution is recommended.
+
+#### Optional Prerequisites
+
+* Python 3.11 is required to run the generated code, but not run the generator.
+  If it is present on the path, the generator will use it for linting and
+  formatting.
+* If `black` is installed in the version of python found on the path, it will
+  be used to format the generated code.
+* If `mypy` is installed in the version of python found on the path, it will
+  be used to check the generated code.
+
 ### Building the generator
 
 The code generator uses the [gradle](https://gradle.org) build system, accessed
