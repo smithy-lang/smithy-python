@@ -306,6 +306,9 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
         FileManifest fileManifest = directive.fileManifest();
         SetupGenerator.generateSetup(directive.settings(), directive.context().writerDelegator());
 
+        LOGGER.info("Flushing writers in preparation for formatting and linting.");
+        directive.context().writerDelegator().flushWriters();
+
         String output;
         try {
             LOGGER.info("Attempting to discover python version");
@@ -319,9 +322,9 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
             LOGGER.warning("Unable to parse python version string. Skipping formatting and type checking.");
         }
         int minorVersion = Integer.parseInt(matcher.group("minor"));
-        if (minorVersion < 9) {
+        if (minorVersion < 11) {
             LOGGER.warning(format("""
-                    Found incompatible python version 3.%s.%s, expected 3.9.0 or greater. \
+                    Found incompatible python version 3.%s.%s, expected 3.11.0 or greater. \
                     Skipping formatting and type checking.""",
                     matcher.group("minor"), matcher.group("patch")));
             return;
