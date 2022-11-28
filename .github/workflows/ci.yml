@@ -76,7 +76,8 @@ jobs:
 
       - name: Install smithy-python
         run: |
-          python${{ matrix.python-version }} -m pip install -e python-packages/smithy-python
+          ./pants --no-dynamic-ui package ::
+          python${{ matrix.python-version }} -m pip install dist/*.whl
 
       - name: clean and build without formatting/linting installed
         run: cd codegen && ./gradlew clean build -Plog-tests
