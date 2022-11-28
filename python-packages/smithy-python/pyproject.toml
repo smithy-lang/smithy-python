@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 name = "smithy_python"
 version = "0.0.1"
 description = "Core libraries for Smithy defined services in Python"
-#readme = "./README.md"
+readme = "README.md"
 authors = [{name = "Amazon Web Services"}]
 keywords = ["python", "sdk", "amazon", "smithy", "codegen"]
 requires-python = ">=3.11"
@@ -34,6 +34,7 @@ source = "https://github.com/awslabs/smithy-python/tree/develop/python-packages/
 changelog = "https://github.com/awslabs/smithy-python/blob/develop/CHANGES.md"
 
 [tool.setuptools]
+license-files = ["NOTICE"]
 include-package-data = true
 
 [tool.setuptools.packages.find]
