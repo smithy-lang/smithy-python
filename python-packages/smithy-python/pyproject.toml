@@ -1,3 +1,44 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "smithy_python"
+version = "0.0.1"
+description = "Core libraries for Smithy defined services in Python"
+#readme = "./README.md"
+authors = [{name = "Amazon Web Services"}]
+keywords = ["python", "sdk", "amazon", "smithy", "codegen"]
+requires-python = ">=3.11"
+license = {text = "Apache License 2.0"}
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "Intended Audience :: Developers",
+    "Intended Audience :: System Administrators",
+    "Natural Language :: English",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Software Development :: Libraries"
+]
+dependencies = [
+    "awscrt>=0.15,<1.0"
+]
+
+[project.urls]
+source = "https://github.com/awslabs/smithy-python/tree/develop/python-packages/smithy-python"
+changelog = "https://github.com/awslabs/smithy-python/blob/develop/CHANGES.md"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+exclude=["tests*", "codegen", "designs"]
+
 [tool.black]
 target-version = ["py310"]
 
