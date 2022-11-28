@@ -74,7 +74,7 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
     public void customizeBeforeShapeGeneration(CustomizeDirective<GenerationContext, PythonSettings> directive) {
         generateDefaultWrapper(directive.settings(), directive.context().writerDelegator());
         generateServiceErrors(directive.settings(), directive.context().writerDelegator());
-        new ConfigGenerator(directive.context()).run();
+        new ConfigGenerator(directive.settings(), directive.context()).run();
     }
 
     @Override
@@ -349,7 +349,7 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
             return;
         }
         LOGGER.info("Running code formatter on generated code");
-        CodegenUtils.runCommand("python3 -m black . --exclude \"\"", fileManifest.getBaseDir());
+        CodegenUtils.runCommand("python3 -m black . --exclude \"\" -t py311", fileManifest.getBaseDir());
     }
 
     private void runMypy(FileManifest fileManifest) {

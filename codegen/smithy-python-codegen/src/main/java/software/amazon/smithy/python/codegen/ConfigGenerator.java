@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import software.amazon.smithy.codegen.core.Symbol;
+import software.amazon.smithy.model.knowledge.TopDownIndex;
 import software.amazon.smithy.python.codegen.integration.PythonIntegration;
 import software.amazon.smithy.python.codegen.integration.RuntimeClientPlugin;
 
@@ -34,29 +35,28 @@ final class ConfigGenerator implements Runnable {
             new ConfigField(
                 "interceptors",
                 Symbol.builder()
-                        .name("list[Interceptor]")
-                        .addReference(Symbol.builder()
-                                .name("Interceptor")
-                                .namespace("smithy_python.interfaces.interceptor", ".")
-                                .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
-                                .build())
+                        .name("list[_ServiceInterceptor]")
                         .build(),
                 true,
                 "The list of interceptors, which are hooks that are called during the execution of a request."
             )
     );
 
+    private final PythonSettings settings;
     private final GenerationContext context;
 
-    ConfigGenerator(GenerationContext context) {
+    ConfigGenerator(PythonSettings settings, GenerationContext context) {
         this.context = context;
+        this.settings = settings;
     }
 
     @Override
     public void run() {
         var config = CodegenUtils.getConfigSymbol(context.settings());
-        context.writerDelegator().useFileWriter(
-                config.getDefinitionFile(), config.getNamespace(), writer -> generateConfig(context, writer));
+        context.writerDelegator().useFileWriter(config.getDefinitionFile(), config.getNamespace(), writer -> {
+            writeInterceptorsType(writer);
+            generateConfig(context, writer);
+        });
 
         // Generate the plugin symbol. This is just a callable. We could do something
         // like have a class to implement, but that seems unnecessarily burdensome for
@@ -68,6 +68,35 @@ final class ConfigGenerator implements Runnable {
             writer.writeComment("A callable that allows customizing the config object on each request.");
             writer.write("$L: TypeAlias = Callable[[$T], None]", plugin.getName(), config);
         });
+    }
+
+
+    private void writeInterceptorsType(PythonWriter writer) {
+        var symbolProvider = context.symbolProvider();
+        var operationShapes = TopDownIndex.of(context.model())
+                .getContainedOperations(settings.getService());
+
+        writer.addStdlibImport("typing", "Union");
+        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+        writer.getImportContainer().addImport("smithy_python.interfaces.interceptor", "Interceptor", "Interceptor");
+
+        writer.writeInline("_ServiceInterceptor = Union[");
+        var iter = operationShapes.iterator();
+        while (iter.hasNext()) {
+            var operation = iter.next();
+            var input = symbolProvider.toSymbol(context.model().expectShape(operation.getInputShape()));
+            var output = symbolProvider.toSymbol(context.model().expectShape(operation.getOutputShape()));
+
+            // TODO: pull the transport request/response types off of the application protocol
+            writer.addStdlibImport("typing", "Any");
+            writer.writeInline("Interceptor[$T, $T, Any, Any]", input, output);
+            if (iter.hasNext()) {
+                writer.writeInline(", ");
+            } else {
+                writer.writeInline("]");
+            }
+        }
+        writer.write("");
     }
 
     private void generateConfig(GenerationContext context, PythonWriter writer) {
