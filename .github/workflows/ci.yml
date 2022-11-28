@@ -69,7 +69,12 @@ jobs:
       - name: clean and build without python
         run: cd codegen && ./gradlew clean build -Plog-tests
 
-      - name: Set Up Python - ${{ matrix.python-version }}
+      - name: Set up Python for Pants - 3.9
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Set Up Python for CI - ${{ matrix.python-version }}
         uses: actions/setup-python@v2
         with:
           python-version: ${{ matrix.python-version }}
