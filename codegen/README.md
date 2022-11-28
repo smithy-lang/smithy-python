@@ -8,7 +8,7 @@ Smithy code generators for Python.
   (https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/downloads-list.html)
   distribution is recommended.
 
-#### Optional Prerequisites
+#### Optional Prerequisites - Python
 
 * Python 3.11 is required to run the generated code, but not run the generator.
   If it is present on the path, the generator will use it for linting and
@@ -16,7 +16,14 @@ Smithy code generators for Python.
 * If `black` is installed in the version of python found on the path, it will
   be used to format the generated code.
 * If `mypy` is installed in the version of python found on the path, it will
-  be used to check the generated code.
+  be used to check the generated code. For mypy to pass, the `smithy_python`
+  package will need to be installed. To install those, run the following in
+  the repository root:
+
+  ```
+  ./pants package ::
+  pip3 install dist/*.whl
+  ```
 
 ### Building the generator
 
