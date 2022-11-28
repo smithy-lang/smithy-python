@@ -1,1 +1,6 @@
-python_sources(name="source")
+resource(name="pytyped", source="py.typed")
+
+python_sources(
+    name="source",
+    dependencies=[":pytyped"]
+)
