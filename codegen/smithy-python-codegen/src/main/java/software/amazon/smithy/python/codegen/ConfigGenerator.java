@@ -66,11 +66,7 @@ final class ConfigGenerator implements Runnable {
                 ),
                 new ConfigField(
                         "endpoint_resolver",
-                        Symbol.builder()
-                                .name(String.format("%s[%s]", endpointResolver.getName(), endpointParams.getName()))
-                                .addReference(endpointResolver)
-                                .addReference(endpointParams)
-                                .build(),
+                        endpointResolver,
                         true,
                         """
                                 The endpoint resolver used to resolve the final endpoint per-operation based on the \
