@@ -20,7 +20,13 @@ import java.util.Map;
 import java.util.Optional;
 import software.amazon.smithy.codegen.core.SymbolDependency;
 import software.amazon.smithy.codegen.core.WriterDelegator;
+import software.amazon.smithy.model.traits.DocumentationTrait;
+import software.amazon.smithy.model.traits.StringTrait;
+import software.amazon.smithy.model.traits.TitleTrait;
 import software.amazon.smithy.python.codegen.PythonDependency.Type;
+import software.amazon.smithy.python.codegen.sections.PyprojectSection;
+import software.amazon.smithy.python.codegen.sections.ReadmeSection;
+import software.amazon.smithy.utils.StringUtils;
 
 /**
  * Generates package setup configuration files.
@@ -31,17 +37,17 @@ final class SetupGenerator {
 
     static void generateSetup(
             PythonSettings settings,
-            WriterDelegator<PythonWriter> writers
+            GenerationContext context
     ) {
-        var dependencies = SymbolDependency.gatherDependencies(writers.getDependencies().stream());
-        writePyproject(settings, writers, dependencies);
-        writeSetupCfg(settings, writers, dependencies);
+        var dependencies = SymbolDependency.gatherDependencies(context.writerDelegator().getDependencies().stream());
+        writePyproject(settings, context.writerDelegator(), dependencies);
+        writeReadme(settings, context);
     }
 
     /**
      * Write a pyproject.toml file.
      *
-     * This file format is what the python ecosystem is trying to transition to
+     * <p>This file format is what the python ecosystem is trying to transition to
      * for package configuration. It allows for arbitrary build tools to share
      * configuration.
      */
@@ -50,17 +56,25 @@ final class SetupGenerator {
             WriterDelegator<PythonWriter> writers,
             Map<String, Map<String, SymbolDependency>> dependencies
     ) {
+        // TODO: Allow all of these settings to be configured, particularly build system
+        // The use of interceptors ostensibly allows this, but it would be better to have
+        // a system that allows end users to configure it without writing code. Just
+        // giving a generic JSON mapping would work since you can convert that to toml.
+        // We can use the jsonAdd from Smithy's OpenAPI transforms for inspiration.
         writers.useFileWriter("pyproject.toml", "", writer -> {
+            writer.pushState(new PyprojectSection(dependencies));
             writer.write("""
                     [build-system]
-                    requires = ["setuptools", "wheel"]
+                    requires = ["setuptools", "setuptools-scm", "wheel"]
                     build-backend = "setuptools.build_meta"
 
                     [project]
-                    name = $S
-                    version = $S
-                    description = $S
+                    name = $1S
+                    version = $2S
+                    description = $3S
+                    readme = "README.md"
                     requires-python = ">=3.11"
+                    keywords = ["smithy", $1S]
                     license = {text = "Apache-2.0"}
                     classifiers = [
                         "Development Status :: 2 - Pre-Alpha",
@@ -81,8 +95,26 @@ final class SetupGenerator {
 
             Optional.ofNullable(dependencies.get(Type.TEST_DEPENDENCY.getType())).ifPresent(deps -> {
                 writer.write("[project.optional-dependencies]");
-                writer.openBlock("test = [", "]", () -> writeDependencyList(writer, deps.values()));
+                writer.openBlock("tests = [", "]", () -> writeDependencyList(writer, deps.values()));
             });
+
+            writer.write("""
+                    [tool.setuptools.packages.find]
+                    exclude=["tests*"]
+
+                    [tool.mypy]
+                    strict = true
+                    warn_unused_configs = true
+
+                    [[tool.mypy.overrides]]
+                    module = ["awscrt", "pytest"]
+                    ignore_missing_imports = true
+
+                    [tool.black]
+                    target-version = ["py311"]
+                    """);
+
+            writer.popState();
         });
     }
 
@@ -102,86 +134,40 @@ final class SetupGenerator {
         }
     }
 
-    /**
-     * Write a setup.cfg file.
-     *
-     * This file is currently needed for setuptools while they work on PEP621
-     * support (which defines the pyproject.toml config options). It is also
-     * currently needed for a number of linting tools.
-     */
-    // TODO: remove most of this once setuptools supports PEP 621
-    private static void writeSetupCfg(
+    private static void writeReadme(
             PythonSettings settings,
-            WriterDelegator<PythonWriter> writers,
-            Map<String, Map<String, SymbolDependency>> dependencies
+            GenerationContext context
     ) {
-        writers.useFileWriter("setup.cfg", "", writer -> {
+        var service = context.model().expectShape(settings.getService());
+        var title = service.getTrait(TitleTrait.class)
+                .map(StringTrait::getValue)
+                .orElse(StringUtils.capitalize(settings.getModuleName()));
+        var description = StringUtils.isBlank(settings.getModuleDescription())
+                ? "Generated service client for " + title
+                : StringUtils.wrap(settings.getModuleDescription(), 80);
+
+        context.writerDelegator().useFileWriter("README.md", writer -> {
+            writer.pushState(new ReadmeSection());
             writer.write("""
-                    [flake8]
-                    # We ignore E203, E501 for this project due to black
-                    ignore = E203,E501
+                    ## $L Client
 
-                    [pycodestyle]
-                    # We ignore E203, E501 for this project due to black
-                    ignore = E203,E501
+                    $L
+                    """, title, description);
 
-                    [mypy]
-                    strict = True
-                    warn_unused_configs = True
+            service.getTrait(DocumentationTrait.class).map(StringTrait::getValue).ifPresent(documentation -> {
+                // TODO: make sure this documentation is well-formed
+                // Existing services in AWS, for example, have a lot of HTML docs.
+                // HTML nodes *are* valid commonmark technically, so it should be
+                // fine here. If we were to make this file RST formatted though,
+                // we'd have a problem. We have to solve that at some point anyway
+                // since the python code docs are RST format.
+                writer.write("""
+                        ### Documentation
 
-                    # This should be removable after mypy 0.990, it's needed to allow the document
-                    # alias to successfully be checked.
-                    enable_recursive_aliases = true
-
-                    [mypy-awscrt]
-                    ignore_missing_imports = True
-
-                    [mypy-pytest]
-                    ignore_missing_imports = True
-
-                    [metadata]
-                    name = $L
-                    version = $L
-                    description = $L
-                    license = Apache-2.0
-                    python_requires = >=3.11
-                    classifiers =
-                        Development Status :: 2 - Pre-Alpha
-                        Intended Audience :: Developers
-                        Intended Audience :: System Administrators
-                        Natural Language :: English
-                        License :: OSI Approved :: Apache Software License
-                        Programming Language :: Python
-                        Programming Language :: Python :: 3
-                        Programming Language :: Python :: 3 :: Only
-                        Programming Language :: Python :: 3.11
-
-                    [options.packages.find]
-                    exclude = tests*
-
-                    [options]
-                    include_package_data = True
-                    packages = find:
-                    """, settings.getModuleName(), settings.getModuleVersion(), settings.getModuleDescription());
-
-            Optional.ofNullable(dependencies.get(Type.DEPENDENCY.getType())).ifPresent(deps -> {
-                writer.openBlock("install_requires =", "", () -> {
-                    deps.values().forEach(dep -> {
-                        if (dep.getProperty("isLink", Boolean.class).orElse(false)) {
-                            writer.write("$L @ $L", dep.getPackageName(), dep.getVersion());
-                        } else {
-                            writer.write("$L$L", dep.getPackageName(), dep.getVersion());
-                        }
-                    });
-                });
+                        $L
+                        """, documentation);
             });
-
-            Optional.ofNullable(dependencies.get(Type.TEST_DEPENDENCY.getType())).ifPresent(deps -> {
-                writer.write("[options.extras_require]");
-                writer.openBlock("test =", "", () -> {
-                    deps.values().forEach(dep -> writer.write("$L$L", dep.getPackageName(), dep.getVersion()));
-                });
-            });
+            writer.popState();
         });
     }
 }
