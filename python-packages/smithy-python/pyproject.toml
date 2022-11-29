@@ -41,7 +41,7 @@ include-package-data = true
 exclude=["tests*", "codegen", "designs"]
 
 [tool.black]
-target-version = ["py310"]
+target-version = ["py311"]
 
 [tool.isort]
 profile = "black"
