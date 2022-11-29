@@ -304,7 +304,7 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
     public void customizeAfterIntegrations(CustomizeDirective<GenerationContext, PythonSettings> directive) {
         Pattern versionPattern = Pattern.compile("Python \\d\\.(?<minor>\\d+)\\.(?<patch>\\d+)");
         FileManifest fileManifest = directive.fileManifest();
-        SetupGenerator.generateSetup(directive.settings(), directive.context().writerDelegator());
+        SetupGenerator.generateSetup(directive.settings(), directive.context());
 
         LOGGER.info("Flushing writers in preparation for formatting and linting.");
         directive.context().writerDelegator().flushWriters();
@@ -349,7 +349,7 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
             return;
         }
         LOGGER.info("Running code formatter on generated code");
-        CodegenUtils.runCommand("python3 -m black . --exclude \"\" -t py311", fileManifest.getBaseDir());
+        CodegenUtils.runCommand("python3 -m black . --exclude \"\"", fileManifest.getBaseDir());
     }
 
     private void runMypy(FileManifest fileManifest) {
