@@ -174,7 +174,6 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
     }
 
     @Override
-
     public String toString() {
         String contents = getImportContainer().toString() + super.toString();
         if (addCodegenWarningHeader) {
