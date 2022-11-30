@@ -286,8 +286,12 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public Symbol operationShape(OperationShape shape) {
-        // TODO: implement operations
-        return createStdlibSymbol(shape, "Any", "typing");
+        // Operation names are escaped like members because ultimately they're
+        // properties on an object too.
+        var name = escaper.escapeMemberName(CaseUtils.toSnakeCase(shape.getId().getName(service)));
+        return createSymbolBuilder(shape, name, format("%s.client", settings.getModuleName()))
+                .definitionFile(format("./%s/client.py", settings.getModuleName()))
+                .build();
     }
 
     @Override
@@ -298,8 +302,10 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public Symbol serviceShape(ServiceShape shape) {
-        // TODO: implement clients
-        return createStdlibSymbol(shape, "Any", "typing");
+        var name = getDefaultShapeName(shape);
+        return createSymbolBuilder(shape, name, format("%s.client", settings.getModuleName()))
+                .definitionFile(format("./%s/client.py", settings.getModuleName()))
+                .build();
     }
 
     @Override
