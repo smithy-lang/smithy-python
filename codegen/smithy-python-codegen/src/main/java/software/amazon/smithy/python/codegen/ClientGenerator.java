@@ -15,11 +15,11 @@
 
 package software.amazon.smithy.python.codegen;
 
+import software.amazon.smithy.model.knowledge.TopDownIndex;
+import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
-import software.amazon.smithy.python.codegen.integration.PythonIntegration;
-import software.amazon.smithy.python.codegen.integration.RuntimeClientPlugin;
 
 /**
  * Generates the actual client and implements operations.
@@ -71,6 +71,49 @@ final class ClientGenerator implements Runnable {
                         for plugin in client_plugins:
                             plugin(self._config)
                     """, configSymbol, pluginSymbol);
+
+            var topDownIndex = TopDownIndex.of(context.model());
+            for (OperationShape operation : topDownIndex.getContainedOperations(service)) {
+                generateOperation(writer, operation);
+            }
+        });
+    }
+
+    /**
+     * Generates the function for a single operation.
+     */
+    private void generateOperation(PythonWriter writer, OperationShape operation) {
+        var operationSymbol = context.symbolProvider().toSymbol(operation);
+        var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
+
+        var input = context.model().expectShape(operation.getInputShape());
+        var inputSymbol = context.symbolProvider().toSymbol(input);
+
+        var output = context.model().expectShape(operation.getOutputShape());
+        var outputSymbol = context.symbolProvider().toSymbol(output);
+
+        writer.openBlock("async def $L(self, input: $T, plugins: list[$T] | None = None) -> $T:", "",
+                operationSymbol.getName(), inputSymbol, pluginSymbol, outputSymbol, () -> {
+            writer.writeDocs(() -> {
+                var docs = operation.getTrait(DocumentationTrait.class)
+                        .map(StringTrait::getValue)
+                        .orElse(String.format("Invokes the %s operation.", operation.getId().getName()));
+
+                var inputDocs = input.getTrait(DocumentationTrait.class)
+                        .map(StringTrait::getValue)
+                        .orElse("The operation's input.");
+
+                writer.write("""
+                        $L
+
+                        :param input: $L
+
+                        :param plugins: A list of callables that modify the configuration dynamically.
+                        Changes made by these plugins only apply for the duration of the operation
+                        execution and will not affect any other operation invocations.""", docs, inputDocs);
+            });
+
+            writer.write("raise NotImplementedError()");
         });
     }
 }
