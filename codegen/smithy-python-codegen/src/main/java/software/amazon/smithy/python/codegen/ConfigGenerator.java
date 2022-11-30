@@ -35,8 +35,8 @@ final class ConfigGenerator implements Runnable {
             new ConfigField(
                 "interceptors",
                 Symbol.builder()
-                        .name("list[_ServiceInterceptor]")
-                        .build(),
+                    .name("list[_ServiceInterceptor]")
+                    .build(),
                 true,
                 "The list of interceptors, which are hooks that are called during the execution of a request."
             )
@@ -55,30 +55,30 @@ final class ConfigGenerator implements Runnable {
         var endpointResolver = CodegenUtils.getEndpointResolver(settings);
         return Arrays.asList(
                 new ConfigField(
-                        "http_client",
-                        Symbol.builder()
-                                .name("AsyncHttpClient")
-                                .namespace("smithy_python.interfaces.http", ".")
-                                .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
-                                .build(),
-                        true,
-                        "The HTTP client used to make requests."
+                    "http_client",
+                    Symbol.builder()
+                        .name("AsyncHttpClient")
+                        .namespace("smithy_python.interfaces.http", ".")
+                        .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                        .build(),
+                    true,
+                    "The HTTP client used to make requests."
                 ),
                 new ConfigField(
-                        "endpoint_resolver",
-                        endpointResolver,
-                        true,
-                        """
-                                The endpoint resolver used to resolve the final endpoint per-operation based on the \
-                                configuration."""
+                    "endpoint_resolver",
+                    endpointResolver,
+                    true,
+                    """
+                        The endpoint resolver used to resolve the final endpoint per-operation based on the \
+                        configuration."""
                 ),
                 new ConfigField(
-                        "endpoint_params",
-                        endpointParams,
-                        true,
-                        """
-                                The endpoint resolver used to resolve the final endpoint per-operation based on the \
-                                configuration."""
+                    "endpoint_params",
+                    endpointParams,
+                    true,
+                    """
+                        The endpoint resolver used to resolve the final endpoint per-operation based on the \
+                        configuration."""
                 )
         );
     }
