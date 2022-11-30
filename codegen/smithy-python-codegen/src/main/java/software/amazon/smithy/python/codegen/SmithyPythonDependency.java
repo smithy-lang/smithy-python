@@ -31,8 +31,8 @@ public final class SmithyPythonDependency {
      */
     public static final PythonDependency SMITHY_PYTHON = new PythonDependency(
             "smithy_python",
-            // TODO: switch to https link when this repo is made public
-            "git+ssh://git@github.com/awslabs/smithy-python.git@develop",
+            // You'll need to locally install this before we publish
+            "0.0.1",
             Type.DEPENDENCY,
             true
     );
