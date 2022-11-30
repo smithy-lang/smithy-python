@@ -19,8 +19,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiPredicate;
+import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
@@ -43,13 +45,13 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
     private final BiPredicate<Model, ServiceShape> servicePredicate;
     private final OperationPredicate operationPredicate;
     private final List<ConfigField> configFields;
-
-    // TODO: Add "plugin" and interceptor initialization
+    private final SymbolReference pythonPlugin;
 
     private RuntimeClientPlugin(Builder builder) {
         servicePredicate = builder.servicePredicate;
         operationPredicate = builder.operationPredicate;
         configFields = Collections.unmodifiableList(builder.configFields);
+        this.pythonPlugin = builder.pythonPlugin;
     }
 
     @FunctionalInterface
@@ -107,6 +109,13 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
     }
 
     /**
+     * @return Returns an optional reference to a callable that modifies client config.
+     */
+    public Optional<SymbolReference> getPythonPlugin() {
+        return Optional.of(pythonPlugin);
+    }
+
+    /**
      * @return Returns a new builder for a {@link RuntimeClientPlugin}.
      */
     public static Builder builder() {
@@ -125,6 +134,7 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
         private BiPredicate<Model, ServiceShape> servicePredicate = (model, service) -> true;
         private OperationPredicate operationPredicate = (model, service, operation) -> false;
         private List<ConfigField> configFields = new ArrayList<>();
+        private SymbolReference pythonPlugin = null;
 
         Builder() {
         }
@@ -213,6 +223,17 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
          */
         public Builder addConfigField(ConfigField configField) {
             this.configFields.add(configField);
+            return this;
+        }
+
+        /**
+         * Configures a python plugin to automatically add to the service or operation.
+         *
+         * @param pythonPlugin A reference to a callable that modifies the client config.
+         * @return Returns the builder.
+         */
+        public Builder pythonPlugin(SymbolReference pythonPlugin) {
+            this.pythonPlugin = pythonPlugin;
             return this;
         }
     }
