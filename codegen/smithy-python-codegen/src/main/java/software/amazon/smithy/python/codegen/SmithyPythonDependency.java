@@ -37,6 +37,16 @@ public final class SmithyPythonDependency {
             true
     );
 
+    /**
+     * testing framework used in generated functional tests.
+     */
+    public static final PythonDependency PYTEST = new PythonDependency(
+            "pytest",
+            ">=7.2.0",
+            Type.TEST_DEPENDENCY,
+            false
+    );
+
     private SmithyPythonDependency() {}
 
     /**
