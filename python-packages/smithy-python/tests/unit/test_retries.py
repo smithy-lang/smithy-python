@@ -11,14 +11,10 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-from datetime import timedelta
-
 import pytest
 
-from smithy_python._private.retries import (
-    ExponentialRetryBackoffStrategy,
-    ExponentialBackoffJitterType as EBJT,
-)
+from smithy_python._private.retries import ExponentialBackoffJitterType as EBJT
+from smithy_python._private.retries import ExponentialRetryBackoffStrategy
 
 
 @pytest.mark.parametrize(
@@ -51,17 +47,20 @@ from smithy_python._private.retries import (
     ],
 )
 def test_exponential_backoff_strategy(
-    jitter_type, scale_value, max_backoff, expected_delays
-):
+    jitter_type: EBJT,
+    scale_value: float,
+    max_backoff: float,
+    expected_delays: list[float],
+) -> None:
     bos = ExponentialRetryBackoffStrategy(
-        backoff_scale_value=timedelta(seconds=scale_value),
-        max_backoff=timedelta(seconds=max_backoff),
+        backoff_scale_value=scale_value,
+        max_backoff=max_backoff,
         jitter_type=jitter_type,
         random=lambda: 0.5,  # every generated "random" value equals 0.5
     )
 
     for delay_index, delay_expected in enumerate(expected_delays):
         delay_actual = bos.compute_next_backoff_delay(retry_attempt=delay_index)
-        delay_expected2 = timedelta(seconds=delay_expected)
+        delay_expected2 = delay_expected
         print(f"{delay_index=} {delay_actual=} {delay_expected2=}")
-        assert delay_actual == timedelta(seconds=delay_expected)
+        assert delay_actual == pytest.approx(delay_expected)

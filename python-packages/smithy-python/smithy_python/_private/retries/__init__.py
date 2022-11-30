@@ -12,22 +12,17 @@
 # language governing permissions and limitations under the License.
 
 import random
-from datetime import timedelta
 from enum import Enum
 from typing import Callable
 
-from ...interfaces.retries import (
-    RetryBackoffStrategy,
-    RetryErrorInfo,
-    RetryStrategy,
-    RetryToken,
-)
+from ...exceptions import SmithyRetryException
+from ...interfaces import retries as retries_interface
 
 
 class ExponentialBackoffJitterType(Enum):
-    """
-    Jitter mode for exponential backoff.
+    """Jitter mode for exponential backoff.
 
+    For use with :py:class:`ExponentialRetryBackoffStrategy`.
     """
 
     DEFAULT = 1  # "equal jitter" in blog post
@@ -36,90 +31,132 @@ class ExponentialBackoffJitterType(Enum):
     DECORRELATED = 4
 
 
-class ExponentialRetryBackoffStrategy(RetryBackoffStrategy):
-    """Exponential backoff with optional jitter
-
-    See also: https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
-    """
-
+class ExponentialRetryBackoffStrategy:
     def __init__(
         self,
-        backoff_scale_value: timedelta,
-        max_backoff: timedelta = timedelta(seconds=20),
+        backoff_scale_value: float,
+        max_backoff: float = 20,
         jitter_type: ExponentialBackoffJitterType = ExponentialBackoffJitterType.DEFAULT,
         random: Callable[[], float] = random.random,
     ):
+        """Exponential backoff with optional jitter
+
+        .. seealso:: https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
+
+        :param backoff_scale_value: Factor that linearly adjusts returned backoff delay
+        values. See the methods ``_next_delay_*`` for the formula used to calculate the
+        delay for each jitter type.
+
+        :param max_backoff: Upper limit for backoff delay values returned, in seconds.
+
+        :param jitter_type: Determines the formula used to apply jitter to the backoff
+        delay.
+
+        :param random: A callable that returns random numbers between ``0`` and ``1``.
+        Use the default ``random.random`` unless you require an alternate source of
+        randomness or a non-uniform distribution.
+        """
         self._backoff_scale_value = backoff_scale_value
         self._max_backoff = max_backoff
         self._jitter_type = jitter_type
         self._random = random
-        self._previous_delay_seconds = backoff_scale_value.total_seconds()
+        self._previous_delay_seconds = backoff_scale_value
 
-    def compute_next_backoff_delay(self, retry_attempt: int) -> timedelta:
-        """Calculates truncated binary exponential backoff delay with with jitter::
+    def compute_next_backoff_delay(self, retry_attempt: int) -> float:
+        """Calculate timespan in seconds to delay before next retry.
 
-            t_i = min(rand(0, 1) * scale ** attempt, max_backoff)
+        See the methods ``_next_delay_*`` for the formula used to calculate the delay
+        for each jitter type.
 
-        where ``t_i`` is the backoff delay for the 0-based request attempt count ``i``.
+        :param retry_attempt: The index of the retry attempt that is about to be made
+        after the delay. The initial attempt, before any retries, is index ``0``, the
+        first retry attempt after the initial attempt failed is index ``1``, and so on.
         """
-        if self._jitter_type == ExponentialBackoffJitterType.NONE:
-            seconds = self._next_delay_no_jitter(retry_attempt=retry_attempt)
-        elif self._jitter_type == ExponentialBackoffJitterType.DEFAULT:
-            seconds = self._next_delay_equal_jitter(retry_attempt=retry_attempt)
-        elif self._jitter_type == ExponentialBackoffJitterType.FULL:
-            seconds = self._next_delay_full_jitter(retry_attempt=retry_attempt)
-        elif self._jitter_type == ExponentialBackoffJitterType.DECORRELATED:
-            seconds = self._next_delay_decorrelated_jitter(
-                previous_delay=self._previous_delay_seconds
-            )
+        match self._jitter_type:
+            case ExponentialBackoffJitterType.NONE:
+                seconds = self._next_delay_no_jitter(retry_attempt=retry_attempt)
+            case ExponentialBackoffJitterType.DEFAULT:
+                seconds = self._next_delay_equal_jitter(retry_attempt=retry_attempt)
+            case ExponentialBackoffJitterType.FULL:
+                seconds = self._next_delay_full_jitter(retry_attempt=retry_attempt)
+            case ExponentialBackoffJitterType.DECORRELATED:
+                seconds = self._next_delay_decorrelated_jitter(
+                    previous_delay=self._previous_delay_seconds
+                )
 
         self._previous_delay_seconds = seconds
-        return timedelta(seconds=seconds)
+        return seconds
 
-    def _base_delay(self, retry_attempt: int) -> float:
-        return self._backoff_scale_value.total_seconds() * (2.0**retry_attempt)
+    def _jitter_free_uncapped_delay(self, retry_attempt: int) -> float:
+        """The basic exponential delay without jitter or upper bound:
+
+        .. code-block:: python
+
+            backoff_scale_value * 2 ** attempt
+        """
+        return self._backoff_scale_value * (2.0**retry_attempt)
 
     def _next_delay_no_jitter(self, retry_attempt: int) -> float:
         """Calculates truncated binary exponential backoff delay without jitter:
 
-        t_i = min(cap, base * 2 ** attempt)
+        .. code-block:: python
+
+            min(max_backoff, backoff_scale_value * 2 ** attempt)
         """
-        no_jitter_delay = self._base_delay(retry_attempt)
-        return min(no_jitter_delay, self._max_backoff.total_seconds())
+        no_jitter_delay = self._jitter_free_uncapped_delay(retry_attempt)
+        return min(no_jitter_delay, self._max_backoff)
 
     def _next_delay_full_jitter(self, retry_attempt: int) -> float:
         """Calculates truncated binary exponential backoff delay with full jitter:
 
-        t_i = random_between(max_backoff, min(cap, base * 2 ** attempt))
+        .. code-block:: python
+
+            random_between(
+                max_backoff, min(max_backoff, backoff_scale_value * 2 ** attempt)
+            )
         """
-        no_jitter_delay = self._base_delay(retry_attempt)
-        return self._random() * min(no_jitter_delay, self._max_backoff.total_seconds())
+        no_jitter_delay = self._jitter_free_uncapped_delay(retry_attempt)
+        return self._random() * min(no_jitter_delay, self._max_backoff)
 
     def _next_delay_equal_jitter(self, retry_attempt: int) -> float:
         """Calculates truncated binary exponential backoff delay with equal jitter:
 
-        temp = min(cap, base * 2 ** attempt)
-        t_i = (temp / 2) + random_between(0, temp / 2)
+        .. code-block:: python
+
+            capped = min(max_backoff, backoff_scale_value * 2 ** attempt)
+            (capped / 2) + random_between(0, capped / 2)
         """
-        no_jitter_delay = self._base_delay(retry_attempt)
-        return (self._random() * 0.5 + 0.5) * min(
-            no_jitter_delay, self._max_backoff.total_seconds()
-        )
+        no_jitter_delay = self._jitter_free_uncapped_delay(retry_attempt)
+        return (self._random() * 0.5 + 0.5) * min(no_jitter_delay, self._max_backoff)
 
     def _next_delay_decorrelated_jitter(self, previous_delay: float) -> float:
         """Calculates truncated binary exp. backoff delay with decorrelated jitter:
 
-        t_i = min(max_backoff, random_between(base, t_(i-1) * 3))
+        .. code-block:: python
+
+            min(max_backoff, random_between(backoff_scale_value, t_(i-1) * 3))
         """
         return min(
-            self._backoff_scale_value.total_seconds()
-            + self._random() * previous_delay * 3,
-            self._max_backoff.total_seconds(),
+            self._backoff_scale_value + self._random() * previous_delay * 3,
+            self._max_backoff,
         )
 
 
-class StandardRetryToken(RetryToken):
-    def __init__(self, *, attempts: int, backoff_strategy: RetryBackoffStrategy):
+class SimpleRetryToken:
+    def __init__(
+        self, *, attempts: int, backoff_strategy: retries_interface.RetryBackoffStrategy
+    ):
+        """Basic retry token that stores only the attempt count and backoff strategy
+
+        Retry tokens should always be obtained from an implementation of
+        :py:class:`retries_interface.RetryStrategy`.
+
+        :param attempts: The 1-based count of all attempts made at an operation,
+        including the initial attempt before retries.
+
+        :param backoff_strategy: The backoff strategy used to compute
+        :py:class:`get_retry_delay`.
+        """
         self._attempts = attempts
         self._backoff_strategy = backoff_strategy
 
@@ -127,31 +164,65 @@ class StandardRetryToken(RetryToken):
         """Retry count is the total number of attempts minus the initial attempt"""
         return self._attempts - 1
 
-    def get_retry_delay(self) -> timedelta:
+    def get_retry_delay(self) -> float:
         return self._backoff_strategy.compute_next_backoff_delay(self.get_retry_count())
 
 
-class StandardRetryStrategy(RetryStrategy):
-    """A bucket-free and unscoped retry strategy with arbitrary backoff strategy"""
-
+class SimpleRetryStrategy:
     def __init__(
-        self, *, backoff_strategy: RetryBackoffStrategy, max_retries_base: int
+        self,
+        *,
+        backoff_strategy: retries_interface.RetryBackoffStrategy,
+        max_retries_base: int,
     ):
+        """Basic retry strategy that simply invokes the given backoff strategy
+
+        :param backoff_strategy: The backoff strategy used by returned tokens to compute
+        the retry delay.
+
+        :param max_retries_base: Upper limit on retry count. For a given value ``n``,
+        a total of ``n + 1`` attempts will be made (the initial attempt plus ``n``
+        retries).
+        """
         self._backoff_strategy = backoff_strategy
         self._max_retries = max_retries_base
 
-    def acquire_retry_token(self, *, token_scope: str) -> RetryToken:
-        return StandardRetryToken(attempts=1, backoff_strategy=self._backoff_strategy)
+    def acquire_initial_retry_token(
+        self, *, token_scope: str | None = None
+    ) -> SimpleRetryToken:
+        """Called before any retries (for the first attempt at the operation).
+
+        :param token_scope: This argument is ignored by this retry strategy.
+        """
+        return SimpleRetryToken(attempts=1, backoff_strategy=self._backoff_strategy)
 
     def refresh_retry_token_for_retry(
-        self, *, token_to_renew: RetryToken, error_info: RetryErrorInfo
-    ) -> RetryToken:
+        self,
+        *,
+        token_to_renew: retries_interface.RetryToken,
+        error_info: retries_interface.RetryErrorInfo,
+    ) -> SimpleRetryToken:
+        """Replace an existing retry token from a failed attempt with a new token.
+
+        This retry strategy always returns a token until the attempt count stored in
+        the new token exceeds the ``max_retries_base`` value.
+
+        :param token_to_renew: The token used for the previous failed attempt.
+
+        :param error_info: If no further retry is allowed, this information is used to
+        construct the exception.
+
+        :raises SmithyRetryException: If no further retry attempts are allowed.
+        """
         if token_to_renew.get_retry_count() >= self._max_retries:
-            raise Exception()  # TODO: which exception type?
-        return StandardRetryToken(
+            raise SmithyRetryException()
+        return SimpleRetryToken(
+            # attempts[i]   = retries[i] + 1
+            # attempts[i+1] = attempts[i] + 1 = retries[i] + 2
             attempts=token_to_renew.get_retry_count() + 2,
             backoff_strategy=self._backoff_strategy,
         )
 
-    def record_success(self, *, token: RetryToken) -> None:
+    def record_success(self, *, token: retries_interface.RetryToken) -> None:
+        """Not used by this retry strategy."""
         pass
