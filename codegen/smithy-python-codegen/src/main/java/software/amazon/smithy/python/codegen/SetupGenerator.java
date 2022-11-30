@@ -112,6 +112,9 @@ final class SetupGenerator {
 
                     [tool.black]
                     target-version = ["py311"]
+
+                    [tool.pytest.ini_options]
+                    asyncio_mode = "auto"
                     """);
 
             writer.popState();

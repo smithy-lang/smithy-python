@@ -33,4 +33,5 @@ buildscript {
 dependencies {
     api("software.amazon.smithy:smithy-codegen-core:$smithyVersion")
     implementation("software.amazon.smithy:smithy-waiters:$smithyVersion")
+    implementation("software.amazon.smithy:smithy-protocol-test-traits:$smithyVersion")
 }
