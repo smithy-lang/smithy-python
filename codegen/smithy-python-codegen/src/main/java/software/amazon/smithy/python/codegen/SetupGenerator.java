@@ -90,7 +90,7 @@ final class SetupGenerator {
                     """, settings.getModuleName(), settings.getModuleVersion(), settings.getModuleDescription());
 
             Optional.ofNullable(dependencies.get(Type.DEPENDENCY.getType())).ifPresent(deps -> {
-                writer.openBlock("requires = [", "]", () -> writeDependencyList(writer, deps.values()));
+                writer.openBlock("dependencies = [", "]", () -> writeDependencyList(writer, deps.values()));
             });
 
             Optional.ofNullable(dependencies.get(Type.TEST_DEPENDENCY.getType())).ifPresent(deps -> {
