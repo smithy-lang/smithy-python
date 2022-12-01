@@ -1,0 +1,20 @@
+{
+    "version": "1.0",
+    "projections": {
+        "rest-json-1": {
+            "transforms": [{
+                "name": "includeServices",
+                "args": {
+                    "services": ["aws.protocoltests.restjson#RestJson"]
+                }
+            }],
+            "plugins": {
+                "python-codegen": {
+                    "service": "aws.protocoltests.restjson#RestJson",
+                    "module": "restjson",
+                    "moduleVersion": "0.0.1"
+                }
+            }
+        }
+    }
+}
