@@ -68,7 +68,7 @@ subprojects {
      * Java
      * ====================================================
      */
-    if (subproject.name != "smithy-python-codegen-test") {
+    if (subproject.name != "smithy-python-codegen-test" && subproject.name != "smithy-python-protocol-test") {
         apply(plugin = "java-library")
 
         java {

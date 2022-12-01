@@ -16,6 +16,7 @@
 rootProject.name = "smithy-python"
 include(":smithy-python-codegen")
 include(":smithy-python-codegen-test")
+include(":smithy-python-protocol-test")
 
 pluginManagement {
     repositories {
