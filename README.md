@@ -70,6 +70,79 @@ design decisions made. Feedback on the
 is extremely helpful at this stage to ensure we're providing functional and
 ergonomic interfaces that meet customer expectations.
 
+### Using repository tooling
+
+This repository is intended to contain the source for multiple python and java
+packages, so the process of development may be a bit different than what you're
+familiar with.
+
+#### Java - gradle
+
+The Java-based code generation uses Gradle, which is a fairly common Java build
+tool that natively supports building, testing, and publishing multiple packages
+in one place. If you've used Gradle before, then there's nothing in this repo
+that will surprise you.
+
+If you haven't used Gradle before, don't worry - it's pretty easy to use. You
+will need to have JDK 17 or newer installed, but that's the only thing you
+need to install yourself. We recommend the [Coretto]
+(https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/downloads-list.html)
+distribution, but any JDK that's at least version 17 will work.
+
+To build and run all the Java packages, simply run `./gradlew clean build` from
+the `codegen` directory. If this is the first time you have run this, it will
+download Gradle onto your system to run along with any dependencies of the Java
+packages.
+
+For more details on working on the code generator, see the readme in the
+`codegen` directory.
+
+#### Python - pants
+
+Building multiple python packages in a single repo is a little less common than
+it is for Java or some other languages, so even if you're a python expert you
+may be unfamiliar with the tooling. The tool we're using is called [pants]
+(https://www.pantsbuild.org), and you use it pretty similarly to how you use
+Gradle.
+
+Like Gradle, pants provides a wrapper script that downloads its dependencies as
+needed. Currently, pants requires python 3.7, 3.8, or 3.9 to run, so one of
+those must be available on your path. (It doesn't have to be the version that
+is linked to `python` or `python3`, it just needs `python3.9` etc.) It is,
+however, fully capable of building and working with code that uses newer python
+versions like we do. This repository uses a minimum python version of 3.11
+for all its packages, so you will need that too to work on it.
+
+Pants provides a number of python commands it calls goals, documente [here]
+(https://www.pantsbuild.org/docs/python-goals). In short:
+
+* `./pants fmt ::` - This will run our formatters on all of the python library
+  code. Use this before you make a commit.
+* `./pants lint ::` - This will run our linters on all of the python library
+  code. You should also use this before you make a commit, and particularly
+  before you make a pull request.
+* `./pants check: ::` - This will run mypy on all of the python library code.
+  This should be used regularly, and must pass for any pull request.
+* `./pants test ::` - This will run all of the tests written for the python
+  library code. Use this as often as you'd run pytest or any other testing
+  tool. Under the hood, we are using pytest.
+
+There are other commands as well that you can find in the [docs]
+(https://www.pantsbuild.org/docs/python-goals), but these are the one you'll
+use the most.
+
+Important to note is those pairs of colons. These are pants [targets]
+(https://www.pantsbuild.org/docs/targets#target-addresses). The double colon is
+a special target that means "everything". So running exactly what's listed
+above will run those goals on every python file or other relevant file. You can
+also target just `smithy_python`, for example, with
+`./pants check python-packages/smithy-python/smithy_python:source`, or even
+individual files with something like
+`./pants check python-packages/smithy-python/smithy_python/interfaces/http.py:../source`.
+To list what targets are available in a directory, run
+`./pants list path/to/dir:`. For more detailed information, see the [docs]
+(https://www.pantsbuild.org/docs/targets#target-addresses).
+
 ## License
 
 This project is licensed under the Apache-2.0 License.
