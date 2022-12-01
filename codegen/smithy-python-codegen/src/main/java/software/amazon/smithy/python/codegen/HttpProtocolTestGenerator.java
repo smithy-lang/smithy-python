@@ -31,6 +31,7 @@ import software.amazon.smithy.protocoltests.traits.HttpRequestTestsTrait;
 import software.amazon.smithy.protocoltests.traits.HttpResponseTestCase;
 import software.amazon.smithy.protocoltests.traits.HttpResponseTestsTrait;
 import software.amazon.smithy.utils.CaseUtils;
+import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
  * Generates protocol tests for a given HTTP protocol.
@@ -38,7 +39,8 @@ import software.amazon.smithy.utils.CaseUtils;
  * <p>This should preferably be instantiated and used within an
  * implementation of a `ProtocolGeneration`
  */
-final class HttpProtocolTestGenerator implements Runnable {
+@SmithyUnstableApi
+public final class HttpProtocolTestGenerator implements Runnable {
 
     private static final Logger LOGGER = Logger.getLogger(HttpProtocolTestGenerator.class.getName());
 
@@ -49,7 +51,7 @@ final class HttpProtocolTestGenerator implements Runnable {
     private final PythonWriter writer;
     private final GenerationContext context;
 
-    HttpProtocolTestGenerator(
+    public HttpProtocolTestGenerator(
             GenerationContext context,
             ShapeId protocol,
             PythonWriter writer
