@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 
 
-from typing import Any, Awaitable, Callable, Generic, Optional, TypeVar
+from typing import Any, Awaitable, Callable, Generic, TypeVar
 
 from smithy_python._private.collection import SmithyCollection
 from smithy_python.interfaces.http import Request, Response
@@ -46,7 +46,7 @@ Context = dict[Any, Any]
 
 # Step Inputs
 class InitializeInput(Generic[Input]):
-    def __init__(self, *, param: Input, context: Optional[Context] = None) -> None:
+    def __init__(self, *, param: Input, context: Context | None = None) -> None:
         self.input: Input = param
         if context is None:
             context = {}
@@ -58,11 +58,11 @@ class SerializeInput(Generic[Input]):
         self,
         *,
         param: Input,
-        request: Optional[Request] = None,
-        context: Optional[Context] = None,
+        request: Request | None = None,
+        context: Context | None = None,
     ) -> None:
         self.input: Input = param
-        self.request: Optional[Request] = request
+        self.request: Request | None = request
         if context is None:
             context = {}
         self.context: Context = context
@@ -70,7 +70,7 @@ class SerializeInput(Generic[Input]):
 
 class BuildInput(Generic[Input]):
     def __init__(
-        self, *, param: Input, request: Request, context: Optional[Context] = None
+        self, *, param: Input, request: Request, context: Context | None = None
     ) -> None:
         self.input: Input = param
         self.request: Request = request
@@ -85,12 +85,12 @@ class FinalizeInput(Generic[Input]):
         *,
         param: Input,
         request: Request,
-        response: Optional[Response] = None,
-        context: Optional[Context] = None,
+        response: Response | None = None,
+        context: Context | None = None,
     ) -> None:
         self.input: Input = param
         self.request: Request = request
-        self.response: Optional[Response] = response
+        self.response: Response | None = response
         if context is None:
             context = {}
         self.context: Context = context
@@ -103,7 +103,7 @@ class DeserializeInput(Generic[Input]):
         param: Input,
         request: Request,
         response: Response,
-        context: Optional[Context] = None,
+        context: Context | None = None,
     ) -> None:
         self.input: Input = param
         self.request: Request = request
@@ -197,7 +197,7 @@ class SmithyStack(Generic[Input, Output]):
     def resolve(
         self,
         terminal: DeserializeHandler[Input, Output],
-        context: Optional[Context] = None,
+        context: Context | None = None,
     ) -> Handler[Input, Output]:
         stack_chain = self._build_deserialize_chain(terminal)
 

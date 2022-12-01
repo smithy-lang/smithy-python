@@ -16,7 +16,7 @@ import asyncio
 from concurrent.futures import Future
 from io import BytesIO
 from threading import Lock
-from typing import Any, AsyncGenerator, Awaitable, Generator, Optional
+from typing import Any, AsyncGenerator, Awaitable, Generator
 
 from awscrt import http, io
 
@@ -46,7 +46,7 @@ class AWSCRTEventLoop:
 
 class _BaseAwsCrtHttpResponse:
     def __init__(self) -> None:
-        self._stream: Optional[http.HttpClientStream] = None
+        self._stream: http.HttpClientStream | None = None
         self._status_code_future: Future[int] = Future()
         self._headers_future: Future[HeadersList] = Future()
         self._chunk_futures: list[Future[bytes]] = []
@@ -172,14 +172,14 @@ class _SyncAwsCrtHttpResponse(_BaseAwsCrtHttpResponse):
                 break
 
 
-ConnectionPoolKey = tuple[str, str, Optional[int]]
+ConnectionPoolKey = tuple[str, str, int | None]
 ConnectionPoolDict = dict[ConnectionPoolKey, http.HttpClientConnection]
 
 
 class AwsCrtHttpSessionConfig:
     def __init__(
         self,
-        force_http_2: Optional[bool] = None,
+        force_http_2: bool | None = None,
     ) -> None:
         if force_http_2 is None:
             force_http_2 = False
@@ -192,8 +192,8 @@ class _BaseAwsCrtHttpSession:
 
     def __init__(
         self,
-        eventloop: Optional[AWSCRTEventLoop] = None,
-        config: Optional[AwsCrtHttpSessionConfig] = None,
+        eventloop: AWSCRTEventLoop | None = None,
+        config: AwsCrtHttpSessionConfig | None = None,
     ) -> None:
         if eventloop is None:
             eventloop = AWSCRTEventLoop()
