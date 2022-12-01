@@ -20,7 +20,7 @@ interpreter_constraints = [">=3.11"]
 
 [black]
 version = "black==22.10.0"
-args = ["-t py310"]
+args = ["-t py311"]
 lockfile = "lockfiles/black"
 interpreter_constraints = [">=3.11"]
 
@@ -46,7 +46,7 @@ version = "flake8<3.10"
 lockfile = "lockfiles/flake8"
 
 [pyupgrade]
-args = ["--py39-plus"]
+args = ["--py311-plus"]
 interpreter_constraints = [">=3.11"]
 
 [poetry]
