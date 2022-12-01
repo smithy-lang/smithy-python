@@ -4,8 +4,8 @@ Smithy code generators for Python.
 
 ### Prerequisites
 
-* JDK 17 or newer is required to run the code generator. The [Coretto]
-  (https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/downloads-list.html)
+* JDK 17 or newer is required to run the code generator. The
+  [Coretto](https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/downloads-list.html)
   distribution is recommended.
 
 #### Optional Prerequisites - Python
