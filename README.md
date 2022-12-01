@@ -72,7 +72,7 @@ ergonomic interfaces that meet customer expectations.
 
 ### Using repository tooling
 
-This repository is intended to contain the source for multiple python and java
+This repository is intended to contain the source for multiple Python and Java
 packages, so the process of development may be a bit different than what you're
 familiar with.
 
@@ -121,7 +121,7 @@ Pants provides a number of python commands it calls goals, documente [here]
 * `./pants lint ::` - This will run our linters on all of the python library
   code. You should also use this before you make a commit, and particularly
   before you make a pull request.
-* `./pants check: ::` - This will run mypy on all of the python library code.
+* `./pants check ::` - This will run mypy on all of the python library code.
   This should be used regularly, and must pass for any pull request.
 * `./pants test ::` - This will run all of the tests written for the python
   library code. Use this as often as you'd run pytest or any other testing
