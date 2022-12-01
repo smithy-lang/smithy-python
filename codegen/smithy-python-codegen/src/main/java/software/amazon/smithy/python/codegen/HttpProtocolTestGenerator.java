@@ -72,28 +72,25 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
         // Use a TreeSet to have a fixed ordering of tests.
         for (OperationShape operation : new TreeSet<>(topDownIndex.getContainedOperations(service))) {
-
-            // TODO: Add settings to configure which tests are generated (client or server)
-            generateOperationTests(AppliesTo.CLIENT, operation, operationIndex);
+            generateOperationTests(operation, operationIndex);
         }
     }
 
     private void generateOperationTests(
-            AppliesTo implementation,
             OperationShape operation,
             OperationIndex operationIndex) {
 
         // Request Tests
         operation.getTrait(HttpRequestTestsTrait.class).ifPresent(trait -> {
-            for (HttpRequestTestCase testCase : trait.getTestCasesFor(implementation)) {
-                onlyIfProtocolMatches(testCase, () -> generateRequestTest(testCase));
+            for (HttpRequestTestCase testCase : trait.getTestCasesFor(AppliesTo.CLIENT)) {
+                onlyIfProtocolMatches(testCase, () -> generateRequestTest(operation, testCase));
             }
         });
 
         // Response Tests
         operation.getTrait(HttpResponseTestsTrait.class).ifPresent(trait -> {
-            for (HttpResponseTestCase testCase : trait.getTestCasesFor(implementation)) {
-                onlyIfProtocolMatches(testCase, () -> generateResponseTest(testCase));
+            for (HttpResponseTestCase testCase : trait.getTestCasesFor(AppliesTo.CLIENT)) {
+                onlyIfProtocolMatches(testCase, () -> generateResponseTest(operation, testCase));
             }
         });
 
@@ -102,7 +99,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
         for (StructureShape error : operationIndex.getErrors(operation, service)) {
             if (!error.hasTag("server-only")) {
                 error.getTrait(HttpResponseTestsTrait.class).ifPresent(trait -> {
-                    for (HttpResponseTestCase testCase : trait.getTestCasesFor(implementation)) {
+                    for (HttpResponseTestCase testCase : trait.getTestCasesFor(AppliesTo.CLIENT)) {
                         onlyIfProtocolMatches(testCase,
                                 () -> generateErrorResponseTest(operation, error, testCase));
                     }
@@ -111,16 +108,18 @@ public final class HttpProtocolTestGenerator implements Runnable {
         }
     }
 
-    private void generateRequestTest(HttpRequestTestCase testCase) {
+    private void generateRequestTest(OperationShape operation, HttpRequestTestCase testCase) {
         // TODO: Generate the real request test logic, add logic for skipping
-        writeTestBlock(testCase, testCase.getId(), false, () -> {
+        var name = String.format("%s_request_%s", testCase.getId(), operation.getId().getName());
+        writeTestBlock(testCase, name, false, () -> {
             writer.write("pass");
         });
     }
 
-    private void generateResponseTest(HttpResponseTestCase testCase) {
+    private void generateResponseTest(OperationShape operation, HttpResponseTestCase testCase) {
         // TODO: Generate the real response test logic, add logic for skipping
-        writeTestBlock(testCase, testCase.getId(), true, () -> {
+        var name = String.format("%s_response_%s", testCase.getId(), operation.getId().getName());
+        writeTestBlock(testCase, name, true, () -> {
             writer.write("pass");
         });
     }
@@ -130,10 +129,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
             StructureShape error,
             HttpResponseTestCase testCase) {
         // TODO: Generate the real error response test logic, add logic for skipping
-        writeTestBlock(testCase,
-                String.format("%s_error_%s", testCase.getId(), operation.getId().getName()),
-                false,
-                () -> {
+        var name = String.format("%s_error_%s", testCase.getId(), operation.getId().getName());
+        writeTestBlock(testCase, name, false, () -> {
             writer.write("pass");
         });
     }
@@ -150,7 +147,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
     }
 
     // write the test block, which may include certain decorators (i.e. `skip`)
-    private void writeTestBlock(
+    private void rwriteTestBlock(
             HttpMessageTestCase testCase,
             String testName,
             boolean shouldSkip,
@@ -165,7 +162,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
             writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "mark", "mark");
             writer.write("@mark.skip()");
         }
-        writer.openBlock("async def test_$L():", "", CaseUtils.toSnakeCase(testName), () -> {
+        writer.openBlock("async def test_$L() -> None:", "", CaseUtils.toSnakeCase(testName), () -> {
             testCase.getDocumentation().ifPresent(writer::writeDocs);
             f.run();
         });

@@ -127,8 +127,6 @@ final class StructureGenerator implements Runnable {
             writer.write("message: str");
             writeProperties(true);
             writeInit(true);
-            writeAsDict(true);
-            writeFromDict(true);
         });
         writer.write("");
     }

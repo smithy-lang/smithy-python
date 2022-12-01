@@ -82,23 +82,31 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         this.settings = settings;
         this.service = model.expectShape(settings.getService(), ServiceShape.class);
 
-        // Load reserved words from a new-line delimited file.
         ReservedWords reservedWords = new ReservedWordsBuilder()
                 .put("str", "str_")
+                .put("float", "float_")
+                .put("int", "int_")
+                .put("bytes", "bytes_")
+                .put("bytearray", "bytearray_")
                 .build();
 
         escaper = ReservedWordSymbolProvider.builder()
-                // TODO: escape reserved member names
-                .nameReservedWords(reservedWords)
-                // Only escape words when the symbol has a definition file to
-                // prevent escaping intentional references to built-in types.
-                .escapePredicate((shape, symbol) -> !StringUtils.isEmpty(symbol.getDefinitionFile()))
-                .buildEscaper();
+            .nameReservedWords(reservedWords)
+            .memberReservedWords(reservedWords)
+            // Only escape words when the symbol has a definition file to
+            // prevent escaping intentional references to built-in types.
+            .escapePredicate((shape, symbol) -> !StringUtils.isEmpty(symbol.getDefinitionFile()))
+            .buildEscaper();
 
         // Reserved words that only apply to error members.
         ReservedWords reservedErrorMembers = new ReservedWordsBuilder()
-                .put("code", "code_")
-                .build();
+            .put("code", "code_")
+            .put("str", "str_")
+            .put("float", "float_")
+            .put("int", "int_")
+            .put("bytes", "bytes_")
+            .put("bytearray", "bytearray_")
+            .build();
 
         errorMemberEscaper = ReservedWordSymbolProvider.builder()
                 .memberReservedWords(reservedErrorMembers)
