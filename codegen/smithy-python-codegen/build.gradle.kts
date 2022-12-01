@@ -34,4 +34,6 @@ dependencies {
     api("software.amazon.smithy:smithy-codegen-core:$smithyVersion")
     implementation("software.amazon.smithy:smithy-waiters:$smithyVersion")
     implementation("software.amazon.smithy:smithy-protocol-test-traits:$smithyVersion")
+    // We have this because we're using RestJson1 as a 'generic' protocol.
+    implementation("software.amazon.smithy:smithy-aws-traits:$smithyVersion")
 }

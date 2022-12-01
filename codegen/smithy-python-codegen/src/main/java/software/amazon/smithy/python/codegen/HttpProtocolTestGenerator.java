@@ -38,7 +38,7 @@ import software.amazon.smithy.utils.CaseUtils;
  * <p>This should preferably be instantiated and used within an
  * implementation of a `ProtocolGeneration`
  */
-final class HttpProtocolTestGenerator implements Runnable {
+public final class HttpProtocolTestGenerator implements Runnable {
 
     private static final Logger LOGGER = Logger.getLogger(HttpProtocolTestGenerator.class.getName());
 
@@ -49,7 +49,7 @@ final class HttpProtocolTestGenerator implements Runnable {
     private final PythonWriter writer;
     private final GenerationContext context;
 
-    HttpProtocolTestGenerator(
+    public HttpProtocolTestGenerator(
             GenerationContext context,
             ShapeId protocol,
             PythonWriter writer
