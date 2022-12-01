@@ -110,4 +110,44 @@ public interface ProtocolGenerator {
                 .definitionFile(format("./%s/deserialize.py", context.settings().getModuleName()))
                 .build();
     }
+
+    /**
+     * Generates any standard code for service request/response serde.
+     *
+     * @param context Serde context.
+     */
+    default void generateSharedSerializerComponents(GenerationContext context) {
+    }
+
+    /**
+     * Generates the code used to serialize the shapes of a service
+     * for requests.
+     *
+     * @param context Serialization context.
+     */
+    void generateRequestSerializers(GenerationContext context);
+
+    /**
+     * Generates any standard code for service response deserialization.
+     *
+     * @param context Serde context.
+     */
+    default void generateSharedDeserializerComponents(GenerationContext context) {
+    }
+
+    /**
+     * Generates the code used to deserialize the shapes of a service
+     * for responses.
+     *
+     * @param context Deserialization context.
+     */
+    void generateResponseDeserializers(GenerationContext context);
+
+    /**
+     * Generates the code for validating the generated protocol's serializers and deserializers.
+     *
+     * @param context Generation context
+     */
+    default void generateProtocolTests(GenerationContext context) {
+    }
 }

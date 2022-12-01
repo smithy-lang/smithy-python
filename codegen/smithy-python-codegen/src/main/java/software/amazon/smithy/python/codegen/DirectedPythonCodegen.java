@@ -154,6 +154,19 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
     @Override
     public void generateService(GenerateServiceDirective<GenerationContext, PythonSettings> directive) {
         new ClientGenerator(directive.context(), directive.service()).run();
+
+        var protocolGenerator = directive.context().protocolGenerator();
+        if (protocolGenerator == null) {
+            return;
+        }
+
+        protocolGenerator.generateSharedSerializerComponents(directive.context());
+        protocolGenerator.generateRequestSerializers(directive.context());
+
+        protocolGenerator.generateSharedDeserializerComponents(directive.context());
+        protocolGenerator.generateResponseDeserializers(directive.context());
+
+        protocolGenerator.generateProtocolTests(directive.context());
     }
 
     private void generateDefaultWrapper(PythonSettings settings, WriterDelegator<PythonWriter> writers) {
