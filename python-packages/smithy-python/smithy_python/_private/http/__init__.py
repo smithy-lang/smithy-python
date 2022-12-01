@@ -15,7 +15,7 @@
 
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 from urllib.parse import parse_qsl, urlparse
 
 from smithy_python.interfaces import http as http_interface
@@ -28,13 +28,13 @@ class URL:
     def __init__(
         self,
         hostname: str,
-        path: Optional[str] = None,
-        scheme: Optional[str] = None,
-        query_params: Optional[QueryParamsList] = None,
-        port: Optional[int] = None,
+        path: str | None = None,
+        scheme: str | None = None,
+        query_params: QueryParamsList | None = None,
+        port: int | None = None,
     ):
         self.hostname: str = hostname
-        self.port: Optional[int] = port
+        self.port: int | None = port
 
         self.path: str = ""
         if path is not None:
@@ -54,7 +54,7 @@ class Request:
         self,
         url: http_interface.URL,
         method: str = "GET",
-        headers: Optional[HeadersList] = None,
+        headers: HeadersList | None = None,
         body: Any = None,
     ):
         self.url: http_interface.URL = url

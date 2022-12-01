@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Any, Optional, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar
 
 # Defining headers as a list instead of a mapping to avoid ambiguity and
 # the nuances of multiple fields in a mapping style interface
@@ -9,7 +9,7 @@ HeadersList = list[tuple[str, str]]
 class URL(Protocol):
     scheme: str  # http or https
     hostname: str  # hostname e.g. amazonaws.com
-    port: Optional[int]  # explicit port number
+    port: int | None  # explicit port number
     path: str  # request path
     query_params: list[tuple[str, str]]
 

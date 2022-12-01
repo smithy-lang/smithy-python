@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 
 
-from typing import Generic, Optional, TypeVar
+from typing import Generic, TypeVar
 
 EntryType = TypeVar("EntryType")
 
@@ -37,20 +37,18 @@ class SmithyCollection(Generic[EntryType]):
         # merging collections
         return list(self._entries)
 
-    def _resolve_entry_position(self, name: Optional[str], default_pos: int) -> int:
+    def _resolve_entry_position(self, name: str | None, default_pos: int) -> int:
         for n, entry in enumerate(self._entries):
             if entry.name == name:
                 return n
         return default_pos
 
     def add_before(
-        self, entry: SmithyEntry[EntryType], name: Optional[str] = None
+        self, entry: SmithyEntry[EntryType], name: str | None = None
     ) -> None:
         position = self._resolve_entry_position(name, 0)
         self._entries.insert(position, entry)
 
-    def add_after(
-        self, entry: SmithyEntry[EntryType], name: Optional[str] = None
-    ) -> None:
+    def add_after(self, entry: SmithyEntry[EntryType], name: str | None = None) -> None:
         position = self._resolve_entry_position(name, len(self._entries))
         self._entries.insert(position + 1, entry)
