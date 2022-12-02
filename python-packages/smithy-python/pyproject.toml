@@ -40,14 +40,6 @@ include-package-data = true
 [tool.setuptools.packages.find]
 exclude=["tests*", "codegen", "designs"]
 
-[tool.black]
-target-version = ["py311"]
-
-[tool.isort]
-profile = "black"
-honor_noqa = true
-src_paths = ["smithy_python", "tests"]
-
 [tool.mypy]
 strict = true
 warn_unused_configs = true
@@ -59,3 +51,4 @@ enable_recursive_aliases = true
 [[tool.mypy.overrides]]
 module = ["awscrt", "pytest"]
 ignore_missing_imports = true
+enable_recursive_aliases = true
