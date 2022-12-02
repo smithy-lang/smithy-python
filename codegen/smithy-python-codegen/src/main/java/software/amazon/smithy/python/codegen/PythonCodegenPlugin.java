@@ -31,18 +31,18 @@ public final class PythonCodegenPlugin implements SmithyBuildPlugin {
 
     @Override
     public void execute(PluginContext context) {
-        CodegenDirector<PythonWriter, PythonIntegration, GenerationContext, PythonSettings> runnner
+        CodegenDirector<PythonWriter, PythonIntegration, GenerationContext, PythonSettings> runner
                 = new CodegenDirector<>();
 
         PythonSettings settings = PythonSettings.from(context.getSettings());
-        runnner.settings(settings);
-        runnner.directedCodegen(new DirectedPythonCodegen());
-        runnner.fileManifest(context.getFileManifest());
-        runnner.service(settings.getService());
-        runnner.model(context.getModel());
-        runnner.integrationClass(PythonIntegration.class);
-        runnner.performDefaultCodegenTransforms();
-        runnner.createDedicatedInputsAndOutputs();
-        runnner.run();
+        runner.settings(settings);
+        runner.directedCodegen(new DirectedPythonCodegen());
+        runner.fileManifest(context.getFileManifest());
+        runner.service(settings.getService());
+        runner.model(context.getModel());
+        runner.integrationClass(PythonIntegration.class);
+        runner.performDefaultCodegenTransforms();
+        runner.createDedicatedInputsAndOutputs();
+        runner.run();
     }
 }
