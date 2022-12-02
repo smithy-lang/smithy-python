@@ -160,7 +160,7 @@ final class StructureGenerator implements Runnable {
         var nullableIndex = NullableIndex.of(model);
         writer.openBlock("def __init__(", "):", () -> {
             writer.write("self,");
-            if (!shape.members().isEmpty()) {
+            if (!shape.members().isEmpty() || isError) {
                 // Adding this star to the front prevents the use of positional arguments.
                 writer.write("*,");
             }
@@ -443,7 +443,7 @@ final class StructureGenerator implements Runnable {
                         than the parameter names as keys to be mostly compatible with boto3."""));
             });
 
-            if (shape.members().isEmpty()) {
+            if (shape.members().isEmpty() && !isError) {
                 writer.write("return $L()", shapeName);
                 return;
             }

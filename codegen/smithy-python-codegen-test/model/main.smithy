@@ -111,7 +111,7 @@ operation GetCity {
         cityData: JsonString
         binaryCityData: JsonBlob
     }
-    errors: [NoSuchResource]
+    errors: [NoSuchResource, EmptyError]
 }
 
 // Tests that HTTP protocol tests are generated.
@@ -210,6 +210,12 @@ apply NoSuchResource @httpResponseTests([
         }
     }
 ])
+
+// This will have a synthetic message member added to it, even
+// though it doesn't actually have one.
+@error("client")
+@httpError(400)
+structure EmptyError {}
 
 // The paginated trait indicates that the operation may
 // return truncated results.
