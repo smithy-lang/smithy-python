@@ -1,0 +1,72 @@
+# Python reserved words for members.
+
+# The following are reserved words that can't be used as identifiers at all.
+# For example, the following would produce a syntax error:
+#
+# class Foo:
+#     pass: int
+#
+# A full list of these can be found here:
+#
+# https://docs.python.org/3/reference/lexical_analysis.html#keywords
+#
+# Note that None, True, and False aren't here - members are always lower
+# cased, so they'll never match here. Those are in the clas names reserve
+# list.
+and
+as
+assert
+break
+class
+continue
+def
+del
+elif
+else
+except
+finally
+for
+from
+global
+if
+import
+in
+is
+lambda
+nonlocal
+not
+or
+pass
+raise
+return
+try
+while
+with
+yield
+
+# The following aren't reserved words, but are built-in types / functions that
+# would break if you ever tried to refer to the type again in scope. For
+# example:
+#
+# class Foo:
+#     str: str
+#
+#     def __init__(self, str: str):
+#         pass
+#
+# That would have an exception in the definition of __init__ since when you use
+# `str` as the type after you've defined `str` in scope, it thinks you're
+# referencing `Foo.str` rather than the built-in type (or a type at all).
+#
+# A listing of these types can be found here:
+# https://docs.python.org/3/library/stdtypes.html
+#
+# Note though that we only need to escape the types we use.
+bool
+bytes
+bytearray
+dict
+float
+int
+list
+str

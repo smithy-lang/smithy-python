@@ -1,0 +1,11 @@
+# Python reserved words for class names
+#
+# Most of python's reserved words are lower-case, so there isn't much
+# here. Furthermore, import aliases can resolve any other conflicts
+# with non-reserved builtins or other conflicting classes.
+#
+# A full list of reserved words can be found here:
+# https://docs.python.org/3/reference/lexical_analysis.html#keywords
+True
+False
+None

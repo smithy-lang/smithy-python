@@ -264,6 +264,10 @@ operation ListCities {
         someEnum: StringYesNo
         aString: String
         defaults: Defaults
+        escaping: MemberEscaping
+        escapeTrue: True
+        escapeFalse: False
+        escapeNone: None
 
         @required
         items: CitySummaries
@@ -364,6 +368,70 @@ structure Defaults {
     @required
     requiredDefaultDocument: Document = "eggs"
 }
+
+// This structure has members that need to be escaped.
+structure MemberEscaping {
+    // This first set of member names are all reserved words that are a syntax
+    // error to use as identifiers. A full list of these can be found here:
+    // https://docs.python.org/3/reference/lexical_analysis.html#keywords
+    and: String
+    as: String
+    assert: String
+    break: String
+    class: String
+    continue: String
+    def: String
+    del: String
+    elif: String
+    else: String
+    except: String
+    finally: String
+    for: String
+    from: String
+    global: String
+    if: String
+    import: String
+    in: String
+    is: String
+    lambda: String
+    nonlocal: String
+    not: String
+    or: String
+    pass: String
+    raise: String
+    return: String
+    try: String
+    while: String
+    with: String
+    yield: String
+
+    // These are built-in types, but not reserved words. They can be shadowed,
+    // but the shadowing naturally makes it impossible to use them later in
+    // scope. A listing of these can be found here:
+    // https://docs.python.org/3/library/stdtypes.html
+    bool: Boolean
+    dict: StringMap
+    float: Float
+    int: Integer
+    list: StringList
+    str: String
+    bytes: Blob
+    bytearray: Blob
+
+    // We don't actually use these, but they're here for completeness.
+    complex: Float
+    tuple: StringList
+    range: StringList
+    memoryview: Blob
+    set: StringList
+    frozenset: StringList
+}
+
+// These would result in class names that produce syntax errors since they're
+// reserved words.
+structure True {}
+structure False {}
+structure None {}
 
 @timestampFormat("date-time")
 timestamp DateTime

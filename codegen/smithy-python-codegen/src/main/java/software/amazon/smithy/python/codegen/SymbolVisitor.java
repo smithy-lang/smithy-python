@@ -82,28 +82,34 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         this.settings = settings;
         this.service = model.expectShape(settings.getService(), ServiceShape.class);
 
-        // Load reserved words from a new-line delimited file.
-        ReservedWords reservedWords = new ReservedWordsBuilder()
-                .put("str", "str_")
-                .build();
+        // Load reserved words from new-line delimited files.
+        var reservedClassNames = new ReservedWordsBuilder()
+            .loadWords(SymbolVisitor.class.getResource("reserved-class-names.txt"), this::escapeWord)
+            .build();
+        var reservedMemberNamesBuilder = new ReservedWordsBuilder()
+            .loadWords(SymbolVisitor.class.getResource("reserved-member-names.txt"), this::escapeWord);
 
         escaper = ReservedWordSymbolProvider.builder()
-                // TODO: escape reserved member names
-                .nameReservedWords(reservedWords)
-                // Only escape words when the symbol has a definition file to
-                // prevent escaping intentional references to built-in types.
-                .escapePredicate((shape, symbol) -> !StringUtils.isEmpty(symbol.getDefinitionFile()))
-                .buildEscaper();
+            .nameReservedWords(reservedClassNames)
+            .memberReservedWords(reservedMemberNamesBuilder.build())
+            // Only escape words when the symbol has a definition file to
+            // prevent escaping intentional references to built-in types.
+            .escapePredicate((shape, symbol) -> !StringUtils.isEmpty(symbol.getDefinitionFile()))
+            .buildEscaper();
 
         // Reserved words that only apply to error members.
-        ReservedWords reservedErrorMembers = new ReservedWordsBuilder()
-                .put("code", "code_")
-                .build();
+        ReservedWords reservedErrorMembers = reservedMemberNamesBuilder
+            .put("code", "code_")
+            .build();
 
         errorMemberEscaper = ReservedWordSymbolProvider.builder()
-                .memberReservedWords(reservedErrorMembers)
-                .escapePredicate((shape, symbol) -> !StringUtils.isEmpty(symbol.getDefinitionFile()))
-                .buildEscaper();
+            .memberReservedWords(reservedErrorMembers)
+            .escapePredicate((shape, symbol) -> !StringUtils.isEmpty(symbol.getDefinitionFile()))
+            .buildEscaper();
+    }
+
+    private String escapeWord(String word) {
+        return word + "_";
     }
 
     @Override
