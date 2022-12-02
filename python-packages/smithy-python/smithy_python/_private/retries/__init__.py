@@ -66,12 +66,16 @@ class ExponentialRetryBackoffStrategy:
         """Calculate timespan in seconds to delay before next retry.
 
         See the methods ``_next_delay_*`` for the formula used to calculate the delay
-        for each jitter type.
+        for each jitter type for values of ``retry_attempt > 0``.
 
         :param retry_attempt: The index of the retry attempt that is about to be made
-        after the delay. The initial attempt, before any retries, is index ``0``, the
-        first retry attempt after the initial attempt failed is index ``1``, and so on.
+        after the delay. The initial attempt, before any retries, is index ``0``, and
+        will return a delay of ``0``. The first retry attempt after a failed initial
+        attempt is index ``1``, and so on.
         """
+        if retry_attempt == 0:
+            return 0
+
         match self._jitter_type:
             case ExponentialBackoffJitterType.NONE:
                 seconds = self._next_delay_no_jitter(retry_attempt=retry_attempt)
@@ -92,16 +96,16 @@ class ExponentialRetryBackoffStrategy:
 
         .. code-block:: python
 
-            backoff_scale_value * 2 ** attempt
+            backoff_scale_value * 2 ** (retry_attempt - 1)
         """
-        return self._backoff_scale_value * (2.0**retry_attempt)
+        return self._backoff_scale_value * (2.0 ** (retry_attempt - 1))
 
     def _next_delay_no_jitter(self, retry_attempt: int) -> float:
         """Calculates truncated binary exponential backoff delay without jitter:
 
         .. code-block:: python
 
-            min(max_backoff, backoff_scale_value * 2 ** attempt)
+            min(max_backoff, backoff_scale_value * 2 ** (retry_attempt - 1))
         """
         no_jitter_delay = self._jitter_free_uncapped_delay(retry_attempt)
         return min(no_jitter_delay, self._max_backoff)
@@ -112,7 +116,8 @@ class ExponentialRetryBackoffStrategy:
         .. code-block:: python
 
             random_between(
-                max_backoff, min(max_backoff, backoff_scale_value * 2 ** attempt)
+                max_backoff,
+                min(max_backoff, backoff_scale_value * 2 ** (retry_attempt - 1))
             )
         """
         no_jitter_delay = self._jitter_free_uncapped_delay(retry_attempt)
@@ -123,7 +128,7 @@ class ExponentialRetryBackoffStrategy:
 
         .. code-block:: python
 
-            capped = min(max_backoff, backoff_scale_value * 2 ** attempt)
+            capped = min(max_backoff, backoff_scale_value * 2 ** (retry_attempt - 1))
             (capped / 2) + random_between(0, capped / 2)
         """
         no_jitter_delay = self._jitter_free_uncapped_delay(retry_attempt)
