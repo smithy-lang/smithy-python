@@ -383,6 +383,8 @@ structure MemberEscaping {
     and: String
     as: String
     assert: String
+    async: String
+    await: String
     break: String
     class: String
     continue: String
