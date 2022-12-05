@@ -386,6 +386,15 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public Symbol memberShape(MemberShape shape) {
+        var container = model.expectShape(shape.getContainer());
+        if (container.isUnionShape()) {
+            // Union members, unlike other shape members, have types generated for them.
+            var containerSymbol = container.accept(this);
+            var name = containerSymbol.getName() + StringUtils.capitalize(shape.getMemberName());
+            return createSymbolBuilder(shape, name, format("%s.models", settings.getModuleName()))
+                .definitionFile(format("./%s/models.py", settings.getModuleName()))
+                .build();
+        }
         Shape targetShape = model.getShape(shape.getTarget())
                 .orElseThrow(() -> new CodegenException("Shape not found: " + shape.getTarget()));
         return toSymbol(targetShape);
