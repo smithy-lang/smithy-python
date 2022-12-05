@@ -177,6 +177,22 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
     /**
      * Imports a type using an alias from a module only if necessary.
      *
+     * <p>If you use this, you MUST add the dependency manually using {@link PythonWriter#addDependency}.
+     *
+     * @param namespace Module to import the type from.
+     * @param name Type to import.
+     * @return Returns the writer.
+     */
+    public PythonWriter addImport(String namespace, String name) {
+        getImportContainer().addImport(namespace, name, name);
+        return this;
+    }
+
+    /**
+     * Imports a type using an alias from a module only if necessary.
+     *
+     * <p>If you use this, you MUST add the dependency manually using {@link PythonWriter#addDependency}.
+     *
      * @param namespace Module to import the type from.
      * @param name Type to import.
      * @param alias The name to import the type as.
