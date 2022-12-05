@@ -87,10 +87,10 @@ class InterceptorContext(
     def copy(
         self,
         *,
-        request: Request | None,
-        response: Response | Exception | None,
-        transport_request: TransportRequest | None,
-        transport_response: TransportResponse | None,
+        request: Request | None = None,
+        response: Response | Exception | None = None,
+        transport_request: TransportRequest | None = None,
+        transport_response: TransportResponse | None = None,
     ) -> "InterceptorContext[Request, Response, TransportRequest, TransportResponse]":
         """Copy the context object, optionally overriding certain properties."""
         if transport_request is None:
