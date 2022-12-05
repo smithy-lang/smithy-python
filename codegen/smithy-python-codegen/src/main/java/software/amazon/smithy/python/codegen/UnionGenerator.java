@@ -59,20 +59,19 @@ final class UnionGenerator implements Runnable {
 
         var memberNames = new ArrayList<String>();
         for (MemberShape member : shape.members()) {
-            var memberName = parentName + StringUtils.capitalize(member.getMemberName());
-            memberNames.add(memberName);
             var memberSymbol = symbolProvider.toSymbol(member);
+            memberNames.add(memberSymbol.getName());
 
-            writer.openBlock("class $L():", "", memberName, () -> {
+            var target = model.expectShape(member.getTarget());
+            var targetSymbol = symbolProvider.toSymbol(target);
+
+            writer.openBlock("class $L():", "", memberSymbol.getName(), () -> {
                 member.getMemberTrait(model, DocumentationTrait.class).ifPresent(trait -> {
                     writer.writeDocs(trait.getValue());
                 });
-                writer.openBlock("def __init__(self, value: $T):", "", memberSymbol, () -> {
+                writer.openBlock("def __init__(self, value: $T):", "", targetSymbol, () -> {
                     writer.write("self.value = value");
                 });
-
-                var target = model.expectShape(member.getTarget());
-                var targetSymbol = symbolProvider.toSymbol(target);
 
                 writer.openBlock("def as_dict(self) -> Dict[str, Any]:", "", () -> {
                     if (target.isStructureShape() || target.isUnionShape()) {
@@ -86,19 +85,20 @@ final class UnionGenerator implements Runnable {
                 });
 
                 writer.write("@staticmethod");
-                writer.openBlock("def from_dict(d: Dict[str, Any]) -> $S:", "", memberName, () -> {
+                writer.openBlock("def from_dict(d: Dict[str, Any]) -> $S:", "", memberSymbol.getName(), () -> {
                     writer.write("""
                             if (len(d) != 1):
                                 raise TypeError(f"Unions may have exactly 1 value, but found {len(d)}")
                             """);
                     if (target.isStructureShape()) {
-                        writer.write("return $L($T.from_dict(d[$S]))", memberName, targetSymbol,
+                        writer.write("return $T($T.from_dict(d[$S]))", memberSymbol, targetSymbol,
                                 member.getMemberName());
                     } else if (targetSymbol.getProperty("fromDict").isPresent()) {
                         var targetFromDictSymbol = targetSymbol.expectProperty("fromDict", Symbol.class);
-                        writer.write("return $L($T(d[$S]))", memberName, targetFromDictSymbol, member.getMemberName());
+                        writer.write("return $T($T(d[$S]))",
+                            memberSymbol, targetFromDictSymbol, member.getMemberName());
                     } else {
-                        writer.write("return $L(d[$S])", memberName, member.getMemberName());
+                        writer.write("return $T(d[$S])", memberSymbol, member.getMemberName());
                     }
                 });
             });
