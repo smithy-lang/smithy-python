@@ -93,9 +93,9 @@ jobs:
       - name: clean and build without linting installed
         run: cd codegen && ./gradlew clean build -Plog-tests
 
-      - name: Install mypy
+      - name: Install mypy and other libraries necessary for typing
         run: |
-          python${{ matrix.python-version }} -m pip install --upgrade mypy
+          python${{ matrix.python-version }} -m pip install --upgrade mypy pytest pytest-asyncio
 
       - name: clean and build with all optional tools installed
         run: cd codegen && ./gradlew clean build -Plog-tests
