@@ -64,6 +64,16 @@ final class ConfigGenerator implements Runnable {
                     "The HTTP client used to make requests."
                 ),
                 new ConfigField(
+                    "http_request_config",
+                    Symbol.builder()
+                        .name("HttpRequestConfiguration")
+                        .namespace("smithy_python.interfaces.http", ".")
+                        .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                        .build(),
+                    true,
+                    "The HTTP client used to make requests."
+                ),
+                new ConfigField(
                     "endpoint_resolver",
                     endpointResolver,
                     true,
