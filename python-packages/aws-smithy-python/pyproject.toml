@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "aws_smithy_python"
+name = "smithy_python"
 version = "0.0.1"
 description = "Core libraries for Smithy defined AWS services in Python"
 readme = "README.md"
@@ -40,22 +40,7 @@ include-package-data = true
 [tool.setuptools.packages.find]
 exclude=["tests*", "codegen", "designs"]
 
-[tool.black]
-target-version = ["py311"]
-
 [tool.isort]
 profile = "black"
 honor_noqa = true
-src_paths = ["smithy_python", "tests"]
-
-[tool.mypy]
-strict = true
-warn_unused_configs = true
-
-# This should be removable after mypy 0.990, it's needed to allow the document
-# alias to successfully be checked.
-enable_recursive_aliases = true
-
-[[tool.mypy.overrides]]
-module = ["awscrt", "pytest"]
-ignore_missing_imports = true
+src_paths = ["aws_smithy_python", "tests"]
