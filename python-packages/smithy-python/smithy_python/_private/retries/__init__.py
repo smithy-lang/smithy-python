@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 
 import random
+from dataclasses import dataclass
 from enum import Enum
 from typing import Callable
 
@@ -25,10 +26,46 @@ class ExponentialBackoffJitterType(Enum):
     For use with :py:class:`ExponentialRetryBackoffStrategy`.
     """
 
-    DEFAULT = 1  # "equal jitter" in blog post
+    DEFAULT = 1
+    """Truncated binary exponential backoff delay with equal jitter:
+
+    .. code-block:: python
+
+        capped = min(max_backoff, backoff_scale_value * 2 ** (retry_attempt - 1))
+        (capped / 2) + random_between(0, capped / 2)
+
+    Also known as "Equal Jitter". Similar to :py:var:`FULL` but always keep some of the
+    backoff and jitters by a smaller amount.
+    """
+
     NONE = 2
+    """Truncated binary exponential backoff delay without jitter:
+
+    .. code-block:: python
+
+        min(max_backoff, backoff_scale_value * 2 ** (retry_attempt - 1))
+    """
+
     FULL = 3
+    """Truncated binary exponential backoff delay with full jitter:
+
+    .. code-block:: python
+
+        random_between(
+            max_backoff,
+            min(max_backoff, backoff_scale_value * 2 ** (retry_attempt - 1))
+        )
+    """
+
     DECORRELATED = 4
+    """Truncated binary exponential backoff delay with decorrelated jitter:
+
+    .. code-block:: python
+
+        min(max_backoff, random_between(backoff_scale_value, t_(i-1) * 3))
+
+    Similar to :py:var:`FULL`, but also increases the maximum jitter at each retry.
+    """
 
 
 class ExponentialRetryBackoffStrategy:
@@ -101,35 +138,27 @@ class ExponentialRetryBackoffStrategy:
         return self._backoff_scale_value * (2.0 ** (retry_attempt - 1))
 
     def _next_delay_no_jitter(self, retry_attempt: int) -> float:
-        """Calculates truncated binary exponential backoff delay without jitter:
+        """Calculates truncated binary exponential backoff delay without jitter.
 
-        .. code-block:: python
-
-            min(max_backoff, backoff_scale_value * 2 ** (retry_attempt - 1))
+        Used when :py:var:`jitter_type` is :py:attr:`ExponentialBackoffJitterType.NONE`.
         """
         no_jitter_delay = self._jitter_free_uncapped_delay(retry_attempt)
         return min(no_jitter_delay, self._max_backoff)
 
     def _next_delay_full_jitter(self, retry_attempt: int) -> float:
-        """Calculates truncated binary exponential backoff delay with full jitter:
+        """Calculates truncated binary exponential backoff delay with full jitter.
 
-        .. code-block:: python
-
-            random_between(
-                max_backoff,
-                min(max_backoff, backoff_scale_value * 2 ** (retry_attempt - 1))
-            )
+        Used when :py:var:`jitter_type` is :py:attr:`ExponentialBackoffJitterType.FULL`.
         """
+
         no_jitter_delay = self._jitter_free_uncapped_delay(retry_attempt)
         return self._random() * min(no_jitter_delay, self._max_backoff)
 
     def _next_delay_equal_jitter(self, retry_attempt: int) -> float:
         """Calculates truncated binary exponential backoff delay with equal jitter:
 
-        .. code-block:: python
-
-            capped = min(max_backoff, backoff_scale_value * 2 ** (retry_attempt - 1))
-            (capped / 2) + random_between(0, capped / 2)
+        Used when :py:var:`jitter_type` is
+        :py:attr:`ExponentialBackoffJitterType.DEFAULT`.
         """
         no_jitter_delay = self._jitter_free_uncapped_delay(retry_attempt)
         return (self._random() * 0.5 + 0.5) * min(no_jitter_delay, self._max_backoff)
@@ -137,9 +166,8 @@ class ExponentialRetryBackoffStrategy:
     def _next_delay_decorrelated_jitter(self, previous_delay: float) -> float:
         """Calculates truncated binary exp. backoff delay with decorrelated jitter:
 
-        .. code-block:: python
-
-            min(max_backoff, random_between(backoff_scale_value, t_(i-1) * 3))
+        Used when :py:var:`jitter_type` is
+        :py:attr:`ExponentialBackoffJitterType.DECORRELATED`.
         """
         return min(
             self._backoff_scale_value + self._random() * previous_delay * 3,
@@ -147,30 +175,19 @@ class ExponentialRetryBackoffStrategy:
         )
 
 
+@dataclass(kw_only=True)
 class SimpleRetryToken:
-    def __init__(
-        self, *, attempts: int, backoff_strategy: retries_interface.RetryBackoffStrategy
-    ):
-        """Basic retry token that stores only the attempt count and backoff strategy
+    """Basic retry token that stores only the attempt count and backoff strategy
 
-        Retry tokens should always be obtained from an implementation of
-        :py:class:`retries_interface.RetryStrategy`.
+    Retry tokens should always be obtained from an implementation of
+    :py:class:`retries_interface.RetryStrategy`.
+    """
 
-        :param attempts: The 1-based count of all attempts made at an operation,
-        including the initial attempt before retries.
+    retry_count: int
+    """Retry count is the total number of attempts minus the initial attempt"""
 
-        :param backoff_strategy: The backoff strategy used to compute
-        :py:class:`get_retry_delay`.
-        """
-        self._attempts = attempts
-        self._backoff_strategy = backoff_strategy
-
-    def get_retry_count(self) -> int:
-        """Retry count is the total number of attempts minus the initial attempt"""
-        return self._attempts - 1
-
-    def get_retry_delay(self) -> float:
-        return self._backoff_strategy.compute_next_backoff_delay(self.get_retry_count())
+    retry_delay: float
+    """Delay in seconds to wait before the retry attempt."""
 
 
 class SimpleRetryStrategy:
@@ -199,7 +216,8 @@ class SimpleRetryStrategy:
 
         :param token_scope: This argument is ignored by this retry strategy.
         """
-        return SimpleRetryToken(attempts=1, backoff_strategy=self._backoff_strategy)
+        retry_delay = self._backoff_strategy.compute_next_backoff_delay(0)
+        return SimpleRetryToken(retry_count=0, retry_delay=retry_delay)
 
     def refresh_retry_token_for_retry(
         self,
@@ -219,14 +237,13 @@ class SimpleRetryStrategy:
 
         :raises SmithyRetryException: If no further retry attempts are allowed.
         """
-        if token_to_renew.get_retry_count() >= self._max_retries:
-            raise SmithyRetryException()
-        return SimpleRetryToken(
-            # attempts[i]   = retries[i] + 1
-            # attempts[i+1] = attempts[i] + 1 = retries[i] + 2
-            attempts=token_to_renew.get_retry_count() + 2,
-            backoff_strategy=self._backoff_strategy,
-        )
+        if token_to_renew.retry_count >= self._max_retries:
+            raise SmithyRetryException(
+                f"Reached maximum number of allowed retries: {self._max_retries}"
+            )
+        retry_count = token_to_renew.retry_count + 1
+        retry_delay = self._backoff_strategy.compute_next_backoff_delay(retry_count)
+        return SimpleRetryToken(retry_count=retry_count, retry_delay=retry_delay)
 
     def record_success(self, *, token: retries_interface.RetryToken) -> None:
         """Not used by this retry strategy."""

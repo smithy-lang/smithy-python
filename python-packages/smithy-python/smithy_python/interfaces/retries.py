@@ -11,11 +11,14 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+from dataclasses import dataclass
 from enum import Enum
 from typing import Protocol
 
 
 class RetryErrorType(Enum):
+    """Classification of errors based on desired retry behavior."""
+
     TRANSIENT = 1
     """
     A connection level error such as a socket timeout, socket connect error, TLS
@@ -31,7 +34,7 @@ class RetryErrorType(Enum):
     SERVER_ERROR = 3
     """
     A server error that should be retried and does not match the definition of
-    `THROTTLING`.
+    ``THROTTLING``.
     """
 
     CLIENT_ERROR = 4
@@ -41,8 +44,13 @@ class RetryErrorType(Enum):
     """
 
 
-class RetryErrorInfo(Protocol):
+@dataclass(kw_only=True)
+class RetryErrorInfo:
+    """Container for information about a retryable error."""
+
     error_type: RetryErrorType
+    """Classification of error based on desired retry behavior."""
+
     retry_after_hint: float | None
     """Protocol hint for computing the timespan to delay before the next retry.
 
@@ -52,6 +60,8 @@ class RetryErrorInfo(Protocol):
 
 
 class RetryBackoffStrategy(Protocol):
+    """Stateless strategy for computing retry delays based on retry attempt account."""
+
     def compute_next_backoff_delay(self, retry_attempt: int) -> float:
         """Calculate timespan in seconds to delay before next retry.
 
@@ -62,21 +72,29 @@ class RetryBackoffStrategy(Protocol):
         ...
 
 
-class RetryToken(Protocol):
-    """Token issued by a retry strategy for the next attempt."""
+@dataclass(kw_only=True)
+class RetryToken:
+    """Token issued by a :py:class:`RetryStrategy` for the next attempt."""
 
-    def get_retry_count(self) -> int:
-        """Retry count is the total number of attempts minus the initial attempt."""
-        ...
+    retry_count: int
+    """Retry count is the total number of attempts minus the initial attempt."""
 
-    def get_retry_delay(self) -> float:
-        """Delay in seconds to wait before the retry attempt."""
-        ...
+    retry_delay: float
+    """Delay in seconds to wait before the retry attempt."""
 
 
 class RetryStrategy(Protocol):
+    """Issuer of :py:class:`RetryToken`s."""
+
     backoff_strategy: RetryBackoffStrategy
+    """The strategy used by returned tokens to compute delay duration values."""
+
     max_retries_base: int
+    """Upper limit on retry count.
+
+    For a given value ``n``, a total of ``n + 1`` attempts should be made (the initial
+    attempt plus ``n`` retries).
+    """
 
     def acquire_initial_retry_token(
         self, *, token_scope: str | None = None
