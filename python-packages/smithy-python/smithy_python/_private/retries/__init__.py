@@ -189,25 +189,29 @@ class SimpleRetryToken:
     retry_delay: float
     """Delay in seconds to wait before the retry attempt."""
 
+    @property
+    def attempt_count(self) -> int:
+        """The total number of attempts including the initial attempt and retries."""
+        return self.retry_count + 1
+
 
 class SimpleRetryStrategy:
     def __init__(
         self,
         *,
         backoff_strategy: retries_interface.RetryBackoffStrategy,
-        max_retries_base: int,
+        max_attempts: int,
     ):
         """Basic retry strategy that simply invokes the given backoff strategy
 
         :param backoff_strategy: The backoff strategy used by returned tokens to compute
         the retry delay.
 
-        :param max_retries_base: Upper limit on retry count. For a given value ``n``,
-        a total of ``n + 1`` attempts will be made (the initial attempt plus ``n``
-        retries).
+        :param max_attempts: Upper limit on total number of attempts made, including
+        initial attempt and retries.
         """
         self._backoff_strategy = backoff_strategy
-        self._max_retries = max_retries_base
+        self._max_attempts = max_attempts
 
     def acquire_initial_retry_token(
         self, *, token_scope: str | None = None
@@ -228,7 +232,7 @@ class SimpleRetryStrategy:
         """Replace an existing retry token from a failed attempt with a new token.
 
         This retry strategy always returns a token until the attempt count stored in
-        the new token exceeds the ``max_retries_base`` value.
+        the new token exceeds the ``max_attempts`` value.
 
         :param token_to_renew: The token used for the previous failed attempt.
 
@@ -237,11 +241,11 @@ class SimpleRetryStrategy:
 
         :raises SmithyRetryException: If no further retry attempts are allowed.
         """
-        if token_to_renew.retry_count >= self._max_retries:
-            raise SmithyRetryException(
-                f"Reached maximum number of allowed retries: {self._max_retries}"
-            )
         retry_count = token_to_renew.retry_count + 1
+        if retry_count >= self._max_attempts:
+            raise SmithyRetryException(
+                f"Reached maximum number of allowed attempts: {self._max_attempts}"
+            )
         retry_delay = self._backoff_strategy.compute_next_backoff_delay(retry_count)
         return SimpleRetryToken(retry_count=retry_count, retry_delay=retry_delay)
 

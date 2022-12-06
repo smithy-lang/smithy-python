@@ -14,7 +14,12 @@
 import pytest
 
 from smithy_python._private.retries import ExponentialBackoffJitterType as EBJT
-from smithy_python._private.retries import ExponentialRetryBackoffStrategy
+from smithy_python._private.retries import (
+    ExponentialRetryBackoffStrategy,
+    SimpleRetryStrategy,
+)
+from smithy_python.exceptions import SmithyRetryException
+from smithy_python.interfaces.retries import RetryErrorInfo, RetryErrorType
 
 
 @pytest.mark.parametrize(
@@ -64,3 +69,21 @@ def test_exponential_backoff_strategy(
         delay_expected2 = delay_expected
         print(f"{delay_index=} {delay_actual=} {delay_expected2=}")
         assert delay_actual == pytest.approx(delay_expected)
+
+
+@pytest.mark.parametrize("max_attempts", [2, 3, 10])
+def test_simple_retry_strategy(max_attempts: int) -> None:
+    strategy = SimpleRetryStrategy(
+        backoff_strategy=ExponentialRetryBackoffStrategy(backoff_scale_value=5),
+        max_attempts=max_attempts,
+    )
+    error_info = RetryErrorInfo(error_type=RetryErrorType.THROTTLING)
+    token = strategy.acquire_initial_retry_token()
+    for _ in range(max_attempts - 1):
+        token = strategy.refresh_retry_token_for_retry(
+            token_to_renew=token, error_info=error_info
+        )
+    with pytest.raises(SmithyRetryException):
+        strategy.refresh_retry_token_for_retry(
+            token_to_renew=token, error_info=error_info
+        )

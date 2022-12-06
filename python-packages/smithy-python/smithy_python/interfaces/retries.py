@@ -51,7 +51,7 @@ class RetryErrorInfo:
     error_type: RetryErrorType
     """Classification of error based on desired retry behavior."""
 
-    retry_after_hint: float | None
+    retry_after_hint: float | None = None
     """Protocol hint for computing the timespan to delay before the next retry.
 
     This could come from HTTP's 'retry-after' header or similar mechanisms in other
@@ -73,7 +73,7 @@ class RetryBackoffStrategy(Protocol):
 
 
 @dataclass(kw_only=True)
-class RetryToken:
+class RetryToken(Protocol):
     """Token issued by a :py:class:`RetryStrategy` for the next attempt."""
 
     retry_count: int
@@ -89,12 +89,8 @@ class RetryStrategy(Protocol):
     backoff_strategy: RetryBackoffStrategy
     """The strategy used by returned tokens to compute delay duration values."""
 
-    max_retries_base: int
-    """Upper limit on retry count.
-
-    For a given value ``n``, a total of ``n + 1`` attempts should be made (the initial
-    attempt plus ``n`` retries).
-    """
+    max_attempts: int
+    """Upper limit on total attempt count (initial attempt plus retries)."""
 
     def acquire_initial_retry_token(
         self, *, token_scope: str | None = None
