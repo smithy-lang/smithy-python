@@ -54,8 +54,12 @@ final class ImportDeclarations implements ImportContainer {
     }
 
     ImportDeclarations addImport(String namespace, String name, String alias) {
+        var isTestModule = this.localNamespace.startsWith("tests");
         if (namespace.startsWith(settings.getModuleName())) {
-            return addImportToMap(relativize(namespace), name, alias, localImports);
+            // if the module is for tests, we shouldn't relativize the imports
+            //  as python will complain that the imports are beyond the top-level package
+            var ns = isTestModule ? namespace : relativize(namespace);
+            return addImportToMap(ns, name, alias, localImports);
         }
         return addImportToMap(namespace, name, alias, externalImports);
     }

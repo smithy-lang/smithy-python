@@ -20,6 +20,7 @@ import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.CollectionShape;
 import software.amazon.smithy.model.shapes.MapShape;
+import software.amazon.smithy.model.traits.SparseTrait;
 
 /**
  * Generates private helper methods for maps.
@@ -59,15 +60,15 @@ public class MapGenerator implements Runnable {
         var asDictSymbol = symbol.expectProperty("asDict", Symbol.class);
         var target = model.expectShape(shape.getValue().getTarget());
         var targetSymbol = symbolProvider.toSymbol(target);
-
+        var sparseGuard = shape.hasTrait(SparseTrait.class) ? " if v is not None else None" : "";
         writer.addStdlibImport("typing", "Any");
         writer.addStdlibImport("typing", "Dict");
         writer.openBlock("def $L(given: $T) -> Dict[str, Any]:", "", asDictSymbol.getName(), symbol, () -> {
             if (target.isUnionShape() || target.isStructureShape()) {
-                writer.write("return {k: v.as_dict() for k, v in given.items()}");
+                writer.write("return {k: v.as_dict()$L for k, v in given.items()}", sparseGuard);
             } else if (target.isMapShape() || target instanceof CollectionShape) {
                 var targetAsDictSymbol = targetSymbol.expectProperty("asDict", Symbol.class);
-                writer.write("return {k: $T(v) for k, v in given.items()}", targetAsDictSymbol);
+                writer.write("return {k: $T(v)$L for k, v in given.items()}", targetAsDictSymbol, sparseGuard);
             }
         });
     }
@@ -77,15 +78,15 @@ public class MapGenerator implements Runnable {
         var fromDictSymbol = symbol.expectProperty("fromDict", Symbol.class);
         var target = model.expectShape(shape.getValue().getTarget());
         var targetSymbol = symbolProvider.toSymbol(target);
-
+        var sparseGuard = shape.hasTrait(SparseTrait.class) ? " if v is not None else None" : "";
         writer.addStdlibImport("typing", "Any");
         writer.addStdlibImport("typing", "Dict");
         writer.openBlock("def $L(given: Dict[str, Any]) -> $T:", "", fromDictSymbol.getName(), symbol, () -> {
             if (target.isUnionShape() || target.isStructureShape()) {
-                writer.write("return {k: $T.from_dict(v) for k, v in given.items()}", targetSymbol);
+                writer.write("return {k: $T.from_dict(v)$L for k, v in given.items()}", targetSymbol, sparseGuard);
             } else if (target.isMapShape() || target instanceof CollectionShape) {
                 var targetFromDictSymbol = targetSymbol.expectProperty("fromDict", Symbol.class);
-                writer.write("return {k: $T(v) for k, v in given.items()}", targetFromDictSymbol);
+                writer.write("return {k: $T(v)$L for k, v in given.items()}", targetFromDictSymbol, sparseGuard);
             }
         });
     }
