@@ -21,16 +21,16 @@ from typing import Any, AsyncGenerator, Awaitable, Generator
 from awscrt import http, io
 
 from smithy_python._private.http import Response
+from smithy_python.exceptions import SmithyException
 from smithy_python.interfaces import http as http_interface
 
 HeadersList = list[tuple[str, str]]
 
 
-class HTTPException(Exception):
+class HTTPException(SmithyException):
     """TODO: Improve exception handling
 
-    This should probably extend from a base smithy error or something similar.
-    In general, error handling in smithy-python needs to be designed out.
+    Error handling in smithy-python needs to be designed out.
     """
 
 
