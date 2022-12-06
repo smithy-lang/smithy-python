@@ -21,6 +21,7 @@ import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.codegen.core.SymbolWriter;
+import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.utils.StringUtils;
 
 /**
@@ -204,7 +205,9 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         public String apply(Object type, String indent) {
             if (type instanceof Symbol) {
                 Symbol typeSymbol = (Symbol) type;
-                addUseImports(typeSymbol);
+                if (!isOperationSymbol(typeSymbol)) {
+                    addUseImports(typeSymbol);
+                }
                 return typeSymbol.getName();
             } else if (type instanceof SymbolReference) {
                 SymbolReference typeSymbol = (SymbolReference) type;
@@ -215,5 +218,9 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
                         "Invalid type provided to $T. Expected a Symbol, but found `" + type + "`");
             }
         }
+    }
+
+    private Boolean isOperationSymbol(Symbol typeSymbol) {
+        return typeSymbol.getProperty("shape", Shape.class).map(Shape::isOperationShape).orElse(false);
     }
 }
