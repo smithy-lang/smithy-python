@@ -39,6 +39,16 @@ final class ConfigGenerator implements Runnable {
                     .build(),
                 true,
                 "The list of interceptors, which are hooks that are called during the execution of a request."
+            ),
+            new ConfigField(
+                "retry_strategy",
+                Symbol.builder()
+                    .name("RetryStrategy")
+                    .namespace("smithy_python.interfaces.retries", ".")
+                    .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                    .build(),
+                true,
+                "The retry strategy for issuing retry tokens and computing retry delays."
             )
     );
 
