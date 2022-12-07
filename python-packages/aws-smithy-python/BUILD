@@ -10,18 +10,10 @@ python_distribution(
         ":notice",
         ":requirements",
         "python-packages/aws-smithy-python/aws_smithy_python:source",
+        "python-packages/smithy-python:dist",
     ],
     provides=python_artifact(
         name="aws_smithy_python",
         version="0.0.1",
     )
-)
-
-python_requirements(
-    name="dev-requirements",
-    source="requirements-dev.txt",
-)
-
-python_requirements(
-    name="requirements",
 )

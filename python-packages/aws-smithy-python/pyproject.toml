@@ -3,12 +3,12 @@ requires = ["setuptools", "setuptools-scm", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "smithy_python"
+name = "aws_smithy_python"
 version = "0.0.1"
-description = "Core libraries for Smithy defined AWS services in Python"
+description = "Core libraries for Smithy defined AWS services in Python."
 readme = "README.md"
 authors = [{name = "Amazon Web Services"}]
-keywords = ["python", "sdk", "amazon", "smithy", "codegen"]
+keywords = ["aws", "python", "sdk", "amazon", "smithy", "codegen"]
 requires-python = ">=3.11"
 license = {text = "Apache License 2.0"}
 classifiers = [
@@ -26,7 +26,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries"
 ]
 dependencies = [
-    "awscrt>=0.15,<1.0"
+    "smithy-python==0.0.1"
 ]
 
 [project.urls]
