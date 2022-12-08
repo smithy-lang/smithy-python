@@ -19,7 +19,6 @@ from threading import Lock
 from typing import Any, AsyncGenerator, Awaitable, Generator
 
 from awscrt import http, io
-
 from smithy_python._private.http import Response
 from smithy_python.exceptions import SmithyException
 from smithy_python.interfaces import http as http_interface

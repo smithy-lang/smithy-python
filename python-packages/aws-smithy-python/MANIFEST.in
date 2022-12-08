@@ -1,0 +1,1 @@
+include aws_smithy_python/py.typed
