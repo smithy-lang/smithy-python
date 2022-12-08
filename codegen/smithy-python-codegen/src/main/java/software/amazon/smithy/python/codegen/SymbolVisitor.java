@@ -56,6 +56,7 @@ import software.amazon.smithy.model.shapes.TimestampShape;
 import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.MediaTypeTrait;
+import software.amazon.smithy.model.traits.SparseTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.utils.CaseUtils;
 import software.amazon.smithy.utils.MediaType;
@@ -175,7 +176,8 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol listShape(ListShape shape) {
         Symbol reference = toSymbol(shape.getMember());
-        var builder = createSymbolBuilder(shape, "list[" + reference.getName() + "]")
+        String type = String.format(shape.hasTrait(SparseTrait.class) ? "%s | None" : "%s", reference.getName());
+        var builder = createSymbolBuilder(shape, "list[" + type + "]")
                 .addReference(reference);
 
         if (needsDictHelpers(shape)) {
@@ -188,7 +190,8 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol mapShape(MapShape shape) {
         Symbol reference = toSymbol(shape.getValue());
-        var builder = createSymbolBuilder(shape, "dict[str, " + reference.getName() + "]")
+        String type = String.format(shape.hasTrait(SparseTrait.class) ? "%s | None" : "%s", reference.getName());
+        var builder = createSymbolBuilder(shape, "dict[str, " + type + "]")
                 .addReference(reference);
 
         if (needsDictHelpers(shape)) {
