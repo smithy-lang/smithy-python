@@ -51,7 +51,6 @@ final class ConfigGenerator implements Runnable {
     }
 
     private static List<ConfigField> getHttpFields(PythonSettings settings) {
-        var endpointParams = CodegenUtils.getEndpointParams(settings);
         var endpointResolver = CodegenUtils.getEndpointResolver(settings);
         return Arrays.asList(
                 new ConfigField(
@@ -73,12 +72,17 @@ final class ConfigGenerator implements Runnable {
                         configuration."""
                 ),
                 new ConfigField(
-                    "endpoint_params",
-                    endpointParams,
+                    "endpoint_url",
+                    Symbol.builder()
+                        .name("str | URL")
+                        .addReference(Symbol.builder()
+                            .name("URL")
+                            .namespace("smithy_python.interfaces.http", ".")
+                            .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                            .build())
+                        .build(),
                     true,
-                    """
-                        The endpoint resolver used to resolve the final endpoint per-operation based on the \
-                        configuration."""
+                    "A static URL to route requests to."
                 )
         );
     }
