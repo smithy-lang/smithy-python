@@ -87,9 +87,16 @@ final class ClientGenerator implements Runnable {
             }
         });
 
+        if (context.protocolGenerator() != null) {
+            generateOperationExecutor(writer);
+        }
+    }
+
+    private void generateOperationExecutor(PythonWriter writer) {
         var transportRequest = context.applicationProtocol().requestType();
         var transportResponse = context.applicationProtocol().responseType();
         var errorSymbol = CodegenUtils.getServiceError(context.settings());
+        var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
 
         writer.addStdlibImport("typing", "Callable");
         writer.addStdlibImport("typing", "Awaitable");
