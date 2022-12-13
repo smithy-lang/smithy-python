@@ -55,7 +55,7 @@ public final class CodegenUtils {
 
     private CodegenUtils() {}
 
-    static Symbol getConfigSymbol(PythonSettings settings) {
+    public static Symbol getConfigSymbol(PythonSettings settings) {
         return Symbol.builder()
                 .name("Config")
                 .namespace(format("%s.config", settings.getModuleName()), ".")
