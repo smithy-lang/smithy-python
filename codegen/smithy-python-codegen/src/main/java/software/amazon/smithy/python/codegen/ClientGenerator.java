@@ -97,6 +97,7 @@ final class ClientGenerator implements Runnable {
         var transportResponse = context.applicationProtocol().responseType();
         var errorSymbol = CodegenUtils.getServiceError(context.settings());
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
+        var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
 
         writer.addStdlibImport("typing", "Callable");
         writer.addStdlibImport("typing", "Awaitable");
@@ -113,9 +114,9 @@ final class ClientGenerator implements Runnable {
                     self,
                     input: Input,
                     plugins: list[$1T],
-                    serialize: Callable[[Input, Config], Awaitable[$2T]],
-                    deserialize: Callable[[$3T, Config], Awaitable[Output]],
-                    config: Config,
+                    serialize: Callable[[Input, $5T], Awaitable[$2T]],
+                    deserialize: Callable[[$3T, $5T], Awaitable[Output]],
+                    config: $5T,
                 ) -> Output:
                     try:
                         return await self._handle_execution(
@@ -132,9 +133,9 @@ final class ClientGenerator implements Runnable {
                     self,
                     input: Input,
                     plugins: list[$1T],
-                    serialize: Callable[[Input, Config], Awaitable[$2T]],
-                    deserialize: Callable[[$3T, Config], Awaitable[Output]],
-                    config: Config,
+                    serialize: Callable[[Input, $5T], Awaitable[$2T]],
+                    deserialize: Callable[[$3T, $5T], Awaitable[Output]],
+                    config: $5T,
                 ) -> Output:
                     context: InterceptorContext[Input, None, None, None] = InterceptorContext(
                         request=input,
@@ -248,10 +249,10 @@ final class ClientGenerator implements Runnable {
 
                 async def _handle_attempt(
                     self,
-                    deserialize: Callable[[$3T, Config], Awaitable[Output]],
+                    deserialize: Callable[[$3T, $5T], Awaitable[Output]],
                     interceptors: list[Interceptor[Input, Output, $2T, $3T]],
                     context: InterceptorContext[Input, None, $2T, None],
-                    config: Config,
+                    config: $5T,
                 ) -> InterceptorContext[Input, Output, $2T, $3T | None]:
                     try:
                         # assert config.interceptors is not None
@@ -265,7 +266,7 @@ final class ClientGenerator implements Runnable {
                         # Step 7d: Invoke auth_scheme.signer
                         # Step 7e: Invoke identity_resolver.resolve_identity
 
-                """, pluginSymbol, transportRequest, transportResponse, errorSymbol);
+                """, pluginSymbol, transportRequest, transportResponse, errorSymbol, configSymbol);
 
         writer.pushState(new ResolveEndpointSection());
         if (context.applicationProtocol().isHttpProtocol()) {
