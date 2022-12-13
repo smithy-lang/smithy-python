@@ -482,7 +482,22 @@ final class ClientGenerator implements Runnable {
                         execution and will not affect any other operation invocations.""", docs, inputDocs);
             });
 
-            writer.write("raise NotImplementedError()");
+            if (context.protocolGenerator() == null) {
+                writer.write("raise NotImplementedError()");
+            } else {
+                var protocolGenerator = context.protocolGenerator();
+                var serSymbol = protocolGenerator.getSerializationFunction(context, operation);
+                var deserSymbol = protocolGenerator.getDeserializationFunction(context, operation);
+                writer.write("""
+                    return await self._execute_operation(
+                        input=input,
+                        plugins=plugins or [],
+                        serialize=$T,
+                        deserialize=$T,
+                        config=self._config,
+                    )
+                    """, serSymbol, deserSymbol);
+            }
         });
     }
 }
