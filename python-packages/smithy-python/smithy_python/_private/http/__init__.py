@@ -80,7 +80,7 @@ class Response:
 
 @dataclass
 class Endpoint(http_interface.Endpoint):
-    url: URL
+    url: http_interface.URL
     headers: HeadersList = field(default_factory=list)
 
 
@@ -92,7 +92,7 @@ class StaticEndpointParams:
     :params url: A static URL to route requests to.
     """
 
-    url: str | URL
+    url: str | http_interface.URL
 
 
 class StaticEndpointResolver(http_interface.EndpointResolver[StaticEndpointParams]):
