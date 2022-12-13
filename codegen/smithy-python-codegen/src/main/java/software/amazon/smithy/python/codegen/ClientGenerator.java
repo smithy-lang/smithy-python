@@ -15,11 +15,16 @@
 
 package software.amazon.smithy.python.codegen;
 
+import java.util.Collection;
+import java.util.LinkedHashSet;
+import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
+import software.amazon.smithy.python.codegen.integration.PythonIntegration;
+import software.amazon.smithy.python.codegen.integration.RuntimeClientPlugin;
 import software.amazon.smithy.python.codegen.sections.ResolveEndpointSection;
 import software.amazon.smithy.python.codegen.sections.SendRequestSection;
 
@@ -67,19 +72,29 @@ final class ClientGenerator implements Runnable {
                         can be used to set defaults, for example.""", docs);
             });
 
-            // TODO: generate default plugins
+            var defaultPlugins = new LinkedHashSet<SymbolReference>();
+
+            for (PythonIntegration integration : context.integrations()) {
+                for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins()) {
+                    if (runtimeClientPlugin.matchesService(context.model(), service)) {
+                        runtimeClientPlugin.getPythonPlugin().ifPresent(defaultPlugins::add);
+                    }
+                }
+            }
+
             writer.write("""
                     def __init__(self, config: $1T | None = None, plugins: list[$2T] | None = None):
                         self._config = config or $1T()
 
                         client_plugins: list[$2T] = [
+                            $3C
                         ]
-                        if plugins is not None:
+                        if plugins:
                             client_plugins.extend(plugins)
 
                         for plugin in client_plugins:
                             plugin(self._config)
-                    """, configSymbol, pluginSymbol);
+                    """, configSymbol, pluginSymbol, writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)));
 
             var topDownIndex = TopDownIndex.of(context.model());
             for (OperationShape operation : topDownIndex.getContainedOperations(service)) {
@@ -456,6 +471,12 @@ final class ClientGenerator implements Runnable {
         writer.dedent();
     }
 
+    private void writeDefaultPlugins(PythonWriter writer, Collection<SymbolReference> plugins) {
+        for (SymbolReference plugin : plugins) {
+            writer.write("$T,", plugin);
+        }
+    }
+
     /**
      * Generates the function for a single operation.
      */
@@ -490,6 +511,22 @@ final class ClientGenerator implements Runnable {
                         execution and will not affect any other operation invocations.""", docs, inputDocs);
             });
 
+            var defaultPlugins = new LinkedHashSet<SymbolReference>();
+            for (PythonIntegration integration : context.integrations()) {
+                for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins()) {
+                    if (runtimeClientPlugin.matchesOperation(context.model(), service, operation)) {
+                        runtimeClientPlugin.getPythonPlugin().ifPresent(defaultPlugins::add);
+                    }
+                }
+            }
+            writer.write("""
+                operation_plugins = [
+                    $C
+                ]
+                if plugins:
+                    operation_plugins.extend(plugins)
+                """, writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)));
+
             if (context.protocolGenerator() == null) {
                 writer.write("raise NotImplementedError()");
             } else {
@@ -499,7 +536,7 @@ final class ClientGenerator implements Runnable {
                 writer.write("""
                     return await self._execute_operation(
                         input=input,
-                        plugins=plugins or [],
+                        plugins=operation_plugins,
                         serialize=$T,
                         deserialize=$T,
                         config=self._config,
