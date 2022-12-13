@@ -17,6 +17,7 @@ package software.amazon.smithy.python.codegen;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
 import software.amazon.smithy.model.shapes.OperationShape;
@@ -73,6 +74,16 @@ final class ClientGenerator implements Runnable {
             });
 
             var defaultPlugins = new LinkedHashSet<SymbolReference>();
+            if (context.applicationProtocol().isHttpProtocol()) {
+                defaultPlugins.add(SymbolReference.builder()
+                    .symbol(Symbol.builder()
+                        .name("set_static_endpoint_resolver")
+                        .namespace("smithy_python._private.http", ".")
+                        .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                        .build())
+                    .build()
+                );
+            }
 
             for (PythonIntegration integration : context.integrations()) {
                 for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins()) {
