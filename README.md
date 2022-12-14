@@ -29,8 +29,7 @@ for more information.
 
 The `smithy-python` package provides the core modules and interfaces required
 to build a service client or server. These basic modules include things like:
-an HTTP/1.1 and HTTP/2 client implementation, a generic middleware
-implementation, etc.
+an HTTP/1.1 and HTTP/2 client implementation, retry strategies, etc.
 
 ### What are the design goals of this project?
 
