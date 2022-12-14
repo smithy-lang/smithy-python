@@ -61,7 +61,7 @@ final class ConfigGenerator implements Runnable {
     }
 
     private static List<ConfigField> getHttpFields(PythonSettings settings) {
-        var endpointResolver = CodegenUtils.getEndpointResolver(settings);
+        var endpointParams = CodegenUtils.getEndpointParams(settings);
         return Arrays.asList(
                 new ConfigField(
                     "http_client",
@@ -85,7 +85,15 @@ final class ConfigGenerator implements Runnable {
                 ),
                 new ConfigField(
                     "endpoint_resolver",
-                    endpointResolver,
+                    Symbol.builder()
+                        .name(String.format("EndpointResolver[%s]", endpointParams.getName()))
+                        .addReference(endpointParams)
+                        .addReference(Symbol.builder()
+                            .name("EndpointResolver")
+                            .namespace("smithy_python.interfaces.http", ".")
+                            .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                            .build())
+                        .build(),
                     true,
                     """
                         The endpoint resolver used to resolve the final endpoint per-operation based on the \
