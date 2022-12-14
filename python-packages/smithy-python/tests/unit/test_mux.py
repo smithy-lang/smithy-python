@@ -3,7 +3,8 @@ from typing import Any, Literal, cast
 
 import pytest
 
-from smithy_python.interfaces.http import URL, HeadersList, Request
+from smithy_python._private.http import URL
+from smithy_python.interfaces.http import URI, HeadersList, Request
 from smithy_python.mux import (
     HttpBindingMux,
     PathGreedySegment,
@@ -16,27 +17,24 @@ from smithy_python.mux import (
 )
 
 
-@dataclass(init=False)
-class TestURL:
-    path: str
-    query_params: list[tuple[str, str]]
-    scheme: str = "https"
-    hostname: str = "com.example"
-    port: int | None = None
-
+class TestURL(URL):
     def __init__(self, path: str = "/", query: list[tuple[str, str]] | None = None):
-        self.path = path
-        self.query_params = query or []
+        super().__init__(
+            host="com.example",
+            path=path,
+            scheme="https",
+            query_params=query or [],
+        )
 
 
 @dataclass(init=False)
 class TestRequest:
-    url: URL
+    url: URI
     method: str
     headers: HeadersList
     body: Any
 
-    def __init__(self, method: str = "GET", url: URL | None = None):
+    def __init__(self, method: str = "GET", url: URI | None = None):
         self.headers = []
         self.method = method
         self.url = url or TestURL()

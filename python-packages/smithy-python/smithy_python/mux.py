@@ -96,7 +96,7 @@ class UriSpec(Generic[S, OP]):
         if request.method != self._method:
             return False
 
-        if request.url.path in self._EMPTY_PATHS:
+        if request.url.path is None or request.url.path in self._EMPTY_PATHS:
             # Both of these cases would produce [''] after a split, which isn't
             # what we want because they both represent the 0 segment case.
             request_path_segments = []
@@ -135,7 +135,7 @@ class UriSpec(Generic[S, OP]):
         if len(self._query_segments) == 0:
             return True
 
-        if len(request.url.query_params) == 0:
+        if not request.url.query:
             return False
 
         query_map = self._get_query_map(request.url.query_params)

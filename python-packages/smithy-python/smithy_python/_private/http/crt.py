@@ -206,7 +206,7 @@ class _BaseAwsCrtHttpSession:
         self._connections: ConnectionPoolDict = {}
 
     def _build_new_connection(
-        self, url: http_interface.URL
+        self, url: http_interface.URI
     ) -> "Future[http.HttpClientConnection]":
         if url.scheme == "http":
             port = self._HTTP_PORT
@@ -214,7 +214,7 @@ class _BaseAwsCrtHttpSession:
         else:
             port = self._HTTPS_PORT
             tls_connection_options = self._tls_ctx.new_connection_options()
-            tls_connection_options.set_server_name(url.hostname)
+            tls_connection_options.set_server_name(url.host)
             # TODO: Support TLS configuration, including alpn
             tls_connection_options.set_alpn_list(["h2", "http/1.1"])
         if url.port is not None:
@@ -224,7 +224,7 @@ class _BaseAwsCrtHttpSession:
             http.HttpClientConnection
         ] = http.HttpClientConnection.new(
             bootstrap=self._client_bootstrap,
-            host_name=url.hostname,
+            host_name=url.host,
             port=port,
             socket_options=self._socket_options,
             tls_connection_options=tls_connection_options,
@@ -238,20 +238,19 @@ class _BaseAwsCrtHttpSession:
             negotiated = http.HttpVersion(connection.version).name
             raise HTTPException(f"HTTP/2 could not be negotiated: {negotiated}")
 
-    def _render_path(self, url: http_interface.URL) -> str:
+    def _render_path(self, url: http_interface.URI) -> str:
         path = url.path
         if not path:
             # TODO: Conflating None and empty "" path?
             path = "/"
-        if url.query_params:
+        if url.query:
             # TODO: Do we handle URL escaping here?
-            query = "&".join(f"{k}={v}" for k, v in url.query_params)
-            path = path + "?" + query
+            path = path + "?" + url.query
         return path
 
-    def _validate_url(self, url: http_interface.URL) -> None:
-        if not url.hostname:
-            raise HTTPException(f"Invalid host name: {url.hostname}")
+    def _validate_url(self, url: http_interface.URI) -> None:
+        if not url.host:
+            raise HTTPException(f"Invalid host name: {url.host}")
 
     def _build_new_request(self, request: http_interface.Request) -> http.HttpRequest:
         headers = None
@@ -275,7 +274,7 @@ class _BaseAwsCrtHttpSession:
 
 class AsyncAwsCrtHttpSession(_BaseAwsCrtHttpSession):
     async def _create_connection(
-        self, url: http_interface.URL
+        self, url: http_interface.URI
     ) -> http.HttpClientConnection:
         connect_future = self._build_new_connection(url)
         connection = await asyncio.wrap_future(connect_future)
@@ -283,11 +282,11 @@ class AsyncAwsCrtHttpSession(_BaseAwsCrtHttpSession):
         return connection
 
     async def _get_connection(
-        self, url: http_interface.URL
+        self, url: http_interface.URI
     ) -> http.HttpClientConnection:
         # TODO: Use CRT connection pooling instead of this basic kind
         self._validate_url(url)
-        connection_key = (url.scheme, url.hostname, url.port)
+        connection_key = (url.scheme, url.host, url.port)
         if connection_key in self._connections:
             return self._connections[connection_key]
         else:
@@ -314,10 +313,10 @@ class AsyncAwsCrtHttpSession(_BaseAwsCrtHttpSession):
 
 
 class SyncAwsCrtHttpSession(_BaseAwsCrtHttpSession):
-    def _get_connection(self, url: http_interface.URL) -> http.HttpClientConnection:
+    def _get_connection(self, url: http_interface.URI) -> http.HttpClientConnection:
         # TODO: Use CRT connection pooling instead of this basic kind
         self._validate_url(url)
-        connection_key = (url.scheme, url.hostname, url.port)
+        connection_key = (url.scheme, url.host, url.port)
         if connection_key in self._connections:
             return self._connections[connection_key]
         else:

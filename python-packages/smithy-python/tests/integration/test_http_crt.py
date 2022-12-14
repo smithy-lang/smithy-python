@@ -11,7 +11,7 @@ from smithy_python._private.http.crt import (
 @pytest.fixture
 def aws_request() -> Request:
     return Request(
-        url=URL(hostname="aws.amazon.com"),
+        url=URL(host="aws.amazon.com"),
         headers=[("host", "aws.amazon.com"), ("user-agent", "smithy-python-test")],
     )
 

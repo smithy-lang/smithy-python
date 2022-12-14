@@ -4,18 +4,50 @@ from typing import Any, Protocol, TypeVar
 # Defining headers as a list instead of a mapping to avoid ambiguity and
 # the nuances of multiple fields in a mapping style interface
 HeadersList = list[tuple[str, str]]
+QueryParamsList = list[tuple[str, str]]
 
 
-class URL(Protocol):
-    scheme: str  # http or https
-    hostname: str  # hostname e.g. amazonaws.com
-    port: int | None  # explicit port number
-    path: str  # request path
-    query_params: list[tuple[str, str]]
+class URI(Protocol):
+    """Universal Resource Identifier, target location for a :py:class:`Request`."""
+
+    scheme: str
+    """For example ``http`` or ``https``."""
+
+    username: str | None
+    """Username part of the userinfo URI component."""
+
+    password: str | None
+    """Password part of the userinfo URI component."""
+
+    host: str
+    """The hostname, for example ``amazonaws.com``."""
+
+    port: int | None
+    """An explicit port number."""
+
+    path: str | None
+    """Path component of the URI."""
+
+    query: str | None
+    """Query component of the URI as string."""
+
+    query_params: QueryParamsList
+    """Query component of the URI as list of key-value tuples."""
+
+    fragment: str | None
+    """Part of the URI specification, but may not be transmitted by a client."""
+
+    def build(self) -> str:
+        """Construct URI string representation.
+
+        Returns a string of the form
+        ``{scheme}://{username}:{password}@{host}:{port}{path}?{query}#{fragment}``
+        """
+        ...
 
 
 class Request(Protocol):
-    url: URL
+    url: URI
     method: str  # GET, PUT, etc
     headers: HeadersList
     body: Any
@@ -28,7 +60,7 @@ class Response(Protocol):
 
 
 class Endpoint(Protocol):
-    url: URL
+    url: URI
     headers: HeadersList
 
 
