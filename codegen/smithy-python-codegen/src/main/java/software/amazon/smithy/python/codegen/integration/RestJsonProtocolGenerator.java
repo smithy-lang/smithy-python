@@ -60,4 +60,14 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         // TODO: implement this
         writer.write("body = b'{}'");
     }
+
+    @Override
+    protected void deserializeDocumentBody(
+        GenerationContext context,
+        PythonWriter writer,
+        OperationShape operation,
+        List<HttpBinding> documentBindings
+    ) {
+        // TODO: implement this
+    }
 }
