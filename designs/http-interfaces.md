@@ -19,16 +19,27 @@ smithy-python package to implement.
 ## Request and Response Interfaces
 
 ```python
-class URL(Protocol):
-    scheme: str # http or https
-    hostname: str # hostname e.g. amazonaws.com
-    port: Optional[int] # explicit port number
-    path: str # request path
-    query_params: List[Tuple[str, str]] # query parameters
+class URI(Protocol):
+    scheme: str  # For example ``http`` or ``https``.
+    username: str | None  # Username part of the userinfo URI component.
+    password: str | None  # Password part of the userinfo URI component.
+    host: str  # The hostname, for example ``amazonaws.com``.
+    port: int | None  # An explicit port number.
+    path: str | None  # Path component of the URI.
+    query: str | None  # Query component of the URI as string.
+    fragment: str | None  # Part of the URI specification, but may not be transmitted by a client.
+
+    def build(self) -> str:
+        """Construct URI string representation.
+
+        Returns a string of the form
+        ``{scheme}://{username}:{password}@{host}:{port}{path}?{query}#{fragment}``
+        """
+        ...
 
 
 class Request(Protocol):
-    url: URL
+    url: URI
     method: str # GET, PUT, etc
     headers: List[Tuple[str, str]]
     body: Any
@@ -41,12 +52,12 @@ class Response(Protocol):
 ```
 
 These interfaces are relatively straightforward and self-explanatory. The
-inclusion of an explicit `URL` interface is the only thing that might be
+inclusion of an explicit `URI` interface is the only thing that might be
 surprising. This interface is important to avoid joining and splitting an
 endpoint multiple times in the request response lifecycle, like we do in
 botocore. It will be the responsibility of an HTTP client implementation
-to take the information present in the `URL` object and render it into an
-appropriate representation of the URL for the HTTP client being used.
+to take the information present in the `URI` object and render it into an
+appropriate representation of the URI for the HTTP client being used.
 
 ## HTTP Session interface
 

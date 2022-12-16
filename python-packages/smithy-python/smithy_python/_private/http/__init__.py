@@ -16,41 +16,31 @@
 
 from dataclasses import dataclass, field
 from typing import Any, Protocol
-from urllib.parse import parse_qsl, urlparse
+from urllib.parse import urlparse, urlunparse
 
 from smithy_python.interfaces import http as http_interface
 
 
-class URL:
+class URI:
     def __init__(
         self,
         host: str,
         path: str | None = None,
         scheme: str | None = None,
-        query_params: http_interface.QueryParamsList | None = None,
+        query: str | None = None,
         port: int | None = None,
     ):
         self.scheme: str = "https" if scheme is None else scheme
-        self.username: str | None = None
-        self.password: str | None = None
         self.host = host
         self.port = port
         self.path = path
-        self.query_params: http_interface.QueryParamsList = (
-            [] if query_params is None else query_params
-        )
+        self.query = query
+
+        # Properties required by the ``http_interface.URI`` interface but not used in
+        # this implementation.
+        self.username: str | None = None
+        self.password: str | None = None
         self.fragment: str | None = None
-
-    @property
-    def query(self) -> str | None:
-        """Construct string representation of the query component of a URI."""
-        if not self.query_params:
-            return None
-        return urlencode(self.query_params)
-
-    @query.setter
-    def query(self, new_query: str) -> None:
-        self.query_params = parse_qsl(new_query)
 
     def build(self) -> str:
         """Construct URI string representation.
@@ -111,7 +101,7 @@ class StaticEndpointParams:
     """
     Static endpoint params.
 
-    :params url: A static URL to route requests to.
+    :params url: A static URI to route requests to.
     """
 
     url: str | http_interface.URI
@@ -136,11 +126,11 @@ class StaticEndpointResolver(http_interface.EndpointResolver[StaticEndpointParam
             )
 
         return Endpoint(
-            url=URL(
+            url=URI(
                 host=parsed.hostname,
                 path=parsed.path,
                 scheme=parsed.scheme,
-                query_params=parse_qsl(parsed.query),
+                query=parsed.query,
                 port=parsed.port,
             )
         )

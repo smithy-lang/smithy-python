@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 
 from smithy_python._private.http import (
-    URL,
+    URI,
     Request,
     Response,
     StaticEndpointParams,
@@ -21,23 +21,23 @@ from smithy_python._private.http import (
 
 
 def test_url() -> None:
-    url = URL(
+    url = URI(
         host="test.com",
         path="/my/path",
         scheme="http",
-        query_params=[("foo", "bar")],
+        query="foo=bar",
         port=80,
     )
 
     assert url.host == "test.com"
     assert url.path == "/my/path"
     assert url.scheme == "http"
-    assert url.query_params == [("foo", "bar")]
+    assert url.query == "foo=bar"
     assert url.port == 80
 
 
 def test_request() -> None:
-    url = URL(host="test.com")
+    url = URI(host="test.com")
     request = Request(
         url=url,
         headers=[("foo", "bar")],
@@ -66,11 +66,11 @@ async def test_endpoint_provider_with_url_string() -> None:
     params = StaticEndpointParams(
         url="https://foo.example.com/spam:8080?foo=bar&foo=baz"
     )
-    expected = URL(
+    expected = URI(
         host="foo.example.com",
         path="/spam",
         scheme="https",
-        query_params=[("foo", "bar"), ("foo", "baz")],
+        query="foo=bar&foo=baz",
         port=8080,
     )
     resolver = StaticEndpointResolver()
@@ -80,11 +80,11 @@ async def test_endpoint_provider_with_url_string() -> None:
 
 
 async def test_endpoint_provider_with_url_object() -> None:
-    expected = URL(
+    expected = URI(
         host="foo.example.com",
         path="/spam",
         scheme="https",
-        query_params=[("foo", "bar"), ("foo", "baz")],
+        query="foo=bar&foo=baz",
         port=8080,
     )
     params = StaticEndpointParams(url=expected)

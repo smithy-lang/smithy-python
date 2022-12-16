@@ -31,9 +31,6 @@ class URI(Protocol):
     query: str | None
     """Query component of the URI as string."""
 
-    query_params: QueryParamsList
-    """Query component of the URI as list of key-value tuples."""
-
     fragment: str | None
     """Part of the URI specification, but may not be transmitted by a client."""
 

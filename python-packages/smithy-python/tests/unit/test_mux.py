@@ -1,10 +1,11 @@
 from dataclasses import dataclass
 from typing import Any, Literal, cast
+from urllib.parse import urlencode
 
 import pytest
 
-from smithy_python._private.http import URL
-from smithy_python.interfaces.http import URI, HeadersList, Request
+import smithy_python.interfaces.http as http_interface
+from smithy_python._private.http import URI
 from smithy_python.mux import (
     HttpBindingMux,
     PathGreedySegment,
@@ -17,24 +18,25 @@ from smithy_python.mux import (
 )
 
 
-class TestURL(URL):
+class TestURL(URI):
     def __init__(self, path: str = "/", query: list[tuple[str, str]] | None = None):
+        query_str = urlencode(query) if query is not None else ""
         super().__init__(
             host="com.example",
             path=path,
             scheme="https",
-            query_params=query or [],
+            query=query_str,
         )
 
 
 @dataclass(init=False)
 class TestRequest:
-    url: URI
+    url: http_interface.URI
     method: str
-    headers: HeadersList
+    headers: http_interface.HeadersList
     body: Any
 
-    def __init__(self, method: str = "GET", url: URI | None = None):
+    def __init__(self, method: str = "GET", url: http_interface.URI | None = None):
         self.headers = []
         self.method = method
         self.url = url or TestURL()
@@ -295,7 +297,7 @@ def mux_fixture() -> HttpBindingMux[TEST_SERVICE, TEST_OPERATIONS]:
 def test_mux_match(
     mux_fixture: HttpBindingMux[TEST_SERVICE, TEST_OPERATIONS],
     expected_operation: TEST_OPERATIONS,
-    req: Request,
+    req: http_interface.Request,
 ) -> None:
     match = mux_fixture.match(req)
     assert match and match.operation == expected_operation
@@ -326,6 +328,7 @@ def test_mux_match(
     ],
 )
 def test_mux_miss(
-    mux_fixture: HttpBindingMux[TEST_SERVICE, TEST_OPERATIONS], req: Request
+    mux_fixture: HttpBindingMux[TEST_SERVICE, TEST_OPERATIONS],
+    req: http_interface.Request,
 ) -> None:
     assert not mux_fixture.match(req)
