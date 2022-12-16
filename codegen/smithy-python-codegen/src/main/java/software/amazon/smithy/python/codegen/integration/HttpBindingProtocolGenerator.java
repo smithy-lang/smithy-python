@@ -287,9 +287,121 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
             delegator.useFileWriter(deserFunction.getDefinitionFile(), deserFunction.getNamespace(), writer -> {
                 writer.write("""
                     async def $L(http_response: $T, config: $T) -> $T:
-                        raise NotImplementedError()
-                    """, deserFunction.getName(), transportResponse, configSymbol, outputSymbol);
+                        ${C|}
+                    """, deserFunction.getName(), transportResponse, configSymbol, outputSymbol,
+                    writer.consumer(w -> generateResponseDeserializer(context, writer, operation)));
             });
         }
+    }
+
+    /**
+     * Generates the content of the operation response deserializer.
+     *
+     * <p>Deserialization of the http-level components will be inline
+     * since there isn't any use for them elsewhere. Deserialization
+     * of document body components should be delegated, however,
+     * as they will need to be re-used in all likelihood.
+     *
+     * <p>This function has the following in scope:
+     * <ul>
+     *     <li>http_response - the http-level response</li>
+     *     <li>config - the client config</li>
+     * </ul>
+     */
+    private void generateResponseDeserializer(
+        GenerationContext context,
+        PythonWriter writer,
+        OperationShape operation
+    ) {
+        writer.addStdlibImport("typing", "Any");
+        writer.write("args: dict[str, Any] = {}");
+        var bindingIndex = HttpBindingIndex.of(context.model());
+
+        deserializeBody(context, writer, operation, bindingIndex);
+        deserializeHeaders(context, writer, operation, bindingIndex);
+        deserializeStatusCode(context, writer, operation, bindingIndex);
+
+        var outputShape = context.model().expectShape(operation.getOutputShape());
+        var outputSymbol = context.symbolProvider().toSymbol(outputShape);
+        writer.write("return $T(**args)", outputSymbol);
+    }
+
+    private void deserializeHeaders(
+        GenerationContext context,
+        PythonWriter writer,
+        OperationShape operation,
+        HttpBindingIndex bindingIndex
+    ) {
+        // TODO: implement header deserialization
+    }
+
+    private void deserializeStatusCode(
+        GenerationContext context,
+        PythonWriter writer,
+        OperationShape operation,
+        HttpBindingIndex bindingIndex
+    ) {
+        // TODO: implement status code deserialization
+    }
+
+    private void deserializeBody(
+        GenerationContext context,
+        PythonWriter writer,
+        OperationShape operation,
+        HttpBindingIndex bindingIndex
+    ) {
+        // TODO: implement body deserialization
+        var documentBindings = bindingIndex.getResponseBindings(operation, DOCUMENT);
+        if (!documentBindings.isEmpty() || shouldWriteDefaultBody(context, operation)) {
+            deserializeDocumentBody(context, writer, operation, documentBindings);
+        }
+
+        var payloadBindings = bindingIndex.getResponseBindings(operation, PAYLOAD);
+        if (!payloadBindings.isEmpty()) {
+            deserializePayloadBody(context, writer, operation, payloadBindings.get(0));
+        }
+    }
+
+    /**
+     * Writes the code needed to deserialize a protocol output document.
+     *
+     * <p>The contents of the response body will be available in the
+     * {@code http_response} variable.
+     *
+     * <p>For example:
+     *
+     * <pre>{@code
+     * data = json.loads(http_response.body.read().decode('utf-8'))
+     * if 'spam' in data:
+     *     args['spam'] = data['spam']
+     * }</pre>
+     * @param context The generation context.
+     * @param writer The writer to write to.
+     * @param operation The operation whose output document is being deserialized.
+     * @param documentBindings The bindings to read from the document.
+     */
+    protected abstract void deserializeDocumentBody(
+        GenerationContext context,
+        PythonWriter writer,
+        OperationShape operation,
+        List<HttpBinding> documentBindings
+    );
+
+    /**
+     * Writes the code needed to deserialize the output payload of a response.
+     *
+     * @param context The generation context.
+     * @param writer The writer to write to.
+     * @param operation The operation whose output payload is being deserialized.
+     * @param binding The payload binding to deserialize.
+     */
+    protected void deserializePayloadBody(
+        GenerationContext context,
+        PythonWriter writer,
+        OperationShape operation,
+        HttpBinding binding
+    ) {
+        // TODO: implement payload deserialization
+        // This will have a default implementation since it'll mostly be standard
     }
 }
