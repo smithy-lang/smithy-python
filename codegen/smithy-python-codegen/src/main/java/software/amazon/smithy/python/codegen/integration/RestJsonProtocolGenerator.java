@@ -15,10 +15,14 @@
 
 package software.amazon.smithy.python.codegen.integration;
 
+import java.util.List;
 import software.amazon.smithy.aws.traits.protocols.RestJson1Trait;
+import software.amazon.smithy.model.knowledge.HttpBinding;
+import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.HttpProtocolTestGenerator;
+import software.amazon.smithy.python.codegen.PythonWriter;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
@@ -44,5 +48,16 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         context.writerDelegator().useFileWriter("./tests/test_protocol.py", "tests.test_protocol", writer -> {
             new HttpProtocolTestGenerator(context, getProtocol(), writer).run();
         });
+    }
+
+    @Override
+    protected void serializeDocumentBody(
+        GenerationContext context,
+        PythonWriter writer,
+        OperationShape operation,
+        List<HttpBinding> documentBindings
+    ) {
+        // TODO: implement this
+        writer.write("body = b'{}'");
     }
 }
