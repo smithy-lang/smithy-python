@@ -81,7 +81,7 @@ final class ConfigGenerator implements Runnable {
                         .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
                         .build(),
                     true,
-                    "The HTTP client used to make requests."
+                    "Configuration for individual HTTP requests."
                 ),
                 new ConfigField(
                     "endpoint_resolver",
