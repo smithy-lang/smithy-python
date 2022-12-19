@@ -17,14 +17,25 @@ package software.amazon.smithy.python.codegen.integration;
 
 
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.DOCUMENT;
+import static software.amazon.smithy.model.knowledge.HttpBinding.Location.LABEL;
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.PAYLOAD;
+import static software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 
 import java.util.List;
+import java.util.stream.Collectors;
+import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.model.knowledge.HttpBinding;
+import software.amazon.smithy.model.knowledge.HttpBinding.Location;
 import software.amazon.smithy.model.knowledge.HttpBindingIndex;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
+import software.amazon.smithy.model.pattern.SmithyPattern;
+import software.amazon.smithy.model.pattern.SmithyPattern.Segment;
+import software.amazon.smithy.model.shapes.MemberShape;
+import software.amazon.smithy.model.shapes.NumberShape;
 import software.amazon.smithy.model.shapes.OperationShape;
+import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.traits.HttpTrait;
+import software.amazon.smithy.model.traits.MediaTypeTrait;
 import software.amazon.smithy.python.codegen.ApplicationProtocol;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
@@ -46,6 +57,13 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
     public ApplicationProtocol getApplicationProtocol() {
         return ApplicationProtocol.createDefaultHttpApplicationProtocol();
     }
+
+    /**
+     * Gets the default serde format for timestamps.
+     *
+     * @return Returns the default format.
+     */
+    protected abstract Format getDocumentTimestampFormat();
 
     /**
      * Given a context and operation, should a default input body be written.
@@ -171,9 +189,67 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         OperationShape operation,
         HttpBindingIndex bindingIndex
     ) {
-        // TODO: map path entries from input
         writer.pushState(new SerializePathSection(operation));
-        writer.write("path: str = '/'");
+
+        // Get a map of member name to label bindings. The URI pattern we fetch uses the member name
+        // for the content of label segments, so this lets us look up the extra info we need for those.
+        var labelBindings = bindingIndex.getRequestBindings(operation, LABEL).stream()
+            .collect(Collectors.toMap(HttpBinding::getMemberName, httpBinding -> httpBinding));
+
+        // Build up a format string that will produce the path. We could have used an f-string, but they end up
+        // taking a ton of space and aren't easily formatted. Using .format results in something that is much
+        // easier to grok.
+        var formatString = new StringBuilder("/");
+        var uri = operation.expectTrait(HttpTrait.class).getUri();
+        for (SmithyPattern.Segment segment : uri.getSegments()) {
+            if (segment.isLabel()) {
+                var httpBinding = labelBindings.get(segment.getContent());
+                var memberName = context.symbolProvider().toMemberName(httpBinding.getMember());
+
+                // Pattern members must be non-empty and non-none, so we assert that here.
+                // Note that we've not actually started writing the format string out yet, which
+                // is why we can just write out these guard clauses here.
+                writer.write("""
+                    if not input.$1L:
+                        raise $2T("$1L must not be empty.")
+                    """, memberName, CodegenUtils.getServiceError(context.settings()));
+
+                // We're creating an f-string, so here we just put the contents inside some brackets to allow
+                // for string interpolation.
+                formatString.append("{");
+                formatString.append(memberName);
+                formatString.append("}");
+            } else {
+                // Static segments just get inserted literally.
+                formatString.append(segment.getContent());
+            }
+
+            // Always append a forward slash. This will leave us with a trailing slash, which is what we want.
+            formatString.append("/");
+        }
+
+        // Write out the f-string
+        writer.openBlock("path = $S.format(", ")", formatString.toString(), () -> {
+            writer.addStdlibImport("urllib.parse", "quote", "urlquote");
+            for (Segment labelSegment : uri.getLabels()) {
+                var httpBinding = labelBindings.get(labelSegment.getContent());
+                var memberName = context.symbolProvider().toMemberName(httpBinding.getMember());
+
+                // urllib.parse.quote will, by default, allow forward slashes. This is fine for
+                // greedy labels, which are expected to contain multiple segments. But normal
+                // labels aren't allowed to contain multiple segments, so we need to encode them
+                // there too. We do this here by adding a conditional argument specifying no safe
+                // characters.
+                var urlSafe = labelSegment.isGreedyLabel() ? "" : ", safe=''";
+
+                var dataSource = "input." + memberName;
+                var target = context.model().expectShape(httpBinding.getMember().getTarget());
+                    writer.write("$1L=urlquote($3L$2L),", memberName, urlSafe, getInputValue(
+                        context, writer, httpBinding.getLocation(), dataSource, httpBinding.getMember(), target
+                    ));
+            }
+        });
+
         writer.popState();
     }
 
@@ -319,6 +395,116 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         HttpBinding payloadBinding
     ) {
         // TODO: implement this
+    }
+
+    /**
+     * Given context and a source of data, generate an input value provider for the
+     * shape. This may use native types or invoke complex type serializers to
+     * manipulate the dataSource into the proper input content.
+     *
+     * @param context The generation context.
+     * @param writer The writer this value will be written to. Used only to add
+     *               imports, if necessary.
+     * @param bindingType How this value is bound to the operation input.
+     * @param dataSource The in-code location of the data to provide an input of
+     *                   ({@code input.foo}, {@code entry}, etc.)
+     * @param member The member that points to the value being provided.
+     * @param target The shape of the value being provided.
+     * @return Returns a value or expression of the input value.
+     */
+    protected String getInputValue(
+        GenerationContext context,
+        PythonWriter writer,
+        HttpBinding.Location bindingType,
+        String dataSource,
+        MemberShape member,
+        Shape target
+    ) {
+        if (target.isStringShape()) {
+            return getStringInputParam(context, writer, bindingType, dataSource, member, target);
+        } else if (target.isFloatShape() || target.isDoubleShape()) {
+            // Using float ensures we get a decimal even if there is no fraction given
+            // e.g. 1 => 1.0
+            return String.format("str(float(%s))", dataSource);
+        } else if (target instanceof NumberShape) {
+            return String.format("str(%s)", dataSource);
+        } else if (target.isBooleanShape()) {
+            return String.format("('true' if %s else 'false')", dataSource);
+        } else if (target.isTimestampShape()) {
+            return getTimestampInputParam(context, writer, bindingType, dataSource, member, target);
+        } else {
+            // TODO: add support here for other shape types
+            return dataSource;
+        }
+//        throw new CodegenException(String.format(
+//            "Unsupported %s binding of %s to %s in %s using the %s protocol",
+//            bindingType, member.getMemberName(), target.getType(), member.getContainer(), getName()));
+    }
+
+    /**
+     * Given context and a source of data, generate an input value provider for a
+     * string. By default, this base64 encodes content in headers if there is a
+     * mediaType applied to the string, and passes through for all other cases.
+     *
+     * @param context The generation context.
+     * @param writer The writer this value will be written to. Used only to add
+     *               imports, if necessary.
+     * @param bindingType How this value is bound to the operation input.
+     * @param dataSource The in-code location of the data to provide an input of
+     *                   ({@code input.foo}, {@code entry}, etc.)
+     * @param target The shape of the value being provided.
+     * @return Returns a value or expression of the input string.
+     */
+    protected String getStringInputParam(
+        GenerationContext context,
+        PythonWriter writer,
+        HttpBinding.Location bindingType,
+        String dataSource,
+        MemberShape member,
+        Shape target
+    ) {
+        if (bindingType == Location.HEADER) {
+            if (target.hasTrait(MediaTypeTrait.class)) {
+                writer.addStdlibImport("base64", "b64encode");
+                return "b64encode(" + dataSource + "))";
+            }
+        }
+        return dataSource;
+    }
+
+    /**
+     * Given context and a source of data, generate an input value provider for the
+     * shape. This uses the format specified, converting to strings when in a header,
+     * label, or query string.
+     *
+     * @param context The generation context.
+     * @param writer The writer this value will be written to. Used only to add
+     *               imports, if necessary.
+     * @param bindingType How this value is bound to the operation input.
+     * @param dataSource The in-code location of the data to provide an input of
+     *                   ({@code input.foo}, {@code entry}, etc.)
+     * @param member The member that points to the value being provided.
+     * @return Returns a value or expression of the input shape.
+     */
+    protected String getTimestampInputParam(
+        GenerationContext context,
+        PythonWriter writer,
+        HttpBinding.Location bindingType,
+        String dataSource,
+        MemberShape member,
+        Shape target
+    ) {
+        var httpIndex = HttpBindingIndex.of(context.model());
+        var format = switch (bindingType) {
+            case HEADER -> httpIndex.determineTimestampFormat(member, bindingType, Format.HTTP_DATE);
+            case LABEL -> httpIndex.determineTimestampFormat(member, bindingType, getDocumentTimestampFormat());
+            case QUERY -> httpIndex.determineTimestampFormat(member, bindingType, Format.DATE_TIME);
+            default ->
+                throw new CodegenException("Unexpected named member shape binding location `" + bindingType + "`");
+        };
+
+        return HttpProtocolGeneratorUtils.getTimestampInputParam(
+            context, writer, dataSource, member, format);
     }
 
     @Override

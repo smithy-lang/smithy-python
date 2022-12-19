@@ -20,6 +20,7 @@ import software.amazon.smithy.aws.traits.protocols.RestJson1Trait;
 import software.amazon.smithy.model.knowledge.HttpBinding;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ShapeId;
+import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.HttpProtocolTestGenerator;
 import software.amazon.smithy.python.codegen.PythonWriter;
@@ -39,6 +40,11 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
     @Override
     public ShapeId getProtocol() {
         return RestJson1Trait.ID;
+    }
+
+    @Override
+    protected Format getDocumentTimestampFormat() {
+        return Format.EPOCH_SECONDS;
     }
 
     // This is here rather than in HttpBindingProtocolGenerator because eventually
