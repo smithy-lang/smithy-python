@@ -13,11 +13,14 @@
 
 from smithy_python._private.http import (
     URI,
-    Request,
-    Response,
+    Field,
+    Fields,
+    HTTPRequest,
+    HTTPResponse,
     StaticEndpointParams,
     StaticEndpointResolver,
 )
+from smithy_python.async_utils import async_list
 
 
 def test_uri_basic() -> None:
@@ -109,30 +112,35 @@ def test_uri_password_but_no_username() -> None:
     assert uri.netloc == "test.aws.dev"
 
 
-def test_request() -> None:
+async def test_request() -> None:
     url = URI(host="test.aws.dev")
-    request = Request(
-        url=url,
-        headers=[("foo", "bar")],
-        body=b"test body",
+    headers = Fields([Field(name="foo", values=["bar"])])
+    request = HTTPRequest(
+        method="GET",
+        destination=url,
+        fields=headers,
+        body=async_list([b"test body"]),
     )
 
     assert request.method == "GET"
-    assert request.url == url
-    assert request.headers == [("foo", "bar")]
-    assert request.body == b"test body"
+    assert request.destination == url
+    assert request.fields == headers
+    request_body = b"".join([chunk async for chunk in request.body])
+    assert request_body == b"test body"
 
 
-def test_response() -> None:
-    response = Response(
-        status_code=200,
-        headers=[("foo", "bar")],
-        body=b"test body",
+async def test_response() -> None:
+    headers = Fields([Field(name="foo", values=["bar"])])
+    response = HTTPResponse(
+        status=200,
+        fields=headers,
+        body=async_list([b"test body"]),
     )
 
-    assert response.status_code == 200
-    assert response.headers == [("foo", "bar")]
-    assert response.body == b"test body"
+    assert response.status == 200
+    assert response.fields == headers
+    response_body = await response.consume_body()
+    assert response_body == b"test body"
 
 
 async def test_endpoint_provider_with_url_string() -> None:
@@ -149,7 +157,7 @@ async def test_endpoint_provider_with_url_string() -> None:
     resolver = StaticEndpointResolver()
     result = await resolver.resolve_endpoint(params=params)
     assert result.url == expected
-    assert result.headers == []
+    assert result.headers == Fields([])
 
 
 async def test_endpoint_provider_with_url_object() -> None:
@@ -164,4 +172,4 @@ async def test_endpoint_provider_with_url_object() -> None:
     resolver = StaticEndpointResolver()
     result = await resolver.resolve_endpoint(params=params)
     assert result.url == expected
-    assert result.headers == []
+    assert result.headers == Fields([])

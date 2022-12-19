@@ -396,7 +396,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
         LOGGER.fine(String.format("Writing utility stubs for %s : %s", serviceSymbol.getName(), protocol.getName()));
         writer.addStdlibImport("typing", "Any");
         writer.addImports("smithy_python.interfaces.http", Set.of(
-                "HeadersList", "HttpRequestConfiguration", "Request", "Response")
+                "Fields", "HttpRequestConfiguration", "Request", "Response")
         );
         writer.addImport("smithy_python._private.http", "Response", "_Response");
 
@@ -436,7 +436,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         class $4L:
                             ""\"An asynchronous HTTP client solely for testing purposes.""\"
 
-                            def __init__(self, status_code: int, headers: HeadersList, body: bytes):
+                            def __init__(self, status_code: int, headers: Fields, body: bytes):
                                 self.status_code = status_code
                                 self.headers = headers
                                 self.body = AwaitableBody(body)

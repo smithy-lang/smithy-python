@@ -15,35 +15,42 @@
 
 
 from collections import Counter, OrderedDict
-from collections.abc import Iterable
+from collections.abc import AsyncIterable, Iterable, Iterator
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from typing import Protocol
 from urllib.parse import urlparse, urlunparse
 
 from ... import interfaces
 from ...interfaces.http import FieldPosition as FieldPosition  # re-export
 
 
-class URI:
-    def __init__(
-        self,
-        host: str,
-        path: str | None = None,
-        scheme: str | None = None,
-        query: str | None = None,
-        port: int | None = None,
-        username: str | None = None,
-        password: str | None = None,
-        fragment: str | None = None,
-    ):
-        self.scheme: str = "https" if scheme is None else scheme
-        self.host = host
-        self.port = port
-        self.path = path
-        self.query = query
-        self.username = username
-        self.password = password
-        self.fragment = fragment
+@dataclass(kw_only=True)
+class URI(interfaces.URI):
+    """Universal Resource Identifier, target location for a :py:class:`HTTPRequest`."""
+
+    scheme: str = "https"
+    """For example ``http`` or ``https``."""
+
+    username: str | None = None
+    """Username part of the userinfo URI component."""
+
+    password: str | None = None
+    """Password part of the userinfo URI component."""
+
+    host: str
+    """The hostname, for example ``amazonaws.com``."""
+
+    port: int | None = None
+    """An explicit port number."""
+
+    path: str | None = None
+    """Path component of the URI."""
+
+    query: str | None = None
+    """Query component of the URI as string."""
+
+    fragment: str | None = None
+    """Part of the URI specification, but may not be transmitted by a client."""
 
     @property
     def netloc(self) -> str:
@@ -91,32 +98,48 @@ class URI:
         )
 
 
-class Request:
-    def __init__(
-        self,
-        url: interfaces.http.URI,
-        method: str = "GET",
-        headers: interfaces.http.HeadersList | None = None,
-        body: Any = None,
-    ):
-        self.url: interfaces.http.URI = url
-        self.method: str = method
-        self.body: Any = body
-        self.headers: interfaces.http.HeadersList = []
-        if headers is not None:
-            self.headers = headers
+@dataclass(kw_only=True)
+class HTTPRequest(interfaces.http.HTTPRequest):
+    """
+    HTTP primitives for an Exchange to construct a version agnostic HTTP message.
+    """
+
+    destination: interfaces.URI
+    body: AsyncIterable[bytes]
+    method: str
+    fields: interfaces.http.Fields
+
+    async def consume_body(self) -> bytes:
+        """Iterate over request body and return as bytes."""
+        body = b""
+        async for chunk in self.body:
+            body += chunk
+        return body
 
 
-class Response:
-    def __init__(
-        self,
-        status_code: int,
-        headers: interfaces.http.HeadersList,
-        body: Any,
-    ):
-        self.status_code: int = status_code
-        self.headers: interfaces.http.HeadersList = headers
-        self.body: Any = body
+@dataclass(kw_only=True)
+class HTTPResponse(interfaces.http.HTTPResponse):
+    body: AsyncIterable[bytes]
+    status: int
+    fields: interfaces.http.Fields
+    reason: str | None = None
+
+    async def consume_body(self) -> bytes:
+        """Iterate over response body and return as bytes."""
+        body = b""
+        async for chunk in self.body:
+            body += chunk
+        return body
+
+    @property
+    def done(self) -> bool:
+        """
+        Has the complete body been received.
+
+        Always returns True. Subclasses in implementations that support response
+        streaming may override this.
+        """
+        return True
 
 
 class Field(interfaces.http.Field):
@@ -274,14 +297,14 @@ class Fields(interfaces.http.Fields):
             return False
         return self.encoding == other.encoding and self.entries == other.entries
 
-    def __iter__(self) -> Iterable[interfaces.http.Field]:
+    def __iter__(self) -> Iterator[interfaces.http.Field]:
         yield from self.entries.values()
 
 
 @dataclass
 class Endpoint(interfaces.http.Endpoint):
-    url: interfaces.http.URI
-    headers: interfaces.http.HeadersList = field(default_factory=list)
+    url: interfaces.URI
+    headers: interfaces.http.Fields = field(default_factory=Fields)
 
 
 @dataclass
@@ -289,10 +312,10 @@ class StaticEndpointParams:
     """
     Static endpoint params.
 
-    :params url: A static URI to route requests to.
+    :param url: A static URI to route requests to.
     """
 
-    url: str | interfaces.http.URI
+    url: str | interfaces.URI
 
 
 class StaticEndpointResolver(interfaces.http.EndpointResolver[StaticEndpointParams]):

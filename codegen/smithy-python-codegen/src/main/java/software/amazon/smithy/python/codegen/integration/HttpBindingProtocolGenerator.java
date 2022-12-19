@@ -195,8 +195,8 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         writer.pushState(new SerializeFieldsSection(operation));
         // TODO: map headers from inputs
         // TODO: write out default http and protocol headers
-        writer.addImport("smithy_python.interfaces.http", "HeadersList", "_HeadersList");
-        writer.write("headers: _HeadersList = []");
+        writer.addImport("smithy_python.interfaces.http", "Fields", "_Fields");
+        writer.write("headers: _Fields = []");
         writer.popState();
     }
 
