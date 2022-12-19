@@ -16,7 +16,6 @@
 package software.amazon.smithy.python.codegen.integration;
 
 
-import static java.lang.String.format;
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.DOCUMENT;
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.PAYLOAD;
 
@@ -30,6 +29,7 @@ import software.amazon.smithy.python.codegen.ApplicationProtocol;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonWriter;
+import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
@@ -57,32 +57,6 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      */
     protected boolean shouldWriteDefaultBody(GenerationContext context, OperationShape operation) {
         return HttpBindingIndex.of(context.model()).getRequestBindings(operation).isEmpty();
-    }
-
-    @Override
-    public void generateSharedSerializerComponents(GenerationContext context) {
-        // TODO: remove this when we have a concrete implementation to use
-        var filename = format("./%s/serialize.py", context.settings().getModuleName());
-        context.writerDelegator().useFileWriter(filename, writer -> {
-            writer.addStdlibImport("dataclasses", "dataclass");
-            writer.write("""
-                @dataclass
-                class URL:
-                    scheme: str
-                    hostname: str
-                    port: int | None
-                    path: str
-                    query_params: list[tuple[str, str]]
-
-
-                @dataclass
-                class Request:
-                    url: URL
-                    method: str
-                    headers: list[tuple[str, str]]
-                    body: Any
-                """);
-        });
     }
 
     @Override
@@ -131,14 +105,17 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         serializeQuery(context, writer, operation, bindingIndex);
         serializeBody(context, writer, operation, bindingIndex);
 
+        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+        writer.addImport("smithy_python._private.http", "Request", "_Request");
+        writer.addImport("smithy_python._private.http", "URI", "_URI");
+
         writer.write("""
-            return Request(
-                url=URL(
-                    scheme="https",
-                    hostname="",
-                    port=None,
+            return _Request(
+                url=_URI(
+                    host="",
                     path=path,
-                    query_params=query_params,
+                    scheme="https",
+                    query=query,
                 ),
                 method=$S,
                 headers=headers,
@@ -184,8 +161,16 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         OperationShape operation,
         HttpBindingIndex bindingIndex
     ) {
-        // TODO: implement query serialization
         writer.write("query_params: list[tuple[str, str]] = []");
+        // TODO: implement query serialization
+
+        writer.write("""
+            query: str = ""
+            for i, param in enumerate(query_params):
+                if i != 1:
+                    query += "&"
+                query += f"{param[0]}={param[1]}"
+            """);
     }
 
     /**
