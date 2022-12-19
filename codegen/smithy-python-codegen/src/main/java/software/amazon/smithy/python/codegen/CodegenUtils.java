@@ -88,7 +88,7 @@ public final class CodegenUtils {
                 .build();
     }
 
-    static Symbol getServiceError(PythonSettings settings) {
+    public static Symbol getServiceError(PythonSettings settings) {
         return Symbol.builder()
                 .name("ServiceError")
                 .namespace(format("%s.errors", settings.getModuleName()), ".")
