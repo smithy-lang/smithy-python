@@ -2,6 +2,7 @@ import functools
 from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Any, Generic, TypeVar
+from urllib.parse import parse_qs
 
 from smithy_python.interfaces.http import Request
 
@@ -96,7 +97,7 @@ class UriSpec(Generic[S, OP]):
         if request.method != self._method:
             return False
 
-        if request.url.path in self._EMPTY_PATHS:
+        if request.url.path is None or request.url.path in self._EMPTY_PATHS:
             # Both of these cases would produce [''] after a split, which isn't
             # what we want because they both represent the 0 segment case.
             request_path_segments = []
@@ -135,10 +136,10 @@ class UriSpec(Generic[S, OP]):
         if len(self._query_segments) == 0:
             return True
 
-        if len(request.url.query_params) == 0:
+        if not request.url.query:
             return False
 
-        query_map = self._get_query_map(request.url.query_params)
+        query_map = parse_qs(request.url.query, keep_blank_values=True)
         for query_segment in self._query_segments:
             if query_segment.key not in query_map:
                 return False
@@ -146,38 +147,17 @@ class UriSpec(Generic[S, OP]):
             if isinstance(query_segment, QueryLiteralSegment):
                 # Convert any None's to empty strings. A protocol could
                 # theoretically treat them differently, but for now we don't.
-                segment_value = query_segment.value or ""
+                if query_segment.value is None:
+                    segment_value = [""]
+                elif isinstance(query_segment.value, str):
+                    segment_value = [query_segment.value]
+                else:
+                    segment_value = query_segment.value
                 query_value = query_map[query_segment.key] or ""
                 if segment_value != query_value:
                     return False
 
         return True
-
-    # Ideally this should go on the request object and be cached
-    def _get_query_map(
-        self, query_list: list[tuple[str, str]]
-    ) -> dict[str, str | None | list[str | None]]:
-        """Creates a map of query key to value or values from a list of tuples.
-
-        If a key appears more than once, the value inherently becomes a list.
-
-        :param query_list: A list of tuples where the first value is the query key and
-            the second is the query value.
-        :return: A map of query keys to values.
-        """
-        query_map: dict[str, str | None | list[str | None]] = {}
-        for entry in query_list:
-            if entry[0] in query_map:
-                # The key is already present, so the value must be or become a list.
-                former = query_map[entry[0]]
-                if isinstance(former, list):
-                    former.append(entry[1])
-                else:
-                    query_map[entry[0]] = [former, entry[1]]
-
-            query_map[entry[0]] = entry[1]
-
-        return query_map
 
     def __eq__(self, other: Any) -> bool:
         if not isinstance(other, UriSpec):

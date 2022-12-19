@@ -16,52 +16,64 @@
 
 from dataclasses import dataclass, field
 from typing import Any, Protocol
-from urllib.parse import parse_qsl, urlparse
+from urllib.parse import urlparse, urlunparse
 
 from smithy_python.interfaces import http as http_interface
 
-HeadersList = list[tuple[str, str]]
-QueryParamsList = list[tuple[str, str]]
 
-
-class URL:
+class URI:
     def __init__(
         self,
-        hostname: str,
+        host: str,
         path: str | None = None,
         scheme: str | None = None,
-        query_params: QueryParamsList | None = None,
+        query: str | None = None,
         port: int | None = None,
     ):
-        self.hostname: str = hostname
-        self.port: int | None = port
+        self.scheme: str = "https" if scheme is None else scheme
+        self.host = host
+        self.port = port
+        self.path = path
+        self.query = query
 
-        self.path: str = ""
-        if path is not None:
-            self.path = path
+        # Properties required by the ``http_interface.URI`` interface but not used in
+        # this implementation.
+        self.username: str | None = None
+        self.password: str | None = None
+        self.fragment: str | None = None
 
-        self.scheme: str = "https"
-        if scheme is not None:
-            self.scheme = scheme
+    def build(self) -> str:
+        """Construct URI string representation.
 
-        self.query_params: QueryParamsList = []
-        if query_params is not None:
-            self.query_params = query_params
+        Returns a string of the form
+        ``{scheme}://{username}:{password}@{host}:{port}{path}?{query}#{fragment}``
+        """
+        components = (
+            self.scheme,
+            self.host,
+            self.path or "",
+            "",  # params
+            self.query,
+            self.fragment,
+            self.username,
+            self.password,
+        )
+        return urlunparse(components)
 
 
 class Request:
     def __init__(
         self,
-        url: http_interface.URL,
+        url: http_interface.URI,
         method: str = "GET",
-        headers: HeadersList | None = None,
+        headers: http_interface.HeadersList | None = None,
         body: Any = None,
     ):
-        self.url: http_interface.URL = url
+        self.url: http_interface.URI = url
         self.method: str = method
         self.body: Any = body
 
-        self.headers: HeadersList = []
+        self.headers: http_interface.HeadersList = []
         if headers is not None:
             self.headers = headers
 
@@ -70,18 +82,18 @@ class Response:
     def __init__(
         self,
         status_code: int,
-        headers: HeadersList,
+        headers: http_interface.HeadersList,
         body: Any,
     ):
         self.status_code: int = status_code
-        self.headers: HeadersList = headers
+        self.headers: http_interface.HeadersList = headers
         self.body: Any = body
 
 
 @dataclass
 class Endpoint(http_interface.Endpoint):
-    url: http_interface.URL
-    headers: HeadersList = field(default_factory=list)
+    url: http_interface.URI
+    headers: http_interface.HeadersList = field(default_factory=list)
 
 
 @dataclass
@@ -89,10 +101,10 @@ class StaticEndpointParams:
     """
     Static endpoint params.
 
-    :params url: A static URL to route requests to.
+    :params url: A static URI to route requests to.
     """
 
-    url: str | http_interface.URL
+    url: str | http_interface.URI
 
 
 class StaticEndpointResolver(http_interface.EndpointResolver[StaticEndpointParams]):
@@ -114,11 +126,11 @@ class StaticEndpointResolver(http_interface.EndpointResolver[StaticEndpointParam
             )
 
         return Endpoint(
-            url=URL(
-                hostname=parsed.hostname,
+            url=URI(
+                host=parsed.hostname,
                 path=parsed.path,
                 scheme=parsed.scheme,
-                query_params=parse_qsl(parsed.query),
+                query=parsed.query,
                 port=parsed.port,
             )
         )

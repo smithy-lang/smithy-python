@@ -1,5 +1,18 @@
+# Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+#     http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
+
 from smithy_python._private.http import (
-    URL,
+    URI,
     Request,
     Response,
     StaticEndpointParams,
@@ -8,23 +21,23 @@ from smithy_python._private.http import (
 
 
 def test_url() -> None:
-    url = URL(
-        hostname="test.com",
+    url = URI(
+        host="test.com",
         path="/my/path",
         scheme="http",
-        query_params=[("foo", "bar")],
+        query="foo=bar",
         port=80,
     )
 
-    assert url.hostname == "test.com"
+    assert url.host == "test.com"
     assert url.path == "/my/path"
     assert url.scheme == "http"
-    assert url.query_params == [("foo", "bar")]
+    assert url.query == "foo=bar"
     assert url.port == 80
 
 
 def test_request() -> None:
-    url = URL(hostname="test.com")
+    url = URI(host="test.com")
     request = Request(
         url=url,
         headers=[("foo", "bar")],
@@ -53,11 +66,11 @@ async def test_endpoint_provider_with_url_string() -> None:
     params = StaticEndpointParams(
         url="https://foo.example.com/spam:8080?foo=bar&foo=baz"
     )
-    expected = URL(
-        hostname="foo.example.com",
+    expected = URI(
+        host="foo.example.com",
         path="/spam",
         scheme="https",
-        query_params=[("foo", "bar"), ("foo", "baz")],
+        query="foo=bar&foo=baz",
         port=8080,
     )
     resolver = StaticEndpointResolver()
@@ -67,11 +80,11 @@ async def test_endpoint_provider_with_url_string() -> None:
 
 
 async def test_endpoint_provider_with_url_object() -> None:
-    expected = URL(
-        hostname="foo.example.com",
+    expected = URI(
+        host="foo.example.com",
         path="/spam",
         scheme="https",
-        query_params=[("foo", "bar"), ("foo", "baz")],
+        query="foo=bar&foo=baz",
         port=8080,
     )
     params = StaticEndpointParams(url=expected)

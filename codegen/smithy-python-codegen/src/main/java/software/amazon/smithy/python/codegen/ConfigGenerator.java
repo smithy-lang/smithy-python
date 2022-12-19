@@ -102,15 +102,15 @@ final class ConfigGenerator implements Runnable {
                 new ConfigField(
                     "endpoint_url",
                     Symbol.builder()
-                        .name("str | URL")
+                        .name("str | URI")
                         .addReference(Symbol.builder()
-                            .name("URL")
+                            .name("URI")
                             .namespace("smithy_python.interfaces.http", ".")
                             .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
                             .build())
                         .build(),
                     true,
-                    "A static URL to route requests to."
+                    "A static URI to route requests to."
                 )
         );
     }

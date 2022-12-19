@@ -1,6 +1,6 @@
 import pytest
 
-from smithy_python._private.http import URL, Request
+from smithy_python._private.http import URI, Request
 from smithy_python._private.http.crt import (
     AsyncAwsCrtHttpSession,
     AwsCrtHttpSessionConfig,
@@ -11,7 +11,7 @@ from smithy_python._private.http.crt import (
 @pytest.fixture
 def aws_request() -> Request:
     return Request(
-        url=URL(hostname="aws.amazon.com"),
+        url=URI(host="aws.amazon.com"),
         headers=[("host", "aws.amazon.com"), ("user-agent", "smithy-python-test")],
     )
 
