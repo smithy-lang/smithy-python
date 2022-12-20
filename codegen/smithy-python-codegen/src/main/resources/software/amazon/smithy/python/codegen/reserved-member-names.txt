@@ -72,3 +72,8 @@ float
 int
 list
 str
+
+# For the exact same reason as above, these are names of common types
+# that are likely imported in the generated code (e.g. datetime)
+# We only escape the types we use.
+datetime

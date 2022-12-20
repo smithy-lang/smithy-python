@@ -15,10 +15,16 @@
 
 package software.amazon.smithy.python.codegen;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.TreeSet;
+import java.util.function.BiFunction;
 import java.util.logging.Logger;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.Model;
@@ -49,7 +55,6 @@ import software.amazon.smithy.protocoltests.traits.HttpRequestTestsTrait;
 import software.amazon.smithy.protocoltests.traits.HttpResponseTestCase;
 import software.amazon.smithy.protocoltests.traits.HttpResponseTestsTrait;
 import software.amazon.smithy.utils.CaseUtils;
-import software.amazon.smithy.utils.Pair;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
@@ -62,6 +67,15 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
 public final class HttpProtocolTestGenerator implements Runnable {
 
     private static final Logger LOGGER = Logger.getLogger(HttpProtocolTestGenerator.class.getName());
+    private static final Symbol REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL = Symbol.builder()
+            .name("RequestTestAsyncHttpClient")
+            .build();
+    private static final Symbol RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL = Symbol.builder()
+            .name("ResponseTestAsyncHttpClient")
+            .build();
+    private static final Symbol TEST_HTTP_SERVICE_ERR_SYMBOL = Symbol.builder()
+            .name("TestHttpServiceError")
+            .build();
 
     private final PythonSettings settings;
     private final Model model;
@@ -81,6 +95,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
         this.service = settings.getService(model);
         this.writer = writer;
         this.context = context;
+
+        writer.putFormatter('J', new JavaToPythonFormatter());
     }
 
     /**
@@ -93,10 +109,11 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
         // Use a TreeSet to have a fixed ordering of tests.
         for (OperationShape operation : new TreeSet<>(topDownIndex.getContainedOperations(service))) {
-
             // TODO: Add settings to configure which tests are generated (client or server)
             generateOperationTests(AppliesTo.CLIENT, operation, operationIndex);
         }
+        // Write the testing implementations for various objects
+        writeUtilStubs(context.symbolProvider().toSymbol(service));
     }
 
     private void generateOperationTests(
@@ -138,20 +155,50 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 String.format("%s_request_%s", testCase.getId(), operation.getId().getName()),
                 false,
                 () -> {
-            // TODO: Instantiate the client with the request interceptor
-            writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.empty());
+            writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
+                writer.write("""
+                    config = $T(
+                        http_client = $T()
+                    )
+                    """,
+                    CodegenUtils.getConfigSymbol(context.settings()),
+                    REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL
+                );
+            }));
 
             // Generate the input using the expected shape and params
             var inputShape = model.expectShape(operation.getInputShape(), StructureShape.class);
-
             writer.write("input_ = $C\n",
                     (Runnable) () -> testCase.getParams().accept(new ValueNodeVisitor(inputShape))
             );
 
-            writer.write("actual = await client.$T(input_)\n", context.symbolProvider().toSymbol(operation));
+            // Execute the command, and catch the expected exception
+            writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail", "fail");
+            writer.write("""
+                try:
+                    await client.$1T(input_)
+                    fail("Expected '$2T' exception to be thrown!")
+                except $2T as err:
+                    actual = err.request
 
-            // TODO: Correctly assert the response and other values
-            writeAssertionBlock(testCase, List.of(Pair.of("actual", "actual")));
+                    assert actual.method == $3S
+                    assert actual.url.path == $4S
+                    assert actual.url.host == $5S
+                    $6C
+                except Exception as err:
+                    fail(f"Expected '$2L' exception to be thrown, but received {type(err).__name__}")
+                """,
+                context.symbolProvider().toSymbol(operation),
+                TEST_HTTP_SERVICE_ERR_SYMBOL,
+                testCase.getMethod(),
+                testCase.getUri(),
+                testCase.getHost(),
+                (Runnable) () -> writer.maybeWrite(
+                    !testCase.getRequireHeaders().isEmpty(),
+                    "assert {h[0] for h in actual.headers} >= $J",
+                    new HashSet<>(testCase.getRequireHeaders())
+                )
+            );
         });
     }
 
@@ -160,21 +207,47 @@ public final class HttpProtocolTestGenerator implements Runnable {
         writeTestBlock(
                 testCase,
                 String.format("%s_response_%s", testCase.getId(), operation.getId().getName()),
-                true,
+                false,
                 () -> {
-            // TODO: Instantiate the client and interceptor
-            writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.empty());
-
+            writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
+                writer.write("""
+                    config = $T(
+                        http_client = $T(
+                            status_code = $L,
+                            headers = $J,
+                            body = $S,
+                        )
+                    )
+                    """,
+                    CodegenUtils.getConfigSymbol(context.settings()),
+                    RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
+                    testCase.getCode(),
+                    CodegenUtils.toTuples(testCase.getHeaders()),
+                    testCase.getBody().filter(body -> !body.isEmpty()).orElse("")
+                );
+            }));
             // Create an empty input object to pass
             var inputShape = model.expectShape(operation.getInputShape(), StructureShape.class);
+            var outputShape = model.expectShape(operation.getOutputShape(), StructureShape.class);
             writer.write("input_ = $C\n",
-                    (Runnable) () -> (ObjectNode.builder().build()).accept(new ValueNodeVisitor(inputShape))
+                (Runnable) () -> (ObjectNode.builder().build()).accept(new ValueNodeVisitor(inputShape))
             );
-            // Pass input to the operation and call it
-            writer.write("actual = client.$T(input_)\n", context.symbolProvider().toSymbol(operation));
 
-            // TODO: Correctly assert the response and other values
-            writeAssertionBlock(testCase, List.of(Pair.of("actual", "actual")));
+            // Execute the command, fail if unexpected exception
+            writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail", "fail");
+            writer.write("""
+                try:
+                    actual = await client.$T(input_)
+                except Exception as err:
+                    fail(f"Expected a valid response, but received: {type(err).__name__}")
+                else:
+                    expected = $C
+
+                    assert actual == expected
+                """,
+                context.symbolProvider().toSymbol(operation),
+                (Runnable) () -> testCase.getParams().accept(new ValueNodeVisitor(outputShape))
+            );
         });
     }
 
@@ -182,24 +255,46 @@ public final class HttpProtocolTestGenerator implements Runnable {
             OperationShape operation,
             StructureShape error,
             HttpResponseTestCase testCase) {
-        // TODO: Generate the real error response test logic, add logic for skipping
+        // TODO: add logic for skipping
         writeTestBlock(testCase,
                 String.format("%s_error_%s", testCase.getId(), operation.getId().getName()),
                 false,
                 () -> {
-            // TODO: Instantiate the client and interceptor
-            writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.empty());
-
+            writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
+                writer.write("""
+                    config = $T(
+                        http_client = $T(
+                            status_code = $L,
+                            headers = $J,
+                            body = None,
+                        )
+                    )
+                    """,
+                    CodegenUtils.getConfigSymbol(context.settings()),
+                    RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
+                    testCase.getCode(),
+                    CodegenUtils.toTuples(testCase.getHeaders())
+                );
+            }));
             // Create an empty input object to pass
             var inputShape = model.expectShape(operation.getInputShape(), StructureShape.class);
             writer.write("input_ = $C\n",
                     (Runnable) () -> (Node.objectNode()).accept(new ValueNodeVisitor(inputShape))
             );
-            // Pass input to the operation and call it
-            writer.write("actual = client.$T(input_)\n", context.symbolProvider().toSymbol(operation));
-
-            // TODO: Correctly assert the response and other values
-            writeAssertionBlock(testCase, List.of(Pair.of("actual", "actual")));
+            // Execute the command, fail if unexpected exception
+            writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail", "fail");
+            writer.write("""
+                try:
+                    await client.$1T(input_)
+                    fail("Expected '$2L' exception to be thrown!")
+                except Exception as err:
+                    if type(err).__name__ != $2S:
+                        fail(f"Expected '$2L' exception to be thrown, but received {type(err).__name__}")
+                """,
+                context.symbolProvider().toSymbol(operation),
+                error.getId().getName()
+            );
+            // TODO: Correctly assert the status code and other values
         });
     }
 
@@ -245,21 +340,60 @@ public final class HttpProtocolTestGenerator implements Runnable {
     ) {
         LOGGER.fine(String.format("Writing client block for %s in %s", serviceSymbol.getName(), testCase.getId()));
 
+        // Set up the test http client, which is used to "handle" the requests
         writer.openBlock("client = $T(", ")\n", serviceSymbol, () -> {
             additionalConfigurator.ifPresent(Runnable::run);
         });
     }
 
-    private void writeAssertionBlock(
-            HttpMessageTestCase testCase,
-            List<Pair<Object, Object>> assertions
-    ) {
-        LOGGER.fine(String.format("Writing assertions block for %s", testCase.getId()));
+    private void writeUtilStubs(Symbol serviceSymbol) {
+        LOGGER.fine(String.format("Writing utility stubs for %s : %s", serviceSymbol.getName(), protocol.getName()));
+        writer.addStdlibImport("typing", "Any");
+        writer.addImports("smithy_python.interfaces.http", Set.of(
+                "HeadersList", "HttpRequestConfiguration", "Request", "Response", "URI")
+        );
+        writer.addImport("smithy_python._private.http", "Response", "_Response");
 
-        assertions.forEach((assertion) -> {
-            writer.write("assert $L == $L", assertion.left, assertion.right);
-        });
+        writer.write("""
+                        class $1L($2T):
+                            ""\"A test error that subclasses the service-error for protocol tests.""\"
+
+                            def __init__(self, request: Request):
+                                self.request = request
+
+
+                        class $3L:
+                            ""\"An asynchronous HTTP client solely for testing purposes.""\"
+
+                            async def send(
+                                self, request: Request, request_config: HttpRequestConfiguration
+                            ) -> Response:
+                                # Raise the exception with the request object to bypass actual request handling
+                                raise $1T(request)
+
+
+                        class $4L:
+                            ""\"An asynchronous HTTP client solely for testing purposes.""\"
+
+                            def __init__(self, status_code: int, headers: HeadersList, body: Any):
+                                self.status_code = status_code
+                                self.headers = headers
+                                self.body = body
+
+                            async def send(
+                                self, request: Request, request_config: HttpRequestConfiguration
+                            ) -> Response:
+                                # Pre-construct the response from the request and return it
+                                return _Response(self.status_code, self.headers, self.body)
+                        """,
+            TEST_HTTP_SERVICE_ERR_SYMBOL,
+            CodegenUtils.getServiceError(context.settings()),
+            REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
+            RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL
+        );
     }
+
+
 
     /**
      * NodeVisitor implementation for converting node values for
@@ -416,6 +550,58 @@ public final class HttpProtocolTestGenerator implements Runnable {
                             (Runnable) () -> node.accept(new ValueNodeVisitor(targetShape)))
             );
             return null;
+        }
+    }
+
+    /**
+     * Implements Python formatting for the {@code J} formatter.
+     *
+     * <p>Convert an Object in Java to a literal python representation.
+     * The type of Object is constrained to a set of standard types in Java
+     *
+     * <p>For example:
+     * <pre>{@code
+     * List.of("a", "b") -> ["a", "b"]
+     * int[] {1, 2, 3} -> (1, 2, 3)
+     * Set.of("a", "b") -> {"a", "b"}
+     * String "abc" -> "abc"
+     * Integer 1 -> 1
+     * }</pre>
+     */
+    private final class JavaToPythonFormatter implements BiFunction<Object, String, String> {
+        @Override
+        public String apply(Object type, String indent) {
+            if (type instanceof List<?>) {
+                return apply(((List<?>) type).stream(), ",", "[", "]", indent);
+            } else if (type instanceof Object[]) {
+                return apply(Stream.of((Object[]) type), ",", "(", ")", indent);
+            } else if (type instanceof Set<?>) {
+                return apply(((Set<?>) type).stream(), ",", "{", "}", indent);
+            } else if (type instanceof Map<?, ?>) {
+                return apply((Map<?, ?>) type, ",", "{", "}", indent);
+            } else if (type instanceof String) {
+                return writer.format("$S", type);
+            } else if (type instanceof Number) {
+                return writer.format("$L", type);
+            } else {
+                throw new CodegenException(
+                        "Invalid type provided to $J: `" + type + "`");
+            }
+        }
+
+        private String apply(Stream<?> stream, String sep, String start, String end, String indent) {
+            return mapApply(stream, indent).collect(Collectors.joining(sep, start, end));
+        }
+
+        private String apply(Map<?, ?> map, String sep, String start, String end, String indent) {
+            return map.entrySet().stream().map((entry) -> {
+                return writer.format("$L: $L", apply(entry.getKey(), indent), apply(entry.getValue(), indent));
+            }).collect(Collectors.joining(sep, start, end));
+        }
+
+        private Stream<String> mapApply(Stream<?> stream, String indent) {
+            Set<String> test;
+            return stream.map((item) -> apply(item, indent));
         }
     }
 }

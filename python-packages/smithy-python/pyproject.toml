@@ -45,3 +45,6 @@ exclude=["tests*", "codegen", "designs"]
 profile = "black"
 honor_noqa = true
 src_paths = ["smithy_python", "tests"]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
