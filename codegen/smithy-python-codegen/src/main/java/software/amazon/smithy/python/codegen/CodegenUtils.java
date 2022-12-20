@@ -25,6 +25,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.CodegenException;
@@ -190,5 +191,22 @@ public final class CodegenUtils {
             return packageName;
         }
         return packageName.substring(packageName.lastIndexOf('/') + 1);
+    }
+
+    /**
+     * Convert a map of k,v to a list of pairwise arrays.
+     *
+     * <p>For example:
+     *
+     * <pre>{@code
+     * Map.of("a", 1, "b", 2) -> List.of({"a", 1}, {"b", 2})
+     * }</pre>
+     *
+     * @param map The map to be converted
+     * @return The list of arrays
+     */
+    public static List<Object[]> toTuples(Map<?, ?> map) {
+        return map.entrySet().stream().map((entry) ->
+                List.of(entry.getKey(), entry.getValue()).toArray()).toList();
     }
 }

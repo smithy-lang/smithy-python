@@ -15,6 +15,7 @@
 
 package software.amazon.smithy.python.codegen;
 
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.CodegenException;
@@ -200,6 +201,37 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
      */
     public PythonWriter addImport(String namespace, String name, String alias) {
         getImportContainer().addImport(namespace, name, alias);
+        return this;
+    }
+
+    /**
+     * Imports a set of types from a module only if necessary.
+     *
+     * @param namespace Module to import the type from.
+     * @param names Set of types to import.
+     * @return Returns the writer.
+     */
+    public PythonWriter addImports(String namespace, Set<String> names) {
+        names.forEach((name) -> getImportContainer().addImport(namespace, name, name));
+        return this;
+    }
+
+    /**
+     * Conditionally write text.
+     *
+     * <p>Useful for short-handing a conditional write when
+     * you aren't able to use the built-in conditional
+     * formatting functionality.
+     *
+     * @param shouldWrite Whether to write the text or not.
+     * @param content Content to write.
+     * @param args String arguments to use for formatting.
+     * @return Returns self.
+     */
+    public PythonWriter maybeWrite(boolean shouldWrite, Object content, Object... args) {
+        if (shouldWrite) {
+            write(content, args);
+        }
         return this;
     }
 
