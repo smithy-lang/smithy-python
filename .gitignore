@@ -8,6 +8,9 @@
 *.iml
 *.iws
 
+# VS Code
+.vscode/
+
 # Mac
 .DS_Store
 
@@ -29,6 +32,7 @@ __pycache__
 coverage.xml
 htmlcov
 *.egg_info
+*/*/*.egg-info
 dist
 venv/
 env/

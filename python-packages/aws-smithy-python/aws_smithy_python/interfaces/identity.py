@@ -12,19 +12,10 @@
 # language governing permissions and limitations under the License.
 
 from dataclasses import dataclass
-from datetime import datetime
 from typing import Any, Generic, Protocol, TypeVar
 
 from smithy_python.interfaces.http import Request
-
-
-class Identity(Protocol):
-    """An entity within the SDK representing who the customer is."""
-
-    expiration: datetime | None = None
-
-
-IdentityType = TypeVar("IdentityType", bound=Identity)
+from smithy_python.interfaces.identity import Identity, IdentityType
 
 
 class AwsCredentialIdentity(Identity):
@@ -34,37 +25,15 @@ class AwsCredentialIdentity(Identity):
     session_token: str | None = None
 
 
-class TokenIdentity(Identity):
-
-    token: str
-
-
-class LoginIdentity(Identity):
-
-    username: str
-    password: str
-
-
-class AnonymousIdentity(Identity):
-    ...
-
-
-# Ignore this for now.
-@dataclass(kw_only=True)
-class PropertyBag:
-    """A grab bag of properties loaded from the service's authentication rules."""
-
-    ...
-
-
 class IdentityResolver(Generic[IdentityType]):
-    """Used to load a customer's `Identity` from a given source. Each `Identity` has
-    one or more resolver implementations. The default resolver for AWS consults
-    environment variables, IMDS, ~/.aws, etc.
+    """Used to load a customer's `Identity` from a given source.
+
+    Each `Identity` has one or more resolver implementations. The default resolver
+    for AWS consults environment variables, IMDS, ~/.aws, etc.
     """
 
     async def get_identity(
-        self, *, identity_properties: PropertyBag, **kwargs: dict[str, Any]
+        self, *, identity_properties: dict[str, Any]
     ) -> IdentityType:
         """Load the customer's identity from this resolver. Additional keyword
         arguments can be provided.
@@ -80,14 +49,14 @@ class IdentityResolver(Generic[IdentityType]):
 IdentityResolverType = TypeVar("IdentityResolverType", bound=IdentityResolver[Identity])
 
 
-class IdentityResolverConfiguration(Generic[IdentityResolverType]):
-    """The identity resolvers configured in the SDK."""
+class IdentityResolverConfiguration(Protocol):
+    """The identity resolvers configured in the client."""
 
     # TODO: Should we we use an IdentityType type or just a string delineating
     # the different identity types?
     def get_identity_resolver(
-        self, identity_type: IdentityType
-    ) -> IdentityResolverType:
+        self, identity_type: type[IdentityType]
+    ) -> IdentityResolver[IdentityType]:
         """Retrieve an identity resolver for the provided identity type.
 
         :param identity_type: The type of identity to resolve.
@@ -99,7 +68,7 @@ class IdentityResolverConfiguration(Generic[IdentityResolverType]):
         ...
 
 
-class HttpSigner(Generic[IdentityType]):
+class HttpSigner(Protocol):
     """An entity within the SDK representing a way to generate a signature for a
     request.
     """
@@ -108,7 +77,7 @@ class HttpSigner(Generic[IdentityType]):
         self,
         http_request: Request,
         identity: IdentityType,
-        signing_properties: PropertyBag,
+        signing_properties: dict[str, Any],
     ) -> Request:
         """Sign the provided HTTP request, and generate a new HTTP request with the
         signature added.
@@ -128,7 +97,7 @@ class HttpSigner(Generic[IdentityType]):
         ...
 
 
-HttpSignerType = TypeVar("HttpSignerType", bound=HttpSigner[Identity])
+HttpSignerType = TypeVar("HttpSignerType", bound=HttpSigner)
 
 
 @dataclass(kw_only=True)
@@ -156,10 +125,10 @@ class HttpAuthOption:
     HttpAuthScheme.scheme_id
     """
 
-    identity_properties: PropertyBag
+    identity_properties: dict[str, Any]
     """Parameters to pass to IdentityResolver.get_identity."""
 
-    signer_properties: PropertyBag
+    signer_properties: dict[str, Any]
     """Parameters to pass to HttpSigner.sign."""
 
 
