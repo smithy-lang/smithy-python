@@ -16,7 +16,3 @@ from smithy_python.exceptions import SmithyException
 
 class AwsSmithyException(SmithyException):
     """Base exception type for all exceptions raised by aws-smithy-python."""
-
-
-class SmithyIdentityException(AwsSmithyException):
-    """Base exception type for all exceptions raised in identity resolution."""

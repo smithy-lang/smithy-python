@@ -22,3 +22,5 @@ class SmithyRetryException(SmithyException):
 
 class ExpectationNotMetException(SmithyException):
     """Exception type for exceptions thrown by unmet assertions."""
+class SmithyIdentityException(SmithyException):
+    """Base exception type for all exceptions raised in identity resolution."""
