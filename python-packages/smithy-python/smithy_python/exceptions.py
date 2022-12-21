@@ -18,3 +18,7 @@ class SmithyException(Exception):
 
 class SmithyRetryException(SmithyException):
     """Base exception type for all exceptions raised in retry strategies."""
+
+
+class SmithyIdentityException(SmithyException):
+    """Base exception type for all exceptions raised in identity resolution."""
