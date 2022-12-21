@@ -30,6 +30,7 @@ import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonWriter;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
+import software.amazon.smithy.utils.CodeSection;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
@@ -70,11 +71,13 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
             var input = context.model().expectShape(operation.getInputShape());
             var inputSymbol = context.symbolProvider().toSymbol(input);
             delegator.useFileWriter(serFunction.getDefinitionFile(), serFunction.getNamespace(), writer -> {
+                writer.pushState(new RequestSerializerSection(operation));
                 writer.write("""
                     async def $L(input: $T, config: $T) -> $T:
                         ${C|}
                     """, serFunction.getName(), inputSymbol, configSymbol, transportRequest,
                     writer.consumer(w -> generateRequestSerializer(context, operation, w)));
+                writer.popState();
             });
         }
     }
@@ -125,6 +128,13 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
     }
 
     /**
+     * A section that controls writing out the entire serialization function.
+     *
+     * @param operation The operation whose serializer is being generated.
+     */
+    public record RequestSerializerSection(OperationShape operation) implements CodeSection {}
+
+    /**
      * Serializes headers, including standard headers like content-type
      * and protocol-specific standard headers.
      */
@@ -134,11 +144,23 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         OperationShape operation,
         HttpBindingIndex bindingIndex
     ) {
+        writer.pushState(new SerializeFieldsSection(operation));
         // TODO: map headers from inputs
         // TODO: write out default http and protocol headers
         writer.addImport("smithy_python.interfaces.http", "HeadersList", "_HeadersList");
         writer.write("headers: _HeadersList = []");
+        writer.popState();
     }
+
+    /**
+     * A section that controls serializing HTTP fields, namely headers.
+     *
+     * <p>By default, it handles setting protocol default values and values based on
+     * the smithy.api#httpHeader and smithy.api#httpPrefixHeaders traits.
+     *
+     * @param operation The operation whose fields section is being generated.
+     */
+    public record SerializeFieldsSection(OperationShape operation) implements CodeSection {}
 
     /**
      * Serializes the path, including resolving any path bindings.
@@ -150,8 +172,20 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         HttpBindingIndex bindingIndex
     ) {
         // TODO: map path entries from input
+        writer.pushState(new SerializePathSection(operation));
         writer.write("path: str = '/'");
+        writer.popState();
     }
+
+    /**
+     * A section that controls path serialization.
+     *
+     * <p>By default, it handles setting static values and labels based on
+     * the smithy.api#http and smithy.api#httpLabel traits.
+     *
+     * @param operation The operation whose path section is being generated.
+     */
+    public record SerializePathSection(OperationShape operation) implements CodeSection {}
 
     /**
      * Serializes the query in the form of a list of tuples.
@@ -162,7 +196,8 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         OperationShape operation,
         HttpBindingIndex bindingIndex
     ) {
-        writer.write("query_params: list[tuple[str, str]] = []");
+        writer.pushState(new SerializeQuerySection(operation));
+        writer.write("query_params: list[tuple[str, str | None]] = []");
         // TODO: implement query serialization
 
         writer.write("""
@@ -170,9 +205,23 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
             for i, param in enumerate(query_params):
                 if i != 1:
                     query += "&"
-                query += f"{param[0]}={param[1]}"
+                if param[1] is None:
+                    query += param[0]
+                else:
+                    query += f"{param[0]}={param[1]}"
             """);
+        writer.popState();
     }
+
+    /**
+     * A section that controls query serialization.
+     *
+     * <p>By default, it handles setting static values and key-value pairs based on
+     * smithy.api#httpQuery and smithy.api#httpQueryParams.
+     *
+     * @param operation The operation whose query section is being generated.
+     */
+    public record SerializeQuerySection(OperationShape operation) implements CodeSection {}
 
     /**
      * Orchestrates body serialization.
@@ -186,6 +235,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         OperationShape operation,
         HttpBindingIndex bindingIndex
     ) {
+        writer.pushState(new SerializeBodySection(operation));
         writer.addStdlibImport("typing", "Any");
         writer.write("body: Any = b''");
 
@@ -198,7 +248,19 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         if (!payloadBindings.isEmpty()) {
             serializePayloadBody(context, writer, operation, payloadBindings.get(0));
         }
+        writer.popState();
     }
+
+    /**
+     * A section that controls serializing the request body.
+     *
+     * <p>By default, it handles calling out to body serialization functions for every
+     * input member that is bound to the document, or which uses the smithy.api#httpPayload
+     * trait.
+     *
+     * @param operation The operation whose body section is being generated.
+     */
+    public record SerializeBodySection(OperationShape operation) implements CodeSection {}
 
     /**
      * Writes the code needed to serialize a protocol input document.
@@ -271,11 +333,13 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
             var output = context.model().expectShape(operation.getOutputShape());
             var outputSymbol = context.symbolProvider().toSymbol(output);
             delegator.useFileWriter(deserFunction.getDefinitionFile(), deserFunction.getNamespace(), writer -> {
+                writer.pushState(new ResponseDeserializerSection(operation));
                 writer.write("""
                     async def $L(http_response: $T, config: $T) -> $T:
                         ${C|}
                     """, deserFunction.getName(), transportResponse, configSymbol, outputSymbol,
                     writer.consumer(w -> generateResponseDeserializer(context, writer, operation)));
+                writer.popState();
             });
         }
     }
@@ -312,14 +376,33 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         writer.write("return $T(**args)", outputSymbol);
     }
 
+    /**
+     * A section that controls writing out the entire deserialization function.
+     *
+     * @param operation The operation whose deserializer is being generated.
+     */
+    public record ResponseDeserializerSection(OperationShape operation) implements CodeSection {}
+
     private void deserializeHeaders(
         GenerationContext context,
         PythonWriter writer,
         OperationShape operation,
         HttpBindingIndex bindingIndex
     ) {
+        writer.pushState(new DeserializeFieldsSection(operation));
         // TODO: implement header deserialization
+        writer.popState();
     }
+
+    /**
+     * A section that controls deserializing HTTP fields, namely headers.
+     *
+     * <p>By default, it handles values based on smithy.api#httpHeader and
+     * smithy.api#httpPrefixHeaders traits.
+     *
+     * @param operation The operation whose fields section is being generated.
+     */
+    public record DeserializeFieldsSection(OperationShape operation) implements CodeSection {}
 
     private void deserializeStatusCode(
         GenerationContext context,
@@ -327,8 +410,17 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         OperationShape operation,
         HttpBindingIndex bindingIndex
     ) {
+        writer.pushState(new DeserializeStatusCodeSection(operation));
         // TODO: implement status code deserialization
+        writer.popState();
     }
+
+    /**
+     * A section that controls deserializing the HTTP status code.
+     *
+     * @param operation The operation whose status code section is being generated.
+     */
+    public record DeserializeStatusCodeSection(OperationShape operation) implements CodeSection {}
 
     private void deserializeBody(
         GenerationContext context,
@@ -336,6 +428,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         OperationShape operation,
         HttpBindingIndex bindingIndex
     ) {
+        writer.pushState(new DeserializeBodySection(operation));
         // TODO: implement body deserialization
         var documentBindings = bindingIndex.getResponseBindings(operation, DOCUMENT);
         if (!documentBindings.isEmpty() || shouldWriteDefaultBody(context, operation)) {
@@ -346,7 +439,19 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         if (!payloadBindings.isEmpty()) {
             deserializePayloadBody(context, writer, operation, payloadBindings.get(0));
         }
+        writer.popState();
     }
+
+    /**
+     * A section that controls deserializing the response body.
+     *
+     * <p>By default, it handles calling out to body deserialization functions for every
+     * output member that is bound to the document, or which uses the smithy.api#httpPayload
+     * trait.
+     *
+     * @param operation The operation whose body section is being generated.
+     */
+    public record DeserializeBodySection(OperationShape operation) implements CodeSection {}
 
     /**
      * Writes the code needed to deserialize a protocol output document.
