@@ -48,15 +48,21 @@ class URI:
         Returns a string of the form
         ``{scheme}://{username}:{password}@{host}:{port}{path}?{query}#{fragment}``
         """
+        netloc = self.host
+        if self.port is not None:
+            netloc += f":{self.port}"
+        if self.username is not None:
+            if self.password is not None:
+                netloc = f"{self.username}:{self.password}@{netloc}"
+            else:
+                netloc = f"{self.username}@{netloc}"
         components = (
             self.scheme,
-            self.host,
+            netloc,
             self.path or "",
             "",  # params
             self.query,
             self.fragment,
-            self.username,
-            self.password,
         )
         return urlunparse(components)
 

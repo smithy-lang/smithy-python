@@ -11,6 +11,8 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+import pytest
+
 from smithy_python._private.http import (
     URI,
     Request,
@@ -34,6 +36,35 @@ def test_url() -> None:
     assert url.scheme == "http"
     assert url.query == "foo=bar"
     assert url.port == 80
+
+
+@pytest.mark.parametrize(
+    "uri,expected_url",
+    [
+        (
+            URI(
+                host="test.com",
+                path="/my/path",
+                scheme="http",
+                query="foo=bar",
+                port=80,
+            ),
+            "http://test.com:80/my/path?foo=bar",
+        ),
+        (
+            URI(
+                host="test.com",
+                path="/my/path",
+                scheme="http",
+                query="foo=bar",
+                port=80,
+            ),
+            "http://test.com:80/my/path?foo=bar",
+        ),
+    ],
+)
+def test_uri_build(uri: URI, expected_url: str) -> None:
+    assert uri.build() == expected_url
 
 
 def test_request() -> None:
