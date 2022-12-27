@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 
 from datetime import datetime
-from typing import Any, Generic, Protocol, TypeVar
+from typing import Any, Protocol, TypeVar
 
 from .http import Request
 
@@ -41,7 +41,7 @@ class AnonymousIdentity(Identity):
     ...
 
 
-class IdentityResolver(Generic[IdentityType]):
+class IdentityResolver(Protocol):
     """Used to load a user's `Identity` from a given source.
 
     Each `Identity` has one or more resolver implementations. The default resolver
@@ -61,7 +61,7 @@ class IdentityResolver(Generic[IdentityType]):
         ...
 
 
-IdentityResolverType = TypeVar("IdentityResolverType", bound=IdentityResolver[Identity])
+IdentityResolverType = TypeVar("IdentityResolverType", bound=IdentityResolver)
 
 
 class IdentityResolverConfiguration(Protocol):
@@ -71,7 +71,7 @@ class IdentityResolverConfiguration(Protocol):
     # the different identity types?
     def get_identity_resolver(
         self, identity_type: type[IdentityType]
-    ) -> IdentityResolver[IdentityType]:
+    ) -> IdentityResolver:
         """Retrieve an identity resolver for the provided identity type.
 
         :param identity_type: The type of identity to resolve.

@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 
 from dataclasses import dataclass
-from typing import Any, Generic, TypeVar
+from typing import Any, Generic, Protocol, TypeVar
 
 from smithy_python.interfaces.identity import (
     HttpSignerType,
@@ -77,7 +77,7 @@ AuthSchemeParametersType = TypeVar(
 )
 
 
-class AuthSchemeResolver(Generic[AuthSchemeParametersType]):
+class AuthSchemeResolver(Protocol):
     """Determines which authentication scheme to use for a given AWS service.
     Code-generated per service.
     """
