@@ -65,4 +65,40 @@ public final class HttpProtocolGeneratorUtils {
                 throw new CodegenException("Unexpected timestamp format `" + format + "` on " + shape);
         }
     }
+
+    /**
+     * Given a format and a source of data, generate an output value provider for the
+     * timestamp.
+     *
+     * @param writer The current writer (so that imports may be added)
+     * @param dataSource The in-code location of the data to provide an output of
+     *                   ({@code output.foo}, {@code entry}, etc.)
+     * @param shape The shape that represents the value being received.
+     * @param format The timestamp format to provide.
+     * @return Returns a value or expression of the output timestamp.
+     */
+    public static String getTimestampOutputParam(
+        PythonWriter writer,
+        String dataSource,
+        Shape shape,
+        Format format
+    ) {
+        switch (format) {
+            case DATE_TIME:
+                writer.addImport("smithy_python.utils", "ensure_utc");
+                writer.addStdlibImport("datetime", "datetime");
+                return "ensure_utc(datetime.fromisoformat(" + dataSource + "))";
+            case EPOCH_SECONDS:
+                writer.addStdlibImport("datetime", "datetime");
+                writer.addStdlibImport("datetime", "timezone");
+                writer.addImport("smithy_python.utils", "expect_type");
+                return "datetime.fromtimestamp(expect_type(int, " + dataSource + "), timezone.utc)";
+            case HTTP_DATE:
+                writer.addImport("smithy_python.utils", "ensure_utc");
+                writer.addStdlibImport("email.utils", "parsedate_to_datetime");
+                return "ensure_utc(parsedate_to_datetime(" + dataSource + "))";
+            default:
+                throw new CodegenException("Unexpected timestamp format `" + format + "` on " + shape);
+        }
+    }
 }

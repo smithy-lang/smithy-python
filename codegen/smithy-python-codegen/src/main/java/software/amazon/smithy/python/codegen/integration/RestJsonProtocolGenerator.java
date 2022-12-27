@@ -16,14 +16,21 @@
 package software.amazon.smithy.python.codegen.integration;
 
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.stream.Collectors;
 import software.amazon.smithy.aws.traits.protocols.RestJson1Trait;
 import software.amazon.smithy.model.knowledge.HttpBinding;
+import software.amazon.smithy.model.knowledge.NeighborProviderIndex;
+import software.amazon.smithy.model.neighbor.Walker;
 import software.amazon.smithy.model.shapes.OperationShape;
+import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.HttpProtocolTestGenerator;
 import software.amazon.smithy.python.codegen.PythonWriter;
+import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
@@ -74,6 +81,39 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         OperationShape operation,
         List<HttpBinding> documentBindings
     ) {
-        // TODO: implement this
+        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+        writer.addStdlibImport("json", "loads");
+
+        writer.write("""
+            body = await http_response.body.read()
+            output = loads(body.decode('utf-8'))
+
+            """);
+
+        var bodyMembers = documentBindings.stream()
+            .map(HttpBinding::getMember)
+            .collect(Collectors.toSet());
+
+        var deserVisitor = new JsonShapeDeserVisitor(context, writer);
+        deserVisitor.structureMembers(bodyMembers);
+    }
+
+    @Override
+    protected void generateDocumentBodyShapeDeserializers(
+        GenerationContext context,
+        Set<Shape> shapes
+    ) {
+        var shapeWalker = new Walker(NeighborProviderIndex.of(context.model()).getProvider());
+        var shapesToGenerate = new TreeSet<>(shapes);
+        shapes.forEach(shape -> shapesToGenerate.addAll(shapeWalker.walkShapes(shape)));
+
+        for (Shape shape : shapesToGenerate) {
+            var deserFunction = context.protocolGenerator().getDeserializationFunction(context, shape);
+
+            context.writerDelegator().useFileWriter(deserFunction.getDefinitionFile(),
+                    deserFunction.getNamespace(), writer -> {
+                shape.accept(new JsonShapeDeserVisitor(context, writer));
+            });
+        }
     }
 }

@@ -105,8 +105,9 @@ final class UnionGenerator implements Runnable {
             writer.write("");
         }
 
+        var unknownSymbol = symbolProvider.toSymbol(shape).expectProperty("unknown", Symbol.class);
         writer.write("""
-                class $1LUnknown():
+                class $1L():
                     \"""Represents an unknown variant.
 
                     If you receive this value, you will need to update your library to receive the
@@ -122,13 +123,13 @@ final class UnionGenerator implements Runnable {
                         return {"SDK_UNKNOWN_MEMBER": {"name": self.tag}}
 
                     @staticmethod
-                    def from_dict(d: Dict[str, Any]) -> "$1LUnknown":
+                    def from_dict(d: Dict[str, Any]) -> "$1L":
                         if (len(d) != 1):
                             raise TypeError(f"Unions may have exactly 1 value, but found {len(d)}")
-                        return $1LUnknown(d["SDK_UNKNOWN_MEMBER"]["name"])
+                        return $1L(d["SDK_UNKNOWN_MEMBER"]["name"])
 
-                """, parentName);
-        memberNames.add(parentName + "Unknown");
+                """, unknownSymbol.getName());
+        memberNames.add(unknownSymbol.getName());
 
         shape.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeComment(trait.getValue()));
         writer.addStdlibImport("typing", "Union");
