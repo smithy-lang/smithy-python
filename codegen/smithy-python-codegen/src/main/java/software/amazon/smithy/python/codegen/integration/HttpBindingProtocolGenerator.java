@@ -22,6 +22,8 @@ import static software.amazon.smithy.model.knowledge.HttpBinding.Location.PAYLOA
 import static software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 
 import java.util.List;
+import java.util.Set;
+import java.util.TreeSet;
 import java.util.stream.Collectors;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.model.knowledge.HttpBinding;
@@ -52,6 +54,8 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
  */
 @SmithyUnstableApi
 public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator {
+
+    private final Set<Shape> deserializingDocumentShapes = new TreeSet<>();
 
     @Override
     public ApplicationProtocol getApplicationProtocol() {
@@ -528,6 +532,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 writer.popState();
             });
         }
+        generateDocumentBodyShapeDeserializers(context, deserializingDocumentShapes);
     }
 
     /**
@@ -556,6 +561,14 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         deserializeBody(context, writer, operation, bindingIndex);
         deserializeHeaders(context, writer, operation, bindingIndex);
         deserializeStatusCode(context, writer, operation, bindingIndex);
+
+        var documentBindings = bindingIndex.getResponseBindings(operation, DOCUMENT);
+
+        // TODO: exclude event stream shapes
+        for (HttpBinding binding : documentBindings) {
+            var target = context.model().expectShape(binding.getMember().getTarget());
+            deserializingDocumentShapes.add(target);
+        }
 
         var outputShape = context.model().expectShape(operation.getOutputShape());
         var outputSymbol = context.symbolProvider().toSymbol(outputShape);
@@ -623,11 +636,18 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         var documentBindings = bindingIndex.getResponseBindings(operation, DOCUMENT);
         if (!documentBindings.isEmpty() || shouldWriteDefaultBody(context, operation)) {
             deserializeDocumentBody(context, writer, operation, documentBindings);
+            for (HttpBinding binding : documentBindings) {
+                var target = context.model().expectShape(binding.getMember().getTarget());
+                deserializingDocumentShapes.add(target);
+            }
         }
 
         var payloadBindings = bindingIndex.getResponseBindings(operation, PAYLOAD);
         if (!payloadBindings.isEmpty()) {
-            deserializePayloadBody(context, writer, operation, payloadBindings.get(0));
+            var binding = payloadBindings.get(0);
+            deserializePayloadBody(context, writer, operation, binding);
+            var target = context.model().expectShape(binding.getMember().getTarget());
+            deserializingDocumentShapes.add(target);
         }
         writer.popState();
     }
@@ -654,7 +674,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      * <pre>{@code
      * data = json.loads(http_response.body.read().decode('utf-8'))
      * if 'spam' in data:
-     *     args['spam'] = data['spam']
+     *     kwargs['spam'] = data['spam']
      * }</pre>
      * @param context The generation context.
      * @param writer The writer to write to.
@@ -666,6 +686,20 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         PythonWriter writer,
         OperationShape operation,
         List<HttpBinding> documentBindings
+    );
+
+
+    /**
+     * Generates deserialization functions for shapes in the given set.
+     *
+     * <p>These are the functions that deserializeDocumentBody will call out to.
+     *
+     * @param context The generation context.
+     * @param shapes The shapes to generate deserialization for.
+     */
+    protected abstract void generateDocumentBodyShapeDeserializers(
+        GenerationContext context,
+        Set<Shape> shapes
     );
 
     /**

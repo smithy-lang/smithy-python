@@ -65,8 +65,8 @@ public interface ProtocolGenerator {
      * @return Returns the generated function name.
      */
     default String getSerializationFunctionName(GenerationContext context, ToShapeId shapeId) {
-        var shapeSymbol = context.symbolProvider().toSymbol(context.model().expectShape(shapeId.toShapeId()));
-        return "_serialize_" + CaseUtils.toSnakeCase(shapeSymbol.getName());
+        var name = context.settings().getService(context.model()).getContextualName(shapeId);
+        return "_serialize_" + CaseUtils.toSnakeCase(name);
     }
 
     /**
@@ -92,8 +92,8 @@ public interface ProtocolGenerator {
      * @return Returns the generated function name.
      */
     default String getDeserializationFunctionName(GenerationContext context, ToShapeId shapeId) {
-        var shapeSymbol = context.symbolProvider().toSymbol(context.model().expectShape(shapeId.toShapeId()));
-        return "_deserialize_" + CaseUtils.toSnakeCase(shapeSymbol.getName());
+        var name = context.settings().getService(context.model()).getContextualName(shapeId);
+        return "_deserialize_" + CaseUtils.toSnakeCase(name);
     }
 
     /**

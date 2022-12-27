@@ -381,9 +381,16 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol unionShape(UnionShape shape) {
         String name = getDefaultShapeName(shape);
+
+        var unknownName = name + "Unknown";
+        var unknownSymbol = createSymbolBuilder(shape, unknownName, format("%s.models", settings.getModuleName()))
+            .definitionFile(format("./%s/models.py", settings.getModuleName()))
+            .build();
+
         return createSymbolBuilder(shape, name, format("%s.models", settings.getModuleName()))
                 .definitionFile(format("./%s/models.py", settings.getModuleName()))
                 .putProperty("fromDict", createFromDictFunctionSymbol(shape))
+                .putProperty("unknown", unknownSymbol)
                 .build();
     }
 
