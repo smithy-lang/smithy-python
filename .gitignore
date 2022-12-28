@@ -32,12 +32,7 @@ __pycache__
 coverage.xml
 htmlcov
 *.egg_info
-*/*/*.egg-info
 dist
-venv/
-env/
-.venv/
-.python-version
 
 # Pants workspace files
 /.pants.d/
