@@ -20,20 +20,93 @@ from smithy_python._private.http import (
 )
 
 
-def test_url() -> None:
-    url = URI(
+def test_uri_basic() -> None:
+    uri = URI(
+        host="test.com",
+        path="/my/path",
+        query="foo=bar",
+    )
+
+    assert uri.host == "test.com"
+    assert uri.path == "/my/path"
+    assert uri.query == "foo=bar"
+    assert uri.netloc == "test.com"
+    assert uri.build() == "https://test.com/my/path?foo=bar"
+
+
+def test_uri_all_fields_present() -> None:
+    uri = URI(
         host="test.com",
         path="/my/path",
         scheme="http",
         query="foo=bar",
         port=80,
+        username="abc",
+        password="def",
+        fragment="frag",
     )
 
-    assert url.host == "test.com"
-    assert url.path == "/my/path"
-    assert url.scheme == "http"
-    assert url.query == "foo=bar"
-    assert url.port == 80
+    assert uri.host == "test.com"
+    assert uri.path == "/my/path"
+    assert uri.scheme == "http"
+    assert uri.query == "foo=bar"
+    assert uri.port == 80
+    assert uri.username == "abc"
+    assert uri.password == "def"
+    assert uri.fragment == "frag"
+    assert uri.netloc == "abc:def@test.com:80"
+    assert uri.build() == "http://abc:def@test.com:80/my/path?foo=bar#frag"
+
+
+def test_uri_without_scheme_field() -> None:
+    uri = URI(
+        host="test.com",
+        path="/my/path",
+        query="foo=bar",
+        port=80,
+        username="abc",
+        password="def",
+        fragment="frag",
+    )
+    # scheme should default to https
+    assert uri.scheme == "https"
+    assert uri.build() == "https://abc:def@test.com:80/my/path?foo=bar#frag"
+
+
+def test_uri_without_port_number() -> None:
+    uri = URI(
+        host="test.com",
+        path="/my/path",
+        scheme="http",
+        query="foo=bar",
+        username="abc",
+        password="def",
+        fragment="frag",
+    )
+    # by default, the port is omitted from computed netloc and built URI string
+    assert uri.port is None
+    assert uri.netloc == "abc:def@test.com"
+    assert uri.build() == "http://abc:def@test.com/my/path?foo=bar#frag"
+
+
+def test_uri_non_ascii_hostname() -> None:
+    uri = URI(host="umlaut-äöü.aws.dev")
+    assert uri.host == "umlaut-äöü.aws.dev"
+    assert uri.netloc == "umlaut-äöü.aws.dev"
+    assert uri.build() == "https://umlaut-äöü.aws.dev"
+
+
+def test_uri_escaped_path() -> None:
+    uri = URI(host="test.aws.dev", path="/%20%2F")
+    assert uri.path == "/%20%2F"
+    assert uri.build() == "https://test.aws.dev/%20%2F"
+
+
+def test_uri_password_but_no_username() -> None:
+    uri = URI(host="test.aws.dev", password="def")
+    assert uri.password == "def"
+    # the password is ignore if no username is present
+    assert uri.netloc == "test.aws.dev"
 
 
 def test_request() -> None:
@@ -50,7 +123,7 @@ def test_request() -> None:
     assert request.body == b"test body"
 
 
-def test_resposne() -> None:
+def test_response() -> None:
     response = Response(
         status_code=200,
         headers=[("foo", "bar")],

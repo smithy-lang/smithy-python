@@ -29,18 +29,33 @@ class URI:
         scheme: str | None = None,
         query: str | None = None,
         port: int | None = None,
+        username: str | None = None,
+        password: str | None = None,
+        fragment: str | None = None,
     ):
         self.scheme: str = "https" if scheme is None else scheme
         self.host = host
         self.port = port
         self.path = path
         self.query = query
+        self.username = username
+        self.password = password
+        self.fragment = fragment
 
-        # Properties required by the ``http_interface.URI`` interface but not used in
-        # this implementation.
-        self.username: str | None = None
-        self.password: str | None = None
-        self.fragment: str | None = None
+    @property
+    def netloc(self) -> str:
+        """Construct netloc string in format ``{username}:{password}@{host}:{port}``
+
+        ``username``, ``password``, and ``port`` are only included if set. ``password``
+        is ignored, unless ``username`` is also set.
+        """
+        if self.username is not None:
+            password = "" if self.password is None else f":{self.password}"
+            userinfo = f"{self.username}{password}@"
+        else:
+            userinfo = ""
+        port = "" if self.port is None else f":{self.port}"
+        return f"{userinfo}{self.host}{port}"
 
     def build(self) -> str:
         """Construct URI string representation.
@@ -50,13 +65,11 @@ class URI:
         """
         components = (
             self.scheme,
-            self.host,
+            self.netloc,
             self.path or "",
             "",  # params
             self.query,
             self.fragment,
-            self.username,
-            self.password,
         )
         return urlunparse(components)
 
