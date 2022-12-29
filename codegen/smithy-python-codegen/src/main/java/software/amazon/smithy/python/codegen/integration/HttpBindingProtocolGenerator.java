@@ -597,7 +597,11 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         HttpBindingIndex bindingIndex
     ) {
         writer.pushState(new DeserializeStatusCodeSection(operation));
-        // TODO: implement status code deserialization
+        var statusBinding = bindingIndex.getResponseBindings(operation, Location.RESPONSE_CODE);
+        if (!statusBinding.isEmpty()) {
+            var statusMember = context.symbolProvider().toMemberName(statusBinding.get(0).getMember());
+            writer.write("kwargs[$S] = http_response.status_code", statusMember);
+        }
         writer.popState();
     }
 
