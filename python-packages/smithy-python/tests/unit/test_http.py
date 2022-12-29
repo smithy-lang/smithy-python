@@ -22,21 +22,21 @@ from smithy_python._private.http import (
 
 def test_uri_basic() -> None:
     uri = URI(
-        host="test.com",
+        host="test.aws.dev",
         path="/my/path",
         query="foo=bar",
     )
 
-    assert uri.host == "test.com"
+    assert uri.host == "test.aws.dev"
     assert uri.path == "/my/path"
     assert uri.query == "foo=bar"
-    assert uri.netloc == "test.com"
-    assert uri.build() == "https://test.com/my/path?foo=bar"
+    assert uri.netloc == "test.aws.dev"
+    assert uri.build() == "https://test.aws.dev/my/path?foo=bar"
 
 
 def test_uri_all_fields_present() -> None:
     uri = URI(
-        host="test.com",
+        host="test.aws.dev",
         path="/my/path",
         scheme="http",
         query="foo=bar",
@@ -46,7 +46,7 @@ def test_uri_all_fields_present() -> None:
         fragment="frag",
     )
 
-    assert uri.host == "test.com"
+    assert uri.host == "test.aws.dev"
     assert uri.path == "/my/path"
     assert uri.scheme == "http"
     assert uri.query == "foo=bar"
@@ -54,13 +54,13 @@ def test_uri_all_fields_present() -> None:
     assert uri.username == "abc"
     assert uri.password == "def"
     assert uri.fragment == "frag"
-    assert uri.netloc == "abc:def@test.com:80"
-    assert uri.build() == "http://abc:def@test.com:80/my/path?foo=bar#frag"
+    assert uri.netloc == "abc:def@test.aws.dev:80"
+    assert uri.build() == "http://abc:def@test.aws.dev:80/my/path?foo=bar#frag"
 
 
 def test_uri_without_scheme_field() -> None:
     uri = URI(
-        host="test.com",
+        host="test.aws.dev",
         path="/my/path",
         query="foo=bar",
         port=80,
@@ -70,12 +70,12 @@ def test_uri_without_scheme_field() -> None:
     )
     # scheme should default to https
     assert uri.scheme == "https"
-    assert uri.build() == "https://abc:def@test.com:80/my/path?foo=bar#frag"
+    assert uri.build() == "https://abc:def@test.aws.dev:80/my/path?foo=bar#frag"
 
 
 def test_uri_without_port_number() -> None:
     uri = URI(
-        host="test.com",
+        host="test.aws.dev",
         path="/my/path",
         scheme="http",
         query="foo=bar",
@@ -85,8 +85,8 @@ def test_uri_without_port_number() -> None:
     )
     # by default, the port is omitted from computed netloc and built URI string
     assert uri.port is None
-    assert uri.netloc == "abc:def@test.com"
-    assert uri.build() == "http://abc:def@test.com/my/path?foo=bar#frag"
+    assert uri.netloc == "abc:def@test.aws.dev"
+    assert uri.build() == "http://abc:def@test.aws.dev/my/path?foo=bar#frag"
 
 
 def test_uri_non_ascii_hostname() -> None:
@@ -110,7 +110,7 @@ def test_uri_password_but_no_username() -> None:
 
 
 def test_request() -> None:
-    url = URI(host="test.com")
+    url = URI(host="test.aws.dev")
     request = Request(
         url=url,
         headers=[("foo", "bar")],
