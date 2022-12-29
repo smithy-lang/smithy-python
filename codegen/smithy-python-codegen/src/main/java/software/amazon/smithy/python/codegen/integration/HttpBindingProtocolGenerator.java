@@ -550,7 +550,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         OperationShape operation
     ) {
         writer.addStdlibImport("typing", "Any");
-        writer.write("args: dict[str, Any] = {}");
+        writer.write("kwargs: dict[str, Any] = {}");
         var bindingIndex = HttpBindingIndex.of(context.model());
 
         deserializeBody(context, writer, operation, bindingIndex);
@@ -559,7 +559,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
 
         var outputShape = context.model().expectShape(operation.getOutputShape());
         var outputSymbol = context.symbolProvider().toSymbol(outputShape);
-        writer.write("return $T(**args)", outputSymbol);
+        writer.write("return $T(**kwargs)", outputSymbol);
     }
 
     /**
