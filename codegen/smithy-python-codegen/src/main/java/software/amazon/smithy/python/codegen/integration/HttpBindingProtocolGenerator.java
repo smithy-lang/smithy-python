@@ -562,14 +562,6 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         deserializeHeaders(context, writer, operation, bindingIndex);
         deserializeStatusCode(context, writer, operation, bindingIndex);
 
-        var documentBindings = bindingIndex.getResponseBindings(operation, DOCUMENT);
-
-        // TODO: exclude event stream shapes
-        for (HttpBinding binding : documentBindings) {
-            var target = context.model().expectShape(binding.getMember().getTarget());
-            deserializingDocumentShapes.add(target);
-        }
-
         var outputShape = context.model().expectShape(operation.getOutputShape());
         var outputSymbol = context.symbolProvider().toSymbol(outputShape);
         writer.write("return $T(**kwargs)", outputSymbol);
