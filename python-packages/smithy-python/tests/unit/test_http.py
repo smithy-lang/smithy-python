@@ -105,7 +105,7 @@ def test_uri_escaped_path() -> None:
 def test_uri_password_but_no_username() -> None:
     uri = URI(host="test.aws.dev", password="def")
     assert uri.password == "def"
-    # the password is ignore if no username is present
+    # the password is ignored if no username is present
     assert uri.netloc == "test.aws.dev"
 
 
