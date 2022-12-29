@@ -26,7 +26,6 @@ def test_basic_request(aws_request: Request) -> None:
     assert response.body.done
 
 
-@pytest.mark.asyncio
 async def test_async_basic_request(aws_request: Request) -> None:
     config = AwsCrtHttpSessionConfig(force_http_2=True)
     session = AsyncAwsCrtHttpSession(config=config)
