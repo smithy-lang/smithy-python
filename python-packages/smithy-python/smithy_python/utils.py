@@ -1,7 +1,7 @@
 from datetime import datetime, timezone
 from typing import Any, TypeVar
 
-from .exceptions import SmithyException
+from .exceptions import ExpectationNotMetException
 
 
 def ensure_utc(value: datetime) -> datetime:
@@ -56,5 +56,7 @@ def expect_type(typ: type[_T], value: Any) -> _T:
     :raises SmithyException: If the value does not match the type.
     """
     if not isinstance(value, typ):
-        raise SmithyException(f"Expected {typ}, found {type(value)}: {value}")
+        raise ExpectationNotMetException(
+            f"Expected {typ}, found {type(value)}: {value}"
+        )
     return value
