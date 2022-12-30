@@ -82,11 +82,11 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         List<HttpBinding> documentBindings
     ) {
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addStdlibImport("json", "loads");
+        writer.addStdlibImport("json", "loads", "json_loads");
 
         writer.write("""
             body = await http_response.body.read()
-            output = loads(body.decode('utf-8'))
+            output = json_loads(body)
 
             """);
 
