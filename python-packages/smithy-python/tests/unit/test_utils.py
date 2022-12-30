@@ -62,11 +62,7 @@ def test_expect_type_raises(typ: Any, value: Any) -> None:
     ],
 )
 def test_limited_parse_float(given: float | str, expected: float) -> None:
-    if expected is None:
-        with pytest.raises(SmithyException):
-            limited_parse_float(given)
-    else:
-        assert limited_parse_float(given) == expected
+    assert limited_parse_float(given) == expected
 
 
 @pytest.mark.parametrize(
