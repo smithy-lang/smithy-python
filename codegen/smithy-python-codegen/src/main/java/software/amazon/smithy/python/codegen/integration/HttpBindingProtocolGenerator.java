@@ -17,11 +17,14 @@ package software.amazon.smithy.python.codegen.integration;
 
 
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.DOCUMENT;
+import static software.amazon.smithy.model.knowledge.HttpBinding.Location.HEADER;
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.LABEL;
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.PAYLOAD;
+import static software.amazon.smithy.model.knowledge.HttpBinding.Location.PREFIX_HEADERS;
 import static software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -32,10 +35,24 @@ import software.amazon.smithy.model.knowledge.HttpBindingIndex;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
 import software.amazon.smithy.model.pattern.SmithyPattern;
 import software.amazon.smithy.model.pattern.SmithyPattern.Segment;
+import software.amazon.smithy.model.shapes.BigDecimalShape;
+import software.amazon.smithy.model.shapes.BigIntegerShape;
+import software.amazon.smithy.model.shapes.BlobShape;
+import software.amazon.smithy.model.shapes.BooleanShape;
+import software.amazon.smithy.model.shapes.ByteShape;
+import software.amazon.smithy.model.shapes.DoubleShape;
+import software.amazon.smithy.model.shapes.FloatShape;
+import software.amazon.smithy.model.shapes.IntegerShape;
+import software.amazon.smithy.model.shapes.ListShape;
+import software.amazon.smithy.model.shapes.LongShape;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.NumberShape;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.Shape;
+import software.amazon.smithy.model.shapes.ShapeVisitor;
+import software.amazon.smithy.model.shapes.ShortShape;
+import software.amazon.smithy.model.shapes.StringShape;
+import software.amazon.smithy.model.shapes.TimestampShape;
 import software.amazon.smithy.model.traits.HttpTrait;
 import software.amazon.smithy.model.traits.MediaTypeTrait;
 import software.amazon.smithy.python.codegen.ApplicationProtocol;
@@ -581,8 +598,91 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         HttpBindingIndex bindingIndex
     ) {
         writer.pushState(new DeserializeFieldsSection(operation));
-        // TODO: implement header deserialization
+        var individualBindings = bindingIndex.getResponseBindings(operation, HEADER);
+        var prefixBindings = bindingIndex.getResponseBindings(operation, PREFIX_HEADERS);
+
+        if (!individualBindings.isEmpty() || !prefixBindings.isEmpty()) {
+            writer.write("""
+            for key, value in http_response.headers:
+                _key_lowercase = key.lower()
+                ${C|}
+                ${C|}
+            """,
+                writer.consumer(w -> deserializeIndividualHeaders(context, w, individualBindings)),
+                writer.consumer(w -> deserializePrefixHeaders(context, w, prefixBindings))
+            );
+        }
+
         writer.popState();
+    }
+
+    private void deserializeIndividualHeaders(
+        GenerationContext context,
+        PythonWriter writer,
+        List<HttpBinding> bindings
+    ) {
+        if (bindings.isEmpty()) {
+            return;
+        }
+        writer.openBlock("match _key_lowercase:", "", () -> {
+            for (HttpBinding binding : bindings) {
+                // The httpHeader trait can be bound to a list, but not other
+                // collection types.
+                var target = context.model().expectShape(binding.getMember().getTarget());
+                var memberName = context.symbolProvider().toMemberName(binding.getMember());
+                var locationName = binding.getLocationName().toLowerCase(Locale.US);
+                var deserVisitor = new HttpMemberDeserVisitor(
+                    context, writer, binding.getLocation(), "value", binding.getMember(),
+                    getDocumentTimestampFormat()
+                );
+                var targetHandler = target.accept(deserVisitor);
+                if (target.isListShape()) {
+                    // A header list can be a comma-delimited single entry, a set of entries with
+                    // the same header key, or a combination of the two.
+                    writer.write("""
+                    case $1S:
+                        _$2L = $3L
+                        if $2S not in kwargs:
+                            kwargs[$2S] = _$2L
+                        else:
+                            kwargs[$2S].extend(_$2L)
+
+                    """, locationName, memberName, targetHandler);
+                } else {
+                    writer.write("""
+                    case $1S:
+                        kwargs[$2S] = $3L
+
+                    """, locationName, memberName, targetHandler);
+                }
+            }
+        });
+
+    }
+
+    private void deserializePrefixHeaders(
+        GenerationContext context,
+        PythonWriter writer,
+        List<HttpBinding> bindings
+    ) {
+        for (HttpBinding binding : bindings) {
+            var bindingTarget = context.model().expectShape(binding.getMember().getTarget()).asMapShape().get();
+            var mapTarget = context.model().expectShape(bindingTarget.getValue().getTarget());
+            var memberName = context.symbolProvider().toMemberName(binding.getMember());
+            var locationName = binding.getLocationName().toLowerCase(Locale.US);
+            var deserVisitor = new HttpMemberDeserVisitor(
+                context, writer, binding.getLocation(), "value", bindingTarget.getValue(),
+                getDocumentTimestampFormat()
+            );
+            // Prefix headers can only be maps of string to string, and they can't be sparse.
+            writer.write("""
+                if _key_lowercase.startswith($1S):
+                    if $2S not in kwargs:
+                        kwargs[$2S] = {}
+                    kwargs[$2S][key] = $3L
+
+                """, locationName, memberName, mapTarget.accept(deserVisitor));
+        }
     }
 
     /**
@@ -710,5 +810,189 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
     ) {
         // TODO: implement payload deserialization
         // This will have a default implementation since it'll mostly be standard
+    }
+
+    /**
+     * Given context and a source of data, generate an output value provider for the
+     * shape. This may use native types (like generating a datetime for timestamps)
+     * converters (like a b64decode) or invoke complex type deserializers to
+     * manipulate the dataSource into the proper output content.
+     */
+    private static class HttpMemberDeserVisitor extends ShapeVisitor.Default<String> {
+
+        private final GenerationContext context;
+        private final PythonWriter writer;
+        private final String dataSource;
+        private final Location bindingType;
+        private final MemberShape member;
+        private final Format defaultTimestampFormat;
+
+        /**
+         * @param context The generation context.
+         * @param writer The writer to add dependencies to.
+         * @param bindingType How this value is bound to the operation output.
+         * @param dataSource The in-code location of the data to provide an output of
+         *                   ({@code output.foo}, {@code entry}, etc.)
+         * @param member The member that points to the value being provided.
+         * @param defaultTimestampFormat The default timestamp format to use.
+         */
+        HttpMemberDeserVisitor(
+            GenerationContext context,
+            PythonWriter writer,
+            Location bindingType,
+            String dataSource,
+            MemberShape member,
+            Format defaultTimestampFormat
+        ) {
+            this.context = context;
+            this.writer = writer;
+            this.dataSource = dataSource;
+            this.bindingType = bindingType;
+            this.member = member;
+            this.defaultTimestampFormat = defaultTimestampFormat;
+        }
+
+        @Override
+        protected String getDefault(Shape shape) {
+            var protocolName = context.protocolGenerator().getName();
+            throw new CodegenException(String.format(
+                "Unsupported %s binding of %s to %s in %s using the %s protocol",
+                bindingType, member.getMemberName(), shape.getType(), member.getContainer(), protocolName));
+        }
+
+        @Override
+        public String blobShape(BlobShape shape) {
+            if (bindingType == PAYLOAD) {
+                return dataSource;
+            }
+            throw new CodegenException("Unexpected blob binding location `" + bindingType + "`");
+        }
+
+        @Override
+        public String booleanShape(BooleanShape shape) {
+            switch (bindingType) {
+                case QUERY, LABEL, HEADER -> {
+                    writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+                    writer.addImport("smithy_python.utils", "strict_parse_bool");
+                    return "strict_parse_bool(" + dataSource + ")";
+                }
+                default -> throw new CodegenException("Unexpected boolean binding location `" + bindingType + "`");
+            }
+        }
+
+        @Override
+        public String byteShape(ByteShape shape) {
+            // TODO: perform bounds checks
+            return integerShape();
+        }
+
+        @Override
+        public String shortShape(ShortShape shape) {
+            // TODO: perform bounds checks
+            return integerShape();
+        }
+
+        @Override
+        public String integerShape(IntegerShape shape) {
+            // TODO: perform bounds checks
+            return integerShape();
+        }
+
+        @Override
+        public String longShape(LongShape shape) {
+            // TODO: perform bounds checks
+            return integerShape();
+        }
+
+        @Override
+        public String bigIntegerShape(BigIntegerShape shape) {
+            return integerShape();
+        }
+
+        private String integerShape() {
+            return switch (bindingType) {
+                case QUERY, LABEL, HEADER, RESPONSE_CODE -> "int(" + dataSource + ")";
+                default -> throw new CodegenException("Unexpected integer binding location `" + bindingType + "`");
+            };
+        }
+
+        @Override
+        public String floatShape(FloatShape shape) {
+            // TODO: use strict parsing
+            return floatShapes();
+        }
+
+        @Override
+        public String doubleShape(DoubleShape shape) {
+            // TODO: use strict parsing
+            return floatShapes();
+        }
+
+        private String floatShapes() {
+            switch (bindingType) {
+                case QUERY, LABEL, HEADER -> {
+                    writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+                    writer.addImport("smithy_python.utils", "strict_parse_float");
+                    return "strict_parse_float(" + dataSource + ")";
+                }
+                default -> throw new CodegenException("Unexpected float binding location `" + bindingType + "`");
+            }
+        }
+
+        @Override
+        public String bigDecimalShape(BigDecimalShape shape) {
+            switch (bindingType) {
+                case QUERY, LABEL, HEADER -> {
+                    writer.addStdlibImport("decimal", "Decimal", "_Decimal");
+                    return "_Decimal(" + dataSource + ")";
+                }
+                default -> throw new CodegenException("Unexpected bigDecimal binding location `" + bindingType + "`");
+            }
+        }
+
+        @Override
+        public String stringShape(StringShape shape) {
+            if ((bindingType == HEADER || bindingType == PREFIX_HEADERS) && shape.hasTrait(MediaTypeTrait.ID)) {
+                writer.addStdlibImport("base64", "b64decode");
+                return  "b64decode(" + dataSource + ").decode('utf-8')";
+            }
+
+            return dataSource;
+        }
+
+        @Override
+        public String timestampShape(TimestampShape shape) {
+            HttpBindingIndex httpIndex = HttpBindingIndex.of(context.model());
+            Format format = httpIndex.determineTimestampFormat(member, bindingType, defaultTimestampFormat);
+            return HttpProtocolGeneratorUtils.getTimestampOutputParam(writer, dataSource, member, format);
+        }
+
+        @Override
+        public String listShape(ListShape shape) {
+            if (bindingType != HEADER) {
+                throw new CodegenException("Unexpected list binding location `" + bindingType + "`");
+            }
+            var collectionTarget = context.model().expectShape(shape.getMember().getTarget());
+
+            String split = "(" + dataSource + " or '').split(',')";
+
+            // Headers that have HTTP_DATE formatted timestamps already contain a ","
+            // in their formatted entry, so split on every other "," instead.
+            if (collectionTarget.isTimestampShape()) {
+                // Check if our member resolves to the HTTP_DATE format.
+                HttpBindingIndex httpIndex = HttpBindingIndex.of(context.model());
+                Format format = httpIndex.determineTimestampFormat(shape.getMember(), bindingType, Format.HTTP_DATE);
+
+                if (format == Format.HTTP_DATE) {
+                    writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+                    writer.addImport("smithy_python.utils", "split_every");
+                    split = "split_every(" + dataSource + " or '', ',', 2)";
+                }
+            }
+
+            var targetDeserVisitor = new HttpMemberDeserVisitor(
+                context, writer, bindingType, "e", shape.getMember(), defaultTimestampFormat);
+            return String.format("[%s for e in %s]", collectionTarget.accept(targetDeserVisitor), split);
+        }
     }
 }
