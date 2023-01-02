@@ -1,3 +1,4 @@
+import re
 from datetime import datetime, timezone
 from typing import Any, TypeVar
 
@@ -60,3 +61,70 @@ def expect_type(typ: type[_T], value: Any) -> _T:
             f"Expected {typ}, found {type(value)}: {value}"
         )
     return value
+
+
+def split_every(given: str, split_char: str, n: int) -> list[str]:
+    """Splits a string every nth instance of the given character.
+
+    :param given: The string to split.
+    :param split_char: The character to split on.
+    :param n: The number of instances of split_char to see before each split.
+    :returns: A list of strings.
+    """
+    split = given.split(split_char)
+    return [split_char.join(split[i : i + n]) for i in range(0, len(split), n)]
+
+
+def strict_parse_bool(given: str) -> bool:
+    """Strictly parses a boolean from string.
+
+    :param given: A string that is expected to contain either "true" or "false".
+    :returns: The given string parsed to a boolean.
+    :raises ExpectationNotMetException: if the given string is neither "true" nor
+        "false".
+    """
+    match given:
+        case "true":
+            return True
+        case "false":
+            return False
+        case _:
+            raise ExpectationNotMetException(
+                f"Expected 'true' or 'false', found: {given}"
+            )
+
+
+# A regex for Smithy floats. It matches JSON-style numbers.
+_FLOAT_REGEX = re.compile(
+    r"""
+    ( # Opens the numeric float group.
+        -? # The integral may start with a negative sign, but not a positive one.
+        (?:0|[1-9]\d*) # The integral may not have leading 0s unless it is exactly 0.
+        (?:\.\d+)? # There may be a fraction starting with a period and containing at
+                   # least one number.
+        (?: # Opens the exponent group.
+            [eE] # The exponent starts with a case-insensitive e
+            [+-]? # The exponent may have a positive or negave sign.
+            \d+ # The exponent must have one or more digits.
+        )? # Closes the exponent group and makes it optional.
+    ) # Closes the numeric float group.
+    |(-?Infinity) # If the float isn't numeric, it may be Infinity or -Infinity
+    |(NaN) # If the float isn't numeric, it may also be NaN
+    """,
+    re.VERBOSE,
+)
+
+
+def strict_parse_float(given: str) -> float:
+    """Strictly parses a float from a string.
+
+    Unlike float(), this forbids the use of "inf" and case-sensitively matches
+    Infinity and NaN.
+
+    :param given: A string that is expected to contain a float.
+    :returns: The given string parsed to a float.
+    :raises ExpectationNotMetException: If the given string isn't a float.
+    """
+    if _FLOAT_REGEX.fullmatch(given):
+        return float(given)
+    raise ExpectationNotMetException(f"Expected float, found: {given}")
