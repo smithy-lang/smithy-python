@@ -22,6 +22,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
+import java.util.function.BiPredicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -83,11 +84,13 @@ public final class HttpProtocolTestGenerator implements Runnable {
     private final ServiceShape service;
     private final PythonWriter writer;
     private final GenerationContext context;
+    private final BiPredicate<Shape, HttpMessageTestCase> testFilter;
 
     public HttpProtocolTestGenerator(
             GenerationContext context,
             ShapeId protocol,
-            PythonWriter writer
+            PythonWriter writer,
+            BiPredicate<Shape, HttpMessageTestCase> testFilter
     ) {
         this.settings = context.settings();
         this.model = context.model();
@@ -95,8 +98,17 @@ public final class HttpProtocolTestGenerator implements Runnable {
         this.service = settings.getService(model);
         this.writer = writer;
         this.context = context;
+        this.testFilter = testFilter;
 
         writer.putFormatter('J', new JavaToPythonFormatter());
+    }
+
+    public HttpProtocolTestGenerator(
+        GenerationContext context,
+        ShapeId protocol,
+        PythonWriter writer
+    ) {
+        this(context, protocol, writer, (shape, testCase) -> false);
     }
 
     /**
@@ -109,7 +121,6 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
         // Use a TreeSet to have a fixed ordering of tests.
         for (OperationShape operation : new TreeSet<>(topDownIndex.getContainedOperations(service))) {
-            // TODO: Add settings to configure which tests are generated (client or server)
             generateOperationTests(AppliesTo.CLIENT, operation, operationIndex);
         }
         // Write the testing implementations for various objects
@@ -119,8 +130,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
     private void generateOperationTests(
             AppliesTo implementation,
             OperationShape operation,
-            OperationIndex operationIndex) {
-
+            OperationIndex operationIndex
+    ) {
         // Request Tests
         operation.getTrait(HttpRequestTestsTrait.class).ifPresent(trait -> {
             for (HttpRequestTestCase testCase : trait.getTestCasesFor(implementation)) {
@@ -153,7 +164,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
         writeTestBlock(
                 testCase,
                 String.format("%s_request_%s", testCase.getId(), operation.getId().getName()),
-                false,
+                testFilter.test(operation, testCase),
                 () -> {
             writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
                 writer.write("""
@@ -203,11 +214,10 @@ public final class HttpProtocolTestGenerator implements Runnable {
     }
 
     private void generateResponseTest(OperationShape operation, HttpResponseTestCase testCase) {
-        // TODO: Generate the real response test logic, add logic for skipping
         writeTestBlock(
                 testCase,
                 String.format("%s_response_%s", testCase.getId(), operation.getId().getName()),
-                false,
+                testFilter.test(operation, testCase),
                 () -> {
             writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
                 writer.write("""
@@ -254,11 +264,12 @@ public final class HttpProtocolTestGenerator implements Runnable {
     private void generateErrorResponseTest(
             OperationShape operation,
             StructureShape error,
-            HttpResponseTestCase testCase) {
-        // TODO: add logic for skipping
+            HttpResponseTestCase testCase
+    ) {
         writeTestBlock(testCase,
                 String.format("%s_error_%s", testCase.getId(), operation.getId().getName()),
-                false,
+                testFilter.test(operation,
+                    testCase),
                 () -> {
             writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
                 writer.write("""
@@ -392,8 +403,6 @@ public final class HttpProtocolTestGenerator implements Runnable {
             RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL
         );
     }
-
-
 
     /**
      * NodeVisitor implementation for converting node values for
