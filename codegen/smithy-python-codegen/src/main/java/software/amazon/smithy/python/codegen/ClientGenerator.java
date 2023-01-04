@@ -313,6 +313,14 @@ final class ClientGenerator implements Runnable {
                         endpoint = await config.endpoint_resolver.resolve_endpoint(
                             StaticEndpointParams(url=config.endpoint_url)
                         )
+                        if not endpoint.url.path:
+                            endpoint.url.path = ""
+                        elif endpoint.url.path.endswith("/"):
+                            endpoint.url.path = endpoint.url.path.rstrip("/")
+                        if context.transport_request.url.path:
+                            endpoint.url.path += context.transport_request.url.path
+                        endpoint.url.query = context.transport_request.url.query
+                        endpoint.url.host = context.transport_request.url.host + endpoint.url.host
                         context._transport_request.url = endpoint.url
                         context._transport_request.headers.extend(endpoint.headers)
 
