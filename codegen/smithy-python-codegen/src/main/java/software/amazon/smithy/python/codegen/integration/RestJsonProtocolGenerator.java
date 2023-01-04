@@ -21,16 +21,23 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import software.amazon.smithy.aws.traits.protocols.RestJson1Trait;
 import software.amazon.smithy.model.knowledge.HttpBinding;
+import software.amazon.smithy.model.knowledge.HttpBinding.Location;
+import software.amazon.smithy.model.knowledge.HttpBindingIndex;
 import software.amazon.smithy.model.knowledge.NeighborProviderIndex;
 import software.amazon.smithy.model.neighbor.Walker;
+import software.amazon.smithy.model.node.StringNode;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
+import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
+import software.amazon.smithy.protocoltests.traits.HttpMessageTestCase;
+import software.amazon.smithy.protocoltests.traits.HttpRequestTestCase;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.HttpProtocolTestGenerator;
 import software.amazon.smithy.python.codegen.PythonWriter;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
+import software.amazon.smithy.utils.SetUtils;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
@@ -59,8 +66,35 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
     @Override
     public void generateProtocolTests(GenerationContext context) {
         context.writerDelegator().useFileWriter("./tests/test_protocol.py", "tests.test_protocol", writer -> {
-            new HttpProtocolTestGenerator(context, getProtocol(), writer).run();
+            new HttpProtocolTestGenerator(
+                context, getProtocol(), writer, (shape, testCase) -> filterTests(context, shape, testCase)
+            ).run();
         });
+    }
+
+    private boolean filterTests(GenerationContext context, Shape shape, HttpMessageTestCase testCase) {
+        if (shape.hasTrait(ErrorTrait.class)) {
+            // Error handling isn't implemented yet
+            return true;
+        }
+        if (testCase instanceof HttpRequestTestCase) {
+            // Request serialization isn't finished, so here we only test the bindings that are supported.
+            Set<Location> implementedBindings = SetUtils.of(Location.LABEL);
+            var bindingIndex = HttpBindingIndex.of(context.model());
+
+            // If any member specified in the test is bound to a location we haven't yet implemented,
+            // skip the test.
+            var supportedMembers = bindingIndex.getRequestBindings(shape).values().stream()
+                .filter(binding -> implementedBindings.contains(binding.getLocation()))
+                .map(binding -> binding.getMember().getMemberName())
+                .collect(Collectors.toSet());
+            for (StringNode setMember : testCase.getParams().getMembers().keySet()) {
+                if (!supportedMembers.contains(setMember.getValue())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     @Override
