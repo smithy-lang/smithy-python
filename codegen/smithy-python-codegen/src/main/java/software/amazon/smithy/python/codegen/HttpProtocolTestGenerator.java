@@ -186,6 +186,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     (Runnable) () -> testCase.getParams().accept(new ValueNodeVisitor(inputShape))
             );
 
+            var host = testCase.getHost().orElse("example.com");
+
             // Execute the command, and catch the expected exception
             writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail", "fail");
             writer.write("""
@@ -206,7 +208,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 TEST_HTTP_SERVICE_ERR_SYMBOL,
                 testCase.getMethod(),
                 testCase.getUri(),
-                testCase.getHost(),
+                host,
                 (Runnable) () -> writer.maybeWrite(
                     !testCase.getRequireHeaders().isEmpty(),
                     "assert {h[0] for h in actual.headers} >= $J",
