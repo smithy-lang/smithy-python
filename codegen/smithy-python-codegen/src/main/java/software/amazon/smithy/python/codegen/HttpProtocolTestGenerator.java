@@ -168,14 +168,24 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 String.format("%s_request_%s", testCase.getId(), operation.getId().getName()),
                 testFilter.test(operation, testCase),
                 () -> {
+            var hostSplit = testCase.getHost().orElse("example.com").split("/", 2);
+            var host = hostSplit[0];
+            String path;
+            if (hostSplit.length != 1) {
+                path = hostSplit[1];
+            } else {
+                path = "";
+            }
             writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
                 writer.write("""
                     config = $T(
-                        endpoint_url="https://example.com",
+                        endpoint_url="https://$L/$L",
                         http_client = $T(),
                     )
                     """,
                     CodegenUtils.getConfigSymbol(context.settings()),
+                    host,
+                    path,
                     REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL
                 );
             }));
@@ -185,8 +195,6 @@ public final class HttpProtocolTestGenerator implements Runnable {
             writer.write("input_ = $C\n",
                     (Runnable) () -> testCase.getParams().accept(new ValueNodeVisitor(inputShape))
             );
-
-            var host = testCase.getHost().orElse("example.com");
 
             // Execute the command, and catch the expected exception
             writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail", "fail");
