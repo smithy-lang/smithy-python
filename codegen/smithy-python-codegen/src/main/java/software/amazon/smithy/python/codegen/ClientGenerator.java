@@ -255,7 +255,7 @@ final class ClientGenerator implements Runnable {
                                 #         error_type=RetryErrorType.CLIENT_ERROR,
                                 #     )
                                 # )
-                                pass
+                                raise context_with_response.response
                             else:
                                 # Step 8: retry_strategy.record_success(token=retry_token)
                                 break
