@@ -23,6 +23,7 @@ class HttpSigner(Protocol):
 
     def sign(
         self,
+        *,
         http_request: Request,
         identity: Identity,
         signing_properties: dict[str, Any],
@@ -42,7 +43,7 @@ class HttpSigner(Protocol):
 
 @dataclass(kw_only=True)
 class HttpAuthScheme(Protocol):
-    """Represents a way a service will authenticate the customer's identity."""
+    """Represents a way a service will authenticate the user's identity."""
 
     # A unique identifier for the authentication scheme.
     scheme_id: str
@@ -82,13 +83,10 @@ class AuthSchemeParameters:
 
 
 class AuthSchemeResolver(Protocol):
-    """Determines which authentication scheme to use for a given service.
-
-    Code-generated per service.
-    """
+    """Determines which authentication scheme to use for a given service."""
 
     def resolve_auth_scheme(
-        self, auth_parameters: AuthSchemeParameters
+        self, *, auth_parameters: AuthSchemeParameters
     ) -> list[HttpAuthOption]:
         """Resolve an ordered list of applicable auth schemes.
 

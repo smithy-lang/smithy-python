@@ -39,7 +39,9 @@ class IdentityResolver(Protocol):
 class IdentityResolverConfiguration(Protocol):
     """The identity resolvers configured in the client."""
 
-    def get_identity_resolver(self, identity_type: type[Identity]) -> IdentityResolver:
+    def get_identity_resolver(
+        self, *, identity_type: type[Identity]
+    ) -> IdentityResolver:
         """Retrieve an identity resolver for the provided identity type.
 
         :param identity_type: The type of identity to resolve.
