@@ -991,7 +991,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
             }
 
             var targetDeserVisitor = new HttpMemberDeserVisitor(
-                context, writer, bindingType, "e", shape.getMember(), defaultTimestampFormat);
+                context, writer, bindingType, "e.strip()", shape.getMember(), defaultTimestampFormat);
             return String.format("[%s for e in %s]", collectionTarget.accept(targetDeserVisitor), split);
         }
     }
