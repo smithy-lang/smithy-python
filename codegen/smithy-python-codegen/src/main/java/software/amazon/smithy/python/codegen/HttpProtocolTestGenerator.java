@@ -169,7 +169,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
             writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
                 writer.write("""
                     config = $T(
-                        http_client = $T()
+                        endpoint_url="https://example.com",
+                        http_client = $T(),
                     )
                     """,
                     CodegenUtils.getConfigSymbol(context.settings()),
@@ -222,11 +223,12 @@ public final class HttpProtocolTestGenerator implements Runnable {
             writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
                 writer.write("""
                     config = $T(
+                        endpoint_url="https://example.com",
                         http_client = $T(
                             status_code = $L,
                             headers = $J,
                             body = $S,
-                        )
+                        ),
                     )
                     """,
                     CodegenUtils.getConfigSymbol(context.settings()),
@@ -274,11 +276,12 @@ public final class HttpProtocolTestGenerator implements Runnable {
             writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
                 writer.write("""
                     config = $T(
+                        endpoint_url="https://example.com",
                         http_client = $T(
                             status_code = $L,
                             headers = $J,
                             body = None,
-                        )
+                        ),
                     )
                     """,
                     CodegenUtils.getConfigSymbol(context.settings()),
