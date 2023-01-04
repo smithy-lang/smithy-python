@@ -220,9 +220,10 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         // Build up a format string that will produce the path. We could have used an f-string, but they end up
         // taking a ton of space and aren't easily formatted. Using .format results in something that is much
         // easier to grok.
-        var formatString = new StringBuilder("/");
+        var formatString = new StringBuilder();
         var uri = operation.expectTrait(HttpTrait.class).getUri();
         for (SmithyPattern.Segment segment : uri.getSegments()) {
+            formatString.append("/");
             if (segment.isLabel()) {
                 var httpBinding = labelBindings.get(segment.getContent());
                 var memberName = context.symbolProvider().toMemberName(httpBinding.getMember());
@@ -244,9 +245,12 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 // Static segments just get inserted literally.
                 formatString.append(segment.getContent());
             }
+        }
 
-            // Always append a forward slash. This will leave us with a trailing slash, which is what we want.
-            formatString.append("/");
+        if (uri.getLabels().isEmpty()) {
+            writer.write("path = $S", formatString.toString());
+            writer.popState();
+            return;
         }
 
         // Write out the f-string
