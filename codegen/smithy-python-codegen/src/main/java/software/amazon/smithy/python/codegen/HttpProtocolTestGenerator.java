@@ -274,8 +274,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
     ) {
         writeTestBlock(testCase,
                 String.format("%s_error_%s", testCase.getId(), operation.getId().getName()),
-                testFilter.test(operation,
-                    testCase),
+                testFilter.test(error, testCase),
                 () -> {
             writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
                 writer.write("""
