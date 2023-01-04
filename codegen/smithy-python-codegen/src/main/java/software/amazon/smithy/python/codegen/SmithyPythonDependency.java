@@ -32,9 +32,9 @@ public final class SmithyPythonDependency {
     public static final PythonDependency SMITHY_PYTHON = new PythonDependency(
             "smithy_python",
             // You'll need to locally install this before we publish
-            "0.0.1",
+            "==0.0.1",
             Type.DEPENDENCY,
-            true
+            false
     );
 
     /**
@@ -42,9 +42,19 @@ public final class SmithyPythonDependency {
      */
     public static final PythonDependency PYTEST = new PythonDependency(
             "pytest",
-            ">=7.2.0",
+            ">=7.2.0,<8.0.0",
             Type.TEST_DEPENDENCY,
             false
+    );
+
+    /**
+     * testing framework used in generated functional tests.
+     */
+    public static final PythonDependency PYTEST_ASYNCIO = new PythonDependency(
+        "pytest-asyncio",
+        ">=0.2.3,<0.3.0",
+        Type.TEST_DEPENDENCY,
+        false
     );
 
     private SmithyPythonDependency() {}
