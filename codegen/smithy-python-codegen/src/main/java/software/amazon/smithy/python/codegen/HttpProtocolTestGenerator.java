@@ -118,6 +118,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
     public void run() {
         OperationIndex operationIndex = OperationIndex.of(model);
         TopDownIndex topDownIndex = TopDownIndex.of(model);
+        writer.addDependency(SmithyPythonDependency.PYTEST);
+        writer.addDependency(SmithyPythonDependency.PYTEST_ASYNCIO);
 
         // Use a TreeSet to have a fixed ordering of tests.
         for (OperationShape operation : new TreeSet<>(topDownIndex.getContainedOperations(service))) {
@@ -364,7 +366,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
         LOGGER.fine(String.format("Writing utility stubs for %s : %s", serviceSymbol.getName(), protocol.getName()));
         writer.addStdlibImport("typing", "Any");
         writer.addImports("smithy_python.interfaces.http", Set.of(
-                "HeadersList", "HttpRequestConfiguration", "Request", "Response", "URI")
+                "HeadersList", "HttpRequestConfiguration", "Request", "Response")
         );
         writer.addImport("smithy_python._private.http", "Response", "_Response");
 
