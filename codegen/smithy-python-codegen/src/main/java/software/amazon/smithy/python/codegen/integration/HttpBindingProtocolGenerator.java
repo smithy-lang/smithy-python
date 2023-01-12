@@ -46,7 +46,6 @@ import software.amazon.smithy.model.shapes.IntegerShape;
 import software.amazon.smithy.model.shapes.ListShape;
 import software.amazon.smithy.model.shapes.LongShape;
 import software.amazon.smithy.model.shapes.MemberShape;
-import software.amazon.smithy.model.shapes.NumberShape;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeVisitor;
@@ -269,9 +268,10 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
 
                 var dataSource = "input." + memberName;
                 var target = context.model().expectShape(httpBinding.getMember().getTarget());
-                    writer.write("$1L=urlquote($3L$2L),", memberName, urlSafe, getInputValue(
-                        context, writer, httpBinding.getLocation(), dataSource, httpBinding.getMember(), target
-                    ));
+                var inputValue = target.accept(new HttpMemberSerVisitor(
+                    context, writer, httpBinding.getLocation(), dataSource, httpBinding.getMember(),
+                    getDocumentTimestampFormat()));
+                writer.write("$1L=urlquote($3L$2L),", memberName, urlSafe, inputValue);
             }
         });
 
@@ -420,116 +420,6 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         HttpBinding payloadBinding
     ) {
         // TODO: implement this
-    }
-
-    /**
-     * Given context and a source of data, generate an input value provider for the
-     * shape. This may use native types or invoke complex type serializers to
-     * manipulate the dataSource into the proper input content.
-     *
-     * @param context The generation context.
-     * @param writer The writer this value will be written to. Used only to add
-     *               imports, if necessary.
-     * @param bindingType How this value is bound to the operation input.
-     * @param dataSource The in-code location of the data to provide an input of
-     *                   ({@code input.foo}, {@code entry}, etc.)
-     * @param member The member that points to the value being provided.
-     * @param target The shape of the value being provided.
-     * @return Returns a value or expression of the input value.
-     */
-    protected String getInputValue(
-        GenerationContext context,
-        PythonWriter writer,
-        HttpBinding.Location bindingType,
-        String dataSource,
-        MemberShape member,
-        Shape target
-    ) {
-        if (target.isStringShape()) {
-            return getStringInputParam(context, writer, bindingType, dataSource, member, target);
-        } else if (target.isFloatShape() || target.isDoubleShape()) {
-            // Using float ensures we get a decimal even if there is no fraction given
-            // e.g. 1 => 1.0
-            return String.format("str(float(%s))", dataSource);
-        } else if (target instanceof NumberShape) {
-            return String.format("str(%s)", dataSource);
-        } else if (target.isBooleanShape()) {
-            return String.format("('true' if %s else 'false')", dataSource);
-        } else if (target.isTimestampShape()) {
-            return getTimestampInputParam(context, writer, bindingType, dataSource, member, target);
-        } else {
-            // TODO: add support here for other shape types
-            return dataSource;
-        }
-//        throw new CodegenException(String.format(
-//            "Unsupported %s binding of %s to %s in %s using the %s protocol",
-//            bindingType, member.getMemberName(), target.getType(), member.getContainer(), getName()));
-    }
-
-    /**
-     * Given context and a source of data, generate an input value provider for a
-     * string. By default, this base64 encodes content in headers if there is a
-     * mediaType applied to the string, and passes through for all other cases.
-     *
-     * @param context The generation context.
-     * @param writer The writer this value will be written to. Used only to add
-     *               imports, if necessary.
-     * @param bindingType How this value is bound to the operation input.
-     * @param dataSource The in-code location of the data to provide an input of
-     *                   ({@code input.foo}, {@code entry}, etc.)
-     * @param target The shape of the value being provided.
-     * @return Returns a value or expression of the input string.
-     */
-    protected String getStringInputParam(
-        GenerationContext context,
-        PythonWriter writer,
-        HttpBinding.Location bindingType,
-        String dataSource,
-        MemberShape member,
-        Shape target
-    ) {
-        if (bindingType == Location.HEADER) {
-            if (target.hasTrait(MediaTypeTrait.class)) {
-                writer.addStdlibImport("base64", "b64encode");
-                return "b64encode(" + dataSource + "))";
-            }
-        }
-        return dataSource;
-    }
-
-    /**
-     * Given context and a source of data, generate an input value provider for the
-     * shape. This uses the format specified, converting to strings when in a header,
-     * label, or query string.
-     *
-     * @param context The generation context.
-     * @param writer The writer this value will be written to. Used only to add
-     *               imports, if necessary.
-     * @param bindingType How this value is bound to the operation input.
-     * @param dataSource The in-code location of the data to provide an input of
-     *                   ({@code input.foo}, {@code entry}, etc.)
-     * @param member The member that points to the value being provided.
-     * @return Returns a value or expression of the input shape.
-     */
-    protected String getTimestampInputParam(
-        GenerationContext context,
-        PythonWriter writer,
-        HttpBinding.Location bindingType,
-        String dataSource,
-        MemberShape member,
-        Shape target
-    ) {
-        var httpIndex = HttpBindingIndex.of(context.model());
-        var format = switch (bindingType) {
-            case HEADER -> httpIndex.determineTimestampFormat(member, bindingType, Format.HTTP_DATE);
-            case LABEL -> httpIndex.determineTimestampFormat(member, bindingType, getDocumentTimestampFormat());
-            case QUERY -> httpIndex.determineTimestampFormat(member, bindingType, Format.DATE_TIME);
-            default ->
-                throw new CodegenException("Unexpected named member shape binding location `" + bindingType + "`");
-        };
-
-        return HttpProtocolGeneratorUtils.getTimestampInputParam(
-            context, writer, dataSource, member, format);
     }
 
     @Override
@@ -814,6 +704,151 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
     ) {
         // TODO: implement payload deserialization
         // This will have a default implementation since it'll mostly be standard
+    }
+
+    /**
+     * Given context and a source of data, generate an input value provider for the
+     * shape. This may use native types or invoke complex type serializers to
+     * manipulate the dataSource into the proper input content.
+     */
+    private static class HttpMemberSerVisitor extends ShapeVisitor.Default<String> {
+        private final GenerationContext context;
+        private final PythonWriter writer;
+        private final String dataSource;
+        private final Location bindingType;
+        private final MemberShape member;
+        private final Format defaultTimestampFormat;
+
+        /**
+         * @param context The generation context.
+         * @param writer The writer to add dependencies to.
+         * @param bindingType How this value is bound to the operation input.
+         * @param dataSource The in-code location of the data to provide an output of
+         *                   ({@code input.foo}, {@code entry}, etc.)
+         * @param member The member that points to the value being provided.
+         * @param defaultTimestampFormat The default timestamp format to use.
+         */
+        HttpMemberSerVisitor(
+            GenerationContext context,
+            PythonWriter writer,
+            Location bindingType,
+            String dataSource,
+            MemberShape member,
+            Format defaultTimestampFormat
+        ) {
+            this.context = context;
+            this.writer = writer;
+            this.dataSource = dataSource;
+            this.bindingType = bindingType;
+            this.member = member;
+            this.defaultTimestampFormat = defaultTimestampFormat;
+        }
+
+        @Override
+        protected String getDefault(Shape shape) {
+            var protocolName = context.protocolGenerator().getName();
+            throw new CodegenException(String.format(
+                "Unsupported %s binding of %s to %s in %s using the %s protocol",
+                bindingType, member.getMemberName(), shape.getType(), member.getContainer(), protocolName));
+        }
+
+        @Override
+        public String blobShape(BlobShape shape) {
+            // TODO: implement this
+            return dataSource;
+        }
+
+        @Override
+        public String booleanShape(BooleanShape shape) {
+            return String.format("('true' if %s else 'false')", dataSource);
+        }
+
+        @Override
+        public String stringShape(StringShape shape) {
+            if (bindingType == Location.HEADER) {
+                if (shape.hasTrait(MediaTypeTrait.class)) {
+                    writer.addStdlibImport("base64", "b64encode");
+                    return "b64encode(" + dataSource + "))";
+                }
+            }
+            return dataSource;
+        }
+
+        @Override
+        public String byteShape(ByteShape shape) {
+            // TODO: perform bounds checks
+            return integerShape();
+        }
+
+        @Override
+        public String shortShape(ShortShape shape) {
+            // TODO: perform bounds checks
+            return integerShape();
+        }
+
+        @Override
+        public String integerShape(IntegerShape shape) {
+            // TODO: perform bounds checks
+            return integerShape();
+        }
+
+        @Override
+        public String longShape(LongShape shape) {
+            // TODO: perform bounds checks
+            return integerShape();
+        }
+
+        @Override
+        public String bigIntegerShape(BigIntegerShape shape) {
+            return integerShape();
+        }
+
+        private String integerShape() {
+            return String.format("str(%s)", dataSource);
+        }
+
+        @Override
+        public String floatShape(FloatShape shape) {
+            // TODO: use strict parsing
+            return floatShapes();
+        }
+
+        @Override
+        public String doubleShape(DoubleShape shape) {
+            // TODO: use strict parsing
+            return floatShapes();
+        }
+
+        private String floatShapes() {
+            return String.format("str(float(%s))", dataSource);
+        }
+
+
+        @Override
+        public String bigDecimalShape(BigDecimalShape shape) {
+            return String.format("str(%s)", dataSource);
+        }
+
+        @Override
+        public String timestampShape(TimestampShape shape) {
+            var httpIndex = HttpBindingIndex.of(context.model());
+            var format = switch (bindingType) {
+                case HEADER -> httpIndex.determineTimestampFormat(member, bindingType, Format.HTTP_DATE);
+                case LABEL -> httpIndex.determineTimestampFormat(member, bindingType, defaultTimestampFormat);
+                case QUERY -> httpIndex.determineTimestampFormat(member, bindingType, Format.DATE_TIME);
+                default ->
+                    throw new CodegenException("Unexpected named member shape binding location `" + bindingType + "`");
+            };
+
+            return HttpProtocolGeneratorUtils.getTimestampInputParam(
+                context, writer, dataSource, member, format);
+        }
+
+        @Override
+        public String listShape(ListShape shape) {
+            // TODO: implement this
+            return dataSource;
+        }
     }
 
     /**
