@@ -239,7 +239,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         http_client = $T(
                             status_code = $L,
                             headers = $J,
-                            body = $S,
+                            body = b$S,
                         ),
                     )
                     """,
@@ -291,7 +291,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         http_client = $T(
                             status_code = $L,
                             headers = $J,
-                            body = None,
+                            body = b'',
                         ),
                     )
                     """,
@@ -397,13 +397,28 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 raise $1T(request)
 
 
+                        class AwaitableBody:
+                            def __init__(self, contents: bytes):
+                                self._contents = contents
+
+                            async def read(self, size: int = -1) -> bytes:
+                                if size < 0:
+                                    result = self._contents
+                                    self._contents = b''
+                                    return result
+
+                                result = self._contents[0:size-1]
+                                self._contents = self._contents[size-1:]
+                                return result
+
+
                         class $4L:
                             ""\"An asynchronous HTTP client solely for testing purposes.""\"
 
-                            def __init__(self, status_code: int, headers: HeadersList, body: Any):
+                            def __init__(self, status_code: int, headers: HeadersList, body: bytes):
                                 self.status_code = status_code
                                 self.headers = headers
-                                self.body = body
+                                self.body = AwaitableBody(body)
 
                             async def send(
                                 self, request: Request, request_config: HttpRequestConfiguration
