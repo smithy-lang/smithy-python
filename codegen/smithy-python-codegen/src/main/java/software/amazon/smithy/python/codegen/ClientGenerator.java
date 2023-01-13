@@ -152,7 +152,7 @@ final class ClientGenerator implements Runnable {
                         # Make sure every exception that we throw is an instance of $4T so
                         # customers can reliably catch everything we throw.
                         if not isinstance(e, $4T):
-                            raise $4T() from e
+                            raise $4T(e) from e
                         raise e
 
                 async def _handle_execution(
