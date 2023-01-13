@@ -819,14 +819,15 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
             return floatShapes();
         }
 
-        private String floatShapes() {
-            return String.format("str(float(%s))", dataSource);
-        }
-
-
         @Override
         public String bigDecimalShape(BigDecimalShape shape) {
-            return String.format("str(%s)", dataSource);
+            return floatShapes();
+        }
+
+        private String floatShapes() {
+            writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+            writer.addImport("smithy_python.utils", "serialize_float");
+            return String.format("serialize_float(%s)", dataSource);
         }
 
         @Override

@@ -1,5 +1,7 @@
 import re
 from datetime import datetime, timezone
+from decimal import Decimal
+from math import isinf, isnan
 from types import UnionType
 from typing import Any, TypeVar, overload
 
@@ -144,3 +146,23 @@ def strict_parse_float(given: str) -> float:
     if _FLOAT_REGEX.fullmatch(given):
         return float(given)
     raise ExpectationNotMetException(f"Expected float, found: {given}")
+
+
+def serialize_float(given: float | Decimal) -> str:
+    """Serializes a float to a string.
+
+    This ensures non-numeric floats are serialized correctly, and ensures that there is
+    a fractional part.
+
+    :param given: A float or Decimal to be serialized.
+    :returns: The string representation of the given float.
+    """
+    if isnan(given):
+        return "NaN"
+    if isinf(given):
+        return "-Infinity" if given < 0 else "Infinity"
+
+    result = str(given)
+    if "." not in result:
+        result += ".0"
+    return result
