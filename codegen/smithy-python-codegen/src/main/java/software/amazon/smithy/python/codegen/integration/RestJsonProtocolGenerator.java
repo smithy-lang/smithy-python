@@ -33,6 +33,7 @@ import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.protocoltests.traits.HttpMessageTestCase;
 import software.amazon.smithy.protocoltests.traits.HttpRequestTestCase;
+import software.amazon.smithy.protocoltests.traits.HttpResponseTestCase;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.HttpProtocolTestGenerator;
 import software.amazon.smithy.python.codegen.PythonWriter;
@@ -93,6 +94,10 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                     return true;
                 }
             }
+        }
+        if (testCase instanceof HttpResponseTestCase) {
+            var bindingIndex = HttpBindingIndex.of(context.model());
+            return bindingIndex.getResponseBindings(shape, Location.PAYLOAD).size() != 0;
         }
         return false;
     }
