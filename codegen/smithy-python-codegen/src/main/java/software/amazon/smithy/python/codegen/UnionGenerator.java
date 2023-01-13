@@ -101,6 +101,18 @@ final class UnionGenerator implements Runnable {
                         writer.write("return $T(d[$S])", memberSymbol, member.getMemberName());
                     }
                 });
+
+                writer.write("""
+                    def __repr__(self) -> str:
+                        return f"$L(value=repr(self.value))"
+                    """, memberSymbol.getName());
+
+                writer.write("""
+                    def __eq__(self, other: Any) -> bool:
+                        if not isinstance(other, $1L):
+                            return False
+                        return self.value == other.value
+                    """);
             });
             writer.write("");
         }
@@ -127,6 +139,9 @@ final class UnionGenerator implements Runnable {
                         if (len(d) != 1):
                             raise TypeError(f"Unions may have exactly 1 value, but found {len(d)}")
                         return $1L(d["SDK_UNKNOWN_MEMBER"]["name"])
+
+                    def __repr__(self) -> str:
+                        return f"$1L(tag={self.tag})"
 
                 """, unknownSymbol.getName());
         memberNames.add(unknownSymbol.getName());
