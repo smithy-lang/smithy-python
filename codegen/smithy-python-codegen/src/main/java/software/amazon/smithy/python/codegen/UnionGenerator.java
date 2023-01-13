@@ -112,11 +112,15 @@ final class UnionGenerator implements Runnable {
                         if not isinstance(other, $1L):
                             return False
                         return self.value == other.value
-                    """);
+                    """, memberSymbol.getName());
             });
             writer.write("");
         }
 
+        // Note that the unknown variant doesn't implement __eq__. This is because
+        // the default implementation does exactly what we want: an instance check.
+        // Since the underlying value is unknown and un-comparable, that is the only
+        // realistic implementation.
         var unknownSymbol = symbolProvider.toSymbol(shape).expectProperty("unknown", Symbol.class);
         writer.write("""
                 class $1L():
@@ -142,7 +146,6 @@ final class UnionGenerator implements Runnable {
 
                     def __repr__(self) -> str:
                         return f"$1L(tag={self.tag})"
-
                 """, unknownSymbol.getName());
         memberNames.add(unknownSymbol.getName());
 
