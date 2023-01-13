@@ -43,6 +43,7 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.RequiredTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait;
+import software.amazon.smithy.model.traits.SensitiveTrait;
 
 
 /**
@@ -110,6 +111,7 @@ final class StructureGenerator implements Runnable {
             writeInit(false);
             writeAsDict(false);
             writeFromDict(false);
+            writeRepr(false);
         });
         writer.write("");
     }
@@ -129,6 +131,7 @@ final class StructureGenerator implements Runnable {
             writeInit(true);
             writeAsDict(true);
             writeFromDict(true);
+            writeRepr(true);
         });
         writer.write("");
     }
@@ -493,5 +496,39 @@ final class StructureGenerator implements Runnable {
             writer.write("return $L(**kwargs)", shapeName);
         });
         writer.write("");
+    }
+
+    private void writeRepr(boolean isError) {
+        var symbol = symbolProvider.toSymbol(shape);
+        writer.write("""
+            def __repr__(self) -> str:
+                result = "$L("
+                ${C|}
+                return result + ")"
+            """, symbol.getName(), (Runnable) () -> writeReprMembers(isError));
+    }
+
+    private void writeReprMembers(boolean isError) {
+        if (isError) {
+            writer.write("result += f'message={self.message},'");
+        }
+        var iter = shape.members().iterator();
+        while (iter.hasNext()) {
+            var member = iter.next();
+            var memberName = symbolProvider.toMemberName(member);
+            var trailingComma = iter.hasNext() ? ", " : "";
+            if (member.hasTrait(SensitiveTrait.class)) {
+                // Sensitive members must not be printed
+                writer.write("""
+                    if self._has[$1S]:
+                        result += f"$1L=...$2L"
+                    """, memberName, trailingComma);
+            } else {
+                writer.write("""
+                    if self._has[$1S]:
+                        result += f"$1L={repr(self.$1L)}$2L"
+                    """, memberName, trailingComma);
+            }
+        }
     }
 }
