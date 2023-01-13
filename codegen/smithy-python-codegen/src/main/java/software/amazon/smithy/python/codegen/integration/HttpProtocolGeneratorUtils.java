@@ -20,6 +20,7 @@ import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonWriter;
+import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
@@ -55,7 +56,9 @@ public final class HttpProtocolGeneratorUtils {
         var result = "ensure_utc(" + dataSource + ")";
         switch (format) {
             case DATE_TIME:
-                return result + ".isoformat()";
+                writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+                writer.addImport("smithy_python.utils", "serialize_rfc3339");
+                return String.format("serialize_rfc3339(%s)", result);
             case EPOCH_SECONDS:
                 return "str(" + result + ".timestamp())";
             case HTTP_DATE:
