@@ -22,17 +22,28 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.Charset;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
+import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.traits.ErrorTrait;
+import software.amazon.smithy.model.traits.TimestampFormatTrait;
+import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.utils.SetUtils;
 import software.amazon.smithy.utils.StringUtils;
 
@@ -208,5 +219,73 @@ public final class CodegenUtils {
     public static List<Object[]> toTuples(Map<?, ?> map) {
         return map.entrySet().stream().map((entry) ->
                 List.of(entry.getKey(), entry.getValue()).toArray()).toList();
+    }
+
+    /**
+     * Generates a Python datetime constructor for the given ZonedDateTime.
+     *
+     * @param writer A writer to add dependencies to.
+     * @param value The ZonedDateTime to convert.
+     * @return A string containing a Python datetime constructor representing the given ZonedDateTime.
+     */
+    public static String getDatetimeConstructor(PythonWriter writer, ZonedDateTime value) {
+        writer.addStdlibImport("datetime", "datetime");
+        writer.addStdlibImport("datetime", "timezone");
+        var timezone = "timezone.utc";
+        if (value.getOffset() != ZoneOffset.UTC) {
+            writer.addStdlibImport("datetime", "timedelta");
+            timezone = String.format("timezone(timedelta(seconds=%d))", value.getOffset().getTotalSeconds());
+        }
+        return String.format("datetime(%d, %d, %d, %d, %d, %d, %d, %s)", value.get(ChronoField.YEAR),
+            value.get(ChronoField.MONTH_OF_YEAR), value.get(ChronoField.DAY_OF_MONTH),
+            value.get(ChronoField.HOUR_OF_DAY), value.get(ChronoField.MINUTE_OF_HOUR),
+            value.get(ChronoField.SECOND_OF_MINUTE), value.get(ChronoField.MICRO_OF_SECOND), timezone);
+    }
+
+    /**
+     * Parses a timestamp Node.
+     *
+     * <p>This is used to offload modeled timestamp parsing from Python runtime to Java build time.
+     *
+     * @param model The model being generated.
+     * @param shape The shape of the node.
+     * @param value The node to parse.
+     * @return A parsed ZonedDateTime representation of the given node.
+     */
+    public static ZonedDateTime parseTimestampNode(Model model, Shape shape, Node value) {
+        if (value.isNumberNode()) {
+            return parseEpochTime(value);
+        }
+
+        Optional<TimestampFormatTrait> trait = shape.getTrait(TimestampFormatTrait.class);
+        if (shape.isMemberShape()) {
+            trait = shape.asMemberShape().get().getMemberTrait(model, TimestampFormatTrait.class);
+        }
+        var format = Format.DATE_TIME;
+        if (trait.isPresent()) {
+            format = trait.get().getFormat();
+        }
+
+        return switch (format) {
+            case DATE_TIME -> parseDateTime(value);
+            case HTTP_DATE -> parseHttpDate(value);
+            default -> throw new CodegenException("Unexpected timestamp format: " + format);
+        };
+    }
+
+    private static ZonedDateTime parseEpochTime(Node value) {
+        Number number = value.expectNumberNode().getValue();
+        Instant instant = Instant.ofEpochMilli(Double.valueOf(number.doubleValue() * 1000).longValue());
+        return instant.atZone(ZoneId.of("UTC"));
+    }
+
+    private static ZonedDateTime parseDateTime(Node value) {
+        Instant instant =  Instant.from(DateTimeFormatter.ISO_INSTANT.parse(value.expectStringNode().getValue()));
+        return instant.atZone(ZoneId.of("UTC"));
+    }
+
+    private static ZonedDateTime parseHttpDate(Node value) {
+        Instant instant = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(value.expectStringNode().getValue()));
+        return instant.atZone(ZoneId.of("UTC"));
     }
 }
