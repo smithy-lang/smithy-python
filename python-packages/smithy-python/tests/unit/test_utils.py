@@ -10,6 +10,7 @@ from smithy_python.utils import (
     ensure_utc,
     expect_type,
     limited_parse_float,
+    serialize_epoch_seconds,
     serialize_float,
     serialize_rfc3339,
     strict_parse_bool,
@@ -177,3 +178,17 @@ def test_serialize_float(given: float | Decimal, expected: str) -> None:
 )
 def test_serialize_rfc3339(given: datetime, expected: str) -> None:
     assert serialize_rfc3339(given) == expected
+
+
+@pytest.mark.parametrize(
+    "given, expected",
+    [
+        (datetime(2017, 1, 1, tzinfo=timezone.utc), "1483228800"),
+        (
+            datetime(2017, 1, 1, microsecond=1, tzinfo=timezone.utc),
+            "1483228800.000001",
+        ),
+    ],
+)
+def test_serialize_epoch_seconds(given: datetime, expected: str) -> None:
+    assert serialize_epoch_seconds(given) == expected

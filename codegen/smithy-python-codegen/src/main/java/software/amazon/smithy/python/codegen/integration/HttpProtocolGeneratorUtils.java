@@ -60,7 +60,9 @@ public final class HttpProtocolGeneratorUtils {
                 writer.addImport("smithy_python.utils", "serialize_rfc3339");
                 return String.format("serialize_rfc3339(%s)", result);
             case EPOCH_SECONDS:
-                return "str(" + result + ".timestamp())";
+                writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+                writer.addImport("smithy_python.utils", "serialize_epoch_seconds");
+                return String.format("serialize_epoch_seconds(%s)", result);
             case HTTP_DATE:
                 writer.addStdlibImport("email.utils", "format_datetime");
                 return "format_datetime(" + result + ", usegmt=True)";
