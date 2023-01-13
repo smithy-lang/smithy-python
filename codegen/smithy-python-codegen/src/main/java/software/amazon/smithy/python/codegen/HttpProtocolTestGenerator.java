@@ -210,7 +210,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     assert actual.url.host == $5S
                     $6C
                 except Exception as err:
-                    fail(f"Expected '$2L' exception to be thrown, but received {type(err).__name__}")
+                    fail(f"Expected '$2L' exception to be thrown, but received {type(err).__name__}: {err}")
                 """,
                 context.symbolProvider().toSymbol(operation),
                 TEST_HTTP_SERVICE_ERR_SYMBOL,
@@ -263,7 +263,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 try:
                     actual = await client.$T(input_)
                 except Exception as err:
-                    fail(f"Expected a valid response, but received: {type(err).__name__}")
+                    fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
                 else:
                     expected = $C
 
@@ -314,7 +314,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     fail("Expected '$2L' exception to be thrown!")
                 except Exception as err:
                     if type(err).__name__ != $2S:
-                        fail(f"Expected '$2L' exception to be thrown, but received {type(err).__name__}")
+                        fail(f"Expected '$2L' exception to be thrown, but received {type(err).__name__}: {err}")
                 """,
                 context.symbolProvider().toSymbol(operation),
                 error.getId().getName()
