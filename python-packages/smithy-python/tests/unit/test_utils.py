@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from decimal import Decimal
 from math import isnan
 from typing import Any
 
@@ -9,6 +10,7 @@ from smithy_python.utils import (
     ensure_utc,
     expect_type,
     limited_parse_float,
+    serialize_float,
     strict_parse_bool,
     strict_parse_float,
 )
@@ -139,3 +141,24 @@ def test_strict_parse_float_nan() -> None:
 def test_strict_parse_float_raises(given: str) -> None:
     with pytest.raises(ExpectationNotMetException):
         strict_parse_float(given)
+
+
+@pytest.mark.parametrize(
+    "given, expected",
+    [
+        (1, "1.0"),
+        (1.0, "1.0"),
+        (1.1, "1.1"),
+        (float("NaN"), "NaN"),
+        (float("Infinity"), "Infinity"),
+        (float("-Infinity"), "-Infinity"),
+        (Decimal("1"), "1.0"),
+        (Decimal("1.0"), "1.0"),
+        (Decimal("1.1"), "1.1"),
+        (Decimal("NaN"), "NaN"),
+        (Decimal("Infinity"), "Infinity"),
+        (Decimal("-Infinity"), "-Infinity"),
+    ],
+)
+def test_serialize_float(given: float | Decimal, expected: str) -> None:
+    assert serialize_float(given) == expected
