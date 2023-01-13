@@ -42,8 +42,8 @@ import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.RequiredTrait;
-import software.amazon.smithy.model.traits.TimestampFormatTrait;
 import software.amazon.smithy.model.traits.SensitiveTrait;
+import software.amazon.smithy.model.traits.TimestampFormatTrait;
 
 
 /**
@@ -112,6 +112,7 @@ final class StructureGenerator implements Runnable {
             writeAsDict(false);
             writeFromDict(false);
             writeRepr(false);
+            writeEq(false);
         });
         writer.write("");
     }
@@ -132,6 +133,7 @@ final class StructureGenerator implements Runnable {
             writeAsDict(true);
             writeFromDict(true);
             writeRepr(true);
+            writeEq(true);
         });
         writer.write("");
     }
@@ -530,5 +532,39 @@ final class StructureGenerator implements Runnable {
                     """, memberName, trailingComma);
             }
         }
+    }
+
+    private void writeEq(boolean isError) {
+        var symbol = symbolProvider.toSymbol(shape);
+        writer.addStdlibImport("typing", "Any");
+        var attributeList = new StringBuilder("[");
+        if (isError) {
+            attributeList.append("'message',");
+        }
+        for (MemberShape member : shape.members()) {
+            attributeList.append(String.format("'%s',", symbolProvider.toMemberName(member)));
+        }
+        attributeList.append("]");
+
+        if (!isError && shape.members().isEmpty()) {
+            writer.write("""
+                def __eq__(self, other: Any) -> bool:
+                    return isinstance(other, $L)
+                """, symbol.getName());
+            return;
+        }
+
+        // Use a generator expression inside "all" here to save some space while still
+        // lazily evaluating each equality check.
+        writer.write("""
+            def __eq__(self, other: Any) -> bool:
+                if not isinstance(other, $L):
+                    return False
+                attributes: list[str] = $L
+                return all(
+                    self._hasattr(a) == other._hasattr(a) and getattr(self, a) == getattr(other, a)
+                    for a in attributes
+                )
+            """, symbol.getName(), attributeList.toString());
     }
 }
