@@ -182,3 +182,17 @@ def serialize_rfc3339(given: datetime) -> str:
         return given.strftime(RFC3339_MICRO)
     else:
         return given.strftime(RFC3339)
+
+
+def serialize_epoch_seconds(given: datetime) -> str:
+    """Serializes a datetime into a string containing the epoch seconds.
+
+    If ``microseconds`` is 0, no fractional part is serialized.
+
+    :param given: The datetime to serialize.
+    :retursn: A string containing the seconds since the UNIX epoch.
+    """
+    result = given.timestamp()
+    if given.microsecond == 0:
+        result = int(result)
+    return str(result)
