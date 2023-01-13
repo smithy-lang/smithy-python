@@ -11,6 +11,7 @@ from smithy_python.utils import (
     expect_type,
     limited_parse_float,
     serialize_float,
+    serialize_rfc3339,
     strict_parse_bool,
     strict_parse_float,
 )
@@ -162,3 +163,17 @@ def test_strict_parse_float_raises(given: str) -> None:
 )
 def test_serialize_float(given: float | Decimal, expected: str) -> None:
     assert serialize_float(given) == expected
+
+
+@pytest.mark.parametrize(
+    "given, expected",
+    [
+        (datetime(2017, 1, 1, tzinfo=timezone.utc), "2017-01-01T00:00:00Z"),
+        (
+            datetime(2017, 1, 1, microsecond=1, tzinfo=timezone.utc),
+            "2017-01-01T00:00:00.000001Z",
+        ),
+    ],
+)
+def test_serialize_rfc3339(given: datetime, expected: str) -> None:
+    assert serialize_rfc3339(given) == expected

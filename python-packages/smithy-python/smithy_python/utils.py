@@ -7,6 +7,10 @@ from typing import Any, TypeVar, overload
 
 from .exceptions import ExpectationNotMetException
 
+RFC3339 = "%Y-%m-%dT%H:%M:%SZ"
+# Same as RFC3339, but with microsecond precision.
+RFC3339_MICRO = "%Y-%m-%dT%H:%M:%S.%fZ"
+
 
 def ensure_utc(value: datetime) -> datetime:
     """Ensures that the given datetime is a UTC timezone-aware datetime.
@@ -166,3 +170,15 @@ def serialize_float(given: float | Decimal) -> str:
     if "." not in result:
         result += ".0"
     return result
+
+
+def serialize_rfc3339(given: datetime) -> str:
+    """Serializes a datetime into an RFC3339 string respresentation.
+
+    :param given: The datetime to serialize.
+    :returns: An RFC3339 formatted timestamp.
+    """
+    if given.microsecond != 0:
+        return given.strftime(RFC3339_MICRO)
+    else:
+        return given.strftime(RFC3339)
