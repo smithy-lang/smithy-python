@@ -478,8 +478,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
         public Void numberNode(NumberNode node) {
             // TODO: Add support for timestamp, int-enum, and others
             if (inputShape.isTimestampShape()) {
-                writer.addStdlibImport("datetime", "datetime");
-                writer.writeInline("datetime.fromtimestamp($L)", node.getValue());
+                var parsed = CodegenUtils.parseTimestampNode(model, inputShape, node);
+                writer.writeInline(CodegenUtils.getDatetimeConstructor(writer, parsed));
             } else if (inputShape.isFloatShape() || inputShape.isDoubleShape()) {
                 writer.writeInline("float($L)", node.getValue());
             } else {

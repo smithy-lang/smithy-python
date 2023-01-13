@@ -18,14 +18,9 @@ package software.amazon.smithy.python.codegen;
 import static java.lang.String.format;
 import static software.amazon.smithy.python.codegen.CodegenUtils.isErrorMessage;
 
-import java.time.Instant;
-import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoField;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
@@ -43,7 +38,6 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.RequiredTrait;
 import software.amazon.smithy.model.traits.SensitiveTrait;
-import software.amazon.smithy.model.traits.TimestampFormatTrait;
 
 
 /**
@@ -299,15 +293,8 @@ final class StructureGenerator implements Runnable {
         var defaultNode = member.expectTrait(DefaultTrait.class).toNode();
         var target = model.expectShape(member.getTarget());
         if (target.isTimestampShape()) {
-            writer.addStdlibImport("datetime", "datetime");
-            writer.addStdlibImport("datetime", "timezone");
-            // We *could* let python do this parsing, but then that work has to be done every time a customer
-            // runs their code.
-            ZonedDateTime value = parseDefaultTimestamp(member, defaultNode);
-            return String.format("datetime(%d, %d, %d, %d, %d, %d, %d, timezone.utc)", value.get(ChronoField.YEAR),
-                    value.get(ChronoField.MONTH_OF_YEAR), value.get(ChronoField.DAY_OF_MONTH),
-                    value.get(ChronoField.HOUR_OF_DAY), value.get(ChronoField.MINUTE_OF_HOUR),
-                    value.get(ChronoField.SECOND_OF_MINUTE), value.get(ChronoField.MICRO_OF_SECOND));
+            ZonedDateTime value = CodegenUtils.parseTimestampNode(model, member, defaultNode);
+            return CodegenUtils.getDatetimeConstructor(writer, value);
         } else if (target.isBlobShape()) {
             return String.format("b'%s'", defaultNode.expectStringNode().getValue());
         }
@@ -316,46 +303,6 @@ final class StructureGenerator implements Runnable {
             case BOOLEAN -> defaultNode.expectBooleanNode().getValue() ? "True" : "False";
             default -> Node.printJson(defaultNode);
         };
-    }
-
-    private ZonedDateTime parseDefaultTimestamp(MemberShape member, Node value) {
-        Optional<TimestampFormatTrait> trait = member.getMemberTrait(model, TimestampFormatTrait.class);
-        if (trait.isPresent()) {
-            switch (trait.get().getFormat()) {
-                case EPOCH_SECONDS:
-                    return parseEpochTime(value);
-                case DATE_TIME:
-                    return parseDateTime(value);
-                case HTTP_DATE:
-                    return parseHttpDate(value);
-                default:
-                    break;
-            }
-        }
-
-        if (value.isNumberNode()) {
-            return parseEpochTime(value);
-        } else {
-            // Smithy's node validator asserts that string nodes are in the http date format if there
-            // is no format explicitly given.
-            return parseDateTime(value);
-        }
-    }
-
-    private ZonedDateTime parseEpochTime(Node value) {
-        Number number = value.expectNumberNode().getValue();
-        Instant instant = Instant.ofEpochMilli(Double.valueOf(number.doubleValue() * 1000).longValue());
-        return instant.atZone(ZoneId.of("UTC"));
-    }
-
-    private ZonedDateTime parseDateTime(Node value) {
-        Instant instant =  Instant.from(DateTimeFormatter.ISO_INSTANT.parse(value.expectStringNode().getValue()));
-        return instant.atZone(ZoneId.of("UTC"));
-    }
-
-    private ZonedDateTime parseHttpDate(Node value) {
-        Instant instant = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(value.expectStringNode().getValue()));
-        return instant.atZone(ZoneId.of("UTC"));
     }
 
     private boolean hasDocs() {
