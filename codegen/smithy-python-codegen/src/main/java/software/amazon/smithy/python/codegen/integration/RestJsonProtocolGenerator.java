@@ -125,7 +125,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
 
         writer.write("""
             body = await http_response.body.read()
-            output = json_loads(body)
+            output = json_loads(body) if body else {}
 
             """);
 
