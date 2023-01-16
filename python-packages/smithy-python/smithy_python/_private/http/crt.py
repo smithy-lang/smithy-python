@@ -24,15 +24,8 @@ from awscrt import http as crt_http
 from awscrt import io as crt_io
 
 from ... import interfaces
-from ...exceptions import SmithyException
+from ...exceptions import SmithyHTTPException
 from . import FieldPosition, Fields, HTTPResponse
-
-
-class HTTPException(SmithyException):
-    """TODO: Improve exception handling
-
-    Error handling in smithy-python needs to be designed out.
-    """
 
 
 class _AWSCRTEventLoop:
@@ -56,7 +49,9 @@ class AwsCrtHttpResponse(interfaces.http.HTTPResponse):
 
     def _set_stream(self, stream: crt_http.HttpClientStream) -> None:
         if self._stream is not None:
-            raise HTTPException("Stream already set on _AwsCrtHttpResponse object")
+            raise SmithyHTTPException(
+                "Stream already set on _AwsCrtHttpResponse object"
+            )
         self._stream = stream
         self._stream.completion_future.add_done_callback(self._on_complete)
         self._stream.activate()
@@ -78,7 +73,7 @@ class AwsCrtHttpResponse(interfaces.http.HTTPResponse):
 
     def _get_chunk_future(self) -> Future[bytes]:
         if self._stream is None:
-            raise HTTPException("Stream not set")
+            raise SmithyHTTPException("Stream not set")
         with self._chunk_lock:
             future: Future[bytes] = Future()
             # TODO: update backpressure window once CRT supports it
@@ -110,13 +105,13 @@ class AwsCrtHttpResponse(interfaces.http.HTTPResponse):
     @property
     def headers(self) -> Awaitable[Fields]:
         if self._stream is None:
-            raise HTTPException("Stream not set")
+            raise SmithyHTTPException("Stream not set")
         return asyncio.wrap_future(self._headers_future)
 
     @property
     def done(self) -> bool:
         if self._stream is None:
-            raise HTTPException("Stream not set")
+            raise SmithyHTTPException("Stream not set")
         # awscrt does not type-annotate self._stream.completion_future
         fut = cast(Future[int], self._stream.completion_future)
         return fut.done()
@@ -229,7 +224,7 @@ class AwsCrtHttpClient(interfaces.http.HttpClient):
             # TODO: Support TLS configuration, including alpn
             tls_connection_options.set_alpn_list(["h2", "http/1.1"])
         else:
-            raise HTTPException(
+            raise SmithyHTTPException(
                 f"AwsCrtHttpClient does not support URL scheme {url.scheme}"
             )
         if url.port is not None:
@@ -256,7 +251,7 @@ class AwsCrtHttpClient(interfaces.http.HttpClient):
         if force_http_2 and connection.version is not crt_http.HttpVersion.Http2:
             connection.close()
             negotiated = crt_http.HttpVersion(connection.version).name
-            raise HTTPException(f"HTTP/2 could not be negotiated: {negotiated}")
+            raise SmithyHTTPException(f"HTTP/2 could not be negotiated: {negotiated}")
 
     def _render_path(self, url: interfaces.URI) -> str:
         path = url.path if url.path is not None else "/"

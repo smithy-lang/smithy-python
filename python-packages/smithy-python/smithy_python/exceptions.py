@@ -26,3 +26,7 @@ class ExpectationNotMetException(SmithyException):
 
 class SmithyIdentityException(SmithyException):
     """Base exception type for all exceptions raised in identity resolution."""
+
+
+class SmithyHTTPException(SmithyException):
+    """Base exception type for all exceptions raised in HTTP clients."""
