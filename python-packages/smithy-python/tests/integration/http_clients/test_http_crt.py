@@ -11,42 +11,28 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-import pytest
+# mypy: allow-untyped-defs
+# mypy: allow-incomplete-defs
 
-from smithy_python._private.http import URI, Field, Fields, HTTPRequest
+from smithy_python._private.http import HTTPRequest
 from smithy_python._private.http.crt import AwsCrtHttpClient, AwsCrtHttpClientConfig
-from smithy_python.async_utils import async_list
-
-
-@pytest.fixture
-def aws_request() -> HTTPRequest:
-    headers = Fields(
-        [
-            Field(name="host", values=["aws.amazon.com"]),
-            Field(name="user-agent", values=["smithy-python-test"]),
-        ]
-    )
-    return HTTPRequest(
-        method="GET",
-        destination=URI(host="aws.amazon.com"),
-        fields=headers,
-        body=async_list([]),
-    )
 
 
 async def test_basic_request_local(aws_request: HTTPRequest) -> None:
     config = AwsCrtHttpClientConfig()
-    session = AwsCrtHttpClient(config=config)
+    session = AwsCrtHttpClient(client_config=config)
     response = await session.send(aws_request)
     assert response.status == 200
+    print(f"{response=}")
     body = await response.consume_body()
+    print(f"{body=}")
     assert b"aws" in body
     assert response.done
 
 
-async def test_async_basic_request_http2(aws_request: HTTPRequest) -> None:
+async def test_basic_request_http2(aws_request: HTTPRequest) -> None:
     config = AwsCrtHttpClientConfig(force_http_2=True)
-    session = AwsCrtHttpClient(config=config)
+    session = AwsCrtHttpClient(client_config=config)
     response = await session.send(aws_request)
     assert response.status == 200
     body = await response.consume_body()
