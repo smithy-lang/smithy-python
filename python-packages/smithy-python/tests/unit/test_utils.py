@@ -39,6 +39,8 @@ def test_ensure_utc(given: datetime, expected: datetime) -> None:
         (str, ""),
         (int, 1),
         (bool, True),
+        (float | int, 1),
+        (float | int, 1.1),
     ],
 )
 def test_expect_type(typ: Any, value: Any) -> None:
@@ -53,6 +55,7 @@ def test_expect_type(typ: Any, value: Any) -> None:
         (int, 1.0),
         (bool, 0),
         (bool, ""),
+        (float | int, "1"),
     ],
 )
 def test_expect_type_raises(typ: Any, value: Any) -> None:

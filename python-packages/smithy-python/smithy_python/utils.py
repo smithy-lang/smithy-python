@@ -1,6 +1,7 @@
 import re
 from datetime import datetime, timezone
-from typing import Any, TypeVar
+from types import UnionType
+from typing import Any, TypeVar, overload
 
 from .exceptions import ExpectationNotMetException
 
@@ -45,7 +46,21 @@ def limited_parse_float(value: Any) -> float:
 _T = TypeVar("_T")
 
 
+@overload
 def expect_type(typ: type[_T], value: Any) -> _T:
+    ...
+
+
+# For some reason, mypy and other type checkers don't treat Union like a full type
+# despite it being checkable with isinstance and other methods. This essentially means
+# we can't pass back the given type when we're given a union. So instead we have to
+# return Any.
+@overload
+def expect_type(typ: UnionType, value: Any) -> Any:
+    ...
+
+
+def expect_type(typ: UnionType | type, value: Any) -> Any:
     """Asserts a value is of the given type and returns it as that type.
 
     This is essentially typing.cast, but with a runtime assertion. If the runtime

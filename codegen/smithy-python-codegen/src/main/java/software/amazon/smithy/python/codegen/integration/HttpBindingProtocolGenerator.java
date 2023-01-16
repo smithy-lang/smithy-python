@@ -968,7 +968,13 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         public String timestampShape(TimestampShape shape) {
             HttpBindingIndex httpIndex = HttpBindingIndex.of(context.model());
             Format format = httpIndex.determineTimestampFormat(member, bindingType, defaultTimestampFormat);
-            return HttpProtocolGeneratorUtils.getTimestampOutputParam(writer, dataSource, member, format);
+            var source = dataSource;
+            if (format == Format.EPOCH_SECONDS) {
+                writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+                writer.addImport("smithy_python.utils", "strict_parse_float");
+                source = "strict_parse_float(" + dataSource + ")";
+            }
+            return HttpProtocolGeneratorUtils.getTimestampOutputParam(writer, source, member, format);
         }
 
         @Override

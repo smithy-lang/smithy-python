@@ -92,7 +92,7 @@ public final class HttpProtocolGeneratorUtils {
                 writer.addStdlibImport("datetime", "datetime");
                 writer.addStdlibImport("datetime", "timezone");
                 writer.addImport("smithy_python.utils", "expect_type");
-                return "datetime.fromtimestamp(expect_type(int, " + dataSource + "), timezone.utc)";
+                return "datetime.fromtimestamp(expect_type(int | float, " + dataSource + "), timezone.utc)";
             case HTTP_DATE:
                 writer.addImport("smithy_python.utils", "ensure_utc");
                 writer.addStdlibImport("email.utils", "parsedate_to_datetime");
