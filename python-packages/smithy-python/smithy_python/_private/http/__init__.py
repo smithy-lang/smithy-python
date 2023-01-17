@@ -73,6 +73,20 @@ class URI:
         )
         return urlunparse(components)
 
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, URI):
+            return False
+        return (
+            self.scheme == other.scheme
+            and self.host == other.host
+            and self.port == other.port
+            and self.path == other.path
+            and self.query == other.query
+            and self.username == other.username
+            and self.password == other.password
+            and self.fragment == other.fragment
+        )
+
 
 class Request:
     def __init__(
