@@ -25,9 +25,9 @@ lockfile = "lockfiles/black"
 interpreter_constraints = [">=3.11"]
 
 [pytest]
-version = "pytest<7.1"
+version = "pytest<7.3"
 extra_requirements = [
-    "pytest-asyncio<0.16.0",
+    "pytest-asyncio<0.21.0",
     "pytest-cov<3.1"
 ]
 lockfile = "lockfiles/pytest"
