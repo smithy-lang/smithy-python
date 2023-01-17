@@ -61,10 +61,11 @@ def expect_type(typ: UnionType, value: Any) -> Any:
 
 
 def expect_type(typ: UnionType | type, value: Any) -> Any:
-    """Asserts a value is of the given type and returns it as that type.
+    """Asserts a value is of the given type and returns it unchanged.
 
-    This is essentially typing.cast, but with a runtime assertion. If the runtime
-    assertion isn't needed, typing.cast should be preferred.
+    This performs both a runtime assertion and type narrowing during type checking
+    similar to ``typing.cast``. If the runtime assertion is not needed, ``typing.cast``
+    should be preferred.
 
     :param typ: The expected type.
     :param value: The value which is expected to be the given type.
