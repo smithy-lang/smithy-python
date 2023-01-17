@@ -683,9 +683,9 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 if _key_lowercase.startswith($1S):
                     if $2S not in kwargs:
                         kwargs[$2S] = {}
-                    kwargs[$2S][key] = $3L
+                    kwargs[$2S][key[$3L:]] = $4L
 
-                """, locationName, memberName, mapTarget.accept(deserVisitor));
+                """, locationName, memberName, locationName.length(), mapTarget.accept(deserVisitor));
         }
     }
 
