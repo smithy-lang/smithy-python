@@ -137,7 +137,7 @@ def test_response() -> None:
 
 async def test_endpoint_provider_with_url_string() -> None:
     params = StaticEndpointParams(
-        url="https://foo.example.com/spam:8080?foo=bar&foo=baz"
+        url="https://foo.example.com:8080/spam?foo=bar&foo=baz"
     )
     expected = URI(
         host="foo.example.com",
