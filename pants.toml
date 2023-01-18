@@ -25,9 +25,9 @@ lockfile = "lockfiles/black"
 interpreter_constraints = [">=3.11"]
 
 [pytest]
-version = "pytest<7.1"
+version = "pytest<7.3"
 extra_requirements = [
-    "pytest-asyncio<0.16.0",
+    "pytest-asyncio<0.21.0",
     "pytest-cov<3.1"
 ]
 lockfile = "lockfiles/pytest"
@@ -42,8 +42,9 @@ lockfile = "lockfiles/mypy"
 interpreter_constraints = [">=3.11"]
 
 [flake8]
-version = "flake8<3.10"
+version = "flake8<6.1"
 lockfile = "lockfiles/flake8"
+args = "--extend-ignore=W503"
 
 [pyupgrade]
 args = ["--py311-plus"]
