@@ -142,17 +142,19 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
         var valueVisitor = getMemberVisitor(shape.getValue(), "v");
         var valueDeserializer = valueShape.accept(valueVisitor);
 
-        var sparseTrailer = "";
-        if (shape.hasTrait(SparseTrait.class)) {
-            sparseTrailer = " if v is not None else None";
-        }
-
         writer.write("""
             def $1L(output: Document, config: $2T) -> $3T:
                 if not isinstance(output, dict):
-                    raise $5T(f"Expected dict, found { type(output) }")
-                return {k: $4L$6L for k, v in output.items()}
-            """, functionName, config, symbol, valueDeserializer, errorSymbol, sparseTrailer);
+                    raise $4T(f"Expected dict, found { type(output) }")
+            """, functionName, config, symbol, errorSymbol);
+
+        writer.indent();
+        if (shape.hasTrait(SparseTrait.class)) {
+            writer.write("return {k: $L if v is not None else None for k, v in output.items()}", valueDeserializer);
+        } else {
+            writer.write("return {k: $L for k, v in output.items() if v is not None}", valueDeserializer);
+        }
+        ;writer.dedent();
         return null;
     }
 
