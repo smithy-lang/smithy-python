@@ -42,8 +42,9 @@ lockfile = "lockfiles/mypy"
 interpreter_constraints = [">=3.11"]
 
 [flake8]
-version = "flake8<3.10"
+version = "flake8<6.1"
 lockfile = "lockfiles/flake8"
+args = "--extend-ignore=W503"
 
 [pyupgrade]
 args = ["--py311-plus"]

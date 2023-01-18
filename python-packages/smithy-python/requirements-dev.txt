@@ -1,5 +1,5 @@
 black==21.11b1
-flake8<3.10
+flake8<6.1
 mypy==0.982
 pytest<7.3
 pytest-asyncio<0.21.0
