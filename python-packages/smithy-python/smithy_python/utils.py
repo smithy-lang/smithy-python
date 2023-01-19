@@ -166,8 +166,11 @@ def serialize_float(given: float | Decimal) -> str:
     if isinf(given):
         return "-Infinity" if given < 0 else "Infinity"
 
+    if isinstance(given, Decimal):
+        given = given.normalize()
+
     result = str(given)
-    if "." not in result:
+    if result.isnumeric():
         result += ".0"
     return result
 
