@@ -204,14 +204,20 @@ class Field(interfaces.http.Field):
 
 
 class Fields(interfaces.http.Fields):
-    """Collection of Field entries mapped by name."""
-
     def __init__(
         self,
         initial: list[interfaces.http.Field] | None = None,
         *,
         encoding: str = "utf-8",
     ) -> None:
+        """
+        Collection of header and trailer entries mapped by name.
+
+        :param initial: Initial list of ``Field`` objects. ``Field``s can alse be added
+        with :func:`set_field` and later removed with :func:`remove_field`.
+        :param encoding: The string encoding to be used when converting the ``Field``
+        name and value from ``str`` to ``bytes`` for transmission.
+        """
         init_tuples = [] if initial is None else [(fld.name, fld) for fld in initial]
         self.entries: OrderedDict[str, interfaces.http.Field] = OrderedDict(init_tuples)
         self.encoding: str = encoding
@@ -233,7 +239,7 @@ class Fields(interfaces.http.Fields):
 
         Used to grab all headers or all trailers
         """
-        return [entry for entry in self.entries.values() if entry.kind == kind]
+        return [entry for entry in self.entries.values() if entry.kind is kind]
 
     def __eq__(self, other: object) -> bool:
         """Encoding must match. Entries must match in values but not order."""

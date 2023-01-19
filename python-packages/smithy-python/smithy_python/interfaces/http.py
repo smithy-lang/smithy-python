@@ -1,4 +1,4 @@
-# Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2023 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -22,15 +22,30 @@ QueryParamsList = list[tuple[str, str]]
 
 
 class FieldPosition(Enum):
+    """
+    The type of a field. Defines its placement in a request or response.
+    """
     HEADER = 0
+    """
+    Header field. In HTTP this is a header as defined in RFC 9114 Section 6.3.
+    Implementations of other protocols may use this FieldPosition for similar types
+    of metadata.
+    """
+
     TRAILER = 1
+    """
+    Trailer field. In HTTP this is a trailer as defined in RFC 9114 Section 6.5.
+    Implementations of other protocols may use this FieldPosition for similar types
+    of metadata.
+    """
 
 
 class Field(Protocol):
     """
-    A name-value pair representing a single field in an HTTP Request or Response.
+    A name-value pair representing a single field in a request or response
 
-    The kind will dictate metadata placement within an HTTP message.
+    The kind will dictate metadata placement within an the message, for example as
+    header or trailer field in a HTTP request as defined in RFC 9114 Section 4.2.
 
     All field names are case insensitive and case-variance must be treated as
     equivalent. Names may be normalized but should be preserved for accuracy during
@@ -66,7 +81,9 @@ class Field(Protocol):
 
 
 class Fields:
-    """Collection of Field entries mapped by name."""
+    """
+    Protocol agnostic mapping of key-value pair request metadata, such as HTTP fields.
+    """
 
     # Entries are keyed off the name of a provided Field
     entries: OrderedDict[str, Field]
