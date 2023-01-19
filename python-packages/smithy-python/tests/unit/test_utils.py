@@ -151,12 +151,27 @@ def test_strict_parse_float_raises(given: str) -> None:
         (1, "1.0"),
         (1.0, "1.0"),
         (1.1, "1.1"),
+        # It's not particularly important whether the result of this is "1.1e3" or
+        # "1100.0" since both are valid representations. This is how float behaves
+        # by default in python though, and there's no reason to do extra work to
+        # change it.
+        (1.1e3, "1100.0"),
+        (1e1, "10.0"),
+        (32.100, "32.1"),
+        (0.321000e2, "32.1"),
+        # It's at about this point that floats start using scientific notation.
+        (1e16, "1e+16"),
         (float("NaN"), "NaN"),
         (float("Infinity"), "Infinity"),
         (float("-Infinity"), "-Infinity"),
         (Decimal("1"), "1.0"),
         (Decimal("1.0"), "1.0"),
         (Decimal("1.1"), "1.1"),
+        (Decimal("1.1e3"), "1.1E+3"),
+        (Decimal("1e1"), "1E+1"),
+        (Decimal("32.100"), "32.1"),
+        (Decimal("0.321000e+2"), "32.1"),
+        (Decimal("1e16"), "1E+16"),
         (Decimal("NaN"), "NaN"),
         (Decimal("Infinity"), "Infinity"),
         (Decimal("-Infinity"), "-Infinity"),
