@@ -14,11 +14,13 @@
 # TODO: move all of this out of _private
 
 
+from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Any, Protocol
 from urllib.parse import urlparse, urlunparse
 
-from smithy_python.interfaces import http as http_interface
+from ... import interfaces
+from ...interfaces.http import FieldPosition as FieldPosition  # re-export
 
 
 class URI:
@@ -91,16 +93,15 @@ class URI:
 class Request:
     def __init__(
         self,
-        url: http_interface.URI,
+        url: interfaces.http.URI,
         method: str = "GET",
-        headers: http_interface.HeadersList | None = None,
+        headers: interfaces.http.HeadersList | None = None,
         body: Any = None,
     ):
-        self.url: http_interface.URI = url
+        self.url: interfaces.http.URI = url
         self.method: str = method
         self.body: Any = body
-
-        self.headers: http_interface.HeadersList = []
+        self.headers: interfaces.http.HeadersList = []
         if headers is not None:
             self.headers = headers
 
@@ -109,18 +110,150 @@ class Response:
     def __init__(
         self,
         status_code: int,
-        headers: http_interface.HeadersList,
+        headers: interfaces.http.HeadersList,
         body: Any,
     ):
         self.status_code: int = status_code
-        self.headers: http_interface.HeadersList = headers
+        self.headers: interfaces.http.HeadersList = headers
         self.body: Any = body
 
 
+class Field(interfaces.http.Field):
+    """
+    A name-value pair representing a single field in an HTTP Request or Response.
+
+    The kind will dictate metadata placement within an HTTP message.
+
+    All field names are case insensitive and case-variance must be treated as
+    equivalent. Names may be normalized but should be preserved for accuracy during
+    transmission.
+    """
+
+    def __init__(
+        self,
+        name: str,
+        value: list[str] | None = None,
+        kind: FieldPosition = FieldPosition.HEADER,
+    ) -> None:
+        self.name = name
+        self.value = value
+        self.kind = kind
+
+    def add(self, value: str) -> None:
+        """Append a value to a field"""
+        if self.value is None:
+            self.value = [value]
+        else:
+            self.value.append(value)
+
+    def set(self, value: list[str]) -> None:
+        """Overwrite existing field values."""
+        self.value = value
+
+    def remove(self, value: str) -> None:
+        """Remove all matching entries from list"""
+        if self.value is None:
+            return
+        try:
+            while True:
+                self.value.remove(value)
+        except ValueError:
+            return
+
+    def _quote_and_escape_single_value(self, value: str) -> str:
+        """Escapes and quotes a single value if necessary.
+
+        A value is surrounded by double quotes if it contains comma (,) or whitespace.
+        Any double quote characters present in the value (before quoting) are escaped
+        with a backslash.
+        """
+        escaped = value.replace('"', '\\"')
+        needs_quoting = any(char == "," or char.isspace() for char in escaped)
+        quoted = f'"{escaped}"' if needs_quoting else escaped
+        return quoted
+
+    def get_value(self) -> str:
+        """
+        Get comma-delimited string values.
+
+        Values with spaces or commas are double-quoted.
+        """
+        if self.value is None:
+            return ""
+        return ",".join(self._quote_and_escape_single_value(val) for val in self.value)
+
+    def get_value_list(self) -> list[str]:
+        """Get string values as a list"""
+        if self.value is None:
+            return []
+        else:
+            return self.value
+
+    def __eq__(self, other: object) -> bool:
+        """Name, values, and kind must match. Values order must match."""
+        if not isinstance(other, Field):
+            return False
+        return (
+            self.name == other.name
+            and self.kind == other.kind
+            and self.value == other.value
+        )
+
+    def __repr__(self) -> str:
+        return f"Field({self.kind.name} {self.name}: {self.get_value()})"
+
+
+class Fields(interfaces.http.Fields):
+    """Collection of Field entries mapped by name."""
+
+    def __init__(
+        self,
+        initial: list[interfaces.http.Field] | None = None,
+        *,
+        encoding: str = "utf-8",
+    ) -> None:
+        init_tuples = [] if initial is None else [(fld.name, fld) for fld in initial]
+        self.entries: OrderedDict[str, interfaces.http.Field] = OrderedDict(init_tuples)
+        self.encoding: str = encoding
+
+    def set_field(self, field: interfaces.http.Field) -> None:
+        """Set entry for a Field name."""
+        self.entries[field.name] = field
+
+    def get_field(self, name: str) -> interfaces.http.Field:
+        """Retrieve Field entry"""
+        return self.entries[name]
+
+    def remove_field(self, name: str) -> None:
+        """Delete entry from collection"""
+        del self.entries[name]
+
+    def get_by_type(self, kind: FieldPosition) -> list[interfaces.http.Field]:
+        """Helper function for retrieving specific types of fields
+
+        Used to grab all headers or all trailers
+        """
+        return [entry for entry in self.entries.values() if entry.kind == kind]
+
+    def __eq__(self, other: object) -> bool:
+        """Encoding must match. Entries must match in values but not order."""
+        if not isinstance(other, Fields):
+            return False
+        if self.encoding != other.encoding:
+            return False
+        if set(self.entries.keys()) != set(other.entries.keys()):
+            return False
+        for field_name, self_field in self.entries.items():
+            other_field = other.get_field(field_name)
+            if self_field != other_field:
+                return False
+        return True
+
+
 @dataclass
-class Endpoint(http_interface.Endpoint):
-    url: http_interface.URI
-    headers: http_interface.HeadersList = field(default_factory=list)
+class Endpoint(interfaces.http.Endpoint):
+    url: interfaces.http.URI
+    headers: interfaces.http.HeadersList = field(default_factory=list)
 
 
 @dataclass
@@ -131,10 +264,10 @@ class StaticEndpointParams:
     :params url: A static URI to route requests to.
     """
 
-    url: str | http_interface.URI
+    url: str | interfaces.http.URI
 
 
-class StaticEndpointResolver(http_interface.EndpointResolver[StaticEndpointParams]):
+class StaticEndpointResolver(interfaces.http.EndpointResolver[StaticEndpointParams]):
     """A basic endpoint resolver that forwards a static url."""
 
     async def resolve_endpoint(self, params: StaticEndpointParams) -> Endpoint:
@@ -164,7 +297,7 @@ class StaticEndpointResolver(http_interface.EndpointResolver[StaticEndpointParam
 
 
 class _StaticEndpointConfig(Protocol):
-    endpoint_resolver: http_interface.EndpointResolver[StaticEndpointParams] | None
+    endpoint_resolver: interfaces.http.EndpointResolver[StaticEndpointParams] | None
 
 
 def set_static_endpoint_resolver(config: _StaticEndpointConfig) -> None:
