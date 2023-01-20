@@ -134,7 +134,7 @@ class Field(interfaces.http.Field):
         name: str,
         value: list[str] | None = None,
         kind: FieldPosition = FieldPosition.HEADER,
-    ) -> None:
+    ):
         self.name = name
         self.value: list[str] = value if value is not None else []
         self.kind = kind
@@ -202,7 +202,7 @@ class Fields(interfaces.http.Fields):
         initial: list[interfaces.http.Field] | None = None,
         *,
         encoding: str = "utf-8",
-    ) -> None:
+    ):
         """
         Collection of header and trailer entries mapped by name.
 
