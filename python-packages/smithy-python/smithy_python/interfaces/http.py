@@ -81,7 +81,7 @@ class Field(Protocol):
         ...
 
 
-class Fields:
+class Fields(Protocol):
     """
     Protocol agnostic mapping of key-value pair request metadata, such as HTTP fields.
     """
