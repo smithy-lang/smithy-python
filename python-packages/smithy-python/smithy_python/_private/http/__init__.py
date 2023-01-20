@@ -158,14 +158,17 @@ class Field(interfaces.http.Field):
     def _quote_and_escape_single_value(self, value: str) -> str:
         """Escapes and quotes a single value if necessary.
 
-        A value is surrounded by double quotes if it contains comma (,) or whitespace.
-        Any double quote characters present in the value (before quoting) are escaped
-        with a backslash.
+        A value that contains comma (,) is quoted (surrounded by double quotes) unless
+        it already starts and ends with double quotes. If a value gets quoted, any
+        double quotes contained within the value are escaped as a quoted-pair (prefixed
+        with a backslash).
         """
-        escaped = value.replace('"', '\\"')
-        needs_quoting = any(char == "," or char.isspace() for char in escaped)
-        quoted = f'"{escaped}"' if needs_quoting else escaped
-        return quoted
+        if value.startswith('"') and value.endswith('"'):
+            return value
+        if not "," in value:
+            return value
+        escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+        return f'"{escaped}"'
 
     def get_value(self) -> str:
         """
