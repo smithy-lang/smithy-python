@@ -62,11 +62,11 @@ class Field(Protocol):
         ...
 
     def set(self, value: list[str]) -> None:
-        """Overwrite existing field values"""
+        """Overwrite existing field values."""
         ...
 
     def remove(self, value: str) -> None:
-        """Remove all matching entries from list"""
+        """Remove all matching entries from list."""
         ...
 
     def get_value(self) -> str:
@@ -77,7 +77,7 @@ class Field(Protocol):
         ...
 
     def get_value_list(self) -> list[str]:
-        """Get string values as a list"""
+        """Get string values as a list."""
         ...
 
 
@@ -95,17 +95,17 @@ class Fields(Protocol):
         ...
 
     def get_field(self, name: str) -> Field:
-        """Retrieve Field entry"""
+        """Retrieve Field entry."""
         ...
 
     def remove_field(self, name: str) -> None:
-        """Delete entry from collection"""
+        """Delete entry from collection."""
         ...
 
     def get_by_type(self, kind: FieldPosition) -> list[Field]:
-        """Helper function for retrieving specific types of fields
+        """Helper function for retrieving specific types of fields.
 
-        Used to grab all headers or all trailers
+        Used to grab all headers or all trailers.
         """
         ...
 

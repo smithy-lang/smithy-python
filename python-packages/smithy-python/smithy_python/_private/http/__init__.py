@@ -140,7 +140,7 @@ class Field(interfaces.http.Field):
         self.kind = kind
 
     def add(self, value: str) -> None:
-        """Append a value to a field"""
+        """Append a value to a field."""
         self.value.append(value)
 
     def set(self, value: list[str]) -> None:
@@ -148,7 +148,7 @@ class Field(interfaces.http.Field):
         self.value = value
 
     def remove(self, value: str) -> None:
-        """Remove all matching entries from list"""
+        """Remove all matching entries from list."""
         try:
             while True:
                 self.value.remove(value)
@@ -217,17 +217,17 @@ class Fields(interfaces.http.Fields):
         self.entries[field.name] = field
 
     def get_field(self, name: str) -> interfaces.http.Field:
-        """Retrieve Field entry"""
+        """Retrieve Field entry."""
         return self.entries[name]
 
     def remove_field(self, name: str) -> None:
-        """Delete entry from collection"""
+        """Delete entry from collection."""
         del self.entries[name]
 
     def get_by_type(self, kind: FieldPosition) -> list[interfaces.http.Field]:
-        """Helper function for retrieving specific types of fields
+        """Helper function for retrieving specific types of fields.
 
-        Used to grab all headers or all trailers
+        Used to grab all headers or all trailers.
         """
         return [entry for entry in self.entries.values() if entry.kind is kind]
 
