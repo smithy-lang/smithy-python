@@ -122,11 +122,6 @@ def test_field_inqueality(f1, f2) -> None:
             Fields([Field(name="fname", value=["fval1", "fval2"])]),
             Fields([Field(name="fname", value=["fval1", "fval2"])]),
         ),
-        # field order does not matter (but value-within-field order does)
-        (
-            Fields([Field(name="f1"), Field(name="f2")]),
-            Fields([Field(name="f2"), Field(name="f1")]),
-        ),
     ],
 )
 def test_fields_equality(fs1, fs2) -> None:
@@ -141,6 +136,10 @@ def test_fields_equality(fs1, fs2) -> None:
             Fields([Field(name="fname")]),
         ),
         (
+            Fields([Field(name="fname1")]),
+            Fields([Field(name="fname2")]),
+        ),
+        (
             Fields(encoding="utf-1"),
             Fields(encoding="utf-2"),
         ),
@@ -152,7 +151,21 @@ def test_fields_equality(fs1, fs2) -> None:
             Fields([Field(name="fname", value=["val2", "val1"])]),
             Fields([Field(name="fname", value=["val1", "val2"])]),
         ),
+        (
+            Fields([Field(name="f1"), Field(name="f2")]),
+            Fields([Field(name="f2"), Field(name="f1")]),
+        ),
     ],
 )
 def test_fields_inequality(fs1, fs2) -> None:
     assert fs1 != fs2
+
+
+def test_repeated_initial_field_names() -> None:
+    with pytest.raises(ValueError):
+        Fields(
+            [
+                Field(name="fname1", value=["val1"]),
+                Field(name="fname1", value=["val2"]),
+            ]
+        )

@@ -165,7 +165,7 @@ class Field(interfaces.http.Field):
         """
         if value.startswith('"') and value.endswith('"'):
             return value
-        if not "," in value:
+        if "," not in value:
             return value
         escaped = value.replace("\\", "\\\\").replace('"', '\\"')
         return f'"{escaped}"'
@@ -211,7 +211,11 @@ class Fields(interfaces.http.Fields):
         :param encoding: The string encoding to be used when converting the ``Field``
         name and value from ``str`` to ``bytes`` for transmission.
         """
-        init_tuples = [] if initial is None else [(fld.name, fld) for fld in initial]
+        init_fields = [] if initial is None else [fld for fld in initial]
+        init_field_names = [fld.name for fld in init_fields]
+        if len(init_field_names) != len(set(init_field_names)):
+            raise ValueError("Field names of the initial list of fields must be unique")
+        init_tuples = zip(init_field_names, init_fields)
         self.entries: OrderedDict[str, interfaces.http.Field] = OrderedDict(init_tuples)
         self.encoding: str = encoding
 
@@ -235,18 +239,10 @@ class Fields(interfaces.http.Fields):
         return [entry for entry in self.entries.values() if entry.kind is kind]
 
     def __eq__(self, other: object) -> bool:
-        """Encoding must match. Entries must match in values but not order."""
+        """Encoding must match. Entries must match in values and order."""
         if not isinstance(other, Fields):
             return False
-        if self.encoding != other.encoding:
-            return False
-        if set(self.entries.keys()) != set(other.entries.keys()):
-            return False
-        for field_name, self_field in self.entries.items():
-            other_field = other.get_field(field_name)
-            if self_field != other_field:
-                return False
-        return True
+        return self.encoding == other.encoding and self.entries == other.entries
 
 
 @dataclass
