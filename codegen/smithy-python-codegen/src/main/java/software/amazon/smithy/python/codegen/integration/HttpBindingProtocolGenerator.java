@@ -983,26 +983,28 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 throw new CodegenException("Unexpected list binding location `" + bindingType + "`");
             }
             var collectionTarget = context.model().expectShape(shape.getMember().getTarget());
+            writer.addImport("smithy_python.httputils", "split_header");
+            writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+            String split = String.format("split_header(%s or '')", dataSource);;
 
-            String split = "(" + dataSource + " or '').split(',')";
-
-            // Headers that have HTTP_DATE formatted timestamps already contain a ","
-            // in their formatted entry, so split on every other "," instead.
-            if (collectionTarget.isTimestampShape()) {
-                // Check if our member resolves to the HTTP_DATE format.
-                HttpBindingIndex httpIndex = HttpBindingIndex.of(context.model());
-                Format format = httpIndex.determineTimestampFormat(shape.getMember(), bindingType, Format.HTTP_DATE);
-
-                if (format == Format.HTTP_DATE) {
-                    writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-                    writer.addImport("smithy_python.utils", "split_every");
-                    split = "split_every(" + dataSource + " or '', ',', 2)";
-                }
+            // Headers that have HTTP_DATE formatted timestamps may not be quoted, so we need
+            // to enable special handling for them.
+            if (isHttpDate(shape.getMember(), collectionTarget)) {
+                split = String.format("split_header(%s or '', True)", dataSource);
             }
 
             var targetDeserVisitor = new HttpMemberDeserVisitor(
                 context, writer, bindingType, "e.strip()", shape.getMember(), defaultTimestampFormat);
             return String.format("[%s for e in %s]", collectionTarget.accept(targetDeserVisitor), split);
+        }
+
+        private boolean isHttpDate(MemberShape member, Shape target) {
+            if (target.isTimestampShape()) {
+                HttpBindingIndex httpIndex = HttpBindingIndex.of(context.model());
+                Format format = httpIndex.determineTimestampFormat(member, bindingType, Format.HTTP_DATE);
+                return format == Format.HTTP_DATE;
+            }
+            return false;
         }
     }
 }
