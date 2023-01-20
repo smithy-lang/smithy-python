@@ -176,7 +176,7 @@ class Field(interfaces.http.Field):
 
         Values with spaces or commas are double-quoted.
         """
-        return ",".join(self._quote_and_escape_single_value(val) for val in self.value)
+        return ", ".join(self._quote_and_escape_single_value(val) for val in self.value)
 
     def get_value_list(self) -> list[str]:
         """Get values as a list of strings."""

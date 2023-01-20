@@ -33,7 +33,7 @@ def test_field_multi_valued_basics() -> None:
     assert field.name == "fname"
     assert field.kind == FieldPosition.HEADER
     assert field.value == ["fval1", "fval2"]
-    assert field.get_value() == "fval1,fval2"
+    assert field.get_value() == "fval1, fval2"
     assert field.get_value_list() == ["fval1", "fval2"]
 
 
@@ -41,27 +41,27 @@ def test_field_multi_valued_basics() -> None:
     "values,expected",
     [
         (["val1"], "val1"),
-        (["val1", "val2"], "val1,val2"),
-        (["©väl", "val2"], "©väl,val2"),
+        (["val1", "val2"], "val1, val2"),
+        (["©väl", "val2"], "©väl, val2"),
         # Values containing commas must be double-quoted.
-        (["val1,", "val2"], '"val1,",val2'),
-        (["v,a,l,1", "val2"], '"v,a,l,1",val2'),
+        (["val1,", "val2"], '"val1,", val2'),
+        (["v,a,l,1", "val2"], '"v,a,l,1", val2'),
         # ... but if the value is already quoted, it will not be quoted again.
-        (['"v,a,l,1"', "val2"], '"v,a,l,1",val2'),
+        (['"v,a,l,1"', "val2"], '"v,a,l,1", val2'),
         # In strings the got quoted, pre-existing double quotes are escaped with a
         # single backslash. The second backslash below is for escaping the actual
         # backslash in the string for Python.
-        (["slc", '4,196"'], 'slc,"4,196\\""'),
+        (["slc", '4,196"'], 'slc, "4,196\\""'),
         # ... unless they appear at the beginning AND end of the value, i.e. the value
         # is already quoted.
-        (['"quoted"', "val2"], '"quoted",val2'),
+        (['"quoted"', "val2"], '"quoted", val2'),
         # If the value is already quoted, additional quotes contained within do not get
         # escaped.
-        (['"""', "val2"], '""",val2'),
+        (['"""', "val2"], '""", val2'),
         # Backslashes are also escaped. The following case is a single backslash getting
         # serialized into two backslashes. Python escaping accounts for each actual
         # backslash being written as two.
-        (["foo,bar\\", "val2"], '"foo,bar\\\\",val2'),
+        (["foo,bar\\", "val2"], '"foo,bar\\\\", val2'),
     ],
 )
 def test_field_serialization(values, expected):
