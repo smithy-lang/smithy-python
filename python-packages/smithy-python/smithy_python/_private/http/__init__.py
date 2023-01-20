@@ -16,7 +16,7 @@
 
 from collections import OrderedDict
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from typing import Any, Iterable, Protocol
 from urllib.parse import urlparse, urlunparse
 
 from ... import interfaces
@@ -188,12 +188,12 @@ class Field(interfaces.http.Field):
             return False
         return (
             self.name == other.name
-            and self.kind == other.kind
+            and self.kind is other.kind
             and self.value == other.value
         )
 
-    def __str__(self) -> str:
-        return f"Field({self.kind.name} {self.name}: {self.get_value()})"
+    def __repr__(self) -> str:
+        return f'Field(name="{self.name}", value=[{self.value}], kind={self.kind})'
 
 
 class Fields(interfaces.http.Fields):
@@ -243,6 +243,9 @@ class Fields(interfaces.http.Fields):
         if not isinstance(other, Fields):
             return False
         return self.encoding == other.encoding and self.entries == other.entries
+
+    def __iter__(self) -> Iterable[interfaces.http.Field]:
+        yield from self.entries.values()
 
 
 @dataclass
