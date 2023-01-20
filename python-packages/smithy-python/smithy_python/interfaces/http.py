@@ -25,6 +25,7 @@ class FieldPosition(Enum):
     """
     The type of a field. Defines its placement in a request or response.
     """
+
     HEADER = 0
     """
     Header field. In HTTP this is a header as defined in RFC 9114 Section 6.3.

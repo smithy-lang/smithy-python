@@ -136,15 +136,12 @@ class Field(interfaces.http.Field):
         kind: FieldPosition = FieldPosition.HEADER,
     ) -> None:
         self.name = name
-        self.value = value
+        self.value: list[str] = value if value is not None else []
         self.kind = kind
 
     def add(self, value: str) -> None:
         """Append a value to a field"""
-        if self.value is None:
-            self.value = [value]
-        else:
-            self.value.append(value)
+        self.value.append(value)
 
     def set(self, value: list[str]) -> None:
         """Overwrite existing field values."""
@@ -152,8 +149,6 @@ class Field(interfaces.http.Field):
 
     def remove(self, value: str) -> None:
         """Remove all matching entries from list"""
-        if self.value is None:
-            return
         try:
             while True:
                 self.value.remove(value)
@@ -174,20 +169,15 @@ class Field(interfaces.http.Field):
 
     def get_value(self) -> str:
         """
-        Get comma-delimited string values.
+        Get comma-delimited string of values.
 
         Values with spaces or commas are double-quoted.
         """
-        if self.value is None:
-            return ""
         return ",".join(self._quote_and_escape_single_value(val) for val in self.value)
 
     def get_value_list(self) -> list[str]:
-        """Get string values as a list"""
-        if self.value is None:
-            return []
-        else:
-            return self.value
+        """Get values as a list of strings."""
+        return self.value
 
     def __eq__(self, other: object) -> bool:
         """Name, values, and kind must match. Values order must match."""
@@ -199,7 +189,7 @@ class Field(interfaces.http.Field):
             and self.value == other.value
         )
 
-    def __repr__(self) -> str:
+    def __str__(self) -> str:
         return f"Field({self.kind.name} {self.name}: {self.get_value()})"
 
 

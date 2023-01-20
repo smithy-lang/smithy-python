@@ -49,6 +49,10 @@ def test_field_multi_valued_basics() -> None:
         # Double quotes are escaped with a single backslash. The second backslash below
         # is for escaping the actual backslash in the string for Python.
         (['"quotes"', "val2"], '\\"quotes\\",val2'),
+        # Backslashes are also escaped. The following case is a single backslash getting
+        # serialized into two backslashes. Python escaping accounts for each actual
+        # backslash being written as two.
+        (["foo,bar\\", "val2"], '"foo,bar\\\\",val2'),
     ],
 )
 def test_field_serialization(values, expected):
