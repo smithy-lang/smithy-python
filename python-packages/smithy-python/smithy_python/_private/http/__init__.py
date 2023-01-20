@@ -155,28 +155,13 @@ class Field(interfaces.http.Field):
         except ValueError:
             return
 
-    def _quote_and_escape_single_value(self, value: str) -> str:
-        """Escapes and quotes a single value if necessary.
-
-        A value that contains comma (,) is quoted (surrounded by double quotes) unless
-        it already starts and ends with double quotes. If a value gets quoted, any
-        double quotes contained within the value are escaped as a quoted-pair (prefixed
-        with a backslash).
-        """
-        if value.startswith('"') and value.endswith('"'):
-            return value
-        if "," not in value:
-            return value
-        escaped = value.replace("\\", "\\\\").replace('"', '\\"')
-        return f'"{escaped}"'
-
     def get_value(self) -> str:
         """
         Get comma-delimited string of values.
 
         Values with spaces or commas are double-quoted.
         """
-        return ", ".join(self._quote_and_escape_single_value(val) for val in self.value)
+        return ", ".join(quote_and_escape_field_value(val) for val in self.value)
 
     def get_value_list(self) -> list[str]:
         """Get values as a list of strings."""
@@ -194,6 +179,22 @@ class Field(interfaces.http.Field):
 
     def __repr__(self) -> str:
         return f'Field(name="{self.name}", value=[{self.value}], kind={self.kind})'
+
+
+def quote_and_escape_field_value(value: str) -> str:
+    """Escapes and quotes a single :class:`Field` value if necessary.
+
+    A value that contains comma (,) is quoted (surrounded by double quotes) unless
+    it already starts and ends with double quotes. If a value gets quoted, any
+    double quotes contained within the value are escaped as a quoted-pair (prefixed
+    with a backslash).
+    """
+    if value.startswith('"') and value.endswith('"'):
+        return value
+    if "," not in value:
+        return value
+    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
 
 
 class Fields(interfaces.http.Fields):

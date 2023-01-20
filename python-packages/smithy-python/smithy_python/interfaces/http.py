@@ -58,7 +58,7 @@ class Field(Protocol):
     kind: FieldPosition = FieldPosition.HEADER
 
     def add(self, value: str) -> None:
-        """Append a value to a field"""
+        """Append a value to a field."""
         ...
 
     def set(self, value: list[str]) -> None:
