@@ -175,9 +175,11 @@ class Field(interfaces.http.Field):
             return self.value[0]
         return ", ".join(quote_and_escape_field_value(val) for val in self.value)
 
-    def get_value_list(self) -> list[str]:
-        """Get values as a list of strings."""
-        return self.value
+    def as_tuples(self) -> list[tuple[str, str]]:
+        """
+        Get list of ``name``, ``value`` tuples where each tuple represents one value.
+        """
+        return [(self.name, val) for val in self.value]
 
     def __eq__(self, other: object) -> bool:
         """Name, values, and kind must match. Values order must match."""

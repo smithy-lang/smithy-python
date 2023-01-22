@@ -54,7 +54,7 @@ class Field(Protocol):
     """
 
     name: str
-    value: list[str] | None = None
+    value: list[str]
     kind: FieldPosition = FieldPosition.HEADER
 
     def add(self, value: str) -> None:
@@ -73,12 +73,10 @@ class Field(Protocol):
         """Serialize the ``Field``'s values into a single line string."""
         ...
 
-        Values containing commas or quotes are double-quoted.
+    def as_tuples(self) -> list[tuple[str, str]]:
         """
-        ...
-
-    def get_value_list(self) -> list[str]:
-        """Get string values as a list."""
+        Get list of ``name``, ``value`` tuples where each tuple represents one value.
+        """
         ...
 
 

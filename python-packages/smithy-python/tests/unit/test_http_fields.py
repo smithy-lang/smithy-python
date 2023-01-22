@@ -25,7 +25,7 @@ def test_field_single_valued_basics() -> None:
     assert field.kind == FieldPosition.HEADER
     assert field.value == ["fval"]
     assert field.as_string() == "fval"
-    assert field.get_value_list() == ["fval"]
+    assert field.as_tuples() == [("fname", "fval")]
 
 
 def test_field_multi_valued_basics() -> None:
@@ -34,7 +34,7 @@ def test_field_multi_valued_basics() -> None:
     assert field.kind == FieldPosition.HEADER
     assert field.value == ["fval1", "fval2"]
     assert field.as_string() == "fval1, fval2"
-    assert field.get_value_list() == ["fval1", "fval2"]
+    assert field.as_tuples() == [("fname", "fval1"), ("fname", "fval2")]
 
 
 @pytest.mark.parametrize(
