@@ -66,7 +66,7 @@ def test_field_multi_valued_basics() -> None:
         (["foo,bar\\", "val2"], '"foo,bar\\\\", val2'),
     ],
 )
-def test_field_serialization(values, expected):
+def test_field_serialization(values: list[str], expected: str):
     field = Field(name="_", value=values)
     assert field.as_string() == expected
 
@@ -88,7 +88,7 @@ def test_field_serialization(values, expected):
         ),
     ],
 )
-def test_field_equality(f1, f2) -> None:
+def test_field_equality(f1: Field, f2: Field) -> None:
     assert f1 == f2
 
 
@@ -113,7 +113,7 @@ def test_field_equality(f1, f2) -> None:
         ),
     ],
 )
-def test_field_inqueality(f1, f2) -> None:
+def test_field_inqueality(f1: Field, f2: Field) -> None:
     assert f1 != f2
 
 
@@ -126,7 +126,7 @@ def test_field_inqueality(f1, f2) -> None:
         ),
     ],
 )
-def test_fields_equality(fs1, fs2) -> None:
+def test_fields_equality(fs1: Fields, fs2: Fields) -> None:
     assert fs1 == fs2
 
 
@@ -159,7 +159,7 @@ def test_fields_equality(fs1, fs2) -> None:
         ),
     ],
 )
-def test_fields_inequality(fs1, fs2) -> None:
+def test_fields_inequality(fs1: Fields, fs2: Fields) -> None:
     assert fs1 != fs2
 
 
