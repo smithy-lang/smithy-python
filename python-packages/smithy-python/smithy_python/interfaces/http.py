@@ -69,8 +69,9 @@ class Field(Protocol):
         """Remove all matching entries from list."""
         ...
 
-    def get_value(self) -> str:
-        """Get comma-delimited string.
+    def as_string(self) -> str:
+        """Serialize the ``Field``'s values into a single line string."""
+        ...
 
         Values containing commas or quotes are double-quoted.
         """

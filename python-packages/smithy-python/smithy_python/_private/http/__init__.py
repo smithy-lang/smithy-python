@@ -155,12 +155,24 @@ class Field(interfaces.http.Field):
         except ValueError:
             return
 
-    def get_value(self) -> str:
+    def as_string(self) -> str:
         """
-        Get comma-delimited string of values.
+        Get comma-delimited string of all values.
 
-        Values with spaces or commas are double-quoted.
+        If the ``Field`` has zero values, the empty string is returned. If the ``Field``
+        has exactly one value, the value is returned unmodified.
+
+        For ``Field``s with more than one value, the values are joined by a comma and a
+        space. For such multi-valued ``Field``s, any values that already contain
+        commata or double quotes will be surrounded by double quotes. Within any values
+        that get quoted, pre-existing double quotes and backslashes are escaped with a
+        backslash.
         """
+        value_count = len(self.value)
+        if value_count == 0:
+            return ""
+        if value_count == 1:
+            return self.value[0]
         return ", ".join(quote_and_escape_field_value(val) for val in self.value)
 
     def get_value_list(self) -> list[str]:
@@ -184,17 +196,14 @@ class Field(interfaces.http.Field):
 def quote_and_escape_field_value(value: str) -> str:
     """Escapes and quotes a single :class:`Field` value if necessary.
 
-    A value that contains comma (,) is quoted (surrounded by double quotes) unless
-    it already starts and ends with double quotes. If a value gets quoted, any
-    double quotes contained within the value are escaped as a quoted-pair (prefixed
-    with a backslash).
+    See :func:`Field.as_string` for quoting and escaping logic.
     """
-    if value.startswith('"') and value.endswith('"'):
+    CHARS_TO_QUOTE = (",", '"')
+    if any(char in CHARS_TO_QUOTE for char in value):
+        escaped = value.replace("\\", "\\\\").replace('"', '\\"')
+        return f'"{escaped}"'
+    else:
         return value
-    if "," not in value:
-        return value
-    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
-    return f'"{escaped}"'
 
 
 class Fields(interfaces.http.Fields):
