@@ -163,11 +163,20 @@ def test_fields_inequality(fs1, fs2) -> None:
     assert fs1 != fs2
 
 
-def test_repeated_initial_field_names() -> None:
+@pytest.mark.parametrize(
+    "initial_fields",
+    [
+        [
+            Field(name="fname1", value=["val1"]),
+            Field(name="fname1", value=["val2"]),
+        ],
+        # uniqueness is checked _after_ normaling field names
+        [
+            Field(name="fNaMe1", value=["val1"]),
+            Field(name="fname1", value=["val2"]),
+        ],
+    ],
+)
+def test_repeated_initial_field_names(initial_fields: list[Field]) -> None:
     with pytest.raises(ValueError):
-        Fields(
-            [
-                Field(name="fname1", value=["val1"]),
-                Field(name="fname1", value=["val2"]),
-            ]
-        )
+        Fields(initial_fields)

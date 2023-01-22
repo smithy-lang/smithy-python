@@ -14,7 +14,7 @@
 # TODO: move all of this out of _private
 
 
-from collections import OrderedDict
+from collections import Counter, OrderedDict
 from dataclasses import dataclass, field
 from typing import Any, Iterable, Protocol
 from urllib.parse import urlparse, urlunparse
@@ -223,25 +223,37 @@ class Fields(interfaces.http.Fields):
         :param encoding: The string encoding to be used when converting the ``Field``
         name and value from ``str`` to ``bytes`` for transmission.
         """
-        init_fields = [] if initial is None else [fld for fld in initial]
-        init_field_names = [fld.name for fld in init_fields]
-        if len(init_field_names) != len(set(init_field_names)):
-            raise ValueError("Field names of the initial list of fields must be unique")
+        init_fields = [fld for fld in initial] if initial is not None else []
+        init_field_names = [self._normalize_field_name(fld.name) for fld in init_fields]
+        fname_counter = Counter(init_field_names)
+        repeated_names_exist = (
+            len(init_fields) > 0 and fname_counter.most_common(1)[0][1] > 1
+        )
+        if repeated_names_exist:
+            non_unique_names = [name for name, cnt in fname_counter.items() if cnt > 1]
+            raise ValueError(
+                "Field names of the initial list of fields must be unique. The "
+                "following normalized field names appear more than once: "
+                f"{', '.join(non_unique_names)}."
+            )
         init_tuples = zip(init_field_names, init_fields)
         self.entries: OrderedDict[str, interfaces.http.Field] = OrderedDict(init_tuples)
         self.encoding: str = encoding
 
     def set_field(self, field: interfaces.http.Field) -> None:
         """Set entry for a Field name."""
-        self.entries[field.name] = field
+        normalized_name = self._normalize_field_name(field.name)
+        self.entries[normalized_name] = field
 
     def get_field(self, name: str) -> interfaces.http.Field:
         """Retrieve Field entry."""
-        return self.entries[name]
+        normalized_name = self._normalize_field_name(name)
+        return self.entries[normalized_name]
 
     def remove_field(self, name: str) -> None:
         """Delete entry from collection."""
-        del self.entries[name]
+        normalized_name = self._normalize_field_name(name)
+        del self.entries[normalized_name]
 
     def get_by_type(self, kind: FieldPosition) -> list[interfaces.http.Field]:
         """Helper function for retrieving specific types of fields.
@@ -249,6 +261,10 @@ class Fields(interfaces.http.Fields):
         Used to grab all headers or all trailers.
         """
         return [entry for entry in self.entries.values() if entry.kind is kind]
+
+    def _normalize_field_name(self, name: str) -> str:
+        """Normalize field names. For use as key in ``entries``."""
+        return name.lower()
 
     def __eq__(self, other: object) -> bool:
         """Encoding must match. Entries must match in values and order."""
