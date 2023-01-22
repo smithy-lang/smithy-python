@@ -15,8 +15,9 @@
 
 
 from collections import Counter, OrderedDict
+from collections.abc import Iterable
 from dataclasses import dataclass, field
-from typing import Any, Iterable, Protocol
+from typing import Any, Protocol
 from urllib.parse import urlparse, urlunparse
 
 from ... import interfaces
@@ -132,11 +133,11 @@ class Field(interfaces.http.Field):
     def __init__(
         self,
         name: str,
-        value: list[str] | None = None,
+        value: Iterable[str] | None = None,
         kind: FieldPosition = FieldPosition.HEADER,
     ):
         self.name = name
-        self.value: list[str] = value if value is not None else []
+        self.value: list[str] = [val for val in value] if value is not None else []
         self.kind = kind
 
     def add(self, value: str) -> None:
@@ -211,7 +212,7 @@ def quote_and_escape_field_value(value: str) -> str:
 class Fields(interfaces.http.Fields):
     def __init__(
         self,
-        initial: list[interfaces.http.Field] | None = None,
+        initial: Iterable[interfaces.http.Field] | None = None,
         *,
         encoding: str = "utf-8",
     ):
