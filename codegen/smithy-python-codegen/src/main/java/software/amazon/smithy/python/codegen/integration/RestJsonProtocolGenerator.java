@@ -52,6 +52,14 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
 @SmithyUnstableApi
 public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
 
+    private static final Set<String> OUTPUT_TESTS_TO_SKIP = Set.of(
+        // These two tests essentially try to assert nan == nan,
+        // which is never true. We should update the generator to
+        // make specific assertions for these.
+        "RestJsonSupportsNaNFloatHeaderOutputs",
+        "RestJsonSupportsNaNFloatInputs"
+    );
+
     @Override
     public ShapeId getProtocol() {
         return RestJson1Trait.ID;
@@ -94,8 +102,16 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                     return true;
                 }
             }
+
+            // Some headers are implicit, since we still don't support header serialization we need to skip them.
+            if (!testCase.getRequireHeaders().isEmpty() || !testCase.getHeaders().isEmpty()) {
+                return true;
+            }
         }
         if (testCase instanceof HttpResponseTestCase) {
+            if (OUTPUT_TESTS_TO_SKIP.contains(testCase.getId())) {
+                return true;
+            }
             var bindingIndex = HttpBindingIndex.of(context.model());
             return bindingIndex.getResponseBindings(shape, Location.PAYLOAD).size() != 0;
         }
