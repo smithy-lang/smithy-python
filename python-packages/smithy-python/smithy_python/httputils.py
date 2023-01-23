@@ -17,8 +17,8 @@ from .exceptions import SmithyException
 def split_header(given: str, handle_unquoted_http_date: bool = False) -> list[str]:
     """Splits a header value into a list of strings.
 
-    The format is based on RFC9110's list extension found in secion 5.6.1 with quoted
-    the quoted string syntax found in section 5.6.4. In short:
+    The format is based on RFC9110's list production found in secion 5.6.1 with
+    the quoted string production found in section 5.6.4. In short:
 
     A list is 1 or more elements surrounded by optional whitespace and separated by
     commas. Elements may be quoted with double quotes (``"``) to contain leading or
