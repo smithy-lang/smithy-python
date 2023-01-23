@@ -162,7 +162,6 @@ public final class HttpProtocolTestGenerator implements Runnable {
     }
 
     private void generateRequestTest(OperationShape operation, HttpRequestTestCase testCase) {
-        // TODO: add logic for checking if should skip
         writeTestBlock(
                 testCase,
                 String.format("%s_request_%s", testCase.getId(), operation.getId().getName()),
@@ -348,7 +347,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
         if (shouldSkip) {
             LOGGER.fine(String.format("Marking test (%s) as skipped.", testName));
             writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "mark", "mark");
-            writer.write("@mark.skip()");
+            writer.write("@mark.xfail()");
         }
         writer.openBlock("async def test_$L() -> None:", "", CaseUtils.toSnakeCase(testName), () -> {
             testCase.getDocumentation().ifPresent(writer::writeDocs);
