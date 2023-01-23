@@ -165,7 +165,7 @@ class Field(interfaces.http.Field):
 
         For ``Field``s with more than one value, the values are joined by a comma and a
         space. For such multi-valued ``Field``s, any values that already contain
-        commata or double quotes will be surrounded by double quotes. Within any values
+        commas or double quotes will be surrounded by double quotes. Within any values
         that get quoted, pre-existing double quotes and backslashes are escaped with a
         backslash.
         """
@@ -193,7 +193,7 @@ class Field(interfaces.http.Field):
         )
 
     def __repr__(self) -> str:
-        return f'Field(name="{self.name}", value=[{self.value}], kind={self.kind})'
+        return f"Field(name={self.name!r}, value={self.value!r}, kind={self.kind!r})"
 
 
 def quote_and_escape_field_value(value: str) -> str:
@@ -201,8 +201,8 @@ def quote_and_escape_field_value(value: str) -> str:
 
     See :func:`Field.as_string` for quoting and escaping logic.
     """
-    CHARS_TO_QUOTE = (",", '"')
-    if any(char in CHARS_TO_QUOTE for char in value):
+    chars_to_quote = (",", '"')
+    if any(char in chars_to_quote for char in value):
         escaped = value.replace("\\", "\\\\").replace('"', '\\"')
         return f'"{escaped}"'
     else:
@@ -231,7 +231,7 @@ class Fields(interfaces.http.Fields):
             len(init_fields) > 0 and fname_counter.most_common(1)[0][1] > 1
         )
         if repeated_names_exist:
-            non_unique_names = [name for name, cnt in fname_counter.items() if cnt > 1]
+            non_unique_names = [name for name, num in fname_counter.items() if num > 1]
             raise ValueError(
                 "Field names of the initial list of fields must be unique. The "
                 "following normalized field names appear more than once: "
