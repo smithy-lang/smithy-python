@@ -1,0 +1,53 @@
+name: Protocol Tests
+
+on:
+    push:
+        branches: develop
+    pull_request:
+        branches: develop
+
+jobs:
+  protocol-test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+
+    name: RestJson1
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Set up Corretto 17 JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: corretto
+          java-version: 17
+
+      - name: Set up Python for Pants - 3.9
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+
+      - name: Set up Python for protocol tests - 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Install Python packages
+        run: |
+          ./pants --no-dynamic-ui package ::
+          python3.11 -m pip install dist/*.whl
+
+      - name: Generate protocol tests
+        run: cd codegen && ./gradlew clean build -Plog-tests
+
+      - name: Set up protocol test package
+        run: |
+          cd codegen/smithy-python-protocol-test/build/smithyprojections/smithy-python-protocol-test/rest-json-1/python-codegen
+          python3.11 -m pip install '.[tests]'
+
+      - name: Run protocol tests
+        run: |
+          cd codegen/smithy-python-protocol-test/build/smithyprojections/smithy-python-protocol-test/rest-json-1/python-codegen
+          python3.11 -m pytest tests
