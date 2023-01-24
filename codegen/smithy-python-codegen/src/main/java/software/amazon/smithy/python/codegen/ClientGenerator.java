@@ -316,7 +316,7 @@ final class ClientGenerator implements Runnable {
                         if not endpoint.url.path:
                             endpoint.url.path = ""
                         elif endpoint.url.path.endswith("/"):
-                            endpoint.url.path = endpoint.url.path.rstrip("/")
+                            endpoint.url.path = endpoint.url.path[:-1]
                         if context.transport_request.url.path:
                             endpoint.url.path += context.transport_request.url.path
                         endpoint.url.query = context.transport_request.url.query
