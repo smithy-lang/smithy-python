@@ -133,26 +133,26 @@ class Field(interfaces.http.Field):
     def __init__(
         self,
         name: str,
-        value: Iterable[str] | None = None,
+        values: Iterable[str] | None = None,
         kind: FieldPosition = FieldPosition.HEADER,
     ):
         self.name = name
-        self.value: list[str] = [val for val in value] if value is not None else []
+        self.values: list[str] = [val for val in values] if values is not None else []
         self.kind = kind
 
     def add(self, value: str) -> None:
         """Append a value to a field."""
-        self.value.append(value)
+        self.values.append(value)
 
-    def set(self, value: list[str]) -> None:
+    def set(self, values: list[str]) -> None:
         """Overwrite existing field values."""
-        self.value = value
+        self.values = values
 
     def remove(self, value: str) -> None:
         """Remove all matching entries from list."""
         try:
             while True:
-                self.value.remove(value)
+                self.values.remove(value)
         except ValueError:
             return
 
@@ -169,18 +169,18 @@ class Field(interfaces.http.Field):
         that get quoted, pre-existing double quotes and backslashes are escaped with a
         backslash.
         """
-        value_count = len(self.value)
+        value_count = len(self.values)
         if value_count == 0:
             return ""
         if value_count == 1:
-            return self.value[0]
-        return ", ".join(quote_and_escape_field_value(val) for val in self.value)
+            return self.values[0]
+        return ", ".join(quote_and_escape_field_value(val) for val in self.values)
 
     def as_tuples(self) -> list[tuple[str, str]]:
         """
         Get list of ``name``, ``value`` tuples where each tuple represents one value.
         """
-        return [(self.name, val) for val in self.value]
+        return [(self.name, val) for val in self.values]
 
     def __eq__(self, other: object) -> bool:
         """Name, values, and kind must match. Values order must match."""
@@ -189,11 +189,11 @@ class Field(interfaces.http.Field):
         return (
             self.name == other.name
             and self.kind is other.kind
-            and self.value == other.value
+            and self.values == other.values
         )
 
     def __repr__(self) -> str:
-        return f"Field(name={self.name!r}, value={self.value!r}, kind={self.kind!r})"
+        return f"Field(name={self.name!r}, value={self.values!r}, kind={self.kind!r})"
 
 
 def quote_and_escape_field_value(value: str) -> str:

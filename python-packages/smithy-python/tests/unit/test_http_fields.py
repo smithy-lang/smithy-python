@@ -23,7 +23,7 @@ def test_field_single_valued_basics() -> None:
     field = Field("fname", ["fval"], FieldPosition.HEADER)
     assert field.name == "fname"
     assert field.kind == FieldPosition.HEADER
-    assert field.value == ["fval"]
+    assert field.values == ["fval"]
     assert field.as_string() == "fval"
     assert field.as_tuples() == [("fname", "fval")]
 
@@ -32,7 +32,7 @@ def test_field_multi_valued_basics() -> None:
     field = Field("fname", ["fval1", "fval2"], FieldPosition.HEADER)
     assert field.name == "fname"
     assert field.kind == FieldPosition.HEADER
-    assert field.value == ["fval1", "fval2"]
+    assert field.values == ["fval1", "fval2"]
     assert field.as_string() == "fval1, fval2"
     assert field.as_tuples() == [("fname", "fval1"), ("fname", "fval2")]
 
@@ -67,7 +67,7 @@ def test_field_multi_valued_basics() -> None:
     ],
 )
 def test_field_serialization(values: list[str], expected: str):
-    field = Field(name="_", value=values)
+    field = Field(name="_", values=values)
     assert field.as_string() == expected
 
 
@@ -121,8 +121,8 @@ def test_field_inqueality(f1: Field, f2: Field) -> None:
     "fs1,fs2",
     [
         (
-            Fields([Field(name="fname", value=["fval1", "fval2"])]),
-            Fields([Field(name="fname", value=["fval1", "fval2"])]),
+            Fields([Field(name="fname", values=["fval1", "fval2"])]),
+            Fields([Field(name="fname", values=["fval1", "fval2"])]),
         ),
     ],
 )
@@ -146,12 +146,12 @@ def test_fields_equality(fs1: Fields, fs2: Fields) -> None:
             Fields(encoding="utf-2"),
         ),
         (
-            Fields([Field(name="fname", value=["val1"])]),
-            Fields([Field(name="fname", value=["val2"])]),
+            Fields([Field(name="fname", values=["val1"])]),
+            Fields([Field(name="fname", values=["val2"])]),
         ),
         (
-            Fields([Field(name="fname", value=["val2", "val1"])]),
-            Fields([Field(name="fname", value=["val1", "val2"])]),
+            Fields([Field(name="fname", values=["val2", "val1"])]),
+            Fields([Field(name="fname", values=["val1", "val2"])]),
         ),
         (
             Fields([Field(name="f1"), Field(name="f2")]),
@@ -167,13 +167,13 @@ def test_fields_inequality(fs1: Fields, fs2: Fields) -> None:
     "initial_fields",
     [
         [
-            Field(name="fname1", value=["val1"]),
-            Field(name="fname1", value=["val2"]),
+            Field(name="fname1", values=["val1"]),
+            Field(name="fname1", values=["val2"]),
         ],
         # uniqueness is checked _after_ normaling field names
         [
-            Field(name="fNaMe1", value=["val1"]),
-            Field(name="fname1", value=["val2"]),
+            Field(name="fNaMe1", values=["val1"]),
+            Field(name="fname1", values=["val2"]),
         ],
     ],
 )

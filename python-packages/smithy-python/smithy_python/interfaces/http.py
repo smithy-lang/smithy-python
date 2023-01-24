@@ -54,14 +54,14 @@ class Field(Protocol):
     """
 
     name: str
-    value: list[str]
+    values: list[str]
     kind: FieldPosition = FieldPosition.HEADER
 
     def add(self, value: str) -> None:
         """Append a value to a field."""
         ...
 
-    def set(self, value: list[str]) -> None:
+    def set(self, values: list[str]) -> None:
         """Overwrite existing field values."""
         ...
 
