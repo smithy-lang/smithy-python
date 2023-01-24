@@ -154,7 +154,7 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
         } else {
             writer.write("return {k: $L for k, v in output.items() if v is not None}", valueDeserializer);
         }
-        ;writer.dedent();
+        writer.dedent();
         return null;
     }
 
