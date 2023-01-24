@@ -178,6 +178,8 @@ def serialize_float(given: float | Decimal) -> str:
 def serialize_rfc3339(given: datetime) -> str:
     """Serializes a datetime into an RFC3339 string respresentation.
 
+    If ``microseconds`` is 0, no fractional part is serialized.
+
     :param given: The datetime to serialize.
     :returns: An RFC3339 formatted timestamp.
     """

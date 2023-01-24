@@ -52,7 +52,8 @@ public final class SmithyPythonDependency {
      */
     public static final PythonDependency PYTEST_ASYNCIO = new PythonDependency(
         "pytest-asyncio",
-        ">=0.20.3,<0.30.0",
+        ">=0.20.3,<0.30" +
+            ".0",
         Type.TEST_DEPENDENCY,
         false
     );
