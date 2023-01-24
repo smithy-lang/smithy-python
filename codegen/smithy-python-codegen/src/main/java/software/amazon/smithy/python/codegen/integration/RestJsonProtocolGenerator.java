@@ -88,7 +88,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         }
         if (testCase instanceof HttpRequestTestCase) {
             // Request serialization isn't finished, so here we only test the bindings that are supported.
-            Set<Location> implementedBindings = SetUtils.of(Location.LABEL);
+            Set<Location> implementedBindings = SetUtils.of(Location.LABEL, Location.DOCUMENT);
             var bindingIndex = HttpBindingIndex.of(context.model());
 
             // If any member specified in the test is bound to a location we haven't yet implemented,
@@ -125,8 +125,30 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         OperationShape operation,
         List<HttpBinding> documentBindings
     ) {
-        // TODO: implement this
-        writer.write("body = b'{}'");
+        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+        writer.addImport("smithy_python.types", "Document");
+        writer.write("result: dict[str, Document] = {}\n");
+
+        var bodyMembers = documentBindings.stream()
+            .map(HttpBinding::getMember)
+            .collect(Collectors.toSet());
+
+        var serVisitor = new JsonShapeSerVisitor(context, writer);
+        serVisitor.structureMembers(bodyMembers);
+
+        writer.addStdlibImport("json", "dumps", "json_dumps");
+        writer.write("body = json_dumps(result).encode('utf-8')");
+    }
+
+    @Override
+    protected void generateDocumentBodyShapeSerializers(GenerationContext context, Set<Shape> shapes) {
+        for (Shape shape : getConnectedShapes(context, shapes)) {
+            var serFunction = context.protocolGenerator().getSerializationFunction(context, shape);
+            context.writerDelegator().useFileWriter(serFunction.getDefinitionFile(),
+                serFunction.getNamespace(), writer -> {
+                    shape.accept(new JsonShapeSerVisitor(context, writer));
+                });
+        }
     }
 
     @Override
@@ -158,11 +180,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         GenerationContext context,
         Set<Shape> shapes
     ) {
-        var shapeWalker = new Walker(NeighborProviderIndex.of(context.model()).getProvider());
-        var shapesToGenerate = new TreeSet<>(shapes);
-        shapes.forEach(shape -> shapesToGenerate.addAll(shapeWalker.walkShapes(shape)));
-
-        for (Shape shape : shapesToGenerate) {
+        for (Shape shape : getConnectedShapes(context, shapes)) {
             var deserFunction = context.protocolGenerator().getDeserializationFunction(context, shape);
 
             context.writerDelegator().useFileWriter(deserFunction.getDefinitionFile(),
@@ -170,5 +188,12 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                 shape.accept(new JsonShapeDeserVisitor(context, writer));
             });
         }
+    }
+
+    private Set<Shape> getConnectedShapes(GenerationContext context, Set<Shape> initialShapes) {
+        var shapeWalker = new Walker(NeighborProviderIndex.of(context.model()).getProvider());
+        var connectedShapes = new TreeSet<>(initialShapes);
+        initialShapes.forEach(shape -> connectedShapes.addAll(shapeWalker.walkShapes(shape)));
+        return connectedShapes;
     }
 }

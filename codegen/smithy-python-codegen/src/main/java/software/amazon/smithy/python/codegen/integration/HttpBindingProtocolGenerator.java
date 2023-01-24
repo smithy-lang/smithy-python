@@ -71,6 +71,7 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
 @SmithyUnstableApi
 public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator {
 
+    private final Set<Shape> serializingDocumentShapes = new TreeSet<>();
     private final Set<Shape> deserializingDocumentShapes = new TreeSet<>();
 
     @Override
@@ -118,6 +119,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 writer.popState();
             });
         }
+        generateDocumentBodyShapeSerializers(context, serializingDocumentShapes);
     }
 
     /**
@@ -343,11 +345,18 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         var documentBindings = bindingIndex.getRequestBindings(operation, DOCUMENT);
         if (!documentBindings.isEmpty() || shouldWriteDefaultBody(context, operation)) {
             serializeDocumentBody(context, writer, operation, documentBindings);
+            for (HttpBinding binding : documentBindings) {
+                var target = context.model().expectShape(binding.getMember().getTarget());
+                serializingDocumentShapes.add(target);
+            }
         }
 
         var payloadBindings = bindingIndex.getRequestBindings(operation, PAYLOAD);
         if (!payloadBindings.isEmpty()) {
-            serializePayloadBody(context, writer, operation, payloadBindings.get(0));
+            var binding = payloadBindings.get(0);
+            serializePayloadBody(context, writer, operation, binding);
+            var target = context.model().expectShape(binding.getMember().getTarget());
+            serializingDocumentShapes.add(target);
         }
         writer.popState();
     }
@@ -395,6 +404,18 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         List<HttpBinding> documentBindings
     );
 
+    /**
+     * Generates serialization functions for shapes in the given set.
+     *
+     * <p>These are the functions that serializeDocumentBody will call out to.
+     *
+     * @param context The generation context.
+     * @param shapes The shapes to generate deserialization for.
+     */
+    protected abstract void generateDocumentBodyShapeSerializers(
+        GenerationContext context,
+        Set<Shape> shapes
+    );
 
     /**
      * Writes the code needed to serialize the input payload of a request.
