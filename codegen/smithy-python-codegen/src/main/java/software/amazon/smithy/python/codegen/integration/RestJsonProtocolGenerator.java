@@ -88,7 +88,8 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         }
         if (testCase instanceof HttpRequestTestCase) {
             // Request serialization isn't finished, so here we only test the bindings that are supported.
-            Set<Location> implementedBindings = SetUtils.of(Location.LABEL, Location.DOCUMENT);
+            Set<Location> implementedBindings = SetUtils.of(Location.LABEL, Location.DOCUMENT, Location.QUERY,
+                Location.QUERY_PARAMS);
             var bindingIndex = HttpBindingIndex.of(context.model());
 
             // If any member specified in the test is bound to a location we haven't yet implemented,
