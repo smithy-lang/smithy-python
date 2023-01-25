@@ -38,9 +38,11 @@ import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.knowledge.NullableIndex;
 import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
+import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
@@ -287,5 +289,45 @@ public final class CodegenUtils {
     private static ZonedDateTime parseHttpDate(Node value) {
         Instant instant = Instant.from(DateTimeFormatter.RFC_1123_DATE_TIME.parse(value.expectStringNode().getValue()));
         return instant.atZone(ZoneId.of("UTC"));
+    }
+
+    /**
+     * Writes an accessor for a structure member, handling defaultedness and nullability.
+     *
+     * @param context The generation context.
+     * @param writer The writer to write to.
+     * @param variableName The python variable name pointing to the structure to be accessed.
+     * @param member The member to access.
+     * @param runnable A runnable which uses the member.
+     */
+    public static void accessStructureMember(
+        GenerationContext context,
+        PythonWriter writer,
+        String variableName,
+        MemberShape member,
+        Runnable runnable
+    ) {
+        var shouldDedent = false;
+        var isNullable = NullableIndex.of(context.model()).isMemberNullable(member);
+        var memberName = context.symbolProvider().toMemberName(member);
+        if (member.getMemberTrait(context.model(), DefaultTrait.class).isPresent()) {
+            if (isNullable) {
+                writer.write("if $1L._hasattr($2S) and $1L.$2L is not None:", variableName, memberName);
+            } else {
+                writer.write("if $L._hasattr($S):", variableName, memberName);
+            }
+            writer.indent();
+            shouldDedent = true;
+        } else if (isNullable) {
+            writer.write("if $L.$L is not None:", variableName, memberName);
+            writer.indent();
+            shouldDedent = true;
+        }
+
+        runnable.run();
+
+        if (shouldDedent) {
+            writer.dedent();
+        }
     }
 }
