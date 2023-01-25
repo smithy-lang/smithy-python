@@ -17,7 +17,6 @@ package software.amazon.smithy.python.codegen.integration;
 
 import java.util.Collection;
 import software.amazon.smithy.codegen.core.CodegenException;
-import software.amazon.smithy.model.knowledge.NullableIndex;
 import software.amazon.smithy.model.shapes.ListShape;
 import software.amazon.smithy.model.shapes.MapShape;
 import software.amazon.smithy.model.shapes.MemberShape;
@@ -28,7 +27,6 @@ import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeVisitor;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.UnionShape;
-import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.JsonNameTrait;
 import software.amazon.smithy.model.traits.SparseTrait;
 import software.amazon.smithy.model.traits.StringTrait;
@@ -154,30 +152,17 @@ public class JsonShapeSerVisitor extends ShapeVisitor.Default<Void> {
      * @param members The members to generate serializers for.
      */
     public void structureMembers(Collection<MemberShape> members) {
-        var index = NullableIndex.of(context.model());
         for (MemberShape member : members) {
             var pythonName = context.symbolProvider().toMemberName(member);
             var jsonName = locationName(member);
             var target = context.model().expectShape(member.getTarget());
 
-            var shouldDedent = false;
-            if (member.hasTrait(DefaultTrait.class)) {
-                writer.write("input._hasattr($S):", pythonName);
-                writer.indent();
-                shouldDedent = true;
-            } else if (index.isMemberNullable(member)) {
-                writer.write("if input.$L is not None:", pythonName);
-                writer.indent();
-                shouldDedent = true;
-            }
-
             var memberVisitor = getMemberVisitor(member, "input." + pythonName);
             var memberSerializer = target.accept(memberVisitor);
-            writer.write("result[$S] = $L\n", jsonName, memberSerializer);
 
-            if (shouldDedent) {
-                writer.dedent();
-            }
+            CodegenUtils.accessStructureMember(context, writer, "input", member, () -> {
+                writer.write("result[$S] = $L\n", jsonName, memberSerializer);
+            });
         }
     }
 
