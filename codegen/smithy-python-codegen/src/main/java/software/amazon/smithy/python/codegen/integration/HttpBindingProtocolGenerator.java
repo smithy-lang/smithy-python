@@ -21,10 +21,13 @@ import static software.amazon.smithy.model.knowledge.HttpBinding.Location.HEADER
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.LABEL;
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.PAYLOAD;
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.PREFIX_HEADERS;
+import static software.amazon.smithy.model.knowledge.HttpBinding.Location.QUERY;
+import static software.amazon.smithy.model.knowledge.HttpBinding.Location.QUERY_PARAMS;
 import static software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -45,6 +48,7 @@ import software.amazon.smithy.model.shapes.FloatShape;
 import software.amazon.smithy.model.shapes.IntegerShape;
 import software.amazon.smithy.model.shapes.ListShape;
 import software.amazon.smithy.model.shapes.LongShape;
+import software.amazon.smithy.model.shapes.MapShape;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.Shape;
@@ -300,8 +304,19 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         HttpBindingIndex bindingIndex
     ) {
         writer.pushState(new SerializeQuerySection(operation));
-        writer.write("query_params: list[tuple[str, str | None]] = []");
-        // TODO: implement query serialization
+        writer.writeInline("query_params: list[tuple[str, str | None]] = [");
+        var httpTrait = operation.expectTrait(HttpTrait.class);
+        for (Map.Entry<String, String> entry : httpTrait.getUri().getQueryLiterals().entrySet()) {
+            if (entry.getValue() == null) {
+                writer.write("($S, None),", entry.getKey());
+            } else {
+                writer.write("($S, $S),", entry.getKey(), entry.getValue());
+            }
+        }
+        writer.write("]\n");
+
+        serializeIndividualQueryParams(context, writer, operation, bindingIndex);
+        serializeQueryParamsMap(context, writer, operation, bindingIndex);
 
         writer.write("""
             query: str = ""
@@ -314,6 +329,69 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                     query += f"{param[0]}={param[1]}"
             """);
         writer.popState();
+    }
+
+    private void serializeIndividualQueryParams(
+        GenerationContext context,
+        PythonWriter writer,
+        OperationShape operation,
+        HttpBindingIndex bindingIndex
+    ) {
+        var queryBindings = bindingIndex.getRequestBindings(operation, QUERY);
+        for (HttpBinding binding : queryBindings) {
+            var memberName = context.symbolProvider().toMemberName(binding.getMember());
+            var locationName = binding.getLocationName();
+            var target = context.model().expectShape(binding.getMember().getTarget());
+
+            CodegenUtils.accessStructureMember(context, writer, "input", binding.getMember(), () -> {
+                if (target.isListShape()) {
+                    var listMember = target.asListShape().get().getMember();
+                    var listTarget = context.model().expectShape(listMember.getTarget());
+                    var memberSerializer = listTarget.accept(new HttpMemberSerVisitor(
+                        context, writer, QUERY, "e", listMember,
+                        getDocumentTimestampFormat()));
+                    writer.write("query_params.extend(($S, $L) for e in input.$L)",
+                        locationName, memberSerializer, memberName);
+                } else {
+                    var memberSerializer = target.accept(new HttpMemberSerVisitor(
+                        context, writer, QUERY, "input." + memberName, binding.getMember(),
+                        getDocumentTimestampFormat()));
+                    writer.write("query_params.append(($S, $L))", locationName, memberSerializer);
+                }
+            });
+        }
+    }
+
+    private void serializeQueryParamsMap(
+        GenerationContext context,
+        PythonWriter writer,
+        OperationShape operation,
+        HttpBindingIndex bindingIndex
+    ) {
+        var queryMapBindings = bindingIndex.getRequestBindings(operation, QUERY_PARAMS);
+        for (HttpBinding binding : queryMapBindings) {
+            var memberName = context.symbolProvider().toMemberName(binding.getMember());
+            var mapShape = context.model().expectShape(binding.getMember().getTarget(), MapShape.class);
+            var mapTarget = context.model().expectShape(mapShape.getValue().getTarget());
+
+            CodegenUtils.accessStructureMember(context, writer, "input", binding.getMember(), () -> {
+                if (mapTarget.isListShape()) {
+                    var listMember = mapTarget.asListShape().get().getMember();
+                    var listMemberTarget = context.model().expectShape(listMember.getTarget());
+                    var memberSerializer = listMemberTarget.accept(new HttpMemberSerVisitor(
+                        context, writer, QUERY, "v", listMember,
+                        getDocumentTimestampFormat()));
+                    writer.write("query_params.extend((k, $1L) for k in input.$2L for v in input.$2L[k])",
+                        memberSerializer, memberName);
+                } else {
+                    var memberSerializer = mapTarget.accept(new HttpMemberSerVisitor(
+                        context, writer, QUERY, "v", mapShape.getValue(),
+                        getDocumentTimestampFormat()));
+                    writer.write("query_params.extend((k, $L) for k, v in input.$L.items())",
+                        memberSerializer, memberName);
+                }
+            });
+        }
     }
 
     /**
