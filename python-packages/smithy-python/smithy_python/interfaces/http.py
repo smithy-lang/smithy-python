@@ -43,7 +43,7 @@ class FieldPosition(Enum):
 
 class Field(Protocol):
     """
-    A name-value pair representing a single field in a request or response
+    A name-value pair representing a single field in a request or response.
 
     The kind will dictate metadata placement within an the message, for example as
     header or trailer field in a HTTP request as defined in RFC 9114 Section 4.2.
