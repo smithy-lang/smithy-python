@@ -1,5 +1,5 @@
-from typing import TypeAlias
+from typing import Mapping, Sequence, TypeAlias
 
 Document: TypeAlias = (
-    dict[str, "Document"] | list["Document"] | str | int | float | bool | None
+    Mapping[str, "Document"] | Sequence["Document"] | str | int | float | bool | None
 )
