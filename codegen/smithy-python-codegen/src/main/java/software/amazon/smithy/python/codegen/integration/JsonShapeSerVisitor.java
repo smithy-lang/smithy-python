@@ -52,8 +52,8 @@ public class JsonShapeSerVisitor extends ShapeVisitor.Default<Void> {
         this.writer = writer;
     }
 
-    private DocumentMemberSerVisitor getMemberVisitor(MemberShape member, String dataSource) {
-        return new DocumentMemberSerVisitor(context, writer, member, dataSource, Format.EPOCH_SECONDS);
+    protected DocumentMemberSerVisitor getMemberVisitor(MemberShape member, String dataSource) {
+        return new JsonMemberSerVisitor(context, writer, member, dataSource, Format.EPOCH_SECONDS);
     }
 
     @Override
@@ -86,6 +86,11 @@ public class JsonShapeSerVisitor extends ShapeVisitor.Default<Void> {
         var memberVisitor = getMemberVisitor(shape.getMember(), "e");
         var memberSerializer = target.accept(memberVisitor);
 
+        // If we're not doing a transform, there's no need to have a function for it.
+        if (memberSerializer.equals("e")) {
+            return null;
+        }
+
         var sparseTrailer = "";
         if (shape.hasTrait(SparseTrait.class)) {
             sparseTrailer = " if e is not None else None";
@@ -109,6 +114,11 @@ public class JsonShapeSerVisitor extends ShapeVisitor.Default<Void> {
         var target = context.model().expectShape(shape.getValue().getTarget());
         var valueVisitor = getMemberVisitor(shape.getValue(), "v");
         var valueSerializer = target.accept(valueVisitor);
+
+        // If we're not doing a transform, there's no need to have a function for it.
+        if (valueSerializer.equals("v")) {
+            return null;
+        }
 
         var sparseTrailer = "";
         if (shape.hasTrait(SparseTrait.class)) {
