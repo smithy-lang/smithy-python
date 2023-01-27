@@ -20,7 +20,7 @@ from smithy_python._private.http import Field, FieldPosition, Fields
 
 
 def test_field_single_valued_basics() -> None:
-    field = Field("fname", ["fval"], FieldPosition.HEADER)
+    field = Field(name="fname", values=["fval"], kind=FieldPosition.HEADER)
     assert field.name == "fname"
     assert field.kind == FieldPosition.HEADER
     assert field.values == ["fval"]
@@ -29,7 +29,7 @@ def test_field_single_valued_basics() -> None:
 
 
 def test_field_multi_valued_basics() -> None:
-    field = Field("fname", ["fval1", "fval2"], FieldPosition.HEADER)
+    field = Field(name="fname", values=["fval1", "fval2"], kind=FieldPosition.HEADER)
     assert field.name == "fname"
     assert field.kind == FieldPosition.HEADER
     assert field.values == ["fval1", "fval2"]
@@ -75,16 +75,16 @@ def test_field_serialization(values: list[str], expected: str):
     "f1,f2",
     [
         (
-            Field("fname", ["fval1", "fval2"], FieldPosition.TRAILER),
-            Field("fname", ["fval1", "fval2"], FieldPosition.TRAILER),
+            Field(name="fname", values=["fval1", "fval2"], kind=FieldPosition.TRAILER),
+            Field(name="fname", values=["fval1", "fval2"], kind=FieldPosition.TRAILER),
         ),
         (
-            Field("fname", ["fval1", "fval2"]),
-            Field("fname", ["fval1", "fval2"]),
+            Field(name="fname", values=["fval1", "fval2"]),
+            Field(name="fname", values=["fval1", "fval2"]),
         ),
         (
-            Field("fname"),
-            Field("fname"),
+            Field(name="fname"),
+            Field(name="fname"),
         ),
     ],
 )
@@ -96,20 +96,20 @@ def test_field_equality(f1: Field, f2: Field) -> None:
     "f1,f2",
     [
         (
-            Field("fname", ["fval1", "fval2"], FieldPosition.HEADER),
-            Field("fname", ["fval1", "fval2"], FieldPosition.TRAILER),
+            Field(name="fname", values=["fval1", "fval2"], kind=FieldPosition.HEADER),
+            Field(name="fname", values=["fval1", "fval2"], kind=FieldPosition.TRAILER),
         ),
         (
-            Field("fname", ["fval1", "fval2"], FieldPosition.HEADER),
-            Field("fname", ["fval2", "fval1"], FieldPosition.HEADER),
+            Field(name="fname", values=["fval1", "fval2"], kind=FieldPosition.HEADER),
+            Field(name="fname", values=["fval2", "fval1"], kind=FieldPosition.HEADER),
         ),
         (
-            Field("fname", ["fval1", "fval2"], FieldPosition.HEADER),
-            Field("fname", ["fval1"], FieldPosition.HEADER),
+            Field(name="fname", values=["fval1", "fval2"], kind=FieldPosition.HEADER),
+            Field(name="fname", values=["fval1"], kind=FieldPosition.HEADER),
         ),
         (
-            Field("fname1", ["fval1", "fval2"], FieldPosition.HEADER),
-            Field("fname2", ["fval1", "fval2"], FieldPosition.HEADER),
+            Field(name="fname1", values=["fval1", "fval2"], kind=FieldPosition.HEADER),
+            Field(name="fname2", values=["fval1", "fval2"], kind=FieldPosition.HEADER),
         ),
     ],
 )
