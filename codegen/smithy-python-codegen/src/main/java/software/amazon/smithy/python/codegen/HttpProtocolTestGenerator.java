@@ -311,14 +311,15 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         http_client = $T(
                             status_code = $L,
                             headers = $J,
-                            body = b'',
+                            body = b$S,
                         ),
                     )
                     """,
                     CodegenUtils.getConfigSymbol(context.settings()),
                     RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
                     testCase.getCode(),
-                    CodegenUtils.toTuples(testCase.getHeaders())
+                    CodegenUtils.toTuples(testCase.getHeaders()),
+                    testCase.getBody().orElse("")
                 );
             }));
             // Create an empty input object to pass
