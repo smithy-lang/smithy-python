@@ -29,7 +29,6 @@ import software.amazon.smithy.model.node.StringNode;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
-import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.protocoltests.traits.HttpMessageTestCase;
 import software.amazon.smithy.protocoltests.traits.HttpRequestTestCase;
@@ -86,10 +85,6 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
 
     private boolean filterTests(GenerationContext context, Shape shape, HttpMessageTestCase testCase) {
         if (TESTS_TO_SKIP.contains(testCase.getId())) {
-            return true;
-        }
-        if (shape.hasTrait(ErrorTrait.class)) {
-            // Error handling isn't implemented yet
             return true;
         }
         if (testCase instanceof HttpRequestTestCase) {
