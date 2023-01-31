@@ -112,6 +112,23 @@ public interface ProtocolGenerator {
     }
 
     /**
+     * Generates the symbol for the error deserializer function for an shape of a service that is not
+     * protocol-specific.
+     *
+     * @param context The code generation context.
+     * @param shapeId The shape id of the shape the error deserializer function is being generated for.
+     * @return Returns the generated symbol.
+     */
+    default Symbol getErrorDeserializationFunction(GenerationContext context, ToShapeId shapeId) {
+        var name = context.settings().getService(context.model()).getContextualName(shapeId);
+        return Symbol.builder()
+            .name("_deserialize_error_" + CaseUtils.toSnakeCase(name))
+            .namespace(format("%s.deserialize", context.settings().getModuleName()), "")
+            .definitionFile(format("./%s/deserialize.py", context.settings().getModuleName()))
+            .build();
+    }
+
+    /**
      * Generates any standard code for service request/response serde.
      *
      * @param context Serde context.

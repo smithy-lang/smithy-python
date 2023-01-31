@@ -109,7 +109,7 @@ public final class CodegenUtils {
                 .build();
     }
 
-    static Symbol getApiError(PythonSettings settings) {
+    public static Symbol getApiError(PythonSettings settings) {
         return Symbol.builder()
                 .name("ApiError")
                 .namespace(format("%s.errors", settings.getModuleName()), ".")
@@ -117,7 +117,7 @@ public final class CodegenUtils {
                 .build();
     }
 
-    static Symbol getUnknownApiError(PythonSettings settings) {
+    public static Symbol getUnknownApiError(PythonSettings settings) {
         return Symbol.builder()
                 .name("UnknownApiError")
                 .namespace(format("%s.errors", settings.getModuleName()), ".")

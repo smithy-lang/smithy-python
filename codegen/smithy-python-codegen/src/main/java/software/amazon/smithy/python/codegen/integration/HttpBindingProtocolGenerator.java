@@ -24,6 +24,7 @@ import static software.amazon.smithy.model.knowledge.HttpBinding.Location.PREFIX
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.QUERY;
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.QUERY_PARAMS;
 import static software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
+import static software.amazon.smithy.python.codegen.integration.HttpProtocolGeneratorUtils.generateErrorDispatcher;
 
 import java.util.List;
 import java.util.Locale;
@@ -52,9 +53,11 @@ import software.amazon.smithy.model.shapes.MapShape;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.Shape;
+import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.shapes.ShapeVisitor;
 import software.amazon.smithy.model.shapes.ShortShape;
 import software.amazon.smithy.model.shapes.StringShape;
+import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.TimestampShape;
 import software.amazon.smithy.model.traits.HttpTrait;
 import software.amazon.smithy.model.traits.MediaTypeTrait;
@@ -525,24 +528,16 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
 
     @Override
     public void generateResponseDeserializers(GenerationContext context) {
-        // TODO: Generate deserializers for http bindings, e.g. non-body parts of the http response
         var topDownIndex = TopDownIndex.of(context.model());
-        var delegator = context.writerDelegator();
-        var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
-        var transportResponse = context.applicationProtocol().responseType();
+        var service = context.settings().getService(context.model());
+        var deserializingErrorShapes = new TreeSet<ShapeId>();
         for (OperationShape operation : topDownIndex.getContainedOperations(context.settings().getService())) {
-            var deserFunction = getDeserializationFunction(context, operation);
-            var output = context.model().expectShape(operation.getOutputShape());
-            var outputSymbol = context.symbolProvider().toSymbol(output);
-            delegator.useFileWriter(deserFunction.getDefinitionFile(), deserFunction.getNamespace(), writer -> {
-                writer.pushState(new ResponseDeserializerSection(operation));
-                writer.write("""
-                    async def $L(http_response: $T, config: $T) -> $T:
-                        ${C|}
-                    """, deserFunction.getName(), transportResponse, configSymbol, outputSymbol,
-                    writer.consumer(w -> generateResponseDeserializer(context, writer, operation)));
-                writer.popState();
-            });
+            generateOperationResponseDeserializer(context, operation);
+            deserializingErrorShapes.addAll(operation.getErrors(service));
+        }
+        for (ShapeId errorId : deserializingErrorShapes) {
+            var error = context.model().expectShape(errorId, StructureShape.class);
+            generateErrorResponseDeserializer(context, error);
         }
         generateDocumentBodyShapeDeserializers(context, deserializingDocumentShapes);
     }
@@ -561,40 +556,139 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      *     <li>config - the client config</li>
      * </ul>
      */
-    private void generateResponseDeserializer(
+    private void generateOperationResponseDeserializer(
         GenerationContext context,
-        PythonWriter writer,
         OperationShape operation
     ) {
-        writer.addStdlibImport("typing", "Any");
-        writer.write("kwargs: dict[str, Any] = {}");
-        var bindingIndex = HttpBindingIndex.of(context.model());
+        var delegator = context.writerDelegator();
+        var deserFunction = getDeserializationFunction(context, operation);
+        var output = context.model().expectShape(operation.getOutputShape());
+        var outputSymbol = context.symbolProvider().toSymbol(output);
+        var transportResponse = context.applicationProtocol().responseType();
+        var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
+        var httpTrait = operation.expectTrait(HttpTrait.class);
+        var errorFunction = context.protocolGenerator().getErrorDeserializationFunction(context, operation);
+        delegator.useFileWriter(deserFunction.getDefinitionFile(), deserFunction.getNamespace(), writer -> {
+            writer.pushState(new ResponseDeserializerSection(operation));
+            writer.addStdlibImport("typing", "Any");
+            writer.write("""
+                async def $L(http_response: $T, config: $T) -> $T:
+                    if http_response.status_code != $L and http_response.status_code >= 300:
+                        raise await $T(http_response, config)
 
-        deserializeBody(context, writer, operation, bindingIndex);
-        deserializeHeaders(context, writer, operation, bindingIndex);
-        deserializeStatusCode(context, writer, operation, bindingIndex);
+                    kwargs: dict[str, Any] = {}
 
-        var outputShape = context.model().expectShape(operation.getOutputShape());
-        var outputSymbol = context.symbolProvider().toSymbol(outputShape);
-        writer.write("return $T(**kwargs)", outputSymbol);
+                    ${C|}
+
+                """, deserFunction.getName(), transportResponse, configSymbol,
+                outputSymbol, httpTrait.getCode(), errorFunction,
+                writer.consumer(w -> generateHttpResponseDeserializer(context, writer, operation)));
+            writer.popState();
+        });
+        generateErrorDispatcher(context, operation, this::getErrorCode, this::resolveErrorCodeAndMessage);
     }
 
     /**
-     * A section that controls writing out the entire deserialization function.
+     * A section that controls writing out the entire deserialization function for an operation.
      *
      * @param operation The operation whose deserializer is being generated.
      */
     public record ResponseDeserializerSection(OperationShape operation) implements CodeSection {}
 
+    private void generateErrorResponseDeserializer(GenerationContext context, StructureShape error) {
+        var deserFunction = getErrorDeserializationFunction(context, error);
+        var errorSymbol = context.symbolProvider().toSymbol(error);
+        var delegator = context.writerDelegator();
+        var transportResponse = context.applicationProtocol().responseType();
+        var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
+        delegator.useFileWriter(deserFunction.getDefinitionFile(), deserFunction.getNamespace(), writer -> {
+            writer.pushState(new ErrorDeserializerSection(error));
+            writer.addStdlibImport("typing", "Any");
+            writer.write("""
+                async def $L(
+                    http_response: $T,
+                    config: $T,
+                    parsed_body: Document | None,
+                    default_message: str,
+                ) -> $T:
+                    kwargs: dict[str, Any] = {"message": default_message}
+
+                    ${C|}
+
+                """, deserFunction.getName(), transportResponse, configSymbol, errorSymbol,
+                writer.consumer(w -> generateHttpResponseDeserializer(context, writer, error)));
+            writer.popState();
+        });
+    }
+
+    /**
+     * A section that controls writing out the entire deserialization function for an error.
+     *
+     * @param error The error whose deserializer is being generated.
+     */
+    public record ErrorDeserializerSection(StructureShape error) implements CodeSection {}
+
+    private void generateHttpResponseDeserializer(
+        GenerationContext context,
+        PythonWriter writer,
+        Shape operationOrError
+    ) {
+        var bindingIndex = HttpBindingIndex.of(context.model());
+
+        var outputShape = operationOrError;
+        if (operationOrError.isOperationShape()) {
+            outputShape = context.model().expectShape(operationOrError.asOperationShape().get().getOutputShape());
+        }
+        var outputSymbol = context.symbolProvider().toSymbol(outputShape);
+
+        writer.write("""
+            ${C|}
+
+            ${C|}
+
+            ${C|}
+
+            return $T(**kwargs)
+            """,
+            writer.consumer(w -> deserializeBody(context, w, operationOrError, bindingIndex)),
+            writer.consumer(w -> deserializeHeaders(context, w, operationOrError, bindingIndex)),
+            writer.consumer(w -> deserializeStatusCode(context, w, operationOrError, bindingIndex)),
+            outputSymbol);
+    }
+
+    /**
+     * Maps error shapes to their error codes.
+     *
+     * <p>By default, this returns the error shape's name.
+     *
+     * @param error The error shape.
+     * @return The wire code matching the error shape.
+     */
+    protected String getErrorCode(StructureShape error) {
+        return error.getId().getName();
+    }
+
+    /**
+     * Resolves the error code and message into the {@literal code} and {@literal message}
+     * variables, respectively.
+     *
+     * @param context The generation context.
+     * @param writer The writer to write to.
+     */
+    protected abstract void resolveErrorCodeAndMessage(
+        GenerationContext context,
+        PythonWriter writer
+    );
+
     private void deserializeHeaders(
         GenerationContext context,
         PythonWriter writer,
-        OperationShape operation,
+        Shape operationOrError,
         HttpBindingIndex bindingIndex
     ) {
-        writer.pushState(new DeserializeFieldsSection(operation));
-        var individualBindings = bindingIndex.getResponseBindings(operation, HEADER);
-        var prefixBindings = bindingIndex.getResponseBindings(operation, PREFIX_HEADERS);
+        writer.pushState(new DeserializeFieldsSection(operationOrError));
+        var individualBindings = bindingIndex.getResponseBindings(operationOrError, HEADER);
+        var prefixBindings = bindingIndex.getResponseBindings(operationOrError, PREFIX_HEADERS);
 
         if (!individualBindings.isEmpty() || !prefixBindings.isEmpty()) {
             writer.write("""
@@ -686,18 +780,18 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      * <p>By default, it handles values based on smithy.api#httpHeader and
      * smithy.api#httpPrefixHeaders traits.
      *
-     * @param operation The operation whose fields section is being generated.
+     * @param operationOrError The operation or error whose fields section is being generated.
      */
-    public record DeserializeFieldsSection(OperationShape operation) implements CodeSection {}
+    public record DeserializeFieldsSection(Shape operationOrError) implements CodeSection {}
 
     private void deserializeStatusCode(
         GenerationContext context,
         PythonWriter writer,
-        OperationShape operation,
+        Shape operationOrError,
         HttpBindingIndex bindingIndex
     ) {
-        writer.pushState(new DeserializeStatusCodeSection(operation));
-        var statusBinding = bindingIndex.getResponseBindings(operation, Location.RESPONSE_CODE);
+        writer.pushState(new DeserializeStatusCodeSection(operationOrError));
+        var statusBinding = bindingIndex.getResponseBindings(operationOrError, Location.RESPONSE_CODE);
         if (!statusBinding.isEmpty()) {
             var statusMember = context.symbolProvider().toMemberName(statusBinding.get(0).getMember());
             writer.write("kwargs[$S] = http_response.status_code", statusMember);
@@ -708,31 +802,30 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
     /**
      * A section that controls deserializing the HTTP status code.
      *
-     * @param operation The operation whose status code section is being generated.
+     * @param operationOrError The operation or error whose status code section is being generated.
      */
-    public record DeserializeStatusCodeSection(OperationShape operation) implements CodeSection {}
+    public record DeserializeStatusCodeSection(Shape operationOrError) implements CodeSection {}
 
     private void deserializeBody(
         GenerationContext context,
         PythonWriter writer,
-        OperationShape operation,
+        Shape operationOrError,
         HttpBindingIndex bindingIndex
     ) {
-        writer.pushState(new DeserializeBodySection(operation));
-        // TODO: implement body deserialization
-        var documentBindings = bindingIndex.getResponseBindings(operation, DOCUMENT);
-        if (!documentBindings.isEmpty() || shouldWriteDefaultBody(context, operation)) {
-            deserializeDocumentBody(context, writer, operation, documentBindings);
+        writer.pushState(new DeserializeBodySection(operationOrError));
+        var documentBindings = bindingIndex.getResponseBindings(operationOrError, DOCUMENT);
+        if (!documentBindings.isEmpty()) {
+            deserializeDocumentBody(context, writer, operationOrError, documentBindings);
             for (HttpBinding binding : documentBindings) {
                 var target = context.model().expectShape(binding.getMember().getTarget());
                 deserializingDocumentShapes.add(target);
             }
         }
 
-        var payloadBindings = bindingIndex.getResponseBindings(operation, PAYLOAD);
+        var payloadBindings = bindingIndex.getResponseBindings(operationOrError, PAYLOAD);
         if (!payloadBindings.isEmpty()) {
             var binding = payloadBindings.get(0);
-            deserializePayloadBody(context, writer, operation, binding);
+            deserializePayloadBody(context, writer, operationOrError, binding);
             var target = context.model().expectShape(binding.getMember().getTarget());
             deserializingDocumentShapes.add(target);
         }
@@ -746,9 +839,9 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      * output member that is bound to the document, or which uses the smithy.api#httpPayload
      * trait.
      *
-     * @param operation The operation whose body section is being generated.
+     * @param operationOrError The operation or error whose body section is being generated.
      */
-    public record DeserializeBodySection(OperationShape operation) implements CodeSection {}
+    public record DeserializeBodySection(Shape operationOrError) implements CodeSection {}
 
     /**
      * Writes the code needed to deserialize a protocol output document.
@@ -765,13 +858,13 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      * }</pre>
      * @param context The generation context.
      * @param writer The writer to write to.
-     * @param operation The operation whose output document is being deserialized.
+     * @param operationOrError The operation or error whose output document is being deserialized.
      * @param documentBindings The bindings to read from the document.
      */
     protected abstract void deserializeDocumentBody(
         GenerationContext context,
         PythonWriter writer,
-        OperationShape operation,
+        Shape operationOrError,
         List<HttpBinding> documentBindings
     );
 
@@ -794,13 +887,13 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      *
      * @param context The generation context.
      * @param writer The writer to write to.
-     * @param operation The operation whose output payload is being deserialized.
+     * @param operationOrError The operation or error whose output payload is being deserialized.
      * @param binding The payload binding to deserialize.
      */
     protected void deserializePayloadBody(
         GenerationContext context,
         PythonWriter writer,
-        OperationShape operation,
+        Shape operationOrError,
         HttpBinding binding
     ) {
         // TODO: implement payload deserialization
