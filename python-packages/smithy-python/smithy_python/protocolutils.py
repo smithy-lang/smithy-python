@@ -34,18 +34,19 @@ async def parse_rest_json_error_info(http_response: Response) -> RestJsonErrorIn
     """Parses generic RestJson error info from an HTTP response.
 
     :param http_response: The HTTP response to parse.
+    :param check_body: Whether to check the body for the code / message.
     :returns: The parsed error information.
     """
     code: str | None = None
-
-    for key, value in http_response.headers:
-        if key.lower() == _REST_JSON_CODE_HEADER:
-            code = value
-
-    body: bytes = await http_response.body.read()
-    json_body: Document = json.loads(body) if body else {}
-
     message: str | None = None
+
+    for header_key, header_value in http_response.headers:
+        if header_key.lower() == _REST_JSON_CODE_HEADER:
+            code = header_value
+
+    json_body: dict[str, Document] = {}
+    if body := await http_response.body.read():
+        json_body = json.loads(body)
 
     for key, value in json_body.items():
         key_lower = key.lower()
