@@ -84,6 +84,8 @@ class _AsyncReader:
 async def test_parse_rest_json_error_info(
     headers: HeadersList, body: Document, expected: RestJsonErrorInfo
 ) -> None:
-    response = Response(status_code=400, headers=headers, body=_AsyncReader(json.dumps(body)))
+    response = Response(
+        status_code=400, headers=headers, body=_AsyncReader(json.dumps(body))
+    )
     actual = await parse_rest_json_error_info(response)
     assert actual == expected
