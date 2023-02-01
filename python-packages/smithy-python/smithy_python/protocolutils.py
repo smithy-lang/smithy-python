@@ -30,7 +30,9 @@ class RestJsonErrorInfo(NamedTuple):
     """The HTTP response body parsed as JSON."""
 
 
-async def parse_rest_json_error_info(http_response: Response) -> RestJsonErrorInfo:
+async def parse_rest_json_error_info(
+    http_response: Response, check_body: bool = True
+) -> RestJsonErrorInfo:
     """Parses generic RestJson error info from an HTTP response.
 
     :param http_response: The HTTP response to parse.
@@ -39,21 +41,23 @@ async def parse_rest_json_error_info(http_response: Response) -> RestJsonErrorIn
     """
     code: str | None = None
     message: str | None = None
+    json_body: dict[str, Document] | None = None
 
     for header_key, header_value in http_response.headers:
         if header_key.lower() == _REST_JSON_CODE_HEADER:
             code = header_value
 
-    json_body: dict[str, Document] = {}
-    if body := await http_response.body.read():
-        json_body = json.loads(body)
+    if check_body:
+        if body := await http_response.body.read():
+            json_body = json.loads(body)
 
-    for key, value in json_body.items():
-        key_lower = key.lower()
-        if not code and key_lower in _REST_JSON_CODE_KEYS:
-            code = expect_type(str, value)
-        if not message and key_lower in _REST_JSON_MESSAGE_KEYS:
-            message = expect_type(str, value)
+        if json_body:
+            for key, value in json_body.items():
+                key_lower = key.lower()
+                if not code and key_lower in _REST_JSON_CODE_KEYS:
+                    code = expect_type(str, value)
+                if not message and key_lower in _REST_JSON_MESSAGE_KEYS:
+                    message = expect_type(str, value)
 
     # Normalize the error code. Some services may try to send a fully-qualified shape
     # ID or a url, but we don't want to include those.

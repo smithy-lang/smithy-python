@@ -89,3 +89,36 @@ async def test_parse_rest_json_error_info(
     )
     actual = await parse_rest_json_error_info(response)
     assert actual == expected
+
+
+class _ExceptionThrowingBody:
+    async def read(self, size: int = -1) -> bytes:
+        raise Exception("Body unexpectedly accessed")
+
+
+@pytest.mark.parametrize(
+    "headers, expected",
+    [
+        ([], RestJsonErrorInfo("Unknown", "Unknown", None)),
+        ([("x-amzn-errortype", "foo")], RestJsonErrorInfo("foo", "Unknown", None)),
+        ([("X-Amzn-Errortype", "foo")], RestJsonErrorInfo("foo", "Unknown", None)),
+        (
+            [("x-amzn-errortype", "com.example#foo")],
+            RestJsonErrorInfo("foo", "Unknown", None),
+        ),
+        (
+            [("x-amzn-errortype", "foo:https://example.com/")],
+            RestJsonErrorInfo("foo", "Unknown", None),
+        ),
+        (
+            [("x-amzn-errortype", "com.example#foo:https://example.com/")],
+            RestJsonErrorInfo("foo", "Unknown", None),
+        ),
+    ],
+)
+async def test_parse_rest_json_error_info_without_body(
+    headers: HeadersList, expected: RestJsonErrorInfo
+) -> None:
+    response = Response(status_code=400, headers=headers, body=_ExceptionThrowingBody())
+    actual = await parse_rest_json_error_info(response, check_body=False)
+    assert actual == expected
