@@ -72,6 +72,11 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         return Format.EPOCH_SECONDS;
     }
 
+    @Override
+    protected String getDocumentContentType() {
+        return "application/json";
+    }
+
     // This is here rather than in HttpBindingProtocolGenerator because eventually
     // it will need to generate some protocol-specific comparators.
     @Override

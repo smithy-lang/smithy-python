@@ -29,6 +29,7 @@ import static software.amazon.smithy.python.codegen.integration.HttpProtocolGene
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
 import java.util.stream.Collectors;
@@ -61,6 +62,7 @@ import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.TimestampShape;
 import software.amazon.smithy.model.traits.HttpTrait;
 import software.amazon.smithy.model.traits.MediaTypeTrait;
+import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.python.codegen.ApplicationProtocol;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
@@ -151,10 +153,10 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
     ) {
         var httpTrait = operation.expectTrait(HttpTrait.class);
         var bindingIndex = HttpBindingIndex.of(context.model());
-        serializeHeaders(context, writer, operation, bindingIndex);
         serializePath(context, writer, operation, bindingIndex);
         serializeQuery(context, writer, operation, bindingIndex);
         serializeBody(context, writer, operation, bindingIndex);
+        serializeHeaders(context, writer, operation, bindingIndex);
 
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
         writer.addImport("smithy_python._private.http", "Request", "_Request");
@@ -194,10 +196,62 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
     ) {
         writer.pushState(new SerializeFieldsSection(operation));
         // TODO: map headers from inputs
-        // TODO: write out default http and protocol headers
         writer.addImport("smithy_python.interfaces.http", "HeadersList", "_HeadersList");
-        writer.write("headers: _HeadersList = []");
+        writer.write("""
+            headers: _HeadersList = [
+                ${C|}
+                ${C|}
+                ${C|}
+            ]
+            """,
+            writer.consumer(w -> writeContentType(context, w, operation)),
+            writer.consumer(w -> writeContentLength(context, w, operation)),
+            writer.consumer(w -> writeDefaultHeaders(context, w, operation)));
         writer.popState();
+    }
+
+    /**
+     * Gets the default content-type when a document is synthesized in the body.
+     *
+     * @return Returns the default content-type.
+     */
+    protected abstract String getDocumentContentType();
+
+    private void writeContentType(GenerationContext context, PythonWriter writer, OperationShape operation) {
+        if (isStreamingPayloadInput(context, operation)) {
+            return;
+        }
+        var httpIndex = HttpBindingIndex.of(context.model());
+        var optionalContentType = httpIndex.determineRequestContentType(operation, getDocumentContentType());
+        if (optionalContentType.isEmpty() && shouldWriteDefaultBody(context, operation)) {
+            optionalContentType = Optional.of(getDocumentContentType());
+        }
+        optionalContentType.ifPresent(contentType -> writer.write("('Content-Type', $S),", contentType));
+    }
+
+    private void writeContentLength(GenerationContext context, PythonWriter writer, OperationShape operation) {
+        if (isStreamingPayloadInput(context, operation)) {
+            return;
+        }
+        writer.write("('Content-Length', str(len(body))),");
+    }
+
+    private boolean isStreamingPayloadInput(GenerationContext context, OperationShape operation) {
+        var payloadBinding = HttpBindingIndex.of(context.model()).getRequestBindings(operation, PAYLOAD);
+        if (payloadBinding.isEmpty()) {
+            return false;
+        }
+        return payloadBinding.get(0).getMember().getMemberTrait(context.model(), StreamingTrait.class).isPresent();
+    }
+
+    /**
+     * Writes any additional HTTP input headers required by the protocol implementation.
+     *
+     * @param context The generation context.
+     * @param writer The writer to write to.
+     * @param operation The operation whose input is being generated.
+     */
+    protected void writeDefaultHeaders(GenerationContext context, PythonWriter writer, OperationShape operation) {
     }
 
     /**
