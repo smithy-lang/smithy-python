@@ -197,6 +197,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
             // Execute the command, and catch the expected exception
             writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail", "fail");
+            writer.addStdlibImport("urllib.parse", "parse_qs");
+            writer.addStdlibImport("typing", "AbstractSet");
             writer.write("""
                 try:
                     await client.$1T(input_)
@@ -207,7 +209,23 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     assert actual.method == $3S
                     assert actual.url.path == $4S
                     assert actual.url.host == $5S
-                    $6C
+
+                    query = actual.url.query
+                    actual_query_segments: list[str] = query.split("&") if query else []
+                    expected_query_segments: list[str] = $6J
+                    for expected_query_segment in expected_query_segments:
+                        assert expected_query_segment in actual_query_segments
+                        actual_query_segments.remove(expected_query_segment)
+
+                    actual_query_keys: AbstractSet[str] = parse_qs(query).keys() if query else set()
+                    expected_query_keys: set[str] = set($7J)
+                    assert actual_query_keys >= expected_query_keys
+
+                    forbidden_query_keys: set[str] = set($8J)
+                    for forbidden_key in forbidden_query_keys:
+                        assert forbidden_key not in actual_query_keys
+
+                    $9C
                 except Exception as err:
                     fail(f"Expected '$2L' exception to be thrown, but received {type(err).__name__}: {err}")
                 """,
@@ -216,6 +234,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 testCase.getMethod(),
                 testCase.getUri(),
                 host,
+                testCase.getQueryParams(),
+                testCase.getRequireQueryParams(),
+                testCase.getForbidQueryParams(),
                 (Runnable) () -> writer.maybeWrite(
                     !testCase.getRequireHeaders().isEmpty(),
                     "assert {h[0] for h in actual.headers} >= $J",
