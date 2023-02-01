@@ -158,13 +158,23 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         List<HttpBinding> documentBindings
     ) {
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+        writer.addImport("smithy_python.types", "Document");
         writer.addStdlibImport("json", "loads", "json_loads");
 
-        writer.write("""
-            body = await http_response.body.read()
-            output = json_loads(body) if body else {}
+        writer.write("output: dict[str, Document] = {}");
+        if (operationOrError.isOperationShape()) {
+            writer.write("""
+                if (body := await http_response.body.read()):
+                    output = json_loads(body)
 
-            """);
+                """);
+        } else {
+            writer.write("""
+                if parsed_body is None and (body := await http_response.body.read()):
+                    output = json_loads(body)
+
+                """);
+        }
 
         var bodyMembers = documentBindings.stream()
             .map(HttpBinding::getMember)
