@@ -41,7 +41,7 @@ public class JsonMemberSerVisitor extends DocumentMemberSerVisitor {
 
     /**
      * @param context The generation context.
-     * @param writer The writer to write to.q
+     * @param writer The writer to write to.
      * @param member The member shape being deserialized. Used for any extra traits
      *               it might bear, such as the timestamp format.
      * @param dataSource The in-code location of the data to provide an output of
