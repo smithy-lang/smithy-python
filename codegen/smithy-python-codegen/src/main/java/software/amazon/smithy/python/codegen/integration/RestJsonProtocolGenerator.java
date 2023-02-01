@@ -25,19 +25,16 @@ import software.amazon.smithy.model.knowledge.HttpBinding.Location;
 import software.amazon.smithy.model.knowledge.HttpBindingIndex;
 import software.amazon.smithy.model.knowledge.NeighborProviderIndex;
 import software.amazon.smithy.model.neighbor.Walker;
-import software.amazon.smithy.model.node.StringNode;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.protocoltests.traits.HttpMessageTestCase;
 import software.amazon.smithy.protocoltests.traits.HttpRequestTestCase;
-import software.amazon.smithy.protocoltests.traits.HttpResponseTestCase;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.HttpProtocolTestGenerator;
 import software.amazon.smithy.python.codegen.PythonWriter;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
-import software.amazon.smithy.utils.SetUtils;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
@@ -92,34 +89,12 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         if (TESTS_TO_SKIP.contains(testCase.getId())) {
             return true;
         }
+        var bindingIndex = HttpBindingIndex.of(context.model());
         if (testCase instanceof HttpRequestTestCase) {
-            // Request serialization isn't finished, so here we only test the bindings that are supported.
-            Set<Location> implementedBindings = SetUtils.of(Location.LABEL, Location.DOCUMENT, Location.QUERY,
-                Location.QUERY_PARAMS);
-            var bindingIndex = HttpBindingIndex.of(context.model());
-
-            // If any member specified in the test is bound to a location we haven't yet implemented,
-            // skip the test.
-            var supportedMembers = bindingIndex.getRequestBindings(shape).values().stream()
-                .filter(binding -> implementedBindings.contains(binding.getLocation()))
-                .map(binding -> binding.getMember().getMemberName())
-                .collect(Collectors.toSet());
-            for (StringNode setMember : testCase.getParams().getMembers().keySet()) {
-                if (!supportedMembers.contains(setMember.getValue())) {
-                    return true;
-                }
-            }
-
-            // Some headers are implicit, since we still don't support header serialization we need to skip them.
-            if (!testCase.getRequireHeaders().isEmpty() || !testCase.getHeaders().isEmpty()) {
-                return true;
-            }
-        }
-        if (testCase instanceof HttpResponseTestCase) {
-            var bindingIndex = HttpBindingIndex.of(context.model());
+            return bindingIndex.getRequestBindings(shape, Location.PAYLOAD).size() != 0;
+        } else {
             return bindingIndex.getResponseBindings(shape, Location.PAYLOAD).size() != 0;
         }
-        return false;
     }
 
     @Override
