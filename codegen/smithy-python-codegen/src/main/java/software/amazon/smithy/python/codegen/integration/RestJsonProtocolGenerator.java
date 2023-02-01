@@ -52,12 +52,15 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
 @SmithyUnstableApi
 public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
 
-    private static final Set<String> OUTPUT_TESTS_TO_SKIP = Set.of(
+    private static final Set<String> TESTS_TO_SKIP = Set.of(
         // These two tests essentially try to assert nan == nan,
         // which is never true. We should update the generator to
         // make specific assertions for these.
         "RestJsonSupportsNaNFloatHeaderOutputs",
-        "RestJsonSupportsNaNFloatInputs"
+        "RestJsonSupportsNaNFloatInputs",
+
+        // This requires support of idempotency autofill
+        "RestJsonQueryIdempotencyTokenAutoFill"
     );
 
     @Override
@@ -82,6 +85,9 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
     }
 
     private boolean filterTests(GenerationContext context, Shape shape, HttpMessageTestCase testCase) {
+        if (TESTS_TO_SKIP.contains(testCase.getId())) {
+            return true;
+        }
         if (shape.hasTrait(ErrorTrait.class)) {
             // Error handling isn't implemented yet
             return true;
@@ -110,9 +116,6 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
             }
         }
         if (testCase instanceof HttpResponseTestCase) {
-            if (OUTPUT_TESTS_TO_SKIP.contains(testCase.getId())) {
-                return true;
-            }
             var bindingIndex = HttpBindingIndex.of(context.model());
             return bindingIndex.getResponseBindings(shape, Location.PAYLOAD).size() != 0;
         }
