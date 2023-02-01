@@ -16,6 +16,7 @@
 package software.amazon.smithy.python.codegen.integration;
 
 
+import static java.lang.String.format;
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.DOCUMENT;
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.HEADER;
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.LABEL;
@@ -195,7 +196,6 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         HttpBindingIndex bindingIndex
     ) {
         writer.pushState(new SerializeFieldsSection(operation));
-        // TODO: map headers from inputs
         writer.addImport("smithy_python.interfaces.http", "HeadersList", "_HeadersList");
         writer.write("""
             headers: _HeadersList = [
@@ -203,10 +203,13 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 ${C|}
                 ${C|}
             ]
+
             """,
             writer.consumer(w -> writeContentType(context, w, operation)),
             writer.consumer(w -> writeContentLength(context, w, operation)),
             writer.consumer(w -> writeDefaultHeaders(context, w, operation)));
+            serializeIndividualHeaders(context, writer, operation);
+            serializePrefixHeaders(context, writer, operation);
         writer.popState();
     }
 
@@ -252,6 +255,54 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      * @param operation The operation whose input is being generated.
      */
     protected void writeDefaultHeaders(GenerationContext context, PythonWriter writer, OperationShape operation) {
+    }
+
+    private void serializeIndividualHeaders(GenerationContext context, PythonWriter writer, OperationShape operation) {
+        var index = HttpBindingIndex.of(context.model());
+        var headerBindings = index.getRequestBindings(operation, HEADER);
+        for (HttpBinding binding : headerBindings) {
+            CodegenUtils.accessStructureMember(context, writer, "input", binding.getMember(), () -> {
+                var pythonName = context.symbolProvider().toMemberName(binding.getMember());
+                var target = context.model().expectShape(binding.getMember().getTarget());
+
+                if (target.isListShape()) {
+                    var listMember = target.asListShape().get().getMember();
+                    var listTarget = context.model().expectShape(listMember.getTarget());
+                    var inputValue = listTarget.accept(new HttpMemberSerVisitor(
+                        context, writer, binding.getLocation(), "e", listMember,
+                        getDocumentTimestampFormat()));
+                    writer.write("""
+                        headers.extend(($S, $L) for e in input.$L)
+                        """, binding.getLocationName(), inputValue, pythonName);
+                } else {
+                    var dataSource = "input." + pythonName;
+                    var inputValue = target.accept(new HttpMemberSerVisitor(
+                        context, writer, binding.getLocation(), dataSource, binding.getMember(),
+                        getDocumentTimestampFormat()));
+                    writer.write("headers.append(($S, $L))", binding.getLocationName(), inputValue);
+                }
+            });
+        }
+    }
+
+    private void serializePrefixHeaders(GenerationContext context, PythonWriter writer, OperationShape operation) {
+        var index = HttpBindingIndex.of(context.model());
+        var prefixHeaderBindings = index.getRequestBindings(operation, PREFIX_HEADERS);
+        for (HttpBinding binding : prefixHeaderBindings) {
+            CodegenUtils.accessStructureMember(context, writer, "input", binding.getMember(), () -> {
+                var pythonName = context.symbolProvider().toMemberName(binding.getMember());
+                var target = context.model().expectShape(binding.getMember().getTarget(), MapShape.class);
+                var valueTarget = context.model().expectShape(target.getValue().getTarget());
+                var inputValue = valueTarget.accept(new HttpMemberSerVisitor(
+                    context, writer, binding.getLocation(), "v", target.getValue(),
+                    getDocumentTimestampFormat()));
+                writer.write("""
+                    headers.extend((f'$L{k}', $L) for k, v in input.$L.items())
+                    """, binding.getLocationName(
+                ), inputValue, pythonName);
+            });
+        }
+
     }
 
     /**
@@ -1002,8 +1053,11 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
 
         @Override
         public String blobShape(BlobShape shape) {
-            // TODO: implement this
-            return dataSource;
+            if (member.getMemberTrait(context.model(), StreamingTrait.class).isPresent()) {
+                return dataSource;
+            }
+            writer.addStdlibImport("base64", "b64encode");
+            return format("b64encode(%s).decode('utf-8')", dataSource);
         }
 
         @Override
@@ -1016,7 +1070,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
             if (bindingType == Location.HEADER) {
                 if (shape.hasTrait(MediaTypeTrait.class)) {
                     writer.addStdlibImport("base64", "b64encode");
-                    return "b64encode(" + dataSource + "))";
+                    return format("b64encode(%s.encode('utf-8')).decode('utf-8')", dataSource);
                 }
             }
             return dataSource;
@@ -1091,12 +1145,6 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
 
             return HttpProtocolGeneratorUtils.getTimestampInputParam(
                 context, writer, dataSource, member, format);
-        }
-
-        @Override
-        public String listShape(ListShape shape) {
-            // TODO: implement this
-            return dataSource;
         }
     }
 
