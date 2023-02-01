@@ -15,6 +15,8 @@
 
 package software.amazon.smithy.python.codegen.integration;
 
+import static java.lang.String.format;
+
 import java.util.Locale;
 import java.util.function.BiConsumer;
 import java.util.function.Function;
@@ -96,22 +98,25 @@ public final class HttpProtocolGeneratorUtils {
         Shape shape,
         Format format
     ) {
+        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+        writer.addImport("smithy_python.utils", "expect_type");
         switch (format) {
-            case DATE_TIME:
+            case DATE_TIME -> {
                 writer.addImport("smithy_python.utils", "ensure_utc");
                 writer.addStdlibImport("datetime", "datetime");
-                return "ensure_utc(datetime.fromisoformat(" + dataSource + "))";
-            case EPOCH_SECONDS:
+                return format("ensure_utc(datetime.fromisoformat(expect_type(str, %s)))", dataSource);
+            }
+            case EPOCH_SECONDS -> {
                 writer.addStdlibImport("datetime", "datetime");
                 writer.addStdlibImport("datetime", "timezone");
-                writer.addImport("smithy_python.utils", "expect_type");
-                return "datetime.fromtimestamp(expect_type(int | float, " + dataSource + "), timezone.utc)";
-            case HTTP_DATE:
+                return format("datetime.fromtimestamp(expect_type(int | float, %s), timezone.utc)", dataSource);
+            }
+            case HTTP_DATE -> {
                 writer.addImport("smithy_python.utils", "ensure_utc");
                 writer.addStdlibImport("email.utils", "parsedate_to_datetime");
-                return "ensure_utc(parsedate_to_datetime(" + dataSource + "))";
-            default:
-                throw new CodegenException("Unexpected timestamp format `" + format + "` on " + shape);
+                return format("ensure_utc(parsedate_to_datetime(expect_type(str, %s)))", dataSource);
+            }
+            default -> throw new CodegenException("Unexpected timestamp format `" + format + "` on " + shape);
         }
     }
 
