@@ -65,6 +65,7 @@ import software.amazon.smithy.python.codegen.PythonWriter;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.utils.CodeSection;
 import software.amazon.smithy.utils.SmithyUnstableApi;
+import software.amazon.smithy.utils.StringUtils;
 
 /**
  * Abstract implementation useful for all protocols that use HTTP bindings.
@@ -307,7 +308,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         writer.writeInline("query_params: list[tuple[str, str | None]] = [");
         var httpTrait = operation.expectTrait(HttpTrait.class);
         for (Map.Entry<String, String> entry : httpTrait.getUri().getQueryLiterals().entrySet()) {
-            if (entry.getValue() == null) {
+            if (StringUtils.isBlank(entry.getValue())) {
                 writer.write("($S, None),", entry.getKey());
             } else {
                 writer.write("($S, $S),", entry.getKey(), entry.getValue());
@@ -318,15 +319,16 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         serializeIndividualQueryParams(context, writer, operation, bindingIndex);
         serializeQueryParamsMap(context, writer, operation, bindingIndex);
 
+        writer.addStdlibImport("urllib.parse", "quote", "urlquote");
         writer.write("""
             query: str = ""
             for i, param in enumerate(query_params):
-                if i != 1:
+                if i != 0:
                     query += "&"
                 if param[1] is None:
-                    query += param[0]
+                    query += urlquote(param[0], safe='')
                 else:
-                    query += f"{param[0]}={param[1]}"
+                    query += f"{urlquote(param[0], safe='')}={urlquote(param[1], safe='')}"
             """);
         writer.popState();
     }
