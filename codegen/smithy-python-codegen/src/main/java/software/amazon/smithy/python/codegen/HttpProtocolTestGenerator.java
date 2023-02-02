@@ -176,6 +176,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 () -> {
             var hostSplit = testCase.getHost().orElse("example.com").split("/", 2);
             var host = hostSplit[0];
+            var resolvedHost = testCase.getResolvedHost().map(h -> h.split("/", 2)[0]).orElse(host);
             String path;
             if (hostSplit.length != 1) {
                 path = hostSplit[1];
@@ -256,7 +257,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 TEST_HTTP_SERVICE_ERR_SYMBOL,
                 testCase.getMethod(),
                 testCase.getUri(),
-                host,
+                resolvedHost,
                 testCase.getQueryParams(),
                 testCase.getForbidQueryParams(),
                 testCase.getRequireQueryParams(),

@@ -59,7 +59,11 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         "RestJsonQueryIdempotencyTokenAutoFill",
 
         // This requires support of the httpChecksumRequired trait
-        "RestJsonHttpChecksumRequired"
+        "RestJsonHttpChecksumRequired",
+
+        // These require support of the endpoint trait
+        "RestJsonEndpointTraitWithHostLabel",
+        "RestJsonEndpointTrait"
     );
 
     @Override
