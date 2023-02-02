@@ -161,17 +161,20 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         writer.addImport("smithy_python.types", "Document");
         writer.addStdlibImport("json", "loads", "json_loads");
 
-        writer.write("output: dict[str, Document] = {}");
         if (operationOrError.isOperationShape()) {
             writer.write("""
+                output: dict[str, Document] = {}
                 if (body := await http_response.body.read()):
                     output = json_loads(body)
 
                 """);
         } else {
+            // The method that parses the error code will also pre-parse the body.
+            // The only time it doesn't is for streaming payloads, which isn't
+            // relevant here.
+            writer.addStdlibImport("typing", "cast");
             writer.write("""
-                if parsed_body is None and (body := await http_response.body.read()):
-                    output = json_loads(body)
+                output: dict[str, Document] = cast(dict[str, Document], parsed_body)
 
                 """);
         }
