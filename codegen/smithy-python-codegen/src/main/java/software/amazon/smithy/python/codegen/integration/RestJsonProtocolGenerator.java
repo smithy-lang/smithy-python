@@ -56,7 +56,10 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         "RestJsonSupportsNaNFloatInputs",
 
         // This requires support of idempotency autofill
-        "RestJsonQueryIdempotencyTokenAutoFill"
+        "RestJsonQueryIdempotencyTokenAutoFill",
+
+        // This requires support of the httpChecksumRequired trait
+        "RestJsonHttpChecksumRequired"
     );
 
     @Override
