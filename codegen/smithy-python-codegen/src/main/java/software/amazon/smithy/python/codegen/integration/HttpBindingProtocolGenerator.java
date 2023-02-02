@@ -236,7 +236,13 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         if (isStreamingPayloadInput(context, operation)) {
             return;
         }
-        writer.write("('Content-Length', str(len(body))),");
+        var hasBodyBindings = HttpBindingIndex.of(context.model())
+            .getRequestBindings(operation).values().stream()
+            .anyMatch(binding -> binding.getLocation() == PAYLOAD || binding.getLocation() == DOCUMENT);
+
+        if (hasBodyBindings) {
+            writer.write("('Content-Length', str(len(body))),");
+        }
     }
 
     private boolean isStreamingPayloadInput(GenerationContext context, OperationShape operation) {
