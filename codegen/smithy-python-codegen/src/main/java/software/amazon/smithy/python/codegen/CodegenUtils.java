@@ -307,15 +307,42 @@ public final class CodegenUtils {
         MemberShape member,
         Runnable runnable
     ) {
+        accessStructureMember(context, writer, variableName, member, true, runnable);
+    }
+
+    /**
+     * Writes an accessor for a structure member, handling defaultedness and nullability.
+     *
+     * @param context The generation context.
+     * @param writer The writer to write to.
+     * @param variableName The python variable name pointing to the structure to be accessed.
+     * @param member The member to access.
+     * @param accessFalsey Whether to access falsey members such as empty strings.
+     * @param runnable A runnable which uses the member.
+     */
+    public static void accessStructureMember(
+        GenerationContext context,
+        PythonWriter writer,
+        String variableName,
+        MemberShape member,
+        boolean accessFalsey,
+        Runnable runnable
+    ) {
         var shouldDedent = false;
         var isNullable = NullableIndex.of(context.model()).isMemberNullable(member);
         var memberName = context.symbolProvider().toMemberName(member);
         if (member.getMemberTrait(context.model(), DefaultTrait.class).isPresent()) {
-            if (isNullable) {
+            if (!accessFalsey) {
+                writer.write("if $1L._hasattr($2S) and $1L.$2L:", variableName, memberName);
+            } else if (isNullable) {
                 writer.write("if $1L._hasattr($2S) and $1L.$2L is not None:", variableName, memberName);
             } else {
                 writer.write("if $L._hasattr($S):", variableName, memberName);
             }
+            writer.indent();
+            shouldDedent = true;
+        } else if (!accessFalsey) {
+            writer.write("if $L.$L:", variableName, memberName);
             writer.indent();
             shouldDedent = true;
         } else if (isNullable) {

@@ -261,9 +261,11 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         var index = HttpBindingIndex.of(context.model());
         var headerBindings = index.getRequestBindings(operation, HEADER);
         for (HttpBinding binding : headerBindings) {
-            CodegenUtils.accessStructureMember(context, writer, "input", binding.getMember(), () -> {
+            var target = context.model().expectShape(binding.getMember().getTarget());
+            boolean accessFalsey = !(target.isStringShape() || target.isListShape());
+
+            CodegenUtils.accessStructureMember(context, writer, "input", binding.getMember(), accessFalsey, () -> {
                 var pythonName = context.symbolProvider().toMemberName(binding.getMember());
-                var target = context.model().expectShape(binding.getMember().getTarget());
 
                 if (target.isListShape()) {
                     var listMember = target.asListShape().get().getMember();
@@ -271,9 +273,11 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                     var inputValue = listTarget.accept(new HttpMemberSerVisitor(
                         context, writer, binding.getLocation(), "e", listMember,
                         getDocumentTimestampFormat()));
+
+                    var trailer = listTarget.isStringShape() ? " if e" : "";
                     writer.write("""
-                        headers.extend(($S, $L) for e in input.$L)
-                        """, binding.getLocationName(), inputValue, pythonName);
+                        headers.extend(($S, $L) for e in input.$L$L)
+                        """, binding.getLocationName(), inputValue, pythonName, trailer);
                 } else {
                     var dataSource = "input." + pythonName;
                     var inputValue = target.accept(new HttpMemberSerVisitor(
@@ -297,7 +301,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                     context, writer, binding.getLocation(), "v", target.getValue(),
                     getDocumentTimestampFormat()));
                 writer.write("""
-                    headers.extend((f'$L{k}', $L) for k, v in input.$L.items())
+                    headers.extend((f'$L{k}', $L) for k, v in input.$L.items() if v)
                     """, binding.getLocationName(
                 ), inputValue, pythonName);
             });
