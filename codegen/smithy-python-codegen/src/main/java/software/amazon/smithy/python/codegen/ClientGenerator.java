@@ -317,12 +317,12 @@ final class ClientGenerator implements Runnable {
                             endpoint.url.path = ""
                         elif endpoint.url.path.endswith("/"):
                             endpoint.url.path = endpoint.url.path[:-1]
-                        if context.transport_request.url.path:
-                            endpoint.url.path += context.transport_request.url.path
-                        endpoint.url.query = context.transport_request.url.query
-                        endpoint.url.host = context.transport_request.url.host + endpoint.url.host
-                        context._transport_request.url = endpoint.url
-                        context._transport_request.headers.extend(endpoint.headers)
+                        if context.transport_request.destination.path:
+                            endpoint.url.path += context.transport_request.destination.path
+                        endpoint.url.query = context.transport_request.destination.query
+                        endpoint.url.host = context.transport_request.destination.host + endpoint.url.host
+                        context._transport_request.destination = endpoint.url
+                        context._transport_request.fields.extend(endpoint.headers)
 
                 """, errorSymbol);
         }
@@ -368,7 +368,8 @@ final class ClientGenerator implements Runnable {
                             InterceptorContext[Input, None, $1T, $2T], context
                         )
                         context_with_response._transport_response = await config.http_client.send(
-                            context_with_response.transport_request, request_config
+                            request=context_with_response.transport_request,
+                            request_config=request_config,
                         )
 
                 """, transportRequest, transportResponse, errorSymbol);

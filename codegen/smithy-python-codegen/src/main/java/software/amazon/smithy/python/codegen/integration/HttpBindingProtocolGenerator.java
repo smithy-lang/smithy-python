@@ -157,19 +157,19 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         serializeBody(context, writer, operation, bindingIndex);
 
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python._private.http", "Request", "_Request");
+        writer.addImport("smithy_python._private.http", "HTTPRequest", "_HTTPRequest");
         writer.addImport("smithy_python._private.http", "URI", "_URI");
 
         writer.write("""
-            return _Request(
-                url=_URI(
+            return _HTTPRequest(
+                destination=_URI(
                     host="",
                     path=path,
                     scheme="https",
                     query=query,
                 ),
                 method=$S,
-                headers=headers,
+                fields=headers,
                 body=body,
             )
             """, httpTrait.getMethod());
@@ -195,8 +195,8 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         writer.pushState(new SerializeFieldsSection(operation));
         // TODO: map headers from inputs
         // TODO: write out default http and protocol headers
-        writer.addImport("smithy_python.interfaces.http", "Fields", "_Fields");
-        writer.write("headers: _Fields = []");
+        writer.addImport("smithy_python._private.http", "Fields");
+        writer.write("headers = Fields()");
         writer.popState();
     }
 
@@ -573,7 +573,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
             writer.addStdlibImport("typing", "Any");
             writer.write("""
                 async def $L(http_response: $T, config: $T) -> $T:
-                    if http_response.status_code != $L and http_response.status_code >= 300:
+                    if http_response.status != $L and http_response.status >= 300:
                         raise await $T(http_response, config)
 
                     kwargs: dict[str, Any] = {}
@@ -692,10 +692,11 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
 
         if (!individualBindings.isEmpty() || !prefixBindings.isEmpty()) {
             writer.write("""
-            for key, value in http_response.headers:
-                _key_lowercase = key.lower()
-                ${C|}
-                ${C|}
+            for fld in http_response.fields:
+                for key, value in fld.as_tuples():
+                    _key_lowercase = key.lower()
+                    ${C|}
+                    ${C|}
             """,
                 writer.consumer(w -> deserializeIndividualHeaders(context, w, individualBindings)),
                 writer.consumer(w -> deserializePrefixHeaders(context, w, prefixBindings))
@@ -794,7 +795,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         var statusBinding = bindingIndex.getResponseBindings(operationOrError, Location.RESPONSE_CODE);
         if (!statusBinding.isEmpty()) {
             var statusMember = context.symbolProvider().toMemberName(statusBinding.get(0).getMember());
-            writer.write("kwargs[$S] = http_response.status_code", statusMember);
+            writer.write("kwargs[$S] = http_response.status", statusMember);
         }
         writer.popState();
     }
@@ -852,7 +853,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      * <p>For example:
      *
      * <pre>{@code
-     * data = json.loads(http_response.body.read().decode('utf-8'))
+     * data = json.loads(http_response.consume_body().decode('utf-8'))
      * if 'spam' in data:
      *     kwargs['spam'] = data['spam']
      * }</pre>

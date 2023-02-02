@@ -66,7 +66,7 @@ final class ConfigGenerator implements Runnable {
                 new ConfigField(
                     "http_client",
                     Symbol.builder()
-                        .name("AsyncHttpClient")
+                        .name("HttpClient")
                         .namespace("smithy_python.interfaces.http", ".")
                         .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
                         .build(),
@@ -105,7 +105,7 @@ final class ConfigGenerator implements Runnable {
                         .name("str | URI")
                         .addReference(Symbol.builder()
                             .name("URI")
-                            .namespace("smithy_python.interfaces.http", ".")
+                            .namespace("smithy_python.interfaces", ".")
                             .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
                             .build())
                         .build(),

@@ -301,6 +301,26 @@ class Fields(interfaces.http.Fields):
         yield from self.entries.values()
 
 
+def tuples_list_to_fields(
+    tuples: list[tuple[str, str]], *, kind: FieldPosition | None = None
+) -> Fields:
+    """Convert ``name``, ``value`` tuples to ``Fields`` object. Each tuple represents
+    one Field value.
+
+    :param kind: The Field kind to define for all tuples.
+    """
+    fields = Fields()
+    for name, value in tuples:
+        try:
+            fields.get_field(name).add(value)
+        except KeyError:
+            fields.set_field(
+                Field(name=name, values=[value], kind=kind or FieldPosition.HEADER)
+            )
+
+    return fields
+
+
 @dataclass
 class Endpoint(interfaces.http.Endpoint):
     url: interfaces.URI

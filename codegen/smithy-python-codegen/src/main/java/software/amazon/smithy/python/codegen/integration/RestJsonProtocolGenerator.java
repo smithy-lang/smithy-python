@@ -164,7 +164,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         if (operationOrError.isOperationShape()) {
             writer.write("""
                 output: dict[str, Document] = {}
-                if (body := await http_response.body.read()):
+                if (body := await http_response.consume_body()):
                     output = json_loads(body)
 
                 """);

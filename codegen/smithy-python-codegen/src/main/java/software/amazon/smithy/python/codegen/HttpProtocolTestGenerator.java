@@ -69,10 +69,10 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
     private static final Logger LOGGER = Logger.getLogger(HttpProtocolTestGenerator.class.getName());
     private static final Symbol REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL = Symbol.builder()
-            .name("RequestTestAsyncHttpClient")
+            .name("RequestTestHttpClient")
             .build();
     private static final Symbol RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL = Symbol.builder()
-            .name("ResponseTestAsyncHttpClient")
+            .name("ResponseTestHttpClient")
             .build();
     private static final Symbol TEST_HTTP_SERVICE_ERR_SYMBOL = Symbol.builder()
             .name("TestHttpServiceError")
@@ -207,10 +207,10 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     actual = err.request
 
                     assert actual.method == $3S
-                    assert actual.url.path == $4S
-                    assert actual.url.host == $5S
+                    assert actual.destination.path == $4S
+                    assert actual.destination.host == $5S
 
-                    query = actual.url.query
+                    query = actual.destination.query
                     actual_query_segments: list[str] = query.split("&") if query else []
                     expected_query_segments: list[str] = $6J
                     for expected_query_segment in expected_query_segments:
@@ -239,7 +239,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 testCase.getForbidQueryParams(),
                 (Runnable) () -> writer.maybeWrite(
                     !testCase.getRequireHeaders().isEmpty(),
-                    "assert {h[0] for h in actual.headers} >= $J",
+                    "assert {h.name for h in actual.fields} >= $J",
                     new HashSet<>(testCase.getRequireHeaders())
                 )
             );
@@ -257,9 +257,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     config = $T(
                         endpoint_url="https://example.com",
                         http_client = $T(
-                            status_code = $L,
-                            headers = $J,
-                            body = b$S,
+                            status=$L,
+                            headers=$J,
+                            body=b$S,
                         ),
                     )
                     """,
@@ -309,9 +309,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     config = $T(
                         endpoint_url="https://example.com",
                         http_client = $T(
-                            status_code = $L,
-                            headers = $J,
-                            body = b$S,
+                            status=$L,
+                            headers=$J,
+                            body=b$S,
                         ),
                     )
                     """,
@@ -396,15 +396,17 @@ public final class HttpProtocolTestGenerator implements Runnable {
         LOGGER.fine(String.format("Writing utility stubs for %s : %s", serviceSymbol.getName(), protocol.getName()));
         writer.addStdlibImport("typing", "Any");
         writer.addImports("smithy_python.interfaces.http", Set.of(
-                "Fields", "HttpRequestConfiguration", "Request", "Response")
+                "Fields", "HttpRequestConfiguration", "HTTPRequest", "HTTPResponse")
         );
-        writer.addImport("smithy_python._private.http", "Response", "_Response");
+        writer.addImport("smithy_python._private.http", "tuples_list_to_fields");
+        writer.addImport("smithy_python._private.http", "HTTPResponse", "_HTTPResponse");
+        writer.addImport("smithy_python.async_utils", "async_list");
 
         writer.write("""
                         class $1L($2T):
                             ""\"A test error that subclasses the service-error for protocol tests.""\"
 
-                            def __init__(self, request: Request):
+                            def __init__(self, request: HTTPRequest):
                                 self.request = request
 
 
@@ -412,40 +414,29 @@ public final class HttpProtocolTestGenerator implements Runnable {
                             ""\"An asynchronous HTTP client solely for testing purposes.""\"
 
                             async def send(
-                                self, request: Request, request_config: HttpRequestConfiguration
-                            ) -> Response:
+                                self, *, request: HTTPRequest, request_config: HttpRequestConfiguration | None
+                            ) -> HTTPResponse:
                                 # Raise the exception with the request object to bypass actual request handling
                                 raise $1T(request)
-
-
-                        class AwaitableBody:
-                            def __init__(self, contents: bytes):
-                                self._contents = contents
-
-                            async def read(self, size: int = -1) -> bytes:
-                                if size < 0:
-                                    result = self._contents
-                                    self._contents = b''
-                                    return result
-
-                                result = self._contents[0:size-1]
-                                self._contents = self._contents[size-1:]
-                                return result
 
 
                         class $4L:
                             ""\"An asynchronous HTTP client solely for testing purposes.""\"
 
-                            def __init__(self, status_code: int, headers: Fields, body: bytes):
-                                self.status_code = status_code
-                                self.headers = headers
-                                self.body = AwaitableBody(body)
+                            def __init__(self, status: int, headers: list[tuple[str, str]], body: bytes):
+                                self.status = status
+                                self.fields = tuples_list_to_fields(headers)
+                                self.body = body
 
                             async def send(
-                                self, request: Request, request_config: HttpRequestConfiguration
-                            ) -> Response:
+                                self, *, request: HTTPRequest, request_config: HttpRequestConfiguration | None
+                            ) -> _HTTPResponse:
                                 # Pre-construct the response from the request and return it
-                                return _Response(self.status_code, self.headers, self.body)
+                                return _HTTPResponse(
+                                    status=self.status,
+                                    fields=self.fields,
+                                    body=async_list([self.body]),
+                                )
                         """,
             TEST_HTTP_SERVICE_ERR_SYMBOL,
             CodegenUtils.getServiceError(context.settings()),
