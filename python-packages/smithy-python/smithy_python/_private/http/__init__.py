@@ -119,10 +119,22 @@ class HTTPRequest(interfaces.http.HTTPRequest):
 
 @dataclass(kw_only=True)
 class HTTPResponse(interfaces.http.HTTPResponse):
+    """
+    Basic implementation of :py:class:`...interfaces.http.HTTPResponse`.
+
+    ``done`` is always ``True``. :py:class:`...interfaces.http.HTTPClient`
+    implementations that create instances of this class before the complete body is
+    received must modify ``done`` to correctly reflect the response state.
+
+    Implementations of :py:class:`...interfaces.http.HTTPClient` may return instances
+    of this class or of custom response implementatinos.
+    """
+
     body: AsyncIterable[bytes]
     status: int
     fields: interfaces.http.Fields
     reason: str | None = None
+    done: bool = True
 
     async def consume_body(self) -> bytes:
         """Iterate over response body and return as bytes."""
@@ -130,16 +142,6 @@ class HTTPResponse(interfaces.http.HTTPResponse):
         async for chunk in self.body:
             body += chunk
         return body
-
-    @property
-    def done(self) -> bool:
-        """
-        Has the complete body been received.
-
-        Always returns True. Subclasses in implementations that support response
-        streaming may override this.
-        """
-        return True
 
 
 class Field(interfaces.http.Field):

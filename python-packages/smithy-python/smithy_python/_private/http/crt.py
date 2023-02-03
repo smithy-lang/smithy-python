@@ -16,7 +16,6 @@ import asyncio
 from collections.abc import AsyncIterable
 from concurrent.futures import Future
 from io import BytesIO
-from itertools import chain
 from threading import Lock
 from typing import Any, AsyncGenerator, Awaitable, cast
 
@@ -25,7 +24,7 @@ from awscrt import io as crt_io
 
 from ... import interfaces
 from ...exceptions import SmithyHTTPException
-from . import FieldPosition, Fields, HTTPResponse
+from . import Field, FieldPosition, Fields
 
 
 class _AWSCRTEventLoop:
@@ -42,7 +41,7 @@ class AwsCrtHttpResponse(interfaces.http.HTTPResponse):
     def __init__(self) -> None:
         self._stream: crt_http.HttpClientStream | None = None
         self._status_code_future: Future[int] = Future()
-        self._headers_future: Future[interfaces.http.Fields] = Future()
+        self._headers_future: Future[Fields] = Future()
         self._chunk_futures: list[Future[bytes]] = []
         self._received_chunks: list[bytes] = []
         self._chunk_lock: Lock = Lock()
@@ -57,10 +56,22 @@ class AwsCrtHttpResponse(interfaces.http.HTTPResponse):
         self._stream.activate()
 
     def _on_headers(
-        self, status_code: int, headers: interfaces.http.Fields, **kwargs: Any
+        self, status_code: int, headers: list[tuple[str, str]], **kwargs: Any
     ) -> None:  # pragma: crt-callback
+        fields = Fields()
+        for header_name, header_val in headers:
+            try:
+                fields.get_field(header_name).add(header_val)
+            except KeyError:
+                fields.set_field(
+                    Field(
+                        name=header_name,
+                        values=[header_val],
+                        kind=FieldPosition.HEADER,
+                    )
+                )
         self._status_code_future.set_result(status_code)
-        self._headers_future.set_result(headers)
+        self._headers_future.set_result(fields)
 
     def _on_body(self, chunk: bytes, **kwargs: Any) -> None:  # pragma: crt-callback
         with self._chunk_lock:
@@ -100,13 +111,23 @@ class AwsCrtHttpResponse(interfaces.http.HTTPResponse):
 
     @property
     def status(self) -> int:
+        """The 3 digit response status code (1xx, 2xx, 3xx, 4xx, 5xx)."""
         return self._status_code_future.result()
 
     @property
-    def headers(self) -> Awaitable[Fields]:
+    def fields(self) -> Fields:
+        """List of HTTP header fields."""
         if self._stream is None:
             raise SmithyHTTPException("Stream not set")
-        return asyncio.wrap_future(self._headers_future)
+        if not self._headers_future.done():
+            raise SmithyHTTPException("Headers not received yet")
+        return self._headers_future.result()
+
+    @property
+    def reason(self) -> str:
+        """Optional string provided by the server explaining the status."""
+        # TODO: See how CRT exposes reason.
+        return ""
 
     @property
     def done(self) -> bool:
@@ -172,7 +193,7 @@ class AwsCrtHttpClient(interfaces.http.HttpClient):
         self,
         request: interfaces.http.HTTPRequest,
         request_config: interfaces.http.HttpRequestConfiguration | None = None,
-    ) -> HTTPResponse:
+    ) -> AwsCrtHttpResponse:
         """
         Send HTTP request using awscrt client.
 

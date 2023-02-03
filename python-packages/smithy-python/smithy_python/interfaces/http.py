@@ -130,16 +130,22 @@ class HTTPRequest(Request, Protocol):
 class HTTPResponse(Response, Protocol):
     """
     HTTP primitives returned from an Exchange, used to construct a client response.
-
-    :param status: The 3 digit response status code (1xx, 2xx, 3xx, 4xx, 5xx).
-    :param fields: List of HTTP header fields.
-    :param body: An streamable collection of bytes.
-    :param reason: Optional string provided by the server explaining the status.
     """
 
-    status: int
-    fields: Fields
-    reason: str | None = None
+    @property
+    def status(self) -> int:
+        """The 3 digit response status code (1xx, 2xx, 3xx, 4xx, 5xx)."""
+        ...
+
+    @property
+    def fields(self) -> Fields:
+        """List of HTTP header and trailer fields."""
+        ...
+
+    @property
+    def reason(self) -> str | None:
+        """Optional string provided by the server explaining the status."""
+        ...
 
 
 class Endpoint(Protocol):
@@ -186,7 +192,7 @@ class HttpRequestConfiguration:
 class HttpClient(Protocol):
     """An asynchronous HTTP client interface."""
 
-    def __init__(self, *, client_config=HttpRequestConfiguration | None) -> None:
+    def __init__(self, *, client_config: HttpRequestConfiguration | None) -> None:
         """
         :param client_config: Configuration that applies to all requests made with this
         client.

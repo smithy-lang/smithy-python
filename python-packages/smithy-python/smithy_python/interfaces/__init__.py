@@ -65,7 +65,10 @@ class Request(Protocol):
 class Response(Protocol):
     """Protocol-agnostic representation of a response."""
 
-    body: AsyncIterable[bytes]
+    @property
+    def body(self) -> AsyncIterable[bytes]:
+        """The response payload as iterable of chunks of bytes."""
+        ...
 
     async def consume_body(self) -> bytes:
         """Iterate over response body and return as bytes."""
