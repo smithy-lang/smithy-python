@@ -117,8 +117,12 @@ class HTTPRequest(interfaces.http.HTTPRequest):
         return body
 
 
+# HTTPResponse implements interfaces.http.HTTPResponse but cannot be explicitly
+# annotated to reflect this because doing so causes Python to raise an AttributeError.
+# See https://github.com/python/typing/discussions/903#discussioncomment-4866851 for
+# details.
 @dataclass(kw_only=True)
-class HTTPResponse(interfaces.http.HTTPResponse):
+class HTTPResponse:
     """
     Basic implementation of :py:class:`...interfaces.http.HTTPResponse`.
 
