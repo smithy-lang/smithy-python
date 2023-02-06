@@ -1,3 +1,19 @@
+# Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+#     http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
+
+# mypy: allow-untyped-defs
+# mypy: allow-incomplete-defs
+
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from math import isnan
@@ -246,7 +262,6 @@ def test_epoch_seconds_to_datetime(given: int | float, expected: datetime) -> No
 
 def test_epoch_seconds_to_datetime_with_overflow_error(monkeypatch):
     # Emulate the Year 2038 problem by always raising an OverflowError.
-    # epoch_seconds_to_datetime() must avoid the
     datetime_mock = Mock(wraps=datetime)
     datetime_mock.fromtimestamp = Mock(side_effect=OverflowError())
     monkeypatch.setattr("smithy_python.utils.datetime", datetime_mock)
