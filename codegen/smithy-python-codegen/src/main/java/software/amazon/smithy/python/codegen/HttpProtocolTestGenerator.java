@@ -17,6 +17,7 @@ package software.amazon.smithy.python.codegen;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -224,30 +225,31 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         assert expected_query_segment in actual_query_segments
                         actual_query_segments.remove(expected_query_segment)
 
-                    actual_query_keys: list[str] = [k for k, v in parse_qsl(query)]
+                    actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
                     forbidden_query_keys: set[str] = set($7J)
                     for forbidden_key in forbidden_query_keys:
-                        assert forbidden_key not in actual_query_keys
+                        assert forbidden_key.lower() not in actual_query_keys
 
                     required_query_keys: list[str] = $8J
                     for required_query_key in required_query_keys:
-                        assert required_query_key in actual_query_keys
+                        assert required_query_key.lower() in actual_query_keys
                         actual_query_keys.remove(required_query_key)
 
+                    actual_headers: list[tuple[str, str]] = [(k.lower(), v) for k, v in actual.headers]
                     expected_headers: list[tuple[str, str]] = [
                         ${9C|}
                     ]
                     for expected_pair in expected_headers:
-                        assert expected_pair in actual.headers
+                        assert expected_pair in actual_headers
 
-                    actual_header_keys: list[str] = [k for k, v in actual.headers]
+                    actual_header_keys: list[str] = [k for k, v in actual_headers]
                     forbidden_headers: set[str] = set($10J)
                     for forbidden_header in forbidden_headers:
-                        assert forbidden_header not in actual_header_keys
+                        assert forbidden_header.lower() not in actual_header_keys
 
                     required_headers: list[str] = $11J
                     for required_header in required_headers:
-                        assert required_header in actual_header_keys
+                        assert required_header.lower() in actual_header_keys
                         actual_header_keys.remove(required_header)
 
                 except Exception as err:
@@ -259,13 +261,17 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 testCase.getUri(),
                 resolvedHost,
                 testCase.getQueryParams(),
-                testCase.getForbidQueryParams(),
-                testCase.getRequireQueryParams(),
+                toLowerCase(testCase.getForbidQueryParams()),
+                toLowerCase(testCase.getRequireQueryParams()),
                 (Runnable) () -> writeExpectedHeaders(testCase, operation),
-                testCase.getForbidHeaders(),
-                testCase.getRequireHeaders()
+                toLowerCase(testCase.getForbidHeaders()),
+                toLowerCase(testCase.getRequireHeaders())
             );
         });
+    }
+
+    private List<String> toLowerCase(List<String> given) {
+        return given.stream().map(str -> str.toLowerCase(Locale.US)).collect(Collectors.toList());
     }
 
     private void writeExpectedHeaders(
@@ -274,7 +280,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
     ) {
         var headerPairs = splitHeaders(testCase, operation);
         for (Pair<String, String> pair : headerPairs) {
-            writer.write("($S, $S),", pair.getKey(), pair.getValue());
+            writer.write("($S, $S),", pair.getKey().toLowerCase(Locale.US), pair.getValue());
         }
     }
 
