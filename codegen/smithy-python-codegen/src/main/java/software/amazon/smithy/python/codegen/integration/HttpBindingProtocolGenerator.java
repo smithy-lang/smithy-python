@@ -820,6 +820,11 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         writer.popState();
     }
 
+    /**
+     * This implements deserialization for the {@literal httpHeader} trait.
+     *
+     * <p>See also: <a href="https://smithy.io/2.0/spec/http-bindings.html#httpheader-trait">Smithy httpHeader docs</a>
+     */
     private void deserializeIndividualHeaders(
         GenerationContext context,
         PythonWriter writer,
@@ -864,6 +869,12 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
 
     }
 
+    /**
+     * This implements deserialization for the {@literal httpPrefixHeaders} trait.
+     *
+     * <p>See also: <a href="https://smithy.io/2.0/spec/http-bindings.html#httpprefixheaders-trait">Smithy
+     * httpPrefixHeaders docs</a>
+     */
     private void deserializePrefixHeaders(
         GenerationContext context,
         PythonWriter writer,

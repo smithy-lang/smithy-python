@@ -71,6 +71,9 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
  *
  * <p>This should preferably be instantiated and used within an
  * implementation of a `ProtocolGeneration`
+ *
+ * <p>See Also: <a href="https://smithy.io/2.0/additional-specs/http-protocol-compliance-tests.html#http-protocol-compliance-tests">
+ * HTTP Protocol Compliance Tests</a>
  */
 @SmithyUnstableApi
 public final class HttpProtocolTestGenerator implements Runnable {
@@ -169,6 +172,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
         }
     }
 
+    // See also: https://smithy.io/2.0/additional-specs/http-protocol-compliance-tests.html#httprequesttests-trait
     private void generateRequestTest(OperationShape operation, HttpRequestTestCase testCase) {
         writeTestBlock(
                 testCase,
@@ -233,6 +237,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     required_query_keys: list[str] = $8J
                     for required_query_key in required_query_keys:
                         assert required_query_key.lower() in actual_query_keys
+                        # These are removed because the required list could require more than one
+                        # value, so by removing each value after we asser that it's there we can
+                        # effectively do that without having to have a more complex comparator.
                         actual_query_keys.remove(required_query_key)
 
                     actual_headers: list[tuple[str, str]] = [(k.lower(), v) for k, v in actual.headers]
@@ -386,6 +393,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
         return value;
     }
 
+    // See also: https://smithy.io/2.0/additional-specs/http-protocol-compliance-tests.html#httpresponsetests-trait
     private void generateResponseTest(OperationShape operation, HttpResponseTestCase testCase) {
         writeTestBlock(
                 testCase,
@@ -435,6 +443,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
         });
     }
 
+    // See also: https://smithy.io/2.0/additional-specs/http-protocol-compliance-tests.html#httpresponsetests-trait
     private void generateErrorResponseTest(
             OperationShape operation,
             StructureShape error,
