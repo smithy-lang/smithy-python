@@ -302,6 +302,21 @@ class Fields(interfaces.http.Fields):
         """
         return [entry for entry in self.entries.values() if entry.kind is kind]
 
+    def extend(self, other: interfaces.http.Fields) -> None:
+        """Merges ``entries`` of ``other`` into the current ``entries``.
+
+        For every `Field` in the ``entries`` of ``other``: If the normalized name
+        already exists in the current ``entries``, the values from ``other`` are
+        appended. Otherwise, the ``Field`` is added to the list of ``entries``.
+        """
+        for other_field in other:
+            try:
+                cur_field = self.get_field(name=other_field.name)
+                for other_value in other_field.values:
+                    cur_field.add(other_value)
+            except KeyError:
+                self.set_field(other_field)
+
     def _normalize_field_name(self, name: str) -> str:
         """Normalize field names. For use as key in ``entries``."""
         return name.lower()

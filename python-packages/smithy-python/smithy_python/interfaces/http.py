@@ -108,6 +108,15 @@ class Fields(Protocol):
         """
         ...
 
+    def extend(self, other: "Fields") -> None:
+        """Merges ``entries`` of ``other`` into the current ``entries``.
+
+        For every `Field` in the ``entries`` of ``other``: If the normalized name
+        already exists in the current ``entries``, the values from ``other`` are
+        appended. Otherwise, the ``Field`` is added to the list of ``entries``.
+        """
+        ...
+
     def __iter__(self) -> Iterator[Field]:
         """Allow iteration over entries."""
         ...
