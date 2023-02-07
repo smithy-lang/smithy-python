@@ -238,8 +238,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     for required_query_key in required_query_keys:
                         assert required_query_key.lower() in actual_query_keys
                         # These are removed because the required list could require more than one
-                        # value, so by removing each value after we asser that it's there we can
-                        # effectively do that without having to have a more complex comparator.
+                        # value. By removing each value after we assert that it's there, we can
+                        # effectively validate that without having to have a more complex comparator.
                         actual_query_keys.remove(required_query_key)
 
                     actual_headers: list[tuple[str, str]] = [(k.lower(), v) for k, v in actual.headers]
