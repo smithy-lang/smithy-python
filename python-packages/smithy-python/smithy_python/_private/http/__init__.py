@@ -135,10 +135,19 @@ class HTTPResponse:
     """
 
     body: AsyncIterable[bytes]
+    """The response payload as iterable of chunks of bytes."""
+
     status: int
+    """The 3 digit response status code (1xx, 2xx, 3xx, 4xx, 5xx)."""
+
     fields: interfaces.http.Fields
+    """HTTP header and trailer fields."""
+
     reason: str | None = None
+    """Optional string provided by the server explaining the status."""
+
     done: bool = True
+    """Whether the complete response has been received from the server."""
 
     async def consume_body(self) -> bytes:
         """Iterate over response body and return as bytes."""

@@ -120,7 +120,7 @@ class HTTPRequest(Request, Protocol):
     :param destination: The URI where the request should be sent to.
     :param method: The HTTP method of the request, for example "GET".
     :param fields: List of HTTP header fields.
-    :param body: An streamable collection of bytes.
+    :param body: A streamable collection of bytes.
     """
 
     method: str
@@ -139,7 +139,7 @@ class HTTPResponse(Response, Protocol):
 
     @property
     def fields(self) -> Fields:
-        """List of HTTP header and trailer fields."""
+        """HTTP header and trailer fields."""
         ...
 
     @property
@@ -171,8 +171,7 @@ class EndpointResolver(Protocol[EndpointParams]):
 class HttpClientConfiguration:
     """Client-level HTTP configuration.
 
-    :param force_http_2: How long, in seconds, the client will attempt to read the
-    first byte over an established, open connection before timing out.
+    :param force_http_2: Whether to require HTTP/2.
     """
 
     force_http_2: bool = False
