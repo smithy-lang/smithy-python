@@ -1,25 +1,25 @@
+# Copyright 2023 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+#     http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
+
 import json
+from collections.abc import AsyncIterator
 
 import pytest
 
-from smithy_python._private.http import Response
-from smithy_python.interfaces.http import HeadersList
+from smithy_python._private.http import HTTPResponse, tuples_list_to_fields
+from smithy_python.async_utils import async_list
 from smithy_python.protocolutils import RestJsonErrorInfo, parse_rest_json_error_info
 from smithy_python.types import Document
-
-
-class _AsyncReader:
-    def __init__(self, body: str):
-        self._body: bytes = body.encode("utf-8")
-
-    async def read(self, size: int = -1) -> bytes:
-        result: bytes = self._body
-        if size <= 0:
-            self._body = b""
-        else:
-            result = self._body[:size]
-            self._body = self._body[size:]
-        return result
 
 
 @pytest.mark.parametrize(
@@ -82,17 +82,19 @@ class _AsyncReader:
     ],
 )
 async def test_parse_rest_json_error_info(
-    headers: HeadersList, body: Document, expected: RestJsonErrorInfo
+    headers: list[tuple[str, str]], body: Document, expected: RestJsonErrorInfo
 ) -> None:
-    response = Response(
-        status_code=400, headers=headers, body=_AsyncReader(json.dumps(body))
+    response = HTTPResponse(
+        status=400,
+        fields=tuples_list_to_fields(headers),
+        body=async_list([json.dumps(body).encode()]),
     )
     actual = await parse_rest_json_error_info(response)
     assert actual == expected
 
 
 class _ExceptionThrowingBody:
-    async def read(self, size: int = -1) -> bytes:
+    def __aiter__(self) -> AsyncIterator[bytes]:
         raise Exception("Body unexpectedly accessed")
 
 
@@ -117,8 +119,10 @@ class _ExceptionThrowingBody:
     ],
 )
 async def test_parse_rest_json_error_info_without_body(
-    headers: HeadersList, expected: RestJsonErrorInfo
+    headers: list[tuple[str, str]], expected: RestJsonErrorInfo
 ) -> None:
-    response = Response(status_code=400, headers=headers, body=_ExceptionThrowingBody())
+    response = HTTPResponse(
+        status=400, fields=tuples_list_to_fields(headers), body=_ExceptionThrowingBody()
+    )
     actual = await parse_rest_json_error_info(response, check_body=False)
     assert actual == expected
