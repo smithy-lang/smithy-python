@@ -11,14 +11,14 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-from smithy_python._private.http import HTTPRequest
+from smithy_python._private.http import HttpRequest
 from smithy_python._private.http.aiohttp_client import (
     AioHttpClient,
     AwsCrtHttpClientConfig,
 )
 
 
-async def test_basic_request_local(aws_request: HTTPRequest) -> None:
+async def test_basic_request_local(aws_request: HttpRequest) -> None:
     config = AwsCrtHttpClientConfig()
     session = AioHttpClient(client_config=config)
     response = await session.send(request=aws_request)

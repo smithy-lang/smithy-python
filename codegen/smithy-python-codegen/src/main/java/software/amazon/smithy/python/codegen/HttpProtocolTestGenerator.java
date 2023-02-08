@@ -396,17 +396,17 @@ public final class HttpProtocolTestGenerator implements Runnable {
         LOGGER.fine(String.format("Writing utility stubs for %s : %s", serviceSymbol.getName(), protocol.getName()));
         writer.addStdlibImport("typing", "Any");
         writer.addImports("smithy_python.interfaces.http", Set.of(
-                "Fields", "HttpRequestConfiguration", "HTTPRequest", "HTTPResponse")
+                "Fields", "HttpRequestConfiguration", "HttpRequest", "HttpResponse")
         );
         writer.addImport("smithy_python._private.http", "tuples_list_to_fields");
-        writer.addImport("smithy_python._private.http", "HTTPResponse", "_HTTPResponse");
+        writer.addImport("smithy_python._private.http", "HttpResponse", "_HttpResponse");
         writer.addImport("smithy_python.async_utils", "async_list");
 
         writer.write("""
                         class $1L($2T):
                             ""\"A test error that subclasses the service-error for protocol tests.""\"
 
-                            def __init__(self, request: HTTPRequest):
+                            def __init__(self, request: HttpRequest):
                                 self.request = request
 
 
@@ -414,8 +414,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
                             ""\"An asynchronous HTTP client solely for testing purposes.""\"
 
                             async def send(
-                                self, *, request: HTTPRequest, request_config: HttpRequestConfiguration | None
-                            ) -> HTTPResponse:
+                                self, *, request: HttpRequest, request_config: HttpRequestConfiguration | None
+                            ) -> HttpResponse:
                                 # Raise the exception with the request object to bypass actual request handling
                                 raise $1T(request)
 
@@ -429,10 +429,10 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 self.body = body
 
                             async def send(
-                                self, *, request: HTTPRequest, request_config: HttpRequestConfiguration | None
-                            ) -> _HTTPResponse:
+                                self, *, request: HttpRequest, request_config: HttpRequestConfiguration | None
+                            ) -> _HttpResponse:
                                 # Pre-construct the response from the request and return it
-                                return _HTTPResponse(
+                                return _HttpResponse(
                                     status=self.status,
                                     fields=self.fields,
                                     body=async_list([self.body]),

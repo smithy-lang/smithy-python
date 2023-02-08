@@ -14,11 +14,11 @@
 # mypy: allow-untyped-defs
 # mypy: allow-incomplete-defs
 
-from smithy_python._private.http import HTTPRequest
+from smithy_python._private.http import HttpRequest
 from smithy_python._private.http.crt import AwsCrtHttpClient, AwsCrtHttpClientConfig
 
 
-async def test_basic_request_local(aws_request: HTTPRequest) -> None:
+async def test_basic_request_local(aws_request: HttpRequest) -> None:
     config = AwsCrtHttpClientConfig()
     session = AwsCrtHttpClient(client_config=config)
     response = await session.send(aws_request)
@@ -30,7 +30,7 @@ async def test_basic_request_local(aws_request: HTTPRequest) -> None:
     assert response.done
 
 
-async def test_basic_request_http2(aws_request: HTTPRequest) -> None:
+async def test_basic_request_http2(aws_request: HttpRequest) -> None:
     config = AwsCrtHttpClientConfig(force_http_2=True)
     session = AwsCrtHttpClient(client_config=config)
     response = await session.send(aws_request)

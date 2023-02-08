@@ -122,7 +122,7 @@ class Fields(Protocol):
         ...
 
 
-class HTTPRequest(Request, Protocol):
+class HttpRequest(Request, Protocol):
     """
     HTTP primitive for an Exchange to construct a version agnostic HTTP message.
 
@@ -136,7 +136,7 @@ class HTTPRequest(Request, Protocol):
     fields: Fields
 
 
-class HTTPResponse(Response, Protocol):
+class HttpResponse(Response, Protocol):
     """
     HTTP primitives returned from an Exchange, used to construct a client response.
     """
@@ -208,8 +208,8 @@ class HttpClient(Protocol):
         ...
 
     async def send(
-        self, *, request: HTTPRequest, request_config: HttpRequestConfiguration | None
-    ) -> HTTPResponse:
+        self, *, request: HttpRequest, request_config: HttpRequestConfiguration | None
+    ) -> HttpResponse:
         """
         Send HTTP request over the wire and return the response.
 

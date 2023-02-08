@@ -16,7 +16,7 @@ from collections.abc import AsyncIterator
 
 import pytest
 
-from smithy_python._private.http import HTTPResponse, tuples_list_to_fields
+from smithy_python._private.http import HttpResponse, tuples_list_to_fields
 from smithy_python.async_utils import async_list
 from smithy_python.protocolutils import RestJsonErrorInfo, parse_rest_json_error_info
 from smithy_python.types import Document
@@ -84,7 +84,7 @@ from smithy_python.types import Document
 async def test_parse_rest_json_error_info(
     headers: list[tuple[str, str]], body: Document, expected: RestJsonErrorInfo
 ) -> None:
-    response = HTTPResponse(
+    response = HttpResponse(
         status=400,
         fields=tuples_list_to_fields(headers),
         body=async_list([json.dumps(body).encode()]),
@@ -121,7 +121,7 @@ class _ExceptionThrowingBody:
 async def test_parse_rest_json_error_info_without_body(
     headers: list[tuple[str, str]], expected: RestJsonErrorInfo
 ) -> None:
-    response = HTTPResponse(
+    response = HttpResponse(
         status=400, fields=tuples_list_to_fields(headers), body=_ExceptionThrowingBody()
     )
     actual = await parse_rest_json_error_info(response, check_body=False)

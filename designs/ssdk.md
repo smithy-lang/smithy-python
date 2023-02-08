@@ -286,11 +286,11 @@ from typing import (
 
 from asgiref.typing import (
     Scope,
-    HTTPScope,
+    HttpScope,
     ASGIReceiveCallable,
     ASGISendCallable,
     ASGIReceiveEvent,
-    HTTPRequestEvent,
+    HttpRequestEvent,
     LifespanStartupCompleteEvent,
     LifespanShutdownCompleteEvent,
     ASGI3Application,
@@ -323,7 +323,7 @@ async def convert_request(scope: Scope, receive: ASGIReceiveCallable):
     raise Exception(f"ASGI scope type {scope['type']} not handled.")
 
 
-def is_http_scope(scope: Scope) -> TypeGuard[HTTPScope]:
+def is_http_scope(scope: Scope) -> TypeGuard[HttpScope]:
     return scope["type"] == "http"
 
 
@@ -340,7 +340,7 @@ async def read_body(receive: ASGIReceiveCallable) -> bytes:
     return body
 
 
-def assert_http_request_event(event: ASGIReceiveEvent) -> TypeGuard[HTTPRequestEvent]:
+def assert_http_request_event(event: ASGIReceiveEvent) -> TypeGuard[HttpRequestEvent]:
     if event["type"] != "http.request":
         raise Exception(f"Expected http.request event, received {event['type']}")
     return True

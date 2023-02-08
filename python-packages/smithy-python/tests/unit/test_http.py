@@ -15,8 +15,8 @@ from smithy_python._private.http import (
     URI,
     Field,
     Fields,
-    HTTPRequest,
-    HTTPResponse,
+    HttpRequest,
+    HttpResponse,
     StaticEndpointParams,
     StaticEndpointResolver,
 )
@@ -115,7 +115,7 @@ def test_uri_password_but_no_username() -> None:
 async def test_request() -> None:
     url = URI(host="test.aws.dev")
     headers = Fields([Field(name="foo", values=["bar"])])
-    request = HTTPRequest(
+    request = HttpRequest(
         method="GET",
         destination=url,
         fields=headers,
@@ -131,7 +131,7 @@ async def test_request() -> None:
 
 async def test_response() -> None:
     headers = Fields([Field(name="foo", values=["bar"])])
-    response = HTTPResponse(
+    response = HttpResponse(
         status=200,
         fields=headers,
         body=async_list([b"test body"]),

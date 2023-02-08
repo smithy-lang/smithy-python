@@ -23,7 +23,7 @@ from awscrt import http as crt_http
 from awscrt import io as crt_io
 
 from ... import interfaces
-from ...exceptions import SmithyHTTPException
+from ...exceptions import SmithyHttpException
 from . import Field, FieldPosition, Fields
 
 
@@ -37,7 +37,7 @@ class _AWSCRTEventLoop:
         return crt_io.ClientBootstrap(event_loop_group, host_resolver)
 
 
-class AwsCrtHttpResponse(interfaces.http.HTTPResponse):
+class AwsCrtHttpResponse(interfaces.http.HttpResponse):
     def __init__(self) -> None:
         self._stream: crt_http.HttpClientStream | None = None
         self._status_code_future: Future[int] = Future()
@@ -48,7 +48,7 @@ class AwsCrtHttpResponse(interfaces.http.HTTPResponse):
 
     def _set_stream(self, stream: crt_http.HttpClientStream) -> None:
         if self._stream is not None:
-            raise SmithyHTTPException(
+            raise SmithyHttpException(
                 "Stream already set on _AwsCrtHttpResponse object"
             )
         self._stream = stream
@@ -84,7 +84,7 @@ class AwsCrtHttpResponse(interfaces.http.HTTPResponse):
 
     def _get_chunk_future(self) -> Future[bytes]:
         if self._stream is None:
-            raise SmithyHTTPException("Stream not set")
+            raise SmithyHttpException("Stream not set")
         with self._chunk_lock:
             future: Future[bytes] = Future()
             # TODO: update backpressure window once CRT supports it
@@ -118,9 +118,9 @@ class AwsCrtHttpResponse(interfaces.http.HTTPResponse):
     def fields(self) -> Fields:
         """List of HTTP header fields."""
         if self._stream is None:
-            raise SmithyHTTPException("Stream not set")
+            raise SmithyHttpException("Stream not set")
         if not self._headers_future.done():
-            raise SmithyHTTPException("Headers not received yet")
+            raise SmithyHttpException("Headers not received yet")
         return self._headers_future.result()
 
     @property
@@ -132,7 +132,7 @@ class AwsCrtHttpResponse(interfaces.http.HTTPResponse):
     @property
     def done(self) -> bool:
         if self._stream is None:
-            raise SmithyHTTPException("Stream not set")
+            raise SmithyHttpException("Stream not set")
         # awscrt does not type-annotate self._stream.completion_future
         fut = cast(Future[int], self._stream.completion_future)
         return fut.done()
@@ -167,7 +167,7 @@ class AwsCrtHttpClientConfig(interfaces.http.HttpClientConfiguration):
 
 class AwsCrtHttpClient(interfaces.http.HttpClient):
     _HTTP_PORT = 80
-    _HTTPS_PORT = 443
+    _HttpS_PORT = 443
 
     def __init__(
         self,
@@ -191,7 +191,7 @@ class AwsCrtHttpClient(interfaces.http.HttpClient):
 
     async def send(
         self,
-        request: interfaces.http.HTTPRequest,
+        request: interfaces.http.HttpRequest,
         request_config: interfaces.http.HttpRequestConfiguration | None = None,
     ) -> AwsCrtHttpResponse:
         """
@@ -239,13 +239,13 @@ class AwsCrtHttpClient(interfaces.http.HttpClient):
             port = self._HTTP_PORT
             tls_connection_options = None
         elif url.scheme == "https":
-            port = self._HTTPS_PORT
+            port = self._HttpS_PORT
             tls_connection_options = self._tls_ctx.new_connection_options()
             tls_connection_options.set_server_name(url.host)
             # TODO: Support TLS configuration, including alpn
             tls_connection_options.set_alpn_list(["h2", "http/1.1"])
         else:
-            raise SmithyHTTPException(
+            raise SmithyHttpException(
                 f"AwsCrtHttpClient does not support URL scheme {url.scheme}"
             )
         if url.port is not None:
@@ -272,7 +272,7 @@ class AwsCrtHttpClient(interfaces.http.HttpClient):
         if force_http_2 and connection.version is not crt_http.HttpVersion.Http2:
             connection.close()
             negotiated = crt_http.HttpVersion(connection.version).name
-            raise SmithyHTTPException(f"HTTP/2 could not be negotiated: {negotiated}")
+            raise SmithyHttpException(f"HTTP/2 could not be negotiated: {negotiated}")
 
     def _render_path(self, url: interfaces.URI) -> str:
         path = url.path if url.path is not None else "/"
@@ -280,11 +280,11 @@ class AwsCrtHttpClient(interfaces.http.HttpClient):
         return f"{path}{query}"
 
     async def _marshal_request(
-        self, request: interfaces.http.HTTPRequest
+        self, request: interfaces.http.HttpRequest
     ) -> crt_http.HttpRequest:
         """
         Create :py:class:`awscrt.http.HttpRequest` from
-        :py:class:`smithy_python.interfaces.http.HTTPRequest`
+        :py:class:`smithy_python.interfaces.http.HttpRequest`
         """
         headers_list = []
         for fld in request.fields.entries.values():

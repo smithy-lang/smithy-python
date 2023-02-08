@@ -157,11 +157,11 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         serializeBody(context, writer, operation, bindingIndex);
 
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python._private.http", "HTTPRequest", "_HTTPRequest");
+        writer.addImport("smithy_python._private.http", "HttpRequest", "_HttpRequest");
         writer.addImport("smithy_python._private.http", "URI", "_URI");
 
         writer.write("""
-            return _HTTPRequest(
+            return _HttpRequest(
                 destination=_URI(
                     host="",
                     path=path,

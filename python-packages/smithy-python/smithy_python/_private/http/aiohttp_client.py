@@ -17,7 +17,7 @@ import aiohttp
 
 from ... import interfaces
 from ...async_utils import async_list
-from . import Field, FieldPosition, Fields, HTTPResponse
+from . import Field, FieldPosition, Fields, HttpResponse
 
 
 class AwsCrtHttpClientConfig(interfaces.http.HttpClientConfiguration):
@@ -40,9 +40,9 @@ class AioHttpClient(interfaces.http.HttpClient):
     async def send(
         self,
         *,
-        request: interfaces.http.HTTPRequest,
+        request: interfaces.http.HttpRequest,
         request_config: interfaces.http.HttpRequestConfiguration | None = None,
-    ) -> HTTPResponse:
+    ) -> HttpResponse:
         """
         Send HTTP request using aiohttp client.
 
@@ -78,8 +78,8 @@ class AioHttpClient(interfaces.http.HttpClient):
 
     async def _marshal_response(
         self, aiohttp_resp: aiohttp.ClientResponse
-    ) -> HTTPResponse:
-        """Convert a ``aiohttp.ClientResponse`` to a ``smithy_python.http.HTTPResponse``"""
+    ) -> HttpResponse:
+        """Convert a ``aiohttp.ClientResponse`` to a ``smithy_python.http.HttpResponse``"""
         headers = Fields()
         for header_name, header_val in aiohttp_resp.headers.items():
             try:
@@ -93,7 +93,7 @@ class AioHttpClient(interfaces.http.HttpClient):
                     )
                 )
 
-        return HTTPResponse(
+        return HttpResponse(
             status=aiohttp_resp.status,
             fields=headers,
             body=async_list([await aiohttp_resp.read()]),
