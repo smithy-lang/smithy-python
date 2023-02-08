@@ -60,7 +60,7 @@ async def parse_rest_json_error_info(
                     message = expect_type(str, value)
 
     # Normalize the error code. Some services may try to send a fully-qualified shape
-    # ID or a url, but we don't want to include those.
+    # ID or a URI, but we don't want to include those.
     if code:
         if "#" in code:
             code = code.split("#")[1]

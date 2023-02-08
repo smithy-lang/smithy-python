@@ -64,16 +64,16 @@ class AioHttpClient(interfaces.http.HttpClient):
 
         async with self._session.request(
             method=request.method,
-            url=self._serialize_url_without_query(request.destination),
+            url=self._serialize_uri_without_query(request.destination),
             params=parse_qs(request.destination.query),
             headers=headers_list,
             data=request.body,
         ) as resp:
             return await self._marshal_response(resp)
 
-    def _serialize_url_without_query(self, url: interfaces.URI) -> str:
-        """Serialize all parts of the URL up to and including the path."""
-        components = (url.scheme, url.host, url.path or "", "", "", "")
+    def _serialize_uri_without_query(self, uri: interfaces.URI) -> str:
+        """Serialize all parts of the URI up to and including the path."""
+        components = (uri.scheme, uri.host, uri.path or "", "", "", "")
         return urlunparse(components)
 
     async def _marshal_response(

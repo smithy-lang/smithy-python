@@ -100,7 +100,7 @@ final class ConfigGenerator implements Runnable {
                         configuration."""
                 ),
                 new ConfigField(
-                    "endpoint_url",
+                    "endpoint_uri",
                     Symbol.builder()
                         .name("str | URI")
                         .addReference(Symbol.builder()

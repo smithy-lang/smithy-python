@@ -158,7 +158,7 @@ class HttpResponse(Response, Protocol):
 
 
 class Endpoint(Protocol):
-    url: URI
+    uri: URI
     headers: Fields
 
 

@@ -305,23 +305,23 @@ final class ClientGenerator implements Runnable {
                             raise $1T(
                                 "No endpoint_resolver found on the operation config."
                             )
-                        if config.endpoint_url is None:
+                        if config.endpoint_uri is None:
                             raise $1T(
-                                "No endpoint_url found on the operation config."
+                                "No endpoint_uri found on the operation config."
                             )
 
                         endpoint = await config.endpoint_resolver.resolve_endpoint(
-                            StaticEndpointParams(url=config.endpoint_url)
+                            StaticEndpointParams(uri=config.endpoint_uri)
                         )
-                        if not endpoint.url.path:
-                            endpoint.url.path = ""
-                        elif endpoint.url.path.endswith("/"):
-                            endpoint.url.path = endpoint.url.path[:-1]
+                        if not endpoint.uri.path:
+                            endpoint.uri.path = ""
+                        elif endpoint.uri.path.endswith("/"):
+                            endpoint.uri.path = endpoint.uri.path[:-1]
                         if context.transport_request.destination.path:
-                            endpoint.url.path += context.transport_request.destination.path
-                        endpoint.url.query = context.transport_request.destination.query
-                        endpoint.url.host = context.transport_request.destination.host + endpoint.url.host
-                        context._transport_request.destination = endpoint.url
+                            endpoint.uri.path += context.transport_request.destination.path
+                        endpoint.uri.query = context.transport_request.destination.query
+                        endpoint.uri.host = context.transport_request.destination.host + endpoint.uri.host
+                        context._transport_request.destination = endpoint.uri
                         context._transport_request.fields.extend(endpoint.headers)
 
                 """, errorSymbol);

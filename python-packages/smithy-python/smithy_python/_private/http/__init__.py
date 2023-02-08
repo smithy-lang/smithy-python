@@ -346,7 +346,7 @@ def tuples_list_to_fields(
 
 @dataclass
 class Endpoint(interfaces.http.Endpoint):
-    url: interfaces.URI
+    uri: interfaces.URI
     headers: interfaces.http.Fields = field(default_factory=Fields)
 
 
@@ -355,32 +355,32 @@ class StaticEndpointParams:
     """
     Static endpoint params.
 
-    :param url: A static URI to route requests to.
+    :param uri: A static URI to route requests to.
     """
 
-    url: str | interfaces.URI
+    uri: str | interfaces.URI
 
 
 class StaticEndpointResolver(interfaces.http.EndpointResolver[StaticEndpointParams]):
-    """A basic endpoint resolver that forwards a static url."""
+    """A basic endpoint resolver that forwards a static URI."""
 
     async def resolve_endpoint(self, params: StaticEndpointParams) -> Endpoint:
-        # If it's not a string, it's already a parsed URL so just pass it along.
-        if not isinstance(params.url, str):
-            return Endpoint(url=params.url)
+        # If it's not a string, it's already a parsed URI so just pass it along.
+        if not isinstance(params.uri, str):
+            return Endpoint(uri=params.uri)
 
         # Does crt have implementations of these parsing methods? Using the standard
         # library is probably fine.
-        parsed = urlparse(params.url)
+        parsed = urlparse(params.uri)
 
         # This will end up getting wrapped in the client.
         if parsed.hostname is None:
             raise ValueError(
-                f"Unable to parse hostname from provided url: {params.url}"
+                f"Unable to parse hostname from provided URI: {params.uri}"
             )
 
         return Endpoint(
-            url=URI(
+            uri=URI(
                 host=parsed.hostname,
                 path=parsed.path,
                 scheme=parsed.scheme,
