@@ -25,12 +25,16 @@ import software.amazon.smithy.model.knowledge.HttpBinding.Location;
 import software.amazon.smithy.model.knowledge.HttpBindingIndex;
 import software.amazon.smithy.model.knowledge.NeighborProviderIndex;
 import software.amazon.smithy.model.neighbor.Walker;
+import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
+import software.amazon.smithy.model.traits.RequiresLengthTrait;
+import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.protocoltests.traits.HttpMessageTestCase;
 import software.amazon.smithy.protocoltests.traits.HttpRequestTestCase;
+import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.HttpProtocolTestGenerator;
 import software.amazon.smithy.python.codegen.PythonWriter;
@@ -98,7 +102,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         }
         var bindingIndex = HttpBindingIndex.of(context.model());
         if (testCase instanceof HttpRequestTestCase) {
-            return bindingIndex.getRequestBindings(shape, Location.PAYLOAD).size() != 0;
+            return false;
         } else {
             return bindingIndex.getResponseBindings(shape, Location.PAYLOAD).size() != 0;
         }
@@ -122,8 +126,84 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         var serVisitor = new JsonShapeSerVisitor(context, writer);
         serVisitor.structureMembers(bodyMembers);
 
+        writer.addImport("smithy_python.interfaces.blobs", "AsyncBytesReader");
         writer.addStdlibImport("json", "dumps", "json_dumps");
-        writer.write("body = json_dumps(result).encode('utf-8')");
+        writer.write("content = json_dumps(result).encode('utf-8')");
+        writer.write("content_length = len(content)");
+        writer.write("body = AsyncBytesReader(content)");
+    }
+
+    @Override
+    protected void serializePayloadBody(
+        GenerationContext context,
+        PythonWriter writer,
+        OperationShape operation,
+        HttpBinding payloadBinding
+    ) {
+        var target = context.model().expectShape(payloadBinding.getMember().getTarget());
+        var dataSource = "input." + context.symbolProvider().toMemberName(payloadBinding.getMember());
+        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+
+        // The streaming trait can either be bound to a union, meaning it's an event stream,
+        // or a blob, meaning it's some potentially big collection of bytes.
+        // See also: https://smithy.io/2.0/spec/streaming.html#smithy-api-streaming-trait
+        if (payloadBinding.getMember().getMemberTrait(context.model(), StreamingTrait.class).isPresent()) {
+            // TODO: support event streams
+            if (target.isUnionShape()) {
+                return;
+            }
+
+            if (requiresLength(context, payloadBinding.getMember())) {
+                writer.write("content_length: int = 0");
+            }
+
+            CodegenUtils.accessStructureMember(context, writer, "input", payloadBinding.getMember(), () -> {
+                if (requiresLength(context, payloadBinding.getMember())) {
+                    writer.addImport("smithy_python.interfaces.blobs", "SeekableAsyncBytesReader");
+                    writer.write("""
+                        body = await SeekableAsyncBytesReader.new($L)
+                        body.seek(0, 2)
+                        content_length = body.tell()
+                        body.seek(0, 0)
+                        """, dataSource);
+                } else {
+                    writer.addStdlibImport("typing", "AsyncIterator");
+                    writer.addImport("smithy_python.interfaces.blobs", "AsyncBytesReader");
+                    writer.write("""
+                        if isinstance($1L, AsyncIterator):
+                            body = $1L
+                        else:
+                            body = AsyncBytesReader($1L)
+                        """, dataSource);
+                }
+            });
+            return;
+        }
+
+        var memberVisitor = new JsonMemberSerVisitor(
+            context, writer, payloadBinding.getMember(), dataSource, Format.EPOCH_SECONDS);
+        var memberSerializer = target.accept(memberVisitor);
+        writer.addImport("smithy_python.interfaces.blobs", "AsyncBytesReader");
+        writer.write("content_length: int = 0");
+        CodegenUtils.accessStructureMember(context, writer, "input", payloadBinding.getMember(), () -> {
+            if (target.isBlobShape()) {
+                writer.write("content_length = len($L)", dataSource);
+                writer.write("body = AsyncBytesReader($L)", dataSource);
+                return;
+            }
+
+            if (target.isStringShape()) {
+                writer.write("content = $L.encode('utf-8')", memberSerializer);
+            } else {
+                writer.write("content = json_dumps($L).encode('utf-8')", memberSerializer);
+            }
+            writer.write("content_length = len(content)");
+            writer.write("body = AsyncBytesReader(content)");
+        });
+    }
+
+    private boolean requiresLength(GenerationContext context, MemberShape member) {
+        return member.getMemberTrait(context.model(), RequiresLengthTrait.class).isPresent();
     }
 
     @Override
