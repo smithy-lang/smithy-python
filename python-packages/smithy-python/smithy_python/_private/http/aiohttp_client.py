@@ -67,7 +67,7 @@ class AioHttpClient(interfaces.http.HttpClient):
             url=self._serialize_url_without_query(request.destination),
             params=parse_qs(request.destination.query),
             headers=headers_list,
-            data=await request.consume_body(),
+            data=request.body,
         ) as resp:
             return await self._marshal_response(resp)
 
@@ -97,4 +97,5 @@ class AioHttpClient(interfaces.http.HttpClient):
             status=aiohttp_resp.status,
             fields=headers,
             body=async_list([await aiohttp_resp.read()]),
+            reason=aiohttp_resp.reason,
         )
