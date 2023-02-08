@@ -17,7 +17,7 @@ from collections.abc import AsyncIterable
 from concurrent.futures import Future
 from io import BytesIO
 from threading import Lock
-from typing import Any, AsyncGenerator, Awaitable, cast
+from typing import Any, AsyncGenerator, Awaitable
 
 from awscrt import http as crt_http
 from awscrt import io as crt_io
@@ -128,14 +128,6 @@ class AwsCrtHttpResponse(interfaces.http.HttpResponse):
         """Optional string provided by the server explaining the status."""
         # TODO: See how CRT exposes reason.
         return ""
-
-    @property
-    def done(self) -> bool:
-        if self._stream is None:
-            raise SmithyHttpException("Stream not set")
-        # awscrt does not type-annotate self._stream.completion_future
-        fut = cast(Future[int], self._stream.completion_future)
-        return fut.done()
 
     def get_chunk(self) -> Awaitable[bytes]:
         future = self._get_chunk_future()

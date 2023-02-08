@@ -25,4 +25,3 @@ async def test_basic_request_local(aws_request: HttpRequest) -> None:
     assert response.status == 200
     body = await response.consume_body()
     assert b"aws" in body
-    assert response.done

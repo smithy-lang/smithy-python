@@ -126,10 +126,6 @@ class HttpResponse:
     """
     Basic implementation of :py:class:`...interfaces.http.HttpResponse`.
 
-    ``done`` is always ``True``. :py:class:`...interfaces.http.HttpClient`
-    implementations that create instances of this class before the complete body is
-    received must modify ``done`` to correctly reflect the response state.
-
     Implementations of :py:class:`...interfaces.http.HttpClient` may return instances
     of this class or of custom response implementatinos.
     """
@@ -145,9 +141,6 @@ class HttpResponse:
 
     reason: str | None = None
     """Optional string provided by the server explaining the status."""
-
-    done: bool = True
-    """Whether the complete response has been received from the server."""
 
     async def consume_body(self) -> bytes:
         """Iterate over response body and return as bytes."""
