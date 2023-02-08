@@ -63,6 +63,7 @@ import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.TimestampShape;
 import software.amazon.smithy.model.traits.HttpTrait;
 import software.amazon.smithy.model.traits.MediaTypeTrait;
+import software.amazon.smithy.model.traits.RequiresLengthTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.python.codegen.ApplicationProtocol;
 import software.amazon.smithy.python.codegen.CodegenUtils;
@@ -223,9 +224,6 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
     protected abstract String getDocumentContentType();
 
     private void writeContentType(GenerationContext context, PythonWriter writer, OperationShape operation) {
-        if (isStreamingPayloadInput(context, operation)) {
-            return;
-        }
         var httpIndex = HttpBindingIndex.of(context.model());
         var optionalContentType = httpIndex.determineRequestContentType(operation, getDocumentContentType());
         if (optionalContentType.isEmpty() && shouldWriteDefaultBody(context, operation)) {
@@ -237,6 +235,9 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
 
     private void writeContentLength(GenerationContext context, PythonWriter writer, OperationShape operation) {
         if (isStreamingPayloadInput(context, operation)) {
+            if (requiresLength(context, operation)) {
+                writer.write("Field(name=\"Content-Length\", values=[str(content_length)]),");
+            }
             return;
         }
         var hasBodyBindings = HttpBindingIndex.of(context.model())
@@ -244,7 +245,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
             .anyMatch(binding -> binding.getLocation() == PAYLOAD || binding.getLocation() == DOCUMENT);
 
         if (hasBodyBindings) {
-            writer.write("Field(name=\"Content-Length\", values=[str(len(body))]),");
+            writer.write("Field(name=\"Content-Length\", values=[str(content_length)]),");
         }
     }
 
@@ -254,6 +255,14 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
             return false;
         }
         return payloadBinding.get(0).getMember().getMemberTrait(context.model(), StreamingTrait.class).isPresent();
+    }
+
+    private boolean requiresLength(GenerationContext context, OperationShape operation) {
+        var payloadBinding = HttpBindingIndex.of(context.model()).getRequestBindings(operation, PAYLOAD);
+        if (payloadBinding.isEmpty()) {
+            return false;
+        }
+        return payloadBinding.get(0).getMember().getMemberTrait(context.model(), RequiresLengthTrait.class).isPresent();
     }
 
     /**
@@ -546,8 +555,10 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         HttpBindingIndex bindingIndex
     ) {
         writer.pushState(new SerializeBodySection(operation));
-        writer.addStdlibImport("typing", "Any");
-        writer.write("body: Any = b''");
+        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+        writer.addImport("smithy_python.interfaces.blobs", "AsyncBytesReader");
+        writer.addStdlibImport("typing", "AsyncIterable");
+        writer.write("body: AsyncIterable[bytes] = AsyncBytesReader(b'')");
 
         var documentBindings = bindingIndex.getRequestBindings(operation, DOCUMENT);
         if (!documentBindings.isEmpty() || shouldWriteDefaultBody(context, operation)) {
@@ -641,14 +652,12 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      * @param operation The operation whose input is being generated.
      * @param payloadBinding The payload binding to serialize.
      */
-    protected void serializePayloadBody(
+    protected abstract void serializePayloadBody(
         GenerationContext context,
         PythonWriter writer,
         OperationShape operation,
         HttpBinding payloadBinding
-    ) {
-        // TODO: implement this
-    }
+    );
 
     @Override
     public void generateResponseDeserializers(GenerationContext context) {
