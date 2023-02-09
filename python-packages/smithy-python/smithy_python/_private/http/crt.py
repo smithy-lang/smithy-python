@@ -124,10 +124,10 @@ class AwsCrtHttpResponse(interfaces.http.HttpResponse):
         return self._headers_future.result()
 
     @property
-    def reason(self) -> str:
+    def reason(self) -> str | None:
         """Optional string provided by the server explaining the status."""
         # TODO: See how CRT exposes reason.
-        return ""
+        return None
 
     def get_chunk(self) -> Awaitable[bytes]:
         future = self._get_chunk_future()
