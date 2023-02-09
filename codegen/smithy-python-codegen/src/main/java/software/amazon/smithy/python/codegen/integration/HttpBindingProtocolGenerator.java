@@ -284,9 +284,9 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                         getDocumentTimestampFormat()));
 
                     var trailer = listTarget.isStringShape() ? " if e" : "";
-                    writer.addImport("smithy_python._private.http", "tuples_list_to_fields");
+                    writer.addImport("smithy_python._private.http", "tuples_to_fields");
                     writer.write("""
-                        headers.extend(tuples_list_to_fields(($S, $L) for e in input.$L$L))
+                        headers.extend(tuples_to_fields(($S, $L) for e in input.$L$L))
                         """, binding.getLocationName(), inputValue, pythonName, trailer);
                 } else {
                     var dataSource = "input." + pythonName;
@@ -312,10 +312,10 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 var inputValue = valueTarget.accept(new HttpMemberSerVisitor(
                     context, writer, binding.getLocation(), "v", target.getValue(),
                     getDocumentTimestampFormat()));
-                writer.addImport("smithy_python._private.http", "tuples_list_to_fields");
+                writer.addImport("smithy_python._private.http", "tuples_to_fields");
                 writer.write("""
                     headers.extend(
-                        tuples_list_to_fields((f'$L{k}', $L) for k, v in input.$L.items() if v)
+                        tuples_to_fields((f'$L{k}', $L) for k, v in input.$L.items() if v)
                     )
                     """, binding.getLocationName(
                 ), inputValue, pythonName);

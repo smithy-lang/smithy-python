@@ -547,7 +547,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
         writer.addImports("smithy_python.interfaces.http", Set.of(
                 "Fields", "HttpRequestConfiguration", "HttpRequest", "HttpResponse")
         );
-        writer.addImport("smithy_python._private.http", "tuples_list_to_fields");
+        writer.addImport("smithy_python._private.http", "tuples_to_fields");
         writer.addImport("smithy_python._private.http", "HttpResponse", "_HttpResponse");
         writer.addImport("smithy_python.async_utils", "async_list");
 
@@ -574,7 +574,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
                             def __init__(self, status: int, headers: list[tuple[str, str]], body: bytes):
                                 self.status = status
-                                self.fields = tuples_list_to_fields(headers)
+                                self.fields = tuples_to_fields(headers)
                                 self.body = body
 
                             async def send(
