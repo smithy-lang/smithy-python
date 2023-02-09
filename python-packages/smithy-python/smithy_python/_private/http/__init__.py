@@ -325,7 +325,7 @@ class Fields(interfaces.http.Fields):
 
 
 def tuples_list_to_fields(
-    tuples: list[tuple[str, str]], *, kind: FieldPosition | None = None
+    tuples: Iterable[tuple[str, str]], *, kind: FieldPosition | None = None
 ) -> Fields:
     """Convert ``name``, ``value`` tuples to ``Fields`` object. Each tuple represents
     one Field value.

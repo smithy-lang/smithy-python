@@ -199,7 +199,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         writer.addImports("smithy_python._private.http", Set.of("Field", "Fields"));
         writer.write("""
             headers = Fields(
-                initial=[
+                [
                     ${C|}
                     ${C|}
                     ${C|}
@@ -231,7 +231,8 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         if (optionalContentType.isEmpty() && shouldWriteDefaultBody(context, operation)) {
             optionalContentType = Optional.of(getDocumentContentType());
         }
-        optionalContentType.ifPresent(contentType -> writer.write("('Content-Type', $S),", contentType));
+        optionalContentType.ifPresent(contentType -> writer.write(
+            "Field(name=\"Content-Type\", values=[$S]),", contentType));
     }
 
     private void writeContentLength(GenerationContext context, PythonWriter writer, OperationShape operation) {
@@ -243,7 +244,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
             .anyMatch(binding -> binding.getLocation() == PAYLOAD || binding.getLocation() == DOCUMENT);
 
         if (hasBodyBindings) {
-            writer.write("('Content-Length', str(len(body))),");
+            writer.write("Field(name=\"Content-Length\", values=[str(len(body))]),");
         }
     }
 
@@ -283,15 +284,18 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                         getDocumentTimestampFormat()));
 
                     var trailer = listTarget.isStringShape() ? " if e" : "";
+                    writer.addImport("smithy_python._private.http", "tuples_list_to_fields");
                     writer.write("""
-                        headers.extend(($S, $L) for e in input.$L$L)
+                        headers.extend(tuples_list_to_fields(($S, $L) for e in input.$L$L))
                         """, binding.getLocationName(), inputValue, pythonName, trailer);
                 } else {
                     var dataSource = "input." + pythonName;
                     var inputValue = target.accept(new HttpMemberSerVisitor(
                         context, writer, binding.getLocation(), dataSource, binding.getMember(),
                         getDocumentTimestampFormat()));
-                    writer.write("headers.append(($S, $L))", binding.getLocationName(), inputValue);
+                    writer.write(
+                        "headers.extend(Fields([Field(name=$S, values=[$L])]))",
+                        binding.getLocationName(), inputValue);
                 }
             });
         }
@@ -308,8 +312,11 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 var inputValue = valueTarget.accept(new HttpMemberSerVisitor(
                     context, writer, binding.getLocation(), "v", target.getValue(),
                     getDocumentTimestampFormat()));
+                writer.addImport("smithy_python._private.http", "tuples_list_to_fields");
                 writer.write("""
-                    headers.extend((f'$L{k}', $L) for k, v in input.$L.items() if v)
+                    headers.extend(
+                        tuples_list_to_fields((f'$L{k}', $L) for k, v in input.$L.items() if v)
+                    )
                     """, binding.getLocationName(
                 ), inputValue, pythonName);
             });

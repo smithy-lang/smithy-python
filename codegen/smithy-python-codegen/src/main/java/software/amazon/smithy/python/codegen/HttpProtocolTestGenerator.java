@@ -209,7 +209,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
             );
 
             // Execute the command, and catch the expected exception
-            writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail", "fail");
+            writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail");
+            writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "raises");
             writer.addStdlibImport("urllib.parse", "parse_qsl");
             writer.write("""
                 try:
@@ -242,22 +243,21 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         # effectively validate that without having to have a more complex comparator.
                         actual_query_keys.remove(required_query_key)
 
-                    actual_headers: list[tuple[str, str]] = [(k.lower(), v) for k, v in actual.headers]
                     expected_headers: list[tuple[str, str]] = [
                         ${9C|}
                     ]
-                    for expected_pair in expected_headers:
-                        assert expected_pair in actual_headers
+                    for expected_key, expected_val in expected_headers:
+                        assert expected_val in actual.fields.get_field(expected_key).values
 
-                    actual_header_keys: list[str] = [k for k, v in actual_headers]
                     forbidden_headers: set[str] = set($10J)
-                    for forbidden_header in forbidden_headers:
-                        assert forbidden_header.lower() not in actual_header_keys
+                    for forbidden_key in forbidden_headers:
+                        with raises(KeyError):
+                            actual.fields.get_field(forbidden_key)
 
                     required_headers: list[str] = $11J
-                    for required_header in required_headers:
-                        assert required_header.lower() in actual_header_keys
-                        actual_header_keys.remove(required_header)
+                    for required_key in required_headers:
+                        # Fields.remove_field() raises KeyError if key does not exist
+                        actual.fields.remove_field(required_key)
 
                 except Exception as err:
                     fail(f"Expected '$2L' exception to be thrown, but received {type(err).__name__}: {err}")
