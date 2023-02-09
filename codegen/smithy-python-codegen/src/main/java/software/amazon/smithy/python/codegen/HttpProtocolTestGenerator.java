@@ -15,8 +15,9 @@
 
 package software.amazon.smithy.python.codegen;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -29,6 +30,9 @@ import java.util.stream.Stream;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.knowledge.HttpBinding;
+import software.amazon.smithy.model.knowledge.HttpBinding.Location;
+import software.amazon.smithy.model.knowledge.HttpBindingIndex;
 import software.amazon.smithy.model.knowledge.OperationIndex;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
 import software.amazon.smithy.model.node.ArrayNode;
@@ -41,6 +45,7 @@ import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.model.node.StringNode;
 import software.amazon.smithy.model.shapes.CollectionShape;
 import software.amazon.smithy.model.shapes.DocumentShape;
+import software.amazon.smithy.model.shapes.ListShape;
 import software.amazon.smithy.model.shapes.MapShape;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.OperationShape;
@@ -49,6 +54,7 @@ import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.UnionShape;
+import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.protocoltests.traits.AppliesTo;
 import software.amazon.smithy.protocoltests.traits.HttpMessageTestCase;
 import software.amazon.smithy.protocoltests.traits.HttpRequestTestCase;
@@ -56,6 +62,8 @@ import software.amazon.smithy.protocoltests.traits.HttpRequestTestsTrait;
 import software.amazon.smithy.protocoltests.traits.HttpResponseTestCase;
 import software.amazon.smithy.protocoltests.traits.HttpResponseTestsTrait;
 import software.amazon.smithy.utils.CaseUtils;
+import software.amazon.smithy.utils.Pair;
+import software.amazon.smithy.utils.SimpleParser;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
@@ -63,6 +71,9 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
  *
  * <p>This should preferably be instantiated and used within an
  * implementation of a `ProtocolGeneration`
+ *
+ * <p>See Also: <a href="https://smithy.io/2.0/additional-specs/http-protocol-compliance-tests.html#http-protocol-compliance-tests">
+ * HTTP Protocol Compliance Tests</a>
  */
 @SmithyUnstableApi
 public final class HttpProtocolTestGenerator implements Runnable {
@@ -161,6 +172,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
         }
     }
 
+    // See also: https://smithy.io/2.0/additional-specs/http-protocol-compliance-tests.html#httprequesttests-trait
     private void generateRequestTest(OperationShape operation, HttpRequestTestCase testCase) {
         writeTestBlock(
                 testCase,
@@ -169,6 +181,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 () -> {
             var hostSplit = testCase.getHost().orElse("example.com").split("/", 2);
             var host = hostSplit[0];
+            var resolvedHost = testCase.getResolvedHost().map(h -> h.split("/", 2)[0]).orElse(host);
             String path;
             if (hostSplit.length != 1) {
                 path = hostSplit[1];
@@ -197,8 +210,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
             // Execute the command, and catch the expected exception
             writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail", "fail");
-            writer.addStdlibImport("urllib.parse", "parse_qs");
-            writer.addStdlibImport("typing", "AbstractSet");
+            writer.addStdlibImport("urllib.parse", "parse_qsl");
             writer.write("""
                 try:
                     await client.$1T(input_)
@@ -217,15 +229,36 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         assert expected_query_segment in actual_query_segments
                         actual_query_segments.remove(expected_query_segment)
 
-                    actual_query_keys: AbstractSet[str] = parse_qs(query).keys() if query else set()
-                    expected_query_keys: set[str] = set($7J)
-                    assert actual_query_keys >= expected_query_keys
-
-                    forbidden_query_keys: set[str] = set($8J)
+                    actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+                    forbidden_query_keys: set[str] = set($7J)
                     for forbidden_key in forbidden_query_keys:
-                        assert forbidden_key not in actual_query_keys
+                        assert forbidden_key.lower() not in actual_query_keys
 
-                    $9C
+                    required_query_keys: list[str] = $8J
+                    for required_query_key in required_query_keys:
+                        assert required_query_key.lower() in actual_query_keys
+                        # These are removed because the required list could require more than one
+                        # value. By removing each value after we assert that it's there, we can
+                        # effectively validate that without having to have a more complex comparator.
+                        actual_query_keys.remove(required_query_key)
+
+                    actual_headers: list[tuple[str, str]] = [(k.lower(), v) for k, v in actual.headers]
+                    expected_headers: list[tuple[str, str]] = [
+                        ${9C|}
+                    ]
+                    for expected_pair in expected_headers:
+                        assert expected_pair in actual_headers
+
+                    actual_header_keys: list[str] = [k for k, v in actual_headers]
+                    forbidden_headers: set[str] = set($10J)
+                    for forbidden_header in forbidden_headers:
+                        assert forbidden_header.lower() not in actual_header_keys
+
+                    required_headers: list[str] = $11J
+                    for required_header in required_headers:
+                        assert required_header.lower() in actual_header_keys
+                        actual_header_keys.remove(required_header)
+
                 except Exception as err:
                     fail(f"Expected '$2L' exception to be thrown, but received {type(err).__name__}: {err}")
                 """,
@@ -233,19 +266,134 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 TEST_HTTP_SERVICE_ERR_SYMBOL,
                 testCase.getMethod(),
                 testCase.getUri(),
-                host,
+                resolvedHost,
                 testCase.getQueryParams(),
-                testCase.getRequireQueryParams(),
-                testCase.getForbidQueryParams(),
-                (Runnable) () -> writer.maybeWrite(
-                    !testCase.getRequireHeaders().isEmpty(),
-                    "assert {h.name for h in actual.fields} >= $J",
-                    new HashSet<>(testCase.getRequireHeaders())
-                )
+                toLowerCase(testCase.getForbidQueryParams()),
+                toLowerCase(testCase.getRequireQueryParams()),
+                (Runnable) () -> writeExpectedHeaders(testCase, operation),
+                toLowerCase(testCase.getForbidHeaders()),
+                toLowerCase(testCase.getRequireHeaders())
             );
         });
     }
 
+    private List<String> toLowerCase(List<String> given) {
+        return given.stream().map(str -> str.toLowerCase(Locale.US)).collect(Collectors.toList());
+    }
+
+    private void writeExpectedHeaders(
+        HttpRequestTestCase testCase,
+        OperationShape operation
+    ) {
+        var headerPairs = splitHeaders(testCase, operation);
+        for (Pair<String, String> pair : headerPairs) {
+            writer.write("($S, $S),", pair.getKey().toLowerCase(Locale.US), pair.getValue());
+        }
+    }
+
+    // TODO: upstream this to Smithy itself or update the protocol test traits
+    private List<Pair<String, String>> splitHeaders(
+        HttpRequestTestCase testCase,
+        OperationShape operation
+    ) {
+        // Get a map of headers to binding info for headers that are bound to lists.
+        var listBindings = HttpBindingIndex.of(model)
+            .getRequestBindings(operation, Location.HEADER)
+            .stream()
+            .filter(binding -> model.expectShape(binding.getMember().getTarget()).isListShape())
+            .collect(Collectors.toMap(HttpBinding::getLocationName, binding -> binding));
+
+        // Go through each of the headers on the protocol test and turn them into key-value tuples.
+        var headerPairs = new ArrayList<Pair<String, String>>();
+        for (Map.Entry<String, String> entry : testCase.getHeaders().entrySet()) {
+            // If we know a list isn't bound to this header, then we know it's static so we can just
+            // add it directly.
+            if (!listBindings.containsKey(entry.getKey())) {
+                headerPairs.add(Pair.of(entry.getKey(), entry.getValue()));
+                continue;
+            }
+            var binding = listBindings.get(entry.getKey());
+            var paramValue = testCase.getParams().expectArrayMember(binding.getMemberName());
+            if (paramValue.size() == 1) {
+                // If it's a single value of a list, we want to keep it as-is.
+                headerPairs.add(Pair.of(entry.getKey(), entry.getValue()));
+            }
+            try {
+                headerPairs.addAll(splitHeader(binding, entry.getKey(), entry.getValue()));
+            } catch (Exception e) {
+                throw new CodegenException(
+                    String.format("Failed to split header in protocol test %s - `%s`: `%s` - %s",
+                        testCase.getId(), entry.getKey(), entry.getValue(), e));
+            }
+        }
+
+        return headerPairs;
+    }
+
+    private List<Pair<String, String>> splitHeader(HttpBinding binding, String key, String value) {
+        var values = new ArrayList<Pair<String, String>>();
+        var parser = new SimpleParser(value);
+
+        boolean isHttpDateMember = false;
+        var listShape = model.expectShape(binding.getMember().getTarget(), ListShape.class);
+        var listMember = model.expectShape(listShape.getMember().getTarget());
+        if (listMember.isTimestampShape()) {
+            var httpIndex = HttpBindingIndex.of(model);
+            var format = httpIndex.determineTimestampFormat(
+                binding.getMember(), binding.getLocation(), Format.HTTP_DATE);
+            isHttpDateMember = format == Format.HTTP_DATE;
+        }
+
+        // Strip any leading whitespace
+        parser.ws();
+        while (!parser.eof()) {
+            values.add(Pair.of(key, parseEntry(parser, isHttpDateMember)));
+        }
+        return values;
+    }
+
+    private String parseEntry(SimpleParser parser, boolean skipFirstComma) {
+        String value;
+
+        // If the first character is a dquote, parse as a quoted string.
+        if (parser.peek() == '"') {
+            parser.expect('"');
+            var builder = new StringBuilder();
+            while (!parser.eof() && parser.peek() != '"') {
+                if (parser.peek() == '\\') {
+                    parser.skip();
+                }
+                builder.append(parser.peek());
+                parser.skip();
+            }
+            // Ensure that the string ends in a dquote
+            parser.expect('"');
+            value = builder.toString();
+        } else {
+            var start = parser.position();
+            parser.consumeUntilNoLongerMatches(character -> character != ',');
+            if (skipFirstComma) {
+                parser.expect(',');
+                parser.consumeUntilNoLongerMatches(character -> character != ',');
+            }
+            // We can use substring instead of a StringBuilder here because we don't
+            // need to worry about escaped characters.
+            value = parser.expression().substring(start, parser.position()).trim();
+        }
+
+        // Strip trailing whitespace
+        parser.ws();
+
+        // If we're not at the end of the line, assert that we encounter a comma.
+        if (!parser.eof()) {
+            parser.expect(',');
+            parser.ws();
+        }
+
+        return value;
+    }
+
+    // See also: https://smithy.io/2.0/additional-specs/http-protocol-compliance-tests.html#httpresponsetests-trait
     private void generateResponseTest(OperationShape operation, HttpResponseTestCase testCase) {
         writeTestBlock(
                 testCase,
@@ -295,6 +443,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
         });
     }
 
+    // See also: https://smithy.io/2.0/additional-specs/http-protocol-compliance-tests.html#httpresponsetests-trait
     private void generateErrorResponseTest(
             OperationShape operation,
             StructureShape error,
