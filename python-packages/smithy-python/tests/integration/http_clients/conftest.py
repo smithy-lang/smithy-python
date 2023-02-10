@@ -13,7 +13,8 @@
 
 import pytest
 
-from smithy_python._private.http import URI, Field, Fields, HTTPRequest
+from smithy_python._private import URI, Field, Fields
+from smithy_python._private.http import HTTPRequest
 from smithy_python.async_utils import async_list
 
 

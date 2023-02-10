@@ -161,7 +161,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
 
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
         writer.addImport("smithy_python._private.http", "HTTPRequest", "_HTTPRequest");
-        writer.addImport("smithy_python._private.http", "URI", "_URI");
+        writer.addImport("smithy_python._private", "URI", "_URI");
 
         writer.write("""
             return _HTTPRequest(
@@ -196,7 +196,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         HttpBindingIndex bindingIndex
     ) {
         writer.pushState(new SerializeFieldsSection(operation));
-        writer.addImports("smithy_python._private.http", Set.of("Field", "Fields"));
+        writer.addImports("smithy_python._private", Set.of("Field", "Fields"));
         writer.write("""
             headers = Fields(
                 [
@@ -284,7 +284,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                         getDocumentTimestampFormat()));
 
                     var trailer = listTarget.isStringShape() ? " if e" : "";
-                    writer.addImport("smithy_python._private.http", "tuples_to_fields");
+                    writer.addImport("smithy_python._private", "tuples_to_fields");
                     writer.write("""
                         headers.extend(tuples_to_fields(($S, $L) for e in input.$L$L))
                         """, binding.getLocationName(), inputValue, pythonName, trailer);
@@ -312,7 +312,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 var inputValue = valueTarget.accept(new HttpMemberSerVisitor(
                     context, writer, binding.getLocation(), "v", target.getValue(),
                     getDocumentTimestampFormat()));
-                writer.addImport("smithy_python._private.http", "tuples_to_fields");
+                writer.addImport("smithy_python._private", "tuples_to_fields");
                 writer.write("""
                     headers.extend(
                         tuples_to_fields((f'$L{k}', $L) for k, v in input.$L.items() if v)

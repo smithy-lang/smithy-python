@@ -16,7 +16,7 @@
 
 import pytest
 
-from smithy_python._private.http import Field, FieldPosition, Fields
+from smithy_python._private import Field, FieldPosition, Fields
 
 
 def test_field_single_valued_basics() -> None:

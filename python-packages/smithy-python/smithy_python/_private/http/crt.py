@@ -24,7 +24,7 @@ from awscrt import io as crt_io
 
 from ... import interfaces
 from ...exceptions import SmithyHTTPException
-from . import Field, FieldPosition, Fields
+from .. import Field, FieldPosition, Fields
 
 
 class _AWSCRTEventLoop:

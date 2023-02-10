@@ -17,7 +17,8 @@ import aiohttp
 
 from ... import interfaces
 from ...async_utils import async_list
-from . import Field, FieldPosition, Fields, HTTPResponse
+from .. import Field, FieldPosition, Fields
+from . import HTTPResponse
 
 
 class AIOHTTPClientConfig(interfaces.http.HTTPClientConfiguration):

@@ -544,10 +544,11 @@ public final class HttpProtocolTestGenerator implements Runnable {
     private void writeUtilStubs(Symbol serviceSymbol) {
         LOGGER.fine(String.format("Writing utility stubs for %s : %s", serviceSymbol.getName(), protocol.getName()));
         writer.addStdlibImport("typing", "Any");
+        writer.addImport("smithy_python.interfaces", "Fields");
         writer.addImports("smithy_python.interfaces.http", Set.of(
-                "Fields", "HTTPRequestConfiguration", "HTTPRequest", "HTTPResponse")
+                "HTTPRequestConfiguration", "HTTPRequest", "HTTPResponse")
         );
-        writer.addImport("smithy_python._private.http", "tuples_to_fields");
+        writer.addImport("smithy_python._private", "tuples_to_fields");
         writer.addImport("smithy_python._private.http", "HTTPResponse", "_HTTPResponse");
         writer.addImport("smithy_python.async_utils", "async_list");
 
