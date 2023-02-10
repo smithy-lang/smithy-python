@@ -14,12 +14,12 @@
 from smithy_python._private.http import HttpRequest
 from smithy_python._private.http.aiohttp_client import (
     AioHttpClient,
-    AwsCrtHttpClientConfig,
+    AioHttpClientConfig,
 )
 
 
 async def test_basic_request_local(aws_request: HttpRequest) -> None:
-    config = AwsCrtHttpClientConfig()
+    config = AioHttpClientConfig()
     session = AioHttpClient(client_config=config)
     response = await session.send(request=aws_request)
     assert response.status == 200

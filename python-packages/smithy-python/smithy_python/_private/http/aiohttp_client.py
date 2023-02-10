@@ -20,21 +20,19 @@ from ...async_utils import async_list
 from . import Field, FieldPosition, Fields, HttpResponse
 
 
-class AwsCrtHttpClientConfig(interfaces.http.HttpClientConfiguration):
+class AioHttpClientConfig(interfaces.http.HttpClientConfiguration):
     pass
 
 
 class AioHttpClient(interfaces.http.HttpClient):
     """Implementation of :py:class:`...interfaces.http.HttpClient` using aiohttp."""
 
-    def __init__(self, *, client_config: AwsCrtHttpClientConfig | None) -> None:
+    def __init__(self, *, client_config: AioHttpClientConfig | None = None) -> None:
         """
         :param client_config: Configuration that applies to all requests made with this
         client.
         """
-        self._config = (
-            AwsCrtHttpClientConfig() if client_config is None else client_config
-        )
+        self._config = AioHttpClientConfig() if client_config is None else client_config
         self._session = aiohttp.ClientSession()
 
     async def send(
