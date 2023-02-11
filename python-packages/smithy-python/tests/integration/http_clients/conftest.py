@@ -18,7 +18,7 @@ from smithy_python.async_utils import async_list
 
 
 @pytest.fixture
-def aws_request() -> HttpRequest:
+def sample_request() -> HttpRequest:
     headers = Fields(
         [
             Field(name="host", values=["aws.amazon.com"]),

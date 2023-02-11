@@ -18,10 +18,10 @@ from smithy_python._private.http.aiohttp_client import (
 )
 
 
-async def test_basic_request_local(aws_request: HttpRequest) -> None:
+async def test_basic_request_local(sample_request: HttpRequest) -> None:
     config = AioHttpClientConfig()
     session = AioHttpClient(client_config=config)
-    response = await session.send(request=aws_request)
+    response = await session.send(request=sample_request)
     assert response.status == 200
     body = await response.consume_body()
     assert b"aws" in body
