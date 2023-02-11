@@ -24,7 +24,7 @@ from awscrt import io as crt_io
 
 from ... import interfaces
 from ...exceptions import SmithyHttpException
-from . import Field, FieldPosition, Fields
+from . import ConsumeBodyMixin, Field, FieldPosition, Fields
 
 
 class _AWSCRTEventLoop:
@@ -37,7 +37,7 @@ class _AWSCRTEventLoop:
         return crt_io.ClientBootstrap(event_loop_group, host_resolver)
 
 
-class AwsCrtHttpResponse(interfaces.http.HttpResponse):
+class AwsCrtHttpResponse(ConsumeBodyMixin, interfaces.http.HttpResponse):
     def __init__(self) -> None:
         self._stream: crt_http.HttpClientStream | None = None
         self._status_code_future: Future[int] = Future()
@@ -140,13 +140,6 @@ class AwsCrtHttpResponse(interfaces.http.HttpResponse):
                 yield chunk
             else:
                 break
-
-    async def consume_body(self) -> bytes:
-        """Iterate over request body and return as bytes."""
-        body = b""
-        async for chunk in self.body:
-            body += chunk
-        return body
 
 
 ConnectionPoolKey = tuple[str, str, int | None]
