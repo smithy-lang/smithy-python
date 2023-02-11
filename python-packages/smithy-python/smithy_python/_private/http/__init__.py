@@ -98,25 +98,8 @@ class URI(interfaces.URI):
         )
 
 
-class ConsumeBodyMixin:
-    """Mixin for `Request`` and ``Response`` implementations that provides a
-    consume_body() utility method.
-    """
-
-    @property
-    def body(self) -> AsyncIterable[bytes]:
-        ...
-
-    async def consume_body(self) -> bytes:
-        """Iterate over request body and return as bytes."""
-        body = b""
-        async for chunk in self.body:
-            body += chunk
-        return body
-
-
 @dataclass(kw_only=True)
-class HttpRequest(ConsumeBodyMixin, interfaces.http.HttpRequest):
+class HttpRequest(interfaces.http.HttpRequest):
     """
     HTTP primitives for an Exchange to construct a version agnostic HTTP message.
     """
@@ -126,13 +109,20 @@ class HttpRequest(ConsumeBodyMixin, interfaces.http.HttpRequest):
     method: str
     fields: interfaces.http.Fields
 
+    async def consume_body(self) -> bytes:
+        """Iterate over request body and return as bytes."""
+        body = b""
+        async for chunk in self.body:
+            body += chunk
+        return body
+
 
 # HttpResponse implements interfaces.http.HttpResponse but cannot be explicitly
 # annotated to reflect this because doing so causes Python to raise an AttributeError.
 # See https://github.com/python/typing/discussions/903#discussioncomment-4866851 for
 # details.
 @dataclass(kw_only=True)
-class HttpResponse(ConsumeBodyMixin):
+class HttpResponse:
     """
     Basic implementation of :py:class:`...interfaces.http.HttpResponse`.
 
@@ -151,6 +141,13 @@ class HttpResponse(ConsumeBodyMixin):
 
     reason: str | None = None
     """Optional string provided by the server explaining the status."""
+
+    async def consume_body(self) -> bytes:
+        """Iterate over response body and return as bytes."""
+        body = b""
+        async for chunk in self.body:
+            body += chunk
+        return body
 
 
 class Field(interfaces.http.Field):
