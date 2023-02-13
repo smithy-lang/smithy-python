@@ -4,6 +4,7 @@ repos:
     hooks:
       - id: check-yaml
       - id: end-of-file-fixer
+        exclude: python-packages/aws-smithy-python/tests/unit/auth/aws4_testsuite/
       - id: trailing-whitespace
   - repo: local
     hooks:
