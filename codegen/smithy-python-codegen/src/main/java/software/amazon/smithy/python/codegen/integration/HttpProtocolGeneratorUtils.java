@@ -107,9 +107,8 @@ public final class HttpProtocolGeneratorUtils {
                 return format("ensure_utc(datetime.fromisoformat(expect_type(str, %s)))", dataSource);
             }
             case EPOCH_SECONDS -> {
-                writer.addStdlibImport("datetime", "datetime");
-                writer.addStdlibImport("datetime", "timezone");
-                return format("datetime.fromtimestamp(expect_type(int | float, %s), timezone.utc)", dataSource);
+                writer.addImport("smithy_python.utils", "epoch_seconds_to_datetime");
+                return format("epoch_seconds_to_datetime(expect_type(int | float, %s))", dataSource);
             }
             case HTTP_DATE -> {
                 writer.addImport("smithy_python.utils", "ensure_utc");

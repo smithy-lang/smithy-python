@@ -1,5 +1,5 @@
 import re
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from math import isinf, isnan
 from types import UnionType
@@ -47,6 +47,22 @@ def limited_parse_float(value: Any) -> float:
         return float(value)
 
     return expect_type(float, value)
+
+
+def epoch_seconds_to_datetime(value: int | float) -> datetime:
+    """Parse numerical epoch timestamps (seconds since 1970) into a datetime in UTC.
+
+    Falls back to using ``timedelta`` when ``fromtimestamp`` raises ``OverflowError``.
+    From Python's ``fromtimestamp`` documentation: "This may raise OverflowError, if the
+    timestamp is out of the range of values supported by the platform C localtime()
+    function, and OSError on localtime() failure. It's common for this to be restricted
+    to years from 1970 through 2038." This affects 32-bit systems.
+    """
+    try:
+        return datetime.fromtimestamp(value, tz=timezone.utc)
+    except OverflowError:
+        epoch_zero = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        return epoch_zero + timedelta(seconds=value)
 
 
 _T = TypeVar("_T")

@@ -1,13 +1,31 @@
+# Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+#     http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
+
+# mypy: allow-untyped-defs
+# mypy: allow-incomplete-defs
+
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from math import isnan
-from typing import Any
+from typing import Any, NamedTuple
+from unittest.mock import Mock
 
 import pytest
 
 from smithy_python.exceptions import ExpectationNotMetException
 from smithy_python.utils import (
     ensure_utc,
+    epoch_seconds_to_datetime,
     expect_type,
     limited_parse_float,
     serialize_epoch_seconds,
@@ -181,15 +199,46 @@ def test_serialize_float(given: float | Decimal, expected: str) -> None:
     assert serialize_float(given) == expected
 
 
+class DateTimeTestcase(NamedTuple):
+    dt_object: datetime
+    rfc3339_str: str
+    epoch_seconds_num: int | float
+    epoch_seconds_str: str
+
+
+DATETIME_TEST_CASES: list[DateTimeTestcase] = [
+    DateTimeTestcase(
+        dt_object=datetime(2017, 1, 1, tzinfo=timezone.utc),
+        rfc3339_str="2017-01-01T00:00:00Z",
+        epoch_seconds_num=1483228800,
+        epoch_seconds_str="1483228800",
+    ),
+    DateTimeTestcase(
+        dt_object=datetime(2017, 1, 1, microsecond=1, tzinfo=timezone.utc),
+        rfc3339_str="2017-01-01T00:00:00.000001Z",
+        epoch_seconds_num=1483228800.000001,
+        epoch_seconds_str="1483228800.000001",
+    ),
+    DateTimeTestcase(
+        dt_object=datetime(1969, 12, 31, 23, 59, 59, tzinfo=timezone.utc),
+        rfc3339_str="1969-12-31T23:59:59Z",
+        epoch_seconds_num=-1,
+        epoch_seconds_str="-1",
+    ),
+    # The first second affected by the Year 2038 problem where fromtimestamp raises an
+    # OverflowError on 32-bit systems for dates beyond 2038-01-19 03:14:07 UTC.
+    DateTimeTestcase(
+        dt_object=datetime(2038, 1, 19, 3, 14, 8, tzinfo=timezone.utc),
+        rfc3339_str="2038-01-19T03:14:08Z",
+        epoch_seconds_num=2147483648,
+        epoch_seconds_str="2147483648",
+    ),
+]
+
+
 @pytest.mark.parametrize(
     "given, expected",
-    [
-        (datetime(2017, 1, 1, tzinfo=timezone.utc), "2017-01-01T00:00:00Z"),
-        (
-            datetime(2017, 1, 1, microsecond=1, tzinfo=timezone.utc),
-            "2017-01-01T00:00:00.000001Z",
-        ),
-    ],
+    [(case.dt_object, case.rfc3339_str) for case in DATETIME_TEST_CASES],
 )
 def test_serialize_rfc3339(given: datetime, expected: str) -> None:
     assert serialize_rfc3339(given) == expected
@@ -197,13 +246,24 @@ def test_serialize_rfc3339(given: datetime, expected: str) -> None:
 
 @pytest.mark.parametrize(
     "given, expected",
-    [
-        (datetime(2017, 1, 1, tzinfo=timezone.utc), "1483228800"),
-        (
-            datetime(2017, 1, 1, microsecond=1, tzinfo=timezone.utc),
-            "1483228800.000001",
-        ),
-    ],
+    [(case.dt_object, case.epoch_seconds_str) for case in DATETIME_TEST_CASES],
 )
 def test_serialize_epoch_seconds(given: datetime, expected: str) -> None:
     assert serialize_epoch_seconds(given) == expected
+
+
+@pytest.mark.parametrize(
+    "given, expected",
+    [(case.epoch_seconds_num, case.dt_object) for case in DATETIME_TEST_CASES],
+)
+def test_epoch_seconds_to_datetime(given: int | float, expected: datetime) -> None:
+    assert epoch_seconds_to_datetime(given) == expected
+
+
+def test_epoch_seconds_to_datetime_with_overflow_error(monkeypatch):
+    # Emulate the Year 2038 problem by always raising an OverflowError.
+    datetime_mock = Mock(wraps=datetime)
+    datetime_mock.fromtimestamp = Mock(side_effect=OverflowError())
+    monkeypatch.setattr("smithy_python.utils.datetime", datetime_mock)
+    dt_object = datetime(2038, 1, 19, 3, 14, 8, tzinfo=timezone.utc)
+    epoch_seconds_to_datetime(2147483648) == dt_object
