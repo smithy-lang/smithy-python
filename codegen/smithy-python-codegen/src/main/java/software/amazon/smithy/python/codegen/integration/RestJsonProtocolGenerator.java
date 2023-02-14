@@ -153,18 +153,24 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                 return;
             }
 
+            // If the stream requires a length, we need to calculate that. We can't initialize the
+            // variable in the property accessor because then it would be out of scope, so we do
+            // it here instead.
+            // See also https://smithy.io/2.0/spec/streaming.html#smithy-api-requireslength-trait
             if (requiresLength(context, payloadBinding.getMember())) {
                 writer.write("content_length: int = 0");
             }
 
             CodegenUtils.accessStructureMember(context, writer, "input", payloadBinding.getMember(), () -> {
                 if (requiresLength(context, payloadBinding.getMember())) {
+                    // Since we need to calculate the length, we need to use a seekable stream because
+                    // we can't assume that the source is seekable or safe to read more than once.
                     writer.addImport("smithy_python.interfaces.blobs", "SeekableAsyncBytesReader");
                     writer.write("""
-                        body = await SeekableAsyncBytesReader.new($L)
-                        body.seek(0, 2)
+                        body = SeekableAsyncBytesReader($L)
+                        await body.seek(0, 2)
                         content_length = body.tell()
-                        body.seek(0, 0)
+                        await body.seek(0, 0)
                         """, dataSource);
                 } else {
                     writer.addStdlibImport("typing", "AsyncIterator");
