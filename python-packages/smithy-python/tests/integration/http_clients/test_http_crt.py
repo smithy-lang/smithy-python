@@ -14,13 +14,13 @@
 # mypy: allow-untyped-defs
 # mypy: allow-incomplete-defs
 
-from smithy_python._private.http import HttpRequest
-from smithy_python._private.http.crt import AwsCrtHttpClient, AwsCrtHttpClientConfig
+from smithy_python._private.http import HTTPRequest
+from smithy_python._private.http.crt import AWSCRTHTTPClient, AWSCRTHTTPClientConfig
 
 
-async def test_basic_request_local(sample_request: HttpRequest) -> None:
-    config = AwsCrtHttpClientConfig()
-    session = AwsCrtHttpClient(client_config=config)
+async def test_basic_request_local(sample_request: HTTPRequest) -> None:
+    config = AWSCRTHTTPClientConfig()
+    session = AWSCRTHTTPClient(client_config=config)
     response = await session.send(sample_request)
     assert response.status == 200
     print(f"{response=}")
@@ -29,9 +29,9 @@ async def test_basic_request_local(sample_request: HttpRequest) -> None:
     assert b"aws" in body
 
 
-async def test_basic_request_http2(sample_request: HttpRequest) -> None:
-    config = AwsCrtHttpClientConfig(force_http_2=True)
-    session = AwsCrtHttpClient(client_config=config)
+async def test_basic_request_http2(sample_request: HTTPRequest) -> None:
+    config = AWSCRTHTTPClientConfig(force_http_2=True)
+    session = AWSCRTHTTPClient(client_config=config)
     response = await session.send(sample_request)
     assert response.status == 200
     body = await response.consume_body()

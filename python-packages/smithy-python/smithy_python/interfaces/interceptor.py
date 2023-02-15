@@ -52,7 +52,7 @@ class InterceptorContext(
 
     # Note that TransportRequest (and TransportResponse below) aren't resolved types,
     # but rather TypeVars. This is very important, because in the actual Interceptor
-    # interface class these are sometimes typed as None rather than, say, HttpRequest.
+    # interface class these are sometimes typed as None rather than, say, HTTPRequest.
     # That lets us use the type system to tell people when something will be set and
     # when it will not be set without leaking nullability into the cases where the
     # property will ALWAYS be set.

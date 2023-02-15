@@ -11,16 +11,16 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-from smithy_python._private.http import HttpRequest
+from smithy_python._private.http import HTTPRequest
 from smithy_python._private.http.aiohttp_client import (
-    AioHttpClient,
-    AioHttpClientConfig,
+    AIOHTTPClient,
+    AIOHTTPClientConfig,
 )
 
 
-async def test_basic_request_local(sample_request: HttpRequest) -> None:
-    config = AioHttpClientConfig()
-    session = AioHttpClient(client_config=config)
+async def test_basic_request_local(sample_request: HTTPRequest) -> None:
+    config = AIOHTTPClientConfig()
+    session = AIOHTTPClient(client_config=config)
     response = await session.send(request=sample_request)
     assert response.status == 200
     body = await response.consume_body()

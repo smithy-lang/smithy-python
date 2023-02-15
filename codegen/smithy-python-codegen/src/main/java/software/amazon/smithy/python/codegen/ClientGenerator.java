@@ -357,13 +357,13 @@ final class ClientGenerator implements Runnable {
         writer.pushState(new SendRequestSection());
         if (context.applicationProtocol().isHttpProtocol()) {
             writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-            writer.addImport("smithy_python.interfaces.http", "HttpRequestConfiguration");
+            writer.addImport("smithy_python.interfaces.http", "HTTPRequestConfiguration");
             writer.write("""
                         # Step 7m: Invoke http_client.send
                         if config.http_client is None:
                             raise $3T("No http_client found on the operation config.")
 
-                        request_config = config.http_request_config or HttpRequestConfiguration()
+                        request_config = config.http_request_config or HTTPRequestConfiguration()
                         context_with_response = cast(
                             InterceptorContext[Input, None, $1T, $2T], context
                         )

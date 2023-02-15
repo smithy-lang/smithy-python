@@ -1,7 +1,7 @@
 import json
 from typing import NamedTuple
 
-from .interfaces.http import HttpResponse
+from .interfaces.http import HTTPResponse
 from .types import Document
 from .utils import expect_type
 
@@ -31,7 +31,7 @@ class RestJsonErrorInfo(NamedTuple):
 
 
 async def parse_rest_json_error_info(
-    http_response: HttpResponse, check_body: bool = True
+    http_response: HTTPResponse, check_body: bool = True
 ) -> RestJsonErrorInfo:
     """Parses generic RestJson error info from an HTTP response.
 

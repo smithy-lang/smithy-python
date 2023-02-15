@@ -13,19 +13,19 @@
 
 import pytest
 
-from smithy_python._private.http import URI, Field, Fields, HttpRequest
+from smithy_python._private.http import URI, Field, Fields, HTTPRequest
 from smithy_python.async_utils import async_list
 
 
 @pytest.fixture
-def sample_request() -> HttpRequest:
+def sample_request() -> HTTPRequest:
     headers = Fields(
         [
             Field(name="host", values=["aws.amazon.com"]),
             Field(name="user-agent", values=["smithy-python-test"]),
         ]
     )
-    return HttpRequest(
+    return HTTPRequest(
         method="GET",
         destination=URI(host="aws.amazon.com"),
         fields=headers,

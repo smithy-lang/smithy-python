@@ -17,30 +17,30 @@ import aiohttp
 
 from ... import interfaces
 from ...async_utils import async_list
-from . import Field, FieldPosition, Fields, HttpResponse
+from . import Field, FieldPosition, Fields, HTTPResponse
 
 
-class AioHttpClientConfig(interfaces.http.HttpClientConfiguration):
+class AIOHTTPClientConfig(interfaces.http.HTTPClientConfiguration):
     pass
 
 
-class AioHttpClient(interfaces.http.HttpClient):
-    """Implementation of :py:class:`...interfaces.http.HttpClient` using aiohttp."""
+class AIOHTTPClient(interfaces.http.HTTPClient):
+    """Implementation of :py:class:`...interfaces.http.HTTPClient` using aiohttp."""
 
-    def __init__(self, *, client_config: AioHttpClientConfig | None = None) -> None:
+    def __init__(self, *, client_config: AIOHTTPClientConfig | None = None) -> None:
         """
         :param client_config: Configuration that applies to all requests made with this
         client.
         """
-        self._config = AioHttpClientConfig() if client_config is None else client_config
+        self._config = AIOHTTPClientConfig() if client_config is None else client_config
         self._session = aiohttp.ClientSession()
 
     async def send(
         self,
         *,
-        request: interfaces.http.HttpRequest,
-        request_config: interfaces.http.HttpRequestConfiguration | None = None,
-    ) -> HttpResponse:
+        request: interfaces.http.HTTPRequest,
+        request_config: interfaces.http.HTTPRequestConfiguration | None = None,
+    ) -> HTTPResponse:
         """
         Send HTTP request using aiohttp client.
 
@@ -48,7 +48,7 @@ class AioHttpClient(interfaces.http.HttpClient):
         :param request_config: Configuration specific to this request.
         """
         request_config = (
-            interfaces.http.HttpRequestConfiguration()  # todo: should be an implementation
+            interfaces.http.HTTPRequestConfiguration()  # todo: should be an implementation
             if request_config is None
             else request_config
         )
@@ -76,8 +76,8 @@ class AioHttpClient(interfaces.http.HttpClient):
 
     async def _marshal_response(
         self, aiohttp_resp: aiohttp.ClientResponse
-    ) -> HttpResponse:
-        """Convert a ``aiohttp.ClientResponse`` to a ``smithy_python.http.HttpResponse``"""
+    ) -> HTTPResponse:
+        """Convert a ``aiohttp.ClientResponse`` to a ``smithy_python.http.HTTPResponse``"""
         headers = Fields()
         for header_name, header_val in aiohttp_resp.headers.items():
             try:
@@ -91,7 +91,7 @@ class AioHttpClient(interfaces.http.HttpClient):
                     )
                 )
 
-        return HttpResponse(
+        return HTTPResponse(
             status=aiohttp_resp.status,
             fields=headers,
             body=async_list([await aiohttp_resp.read()]),

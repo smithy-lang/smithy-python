@@ -26,7 +26,7 @@ from ...interfaces.http import FieldPosition as FieldPosition  # re-export
 
 @dataclass(kw_only=True)
 class URI(interfaces.URI):
-    """Universal Resource Identifier, target location for a :py:class:`HttpRequest`."""
+    """Universal Resource Identifier, target location for a :py:class:`HTTPRequest`."""
 
     scheme: str = "https"
     """For example ``http`` or ``https``."""
@@ -99,7 +99,7 @@ class URI(interfaces.URI):
 
 
 @dataclass(kw_only=True)
-class HttpRequest(interfaces.http.HttpRequest):
+class HTTPRequest(interfaces.http.HTTPRequest):
     """
     HTTP primitives for an Exchange to construct a version agnostic HTTP message.
     """
@@ -117,16 +117,16 @@ class HttpRequest(interfaces.http.HttpRequest):
         return body
 
 
-# HttpResponse implements interfaces.http.HttpResponse but cannot be explicitly
+# HTTPResponse implements interfaces.http.HTTPResponse but cannot be explicitly
 # annotated to reflect this because doing so causes Python to raise an AttributeError.
 # See https://github.com/python/typing/discussions/903#discussioncomment-4866851 for
 # details.
 @dataclass(kw_only=True)
-class HttpResponse:
+class HTTPResponse:
     """
-    Basic implementation of :py:class:`...interfaces.http.HttpResponse`.
+    Basic implementation of :py:class:`...interfaces.http.HTTPResponse`.
 
-    Implementations of :py:class:`...interfaces.http.HttpClient` may return instances
+    Implementations of :py:class:`...interfaces.http.HTTPClient` may return instances
     of this class or of custom response implementatinos.
     """
 

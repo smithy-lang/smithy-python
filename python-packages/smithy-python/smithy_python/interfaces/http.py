@@ -122,7 +122,7 @@ class Fields(Protocol):
         ...
 
 
-class HttpRequest(Request, Protocol):
+class HTTPRequest(Request, Protocol):
     """
     HTTP primitive for an Exchange to construct a version agnostic HTTP message.
 
@@ -136,7 +136,7 @@ class HttpRequest(Request, Protocol):
     fields: Fields
 
 
-class HttpResponse(Response, Protocol):
+class HTTPResponse(Response, Protocol):
     """
     HTTP primitives returned from an Exchange, used to construct a client response.
     """
@@ -177,7 +177,7 @@ class EndpointResolver(Protocol[EndpointParams]):
 
 
 @dataclass(kw_only=True)
-class HttpClientConfiguration:
+class HTTPClientConfiguration:
     """Client-level HTTP configuration.
 
     :param force_http_2: Whether to require HTTP/2.
@@ -187,7 +187,7 @@ class HttpClientConfiguration:
 
 
 @dataclass(kw_only=True)
-class HttpRequestConfiguration:
+class HTTPRequestConfiguration:
     """Request-level HTTP configuration.
 
     :param read_timeout: How long, in seconds, the client will attempt to read the
@@ -197,10 +197,10 @@ class HttpRequestConfiguration:
     read_timeout: float | None = None
 
 
-class HttpClient(Protocol):
+class HTTPClient(Protocol):
     """An asynchronous HTTP client interface."""
 
-    def __init__(self, *, client_config: HttpRequestConfiguration | None) -> None:
+    def __init__(self, *, client_config: HTTPRequestConfiguration | None) -> None:
         """
         :param client_config: Configuration that applies to all requests made with this
         client.
@@ -208,8 +208,8 @@ class HttpClient(Protocol):
         ...
 
     async def send(
-        self, *, request: HttpRequest, request_config: HttpRequestConfiguration | None
-    ) -> HttpResponse:
+        self, *, request: HTTPRequest, request_config: HTTPRequestConfiguration | None
+    ) -> HTTPResponse:
         """
         Send HTTP request over the wire and return the response.
 

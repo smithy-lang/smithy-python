@@ -44,10 +44,10 @@ public record ApplicationProtocol(String name, SymbolReference requestType, Symb
         return new ApplicationProtocol(
                 "http",
                 SymbolReference.builder()
-                        .symbol(createHttpSymbol("HttpRequest"))
+                        .symbol(createHttpSymbol("HTTPRequest"))
                         .build(),
                 SymbolReference.builder()
-                        .symbol(createHttpSymbol("HttpResponse"))
+                        .symbol(createHttpSymbol("HTTPResponse"))
                         .build()
         );
     }
