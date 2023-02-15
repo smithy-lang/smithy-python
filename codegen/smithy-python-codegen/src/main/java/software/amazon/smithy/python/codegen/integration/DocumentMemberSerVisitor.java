@@ -17,6 +17,8 @@ package software.amazon.smithy.python.codegen.integration;
 
 import java.util.Optional;
 import software.amazon.smithy.codegen.core.CodegenException;
+import software.amazon.smithy.model.knowledge.HttpBinding.Location;
+import software.amazon.smithy.model.knowledge.HttpBindingIndex;
 import software.amazon.smithy.model.shapes.BigDecimalShape;
 import software.amazon.smithy.model.shapes.BigIntegerShape;
 import software.amazon.smithy.model.shapes.BlobShape;
@@ -220,8 +222,11 @@ public class DocumentMemberSerVisitor implements ShapeVisitor<String> {
 
     @Override
     public String timestampShape(TimestampShape timestampShape) {
+        var sourceShape = memberShape().isPresent() ? member : timestampShape;
+        var index = HttpBindingIndex.of(context.model());
+        var format = index.determineTimestampFormat(sourceShape, Location.DOCUMENT, getDefaultTimestampFormat());
         return HttpProtocolGeneratorUtils.getTimestampInputParam(
-            context(), writer(), dataSource(), timestampShape, getDefaultTimestampFormat());
+            context(), writer(), dataSource(), sourceShape, format);
     }
 
     @Override
