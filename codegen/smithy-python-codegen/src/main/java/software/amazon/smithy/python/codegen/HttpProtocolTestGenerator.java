@@ -259,6 +259,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         # Fields.remove_field() raises KeyError if key does not exist
                         actual.fields.remove_field(required_key)
 
+                    ${12C|}
+
                 except Exception as err:
                     fail(f"Expected '$2L' exception to be thrown, but received {type(err).__name__}: {err}")
                 """,
@@ -272,7 +274,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 toLowerCase(testCase.getRequireQueryParams()),
                 (Runnable) () -> writeExpectedHeaders(testCase, operation),
                 toLowerCase(testCase.getForbidHeaders()),
-                toLowerCase(testCase.getRequireHeaders())
+                toLowerCase(testCase.getRequireHeaders()),
+                writer.consumer(w -> writeBodyComparison(testCase, w))
             );
         });
     }
@@ -391,6 +394,25 @@ public final class HttpProtocolTestGenerator implements Runnable {
         }
 
         return value;
+    }
+
+    private void writeBodyComparison(HttpMessageTestCase testCase, PythonWriter writer) {
+        if (testCase.getBody().isEmpty()) {
+            return;
+        }
+        var contentType = testCase.getBodyMediaType().orElse("application/octet-stream");
+        if (contentType.equals("application/json") || contentType.endsWith("+json")) {
+            writer.addStdlibImport("json", "loads", "json_loads");
+            writer.write("""
+                actual_body = json_loads(await actual.body.read())
+                expected_body = json_loads(b$S)
+                assert actual_body == expected_body
+                """, testCase.getBody().get());
+            return;
+        }
+        writer.write("""
+            assert await actual.body.read() == b$S
+            """, testCase.getBody().get());
     }
 
     // See also: https://smithy.io/2.0/additional-specs/http-protocol-compliance-tests.html#httpresponsetests-trait
