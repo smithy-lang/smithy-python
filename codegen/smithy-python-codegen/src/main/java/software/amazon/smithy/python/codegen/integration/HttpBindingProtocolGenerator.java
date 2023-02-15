@@ -1183,8 +1183,12 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                     throw new CodegenException("Unexpected named member shape binding location `" + bindingType + "`");
             };
 
-            return HttpProtocolGeneratorUtils.getTimestampInputParam(
+            var result = HttpProtocolGeneratorUtils.getTimestampInputParam(
                 context, writer, dataSource, member, format);
+            if (format == Format.EPOCH_SECONDS) {
+                result = format("str(%s)", result);
+            }
+            return result;
         }
     }
 
