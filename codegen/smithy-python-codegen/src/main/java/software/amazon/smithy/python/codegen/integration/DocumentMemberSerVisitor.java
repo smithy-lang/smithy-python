@@ -45,6 +45,7 @@ import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonWriter;
+import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 
 /**
  * Visitor to serialize member values for aggregate types into document bodies.
@@ -172,7 +173,7 @@ public class DocumentMemberSerVisitor implements ShapeVisitor<String> {
 
     @Override
     public String floatShape(FloatShape floatShape) {
-        return dataSource();
+        return floatShapes();
     }
 
     @Override
@@ -182,7 +183,13 @@ public class DocumentMemberSerVisitor implements ShapeVisitor<String> {
 
     @Override
     public String doubleShape(DoubleShape doubleShape) {
-        return dataSource();
+        return floatShapes();
+    }
+
+    private String floatShapes() {
+        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+        writer.addImport("smithy_python.utils", "limited_serialize_float");
+        return String.format("limited_serialize_float(%s)", dataSource);
     }
 
     @Override

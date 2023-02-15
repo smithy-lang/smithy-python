@@ -191,6 +191,22 @@ def serialize_float(given: float | Decimal) -> str:
     return result
 
 
+def limited_serialize_float(given: float) -> str | float:
+    """Serializes non-numeric floats to strings.
+
+    Numeric floats are returned without alteration.
+
+    :param given: A float to be conditionally serialized.
+    :returns: The given float as a float or string.
+    """
+    if isnan(given):
+        return "NaN"
+    if isinf(given):
+        return "-Infinity" if given < 0 else "Infinity"
+
+    return given
+
+
 def serialize_rfc3339(given: datetime) -> str:
     """Serializes a datetime into an RFC3339 string respresentation.
 

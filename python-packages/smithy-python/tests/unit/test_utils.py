@@ -28,6 +28,7 @@ from smithy_python.utils import (
     epoch_seconds_to_datetime,
     expect_type,
     limited_parse_float,
+    limited_serialize_float,
     serialize_epoch_seconds,
     serialize_float,
     serialize_rfc3339,
@@ -234,6 +235,19 @@ DATETIME_TEST_CASES: list[DateTimeTestcase] = [
         epoch_seconds_str="2147483648",
     ),
 ]
+
+
+@pytest.mark.parametrize(
+    "given, expected",
+    [
+        (1.0, 1.0),
+        (float("NaN"), "NaN"),
+        (float("Infinity"), "Infinity"),
+        (float("-Infinity"), "-Infinity"),
+    ],
+)
+def test_limited_serialize_float(given: float, expected: str | float) -> None:
+    assert limited_serialize_float(given) == expected
 
 
 @pytest.mark.parametrize(
