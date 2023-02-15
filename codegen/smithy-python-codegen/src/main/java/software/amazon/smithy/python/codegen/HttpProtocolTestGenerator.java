@@ -404,7 +404,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
         if (contentType.equals("application/json") || contentType.endsWith("+json")) {
             writer.addStdlibImport("json", "loads", "json_loads");
             writer.write("""
-                actual_body = json_loads(await actual.body.read())
+                actual_body_content = await actual.body.read()
+                actual_body = json_loads(actual_body_content) if actual_body_content else ""
                 expected_body = json_loads(b$S)
                 assert actual_body == expected_body
                 """, testCase.getBody().get());
