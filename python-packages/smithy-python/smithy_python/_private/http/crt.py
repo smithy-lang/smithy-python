@@ -48,9 +48,7 @@ class AWSCRTHTTPResponse(interfaces.http.HTTPResponse):
 
     def _set_stream(self, stream: crt_http.HttpClientStream) -> None:
         if self._stream is not None:
-            raise SmithyHTTPException(
-                "Stream already set on AWSCRTHTTPResponse object"
-            )
+            raise SmithyHTTPException("Stream already set on AWSCRTHTTPResponse object")
         self._stream = stream
         self._stream.completion_future.add_done_callback(self._on_complete)
         self._stream.activate()
