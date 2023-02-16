@@ -20,27 +20,21 @@ class RetryErrorType(Enum):
     """Classification of errors based on desired retry behavior."""
 
     TRANSIENT = 1
-    """
-    A connection level error such as a socket timeout, socket connect error, TLS
-    negotiation timeout.
-    """
+    """A connection level error such as a socket timeout, socket connect error, TLS
+    negotiation timeout."""
 
     THROTTLING = 2
-    """
-    The server explicitly told the client to back off, for example with HTTP status 429
-    or 503.
-    """
+    """The server explicitly told the client to back off, for example with HTTP status
+    429 or 503."""
 
     SERVER_ERROR = 3
-    """
-    A server error that should be retried and does not match the definition of
-    ``THROTTLING``.
-    """
+    """A server error that should be retried and does not match the definition of
+    ``THROTTLING``."""
 
     CLIENT_ERROR = 4
-    """
-    Doesn't count against any budgets. This could be something like a 401 challenge in
-    HTTP.
+    """Doesn't count against any budgets.
+
+    This could be something like a 401 challenge in HTTP.
     """
 
 

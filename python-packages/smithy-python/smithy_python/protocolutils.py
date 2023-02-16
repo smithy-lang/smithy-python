@@ -21,9 +21,9 @@ class RestJsonErrorInfo(NamedTuple):
     message: str
     """The generic error message.
 
-    A modeled error may have the error bound somewhere else. This is based off
-    of checking the most common locations and is intended for use with excpetions
-    that either didn't model the message or which are unknown.
+    A modeled error may have the error bound somewhere else. This is based off of
+    checking the most common locations and is intended for use with excpetions that
+    either didn't model the message or which are unknown.
     """
 
     json_body: Document | None = None

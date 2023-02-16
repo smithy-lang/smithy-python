@@ -76,7 +76,7 @@ class ExponentialRetryBackoffStrategy:
         jitter_type: ExponentialBackoffJitterType = ExponentialBackoffJitterType.DEFAULT,
         random: Callable[[], float] = random.random,
     ):
-        """Exponential backoff with optional jitter
+        """Exponential backoff with optional jitter.
 
         .. seealso:: https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
 
@@ -177,14 +177,14 @@ class ExponentialRetryBackoffStrategy:
 
 @dataclass(kw_only=True)
 class SimpleRetryToken:
-    """Basic retry token that stores only the attempt count and backoff strategy
+    """Basic retry token that stores only the attempt count and backoff strategy.
 
     Retry tokens should always be obtained from an implementation of
     :py:class:`retries_interface.RetryStrategy`.
     """
 
     retry_count: int
-    """Retry count is the total number of attempts minus the initial attempt"""
+    """Retry count is the total number of attempts minus the initial attempt."""
 
     retry_delay: float
     """Delay in seconds to wait before the retry attempt."""
@@ -202,7 +202,7 @@ class SimpleRetryStrategy:
         backoff_strategy: retries_interface.RetryBackoffStrategy,
         max_attempts: int,
     ):
-        """Basic retry strategy that simply invokes the given backoff strategy
+        """Basic retry strategy that simply invokes the given backoff strategy.
 
         :param backoff_strategy: The backoff strategy used by returned tokens to compute
         the retry delay.

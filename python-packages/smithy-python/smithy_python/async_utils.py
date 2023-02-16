@@ -19,7 +19,7 @@ _ListEl = TypeVar("_ListEl")
 
 
 async def async_list(lst: Iterable[_ListEl]) -> AsyncIterable[_ListEl]:
-    """Turn an Iterable into an AsyncIterable"""
+    """Turn an Iterable into an AsyncIterable."""
     for x in lst:
         await sleep(0)
         yield x
