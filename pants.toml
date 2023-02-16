@@ -7,7 +7,8 @@ backend_packages = [
     "pants.backend.python.lint.isort",
     "pants.backend.python.lint.flake8",
     "pants.backend.python.typecheck.mypy",
-    "pants.backend.experimental.python.lint.pyupgrade"
+    "pants.backend.experimental.python.lint.pyupgrade",
+    "pants.backend.python.lint.docformatter",
 ]
 
 [source]
@@ -48,6 +49,12 @@ args = "--extend-ignore=W503"
 
 [pyupgrade]
 args = ["--py311-plus"]
+interpreter_constraints = [">=3.11"]
+
+[docformatter]
+version = "docformatter==1.5.1"
+args = ["--wrap-summaries 88", "--wrap-descriptions 88"]
+lockfile = "lockfiles/docformatter"
 interpreter_constraints = [">=3.11"]
 
 [poetry]
