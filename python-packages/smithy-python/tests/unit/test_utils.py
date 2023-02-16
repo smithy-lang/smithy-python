@@ -260,9 +260,9 @@ def test_serialize_rfc3339(given: datetime, expected: str) -> None:
 
 @pytest.mark.parametrize(
     "given, expected",
-    [(case.dt_object, case.epoch_seconds_str) for case in DATETIME_TEST_CASES],
+    [(case.dt_object, case.epoch_seconds_num) for case in DATETIME_TEST_CASES],
 )
-def test_serialize_epoch_seconds(given: datetime, expected: str) -> None:
+def test_serialize_epoch_seconds(given: datetime, expected: int) -> None:
     assert serialize_epoch_seconds(given) == expected
 
 
