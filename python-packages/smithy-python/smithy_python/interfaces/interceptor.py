@@ -45,8 +45,8 @@ class InterceptorContext(
     def response(self) -> Response | Exception:
         """Retrieve the modeled response for the operation being invoked.
 
-        This will only be available once the transport_response has been deserialized
-        or the attempt/execution has failed.
+        This will only be available once the transport_response has been deserialized or
+        the attempt/execution has failed.
         """
         return self._response
 
@@ -127,8 +127,8 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
     def read_before_execution(
         self, context: InterceptorContext[Request, None, None, None]
     ) -> None:
-        """
-        A hook called at the start of an execution, before the SDK does anything else.
+        """A hook called at the start of an execution, before the SDK does anything
+        else.
 
         Implementations MUST NOT modify the `request`, `response`, `transport_request`,
         or `transport_response` in this hook.
@@ -151,10 +151,10 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
     def modify_before_serialization(
         self, context: InterceptorContext[Request, None, None, None]
     ) -> Request:
-        """
-        A hook called before the request is serialized into a transport request.
-        This method has the ability to modify and return a new request of the
-        same type.
+        """A hook called before the request is serialized into a transport request.
+
+        This method has the ability to modify and return a new request of the same
+        type.
 
         This will ALWAYS be called once per execution, except when a failure occurs
         earlier in the request pipeline.
@@ -174,8 +174,8 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
     def read_before_serialization(
         self, context: InterceptorContext[Request, None, None, None]
     ) -> None:
-        """
-        A hook called before the input message is serialized into a transport request.
+        """A hook called before the input message is serialized into a transport
+        request.
 
         Implementations MUST NOT modify the `request`, `response`, `transport_request`,
         or `transport_response` in this hook.
@@ -196,8 +196,7 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
     def read_after_serialization(
         self, context: InterceptorContext[Request, None, TransportRequest, None]
     ) -> None:
-        """
-        A hook called after the input message is serialized into a transport request.
+        """A hook called after the input message is serialized into a transport request.
 
         Implementations MUST NOT modify the `request`, `response`, `transport_request`,
         or `transport_response` in this hook.
@@ -218,9 +217,10 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
     def modify_before_retry_loop(
         self, context: InterceptorContext[Request, None, TransportRequest, None]
     ) -> TransportRequest:
-        """
-        A hook called before the retry loop is entered. This method has the ability to
-        modify and return a new transport request of the same type.
+        """A hook called before the retry loop is entered.
+
+        This method has the ability to modify and return a new transport request of the
+        same type.
 
         This will always be called once per execution, except when a failure occurs
         earlier in the request pipeline.
@@ -236,8 +236,7 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
     def read_before_attempt(
         self, context: InterceptorContext[Request, None, TransportRequest, None]
     ) -> None:
-        """
-        A hook called before each attempt at sending the transport request to the
+        """A hook called before each attempt at sending the transport request to the
         service.
 
         Implementations MUST NOT modify the `request`, `response`, `transport_request`,
@@ -263,9 +262,10 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
     def modify_before_signing(
         self, context: InterceptorContext[Request, None, TransportRequest, None]
     ) -> TransportRequest:
-        """
-        A hook called before the transport request is signed. This method has the
-        ability to modify and return a new transport request of the same type.
+        """A hook called before the transport request is signed.
+
+        This method has the ability to modify and return a new transport request of the
+        same type.
 
         This will always be called once per attempt, except when a failure occurs
         earlier in the request pipeline. This method will be called multiple times in
@@ -288,8 +288,7 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
     def read_before_signing(
         self, context: InterceptorContext[Request, None, TransportRequest, None]
     ) -> None:
-        """
-        A hook called before the transport request is signed.
+        """A hook called before the transport request is signed.
 
         Implementations MUST NOT modify the `request`, `response`, `transport_request`,
         or `transport_response` in this hook.
@@ -313,8 +312,7 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
     def read_after_signing(
         self, context: InterceptorContext[Request, None, TransportRequest, None]
     ) -> None:
-        """
-        A hook called after the transport request is signed.
+        """A hook called after the transport request is signed.
 
         Implementations MUST NOT modify the `request`, `response`, `transport_request`,
         or `transport_response` in this hook.
@@ -338,10 +336,10 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
     def modify_before_transmit(
         self, context: InterceptorContext[Request, None, TransportRequest, None]
     ) -> TransportRequest:
-        """
-        A hook called before the transport request is sent to the service. This
-        method has the ability to modify and return a new transport request of
-        the same type.
+        """A hook called before the transport request is sent to the service.
+
+        This method has the ability to modify and return a new transport request of the
+        same type.
 
         This will always be called once per attempt, except when a failure occurs
         earlier in the request pipeline. This method may be called multiple times in
@@ -364,8 +362,7 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
     def read_before_transmit(
         self, context: InterceptorContext[Request, None, TransportRequest, None]
     ) -> None:
-        """
-        A hook called before the transport request is sent to the service.
+        """A hook called before the transport request is sent to the service.
 
         Implementations MUST NOT modify the `request`, `response`, `transport_request`,
         or `transport_response` in this hook.
@@ -391,8 +388,7 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
         self,
         context: InterceptorContext[Request, None, TransportRequest, TransportResponse],
     ) -> None:
-        """
-        A hook called after the transport request is sent to the service and a
+        """A hook called after the transport request is sent to the service and a
         transport response is received.
 
         Implementations MUST NOT modify the `request`, `response`, `transport_request`,
@@ -419,9 +415,10 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
         self,
         context: InterceptorContext[Request, None, TransportRequest, TransportResponse],
     ) -> TransportResponse:
-        """
-        A hook called before the transport response is deserialized. This method has
-        the ability to modify and return a new transport response of the same type.
+        """A hook called before the transport response is deserialized.
+
+        This method has the ability to modify and return a new transport response of the
+        same type.
 
         This will always be called once per attempt, except when a failure occurs
         earlier in the request pipeline. This method may be called multiple times in
@@ -448,8 +445,7 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
         self,
         context: InterceptorContext[Request, None, TransportRequest, TransportResponse],
     ) -> None:
-        """
-        A hook called before the transport response is deserialized.
+        """A hook called before the transport response is deserialized.
 
         Implementations MUST NOT modify the `request`, `response`, `transport_request`,
         or `transport_response` in this hook.
@@ -477,8 +473,7 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
             Request, Response, TransportRequest, TransportResponse
         ],
     ) -> None:
-        """
-        A hook called after the transport response is deserialized.
+        """A hook called after the transport response is deserialized.
 
         Implementations MUST NOT modify the `request`, `response`, `transport_request`,
         or `transport_response` in this hook.
@@ -506,10 +501,10 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
             Request, Response, TransportRequest, TransportResponse | None
         ],
     ) -> Response | Exception:
-        """
-        A hook called when an attempt is completed. This method has the ability to
-        modify and return a new output message or exception matching the
-        currently-executing operation.
+        """A hook called when an attempt is completed.
+
+        This method has the ability to modify and return a new output message or
+        exception matching the currently-executing operation.
 
         This will ALWAYS be called once per attempt, except when a failure occurs
         before `read_before_attempt`. This method may be called multiple times in the
@@ -536,8 +531,7 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
             Request, Response, TransportRequest, TransportResponse | None
         ],
     ) -> None:
-        """
-        A hook called when an attempt is completed.
+        """A hook called when an attempt is completed.
 
         Implementations MUST NOT modify the `request`, `response`, `transport_request`,
         or `transport_response` in this hook.
@@ -566,10 +560,10 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
             Request, Response, TransportRequest | None, TransportResponse | None
         ],
     ) -> Response | Exception:
-        """
-        A hook called when an execution is completed. This method has the ability to
-        modify and return a new output message or exception matching the
-        currently-executing operation.
+        """A hook called when an execution is completed.
+
+        This method has the ability to modify and return a new output message or
+        exception matching the currently-executing operation.
 
         This will always be called once per execution.
 
@@ -591,8 +585,7 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
             Request, Response, TransportRequest | None, TransportResponse | None
         ],
     ) -> None:
-        """
-        A hook called when an execution is completed.
+        """A hook called when an execution is completed.
 
         Implementations MUST NOT modify the `request`, `response`, `transport_request`,
         or `transport_response` in this hook.

@@ -41,8 +41,7 @@ class AIOHTTPClient(interfaces.http.HTTPClient):
         request: interfaces.http.HTTPRequest,
         request_config: interfaces.http.HTTPRequestConfiguration | None = None,
     ) -> HTTPResponse:
-        """
-        Send HTTP request using aiohttp client.
+        """Send HTTP request using aiohttp client.
 
         :param request: The request including destination URI, fields, payload.
         :param request_config: Configuration specific to this request.
@@ -77,7 +76,8 @@ class AIOHTTPClient(interfaces.http.HTTPClient):
     async def _marshal_response(
         self, aiohttp_resp: aiohttp.ClientResponse
     ) -> HTTPResponse:
-        """Convert a ``aiohttp.ClientResponse`` to a ``smithy_python.http.HTTPResponse``"""
+        """Convert a ``aiohttp.ClientResponse`` to a
+        ``smithy_python.http.HTTPResponse``"""
         headers = Fields()
         for header_name, header_val in aiohttp_resp.headers.items():
             try:

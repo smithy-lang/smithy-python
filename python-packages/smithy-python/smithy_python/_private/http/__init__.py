@@ -100,9 +100,7 @@ class URI(interfaces.URI):
 
 @dataclass(kw_only=True)
 class HTTPRequest(interfaces.http.HTTPRequest):
-    """
-    HTTP primitives for an Exchange to construct a version agnostic HTTP message.
-    """
+    """HTTP primitives for an Exchange to construct a version agnostic HTTP message."""
 
     destination: interfaces.URI
     body: AsyncIterable[bytes]
@@ -123,11 +121,10 @@ class HTTPRequest(interfaces.http.HTTPRequest):
 # details.
 @dataclass(kw_only=True)
 class HTTPResponse:
-    """
-    Basic implementation of :py:class:`...interfaces.http.HTTPResponse`.
+    """Basic implementation of :py:class:`...interfaces.http.HTTPResponse`.
 
-    Implementations of :py:class:`...interfaces.http.HTTPClient` may return instances
-    of this class or of custom response implementatinos.
+    Implementations of :py:class:`...interfaces.http.HTTPClient` may return instances of
+    this class or of custom response implementatinos.
     """
 
     body: AsyncIterable[bytes]
@@ -151,8 +148,7 @@ class HTTPResponse:
 
 
 class Field(interfaces.http.Field):
-    """
-    A name-value pair representing a single field in an HTTP Request or Response.
+    """A name-value pair representing a single field in an HTTP Request or Response.
 
     The kind will dictate metadata placement within an HTTP message.
 
@@ -189,8 +185,7 @@ class Field(interfaces.http.Field):
             return
 
     def as_string(self) -> str:
-        """
-        Get comma-delimited string of all values.
+        """Get comma-delimited string of all values.
 
         If the ``Field`` has zero values, the empty string is returned. If the ``Field``
         has exactly one value, the value is returned unmodified.
@@ -209,13 +204,15 @@ class Field(interfaces.http.Field):
         return ", ".join(quote_and_escape_field_value(val) for val in self.values)
 
     def as_tuples(self) -> list[tuple[str, str]]:
-        """
-        Get list of ``name``, ``value`` tuples where each tuple represents one value.
-        """
+        """Get list of ``name``, ``value`` tuples where each tuple represents one
+        value."""
         return [(self.name, val) for val in self.values]
 
     def __eq__(self, other: object) -> bool:
-        """Name, values, and kind must match. Values order must match."""
+        """Checks equality.
+
+        Name, values, and kind must match. Values order must match.
+        """
         if not isinstance(other, Field):
             return False
         return (
@@ -248,8 +245,7 @@ class Fields(interfaces.http.Fields):
         *,
         encoding: str = "utf-8",
     ):
-        """
-        Collection of header and trailer entries mapped by name.
+        """Collection of header and trailer entries mapped by name.
 
         :param initial: Initial list of ``Field`` objects. ``Field``s can alse be added
         with :func:`set_field` and later removed with :func:`remove_field`.
@@ -311,11 +307,17 @@ class Fields(interfaces.http.Fields):
                 self.set_field(other_field)
 
     def _normalize_field_name(self, name: str) -> str:
-        """Normalize field names. For use as key in ``entries``."""
+        """Normalize field names.
+
+        For use as key in ``entries``.
+        """
         return name.lower()
 
     def __eq__(self, other: object) -> bool:
-        """Encoding must match. Entries must match in values and order."""
+        """Checks equality.
+
+        Encoding must match. Entries must match in values and order.
+        """
         if not isinstance(other, Fields):
             return False
         return self.encoding == other.encoding and self.entries == other.entries
@@ -352,8 +354,7 @@ class Endpoint(interfaces.http.Endpoint):
 
 @dataclass
 class StaticEndpointParams:
-    """
-    Static endpoint params.
+    """Static endpoint params.
 
     :param uri: A static URI to route requests to.
     """
@@ -395,8 +396,7 @@ class _StaticEndpointConfig(Protocol):
 
 
 def set_static_endpoint_resolver(config: _StaticEndpointConfig) -> None:
-    """
-    Sets the endpoint resolver to the static endpoint resolver if not already set.
+    """Sets the endpoint resolver to the static endpoint resolver if not already set.
 
     :param config: A config object that has an endpoint_resolver property.
     """

@@ -184,8 +184,7 @@ class AWSCRTHTTPClient(interfaces.http.HTTPClient):
         request: interfaces.http.HTTPRequest,
         request_config: interfaces.http.HTTPRequestConfiguration | None = None,
     ) -> AWSCRTHTTPResponse:
-        """
-        Send HTTP request using awscrt client.
+        """Send HTTP request using awscrt client.
 
         :param request: The request including destination URI, fields, payload.
         :param request_config: Configuration specific to this request.
@@ -204,7 +203,8 @@ class AWSCRTHTTPClient(interfaces.http.HTTPClient):
     async def _create_connection(
         self, url: interfaces.URI
     ) -> crt_http.HttpClientConnection:
-        """Builds and validates connection to ``url``, returns it as ``asyncio.Future``"""
+        """Builds and validates connection to ``url``, returns it as
+        ``asyncio.Future``"""
         connect_future = self._build_new_connection(url)
         connection = await asyncio.wrap_future(connect_future)
         self._validate_connection(connection)

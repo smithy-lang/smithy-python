@@ -22,28 +22,28 @@ QueryParamsList = list[tuple[str, str]]
 
 
 class FieldPosition(Enum):
-    """
-    The type of a field. Defines its placement in a request or response.
+    """The type of a field.
+
+    Defines its placement in a request or response.
     """
 
     HEADER = 0
-    """
-    Header field. In HTTP this is a header as defined in RFC 9114 Section 6.3.
-    Implementations of other protocols may use this FieldPosition for similar types
-    of metadata.
+    """Header field.
+
+    In HTTP this is a header as defined in RFC 9114 Section 6.3. Implementations of
+    other protocols may use this FieldPosition for similar types of metadata.
     """
 
     TRAILER = 1
-    """
-    Trailer field. In HTTP this is a trailer as defined in RFC 9114 Section 6.5.
-    Implementations of other protocols may use this FieldPosition for similar types
-    of metadata.
+    """Trailer field.
+
+    In HTTP this is a trailer as defined in RFC 9114 Section 6.5. Implementations of
+    other protocols may use this FieldPosition for similar types of metadata.
     """
 
 
 class Field(Protocol):
-    """
-    A name-value pair representing a single field in a request or response.
+    """A name-value pair representing a single field in a request or response.
 
     The kind will dictate metadata placement within an the message, for example as
     header or trailer field in a HTTP request as defined in RFC 9114 Section 4.2.
@@ -74,16 +74,14 @@ class Field(Protocol):
         ...
 
     def as_tuples(self) -> list[tuple[str, str]]:
-        """
-        Get list of ``name``, ``value`` tuples where each tuple represents one value.
-        """
+        """Get list of ``name``, ``value`` tuples where each tuple represents one
+        value."""
         ...
 
 
 class Fields(Protocol):
-    """
-    Protocol agnostic mapping of key-value pair request metadata, such as HTTP fields.
-    """
+    """Protocol agnostic mapping of key-value pair request metadata, such as HTTP
+    fields."""
 
     # Entries are keyed off the name of a provided Field
     entries: OrderedDict[str, Field]
@@ -123,8 +121,7 @@ class Fields(Protocol):
 
 
 class HTTPRequest(Request, Protocol):
-    """
-    HTTP primitive for an Exchange to construct a version agnostic HTTP message.
+    """HTTP primitive for an Exchange to construct a version agnostic HTTP message.
 
     :param destination: The URI where the request should be sent to.
     :param method: The HTTP method of the request, for example "GET".
@@ -137,9 +134,8 @@ class HTTPRequest(Request, Protocol):
 
 
 class HTTPResponse(Response, Protocol):
-    """
-    HTTP primitives returned from an Exchange, used to construct a client response.
-    """
+    """HTTP primitives returned from an Exchange, used to construct a client
+    response."""
 
     @property
     def status(self) -> int:
@@ -210,8 +206,7 @@ class HTTPClient(Protocol):
     async def send(
         self, *, request: HTTPRequest, request_config: HTTPRequestConfiguration | None
     ) -> HTTPResponse:
-        """
-        Send HTTP request over the wire and return the response.
+        """Send HTTP request over the wire and return the response.
 
         :param request: The request including destination URI, fields, payload.
         :param request_config: Configuration specific to this request.
