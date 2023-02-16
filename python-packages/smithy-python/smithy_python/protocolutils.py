@@ -1,7 +1,7 @@
 import json
 from typing import NamedTuple
 
-from .interfaces.http import Response
+from .interfaces.http import HTTPResponse
 from .types import Document
 from .utils import expect_type
 
@@ -31,7 +31,7 @@ class RestJsonErrorInfo(NamedTuple):
 
 
 async def parse_rest_json_error_info(
-    http_response: Response, check_body: bool = True
+    http_response: HTTPResponse, check_body: bool = True
 ) -> RestJsonErrorInfo:
     """Parses generic RestJson error info from an HTTP response.
 
@@ -43,12 +43,12 @@ async def parse_rest_json_error_info(
     message: str | None = None
     json_body: dict[str, Document] | None = None
 
-    for header_key, header_value in http_response.headers:
-        if header_key.lower() == _REST_JSON_CODE_HEADER:
-            code = header_value
+    for field in http_response.fields:
+        if field.name.lower() == _REST_JSON_CODE_HEADER:
+            code = field.values[0]
 
     if check_body:
-        if body := await http_response.body.read():
+        if body := await http_response.consume_body():
             json_body = json.loads(body)
 
         if json_body:
@@ -60,7 +60,7 @@ async def parse_rest_json_error_info(
                     message = expect_type(str, value)
 
     # Normalize the error code. Some services may try to send a fully-qualified shape
-    # ID or a url, but we don't want to include those.
+    # ID or a URI, but we don't want to include those.
     if code:
         if "#" in code:
             code = code.split("#")[1]

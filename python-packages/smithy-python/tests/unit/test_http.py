@@ -13,11 +13,14 @@
 
 from smithy_python._private.http import (
     URI,
-    Request,
-    Response,
+    Field,
+    Fields,
+    HTTPRequest,
+    HTTPResponse,
     StaticEndpointParams,
     StaticEndpointResolver,
 )
+from smithy_python.async_utils import async_list
 
 
 def test_uri_basic() -> None:
@@ -109,35 +112,40 @@ def test_uri_password_but_no_username() -> None:
     assert uri.netloc == "test.aws.dev"
 
 
-def test_request() -> None:
-    url = URI(host="test.aws.dev")
-    request = Request(
-        url=url,
-        headers=[("foo", "bar")],
-        body=b"test body",
+async def test_request() -> None:
+    uri = URI(host="test.aws.dev")
+    headers = Fields([Field(name="foo", values=["bar"])])
+    request = HTTPRequest(
+        method="GET",
+        destination=uri,
+        fields=headers,
+        body=async_list([b"test body"]),
     )
 
     assert request.method == "GET"
-    assert request.url == url
-    assert request.headers == [("foo", "bar")]
-    assert request.body == b"test body"
+    assert request.destination == uri
+    assert request.fields == headers
+    request_body = b"".join([chunk async for chunk in request.body])
+    assert request_body == b"test body"
 
 
-def test_response() -> None:
-    response = Response(
-        status_code=200,
-        headers=[("foo", "bar")],
-        body=b"test body",
+async def test_response() -> None:
+    headers = Fields([Field(name="foo", values=["bar"])])
+    response = HTTPResponse(
+        status=200,
+        fields=headers,
+        body=async_list([b"test body"]),
     )
 
-    assert response.status_code == 200
-    assert response.headers == [("foo", "bar")]
-    assert response.body == b"test body"
+    assert response.status == 200
+    assert response.fields == headers
+    response_body = await response.consume_body()
+    assert response_body == b"test body"
 
 
-async def test_endpoint_provider_with_url_string() -> None:
+async def test_endpoint_provider_with_uri_string() -> None:
     params = StaticEndpointParams(
-        url="https://foo.example.com:8080/spam?foo=bar&foo=baz"
+        uri="https://foo.example.com:8080/spam?foo=bar&foo=baz"
     )
     expected = URI(
         host="foo.example.com",
@@ -148,11 +156,11 @@ async def test_endpoint_provider_with_url_string() -> None:
     )
     resolver = StaticEndpointResolver()
     result = await resolver.resolve_endpoint(params=params)
-    assert result.url == expected
-    assert result.headers == []
+    assert result.uri == expected
+    assert result.headers == Fields([])
 
 
-async def test_endpoint_provider_with_url_object() -> None:
+async def test_endpoint_provider_with_uri_object() -> None:
     expected = URI(
         host="foo.example.com",
         path="/spam",
@@ -160,8 +168,8 @@ async def test_endpoint_provider_with_url_object() -> None:
         query="foo=bar&foo=baz",
         port=8080,
     )
-    params = StaticEndpointParams(url=expected)
+    params = StaticEndpointParams(uri=expected)
     resolver = StaticEndpointResolver()
     result = await resolver.resolve_endpoint(params=params)
-    assert result.url == expected
-    assert result.headers == []
+    assert result.uri == expected
+    assert result.headers == Fields([])

@@ -14,7 +14,7 @@
 from dataclasses import dataclass
 from typing import Any, Protocol
 
-from .http import Request
+from . import Request
 from .identity import Identity, IdentityResolver
 
 

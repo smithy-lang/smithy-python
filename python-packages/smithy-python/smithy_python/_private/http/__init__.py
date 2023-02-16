@@ -15,35 +15,42 @@
 
 
 from collections import Counter, OrderedDict
-from collections.abc import Iterable
+from collections.abc import AsyncIterable, Iterable, Iterator
 from dataclasses import dataclass, field
-from typing import Any, Protocol
+from typing import Protocol
 from urllib.parse import urlparse, urlunparse
 
 from ... import interfaces
 from ...interfaces.http import FieldPosition as FieldPosition  # re-export
 
 
-class URI:
-    def __init__(
-        self,
-        host: str,
-        path: str | None = None,
-        scheme: str | None = None,
-        query: str | None = None,
-        port: int | None = None,
-        username: str | None = None,
-        password: str | None = None,
-        fragment: str | None = None,
-    ):
-        self.scheme: str = "https" if scheme is None else scheme
-        self.host = host
-        self.port = port
-        self.path = path
-        self.query = query
-        self.username = username
-        self.password = password
-        self.fragment = fragment
+@dataclass(kw_only=True)
+class URI(interfaces.URI):
+    """Universal Resource Identifier, target location for a :py:class:`HTTPRequest`."""
+
+    scheme: str = "https"
+    """For example ``http`` or ``https``."""
+
+    username: str | None = None
+    """Username part of the userinfo URI component."""
+
+    password: str | None = None
+    """Password part of the userinfo URI component."""
+
+    host: str
+    """The hostname, for example ``amazonaws.com``."""
+
+    port: int | None = None
+    """An explicit port number."""
+
+    path: str | None = None
+    """Path component of the URI."""
+
+    query: str | None = None
+    """Query component of the URI as string."""
+
+    fragment: str | None = None
+    """Part of the URI specification, but may not be transmitted by a client."""
 
     @property
     def netloc(self) -> str:
@@ -91,32 +98,56 @@ class URI:
         )
 
 
-class Request:
-    def __init__(
-        self,
-        url: interfaces.http.URI,
-        method: str = "GET",
-        headers: interfaces.http.HeadersList | None = None,
-        body: Any = None,
-    ):
-        self.url: interfaces.http.URI = url
-        self.method: str = method
-        self.body: Any = body
-        self.headers: interfaces.http.HeadersList = []
-        if headers is not None:
-            self.headers = headers
+@dataclass(kw_only=True)
+class HTTPRequest(interfaces.http.HTTPRequest):
+    """
+    HTTP primitives for an Exchange to construct a version agnostic HTTP message.
+    """
+
+    destination: interfaces.URI
+    body: AsyncIterable[bytes]
+    method: str
+    fields: interfaces.http.Fields
+
+    async def consume_body(self) -> bytes:
+        """Iterate over request body and return as bytes."""
+        body = b""
+        async for chunk in self.body:
+            body += chunk
+        return body
 
 
-class Response:
-    def __init__(
-        self,
-        status_code: int,
-        headers: interfaces.http.HeadersList,
-        body: Any,
-    ):
-        self.status_code: int = status_code
-        self.headers: interfaces.http.HeadersList = headers
-        self.body: Any = body
+# HTTPResponse implements interfaces.http.HTTPResponse but cannot be explicitly
+# annotated to reflect this because doing so causes Python to raise an AttributeError.
+# See https://github.com/python/typing/discussions/903#discussioncomment-4866851 for
+# details.
+@dataclass(kw_only=True)
+class HTTPResponse:
+    """
+    Basic implementation of :py:class:`...interfaces.http.HTTPResponse`.
+
+    Implementations of :py:class:`...interfaces.http.HTTPClient` may return instances
+    of this class or of custom response implementatinos.
+    """
+
+    body: AsyncIterable[bytes]
+    """The response payload as iterable of chunks of bytes."""
+
+    status: int
+    """The 3 digit response status code (1xx, 2xx, 3xx, 4xx, 5xx)."""
+
+    fields: interfaces.http.Fields
+    """HTTP header and trailer fields."""
+
+    reason: str | None = None
+    """Optional string provided by the server explaining the status."""
+
+    async def consume_body(self) -> bytes:
+        """Iterate over response body and return as bytes."""
+        body = b""
+        async for chunk in self.body:
+            body += chunk
+        return body
 
 
 class Field(interfaces.http.Field):
@@ -264,6 +295,21 @@ class Fields(interfaces.http.Fields):
         """
         return [entry for entry in self.entries.values() if entry.kind is kind]
 
+    def extend(self, other: interfaces.http.Fields) -> None:
+        """Merges ``entries`` of ``other`` into the current ``entries``.
+
+        For every `Field` in the ``entries`` of ``other``: If the normalized name
+        already exists in the current ``entries``, the values from ``other`` are
+        appended. Otherwise, the ``Field`` is added to the list of ``entries``.
+        """
+        for other_field in other:
+            try:
+                cur_field = self.get_field(name=other_field.name)
+                for other_value in other_field.values:
+                    cur_field.add(other_value)
+            except KeyError:
+                self.set_field(other_field)
+
     def _normalize_field_name(self, name: str) -> str:
         """Normalize field names. For use as key in ``entries``."""
         return name.lower()
@@ -274,14 +320,34 @@ class Fields(interfaces.http.Fields):
             return False
         return self.encoding == other.encoding and self.entries == other.entries
 
-    def __iter__(self) -> Iterable[interfaces.http.Field]:
+    def __iter__(self) -> Iterator[interfaces.http.Field]:
         yield from self.entries.values()
+
+
+def tuples_to_fields(
+    tuples: Iterable[tuple[str, str]], *, kind: FieldPosition | None = None
+) -> Fields:
+    """Convert ``name``, ``value`` tuples to ``Fields`` object. Each tuple represents
+    one Field value.
+
+    :param kind: The Field kind to define for all tuples.
+    """
+    fields = Fields()
+    for name, value in tuples:
+        try:
+            fields.get_field(name).add(value)
+        except KeyError:
+            fields.set_field(
+                Field(name=name, values=[value], kind=kind or FieldPosition.HEADER)
+            )
+
+    return fields
 
 
 @dataclass
 class Endpoint(interfaces.http.Endpoint):
-    url: interfaces.http.URI
-    headers: interfaces.http.HeadersList = field(default_factory=list)
+    uri: interfaces.URI
+    headers: interfaces.http.Fields = field(default_factory=Fields)
 
 
 @dataclass
@@ -289,32 +355,32 @@ class StaticEndpointParams:
     """
     Static endpoint params.
 
-    :params url: A static URI to route requests to.
+    :param uri: A static URI to route requests to.
     """
 
-    url: str | interfaces.http.URI
+    uri: str | interfaces.URI
 
 
 class StaticEndpointResolver(interfaces.http.EndpointResolver[StaticEndpointParams]):
-    """A basic endpoint resolver that forwards a static url."""
+    """A basic endpoint resolver that forwards a static URI."""
 
     async def resolve_endpoint(self, params: StaticEndpointParams) -> Endpoint:
-        # If it's not a string, it's already a parsed URL so just pass it along.
-        if not isinstance(params.url, str):
-            return Endpoint(url=params.url)
+        # If it's not a string, it's already a parsed URI so just pass it along.
+        if not isinstance(params.uri, str):
+            return Endpoint(uri=params.uri)
 
         # Does crt have implementations of these parsing methods? Using the standard
         # library is probably fine.
-        parsed = urlparse(params.url)
+        parsed = urlparse(params.uri)
 
         # This will end up getting wrapped in the client.
         if parsed.hostname is None:
             raise ValueError(
-                f"Unable to parse hostname from provided url: {params.url}"
+                f"Unable to parse hostname from provided URI: {params.uri}"
             )
 
         return Endpoint(
-            url=URI(
+            uri=URI(
                 host=parsed.hostname,
                 path=parsed.path,
                 scheme=parsed.scheme,

@@ -305,24 +305,24 @@ final class ClientGenerator implements Runnable {
                             raise $1T(
                                 "No endpoint_resolver found on the operation config."
                             )
-                        if config.endpoint_url is None:
+                        if config.endpoint_uri is None:
                             raise $1T(
-                                "No endpoint_url found on the operation config."
+                                "No endpoint_uri found on the operation config."
                             )
 
                         endpoint = await config.endpoint_resolver.resolve_endpoint(
-                            StaticEndpointParams(url=config.endpoint_url)
+                            StaticEndpointParams(uri=config.endpoint_uri)
                         )
-                        if not endpoint.url.path:
-                            endpoint.url.path = ""
-                        elif endpoint.url.path.endswith("/"):
-                            endpoint.url.path = endpoint.url.path[:-1]
-                        if context.transport_request.url.path:
-                            endpoint.url.path += context.transport_request.url.path
-                        endpoint.url.query = context.transport_request.url.query
-                        endpoint.url.host = context.transport_request.url.host + endpoint.url.host
-                        context._transport_request.url = endpoint.url
-                        context._transport_request.headers.extend(endpoint.headers)
+                        if not endpoint.uri.path:
+                            endpoint.uri.path = ""
+                        elif endpoint.uri.path.endswith("/"):
+                            endpoint.uri.path = endpoint.uri.path[:-1]
+                        if context.transport_request.destination.path:
+                            endpoint.uri.path += context.transport_request.destination.path
+                        endpoint.uri.query = context.transport_request.destination.query
+                        endpoint.uri.host = context.transport_request.destination.host + endpoint.uri.host
+                        context._transport_request.destination = endpoint.uri
+                        context._transport_request.fields.extend(endpoint.headers)
 
                 """, errorSymbol);
         }
@@ -357,18 +357,19 @@ final class ClientGenerator implements Runnable {
         writer.pushState(new SendRequestSection());
         if (context.applicationProtocol().isHttpProtocol()) {
             writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-            writer.addImport("smithy_python.interfaces.http", "HttpRequestConfiguration");
+            writer.addImport("smithy_python.interfaces.http", "HTTPRequestConfiguration");
             writer.write("""
                         # Step 7m: Invoke http_client.send
                         if config.http_client is None:
                             raise $3T("No http_client found on the operation config.")
 
-                        request_config = config.http_request_config or HttpRequestConfiguration()
+                        request_config = config.http_request_config or HTTPRequestConfiguration()
                         context_with_response = cast(
                             InterceptorContext[Input, None, $1T, $2T], context
                         )
                         context_with_response._transport_response = await config.http_client.send(
-                            context_with_response.transport_request, request_config
+                            request=context_with_response.transport_request,
+                            request_config=request_config,
                         )
 
                 """, transportRequest, transportResponse, errorSymbol);

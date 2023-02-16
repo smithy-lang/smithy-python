@@ -11,13 +11,13 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 from collections import OrderedDict
+from collections.abc import Iterator
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Protocol, TypeVar
+from typing import Protocol, TypeVar
 
-# Defining headers as a list instead of a mapping to avoid ambiguity and
-# the nuances of multiple fields in a mapping style interface
-HeadersList = list[tuple[str, str]]
+from . import URI, Request, Response
+
 QueryParamsList = list[tuple[str, str]]
 
 
@@ -108,59 +108,58 @@ class Fields(Protocol):
         """
         ...
 
+    def extend(self, other: "Fields") -> None:
+        """Merges ``entries`` of ``other`` into the current ``entries``.
 
-class URI(Protocol):
-    """Universal Resource Identifier, target location for a :py:class:`Request`."""
-
-    scheme: str
-    """For example ``http`` or ``https``."""
-
-    username: str | None
-    """Username part of the userinfo URI component."""
-
-    password: str | None
-    """Password part of the userinfo URI component."""
-
-    host: str
-    """The hostname, for example ``amazonaws.com``."""
-
-    port: int | None
-    """An explicit port number."""
-
-    path: str | None
-    """Path component of the URI."""
-
-    query: str | None
-    """Query component of the URI as string."""
-
-    fragment: str | None
-    """Part of the URI specification, but may not be transmitted by a client."""
-
-    def build(self) -> str:
-        """Construct URI string representation.
-
-        Returns a string of the form
-        ``{scheme}://{username}:{password}@{host}:{port}{path}?{query}#{fragment}``
+        For every `Field` in the ``entries`` of ``other``: If the normalized name
+        already exists in the current ``entries``, the values from ``other`` are
+        appended. Otherwise, the ``Field`` is added to the list of ``entries``.
         """
         ...
 
-
-class Request(Protocol):
-    url: URI
-    method: str  # GET, PUT, etc
-    headers: HeadersList
-    body: Any
+    def __iter__(self) -> Iterator[Field]:
+        """Allow iteration over entries."""
+        ...
 
 
-class Response(Protocol):
-    status_code: int  # HTTP status code
-    headers: HeadersList
-    body: Any
+class HTTPRequest(Request, Protocol):
+    """
+    HTTP primitive for an Exchange to construct a version agnostic HTTP message.
+
+    :param destination: The URI where the request should be sent to.
+    :param method: The HTTP method of the request, for example "GET".
+    :param fields: List of HTTP header fields.
+    :param body: A streamable collection of bytes.
+    """
+
+    method: str
+    fields: Fields
+
+
+class HTTPResponse(Response, Protocol):
+    """
+    HTTP primitives returned from an Exchange, used to construct a client response.
+    """
+
+    @property
+    def status(self) -> int:
+        """The 3 digit response status code (1xx, 2xx, 3xx, 4xx, 5xx)."""
+        ...
+
+    @property
+    def fields(self) -> Fields:
+        """HTTP header and trailer fields."""
+        ...
+
+    @property
+    def reason(self) -> str | None:
+        """Optional string provided by the server explaining the status."""
+        ...
 
 
 class Endpoint(Protocol):
-    url: URI
-    headers: HeadersList
+    uri: URI
+    headers: Fields
 
 
 # EndpointParams are defined in the generated client, so we use a TypeVar here.
@@ -178,7 +177,17 @@ class EndpointResolver(Protocol[EndpointParams]):
 
 
 @dataclass(kw_only=True)
-class HttpRequestConfiguration:
+class HTTPClientConfiguration:
+    """Client-level HTTP configuration.
+
+    :param force_http_2: Whether to require HTTP/2.
+    """
+
+    force_http_2: bool = False
+
+
+@dataclass(kw_only=True)
+class HTTPRequestConfiguration:
     """Request-level HTTP configuration.
 
     :param read_timeout: How long, in seconds, the client will attempt to read the
@@ -188,19 +197,23 @@ class HttpRequestConfiguration:
     read_timeout: float | None = None
 
 
-class HttpClient(Protocol):
-    """A synchronous HTTP client interface."""
-
-    def send(
-        self, request: Request, request_config: HttpRequestConfiguration
-    ) -> Response:
-        pass
-
-
-class AsyncHttpClient(Protocol):
+class HTTPClient(Protocol):
     """An asynchronous HTTP client interface."""
 
+    def __init__(self, *, client_config: HTTPRequestConfiguration | None) -> None:
+        """
+        :param client_config: Configuration that applies to all requests made with this
+        client.
+        """
+        ...
+
     async def send(
-        self, request: Request, request_config: HttpRequestConfiguration
-    ) -> Response:
-        pass
+        self, *, request: HTTPRequest, request_config: HTTPRequestConfiguration | None
+    ) -> HTTPResponse:
+        """
+        Send HTTP request over the wire and return the response.
+
+        :param request: The request including destination URI, fields, payload.
+        :param request_config: Configuration specific to this request.
+        """
+        ...

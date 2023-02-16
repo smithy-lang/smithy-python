@@ -156,7 +156,7 @@ via other means. A couple of very loose ideas for handling this:
 * Exceptions only matter if they can be recovered from, e.g. retried.
 Meaningful exceptions should actually defined as part of the interface
 definition. This could mean modeling responses as `Tuple[Response,
-Optional[HTTPError]]` or something similar. Where an `HTTPError` can be
+Optional[HttpError]]` or something similar. Where an `HttpError` can be
 marked as retryable, etc.
 * Custom HTTP implementations will also require a custom retry handler
 implementation

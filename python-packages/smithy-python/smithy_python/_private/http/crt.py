@@ -13,57 +13,63 @@
 
 
 import asyncio
+from collections.abc import AsyncIterable
 from concurrent.futures import Future
 from io import BytesIO
 from threading import Lock
-from typing import Any, AsyncGenerator, Awaitable, Generator
+from typing import Any, AsyncGenerator, Awaitable
 
-from awscrt import http, io
-from smithy_python._private.http import Response
-from smithy_python.exceptions import SmithyException
-from smithy_python.interfaces import http as http_interface
+from awscrt import http as crt_http
+from awscrt import io as crt_io
 
-HeadersList = list[tuple[str, str]]
-
-
-class HTTPException(SmithyException):
-    """TODO: Improve exception handling
-
-    Error handling in smithy-python needs to be designed out.
-    """
+from ... import interfaces
+from ...exceptions import SmithyHTTPException
+from . import Field, FieldPosition, Fields
 
 
-class AWSCRTEventLoop:
+class _AWSCRTEventLoop:
     def __init__(self) -> None:
         self.bootstrap = self._initialize_default_loop()
 
-    def _initialize_default_loop(self) -> io.ClientBootstrap:
-        event_loop_group = io.EventLoopGroup(1)
-        host_resolver = io.DefaultHostResolver(event_loop_group)
-        return io.ClientBootstrap(event_loop_group, host_resolver)
+    def _initialize_default_loop(self) -> crt_io.ClientBootstrap:
+        event_loop_group = crt_io.EventLoopGroup(1)
+        host_resolver = crt_io.DefaultHostResolver(event_loop_group)
+        return crt_io.ClientBootstrap(event_loop_group, host_resolver)
 
 
-class _BaseAwsCrtHttpResponse:
+class AWSCRTHTTPResponse(interfaces.http.HTTPResponse):
     def __init__(self) -> None:
-        self._stream: http.HttpClientStream | None = None
+        self._stream: crt_http.HttpClientStream | None = None
         self._status_code_future: Future[int] = Future()
-        self._headers_future: Future[HeadersList] = Future()
+        self._headers_future: Future[Fields] = Future()
         self._chunk_futures: list[Future[bytes]] = []
         self._received_chunks: list[bytes] = []
         self._chunk_lock: Lock = Lock()
 
-    def _set_stream(self, stream: http.HttpClientStream) -> None:
+    def _set_stream(self, stream: crt_http.HttpClientStream) -> None:
         if self._stream is not None:
-            raise HTTPException("Stream already set on _AwsCrtHttpResponse object")
+            raise SmithyHTTPException("Stream already set on AWSCRTHTTPResponse object")
         self._stream = stream
         self._stream.completion_future.add_done_callback(self._on_complete)
         self._stream.activate()
 
     def _on_headers(
-        self, status_code: int, headers: HeadersList, **kwargs: Any
+        self, status_code: int, headers: list[tuple[str, str]], **kwargs: Any
     ) -> None:  # pragma: crt-callback
+        fields = Fields()
+        for header_name, header_val in headers:
+            try:
+                fields.get_field(header_name).add(header_val)
+            except KeyError:
+                fields.set_field(
+                    Field(
+                        name=header_name,
+                        values=[header_val],
+                        kind=FieldPosition.HEADER,
+                    )
+                )
         self._status_code_future.set_result(status_code)
-        self._headers_future.set_result(headers)
+        self._headers_future.set_result(fields)
 
     def _on_body(self, chunk: bytes, **kwargs: Any) -> None:  # pragma: crt-callback
         with self._chunk_lock:
@@ -74,9 +80,9 @@ class _BaseAwsCrtHttpResponse:
             else:
                 self._received_chunks.append(chunk)
 
-    def _get_chunk_future(self) -> "Future[bytes]":
+    def _get_chunk_future(self) -> Future[bytes]:
         if self._stream is None:
-            raise HTTPException("Stream not set")
+            raise SmithyHTTPException("Stream not set")
         with self._chunk_lock:
             future: Future[bytes] = Future()
             # TODO: update backpressure window once CRT supports it
@@ -90,36 +96,36 @@ class _BaseAwsCrtHttpResponse:
         return future
 
     def _on_complete(
-        self, completion_future: "Future[int]"
+        self, completion_future: Future[int]
     ) -> None:  # pragma: crt-callback
         with self._chunk_lock:
             if self._chunk_futures:
                 future = self._chunk_futures.pop(0)
                 future.set_result(b"")
 
-
-class _AsyncAwsCrtHttpResponse(_BaseAwsCrtHttpResponse):
-    async def consume_body(self) -> bytes:
-        body = b""
-        async for chunk in self.chunks():
-            body += chunk
-        return body
+    @property
+    def body(self) -> AsyncIterable[bytes]:
+        return self.chunks()
 
     @property
-    def status_code(self) -> Awaitable[int]:
-        return asyncio.wrap_future(self._status_code_future)
+    def status(self) -> int:
+        """The 3 digit response status code (1xx, 2xx, 3xx, 4xx, 5xx)."""
+        return self._status_code_future.result()
 
     @property
-    def headers(self) -> Awaitable[HeadersList]:
+    def fields(self) -> Fields:
+        """List of HTTP header fields."""
         if self._stream is None:
-            raise HTTPException("Stream not set")
-        return asyncio.wrap_future(self._headers_future)
+            raise SmithyHTTPException("Stream not set")
+        if not self._headers_future.done():
+            raise SmithyHTTPException("Headers not received yet")
+        return self._headers_future.result()
 
     @property
-    def done(self) -> Awaitable[bool]:
-        if self._stream is None:
-            raise HTTPException("Stream not set")
-        return asyncio.wrap_future(self._stream.completion_future)
+    def reason(self) -> str | None:
+        """Optional string provided by the server explaining the status."""
+        # TODO: See how CRT exposes reason.
+        return None
 
     def get_chunk(self) -> Awaitable[bytes]:
         future = self._get_chunk_future()
@@ -133,159 +139,81 @@ class _AsyncAwsCrtHttpResponse(_BaseAwsCrtHttpResponse):
             else:
                 break
 
-
-class _SyncAwsCrtHttpResponse(_BaseAwsCrtHttpResponse):
-    def consume_body(self) -> bytes:
+    async def consume_body(self) -> bytes:
+        """Iterate over request body and return as bytes."""
         body = b""
-        for chunk in self.chunks():
+        async for chunk in self.body:
             body += chunk
         return body
 
-    @property
-    def status_code(self) -> int:
-        return self._status_code_future.result()
-
-    @property
-    def headers(self) -> HeadersList:
-        if self._stream is None:
-            raise HTTPException("Stream not set")
-        return self._headers_future.result()
-
-    @property
-    def done(self) -> bool:
-        if self._stream is None:
-            raise HTTPException("Stream not set")
-        future: Future[bool] = self._stream.completion_future
-        return future.result()
-
-    def get_chunk(self) -> bytes:
-        future = self._get_chunk_future()
-        return future.result()
-
-    def chunks(self) -> Generator[bytes, None, None]:
-        while True:
-            chunk = self.get_chunk()
-            if chunk:
-                yield chunk
-            else:
-                break
-
 
 ConnectionPoolKey = tuple[str, str, int | None]
-ConnectionPoolDict = dict[ConnectionPoolKey, http.HttpClientConnection]
+ConnectionPoolDict = dict[ConnectionPoolKey, crt_http.HttpClientConnection]
 
 
-class AwsCrtHttpSessionConfig:
-    def __init__(
-        self,
-        force_http_2: bool | None = None,
-    ) -> None:
-        if force_http_2 is None:
-            force_http_2 = False
-        self.force_http_2: bool = force_http_2
+class AWSCRTHTTPClientConfig(interfaces.http.HTTPClientConfiguration):
+    pass
 
 
-class _BaseAwsCrtHttpSession:
+class AWSCRTHTTPClient(interfaces.http.HTTPClient):
     _HTTP_PORT = 80
     _HTTPS_PORT = 443
 
     def __init__(
         self,
-        eventloop: AWSCRTEventLoop | None = None,
-        config: AwsCrtHttpSessionConfig | None = None,
+        eventloop: _AWSCRTEventLoop | None = None,
+        client_config: AWSCRTHTTPClientConfig | None = None,
     ) -> None:
+        """
+        :param client_config: Configuration that applies to all requests made with this
+        client.
+        """
+        self._config = (
+            AWSCRTHTTPClientConfig() if client_config is None else client_config
+        )
         if eventloop is None:
-            eventloop = AWSCRTEventLoop()
+            eventloop = _AWSCRTEventLoop()
         self._eventloop = eventloop
-        if config is None:
-            config = AwsCrtHttpSessionConfig()
-        self._config: AwsCrtHttpSessionConfig = config
         self._client_bootstrap = self._eventloop.bootstrap
-        self._tls_ctx = io.ClientTlsContext(io.TlsContextOptions())
-        self._socket_options = io.SocketOptions()
+        self._tls_ctx = crt_io.ClientTlsContext(crt_io.TlsContextOptions())
+        self._socket_options = crt_io.SocketOptions()
         self._connections: ConnectionPoolDict = {}
 
-    def _build_new_connection(
-        self, url: http_interface.URI
-    ) -> "Future[http.HttpClientConnection]":
-        if url.scheme == "http":
-            port = self._HTTP_PORT
-            tls_connection_options = None
-        else:
-            port = self._HTTPS_PORT
-            tls_connection_options = self._tls_ctx.new_connection_options()
-            tls_connection_options.set_server_name(url.host)
-            # TODO: Support TLS configuration, including alpn
-            tls_connection_options.set_alpn_list(["h2", "http/1.1"])
-        if url.port is not None:
-            port = url.port
+    async def send(
+        self,
+        request: interfaces.http.HTTPRequest,
+        request_config: interfaces.http.HTTPRequestConfiguration | None = None,
+    ) -> AWSCRTHTTPResponse:
+        """
+        Send HTTP request using awscrt client.
 
-        connect_future: Future[
-            http.HttpClientConnection
-        ] = http.HttpClientConnection.new(
-            bootstrap=self._client_bootstrap,
-            host_name=url.host,
-            port=port,
-            socket_options=self._socket_options,
-            tls_connection_options=tls_connection_options,
+        :param request: The request including destination URI, fields, payload.
+        :param request_config: Configuration specific to this request.
+        """
+        crt_request = await self._marshal_request(request)
+        connection = await self._get_connection(request.destination)
+        crt_response = AWSCRTHTTPResponse()
+        crt_stream = connection.request(
+            crt_request,
+            crt_response._on_headers,
+            crt_response._on_body,
         )
-        return connect_future
+        crt_response._set_stream(crt_stream)
+        return crt_response
 
-    def _validate_connection(self, connection: http.HttpClientConnection) -> None:
-        force_http_2 = self._config.force_http_2
-        if force_http_2 and connection.version is not http.HttpVersion.Http2:
-            connection.close()
-            negotiated = http.HttpVersion(connection.version).name
-            raise HTTPException(f"HTTP/2 could not be negotiated: {negotiated}")
-
-    def _render_path(self, url: http_interface.URI) -> str:
-        path = url.path
-        if not path:
-            # TODO: Conflating None and empty "" path?
-            path = "/"
-        if url.query:
-            # TODO: Do we handle URL escaping here?
-            path = path + "?" + url.query
-        return path
-
-    def _validate_url(self, url: http_interface.URI) -> None:
-        if not url.host:
-            raise HTTPException(f"Invalid host name: {url.host}")
-
-    def _build_new_request(self, request: http_interface.Request) -> http.HttpRequest:
-        headers = None
-        if isinstance(request.headers, list):
-            headers = http.HttpHeaders(request.headers)
-
-        body: Any
-        if isinstance(request.body, bytes):
-            body = BytesIO(request.body)
-        else:
-            body = request.body
-
-        crt_request = http.HttpRequest(
-            method=request.method,
-            path=self._render_path(request.url),
-            headers=headers,
-            body_stream=body,
-        )
-        return crt_request
-
-
-class AsyncAwsCrtHttpSession(_BaseAwsCrtHttpSession):
     async def _create_connection(
-        self, url: http_interface.URI
-    ) -> http.HttpClientConnection:
+        self, url: interfaces.URI
+    ) -> crt_http.HttpClientConnection:
+        """Builds and validates connection to ``url``, returns it as ``asyncio.Future``"""
         connect_future = self._build_new_connection(url)
         connection = await asyncio.wrap_future(connect_future)
         self._validate_connection(connection)
         return connection
 
     async def _get_connection(
-        self, url: http_interface.URI
-    ) -> http.HttpClientConnection:
+        self, url: interfaces.URI
+    ) -> crt_http.HttpClientConnection:
         # TODO: Use CRT connection pooling instead of this basic kind
-        self._validate_url(url)
         connection_key = (url.scheme, url.host, url.port)
         if connection_key in self._connections:
             return self._connections[connection_key]
@@ -294,50 +222,75 @@ class AsyncAwsCrtHttpSession(_BaseAwsCrtHttpSession):
             self._connections[connection_key] = connection
             return connection
 
-    async def send(self, request: http_interface.Request) -> http_interface.Response:
-        crt_request = self._build_new_request(request)
-        connection = await self._get_connection(request.url)
-        crt_response = _AsyncAwsCrtHttpResponse()
-        crt_stream = connection.request(
-            crt_request,
-            crt_response._on_headers,
-            crt_response._on_body,
-        )
-        crt_response._set_stream(crt_stream)
-
-        return Response(
-            status_code=await crt_response.status_code,
-            headers=await crt_response.headers,
-            body=crt_response,
-        )
-
-
-class SyncAwsCrtHttpSession(_BaseAwsCrtHttpSession):
-    def _get_connection(self, url: http_interface.URI) -> http.HttpClientConnection:
-        # TODO: Use CRT connection pooling instead of this basic kind
-        self._validate_url(url)
-        connection_key = (url.scheme, url.host, url.port)
-        if connection_key in self._connections:
-            return self._connections[connection_key]
+    def _build_new_connection(
+        self, url: interfaces.URI
+    ) -> Future[crt_http.HttpClientConnection]:
+        if url.scheme == "http":
+            port = self._HTTP_PORT
+            tls_connection_options = None
+        elif url.scheme == "https":
+            port = self._HTTPS_PORT
+            tls_connection_options = self._tls_ctx.new_connection_options()
+            tls_connection_options.set_server_name(url.host)
+            # TODO: Support TLS configuration, including alpn
+            tls_connection_options.set_alpn_list(["h2", "http/1.1"])
         else:
-            connection = self._build_new_connection(url).result()
-            self._validate_connection(connection)
-            self._connections[connection_key] = connection
-            return connection
+            raise SmithyHTTPException(
+                f"AWSCRTHTTPClient does not support URL scheme {url.scheme}"
+            )
+        if url.port is not None:
+            port = url.port
 
-    def send(self, request: http_interface.Request) -> http_interface.Response:
-        crt_request = self._build_new_request(request)
-        connection = self._get_connection(request.url)
-        crt_response = _SyncAwsCrtHttpResponse()
-        crt_stream = connection.request(
-            crt_request,
-            crt_response._on_headers,
-            crt_response._on_body,
+        connect_future: Future[
+            crt_http.HttpClientConnection
+        ] = crt_http.HttpClientConnection.new(
+            bootstrap=self._client_bootstrap,
+            host_name=url.host,
+            port=port,
+            socket_options=self._socket_options,
+            tls_connection_options=tls_connection_options,
         )
-        crt_response._set_stream(crt_stream)
+        return connect_future
 
-        return Response(
-            status_code=crt_response.status_code,
-            headers=crt_response.headers,
-            body=crt_response,
+    def _validate_connection(self, connection: crt_http.HttpClientConnection) -> None:
+        """Validates an existing connection against the client config.
+
+        Checks performed:
+        * If ``force_http_2`` is enabled: Is the connection HTTP/2?
+        """
+        force_http_2 = self._config.force_http_2
+        if force_http_2 and connection.version is not crt_http.HttpVersion.Http2:
+            connection.close()
+            negotiated = crt_http.HttpVersion(connection.version).name
+            raise SmithyHTTPException(f"HTTP/2 could not be negotiated: {negotiated}")
+
+    def _render_path(self, url: interfaces.URI) -> str:
+        path = url.path if url.path is not None else "/"
+        query = f"?{url.query}" if url.query is not None else ""
+        return f"{path}{query}"
+
+    async def _marshal_request(
+        self, request: interfaces.http.HTTPRequest
+    ) -> crt_http.HttpRequest:
+        """
+        Create :py:class:`awscrt.http.HttpRequest` from
+        :py:class:`smithy_python.interfaces.http.HTTPRequest`
+        """
+        headers_list = []
+        for fld in request.fields.entries.values():
+            if fld.kind != FieldPosition.HEADER:
+                continue
+            for val in fld.values:
+                headers_list.append((fld.name, val))
+
+        path = self._render_path(request.destination)
+        headers = crt_http.HttpHeaders(headers_list)
+        body = BytesIO(await request.consume_body())
+
+        crt_request = crt_http.HttpRequest(
+            method=request.method,
+            path=path,
+            headers=headers,
+            body_stream=body,
         )
+        return crt_request

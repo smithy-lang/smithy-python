@@ -608,12 +608,12 @@ class SmithyError(Exception):
 
 # This is just an example of a direct implementation of a SmithyError. This
 # would also be defined in generic library code.
-class HTTPClientError(SmithyError):
+class HttpClientError(SmithyError):
     def __init__(
         self,
         error: Exception,
-        request: Optional[HTTPRequest] = None,
-        response: Optional[HTTPResponse] = None
+        request: Optional[HttpRequest] = None,
+        response: Optional[HttpResponse] = None
     ):
         super().__init__(
             f"An HTTP client raised an unhaneled exception: {error}")

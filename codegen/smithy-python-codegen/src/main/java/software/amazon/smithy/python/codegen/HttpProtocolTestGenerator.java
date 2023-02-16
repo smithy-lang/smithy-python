@@ -80,10 +80,10 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
     private static final Logger LOGGER = Logger.getLogger(HttpProtocolTestGenerator.class.getName());
     private static final Symbol REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL = Symbol.builder()
-            .name("RequestTestAsyncHttpClient")
+            .name("RequestTestHTTPClient")
             .build();
     private static final Symbol RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL = Symbol.builder()
-            .name("ResponseTestAsyncHttpClient")
+            .name("ResponseTestHTTPClient")
             .build();
     private static final Symbol TEST_HTTP_SERVICE_ERR_SYMBOL = Symbol.builder()
             .name("TestHttpServiceError")
@@ -191,7 +191,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
             writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
                 writer.write("""
                     config = $T(
-                        endpoint_url="https://$L/$L",
+                        endpoint_uri="https://$L/$L",
                         http_client = $T(),
                     )
                     """,
@@ -209,7 +209,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
             );
 
             // Execute the command, and catch the expected exception
-            writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail", "fail");
+            writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail");
+            writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "raises");
             writer.addStdlibImport("urllib.parse", "parse_qsl");
             writer.write("""
                 try:
@@ -219,10 +220,10 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     actual = err.request
 
                     assert actual.method == $3S
-                    assert actual.url.path == $4S
-                    assert actual.url.host == $5S
+                    assert actual.destination.path == $4S
+                    assert actual.destination.host == $5S
 
-                    query = actual.url.query
+                    query = actual.destination.query
                     actual_query_segments: list[str] = query.split("&") if query else []
                     expected_query_segments: list[str] = $6J
                     for expected_query_segment in expected_query_segments:
@@ -242,22 +243,21 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         # effectively validate that without having to have a more complex comparator.
                         actual_query_keys.remove(required_query_key)
 
-                    actual_headers: list[tuple[str, str]] = [(k.lower(), v) for k, v in actual.headers]
                     expected_headers: list[tuple[str, str]] = [
                         ${9C|}
                     ]
-                    for expected_pair in expected_headers:
-                        assert expected_pair in actual_headers
+                    for expected_key, expected_val in expected_headers:
+                        assert expected_val in actual.fields.get_field(expected_key).values
 
-                    actual_header_keys: list[str] = [k for k, v in actual_headers]
                     forbidden_headers: set[str] = set($10J)
-                    for forbidden_header in forbidden_headers:
-                        assert forbidden_header.lower() not in actual_header_keys
+                    for forbidden_key in forbidden_headers:
+                        with raises(KeyError):
+                            actual.fields.get_field(forbidden_key)
 
                     required_headers: list[str] = $11J
-                    for required_header in required_headers:
-                        assert required_header.lower() in actual_header_keys
-                        actual_header_keys.remove(required_header)
+                    for required_key in required_headers:
+                        # Fields.remove_field() raises KeyError if key does not exist
+                        actual.fields.remove_field(required_key)
 
                 except Exception as err:
                     fail(f"Expected '$2L' exception to be thrown, but received {type(err).__name__}: {err}")
@@ -403,11 +403,11 @@ public final class HttpProtocolTestGenerator implements Runnable {
             writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
                 writer.write("""
                     config = $T(
-                        endpoint_url="https://example.com",
+                        endpoint_uri="https://example.com",
                         http_client = $T(
-                            status_code = $L,
-                            headers = $J,
-                            body = b$S,
+                            status=$L,
+                            headers=$J,
+                            body=b$S,
                         ),
                     )
                     """,
@@ -456,11 +456,11 @@ public final class HttpProtocolTestGenerator implements Runnable {
             writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
                 writer.write("""
                     config = $T(
-                        endpoint_url="https://example.com",
+                        endpoint_uri="https://example.com",
                         http_client = $T(
-                            status_code = $L,
-                            headers = $J,
-                            body = b$S,
+                            status=$L,
+                            headers=$J,
+                            body=b$S,
                         ),
                     )
                     """,
@@ -545,15 +545,17 @@ public final class HttpProtocolTestGenerator implements Runnable {
         LOGGER.fine(String.format("Writing utility stubs for %s : %s", serviceSymbol.getName(), protocol.getName()));
         writer.addStdlibImport("typing", "Any");
         writer.addImports("smithy_python.interfaces.http", Set.of(
-                "HeadersList", "HttpRequestConfiguration", "Request", "Response")
+                "Fields", "HTTPRequestConfiguration", "HTTPRequest", "HTTPResponse")
         );
-        writer.addImport("smithy_python._private.http", "Response", "_Response");
+        writer.addImport("smithy_python._private.http", "tuples_to_fields");
+        writer.addImport("smithy_python._private.http", "HTTPResponse", "_HTTPResponse");
+        writer.addImport("smithy_python.async_utils", "async_list");
 
         writer.write("""
                         class $1L($2T):
                             ""\"A test error that subclasses the service-error for protocol tests.""\"
 
-                            def __init__(self, request: Request):
+                            def __init__(self, request: HTTPRequest):
                                 self.request = request
 
 
@@ -561,40 +563,29 @@ public final class HttpProtocolTestGenerator implements Runnable {
                             ""\"An asynchronous HTTP client solely for testing purposes.""\"
 
                             async def send(
-                                self, request: Request, request_config: HttpRequestConfiguration
-                            ) -> Response:
+                                self, *, request: HTTPRequest, request_config: HTTPRequestConfiguration | None
+                            ) -> HTTPResponse:
                                 # Raise the exception with the request object to bypass actual request handling
                                 raise $1T(request)
-
-
-                        class AwaitableBody:
-                            def __init__(self, contents: bytes):
-                                self._contents = contents
-
-                            async def read(self, size: int = -1) -> bytes:
-                                if size < 0:
-                                    result = self._contents
-                                    self._contents = b''
-                                    return result
-
-                                result = self._contents[0:size-1]
-                                self._contents = self._contents[size-1:]
-                                return result
 
 
                         class $4L:
                             ""\"An asynchronous HTTP client solely for testing purposes.""\"
 
-                            def __init__(self, status_code: int, headers: HeadersList, body: bytes):
-                                self.status_code = status_code
-                                self.headers = headers
-                                self.body = AwaitableBody(body)
+                            def __init__(self, status: int, headers: list[tuple[str, str]], body: bytes):
+                                self.status = status
+                                self.fields = tuples_to_fields(headers)
+                                self.body = body
 
                             async def send(
-                                self, request: Request, request_config: HttpRequestConfiguration
-                            ) -> Response:
+                                self, *, request: HTTPRequest, request_config: HTTPRequestConfiguration | None
+                            ) -> _HTTPResponse:
                                 # Pre-construct the response from the request and return it
-                                return _Response(self.status_code, self.headers, self.body)
+                                return _HTTPResponse(
+                                    status=self.status,
+                                    fields=self.fields,
+                                    body=async_list([self.body]),
+                                )
                         """,
             TEST_HTTP_SERVICE_ERR_SYMBOL,
             CodegenUtils.getServiceError(context.settings()),

@@ -160,19 +160,19 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         serializeHeaders(context, writer, operation, bindingIndex);
 
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python._private.http", "Request", "_Request");
+        writer.addImport("smithy_python._private.http", "HTTPRequest", "_HTTPRequest");
         writer.addImport("smithy_python._private.http", "URI", "_URI");
 
         writer.write("""
-            return _Request(
-                url=_URI(
+            return _HTTPRequest(
+                destination=_URI(
                     host="",
                     path=path,
                     scheme="https",
                     query=query,
                 ),
                 method=$S,
-                headers=headers,
+                fields=headers,
                 body=body,
             )
             """, httpTrait.getMethod());
@@ -196,13 +196,15 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         HttpBindingIndex bindingIndex
     ) {
         writer.pushState(new SerializeFieldsSection(operation));
-        writer.addImport("smithy_python.interfaces.http", "HeadersList", "_HeadersList");
+        writer.addImports("smithy_python._private.http", Set.of("Field", "Fields"));
         writer.write("""
-            headers: _HeadersList = [
-                ${C|}
-                ${C|}
-                ${C|}
-            ]
+            headers = Fields(
+                [
+                    ${C|}
+                    ${C|}
+                    ${C|}
+                ]
+            )
 
             """,
             writer.consumer(w -> writeContentType(context, w, operation)),
@@ -229,7 +231,8 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         if (optionalContentType.isEmpty() && shouldWriteDefaultBody(context, operation)) {
             optionalContentType = Optional.of(getDocumentContentType());
         }
-        optionalContentType.ifPresent(contentType -> writer.write("('Content-Type', $S),", contentType));
+        optionalContentType.ifPresent(contentType -> writer.write(
+            "Field(name=\"Content-Type\", values=[$S]),", contentType));
     }
 
     private void writeContentLength(GenerationContext context, PythonWriter writer, OperationShape operation) {
@@ -241,7 +244,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
             .anyMatch(binding -> binding.getLocation() == PAYLOAD || binding.getLocation() == DOCUMENT);
 
         if (hasBodyBindings) {
-            writer.write("('Content-Length', str(len(body))),");
+            writer.write("Field(name=\"Content-Length\", values=[str(len(body))]),");
         }
     }
 
@@ -281,15 +284,18 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                         getDocumentTimestampFormat()));
 
                     var trailer = listTarget.isStringShape() ? " if e" : "";
+                    writer.addImport("smithy_python._private.http", "tuples_to_fields");
                     writer.write("""
-                        headers.extend(($S, $L) for e in input.$L$L)
+                        headers.extend(tuples_to_fields(($S, $L) for e in input.$L$L))
                         """, binding.getLocationName(), inputValue, pythonName, trailer);
                 } else {
                     var dataSource = "input." + pythonName;
                     var inputValue = target.accept(new HttpMemberSerVisitor(
                         context, writer, binding.getLocation(), dataSource, binding.getMember(),
                         getDocumentTimestampFormat()));
-                    writer.write("headers.append(($S, $L))", binding.getLocationName(), inputValue);
+                    writer.write(
+                        "headers.extend(Fields([Field(name=$S, values=[$L])]))",
+                        binding.getLocationName(), inputValue);
                 }
             });
         }
@@ -306,8 +312,11 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 var inputValue = valueTarget.accept(new HttpMemberSerVisitor(
                     context, writer, binding.getLocation(), "v", target.getValue(),
                     getDocumentTimestampFormat()));
+                writer.addImport("smithy_python._private.http", "tuples_to_fields");
                 writer.write("""
-                    headers.extend((f'$L{k}', $L) for k, v in input.$L.items() if v)
+                    headers.extend(
+                        tuples_to_fields((f'$L{k}', $L) for k, v in input.$L.items() if v)
+                    )
                     """, binding.getLocationName(
                 ), inputValue, pythonName);
             });
@@ -688,7 +697,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
             writer.addStdlibImport("typing", "Any");
             writer.write("""
                 async def $L(http_response: $T, config: $T) -> $T:
-                    if http_response.status_code != $L and http_response.status_code >= 300:
+                    if http_response.status != $L and http_response.status >= 300:
                         raise await $T(http_response, config)
 
                     kwargs: dict[str, Any] = {}
@@ -807,10 +816,11 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
 
         if (!individualBindings.isEmpty() || !prefixBindings.isEmpty()) {
             writer.write("""
-            for key, value in http_response.headers:
-                _key_lowercase = key.lower()
-                ${C|}
-                ${C|}
+            for fld in http_response.fields:
+                for key, value in fld.as_tuples():
+                    _key_lowercase = key.lower()
+                    ${C|}
+                    ${C|}
             """,
                 writer.consumer(w -> deserializeIndividualHeaders(context, w, individualBindings)),
                 writer.consumer(w -> deserializePrefixHeaders(context, w, prefixBindings))
@@ -920,7 +930,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         var statusBinding = bindingIndex.getResponseBindings(operationOrError, Location.RESPONSE_CODE);
         if (!statusBinding.isEmpty()) {
             var statusMember = context.symbolProvider().toMemberName(statusBinding.get(0).getMember());
-            writer.write("kwargs[$S] = http_response.status_code", statusMember);
+            writer.write("kwargs[$S] = http_response.status", statusMember);
         }
         writer.popState();
     }
@@ -978,7 +988,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      * <p>For example:
      *
      * <pre>{@code
-     * data = json.loads(http_response.body.read().decode('utf-8'))
+     * data = json.loads(http_response.consume_body().decode('utf-8'))
      * if 'spam' in data:
      *     kwargs['spam'] = data['spam']
      * }</pre>
