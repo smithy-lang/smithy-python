@@ -108,7 +108,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      * @return True if a default body should be generated.
      */
     protected boolean shouldWriteDefaultBody(GenerationContext context, OperationShape operation) {
-        return HttpBindingIndex.of(context.model()).getRequestBindings(operation).isEmpty();
+        return !HttpBindingIndex.of(context.model()).getRequestBindings(operation, DOCUMENT).isEmpty();
     }
 
     @Override
@@ -561,20 +561,19 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         writer.write("body: AsyncIterable[bytes] = AsyncBytesReader(b'')");
 
         var documentBindings = bindingIndex.getRequestBindings(operation, DOCUMENT);
-        if (!documentBindings.isEmpty() || shouldWriteDefaultBody(context, operation)) {
-            serializeDocumentBody(context, writer, operation, documentBindings);
-            for (HttpBinding binding : documentBindings) {
-                var target = context.model().expectShape(binding.getMember().getTarget());
-                serializingDocumentShapes.add(target);
-            }
-        }
-
         var payloadBindings = bindingIndex.getRequestBindings(operation, PAYLOAD);
+
         if (!payloadBindings.isEmpty()) {
             var binding = payloadBindings.get(0);
             serializePayloadBody(context, writer, operation, binding);
             var target = context.model().expectShape(binding.getMember().getTarget());
             serializingDocumentShapes.add(target);
+        } else if (!documentBindings.isEmpty() || shouldWriteDefaultBody(context, operation)) {
+            serializeDocumentBody(context, writer, operation, documentBindings);
+            for (HttpBinding binding : documentBindings) {
+                var target = context.model().expectShape(binding.getMember().getTarget());
+                serializingDocumentShapes.add(target);
+            }
         }
         writer.popState();
     }

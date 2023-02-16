@@ -128,9 +128,13 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
 
         writer.addImport("smithy_python.interfaces.blobs", "AsyncBytesReader");
         writer.addStdlibImport("json", "dumps", "json_dumps");
-        writer.write("content = json_dumps(result).encode('utf-8')");
-        writer.write("content_length = len(content)");
-        writer.write("body = AsyncBytesReader(content)");
+
+        var defaultTrailer = shouldWriteDefaultBody(context, operation) ? "" : " if result else b''";
+        writer.write("""
+            content = json_dumps(result).encode('utf-8')$L
+            content_length = len(content)
+            body = AsyncBytesReader(content)
+            """, defaultTrailer);
     }
 
     @Override
@@ -191,6 +195,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         var memberSerializer = target.accept(memberVisitor);
         writer.addImport("smithy_python.interfaces.blobs", "AsyncBytesReader");
         writer.write("content_length: int = 0");
+
         CodegenUtils.accessStructureMember(context, writer, "input", payloadBinding.getMember(), () -> {
             if (target.isBlobShape()) {
                 writer.write("content_length = len($L)", dataSource);
@@ -206,6 +211,13 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
             writer.write("content_length = len(content)");
             writer.write("body = AsyncBytesReader(content)");
         });
+        if (target.isStructureShape()) {
+            writer.write("""
+                else:
+                    content_length = 2
+                    body = AsyncBytesReader(b'{}')
+                """);
+        }
     }
 
     private boolean requiresLength(GenerationContext context, MemberShape member) {
