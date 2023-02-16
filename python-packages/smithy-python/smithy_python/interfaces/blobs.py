@@ -1,6 +1,7 @@
 from asyncio import iscoroutinefunction
 from io import BytesIO
 from typing import (
+    AsyncIterable,
     AsyncIterator,
     Awaitable,
     Callable,
@@ -38,7 +39,7 @@ StreamingBlob = Union[
     AsyncByteStream,
     bytes,
     bytearray,
-    AsyncIterator[bytes],
+    AsyncIterable[bytes],
 ]
 
 
@@ -47,7 +48,7 @@ StreamingBlob = Union[
 class AsyncBytesReader:
 
     # BytesIO *is* a ByteStream, but mypy will nevertheless complain if it isn't here.
-    _data: ByteStream | AsyncByteStream | AsyncIterator[bytes] | BytesIO | None
+    _data: ByteStream | AsyncByteStream | AsyncIterable[bytes] | BytesIO | None
     _closed = False
 
     def __init__(self, data: StreamingBlob):
@@ -81,12 +82,12 @@ class AsyncBytesReader:
         elif isinstance(self._data, AsyncByteStream):
             return await self._data.read(size)
         else:
-            return await self._read_from_iterator(
-                cast(AsyncIterator[bytes], self._data), size
+            return await self._read_from_iterable(
+                cast(AsyncIterable[bytes], self._data), size
             )
 
-    async def _read_from_iterator(
-        self, iterator: AsyncIterator[bytes], size: int
+    async def _read_from_iterable(
+        self, iterator: AsyncIterable[bytes], size: int
     ) -> bytes:
         # This takes the iterator as an arg here just to avoid mypy complaints, since
         # we know it's an iterator where this is called.
