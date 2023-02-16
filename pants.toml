@@ -9,6 +9,7 @@ backend_packages = [
     "pants.backend.python.typecheck.mypy",
     "pants.backend.experimental.python.lint.pyupgrade",
     "pants.backend.python.lint.docformatter",
+    "pants.backend.python.lint.pylint",
 ]
 
 [source]
@@ -56,6 +57,10 @@ version = "docformatter==1.5.1"
 args = ["--wrap-summaries 88", "--wrap-descriptions 88"]
 lockfile = "lockfiles/docformatter"
 interpreter_constraints = [">=3.11"]
+
+[pylint]
+version = "pylint==2.16.2"
+lockfile = "lockfiles/pylint"
 
 [poetry]
 interpreter_constraints = [">=3.11"]
