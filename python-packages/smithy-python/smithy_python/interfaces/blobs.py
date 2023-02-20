@@ -21,7 +21,12 @@ class ByteStream(Protocol):
     """A file-like object with a read method that returns bytes."""
 
     def read(self, size: int = -1) -> bytes:
-        pass
+        """Read a number of bytes from the stream.
+
+        :param size: The maximum number of bytes to read. If less than 0, all bytes
+        will be read.
+        """
+        ...
 
 
 @runtime_checkable
@@ -29,7 +34,12 @@ class AsyncByteStream(Protocol):
     """A file-like object with an async read method."""
 
     async def read(self, size: int = -1) -> bytes:
-        pass
+        """Read a number of bytes from the stream.
+
+        :param size: The maximum number of bytes to read. If less than 0, all bytes
+        will be read.
+        """
+        ...
 
 
 # A union of all acceptable streaming blob types. Deserialized payloads will

@@ -23,8 +23,7 @@ def ensure_utc(value: datetime) -> datetime:
     """
     if value.tzinfo is None:
         return value.replace(tzinfo=timezone.utc)
-    else:
-        return value.astimezone(timezone.utc)
+    return value.astimezone(timezone.utc)
 
 
 # Python is way more permissive on value of non-numerical floats than Smithy is, so we
@@ -217,8 +216,7 @@ def serialize_rfc3339(given: datetime) -> str:
     """
     if given.microsecond != 0:
         return given.strftime(RFC3339_MICRO)
-    else:
-        return given.strftime(RFC3339)
+    return given.strftime(RFC3339)
 
 
 def serialize_epoch_seconds(given: datetime) -> float:

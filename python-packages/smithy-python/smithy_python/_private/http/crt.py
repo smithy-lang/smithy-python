@@ -38,6 +38,8 @@ class _AWSCRTEventLoop:
 
 
 class AWSCRTHTTPResponse(interfaces.http.HTTPResponse):
+    """An HTTP response returned by the AWS CRT."""
+
     def __init__(self) -> None:
         self._stream: crt_http.HttpClientStream | None = None
         self._status_code_future: Future[int] = Future()
@@ -53,8 +55,14 @@ class AWSCRTHTTPResponse(interfaces.http.HTTPResponse):
         self._stream.completion_future.add_done_callback(self._on_complete)
         self._stream.activate()
 
+    # This has unused arguments because it's being used as a callback and so the
+    # function signature here must match the expected signature.
     def _on_headers(
-        self, status_code: int, headers: list[tuple[str, str]], **kwargs: Any
+        # pylint: disable=unused-argument
+        self,
+        status_code: int,
+        headers: list[tuple[str, str]],
+        **kwargs: Any,
     ) -> None:  # pragma: crt-callback
         fields = Fields()
         for header_name, header_val in headers:
@@ -71,6 +79,9 @@ class AWSCRTHTTPResponse(interfaces.http.HTTPResponse):
         self._status_code_future.set_result(status_code)
         self._headers_future.set_result(fields)
 
+    # This has unused arguments because it's being used as a callback and so the
+    # function signature here must match the expected signature.
+    # pylint: disable-next=unused-argument
     def _on_body(self, chunk: bytes, **kwargs: Any) -> None:  # pragma: crt-callback
         with self._chunk_lock:
             # TODO: update back pressure window once CRT supports it
@@ -95,8 +106,12 @@ class AWSCRTHTTPResponse(interfaces.http.HTTPResponse):
                 self._chunk_futures.append(future)
         return future
 
+    # This has unused arguments because it's being used as a callback and so the
+    # function signature here must match the expected signature.
     def _on_complete(
-        self, completion_future: Future[int]
+        self,
+        # pylint: disable-next=unused-argument
+        completion_future: Future[int],
     ) -> None:  # pragma: crt-callback
         with self._chunk_lock:
             if self._chunk_futures:
@@ -105,6 +120,7 @@ class AWSCRTHTTPResponse(interfaces.http.HTTPResponse):
 
     @property
     def body(self) -> AsyncIterable[bytes]:
+        """The HTTP response body."""
         return self.chunks()
 
     @property
@@ -128,10 +144,12 @@ class AWSCRTHTTPResponse(interfaces.http.HTTPResponse):
         return None
 
     def get_chunk(self) -> Awaitable[bytes]:
+        """Return a single chunk of the response body."""
         future = self._get_chunk_future()
         return asyncio.wrap_future(future)
 
     async def chunks(self) -> AsyncGenerator[bytes, None]:
+        """Produces an iterable that iterates over the response body chunks."""
         while True:
             chunk = await self.get_chunk()
             if chunk:
@@ -152,10 +170,12 @@ ConnectionPoolDict = dict[ConnectionPoolKey, crt_http.HttpClientConnection]
 
 
 class AWSCRTHTTPClientConfig(interfaces.http.HTTPClientConfiguration):
-    pass
+    """Client configuration for an AWS CRT-based HTTP client."""
 
 
 class AWSCRTHTTPClient(interfaces.http.HTTPClient):
+    """An HTTP client backed by the AWS CRT."""
+
     _HTTP_PORT = 80
     _HTTPS_PORT = 443
 
@@ -164,7 +184,8 @@ class AWSCRTHTTPClient(interfaces.http.HTTPClient):
         eventloop: _AWSCRTEventLoop | None = None,
         client_config: AWSCRTHTTPClientConfig | None = None,
     ) -> None:
-        """
+        """Initialize self.
+
         :param client_config: Configuration that applies to all requests made with this
         client.
         """
@@ -181,6 +202,7 @@ class AWSCRTHTTPClient(interfaces.http.HTTPClient):
 
     async def send(
         self,
+        *,
         request: interfaces.http.HTTPRequest,
         request_config: interfaces.http.HTTPRequestConfiguration | None = None,
     ) -> AWSCRTHTTPResponse:
@@ -189,6 +211,8 @@ class AWSCRTHTTPClient(interfaces.http.HTTPClient):
         :param request: The request including destination URI, fields, payload.
         :param request_config: Configuration specific to this request.
         """
+        # TODO: try to refactor this so we don't need to be calling protected methods.
+        # pylint: disable=protected-access
         crt_request = await self._marshal_request(request)
         connection = await self._get_connection(request.destination)
         crt_response = AWSCRTHTTPResponse()
@@ -217,10 +241,10 @@ class AWSCRTHTTPClient(interfaces.http.HTTPClient):
         connection_key = (url.scheme, url.host, url.port)
         if connection_key in self._connections:
             return self._connections[connection_key]
-        else:
-            connection = await self._create_connection(url)
-            self._connections[connection_key] = connection
-            return connection
+
+        connection = await self._create_connection(url)
+        self._connections[connection_key] = connection
+        return connection
 
     def _build_new_connection(
         self, url: interfaces.URI

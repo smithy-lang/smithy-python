@@ -11,7 +11,7 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-import random
+import random as rand
 from dataclasses import dataclass
 from enum import Enum
 from typing import Callable
@@ -69,14 +69,16 @@ class ExponentialBackoffJitterType(Enum):
 
 
 class ExponentialRetryBackoffStrategy:
+    """Exponential backoff with optional jitter."""
+
     def __init__(
         self,
         backoff_scale_value: float,
         max_backoff: float = 20,
         jitter_type: ExponentialBackoffJitterType = ExponentialBackoffJitterType.DEFAULT,
-        random: Callable[[], float] = random.random,
+        random: Callable[[], float] = rand.random,
     ):
-        """Exponential backoff with optional jitter.
+        """Initialize self.
 
         .. seealso:: https://aws.amazon.com/blogs/architecture/exponential-backoff-and-jitter/
 
@@ -196,13 +198,15 @@ class SimpleRetryToken:
 
 
 class SimpleRetryStrategy:
+    """Basic retry strategy that simply invokes the given backoff strategy."""
+
     def __init__(
         self,
         *,
         backoff_strategy: retries_interface.RetryBackoffStrategy,
         max_attempts: int,
     ):
-        """Basic retry strategy that simply invokes the given backoff strategy.
+        """Initialize self.
 
         :param backoff_strategy: The backoff strategy used by returned tokens to compute
         the retry delay.
@@ -214,7 +218,10 @@ class SimpleRetryStrategy:
         self._max_attempts = max_attempts
 
     def acquire_initial_retry_token(
-        self, *, token_scope: str | None = None
+        self,
+        *,
+        # pylint: disable-next=unused-argument
+        token_scope: str | None = None,
     ) -> SimpleRetryToken:
         """Called before any retries (for the first attempt at the operation).
 
@@ -227,6 +234,7 @@ class SimpleRetryStrategy:
         self,
         *,
         token_to_renew: retries_interface.RetryToken,
+        # pylint: disable-next=unused-argument
         error_info: retries_interface.RetryErrorInfo,
     ) -> SimpleRetryToken:
         """Replace an existing retry token from a failed attempt with a new token.
@@ -251,4 +259,3 @@ class SimpleRetryStrategy:
 
     def record_success(self, *, token: retries_interface.RetryToken) -> None:
         """Not used by this retry strategy."""
-        pass

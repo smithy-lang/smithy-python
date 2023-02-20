@@ -22,7 +22,7 @@ from . import HTTPResponse
 
 
 class AIOHTTPClientConfig(interfaces.http.HTTPClientConfiguration):
-    pass
+    """Configuration for the aiohttp client."""
 
 
 class AIOHTTPClient(interfaces.http.HTTPClient):

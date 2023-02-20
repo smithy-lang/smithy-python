@@ -74,6 +74,12 @@ class HTTPResponse:
 
 @dataclass
 class Endpoint(http_interface.Endpoint):
+    """An HTTP endpoint.
+
+    :param uri: The URI pointing to the endpoint.
+    :param headers: Any headers necessary to access the endpoint.
+    """
+
     uri: interfaces.URI
     headers: interfaces.Fields = field(default_factory=Fields)
 

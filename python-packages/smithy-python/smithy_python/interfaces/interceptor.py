@@ -10,6 +10,8 @@ TransportResponse = TypeVar("TransportResponse")
 class InterceptorContext(
     Generic[Request, Response, TransportRequest, TransportResponse]
 ):
+    """A container for the current data available to an interceptor."""
+
     def __init__(
         self,
         *,
@@ -18,7 +20,7 @@ class InterceptorContext(
         transport_request: TransportRequest,
         transport_response: TransportResponse,
     ):
-        """A container for the current data available to an interceptor.
+        """Initialize self.
 
         :param request: The modeled request for the operation being invoked.
         :param response: The modeled response for the operation being invoked. This will
@@ -105,6 +107,7 @@ class InterceptorContext(
             transport_request=transport_request,
             transport_response=transport_response,
         )
+        # pylint: disable-next=protected-access
         context._properties = deepcopy(self._properties)
         return context
 
@@ -146,7 +149,6 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
         the `response`. If multiple `read_before_execution` methods throw exceptions,
         the latest will be used and earlier ones will be logged and dropped.
         """
-        pass
 
     def modify_before_serialization(
         self, context: InterceptorContext[Request, None, None, None]
@@ -191,7 +193,6 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
         If exceptions are thrown by this hook, execution will jump to
         `modify_before_completion` with the thrown exception as the `response`.
         """
-        pass
 
     def read_after_serialization(
         self, context: InterceptorContext[Request, None, TransportRequest, None]
@@ -212,7 +213,6 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
         If exceptions are thrown by this hook, execution will jump to
         `modify_before_completion` with the thrown exception as the `response`.
         """
-        pass
 
     def modify_before_retry_loop(
         self, context: InterceptorContext[Request, None, TransportRequest, None]
@@ -257,7 +257,6 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
         exception as the `response` If multiple `read_before_attempt` methods throw
         exceptions, the latest will be used and earlier ones will be logged and dropped.
         """
-        pass
 
     def modify_before_signing(
         self, context: InterceptorContext[Request, None, TransportRequest, None]
@@ -307,7 +306,6 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
         If exceptions are thrown by this hook, execution will jump to
         `modify_before_attempt_completion` with the thrown exception as the `response`.
         """
-        pass
 
     def read_after_signing(
         self, context: InterceptorContext[Request, None, TransportRequest, None]
@@ -331,7 +329,6 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
         If exceptions are thrown by this hook, execution will jump to
         `modify_before_attempt_completion` with the thrown exception as the `response`.
         """
-        pass
 
     def modify_before_transmit(
         self, context: InterceptorContext[Request, None, TransportRequest, None]
@@ -382,7 +379,6 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
         If exceptions are thrown by this hook, execution will jump to
         `modify_before_attempt_completion` with the thrown exception as the `response`.
         """
-        pass
 
     def read_after_transmit(
         self,
@@ -409,7 +405,6 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
         If exceptions are thrown by this hook, execution will jump to
         `modify_before_attempt_completion` with the thrown exception as the `response`.
         """
-        pass
 
     def modify_before_deserialization(
         self,
@@ -465,7 +460,6 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
         If exceptions are thrown by this hook, execution will jump to
         `modify_before_attempt_completion` with the thrown exception as the `response`.
         """
-        pass
 
     def read_after_deserialization(
         self,
@@ -493,7 +487,6 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
         If exceptions are thrown by this hook, execution will jump to
         `modify_before_attempt_completion` with the thrown exception as the `response`.
         """
-        pass
 
     def modify_before_attempt_completion(
         self,
@@ -552,7 +545,6 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
         execution will then jump to `read_before_attempt`. Otherwise, execution will
         jump to `modify_before_completion` with the thrown exception as the `response`.
         """
-        pass
 
     def modify_before_completion(
         self,
@@ -603,4 +595,3 @@ class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse
         final response. If multiple `read_after_execution` methods throw exceptions,
         the latest will be used and earlier ones will be logged and dropped.
         """
-        pass

@@ -52,6 +52,12 @@ class HTTPResponse(Response, Protocol):
 
 
 class Endpoint(Protocol):
+    """An HTTP endpoint.
+
+    :param uri: The URI pointing to the endpoint.
+    :param headers: Any headers necessary to access the endpoint.
+    """
+
     uri: URI
     headers: Fields
 
@@ -60,13 +66,18 @@ class Endpoint(Protocol):
 # More specific EndpointParams implementations are subtypes of less specific ones. But
 # consumers of less specific EndpointParams implementations are subtypes of consumers
 # of more specific ones.
-EndpointParams = TypeVar("EndpointParams", contravariant=True)
+EndpointParams_contra = TypeVar("EndpointParams_contra", contravariant=True)
 
 
-class EndpointResolver(Protocol[EndpointParams]):
+class EndpointResolver(Protocol[EndpointParams_contra]):
     """Resolves an operation's endpoint based given parameters."""
 
-    async def resolve_endpoint(self, params: EndpointParams) -> Endpoint:
+    async def resolve_endpoint(self, params: EndpointParams_contra) -> Endpoint:
+        """Resolves an endpoint based on the provided parameters.
+
+        :param params: The specific parameters the endpoint resolver needs in order to
+        resolve an endpoint.
+        """
         raise NotImplementedError()
 
 

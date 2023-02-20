@@ -21,7 +21,7 @@ from smithy_python._private.http.crt import AWSCRTHTTPClient, AWSCRTHTTPClientCo
 async def test_basic_request_local(sample_request: HTTPRequest) -> None:
     config = AWSCRTHTTPClientConfig()
     session = AWSCRTHTTPClient(client_config=config)
-    response = await session.send(sample_request)
+    response = await session.send(request=sample_request)
     assert response.status == 200
     print(f"{response=}")
     body = await response.consume_body()
@@ -32,7 +32,7 @@ async def test_basic_request_local(sample_request: HTTPRequest) -> None:
 async def test_basic_request_http2(sample_request: HTTPRequest) -> None:
     config = AWSCRTHTTPClientConfig(force_http_2=True)
     session = AWSCRTHTTPClient(client_config=config)
-    response = await session.send(sample_request)
+    response = await session.send(request=sample_request)
     assert response.status == 200
     body = await response.consume_body()
     assert b"aws" in body

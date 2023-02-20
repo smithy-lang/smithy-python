@@ -16,12 +16,18 @@ from dataclasses import dataclass
 from urllib.parse import urlunparse
 
 from .. import interfaces
-from ..interfaces import FieldPosition as FieldPosition  # re-export
+
+# This is being deliberately re-exported, which is why it's being aliased like this.
+# pylint: disable-next=useless-import-alias
+from ..interfaces import FieldPosition as FieldPosition
 
 
 @dataclass(kw_only=True)
 class URI(interfaces.URI):
-    """Universal Resource Identifier, target location for a :py:class:`HttpRequest`."""
+    """Universal Resource Identifier, target location for a :py:class:`HTTPRequest`."""
+
+    # We really can't reduce the number of instance attributes here
+    # pylint: disable=too-many-instance-attributes
 
     scheme: str = "https"
     """For example ``http`` or ``https``."""
@@ -111,7 +117,7 @@ class Field(interfaces.Field):
         kind: FieldPosition = FieldPosition.HEADER,
     ):
         self.name = name
-        self.values: list[str] = [val for val in values] if values is not None else []
+        self.values: list[str] = list(values) if values is not None else []
         self.kind = kind
 
     def add(self, value: str) -> None:
@@ -155,9 +161,9 @@ class Field(interfaces.Field):
         return [(self.name, val) for val in self.values]
 
     def __eq__(self, other: object) -> bool:
-        """Name, values, and kind must match.
+        """Checks equality.
 
-        Values order must match.
+        Name, values, and kind must match. Values order must match.
         """
         if not isinstance(other, Field):
             return False
@@ -172,20 +178,22 @@ class Field(interfaces.Field):
 
 
 class Fields(interfaces.Fields):
+    """Collection of header and trailer entries mapped by name."""
+
     def __init__(
         self,
         initial: Iterable[interfaces.Field] | None = None,
         *,
         encoding: str = "utf-8",
     ):
-        """Collection of header and trailer entries mapped by name.
+        """Initialize self.
 
         :param initial: Initial list of ``Field`` objects. ``Field``s can alse be added
         with :func:`set_field` and later removed with :func:`remove_field`.
         :param encoding: The string encoding to be used when converting the ``Field``
         name and value from ``str`` to ``bytes`` for transmission.
         """
-        init_fields = [fld for fld in initial] if initial is not None else []
+        init_fields = list(initial) if initial is not None else []
         init_field_names = [self._normalize_field_name(fld.name) for fld in init_fields]
         fname_counter = Counter(init_field_names)
         repeated_names_exist = (
@@ -202,6 +210,7 @@ class Fields(interfaces.Fields):
         self.entries: OrderedDict[str, interfaces.Field] = OrderedDict(init_tuples)
         self.encoding: str = encoding
 
+    # pylint: disable-next=redefined-outer-name
     def set_field(self, field: interfaces.Field) -> None:
         """Set entry for a Field name."""
         normalized_name = self._normalize_field_name(field.name)
@@ -247,9 +256,9 @@ class Fields(interfaces.Fields):
         return name.lower()
 
     def __eq__(self, other: object) -> bool:
-        """Encoding must match.
+        """Checks equality.
 
-        Entries must match in values and order.
+        Encoding must match. Entries must match in values and order.
         """
         if not isinstance(other, Fields):
             return False
@@ -268,8 +277,7 @@ def quote_and_escape_field_value(value: str) -> str:
     if any(char in chars_to_quote for char in value):
         escaped = value.replace("\\", "\\\\").replace('"', '\\"')
         return f'"{escaped}"'
-    else:
-        return value
+    return value
 
 
 def tuples_to_fields(

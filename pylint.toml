@@ -47,7 +47,7 @@ ignore = ["CVS"]
 # Files or directories matching the regular expression patterns are skipped. The
 # regex matches against base names, not paths. The default value ignores Emacs
 # file locks
-ignore-patterns = ["^\\.#"]
+ignore-patterns = ["^\\.#", "test_.*.py", ".*test.py"]
 
 # List of module names for which member attributes should not be checked (useful
 # for modules/projects where namespaces are manipulated during runtime and thus
@@ -156,7 +156,7 @@ function-naming-style = "snake_case"
 # function-rgx =
 
 # Good variable names which should always be accepted, separated by a comma.
-good-names = ["i", "j", "k", "ex", "Run", "_"]
+good-names = ["i", "j", "k", "ex", "Run", "_", "n", "x", "y"]
 
 # Good variable names regexes, separated by a comma. If names match any regex,
 # they will always be accepted
@@ -355,7 +355,19 @@ confidence = ["HIGH", "CONTROL_FLOW", "INFERENCE", "INFERENCE_FAILURE", "UNDEFIN
 # --enable=similarities". If you want to run only the classes checker, but have
 # no Warning level messages displayed, use "--disable=all --enable=classes
 # --disable=W".
-disable = ["raw-checker-failed", "bad-inline-option", "locally-disabled", "file-ignored", "suppressed-message", "useless-suppression", "deprecated-pragma", "use-symbolic-message-instead"]
+disable = [
+    "raw-checker-failed", "bad-inline-option", "locally-disabled", "file-ignored",
+    "suppressed-message", "useless-suppression", "deprecated-pragma",
+    "use-symbolic-message-instead",
+    # Module docstrings haven't historically been a thing we've done.
+    "missing-module-docstring",
+    # As an in-progress work, we'll necessarily have fixme's all over.
+    "fixme",
+    # This false positives on Protocols, which actually need the ellipsis.
+    "unnecessary-ellipsis",
+    # There are interfaces we must expose that only have one.
+    "too-few-public-methods"
+]
 
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
@@ -524,5 +536,3 @@ ignored-argument-names = "_.*|^ignored_|^unused_"
 # List of qualified module names which can have objects that can redefine
 # builtins.
 redefining-builtins-modules = ["six.moves", "past.builtins", "future.builtins", "builtins", "io"]
-
-
