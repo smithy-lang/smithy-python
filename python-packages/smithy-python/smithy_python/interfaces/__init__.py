@@ -86,14 +86,14 @@ class FieldPosition(Enum):
     HEADER = 0
     """Header field.
 
-    In HTTP this is a header as defined in RFC 9114 Section 6.3. Implementations of
+    In HTTP this is a header as defined in RFC 9110 Section 6.3. Implementations of
     other protocols may use this FieldPosition for similar types of metadata.
     """
 
     TRAILER = 1
     """Trailer field.
 
-    In HTTP this is a trailer as defined in RFC 9114 Section 6.5. Implementations of
+    In HTTP this is a trailer as defined in RFC 9110 Section 6.5. Implementations of
     other protocols may use this FieldPosition for similar types of metadata.
     """
 
@@ -102,7 +102,7 @@ class Field(Protocol):
     """A name-value pair representing a single field in a request or response.
 
     The kind will dictate metadata placement within an the message, for example as
-    header or trailer field in a HTTP request as defined in RFC 9114 Section 4.2.
+    header or trailer field in a HTTP request as defined in RFC 9110 Section 5.
 
     All field names are case insensitive and case-variance must be treated as
     equivalent. Names may be normalized but should be preserved for accuracy during
