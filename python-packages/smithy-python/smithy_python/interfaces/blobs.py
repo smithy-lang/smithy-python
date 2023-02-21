@@ -46,19 +46,21 @@ StreamingBlob = Union[
 # asyncio has a StreamReader class which you might think would be appropriate here,
 # but it is unfortunately tied to the asyncio http interfaces.
 class AsyncBytesReader:
+    """A file-like object with an async read method."""
 
     # BytesIO *is* a ByteStream, but mypy will nevertheless complain if it isn't here.
     _data: ByteStream | AsyncByteStream | AsyncIterable[bytes] | BytesIO | None
     _closed = False
 
     def __init__(self, data: StreamingBlob):
-        """A file-like object with an async read method.
+        """Initializes self.
 
         Data is read from the source on an as-needed basis and is not buffered.
 
         :param data: The source data to read from.
         """
         self._remainder = b""
+        # pylint: disable-next=isinstance-second-argument-not-valid-type
         if isinstance(data, bytes | bytearray):
             self._data = BytesIO(data)
         else:
@@ -79,12 +81,13 @@ class AsyncBytesReader:
             # Python's runtime_checkable can't actually tell the difference between
             # sync and async, so we have to check ourselves.
             return self._data.read(size)
-        elif isinstance(self._data, AsyncByteStream):
+
+        if isinstance(self._data, AsyncByteStream):
             return await self._data.read(size)
-        else:
-            return await self._read_from_iterable(
-                cast(AsyncIterable[bytes], self._data), size
-            )
+
+        return await self._read_from_iterable(
+            cast(AsyncIterable[bytes], self._data), size
+        )
 
     async def _read_from_iterable(
         self, iterator: AsyncIterable[bytes], size: int
@@ -145,14 +148,17 @@ class AsyncBytesReader:
 
 
 class SeekableAsyncBytesReader:
+    """A file-like object with async read and seek methods."""
+
     def __init__(self, data: StreamingBlob):
-        """A file-like object with async read and seek methods.
+        """Initializes self.
 
         Data is read from the source on an as-needed basis and buffered internally so
         that it can be rewound safely.
 
         :param data: The source data to read from.
         """
+        # pylint: disable-next=isinstance-second-argument-not-valid-type
         if isinstance(data, bytes | bytearray):
             self._buffer = BytesIO(data)
             self._data_source = None
@@ -269,14 +275,23 @@ class SeekableAsyncBytesReader:
 
     def close(self) -> None:
         """Closes the stream, as well as the underlying stream where possible."""
-        if (close := getattr(self._data_source, "close", None)) is not None:
-            close()
+        if callable(close_fn := getattr(self._data_source, "close", None)):
+            close_fn()  # pylint: disable=not-callable
         self._data_source = None
         self._buffer.close()
 
 
 class _AsyncByteStreamIterator:
+    """An async bytes iterator that operates over an async read method."""
+
     def __init__(self, read: Callable[[int], Awaitable[bytes]], chunk_size: int):
+        """Initializes self.
+
+        :param read: An async callable that reads a given number of bytes from some
+        source.
+
+        :param chunk_size: The number of bytes to read in each iteration.
+        """
         self._read = read
         self._chunk_size = chunk_size
 
