@@ -401,10 +401,12 @@ public final class HttpProtocolTestGenerator implements Runnable {
             return;
         }
         var contentType = testCase.getBodyMediaType().orElse("application/octet-stream");
+        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+        writer.addImport("smithy_python.interfaces.blobs", "AsyncBytesReader");
+        writer.write("actual_body_content = await AsyncBytesReader(actual.body).read()");
         if (contentType.equals("application/json") || contentType.endsWith("+json")) {
             writer.addStdlibImport("json", "loads", "json_loads");
             writer.write("""
-                actual_body_content = await actual.body.read()
                 actual_body = json_loads(actual_body_content) if actual_body_content else ""
                 expected_body = json_loads(b$S)
                 assert actual_body == expected_body
@@ -412,7 +414,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
             return;
         }
         writer.write("""
-            assert await actual.body.read() == b$S
+            assert actual_body_content == b$S
             """, testCase.getBody().get());
     }
 
