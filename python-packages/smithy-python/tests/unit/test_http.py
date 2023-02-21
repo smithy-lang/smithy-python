@@ -11,10 +11,8 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+from smithy_python._private import URI, Field, Fields
 from smithy_python._private.http import (
-    URI,
-    Field,
-    Fields,
     HTTPRequest,
     HTTPResponse,
     StaticEndpointParams,
