@@ -13,28 +13,24 @@
 
 # TODO: move all of this out of _private
 
-
 from collections.abc import AsyncIterable
 from dataclasses import dataclass, field
 from typing import Protocol
 from urllib.parse import urlparse
 
-from ...interfaces import URI, Fields
-from ...interfaces.http import Endpoint as EndpointInterface
-from ...interfaces.http import EndpointResolver as EndpointResolverInterface
-from ...interfaces.http import HTTPRequest as HTTPRequestInterface
-from .. import URI as _URI
-from .. import Fields as _Fields
+from ... import interfaces
+from ...interfaces import http as http_interface
+from .. import URI, Fields
 
 
 @dataclass(kw_only=True)
-class HTTPRequest(HTTPRequestInterface):
+class HTTPRequest(http_interface.HTTPRequest):
     """HTTP primitives for an Exchange to construct a version agnostic HTTP message."""
 
-    destination: URI
+    destination: interfaces.URI
     body: AsyncIterable[bytes]
     method: str
-    fields: Fields
+    fields: interfaces.Fields
 
     async def consume_body(self) -> bytes:
         """Iterate over request body and return as bytes."""
@@ -62,7 +58,7 @@ class HTTPResponse:
     status: int
     """The 3 digit response status code (1xx, 2xx, 3xx, 4xx, 5xx)."""
 
-    fields: Fields
+    fields: interfaces.Fields
     """HTTP header and trailer fields."""
 
     reason: str | None = None
@@ -77,9 +73,9 @@ class HTTPResponse:
 
 
 @dataclass
-class Endpoint(EndpointInterface):
-    uri: URI
-    headers: Fields = field(default_factory=_Fields)
+class Endpoint(http_interface.Endpoint):
+    uri: interfaces.URI
+    headers: interfaces.Fields = field(default_factory=Fields)
 
 
 @dataclass
@@ -89,10 +85,10 @@ class StaticEndpointParams:
     :param uri: A static URI to route requests to.
     """
 
-    uri: str | URI
+    uri: str | interfaces.URI
 
 
-class StaticEndpointResolver(EndpointResolverInterface[StaticEndpointParams]):
+class StaticEndpointResolver(http_interface.EndpointResolver[StaticEndpointParams]):
     """A basic endpoint resolver that forwards a static URI."""
 
     async def resolve_endpoint(self, params: StaticEndpointParams) -> Endpoint:
@@ -111,7 +107,7 @@ class StaticEndpointResolver(EndpointResolverInterface[StaticEndpointParams]):
             )
 
         return Endpoint(
-            uri=_URI(
+            uri=URI(
                 host=parsed.hostname,
                 path=parsed.path,
                 scheme=parsed.scheme,
@@ -122,7 +118,7 @@ class StaticEndpointResolver(EndpointResolverInterface[StaticEndpointParams]):
 
 
 class _StaticEndpointConfig(Protocol):
-    endpoint_resolver: EndpointResolverInterface[StaticEndpointParams] | None
+    endpoint_resolver: http_interface.EndpointResolver[StaticEndpointParams] | None
 
 
 def set_static_endpoint_resolver(config: _StaticEndpointConfig) -> None:
