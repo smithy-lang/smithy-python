@@ -29,6 +29,7 @@ from smithy_python.utils import (
     expect_type,
     limited_parse_float,
     limited_serialize_float,
+    remove_dot_segments,
     serialize_epoch_seconds,
     serialize_float,
     serialize_rfc3339,
@@ -281,3 +282,39 @@ def test_epoch_seconds_to_datetime_with_overflow_error(monkeypatch):
     monkeypatch.setattr("smithy_python.utils.datetime", datetime_mock)
     dt_object = datetime(2038, 1, 19, 3, 14, 8, tzinfo=timezone.utc)
     epoch_seconds_to_datetime(2147483648) == dt_object
+
+
+@pytest.mark.parametrize(
+    "input_path, expected_path",
+    [
+        ("/foo/bar", "/foo/bar"),
+        ("/foo/bar/", "/foo/bar/"),
+        ("/foo/bar/.", "/foo/bar"),
+        ("/foo/bar/..", "/foo"),
+        ("/foo/bar/../", "/foo/"),
+        ("/foo/bar/../baz", "/foo/baz"),
+        ("/foo/bar/../baz/", "/foo/baz/"),
+        ("/foo/bar/./baz", "/foo/bar/baz"),
+        ("/foo/bar/./baz/", "/foo/bar/baz/"),
+        ("/foo/bar/././baz", "/foo/bar/baz"),
+        ("/foo/bar/././baz/", "/foo/bar/baz/"),
+        ("/foo/bar/./../baz", "/foo/baz"),
+        ("/foo/bar/./../baz/", "/foo/baz/"),
+        ("/foo/bar/.././baz", "/foo/baz"),
+        ("/foo/bar/.././baz/", "/foo/baz/"),
+        ("/foo/bar/../../baz", "/baz"),
+        ("", ""),
+        ("/", "/"),
+        ("/.", "/"),
+        ("/..", "/"),
+        ("/./", "/"),
+        ("/../", "/"),
+        ("/./.", "/"),
+        ("./", ""),
+        ("../", ""),
+        ("..", ""),
+        (".", ""),
+    ],
+)
+def test_remove_dot_segments(input_path: str, expected_path: str) -> None:
+    assert remove_dot_segments(input_path) == expected_path

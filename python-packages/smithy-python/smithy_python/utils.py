@@ -1,3 +1,16 @@
+# Copyright 2023 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+#     http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
+
 import re
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
@@ -7,6 +20,43 @@ from typing import Any, TypeVar, overload
 
 from .exceptions import ExpectationNotMetException
 
+# Vendoring IPv6 validation regex patterns from urllib3
+# using f-strings instead where applicable
+# https://github.com/urllib3/urllib3/blob/7e856c0/src/urllib3/util/url.py
+_IPV4_PAT: str = r"(?:[0-9]{1,3}\.){3}[0-9]{1,3}"
+_IPV4_RE: re.Pattern[str] = re.compile(f"^{_IPV4_PAT}$")
+_HEX_PAT: str = "[0-9A-Fa-f]{1,4}"
+_LS32_PAT: str = f"(?:{_HEX_PAT}:{_HEX_PAT}|{_IPV4_PAT})"
+_subs: dict[str, str] = {"hex": _HEX_PAT, "ls32": _LS32_PAT}
+_variations: list[str] = [
+    #                            6( h16 ":" ) ls32
+    "(?:%(hex)s:){6}%(ls32)s",
+    #                       "::" 5( h16 ":" ) ls32
+    "::(?:%(hex)s:){5}%(ls32)s",
+    # [               h16 ] "::" 4( h16 ":" ) ls32
+    "(?:%(hex)s)?::(?:%(hex)s:){4}%(ls32)s",
+    # [ *1( h16 ":" ) h16 ] "::" 3( h16 ":" ) ls32
+    "(?:(?:%(hex)s:)?%(hex)s)?::(?:%(hex)s:){3}%(ls32)s",
+    # [ *2( h16 ":" ) h16 ] "::" 2( h16 ":" ) ls32
+    "(?:(?:%(hex)s:){0,2}%(hex)s)?::(?:%(hex)s:){2}%(ls32)s",
+    # [ *3( h16 ":" ) h16 ] "::"    h16 ":"   ls32
+    "(?:(?:%(hex)s:){0,3}%(hex)s)?::%(hex)s:%(ls32)s",
+    # [ *4( h16 ":" ) h16 ] "::"              ls32
+    "(?:(?:%(hex)s:){0,4}%(hex)s)?::%(ls32)s",
+    # [ *5( h16 ":" ) h16 ] "::"              h16
+    "(?:(?:%(hex)s:){0,5}%(hex)s)?::%(hex)s",
+    # [ *6( h16 ":" ) h16 ] "::"
+    "(?:(?:%(hex)s:){0,6}%(hex)s)?::",
+]
+
+_UNRESERVED_PAT: str = (
+    r"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._!\-~"
+)
+_IPV6_PAT: str = f"(?:{'|'.join([x % _subs for x in _variations])})"
+_ZONE_ID_PAT: str = f"(?:%25|%)(?:[{_UNRESERVED_PAT}]|%[a-fA-F0-9]{{2}})+"
+_IPV6_ADDRZ_PAT: str = rf"\[{_IPV6_PAT}(?:{_ZONE_ID_PAT})?\]"
+_IPV6_ADDRZ_RE: re.Pattern[str] = re.compile(f"^{_IPV6_ADDRZ_PAT}$")
+
 RFC3339 = "%Y-%m-%dT%H:%M:%SZ"
 # Same as RFC3339, but with microsecond precision.
 RFC3339_MICRO = "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -15,7 +65,7 @@ RFC3339_MICRO = "%Y-%m-%dT%H:%M:%S.%fZ"
 def ensure_utc(value: datetime) -> datetime:
     """Ensures that the given datetime is a UTC timezone-aware datetime.
 
-    If the datetime isn't timzezone-aware, its timezone is set to UTC. If it is
+    If the datetime isn't timezone-aware, its timezone is set to UTC. If it is
     aware, it's replaced with the equivalent datetime under UTC.
 
     :param value: A datetime object that may or may not be timezone-aware.
@@ -142,7 +192,7 @@ _FLOAT_REGEX = re.compile(
                    # least one number.
         (?: # Opens the exponent group.
             [eE] # The exponent starts with a case-insensitive e
-            [+-]? # The exponent may have a positive or negave sign.
+            [+-]? # The exponent may have a positive or negative sign.
             \d+ # The exponent must have one or more digits.
         )? # Closes the exponent group and makes it optional.
     ) # Closes the numeric float group.
@@ -208,7 +258,7 @@ def limited_serialize_float(given: float) -> str | float:
 
 
 def serialize_rfc3339(given: datetime) -> str:
-    """Serializes a datetime into an RFC3339 string respresentation.
+    """Serializes a datetime into an RFC3339 string representation.
 
     If ``microseconds`` is 0, no fractional part is serialized.
 
@@ -227,9 +277,27 @@ def serialize_epoch_seconds(given: datetime) -> float:
     If ``microseconds`` is 0, no fractional part is serialized.
 
     :param given: The datetime to serialize.
-    :retursn: A string containing the seconds since the UNIX epoch.
+    :returns: A string containing the seconds since the UNIX epoch.
     """
     result = given.timestamp()
     if given.microsecond == 0:
         result = int(result)
     return result
+
+
+def remove_dot_segments(path: str) -> str:
+    """Removes dot segments from a path per RFC 3986 section 5.2.4.
+
+    :param path: The path to remove dot segments from.
+    :returns: The path with dot segments removed.
+    """
+    output = []
+    for segment in path.split("/"):
+        if segment and segment != ".":
+            if segment != "..":
+                output.append(segment)
+            elif output:
+                output.pop()
+    start = "/" if path.startswith("/") and path else ""
+    end = "/" if path.endswith("/") and output else ""
+    return f"{start}{'/'.join(output)}{end}"

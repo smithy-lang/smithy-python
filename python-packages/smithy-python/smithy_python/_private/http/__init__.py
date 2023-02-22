@@ -49,7 +49,7 @@ class HTTPResponse:
     """Basic implementation of :py:class:`...interfaces.http.HTTPResponse`.
 
     Implementations of :py:class:`...interfaces.http.HTTPClient` may return instances of
-    this class or of custom response implementatinos.
+    this class or of custom response implementations.
     """
 
     body: AsyncIterable[bytes]

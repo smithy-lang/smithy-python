@@ -11,6 +11,8 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+import pytest
+
 from smithy_python._private import URI, Field, Fields
 from smithy_python._private.http import (
     HTTPRequest,
@@ -19,6 +21,7 @@ from smithy_python._private.http import (
     StaticEndpointResolver,
 )
 from smithy_python.async_utils import async_list
+from smithy_python.exceptions import SmithyHTTPException
 
 
 def test_uri_basic() -> None:
@@ -55,8 +58,9 @@ def test_uri_all_fields_present() -> None:
     assert uri.username == "abc"
     assert uri.password == "def"
     assert uri.fragment == "frag"
-    assert uri.netloc == "abc:def@test.aws.dev:80"
-    assert uri.build() == "http://abc:def@test.aws.dev:80/my/path?foo=bar#frag"
+    # port is omitted because default port for http scheme is 80
+    assert uri.netloc == "abc:def@test.aws.dev"
+    assert uri.build() == "http://abc:def@test.aws.dev/my/path?foo=bar#frag"
 
 
 def test_uri_without_scheme_field() -> None:
@@ -88,6 +92,30 @@ def test_uri_without_port_number() -> None:
     assert uri.port is None
     assert uri.netloc == "abc:def@test.aws.dev"
     assert uri.build() == "http://abc:def@test.aws.dev/my/path?foo=bar#frag"
+
+
+def test_uri_not_default_port_for_scheme() -> None:
+    uri = URI(
+        host="test.aws.dev",
+        path="/my/path",
+        scheme="http",
+        query="foo=bar",
+        port=8080,
+        username="abc",
+        password="def",
+        fragment="frag",
+    )
+    # port is included in netloc and built URI string if it is not the default
+    # port for the scheme
+    assert uri.netloc == "abc:def@test.aws.dev:8080"
+    assert uri.build() == "http://abc:def@test.aws.dev:8080/my/path?foo=bar#frag"
+
+
+def test_uri_ipv6_host() -> None:
+    uri = URI(host="::1")
+    assert uri.host == "::1"
+    assert uri.netloc == "[::1]"
+    assert uri.build() == "https://[::1]"
 
 
 def test_uri_non_ascii_hostname() -> None:
@@ -171,3 +199,42 @@ async def test_endpoint_provider_with_uri_object() -> None:
     result = await resolver.resolve_endpoint(params=params)
     assert result.uri == expected
     assert result.headers == Fields([])
+
+
+@pytest.mark.parametrize(
+    "input_uri, expected_is_valid_ipv6",
+    [
+        (URI(host="example.com"), False),
+        (URI(host="example.com", port=80), False),
+        (URI(host="example.com", port=443), False),
+        (URI(host="example.com", scheme="http", port=80), False),
+        (URI(host="001:db8:3333:4444:5555:6666:7777:8888"), True),
+        (URI(host="001:db8:3333:4444:5555:6666:7777:8888", port=80), True),
+        (URI(host="001:db8:3333:4444:5555:6666:7777:8888", port=443), True),
+        (
+            URI(host="001:db8:3333:4444:5555:6666:7777:8888", scheme="http", port=80),
+            True,
+        ),
+        (URI(host="::"), True),
+        (URI(host="2001:db8::"), True),
+    ],
+)
+def test_is_valid_ipv6(input_uri: URI, expected_is_valid_ipv6: bool) -> None:
+    assert input_uri.is_host_valid_ipv6_endpoint_uri == expected_is_valid_ipv6
+
+
+def test_uri_with_unsafe_characters() -> None:
+    with pytest.raises(SmithyHTTPException):
+        URI(host="example.com\t")
+    with pytest.raises(SmithyHTTPException):
+        URI(host="example.com", path="\tpath\n")
+    with pytest.raises(SmithyHTTPException):
+        URI(host="example.com", query="foo=ba\r")
+    with pytest.raises(SmithyHTTPException):
+        URI(host="example.com", fragment="frag\r")
+    with pytest.raises(SmithyHTTPException):
+        URI(host="example.com", username="user\n")
+    with pytest.raises(SmithyHTTPException):
+        URI(host="example.com", password="\tpass")
+    with pytest.raises(SmithyHTTPException):
+        URI(host="example.com", scheme="http\r")

@@ -12,11 +12,17 @@
 # language governing permissions and limitations under the License.
 from collections import Counter, OrderedDict
 from collections.abc import Iterable, Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from urllib.parse import urlunparse
 
 from .. import interfaces
+from ..exceptions import SmithyHTTPException
 from ..interfaces import FieldPosition as FieldPosition  # re-export
+from ..utils import _IPV6_ADDRZ_RE
+
+UNSAFE_URL_CHARS: frozenset[str] = frozenset("\t\r\n")
+
+DEFAULT_PORTS: dict[str, int] = {"http": 80, "https": 443}
 
 
 @dataclass(kw_only=True)
@@ -47,20 +53,48 @@ class URI(interfaces.URI):
     fragment: str | None = None
     """Part of the URI specification, but may not be transmitted by a client."""
 
+    def __post_init__(self) -> None:
+        """Validate URI components.
+
+        No field may contain any of the characters in :py:attr:`UNSAFE_URL_CHARS`.
+        """
+        for component in fields(self):
+            value = getattr(self, component.name)
+            if isinstance(value, str) and UNSAFE_URL_CHARS.intersection(value):
+                raise SmithyHTTPException(
+                    f"Invalid character in {component.name}: {value}"
+                )
+
     @property
     def netloc(self) -> str:
         """Construct netloc string in format ``{username}:{password}@{host}:{port}``
 
         ``username``, ``password``, and ``port`` are only included if set. ``password``
-        is ignored, unless ``username`` is also set.
+        is ignored, unless ``username`` is also set. Set ``port`` only if it is not the
+        default port for the given ``scheme``. Add square brackets around the host if it
+        is a valid IPv6 endpoint URI.
         """
         if self.username is not None:
             password = "" if self.password is None else f":{self.password}"
             userinfo = f"{self.username}{password}@"
         else:
             userinfo = ""
-        port = "" if self.port is None else f":{self.port}"
-        return f"{userinfo}{self.host}{port}"
+        port = (
+            ""
+            if self.port is None or DEFAULT_PORTS.get(self.scheme) == self.port
+            else f":{self.port}"
+        )
+        host = (
+            self.host if not self.is_host_valid_ipv6_endpoint_uri else f"[{self.host}]"
+        )
+        return f"{userinfo}{host}{port}"
+
+    @property
+    def is_host_valid_ipv6_endpoint_uri(self) -> bool:
+        """Return True if the host is a valid IPv6 endpoint URI."""
+        if UNSAFE_URL_CHARS.intersection(self.host):
+            return False
+        return _IPV6_ADDRZ_RE.match(f"[{self.host}]") is not None
 
     def build(self) -> str:
         """Construct URI string representation.

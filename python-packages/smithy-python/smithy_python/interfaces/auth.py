@@ -12,22 +12,34 @@
 # language governing permissions and limitations under the License.
 
 from dataclasses import dataclass
-from typing import Any, Protocol
+from typing import Any, Protocol, TypedDict, TypeVar
 
-from . import Request
-from .identity import Identity, IdentityResolver
+from .http import HTTPRequest
+from .identity import IdentityResolver, IdentityType, IdentityType_contra
 
 
-class HttpSigner(Protocol):
+class SigningProperties(TypedDict):
+    """Additional properties loaded to modify the signing process."""
+
+    ...
+
+
+SigningPropertiesType = TypeVar("SigningPropertiesType", bound=SigningProperties)
+SigningPropertiesType_contra = TypeVar(
+    "SigningPropertiesType_contra", bound=SigningProperties, contravariant=True
+)
+
+
+class HTTPSigner(Protocol[IdentityType_contra, SigningPropertiesType_contra]):
     """An interface for generating a signed HTTP request."""
 
-    def sign(
+    async def sign(
         self,
         *,
-        http_request: Request,
-        identity: Identity,
-        signing_properties: dict[str, Any],
-    ) -> Request:
+        http_request: HTTPRequest,
+        identity: IdentityType_contra,
+        signing_properties: SigningPropertiesType_contra,
+    ) -> HTTPRequest:
         """Sign the provided HTTP request, and generate a new HTTP request with the
         signature added.
 
@@ -42,7 +54,7 @@ class HttpSigner(Protocol):
 
 
 @dataclass(kw_only=True)
-class HttpAuthScheme(Protocol):
+class HTTPAuthScheme(Protocol[IdentityType, SigningPropertiesType]):
     """Represents a way a service will authenticate the user's identity."""
 
     # A unique identifier for the authentication scheme.
@@ -52,11 +64,11 @@ class HttpAuthScheme(Protocol):
     identity_resolver: IdentityResolver
 
     # An API that can be used to sign HTTP requests.
-    signer: HttpSigner
+    signer: HTTPSigner[IdentityType, SigningPropertiesType]
 
 
 @dataclass(kw_only=True)
-class HttpAuthOption:
+class HTTPAuthOption:
     """Auth scheme used for signing and identity resolution."""
 
     # The ID of the scheme to use. This string matches the one returned by
@@ -87,7 +99,7 @@ class AuthSchemeResolver(Protocol):
 
     def resolve_auth_scheme(
         self, *, auth_parameters: AuthSchemeParameters
-    ) -> list[HttpAuthOption]:
+    ) -> list[HTTPAuthOption]:
         """Resolve an ordered list of applicable auth schemes.
 
         :param auth_parameters: The parameters required for determining which
