@@ -1,3 +1,7 @@
+#
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+#
 # Python reserved words for members.
 
 # The following are reserved words that can't be used as identifiers at all.
