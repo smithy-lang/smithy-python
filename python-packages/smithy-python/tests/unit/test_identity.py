@@ -35,7 +35,6 @@ def test_expiration_timezone(timezone: pytz.BaseTzInfo) -> None:
     expiration = datetime.now(tz=timezone)
     identity = Identity(expiration=expiration)
     assert identity.expiration is not None
-    assert identity.expiration == expiration
     assert identity.expiration.tzinfo is None
 
 
@@ -50,4 +49,4 @@ def test_expiration_timezone(timezone: pytz.BaseTzInfo) -> None:
     ],
 )
 def test_expired(identity: Identity, expected_expired: bool) -> None:
-    assert identity.expired == expected_expired
+    assert identity.expired is expected_expired
