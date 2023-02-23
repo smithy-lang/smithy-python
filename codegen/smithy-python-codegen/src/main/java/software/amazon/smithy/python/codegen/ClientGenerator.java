@@ -233,7 +233,7 @@ final class ClientGenerator implements Runnable {
                             context_with_response = await self._handle_attempt(
                                 deserialize,
                                 interceptors,
-                                context_with_transport_request.copy(),
+                                deepcopy(context_with_transport_request),
                                 config,
                             )
 

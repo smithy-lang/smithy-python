@@ -1,4 +1,3 @@
-from copy import deepcopy
 from typing import Any, Generic, TypeVar
 
 Request = TypeVar("Request")
@@ -19,6 +18,7 @@ class InterceptorContext(
         response: Response | Exception,
         transport_request: TransportRequest,
         transport_response: TransportResponse,
+        properties: dict[str, Any] | None = None,
     ):
         """Initialize self.
 
@@ -31,12 +31,14 @@ class InterceptorContext(
             completed.
         :param transport_response: The transmitted response for the operation being
             invoked. This will only be available once transmission has completed.
+        :param properties: Untyped properties that will be made available to all hooks
+            called during an execution.
         """
         self._request = request
         self._response = response
         self._transport_request = transport_request
         self._transport_response = transport_response
-        self._properties: dict[str, Any] = {}
+        self._properties: dict[str, Any] = properties or {}
 
     @property
     def request(self) -> Request:
@@ -82,34 +84,6 @@ class InterceptorContext(
         hooks that are called for this execution.
         """
         return self._properties
-
-    # The static properties of this class are made 'read-only' like this to discourage
-    # people from trying to modify the context outside of the specific hooks where that
-    # is allowed.
-    def copy(
-        self,
-        *,
-        request: Request | None = None,
-        response: Response | Exception | None = None,
-        transport_request: TransportRequest | None = None,
-        transport_response: TransportResponse | None = None,
-    ) -> "InterceptorContext[Request, Response, TransportRequest, TransportResponse]":
-        """Copy the context object, optionally overriding certain properties."""
-        if transport_request is None:
-            transport_request = self._transport_request
-
-        if transport_response is None:
-            transport_response = self._transport_response
-
-        context = InterceptorContext(
-            request=request if request is not None else self._request,
-            response=response if response is not None else self._response,
-            transport_request=transport_request,
-            transport_response=transport_response,
-        )
-        # pylint: disable-next=protected-access
-        context._properties = deepcopy(self._properties)
-        return context
 
 
 class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse]):
