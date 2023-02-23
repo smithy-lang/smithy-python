@@ -99,9 +99,15 @@ class URI(interfaces.URI):
     def build(self) -> str:
         """Construct URI string representation.
 
-        Returns a string of the form
+        Strip bad characters from each component. Returns a string of the form
         ``{scheme}://{username}:{password}@{host}:{port}{path}?{query}#{fragment}``
         """
+        for component in fields(self):
+            value = getattr(self, component.name)
+            if isinstance(value, str):
+                for char in UNSAFE_URL_CHARS:
+                    value = value.replace(char, "")
+                setattr(self, component.name, value)
         components = (
             self.scheme,
             self.netloc,

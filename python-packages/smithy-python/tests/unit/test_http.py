@@ -13,7 +13,7 @@
 
 import pytest
 
-from smithy_python._private import URI, Field, Fields
+from smithy_python._private import UNSAFE_URL_CHARS, URI, Field, Fields
 from smithy_python._private.http import (
     HTTPRequest,
     HTTPResponse,
@@ -220,10 +220,17 @@ async def test_endpoint_provider_with_uri_object() -> None:
     ],
 )
 def test_is_valid_ipv6(input_uri: URI, expected_is_valid_ipv6: bool) -> None:
-    assert input_uri.is_host_valid_ipv6_endpoint_uri == expected_is_valid_ipv6
+    assert input_uri.is_host_valid_ipv6_endpoint_uri is expected_is_valid_ipv6
 
 
-def test_uri_with_unsafe_characters() -> None:
+def test_is_valid_ipv6_after_init() -> None:
+    uri = URI(host="001:db8:3333:4444:5555:6666:7777:8888")
+    assert uri.is_host_valid_ipv6_endpoint_uri is True
+    uri.host += "\t"
+    assert uri.is_host_valid_ipv6_endpoint_uri is False
+
+
+def test_uri_init_with_unsafe_characters() -> None:
     with pytest.raises(SmithyHTTPException):
         URI(host="example.com\t")
     with pytest.raises(SmithyHTTPException):
@@ -238,3 +245,31 @@ def test_uri_with_unsafe_characters() -> None:
         URI(host="example.com", password="\tpass")
     with pytest.raises(SmithyHTTPException):
         URI(host="example.com", scheme="http\r")
+
+
+def test_uri_build_with_unsafe_characters() -> None:
+    uri = URI(
+        host="example.com",
+        path="/path",
+        query="foo=bar",
+        fragment="frag",
+        scheme="http",
+        username="user",
+        password="pass",
+    )
+    assert uri.host is not None
+    uri.host += "\t"
+    assert uri.scheme is not None
+    uri.scheme += "\r"
+    assert uri.path is not None
+    uri.path += "\n"
+    assert uri.query is not None
+    uri.query += "\r"
+    assert uri.fragment is not None
+    uri.fragment += "\t"
+    assert uri.username is not None
+    uri.username += "\n"
+    assert uri.password is not None
+    uri.password += "\r"
+    for bad_char in UNSAFE_URL_CHARS:
+        assert bad_char not in uri.build()

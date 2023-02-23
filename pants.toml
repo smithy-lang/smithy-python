@@ -44,7 +44,8 @@ version = "mypy==1.0.0"
 lockfile = "lockfiles/mypy"
 interpreter_constraints = [">=3.11"]
 extra_type_stubs = [
-    "types-freezegun<1.2.0"
+    "types-freezegun<1.2.0",
+    "types-pytz<2023.0.0"
 ]
 
 [flake8]

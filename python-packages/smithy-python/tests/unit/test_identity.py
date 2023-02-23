@@ -31,9 +31,11 @@ from smithy_python._private.identity import Identity
         pytz.timezone("US/Central"),
     ],
 )
-def test_expiration_timezone(timezone) -> None:
+def test_expiration_timezone(timezone: pytz.BaseTzInfo) -> None:
     expiration = datetime.now(tz=timezone)
     identity = Identity(expiration=expiration)
+    assert identity.expiration is not None
+    assert identity.expiration == expiration
     assert identity.expiration.tzinfo is None
 
 
@@ -47,5 +49,5 @@ def test_expiration_timezone(timezone) -> None:
         (Identity(expiration=datetime(year=2020, month=12, day=31)), True),
     ],
 )
-def test_expired(identity, expected_expired) -> None:
+def test_expired(identity: Identity, expected_expired: bool) -> None:
     assert identity.expired == expected_expired
