@@ -69,6 +69,10 @@ public final class CodegenUtils {
 
     private CodegenUtils() {}
 
+    /**
+     * @param settings The client settings, used to account for module configuration.
+     * @return Returns the client's configuration object symbol.
+     */
     public static Symbol getConfigSymbol(PythonSettings settings) {
         return Symbol.builder()
                 .name("Config")
@@ -77,7 +81,11 @@ public final class CodegenUtils {
                 .build();
     }
 
-    static Symbol getPluginSymbol(PythonSettings settings) {
+    /**
+     * @param settings The client settings, used to account for module configuration.
+     * @return Returns the client's plugin type hint symbol.
+     */
+    public static Symbol getPluginSymbol(PythonSettings settings) {
         return Symbol.builder()
                 .name("Plugin")
                 .namespace(format("%s.config", settings.getModuleName()), ".")
@@ -85,6 +93,10 @@ public final class CodegenUtils {
                 .build();
     }
 
+    /**
+     * @param settings The client settings, used to account for module configuration.
+     * @return Returns the function that wraps and casts default values.
+     */
     static Symbol getDefaultWrapperFunction(PythonSettings settings) {
         return Symbol.builder()
                 .name("_default")
@@ -93,6 +105,10 @@ public final class CodegenUtils {
                 .build();
     }
 
+    /**
+     * @param settings The client settings, used to account for module configuration.
+     * @return Returns the symbol for the class that wraps default values.
+     */
     static Symbol getDefaultWrapperClass(PythonSettings settings) {
         return Symbol.builder()
                 .name("_DEFAULT")
@@ -101,6 +117,17 @@ public final class CodegenUtils {
                 .build();
     }
 
+    /**
+     * Gets the service error symbol.
+     *
+     * <p>This error is the top-level error for the client. Every error surfaced by
+     * the client MUST be a subclass of this so that customers can reliably catch all
+     * exceptions it raises. The client implementation will wrap any errors that aren't
+     * already subclasses.
+     *
+     * @param settings The client settings, used to account for module configuration.
+     * @return Returns the symbol for the client's error class.
+     */
     public static Symbol getServiceError(PythonSettings settings) {
         return Symbol.builder()
                 .name("ServiceError")
@@ -109,6 +136,15 @@ public final class CodegenUtils {
                 .build();
     }
 
+    /**
+     * Gets the service API error symbol.
+     *
+     * <p>This error is the parent class for all errors returned over the wire by the
+     * service, including unknown errors.
+     *
+     * @param settings The client settings, used to account for module configuration.
+     * @return Returns the symbol for the client's API error class.
+     */
     public static Symbol getApiError(PythonSettings settings) {
         return Symbol.builder()
                 .name("ApiError")
@@ -117,6 +153,15 @@ public final class CodegenUtils {
                 .build();
     }
 
+    /**
+     * Gets the unknown API error symbol.
+     *
+     * <p> This error is the parent class for all errors returned over the wire by
+     * the service which aren't in the model.
+     *
+     * @param settings The client settings, used to account for module configuration.
+     * @return Returns the symbol for unknown API errors.
+     */
     public static Symbol getUnknownApiError(PythonSettings settings) {
         return Symbol.builder()
                 .name("UnknownApiError")
@@ -125,6 +170,10 @@ public final class CodegenUtils {
                 .build();
     }
 
+    /**
+     * @param settings The client settings, used to account for module configuration.
+     * @return Returns the symbol for the client-specific endpoint resolver.
+     */
     static Symbol getEndpointResolver(PythonSettings settings) {
         return Symbol.builder()
                 .name("EndpointResolver")
@@ -133,6 +182,10 @@ public final class CodegenUtils {
                 .build();
     }
 
+    /**
+     * @param settings The client settings, used to account for module configuration.
+     * @return Returns the symbol for the client-specific endpoint parameters.
+     */
     static Symbol getEndpointParams(PythonSettings settings) {
         return Symbol.builder()
                 .name("EndpointParams")
@@ -141,6 +194,13 @@ public final class CodegenUtils {
                 .build();
     }
 
+    /**
+     * Determines whether a given member is probably the main "message" of an error shape.
+     *
+     * @param model The whole service model.
+     * @param shape The member to check.
+     * @return Returns whether the member is probably the error message.
+     */
     static boolean isErrorMessage(Model model, MemberShape shape) {
         return ERROR_MESSAGE_MEMBER_NAMES.contains(shape.getMemberName().toLowerCase(Locale.US))
                 && model.expectShape(shape.getContainer()).hasTrait(ErrorTrait.class);

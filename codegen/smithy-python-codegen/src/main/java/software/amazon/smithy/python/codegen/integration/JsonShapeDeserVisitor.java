@@ -49,6 +49,12 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
     private final GenerationContext context;
     private final PythonWriter writer;
 
+    /**
+     * Constructor.
+     *
+     * @param context The code generation context.
+     * @param writer The writer that will be written to. Used here only to add dependencies.
+     */
     public JsonShapeDeserVisitor(GenerationContext context, PythonWriter writer) {
         this.context = context;
         this.writer = writer;
@@ -180,6 +186,15 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
         return null;
     }
 
+    /**
+     * Generate deserializers for structure members.
+     *
+     * <p>The structure to deserialize must exist in the variable {@literal output}, and
+     * the results will be stored in a dict called {@literal kwargs}, which must also
+     * exist.
+     *
+     * @param members The members to generate serializers for.
+     */
     public void structureMembers(Collection<MemberShape> members) {
         var index = NullableIndex.of(context.model());
         var errorSymbol = CodegenUtils.getServiceError(context.settings());
@@ -212,6 +227,12 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
         }
     }
 
+    /**
+     * Gets the JSON key that will be used for a given member.
+     *
+     * @param member The member to inspect.
+     * @return The string key that will be used for the member.
+     */
     protected String locationName(MemberShape member) {
         return member.getMemberTrait(context.model(), JsonNameTrait.class)
             .map(StringTrait::getValue)

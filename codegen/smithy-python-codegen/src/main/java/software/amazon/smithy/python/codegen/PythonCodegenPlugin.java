@@ -19,10 +19,12 @@ import software.amazon.smithy.build.PluginContext;
 import software.amazon.smithy.build.SmithyBuildPlugin;
 import software.amazon.smithy.codegen.core.directed.CodegenDirector;
 import software.amazon.smithy.python.codegen.integration.PythonIntegration;
+import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
  * Plugin to trigger Python code generation.
  */
+@SmithyUnstableApi
 public final class PythonCodegenPlugin implements SmithyBuildPlugin {
     @Override
     public String getName() {

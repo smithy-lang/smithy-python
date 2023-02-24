@@ -16,11 +16,13 @@
 package software.amazon.smithy.python.codegen.integration;
 
 import java.util.List;
+import software.amazon.smithy.utils.SmithyInternalApi;
 
 /**
  * Integration that registers {@link RestJsonProtocolGenerator}.
  */
-public class RestJsonIntegration implements PythonIntegration {
+@SmithyInternalApi
+public final class RestJsonIntegration implements PythonIntegration {
     @Override
     public List<ProtocolGenerator> getProtocolGenerators() {
         return List.of(new RestJsonProtocolGenerator());

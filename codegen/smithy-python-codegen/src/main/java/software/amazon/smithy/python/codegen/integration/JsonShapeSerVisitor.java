@@ -35,23 +35,34 @@ import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonWriter;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
+import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
  * Visitor to generate serialization functions for shapes in JSON document bodies.
  */
+@SmithyUnstableApi
 public class JsonShapeSerVisitor extends ShapeVisitor.Default<Void> {
     private final GenerationContext context;
     private final PythonWriter writer;
 
     /**
-     * @param context The generation context.
-     * @param writer The writer being written to.
+     * Constructor.
+     *
+     * @param context The code generation context.
+     * @param writer The writer that will be written to. Used here only to add dependencies.
      */
     public JsonShapeSerVisitor(GenerationContext context, PythonWriter writer) {
         this.context = context;
         this.writer = writer;
     }
 
+    /**
+     * Gets the serialization visitor for a member.
+     *
+     * @param member The member to be serialized.
+     * @param dataSource The python variable / source containing the data to serialize.
+     * @return The serialization visitor for the member.
+     */
     protected DocumentMemberSerVisitor getMemberVisitor(MemberShape member, String dataSource) {
         return new JsonMemberSerVisitor(context, writer, member, dataSource, Format.EPOCH_SECONDS);
     }
@@ -176,6 +187,12 @@ public class JsonShapeSerVisitor extends ShapeVisitor.Default<Void> {
         }
     }
 
+    /**
+     * Gets the JSON key that will be used for a given member.
+     *
+     * @param member The member to inspect.
+     * @return The string key that will be used for the member.
+     */
     protected String locationName(MemberShape member) {
         return member.getMemberTrait(context.model(), JsonNameTrait.class)
             .map(StringTrait::getValue)

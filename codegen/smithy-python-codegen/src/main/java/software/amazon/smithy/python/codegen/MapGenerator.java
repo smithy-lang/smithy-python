@@ -25,7 +25,7 @@ import software.amazon.smithy.model.traits.SparseTrait;
 /**
  * Generates private helper methods for maps.
  */
-public class MapGenerator implements Runnable {
+final class MapGenerator implements Runnable {
 
     private final Model model;
     private final SymbolProvider symbolProvider;

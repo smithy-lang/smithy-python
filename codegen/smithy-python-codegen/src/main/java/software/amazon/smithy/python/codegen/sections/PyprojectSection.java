@@ -18,6 +18,7 @@ package software.amazon.smithy.python.codegen.sections;
 import java.util.Map;
 import software.amazon.smithy.codegen.core.SymbolDependency;
 import software.amazon.smithy.utils.CodeSection;
+import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
  * This section controls the entire pyproject.toml
@@ -30,5 +31,6 @@ import software.amazon.smithy.utils.CodeSection;
  *                     to a mapping of the package name to {@link SymbolDependency}.
  *                     This contains all the dependencies for the generated client.
  */
+@SmithyUnstableApi
 public record PyprojectSection(Map<String, Map<String, SymbolDependency>> dependencies) implements CodeSection {
 }

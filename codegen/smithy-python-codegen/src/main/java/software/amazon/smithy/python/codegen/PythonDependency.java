@@ -19,10 +19,12 @@ import java.util.Collections;
 import java.util.List;
 import software.amazon.smithy.codegen.core.SymbolDependency;
 import software.amazon.smithy.codegen.core.SymbolDependencyContainer;
+import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
  * A record of a python package dependency.
  */
+@SmithyUnstableApi
 public record PythonDependency(
         String packageName, String version, Type type, boolean isLink
 ) implements SymbolDependencyContainer {

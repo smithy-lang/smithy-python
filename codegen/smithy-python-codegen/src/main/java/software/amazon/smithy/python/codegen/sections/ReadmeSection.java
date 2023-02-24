@@ -17,6 +17,7 @@ package software.amazon.smithy.python.codegen.sections;
 
 
 import software.amazon.smithy.utils.CodeSection;
+import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
  * This section controls the entire generated README.md
@@ -24,5 +25,6 @@ import software.amazon.smithy.utils.CodeSection;
  * <p>An integration may want to use this if they want to programmatically
  * overwrite the generated README.
  */
+@SmithyUnstableApi
 public record ReadmeSection() implements CodeSection {
 }

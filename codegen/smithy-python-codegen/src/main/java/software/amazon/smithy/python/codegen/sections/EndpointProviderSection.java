@@ -17,6 +17,7 @@ package software.amazon.smithy.python.codegen.sections;
 
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.utils.CodeSection;
+import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
  * This section is responsible for generating an HTTP endpoint provider.
@@ -31,6 +32,7 @@ import software.amazon.smithy.utils.CodeSection;
  * @param endpointResolverSymbol The symbol representing the endpoint provider.
  * @param endpointParamsSymbol The symbol representing the parameter bag required by the endpoint provider.
  */
+@SmithyUnstableApi
 public record EndpointProviderSection(
         Symbol endpointResolverSymbol, Symbol endpointParamsSymbol) implements CodeSection {
 }
