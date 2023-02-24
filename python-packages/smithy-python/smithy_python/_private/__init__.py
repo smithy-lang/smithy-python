@@ -72,28 +72,29 @@ class URI(interfaces.URI):
         ``username``, ``password``, and ``port`` are only included if set. ``password``
         is ignored, unless ``username`` is also set. Set ``port`` only if it is not the
         default port for the given ``scheme``. Add square brackets around the host if it
-        is a valid IPv6 endpoint URI.
+        is a valid IPv6 endpoint URI per :rfc:`3986#section-3.2.2`.
         """
         if self.username is not None:
             password = "" if self.password is None else f":{self.password}"
             userinfo = f"{self.username}{password}@"
         else:
             userinfo = ""
-        port = (
-            ""
-            if self.port is None or DEFAULT_PORTS.get(self.scheme) == self.port
-            else f":{self.port}"
-        )
-        host = (
-            self.host if not self.is_host_valid_ipv6_endpoint_uri else f"[{self.host}]"
-        )
+
+        if self.port is not None and DEFAULT_PORTS.get(self.scheme) != self.port:
+            port = f":{self.port}"
+        else:
+            port = ""
+
+        if self.is_host_valid_ipv6_endpoint_uri:
+            host = f"[{self.host}]"
+        else:
+            host = self.host
+
         return f"{userinfo}{host}{port}"
 
     @property
     def is_host_valid_ipv6_endpoint_uri(self) -> bool:
         """Return True if the host is a valid IPv6 endpoint URI."""
-        if UNSAFE_URL_CHARS.intersection(self.host):
-            return False
         return _IPV6_ADDRZ_RE.match(f"[{self.host}]") is not None
 
     def build(self) -> str:

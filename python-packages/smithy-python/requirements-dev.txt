@@ -4,4 +4,3 @@ mypy==1.0.0
 pytest<7.3
 pytest-asyncio<0.21.0
 pytest-cov<3.1
-pytz<2023.0.0

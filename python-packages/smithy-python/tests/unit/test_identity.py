@@ -11,41 +11,61 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import pytest
-import pytz
-from freezegun import freeze_time
 
 from smithy_python._private.identity import Identity
 
 
+def get_current_time() -> datetime:
+    return datetime(year=2023, month=1, day=1, tzinfo=timezone.utc)
+
+
 @pytest.mark.parametrize(
-    "timezone",
+    "time_zone",
     [
         None,
-        pytz.timezone("US/Eastern"),
-        pytz.timezone("US/Pacific"),
-        pytz.utc,
-        pytz.timezone("Europe/Paris"),
-        pytz.timezone("US/Central"),
+        timezone(timedelta(hours=3)),
+        timezone(timedelta(hours=-3)),
+        timezone.utc,
+        timezone(timedelta(hours=0)),
+        timezone(timedelta(hours=0, minutes=30)),
+        timezone(timedelta(hours=0, minutes=-30)),
     ],
 )
-def test_expiration_timezone(timezone: pytz.BaseTzInfo) -> None:
-    expiration = datetime.now(tz=timezone)
+def test_expiration_timezone(time_zone: timezone) -> None:
+    expiration = datetime.now(tz=time_zone)
     identity = Identity(expiration=expiration)
     assert identity.expiration is not None
-    assert identity.expiration.tzinfo is None
+    assert identity.expiration.tzinfo == timezone.utc
 
 
-@freeze_time("2021-01-01 00:00:01")
 @pytest.mark.parametrize(
     "identity, expected_expired",
     [
-        (Identity(expiration=datetime(year=2021, month=1, day=1)), True),
+        (
+            Identity(
+                expiration=datetime(year=2023, month=1, day=1, tzinfo=timezone.utc),
+                get_current_time=get_current_time,
+            ),
+            True,
+        ),
         (Identity(), False),
-        (Identity(expiration=datetime(year=2021, month=1, day=2)), False),
-        (Identity(expiration=datetime(year=2020, month=12, day=31)), True),
+        (
+            Identity(
+                expiration=datetime(year=2023, month=1, day=2, tzinfo=timezone.utc),
+                get_current_time=get_current_time,
+            ),
+            False,
+        ),
+        (
+            Identity(
+                expiration=datetime(year=2022, month=12, day=31, tzinfo=timezone.utc),
+                get_current_time=get_current_time,
+            ),
+            True,
+        ),
     ],
 )
 def test_expired(identity: Identity, expected_expired: bool) -> None:
