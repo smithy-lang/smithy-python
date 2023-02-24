@@ -46,6 +46,7 @@ import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonWriter;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
+import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
  * Visitor to serialize member values for aggregate types into document bodies.
@@ -62,6 +63,7 @@ import software.amazon.smithy.python.codegen.SmithyPythonDependency;
  *   <li>All other types: unmodified.</li>
  * </ul>
  */
+@SmithyUnstableApi
 public class DocumentMemberSerVisitor implements ShapeVisitor<String> {
     private final GenerationContext context;
     private final PythonWriter writer;

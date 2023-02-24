@@ -24,11 +24,13 @@ import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.ShapeId;
+import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
  * Settings used by {@link PythonCodegenPlugin}.
  * TODO: make this immutable
  */
+@SmithyUnstableApi
 public final class PythonSettings {
 
     private static final String SERVICE = "service";

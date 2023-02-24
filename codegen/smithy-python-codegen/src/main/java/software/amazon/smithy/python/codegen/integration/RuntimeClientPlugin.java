@@ -54,6 +54,9 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
         this.pythonPlugin = builder.pythonPlugin;
     }
 
+    /**
+     * Predicate that tests whether a plugin should be applied to an individual operation.
+     */
     @FunctionalInterface
     public interface OperationPredicate {
         /**

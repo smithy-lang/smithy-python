@@ -97,6 +97,14 @@ public final class HttpProtocolTestGenerator implements Runnable {
     private final GenerationContext context;
     private final BiPredicate<Shape, HttpMessageTestCase> testFilter;
 
+    /**
+     * Constructor.
+     *
+     * @param context The code generation context.
+     * @param protocol The protocol whose tests should be generated.
+     * @param writer The writer to write to.
+     * @param testFilter A filter that indicates tests which are expected to fail.
+     */
     public HttpProtocolTestGenerator(
             GenerationContext context,
             ShapeId protocol,
@@ -112,14 +120,6 @@ public final class HttpProtocolTestGenerator implements Runnable {
         this.testFilter = testFilter;
 
         writer.putFormatter('J', new JavaToPythonFormatter());
-    }
-
-    public HttpProtocolTestGenerator(
-        GenerationContext context,
-        ShapeId protocol,
-        PythonWriter writer
-    ) {
-        this(context, protocol, writer, (shape, testCase) -> false);
     }
 
     /**

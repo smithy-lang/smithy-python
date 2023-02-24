@@ -18,10 +18,12 @@ package software.amazon.smithy.python.codegen;
 import java.util.List;
 import software.amazon.smithy.codegen.core.SymbolDependency;
 import software.amazon.smithy.python.codegen.PythonDependency.Type;
+import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
  * Dependencies used in the smithy python generator.
  */
+@SmithyUnstableApi
 public final class SmithyPythonDependency {
 
     /**

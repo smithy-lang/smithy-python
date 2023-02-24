@@ -24,6 +24,7 @@ import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonWriter;
 import software.amazon.smithy.utils.SetUtils;
+import software.amazon.smithy.utils.SmithyUnstableApi;
 
 
 /**
@@ -32,6 +33,7 @@ import software.amazon.smithy.utils.SetUtils;
  * <p>This does not delegate to serializers for lists or maps that would return them
  * unchanged. A list of booleans, for example, will never need any serialization changes.
  */
+@SmithyUnstableApi
 public class JsonMemberSerVisitor extends DocumentMemberSerVisitor {
 
     private static final Set<ShapeType> NOOP_TARGETS = SetUtils.of(
