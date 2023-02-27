@@ -14,12 +14,9 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
+from freezegun import freeze_time
 
 from smithy_python._private.identity import Identity
-
-
-def get_current_time() -> datetime:
-    return datetime(year=2023, month=1, day=1, tzinfo=timezone.utc)
 
 
 @pytest.mark.parametrize(
@@ -47,7 +44,6 @@ def test_expiration_timezone(time_zone: timezone) -> None:
         (
             Identity(
                 expiration=datetime(year=2023, month=1, day=1, tzinfo=timezone.utc),
-                get_current_time=get_current_time,
             ),
             True,
         ),
@@ -55,18 +51,17 @@ def test_expiration_timezone(time_zone: timezone) -> None:
         (
             Identity(
                 expiration=datetime(year=2023, month=1, day=2, tzinfo=timezone.utc),
-                get_current_time=get_current_time,
             ),
             False,
         ),
         (
             Identity(
                 expiration=datetime(year=2022, month=12, day=31, tzinfo=timezone.utc),
-                get_current_time=get_current_time,
             ),
             True,
         ),
     ],
 )
-def test_expired(identity: Identity, expected_expired: bool) -> None:
-    assert identity.expired is expected_expired
+@freeze_time("2023-01-01")
+def test_is_expired(identity: Identity, expected_expired: bool) -> None:
+    assert identity.is_expired is expected_expired

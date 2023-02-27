@@ -284,3 +284,8 @@ def valid_ipv4_host_address(host: str) -> bool:
 # #########################
 # End validators.py
 # #########################
+
+
+def is_port_valid(port: int) -> bool:
+    """Determine if the given port is valid."""
+    return 0 <= port <= 65535

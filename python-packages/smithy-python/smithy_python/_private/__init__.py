@@ -10,19 +10,43 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+import re
 from collections import Counter, OrderedDict
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass, fields
+from enum import Enum
 from urllib.parse import urlunparse
 
 from .. import interfaces
 from ..exceptions import SmithyHTTPException
 from ..interfaces import FieldPosition as FieldPosition  # re-export
-from ..utils import _IPV6_ADDRZ_RE
+from . import abnf
 
-UNSAFE_URL_CHARS: frozenset[str] = frozenset("\t\r\n")
+USERINFO_MATCHER: re.Pattern[str] = re.compile(abnf.USERINFO_RE)
+COMPONENT_REGEX_MAP: dict[str, re.Pattern[str]] = {
+    "scheme": abnf.SCHEME_MATCHER,
+    "username": USERINFO_MATCHER,
+    "password": USERINFO_MATCHER,
+    "path": abnf.PATH_MATCHER,
+    "query": abnf.QUERY_MATCHER,
+    "fragment": abnf.FRAGMENT_MATCHER,
+}
 
-DEFAULT_PORTS: dict[str, int] = {"http": 80, "https": 443}
+
+class HostType(Enum):
+    """Enumeration of possible host types."""
+
+    IPv6 = "IPv6"
+    """Host is an IPv6 address."""
+
+    IPv4 = "IPv4"
+    """Host is an IPv4 address."""
+
+    IPvFUTURE = "IPvFUTURE"
+    """Host type is a future IP address."""
+
+    DOMAIN = "DOMAIN"
+    """Host type is a domain."""
 
 
 @dataclass(kw_only=True)
@@ -54,16 +78,32 @@ class URI(interfaces.URI):
     """Part of the URI specification, but may not be transmitted by a client."""
 
     def __post_init__(self) -> None:
+        self._validate_fields()
+
+    def _validate_fields(self) -> None:
         """Validate URI components.
 
         No field may contain any of the characters in :py:attr:`UNSAFE_URL_CHARS`.
         """
         for component in fields(self):
             value = getattr(self, component.name)
-            if isinstance(value, str) and UNSAFE_URL_CHARS.intersection(value):
+            regexp = COMPONENT_REGEX_MAP.get(component.name)
+            if (
+                isinstance(value, str)
+                and regexp is not None
+                and not regexp.match(value)
+            ):
                 raise SmithyHTTPException(
-                    f"Invalid character in {component.name}: {value}"
+                    f"Invalid character in {component.name}: {repr(value)}"
                 )
+            elif component.name == "port":
+                if value is not None and not abnf.is_port_valid(value):
+                    raise SmithyHTTPException(f"Invalid port number: {value}")
+            elif component.name == "host":
+                if not abnf.HOST_MATCHER.match(value) and not abnf.IPv6_MATCHER.match(
+                    f"[{value}]"
+                ):
+                    raise SmithyHTTPException(f"Invalid host: {value}")
 
     @property
     def netloc(self) -> str:
@@ -80,12 +120,12 @@ class URI(interfaces.URI):
         else:
             userinfo = ""
 
-        if self.port is not None and DEFAULT_PORTS.get(self.scheme) != self.port:
+        if self.port is not None:
             port = f":{self.port}"
         else:
             port = ""
 
-        if self.is_host_valid_ipv6_endpoint_uri:
+        if self.host_type == HostType.IPv6:
             host = f"[{self.host}]"
         else:
             host = self.host
@@ -93,9 +133,18 @@ class URI(interfaces.URI):
         return f"{userinfo}{host}{port}"
 
     @property
-    def is_host_valid_ipv6_endpoint_uri(self) -> bool:
-        """Return True if the host is a valid IPv6 endpoint URI."""
-        return _IPV6_ADDRZ_RE.match(f"[{self.host}]") is not None
+    def host_type(self) -> HostType:
+        """Return the type of host."""
+        if abnf.IPv6_MATCHER.match(f"[{self.host}]"):
+            return HostType.IPv6
+        if abnf.IPv4_MATCHER.match(self.host):
+            return HostType.IPv4
+        ip_future_matcher = re.compile(abnf.IPv_FUTURE_RE)
+        if ip_future_matcher.match(self.host):
+            return HostType.IPvFUTURE
+        if abnf.HOST_MATCHER.match(self.host):
+            return HostType.DOMAIN
+        raise SmithyHTTPException(f"Could not find host type for host: {self.host}")
 
     def build(self) -> str:
         """Construct URI string representation.
@@ -103,12 +152,7 @@ class URI(interfaces.URI):
         Strip bad characters from each component. Returns a string of the form
         ``{scheme}://{username}:{password}@{host}:{port}{path}?{query}#{fragment}``
         """
-        for component in fields(self):
-            value = getattr(self, component.name)
-            if isinstance(value, str):
-                for char in UNSAFE_URL_CHARS:
-                    value = value.replace(char, "")
-                setattr(self, component.name, value)
+        self._validate_fields()
         components = (
             self.scheme,
             self.netloc,

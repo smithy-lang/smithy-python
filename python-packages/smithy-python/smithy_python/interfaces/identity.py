@@ -21,7 +21,7 @@ class Identity(Protocol):
     expiration: datetime | None = None
 
     @property
-    def expired(self) -> bool:
+    def is_expired(self) -> bool:
         """Whether the identity is expired."""
         ...
 

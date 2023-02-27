@@ -21,7 +21,7 @@ class AWSCredentialIdentity(Identity):
     def __init__(
         self,
         access_key_id: str,
-        secret_key_id: str,
+        secret_access_key: str,
         session_token: str | None = None,
         expiration: datetime | None = None,
     ) -> None:
@@ -29,17 +29,16 @@ class AWSCredentialIdentity(Identity):
 
         :param access_key_id: The access key ID. A unique identifier that AWS uses to
         authenticate a user or application.
-        :param secret_key_id: The secret key ID. A secret key that AWS uses
+        :param secret_key_id: The secret access key. A secret key that AWS uses
         authenticate programmatic access to AWS services along with the access key ID.
         :param session_token: The session token. Used to provide temporary, programmatic
-        access to AWS services. Typically it expires after 1 hour, after which it must
-        be regenerated.
+        access to AWS services.
         :param expiration: The expiration time of the credentials. If time zone is
         provided, it will be removed. The value must always be in UTC.
         """
         super().__init__(expiration)
         self._access_key_id: str = access_key_id
-        self._secret_key_id: str = secret_key_id
+        self._secret_access_key: str = secret_access_key
         self._session_token: str | None = session_token
 
     @property
@@ -47,8 +46,8 @@ class AWSCredentialIdentity(Identity):
         return self._access_key_id
 
     @property
-    def secret_key_id(self) -> str:
-        return self._secret_key_id
+    def secret_access_key(self) -> str:
+        return self._secret_access_key
 
     @property
     def session_token(self) -> str | None:

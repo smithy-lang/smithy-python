@@ -10,8 +10,7 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-from datetime import datetime
-from typing import Callable
+from datetime import datetime, timezone
 
 from ...interfaces import identity as identity_interface
 from ...utils import ensure_utc
@@ -21,7 +20,6 @@ class Identity(identity_interface.Identity):
     def __init__(
         self,
         expiration: datetime | None = None,
-        get_current_time: Callable[[], datetime] = datetime.utcnow,
     ) -> None:
         """Initialize an identity.
 
@@ -31,13 +29,10 @@ class Identity(identity_interface.Identity):
         if expiration is not None:
             expiration = ensure_utc(expiration)
         self.expiration: datetime | None = expiration
-        if get_current_time is None:
-            get_current_time = datetime.now
-        self.get_current_time = get_current_time
 
     @property
-    def expired(self) -> bool:
+    def is_expired(self) -> bool:
         """Whether the identity is expired."""
         if self.expiration is None:
             return False
-        return ensure_utc(self.get_current_time()) >= self.expiration
+        return datetime.now(tz=timezone.utc) >= self.expiration

@@ -20,43 +20,6 @@ from typing import Any, TypeVar, overload
 
 from .exceptions import ExpectationNotMetException
 
-# Vendoring IPv6 validation regex patterns from urllib3
-# using f-strings instead where applicable
-# https://github.com/urllib3/urllib3/blob/7e856c0/src/urllib3/util/url.py
-_IPV4_PAT: str = r"(?:[0-9]{1,3}\.){3}[0-9]{1,3}"
-_IPV4_RE: re.Pattern[str] = re.compile(f"^{_IPV4_PAT}$")
-_HEX_PAT: str = "[0-9A-Fa-f]{1,4}"
-_LS32_PAT: str = f"(?:{_HEX_PAT}:{_HEX_PAT}|{_IPV4_PAT})"
-_subs: dict[str, str] = {"hex": _HEX_PAT, "ls32": _LS32_PAT}
-_variations: list[str] = [
-    #                            6( h16 ":" ) ls32
-    "(?:%(hex)s:){6}%(ls32)s",
-    #                       "::" 5( h16 ":" ) ls32
-    "::(?:%(hex)s:){5}%(ls32)s",
-    # [               h16 ] "::" 4( h16 ":" ) ls32
-    "(?:%(hex)s)?::(?:%(hex)s:){4}%(ls32)s",
-    # [ *1( h16 ":" ) h16 ] "::" 3( h16 ":" ) ls32
-    "(?:(?:%(hex)s:)?%(hex)s)?::(?:%(hex)s:){3}%(ls32)s",
-    # [ *2( h16 ":" ) h16 ] "::" 2( h16 ":" ) ls32
-    "(?:(?:%(hex)s:){0,2}%(hex)s)?::(?:%(hex)s:){2}%(ls32)s",
-    # [ *3( h16 ":" ) h16 ] "::"    h16 ":"   ls32
-    "(?:(?:%(hex)s:){0,3}%(hex)s)?::%(hex)s:%(ls32)s",
-    # [ *4( h16 ":" ) h16 ] "::"              ls32
-    "(?:(?:%(hex)s:){0,4}%(hex)s)?::%(ls32)s",
-    # [ *5( h16 ":" ) h16 ] "::"              h16
-    "(?:(?:%(hex)s:){0,5}%(hex)s)?::%(hex)s",
-    # [ *6( h16 ":" ) h16 ] "::"
-    "(?:(?:%(hex)s:){0,6}%(hex)s)?::",
-]
-
-_UNRESERVED_PAT: str = (
-    r"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._!\-~"
-)
-_IPV6_PAT: str = f"(?:{'|'.join([x % _subs for x in _variations])})"
-_ZONE_ID_PAT: str = f"(?:%25|%)(?:[{_UNRESERVED_PAT}]|%[a-fA-F0-9]{{2}})+"
-_IPV6_ADDRZ_PAT: str = rf"\[{_IPV6_PAT}(?:{_ZONE_ID_PAT})?\]"
-_IPV6_ADDRZ_RE: re.Pattern[str] = re.compile(f"^{_IPV6_ADDRZ_PAT}$")
-
 RFC3339 = "%Y-%m-%dT%H:%M:%SZ"
 # Same as RFC3339, but with microsecond precision.
 RFC3339_MICRO = "%Y-%m-%dT%H:%M:%S.%fZ"
@@ -293,11 +256,14 @@ def remove_dot_segments(path: str) -> str:
     """
     output = []
     for segment in path.split("/"):
-        if segment and segment != ".":
-            if segment != "..":
-                output.append(segment)
-            elif output:
-                output.pop()
-    start = "/" if path.startswith("/") and path else ""
-    end = "/" if path.endswith("/") and output else ""
-    return f"{start}{'/'.join(output)}{end}"
+        if segment == ".":
+            continue
+        elif segment != "..":
+            output.append(segment)
+        elif output:
+            output.pop()
+    if path and path.startswith("/") and (not output or output[0]):
+        output.insert(0, "")
+    if output and path.endswith(("/.", "/..")):
+        output.append("")
+    return "/".join(output)
