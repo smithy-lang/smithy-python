@@ -1,5 +1,6 @@
 [GLOBAL]
 pants_version = "2.14.0"
+pants_ignore = "/python-packages/smithy-python/smithy_python/_private/rfc3986"
 
 backend_packages = [
     "pants.backend.python",

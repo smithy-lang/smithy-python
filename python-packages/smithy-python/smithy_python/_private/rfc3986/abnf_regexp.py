@@ -1,23 +1,17 @@
-# Copyright 2014 Ian Cordasco, Rackspace
-
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at
-
+#
 #    http://www.apache.org/licenses/LICENSE-2.0
-
+#
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
-# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
+# implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-"""Module vended from rfc3986 ``abnf_rexexp.py``, ``misc.py`` and ``validators.py``."""
-import re
-
-# #########################
-# Start abnf_regexp.py
-# #########################
+"""Module for the regular expressions crafted from ABNF."""
+import sys
 
 # https://tools.ietf.org/html/rfc3986#page-13
 GEN_DELIMS = GENERIC_DELIMITERS = ":/?#[]@"
@@ -115,7 +109,9 @@ variations = [
 
 IPv6_RE = "(({})|({})|({})|({})|({})|({})|({})|({})|({}))".format(*variations)
 
-IPv_FUTURE_RE = r"v[0-9A-Fa-f]+\.[%s]+" % (UNRESERVED_RE + SUB_DELIMITERS_RE + ":")
+IPv_FUTURE_RE = r"v[0-9A-Fa-f]+\.[%s]+" % (
+    UNRESERVED_RE + SUB_DELIMITERS_RE + ":"
+)
 
 # RFC 6874 Zone ID ABNF
 ZONE_ID = "(?:[" + UNRESERVED_RE + "]|" + PCT_ENCODED + ")+"
@@ -134,7 +130,9 @@ HOST_RE = HOST_PATTERN = "({}|{}|{})".format(
     IPv4_RE,
     IP_LITERAL_RE,
 )
-USERINFO_RE = "^([" + UNRESERVED_RE + SUB_DELIMITERS_RE + ":]|%s)+" % (PCT_ENCODED)
+USERINFO_RE = (
+    "^([" + UNRESERVED_RE + SUB_DELIMITERS_RE + ":]|%s)+" % (PCT_ENCODED)
+)
 PORT_RE = "[0-9]{1,5}"
 
 # ####################
@@ -191,96 +189,87 @@ HIER_PART_RE = "(//{}{}|{}|{}|{})".format(
     PATH_EMPTY,
 )
 
-# #########################
-# End abnf_regexp.py
-# #########################
+# ###############
+# IRIs / RFC 3987
+# ###############
 
+# Only wide-unicode gets the high-ranges of UCSCHAR
+if sys.maxunicode > 0xFFFF:  # pragma: no cover
+    IPRIVATE = "\uE000-\uF8FF\U000F0000-\U000FFFFD\U00100000-\U0010FFFD"
+    UCSCHAR_RE = (
+        "\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF"
+        "\U00010000-\U0001FFFD\U00020000-\U0002FFFD"
+        "\U00030000-\U0003FFFD\U00040000-\U0004FFFD"
+        "\U00050000-\U0005FFFD\U00060000-\U0006FFFD"
+        "\U00070000-\U0007FFFD\U00080000-\U0008FFFD"
+        "\U00090000-\U0009FFFD\U000A0000-\U000AFFFD"
+        "\U000B0000-\U000BFFFD\U000C0000-\U000CFFFD"
+        "\U000D0000-\U000DFFFD\U000E1000-\U000EFFFD"
+    )
+else:  # pragma: no cover
+    IPRIVATE = "\uE000-\uF8FF"
+    UCSCHAR_RE = "\u00A0-\uD7FF\uF900-\uFDCF\uFDF0-\uFFEF"
 
-# #########################
-# Start misc.py
-# #########################
+IUNRESERVED_RE = "A-Za-z0-9\\._~\\-" + UCSCHAR_RE
+IPCHAR = "([" + IUNRESERVED_RE + SUB_DELIMITERS_RE + ":@]|%s)" % PCT_ENCODED
 
-# These are enumerated for the named tuple used as a superclass of
-# URIReference
-URI_COMPONENTS = ["scheme", "authority", "path", "query", "fragment"]
-
-important_characters = {
-    "generic_delimiters": GENERIC_DELIMITERS,
-    "sub_delimiters": SUB_DELIMITERS,
-    # We need to escape the '*' in this case
-    "re_sub_delimiters": SUB_DELIMITERS_RE,
-    "unreserved_chars": UNRESERVED_CHARS,
-    # We need to escape the '-' in this case:
-    "re_unreserved": UNRESERVED_RE,
+isegments = {
+    "isegment": IPCHAR + "*",
+    # Non-zero length segment
+    "isegment-nz": IPCHAR + "+",
+    # Non-zero length segment without ":"
+    "isegment-nz-nc": IPCHAR.replace(":", "") + "+",
 }
 
-URI_MATCHER = re.compile(URL_PARSING_RE)
-
-SUBAUTHORITY_MATCHER = re.compile(
-    (
-        "^(?:(?P<userinfo>{})@)?"  # userinfo
-        "(?P<host>{})"  # host
-        ":?(?P<port>{})?$"  # port
-    ).format(USERINFO_RE, HOST_PATTERN, PORT_RE)
+IPATH_ROOTLESS = "%(isegment-nz)s(/%(isegment)s)*" % isegments
+IPATH_NOSCHEME = "%(isegment-nz-nc)s(/%(isegment)s)*" % isegments
+IPATH_ABSOLUTE = "/(?:%s)?" % IPATH_ROOTLESS
+IPATH_ABEMPTY = "(?:/%(isegment)s)*" % isegments
+IPATH_RE = "^(?:{}|{}|{}|{}|{})$".format(
+    IPATH_ABEMPTY,
+    IPATH_ABSOLUTE,
+    IPATH_NOSCHEME,
+    IPATH_ROOTLESS,
+    PATH_EMPTY,
 )
 
-HOST_MATCHER = re.compile("^" + HOST_RE + "$")
-IPv4_MATCHER = re.compile("^" + IPv4_RE + "$")
-IPv6_MATCHER = re.compile(r"^\[" + IPv6_ADDRZ_RFC4007_RE + r"\]$")
-
-# Used by host validator
-IPv6_NO_RFC4007_MATCHER = re.compile(r"^\[%s\]$" % (IPv6_ADDRZ_RE))
-
-# Matcher used to validate path components
-PATH_MATCHER = re.compile(PATH_RE)
-
-
-# ##################################
-# Query and Fragment Matcher Section
-# ##################################
-
-QUERY_MATCHER = re.compile(QUERY_RE)
-
-FRAGMENT_MATCHER = QUERY_MATCHER
-
-# Scheme validation, see: http://tools.ietf.org/html/rfc3986#section-3.1
-SCHEME_MATCHER = re.compile(f"^{SCHEME_RE}$")
-
-RELATIVE_REF_MATCHER = re.compile(
-    r"^%s(\?%s)?(#%s)?$"
-    % (
-        RELATIVE_PART_RE,
-        QUERY_RE,
-        FRAGMENT_RE,
-    )
+IREGULAR_NAME_RE = IREG_NAME = "(?:{}|[{}])*".format(
+    "%[0-9A-Fa-f]{2}", SUB_DELIMITERS_RE + IUNRESERVED_RE
 )
 
-# See http://tools.ietf.org/html/rfc3986#section-4.3
-ABSOLUTE_URI_MATCHER = re.compile(
-    r"^%s:%s(\?%s)?$"
-    % (
-        COMPONENT_PATTERN_DICT["scheme"],
-        HIER_PART_RE,
-        QUERY_RE[1:-1],
-    )
+IHOST_RE = IHOST_PATTERN = "({}|{}|{})".format(
+    IREG_NAME,
+    IPv4_RE,
+    IP_LITERAL_RE,
 )
-# #########################
-# End misc.py
-# #########################
 
+IUSERINFO_RE = (
+    "^(?:[" + IUNRESERVED_RE + SUB_DELIMITERS_RE + ":]|%s)+" % (PCT_ENCODED)
+)
 
-# #########################
-# Start validators.py
-# #########################
+IFRAGMENT_RE = (
+    "^(?:[/?:@" + IUNRESERVED_RE + SUB_DELIMITERS_RE + "]|%s)*$" % PCT_ENCODED
+)
+IQUERY_RE = (
+    "^(?:[/?:@"
+    + IUNRESERVED_RE
+    + SUB_DELIMITERS_RE
+    + IPRIVATE
+    + "]|%s)*$" % PCT_ENCODED
+)
 
+IRELATIVE_PART_RE = "(//{}{}|{}|{}|{})".format(
+    COMPONENT_PATTERN_DICT["authority"],
+    IPATH_ABEMPTY,
+    IPATH_ABSOLUTE,
+    IPATH_NOSCHEME,
+    PATH_EMPTY,
+)
 
-def valid_ipv4_host_address(host: str) -> bool:
-    """Determine if the given host is a valid IPv4 address."""
-    # If the host exists, and it might be IPv4, check each byte in the
-    # address.
-    return all([0 <= int(byte, base=10) <= 255 for byte in host.split(".")])
-
-
-# #########################
-# End validators.py
-# #########################
+IHIER_PART_RE = "(//{}{}|{}|{}|{})".format(
+    COMPONENT_PATTERN_DICT["authority"],
+    IPATH_ABEMPTY,
+    IPATH_ABSOLUTE,
+    IPATH_ROOTLESS,
+    PATH_EMPTY,
+)
