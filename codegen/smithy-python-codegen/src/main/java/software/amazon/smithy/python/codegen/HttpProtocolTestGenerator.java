@@ -54,6 +54,7 @@ import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.UnionShape;
+import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.protocoltests.traits.AppliesTo;
 import software.amazon.smithy.protocoltests.traits.HttpMessageTestCase;
@@ -275,7 +276,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 (Runnable) () -> writeExpectedHeaders(testCase, operation),
                 toLowerCase(testCase.getForbidHeaders()),
                 toLowerCase(testCase.getRequireHeaders()),
-                writer.consumer(w -> writeBodyComparison(testCase, w))
+                writer.consumer(w -> writeRequestBodyComparison(testCase, w))
             );
         });
     }
@@ -396,26 +397,30 @@ public final class HttpProtocolTestGenerator implements Runnable {
         return value;
     }
 
-    private void writeBodyComparison(HttpMessageTestCase testCase, PythonWriter writer) {
+    private void writeRequestBodyComparison(HttpMessageTestCase testCase, PythonWriter writer) {
         if (testCase.getBody().isEmpty()) {
             return;
         }
-        var contentType = testCase.getBodyMediaType().orElse("application/octet-stream");
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
         writer.addImport("smithy_python.interfaces.blobs", "AsyncBytesReader");
         writer.write("actual_body_content = await AsyncBytesReader(actual.body).read()");
+        writer.write("expected_body_content = b$S", testCase.getBody().get());
+        compareMediaBlob(testCase, writer);
+    }
+
+    private void compareMediaBlob(HttpMessageTestCase testCase, PythonWriter writer) {
+        var contentType = testCase.getBodyMediaType().orElse("application/octet-stream");
         if (contentType.equals("application/json") || contentType.endsWith("+json")) {
             writer.addStdlibImport("json", "loads", "json_loads");
             writer.write("""
                 actual_body = json_loads(actual_body_content) if actual_body_content else ""
-                expected_body = json_loads(b$S)
+                expected_body = json_loads(expected_body_content)
                 assert actual_body == expected_body
-                """, testCase.getBody().get());
+
+                """);
             return;
         }
-        writer.write("""
-            assert actual_body_content == b$S
-            """, testCase.getBody().get());
+        writer.write("assert actual_body_content == expected_body_content\n");
     }
 
     // See also: https://smithy.io/2.0/additional-specs/http-protocol-compliance-tests.html#httpresponsetests-trait
@@ -460,10 +465,11 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 else:
                     expected = $C
 
-                    assert actual == expected
+                    ${C|}
                 """,
                 context.symbolProvider().toSymbol(operation),
-                (Runnable) () -> testCase.getParams().accept(new ValueNodeVisitor(outputShape))
+                (Runnable) () -> testCase.getParams().accept(new ValueNodeVisitor(outputShape)),
+                (Runnable) () -> assertResponseEqual(testCase, operation)
             );
         });
     }
@@ -516,6 +522,43 @@ public final class HttpProtocolTestGenerator implements Runnable {
             );
             // TODO: Correctly assert the status code and other values
         });
+    }
+
+    private void assertResponseEqual(HttpMessageTestCase testCase, Shape operationOrError) {
+        var index = HttpBindingIndex.of(context.model());
+        var streamBinding = index.getResponseBindings(operationOrError, Location.PAYLOAD)
+            .stream()
+            .filter(binding -> binding.getMember().getMemberTrait(context.model(), StreamingTrait.class).isPresent())
+            .findAny();
+
+        if (streamBinding.isEmpty()) {
+            writer.write("assert actual == expected\n");
+            return;
+        }
+
+        StructureShape responseShape = operationOrError.asStructureShape().orElseGet(() -> {
+            var operation = operationOrError.asOperationShape().get();
+            return context.model().expectShape(operation.getOutputShape(), StructureShape.class);
+        });
+
+        var streamingMember = streamBinding.get().getMember();
+
+        for (MemberShape member : responseShape.members()) {
+            var memberName = context.symbolProvider().toMemberName(member);
+            if (member.equals(streamingMember)) {
+                writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+                writer.addImport("smithy_python.interfaces.blobs", "AsyncByteStream");
+                writer.addImport("smithy_python.interfaces.blobs", "AsyncBytesReader");
+                writer.write("""
+                    assert isinstance(actual.$1L, AsyncByteStream)
+                    actual_body_content = await actual.$1L.read()
+                    expected_body_content = await AsyncBytesReader(expected.$1L).read()
+                    """, memberName);
+                compareMediaBlob(testCase, writer);
+                continue;
+            }
+            writer.write("assert actual.$1L == expected.$1L\n", memberName);
+        }
     }
 
     // Only generate test cases when protocol matches the target protocol.
