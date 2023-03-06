@@ -2,9 +2,7 @@
 import warnings
 
 from . import exceptions as exc
-from . import misc
-from . import normalizers
-from . import validators
+from . import misc, normalizers, validators
 
 
 class URIMixin:

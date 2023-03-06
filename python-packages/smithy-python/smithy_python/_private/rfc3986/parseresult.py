@@ -14,11 +14,7 @@
 """Module containing the urlparse compatibility logic."""
 from collections import namedtuple
 
-from . import compat
-from . import exceptions
-from . import misc
-from . import normalizers
-from . import uri
+from . import compat, exceptions, misc, normalizers, uri
 
 __all__ = ("ParseResult", "ParseResultBytes")
 
@@ -37,9 +33,7 @@ class ParseResultMixin:
     def _generate_authority(self, attributes):
         # I swear I did not align the comparisons below. That's just how they
         # happened to align based on pep8 and attribute lengths.
-        userinfo, host, port = (
-            attributes[p] for p in ("userinfo", "host", "port")
-        )
+        userinfo, host, port = (attributes[p] for p in ("userinfo", "host", "port"))
         if self.userinfo != userinfo or self.host != host or self.port != port:
             if port:
                 port = f"{port}"
@@ -74,9 +68,7 @@ class ParseResultMixin:
         return self.query
 
 
-class ParseResult(
-    namedtuple("ParseResult", PARSED_COMPONENTS), ParseResultMixin
-):
+class ParseResult(namedtuple("ParseResult", PARSED_COMPONENTS), ParseResultMixin):
     """Implementation of urlparse compatibility class.
 
     This uses the URIReference logic to handle compatibility with the
@@ -230,9 +222,7 @@ class ParseResult(
                 ),
             )
         )
-        return ParseResultBytes(
-            uri_ref=self.reference, encoding=encoding, **attrs
-        )
+        return ParseResultBytes(uri_ref=self.reference, encoding=encoding, **attrs)
 
     def unsplit(self, use_idna=False):
         """Create a URI string from the components.

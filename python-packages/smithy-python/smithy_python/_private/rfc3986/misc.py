@@ -11,11 +11,10 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-Module containing compiled regular expressions and constants.
+"""Module containing compiled regular expressions and constants.
 
-This module contains important constants, patterns, and compiled regular
-expressions for parsing and validating URIs and their components.
+This module contains important constants, patterns, and compiled regular expressions for
+parsing and validating URIs and their components.
 """
 import re
 
@@ -52,9 +51,7 @@ SUBAUTHORITY_MATCHER = re.compile(
         "^(?:(?P<userinfo>{})@)?"  # userinfo
         "(?P<host>{})"  # host
         ":?(?P<port>{})?$"  # port
-    ).format(
-        abnf_regexp.USERINFO_RE, abnf_regexp.HOST_PATTERN, abnf_regexp.PORT_RE
-    )
+    ).format(abnf_regexp.USERINFO_RE, abnf_regexp.HOST_PATTERN, abnf_regexp.PORT_RE)
 )
 
 
@@ -110,9 +107,7 @@ ISUBAUTHORITY_MATCHER = re.compile(
         "^(?:(?P<userinfo>{})@)?"  # iuserinfo
         "(?P<host>{})"  # ihost
         ":?(?P<port>{})?$"  # port
-    ).format(
-        abnf_regexp.IUSERINFO_RE, abnf_regexp.IHOST_RE, abnf_regexp.PORT_RE
-    ),
+    ).format(abnf_regexp.IUSERINFO_RE, abnf_regexp.IHOST_RE, abnf_regexp.PORT_RE),
     re.UNICODE,
 )
 

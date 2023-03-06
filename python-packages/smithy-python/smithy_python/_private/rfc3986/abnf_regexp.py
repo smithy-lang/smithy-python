@@ -109,9 +109,7 @@ variations = [
 
 IPv6_RE = "(({})|({})|({})|({})|({})|({})|({})|({})|({}))".format(*variations)
 
-IPv_FUTURE_RE = r"v[0-9A-Fa-f]+\.[%s]+" % (
-    UNRESERVED_RE + SUB_DELIMITERS_RE + ":"
-)
+IPv_FUTURE_RE = r"v[0-9A-Fa-f]+\.[%s]+" % (UNRESERVED_RE + SUB_DELIMITERS_RE + ":")
 
 # RFC 6874 Zone ID ABNF
 ZONE_ID = "(?:[" + UNRESERVED_RE + "]|" + PCT_ENCODED + ")+"
@@ -130,9 +128,7 @@ HOST_RE = HOST_PATTERN = "({}|{}|{})".format(
     IPv4_RE,
     IP_LITERAL_RE,
 )
-USERINFO_RE = (
-    "^([" + UNRESERVED_RE + SUB_DELIMITERS_RE + ":]|%s)+" % (PCT_ENCODED)
-)
+USERINFO_RE = "^([" + UNRESERVED_RE + SUB_DELIMITERS_RE + ":]|%s)+" % (PCT_ENCODED)
 PORT_RE = "[0-9]{1,5}"
 
 # ####################
@@ -243,9 +239,7 @@ IHOST_RE = IHOST_PATTERN = "({}|{}|{})".format(
     IP_LITERAL_RE,
 )
 
-IUSERINFO_RE = (
-    "^(?:[" + IUNRESERVED_RE + SUB_DELIMITERS_RE + ":]|%s)+" % (PCT_ENCODED)
-)
+IUSERINFO_RE = "^(?:[" + IUNRESERVED_RE + SUB_DELIMITERS_RE + ":]|%s)+" % (PCT_ENCODED)
 
 IFRAGMENT_RE = (
     "^(?:[/?:@" + IUNRESERVED_RE + SUB_DELIMITERS_RE + "]|%s)*$" % PCT_ENCODED

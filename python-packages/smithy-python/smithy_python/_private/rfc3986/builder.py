@@ -12,10 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Module containing the logic for the URIBuilder object."""
-from . import compat
-from . import normalizers
-from . import uri
-from . import uri_reference
+from . import compat, normalizers, uri, uri_reference
 
 
 class URIBuilder:
@@ -26,7 +23,6 @@ class URIBuilder:
         This object should be instantiated by the user, but it's recommended
         that it is not provided with arguments. Instead, use the available
         method to populate the fields.
-
     """
 
     def __init__(
@@ -77,9 +73,9 @@ class URIBuilder:
     def from_uri(cls, reference):
         """Initialize the URI builder from another URI.
 
-        Takes the given URI reference and creates a new URI builder instance
-        populated with the values from the reference. If given a string it will
-        try to convert it to a reference before constructing the builder.
+        Takes the given URI reference and creates a new URI builder instance populated
+        with the values from the reference. If given a string it will try to convert it
+        to a reference before constructing the builder.
         """
         if not isinstance(reference, uri.URIReference):
             reference = uri_reference(reference)
@@ -104,7 +100,6 @@ class URIBuilder:
             >>> URIBuilder().add_scheme('HTTPS')
             URIBuilder(scheme='https', userinfo=None, host=None, port=None,
                     path=None, query=None, fragment=None)
-
         """
         scheme = normalizers.normalize_scheme(scheme)
         return URIBuilder(
@@ -158,7 +153,6 @@ class URIBuilder:
             >>> URIBuilder().add_host('google.com')
             URIBuilder(scheme=None, userinfo=None, host='google.com',
                     port=None, path=None, query=None, fragment=None)
-
         """
         return URIBuilder(
             scheme=self.scheme,
@@ -182,7 +176,6 @@ class URIBuilder:
             >>> URIBuilder().add_port(443)
             URIBuilder(scheme=None, userinfo=None, host=None, port='443',
                     path=None, query=None, fragment=None)
-
         """
         port_int = int(port)
         if port_int < 0:
@@ -221,7 +214,6 @@ class URIBuilder:
             >>> URIBuilder().add_path('/checkout.php')
             URIBuilder(scheme=None, userinfo=None, host=None, port=None,
                     path='/checkout.php', query=None, fragment=None)
-
         """
         if not path.startswith("/"):
             path = f"/{path}"
@@ -258,7 +250,6 @@ class URIBuilder:
             >>> URIBuilder(path="/users").extend_path("sigmavirus24")
             URIBuilder(scheme=None, userinfo=None, host=None, port=None,
                     path='/users/sigmavirus24', query=None, fragment=None)
-
         """
         existing_path = self.path or ""
         path = "{}/{}".format(existing_path.rstrip("/"), path.lstrip("/"))
@@ -277,7 +268,6 @@ class URIBuilder:
             >>> URIBuilder().add_query_from([('a', 'b c')])
             URIBuilder(scheme=None, userinfo=None, host=None, port=None,
                     path=None, query='a=b+c', fragment=None)
-
         """
         query = normalizers.normalize_query(compat.urlencode(query_items))
 
@@ -320,7 +310,6 @@ class URIBuilder:
             >>> URIBuilder().add_query('a=b&c=d')
             URIBuilder(scheme=None, userinfo=None, host=None, port=None,
                     path=None, query='a=b&c=d', fragment=None)
-
         """
         return URIBuilder(
             scheme=self.scheme,
@@ -340,7 +329,6 @@ class URIBuilder:
             >>> URIBuilder().add_fragment('section-2.6.1')
             URIBuilder(scheme=None, userinfo=None, host=None, port=None,
                     path=None, query=None, fragment='section-2.6.1')
-
         """
         return URIBuilder(
             scheme=self.scheme,
@@ -365,13 +353,10 @@ class URIBuilder:
             ...     ).add_path('sigmavirus24/rfc3986').add_credentials(
             ...     'sigmavirus24', 'not-re@l').finalize().unsplit()
             'https://sigmavirus24:not-re%40l@github.com/sigmavirus24/rfc3986'
-
         """
         return uri.URIReference(
             self.scheme,
-            normalizers.normalize_authority(
-                (self.userinfo, self.host, self.port)
-            ),
+            normalizers.normalize_authority((self.userinfo, self.host, self.port)),
             self.path,
             self.query,
             self.fragment,

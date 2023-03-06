@@ -14,8 +14,7 @@
 """Module with functions to normalize components."""
 import re
 
-from . import compat
-from . import misc
+from . import compat, misc
 
 
 def normalize_scheme(scheme):

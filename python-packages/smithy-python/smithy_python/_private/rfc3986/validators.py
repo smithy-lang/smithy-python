@@ -12,9 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Module containing the validation logic for rfc3986."""
-from . import exceptions
-from . import misc
-from . import normalizers
+from . import exceptions, misc, normalizers
 
 
 class Validator:
@@ -41,7 +39,6 @@ class Validator:
          rfc3986.exceptions.MissingComponentError: ('path was required but
          missing', URIReference(scheme=u'imap', authority=u'mail.google.com',
          path=None, query=None, fragment=None), ['path'])
-
     """
 
     COMPONENT_NAMES = frozenset(
@@ -159,9 +156,7 @@ class Validator:
         for component in components:
             if component not in self.COMPONENT_NAMES:
                 raise ValueError(f'"{component}" is not a valid component')
-        self.validated_components.update(
-            {component: True for component in components}
-        )
+        self.validated_components.update({component: True for component in components})
         return self
 
     def require_presence_of(self, *components):
@@ -182,9 +177,7 @@ class Validator:
         for component in components:
             if component not in self.COMPONENT_NAMES:
                 raise ValueError(f'"{component}" is not a valid component')
-        self.required_components.update(
-            {component: True for component in components}
-        )
+        self.required_components.update({component: True for component in components})
         return self
 
     def validate(self, uri):

@@ -11,21 +11,22 @@
 # implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""
-An implementation of semantics and validations described in RFC 3986.
+"""An implementation of semantics and validations described in RFC 3986.
 
 See http://rfc3986.readthedocs.io/ for detailed documentation.
 
 :copyright: (c) 2014 Rackspace
 :license: Apache v2.0, see LICENSE for details
 """
-from .api import iri_reference
-from .api import IRIReference
-from .api import is_valid_uri
-from .api import normalize_uri
-from .api import uri_reference
-from .api import URIReference
-from .api import urlparse
+from .api import (
+    IRIReference,
+    URIReference,
+    iri_reference,
+    is_valid_uri,
+    normalize_uri,
+    uri_reference,
+    urlparse,
+)
 from .parseresult import ParseResult
 
 __title__ = "rfc3986"

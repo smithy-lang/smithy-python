@@ -15,9 +15,7 @@
 # limitations under the License.
 from collections import namedtuple
 
-from . import compat
-from . import misc
-from . import normalizers
+from . import compat, misc, normalizers
 from ._mixin import URIMixin
 
 
@@ -81,9 +79,7 @@ class URIReference(namedtuple("URIReference", misc.URI_COMPONENTS), URIMixin):
 
     slots = ()
 
-    def __new__(
-        cls, scheme, authority, path, query, fragment, encoding="utf-8"
-    ):
+    def __new__(cls, scheme, authority, path, query, fragment, encoding="utf-8"):
         """Create a new URIReference."""
         ref = super().__new__(
             cls,
@@ -130,9 +126,7 @@ class URIReference(namedtuple("URIReference", misc.URI_COMPONENTS), URIMixin):
         # this method.
         return URIReference(
             normalizers.normalize_scheme(self.scheme or ""),
-            normalizers.normalize_authority(
-                (self.userinfo, self.host, self.port)
-            ),
+            normalizers.normalize_authority((self.userinfo, self.host, self.port)),
             normalizers.normalize_path(self.path or ""),
             normalizers.normalize_query(self.query),
             normalizers.normalize_fragment(self.fragment),

@@ -13,9 +13,7 @@ class InvalidAuthority(RFC3986Exception):
 
     def __init__(self, authority):
         """Initialize the exception with the invalid authority."""
-        super().__init__(
-            f"The authority ({compat.to_str(authority)}) is not valid."
-        )
+        super().__init__(f"The authority ({compat.to_str(authority)}) is not valid.")
 
 
 class InvalidPort(RFC3986Exception):
@@ -32,9 +30,7 @@ class ResolutionError(RFC3986Exception):
     def __init__(self, uri):
         """Initialize the error with the failed URI."""
         super().__init__(
-            "{} does not meet the requirements for resolution.".format(
-                uri.unsplit()
-            )
+            f"{uri.unsplit()} does not meet the requirements for resolution."
         )
 
 
@@ -90,9 +86,7 @@ class PasswordForbidden(ValidationError):
         """Initialize the error with the URI that failed validation."""
         unsplit = getattr(uri, "unsplit", lambda: uri)
         super().__init__(
-            '"{}" contained a password when validation forbade it'.format(
-                unsplit()
-            )
+            f'"{unsplit()}" contained a password when validation forbade it'
         )
         self.uri = uri
 
