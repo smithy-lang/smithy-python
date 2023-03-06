@@ -12,8 +12,8 @@
 # language governing permissions and limitations under the License.
 from datetime import datetime, timezone
 
-from ...interfaces import identity as identity_interface
-from ...utils import ensure_utc
+from ..interfaces import identity as identity_interface
+from ..utils import ensure_utc
 
 
 class Identity(identity_interface.Identity):

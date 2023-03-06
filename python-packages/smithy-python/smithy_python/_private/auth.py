@@ -11,11 +11,11 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-from ..._private.http import HTTPRequest
-from ...interfaces.auth import HTTPSigner as HTTPSignerInterface
-from ...interfaces.auth import SigningPropertiesType_contra
-from ...interfaces.http import HTTPRequest as HTTPRequestInterface
-from ...interfaces.identity import IdentityType_contra
+from ..interfaces.auth import HTTPSigner as HTTPSignerInterface
+from ..interfaces.auth import SigningPropertiesType_contra
+from ..interfaces.http import HTTPRequest as HTTPRequestInterface
+from ..interfaces.identity import IdentityType_contra
+from .http import HTTPRequest
 
 
 class HTTPSigner(

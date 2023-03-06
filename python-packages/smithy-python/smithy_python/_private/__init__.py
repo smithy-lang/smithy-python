@@ -23,6 +23,7 @@ from ..interfaces import FieldPosition as FieldPosition  # re-export
 from . import abnf
 
 USERINFO_MATCHER: re.Pattern[str] = re.compile(abnf.USERINFO_RE)
+IP_FUTURE_MATCHER: re.Pattern[str] = re.compile(abnf.IPv_FUTURE_RE)
 COMPONENT_REGEX_MAP: dict[str, re.Pattern[str]] = {
     "scheme": abnf.SCHEME_MATCHER,
     "username": USERINFO_MATCHER,
@@ -139,8 +140,7 @@ class URI(interfaces.URI):
             return HostType.IPv6
         if abnf.IPv4_MATCHER.match(self.host):
             return HostType.IPv4
-        ip_future_matcher = re.compile(abnf.IPv_FUTURE_RE)
-        if ip_future_matcher.match(self.host):
+        if IP_FUTURE_MATCHER.match(self.host):
             return HostType.IPvFUTURE
         if abnf.HOST_MATCHER.match(self.host):
             return HostType.DOMAIN

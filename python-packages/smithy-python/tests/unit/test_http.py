@@ -117,6 +117,7 @@ def test_uri_ipv6_host() -> None:
     assert uri.host == "::1"
     assert uri.netloc == "[::1]"
     assert uri.build() == "https://[::1]"
+    assert uri.host_type == HostType.IPv6
 
 
 def test_uri_escaped_path() -> None:

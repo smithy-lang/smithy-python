@@ -248,10 +248,13 @@ def serialize_epoch_seconds(given: datetime) -> float:
     return result
 
 
-def remove_dot_segments(path: str) -> str:
+def remove_dot_segments(path: str, remove_consecutive_slashes: bool = False) -> str:
     """Removes dot segments from a path per :rfc:`3986#section-5.2.4`.
 
+    Optionally removes consecutive slashes.
+
     :param path: The path to remove dot segments from.
+    :param remove_consecutive_slashes: Whether to remove consecutive slashes.
     :returns: The path with dot segments removed.
     """
     output = []
@@ -266,4 +269,7 @@ def remove_dot_segments(path: str) -> str:
         output.insert(0, "")
     if output and path.endswith(("/.", "/..")):
         output.append("")
-    return "/".join(output)
+    result = "/".join(output)
+    if remove_consecutive_slashes:
+        result = result.replace("//", "/")
+    return result
