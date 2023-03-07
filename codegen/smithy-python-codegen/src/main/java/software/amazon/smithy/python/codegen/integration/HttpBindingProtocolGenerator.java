@@ -1051,7 +1051,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
 
     /**
      * Given context and a source of data, generate an input value provider for the
-     * shape. This may useÏ native types or invoke complex type serializers to
+     * shape. This may use native types or invoke complex type serializers to
      * manipulate the dataSource into the proper input content.
      */
     private static class HttpMemberSerVisitor extends ShapeVisitor.Default<String> {

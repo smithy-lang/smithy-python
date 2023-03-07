@@ -49,7 +49,7 @@ public class PayloadDeserVisitor extends ShapeVisitor.Default<Void> {
     @Override
     protected Void getDefault(Shape shape) {
         throw new CodegenException(
-            "Shape type " + shape.getType() + " of shape " + shape + " is not a supported httpPayload."
+            "Shape " + shape + " of type " + shape.getType() + " is not supported as an httpPayload."
         );
     }
 
