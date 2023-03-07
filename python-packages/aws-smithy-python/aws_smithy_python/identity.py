@@ -29,7 +29,7 @@ class AWSCredentialIdentity(Identity):
 
         :param access_key_id: The access key ID. A unique identifier that AWS uses to
         authenticate a user or application.
-        :param secret_key_id: The secret access key. A secret key that AWS uses
+        :param secret_access_key: The secret access key. A secret key that AWS uses
         authenticate programmatic access to AWS services along with the access key ID.
         :param session_token: The session token. Used to provide temporary, programmatic
         access to AWS services.

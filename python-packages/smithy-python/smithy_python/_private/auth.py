@@ -28,4 +28,14 @@ class HTTPSigner(
         identity: IdentityType_contra,
         signing_properties: SigningPropertiesType_contra,
     ) -> HTTPRequest:
+        """Sign the provided HTTP request, and generate a new HTTP request with the
+        signature added.
+
+        :param http_request: The HTTP request to sign.
+
+        :param identity: The signing identity.
+
+        :param signing_properties: Additional properties loaded to modify the
+        signing process.
+        """
         raise NotImplementedError()

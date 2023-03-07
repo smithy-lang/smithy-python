@@ -95,23 +95,6 @@ def test_uri_without_port_number() -> None:
     assert uri.build() == "http://abc:def@test.aws.dev/my/path?foo=bar#frag"
 
 
-def test_uri_not_default_port_for_scheme() -> None:
-    uri = URI(
-        host="test.aws.dev",
-        path="/my/path",
-        scheme="http",
-        query="foo=bar",
-        port=8080,
-        username="abc",
-        password="def",
-        fragment="frag",
-    )
-    # port is included in netloc and built URI string if it is not the default
-    # port for the scheme
-    assert uri.netloc == "abc:def@test.aws.dev:8080"
-    assert uri.build() == "http://abc:def@test.aws.dev:8080/my/path?foo=bar#frag"
-
-
 def test_uri_ipv6_host() -> None:
     uri = URI(host="::1")
     assert uri.host == "::1"
@@ -204,6 +187,7 @@ async def test_endpoint_provider_with_uri_object() -> None:
         (URI(host="::"), HostType.IPv6),
         (URI(host="2001:db8::"), HostType.IPv6),
         (URI(host="192.168.1.1"), HostType.IPv4),
+        (URI(host="v3.foo$"), HostType.IPvFUTURE),
     ],
 )
 def test_host_type(input_uri: URI, host_type: HostType) -> None:

@@ -23,7 +23,7 @@ from ..interfaces import FieldPosition as FieldPosition  # re-export
 from . import abnf
 
 USERINFO_MATCHER: re.Pattern[str] = re.compile(abnf.USERINFO_RE)
-IP_FUTURE_MATCHER: re.Pattern[str] = re.compile(abnf.IPv_FUTURE_RE)
+IPv_FUTURE_MATCHER: re.Pattern[str] = re.compile(abnf.IPv_FUTURE_RE)
 COMPONENT_REGEX_MAP: dict[str, re.Pattern[str]] = {
     "scheme": abnf.SCHEME_MATCHER,
     "username": USERINFO_MATCHER,
@@ -84,7 +84,7 @@ class URI(interfaces.URI):
     def _validate_fields(self) -> None:
         """Validate URI components.
 
-        No field may contain any of the characters in :py:attr:`UNSAFE_URL_CHARS`.
+        Use regular expressions vended from ``rfc3986`` package for each component.
         """
         for component in fields(self):
             value = getattr(self, component.name)
@@ -97,23 +97,26 @@ class URI(interfaces.URI):
                 raise SmithyHTTPException(
                     f"Invalid character in {component.name}: {repr(value)}"
                 )
-            elif component.name == "port":
-                if value is not None and not abnf.is_port_valid(value):
-                    raise SmithyHTTPException(f"Invalid port number: {value}")
-            elif component.name == "host":
-                if not abnf.HOST_MATCHER.match(value) and not abnf.IPv6_MATCHER.match(
-                    f"[{value}]"
-                ):
-                    raise SmithyHTTPException(f"Invalid host: {value}")
+            elif (
+                component.name == "port"
+                and value is not None
+                and not abnf.is_port_valid(value)
+            ):
+                raise SmithyHTTPException(f"Invalid port number: {value}")
+            elif (
+                component.name == "host"
+                and not abnf.HOST_MATCHER.match(value)
+                and not abnf.IPv6_MATCHER.match(f"[{value}]")
+            ):
+                raise SmithyHTTPException(f"Invalid host: {value}")
 
     @property
     def netloc(self) -> str:
         """Construct netloc string in format ``{username}:{password}@{host}:{port}``
 
         ``username``, ``password``, and ``port`` are only included if set. ``password``
-        is ignored, unless ``username`` is also set. Set ``port`` only if it is not the
-        default port for the given ``scheme``. Add square brackets around the host if it
-        is a valid IPv6 endpoint URI per :rfc:`3986#section-3.2.2`.
+        is ignored, unless ``username`` is also set. Add square brackets around the host
+        if it is a valid IPv6 endpoint URI per :rfc:`3986#section-3.2.2`.
         """
         if self.username is not None:
             password = "" if self.password is None else f":{self.password}"
@@ -140,7 +143,7 @@ class URI(interfaces.URI):
             return HostType.IPv6
         if abnf.IPv4_MATCHER.match(self.host):
             return HostType.IPv4
-        if IP_FUTURE_MATCHER.match(self.host):
+        if IPv_FUTURE_MATCHER.match(self.host):
             return HostType.IPvFUTURE
         if abnf.HOST_MATCHER.match(self.host):
             return HostType.DOMAIN
@@ -149,7 +152,7 @@ class URI(interfaces.URI):
     def build(self) -> str:
         """Construct URI string representation.
 
-        Strip bad characters from each component. Returns a string of the form
+        Validate URI components. Returns a string of the form
         ``{scheme}://{username}:{password}@{host}:{port}{path}?{query}#{fragment}``
         """
         self._validate_fields()
