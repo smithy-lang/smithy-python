@@ -246,3 +246,9 @@ def test_uri_build_with_unsafe_characters(
     )
     with pytest.raises(SmithyHTTPException):
         uri.build()
+
+
+@pytest.mark.parametrize("port", [-500, 999999999])
+def test_invalid_port(port: int) -> None:
+    with pytest.raises(SmithyHTTPException):
+        URI(host="example.com", port=port)
