@@ -11,8 +11,6 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-from typing import Any
-
 import pytest
 
 from smithy_python._private import URI, Field, Fields, HostType
@@ -209,29 +207,12 @@ def test_host_type_after_init(host: str, initial_host_type: HostType) -> None:
         uri.host_type
 
 
-@pytest.mark.parametrize(
-    "uri_kwargs",
-    [
-        {"host": "example.com\t"},
-        {"host": "example.com", "path": "\tpa\nth"},
-        {"host": "example.com", "query": "foo\r=ba"},
-        {"host": "example.com", "fragment": "fr\rag"},
-        {"host": "example.com", "scheme": "ht\rtp"},
-    ],
-)
-# type must be ``Any`` to account for optional and ``int`` types in ``URI``.
-def test_uri_init_with_unsafe_characters(uri_kwargs: dict[str, Any]) -> None:
+def test_uri_init_with_unsafe_characters() -> None:
     with pytest.raises(SmithyHTTPException):
-        URI(**uri_kwargs)
+        URI(host="example.com\t")
 
 
-@pytest.mark.parametrize(
-    "component_to_modify, unsafe_characters",
-    [("host", "\t"), ("query", "\r"), ("fragment", "\t"), ("scheme", "\r")],
-)
-def test_uri_build_with_unsafe_characters(
-    component_to_modify: str, unsafe_characters: str
-) -> None:
+def test_uri_build_with_unsafe_characters() -> None:
     uri = URI(
         host="example.com",
         path="/path",
@@ -241,14 +222,6 @@ def test_uri_build_with_unsafe_characters(
         username="user",
         password="pass",
     )
-    setattr(
-        uri, component_to_modify, getattr(uri, component_to_modify) + unsafe_characters
-    )
+    uri.host += "\t"
     with pytest.raises(SmithyHTTPException):
         uri.build()
-
-
-@pytest.mark.parametrize("port", [-500, 999999999])
-def test_invalid_port(port: int) -> None:
-    with pytest.raises(SmithyHTTPException):
-        URI(host="example.com", port=port)

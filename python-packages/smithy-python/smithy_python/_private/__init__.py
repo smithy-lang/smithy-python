@@ -13,7 +13,7 @@
 import re
 from collections import Counter, OrderedDict
 from collections.abc import Iterable, Iterator
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from enum import Enum
 from urllib.parse import urlunparse
 
@@ -22,16 +22,7 @@ from ..exceptions import SmithyHTTPException
 from ..interfaces import FieldPosition as FieldPosition  # re-export
 from . import abnf
 
-USERINFO_MATCHER: re.Pattern[str] = re.compile(abnf.USERINFO_RE)
 IPv_FUTURE_MATCHER: re.Pattern[str] = re.compile(abnf.IPv_FUTURE_RE)
-COMPONENT_REGEX_MAP: dict[str, re.Pattern[str]] = {
-    "scheme": abnf.SCHEME_MATCHER,
-    "username": USERINFO_MATCHER,
-    "password": USERINFO_MATCHER,
-    "path": abnf.PATH_MATCHER,
-    "query": abnf.QUERY_MATCHER,
-    "fragment": abnf.FRAGMENT_MATCHER,
-}
 
 
 class HostType(Enum):
@@ -79,36 +70,17 @@ class URI(interfaces.URI):
     """Part of the URI specification, but may not be transmitted by a client."""
 
     def __post_init__(self) -> None:
-        self._validate_fields()
+        self._validate_host()
 
-    def _validate_fields(self) -> None:
-        """Validate URI components.
+    def _validate_host(self) -> None:
+        """Validate host component.
 
-        Use regular expressions vended from ``rfc3986`` package for each component.
+        Use regular expressions vended from ``rfc3986`` package.
         """
-        for component in fields(self):
-            value = getattr(self, component.name)
-            regexp = COMPONENT_REGEX_MAP.get(component.name)
-            if (
-                isinstance(value, str)
-                and regexp is not None
-                and not regexp.match(value)
-            ):
-                raise SmithyHTTPException(
-                    f"Invalid character in {component.name}: {repr(value)}"
-                )
-            elif (
-                component.name == "port"
-                and value is not None
-                and not abnf.is_port_valid(value)
-            ):
-                raise SmithyHTTPException(f"Invalid port number: {value}")
-            elif (
-                component.name == "host"
-                and not abnf.HOST_MATCHER.match(value)
-                and not abnf.IPv6_MATCHER.match(f"[{value}]")
-            ):
-                raise SmithyHTTPException(f"Invalid host: {value}")
+        if not abnf.HOST_MATCHER.match(self.host) and not abnf.IPv6_MATCHER.match(
+            f"[{self.host}]"
+        ):
+            raise SmithyHTTPException(f"Invalid host: {self.host}")
 
     @property
     def netloc(self) -> str:
@@ -152,10 +124,10 @@ class URI(interfaces.URI):
     def build(self) -> str:
         """Construct URI string representation.
 
-        Validate URI components. Returns a string of the form
+        Validate host. Returns a string of the form
         ``{scheme}://{username}:{password}@{host}:{port}{path}?{query}#{fragment}``
         """
-        self._validate_fields()
+        self._validate_host()
         components = (
             self.scheme,
             self.netloc,

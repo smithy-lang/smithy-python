@@ -12,64 +12,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Module vended from rfc3986 ``abnf_rexexp.py``, ``misc.py`` and ``validators.py``."""
+"""Module vended from rfc3986 ``abnf_rexexp.py`` and ``misc.py``."""
 import re
 
 # #########################
 # Start abnf_regexp.py
 # #########################
 
-# https://tools.ietf.org/html/rfc3986#page-13
-GEN_DELIMS = GENERIC_DELIMITERS = ":/?#[]@"
-GENERIC_DELIMITERS_SET = set(GENERIC_DELIMITERS)
-# https://tools.ietf.org/html/rfc3986#page-13
-SUB_DELIMS = SUB_DELIMITERS = "!$&'()*+,;="
-SUB_DELIMITERS_SET = set(SUB_DELIMITERS)
 # Escape the '*' for use in regular expressions
 SUB_DELIMITERS_RE = r"!$&'()\*+,;="
-RESERVED_CHARS_SET = GENERIC_DELIMITERS_SET.union(SUB_DELIMITERS_SET)
-ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"
-DIGIT = "0123456789"
-# https://tools.ietf.org/html/rfc3986#section-2.3
-UNRESERVED = UNRESERVED_CHARS = ALPHA + DIGIT + r"._!-~"
-UNRESERVED_CHARS_SET = set(UNRESERVED_CHARS)
-NON_PCT_ENCODED_SET = RESERVED_CHARS_SET.union(UNRESERVED_CHARS_SET)
 # We need to escape the '-' in this case:
 UNRESERVED_RE = r"A-Za-z0-9._~\-"
 
 # Percent encoded character values
 PERCENT_ENCODED = PCT_ENCODED = "%[A-Fa-f0-9]{2}"
 PCHAR = "([" + UNRESERVED_RE + SUB_DELIMITERS_RE + ":@]|%s)" % PCT_ENCODED
-
-# NOTE(sigmavirus24): We're going to use more strict regular expressions
-# than appear in Appendix B for scheme. This will prevent over-eager
-# consuming of items that aren't schemes.
-SCHEME_RE = "[a-zA-Z][a-zA-Z0-9+.-]*"
-_AUTHORITY_RE = "[^\\\\/?#]*"
-_PATH_RE = "[^?#]*"
-_QUERY_RE = "[^#]*"
-_FRAGMENT_RE = ".*"
-
-# Extracted from http://tools.ietf.org/html/rfc3986#appendix-B
-COMPONENT_PATTERN_DICT = {
-    "scheme": SCHEME_RE,
-    "authority": _AUTHORITY_RE,
-    "path": _PATH_RE,
-    "query": _QUERY_RE,
-    "fragment": _FRAGMENT_RE,
-}
-
-# See http://tools.ietf.org/html/rfc3986#appendix-B
-# In this case, we name each of the important matches so we can use
-# SRE_Match#groupdict to parse the values out if we so choose. This is also
-# modified to ignore other matches that are not important to the parsing of
-# the reference so we can also simply use SRE_Match#groups.
-URL_PARSING_RE = (
-    r"(?:(?P<scheme>{scheme}):)?(?://(?P<authority>{authority}))?"
-    r"(?P<path>{path})(?:\?(?P<query>{query}))?"
-    r"(?:#(?P<fragment>{fragment}))?"
-).format(**COMPONENT_PATTERN_DICT)
-
 
 # #########################
 # Authority Matcher Section
@@ -134,62 +91,6 @@ HOST_RE = HOST_PATTERN = "({}|{}|{})".format(
     IPv4_RE,
     IP_LITERAL_RE,
 )
-USERINFO_RE = "^([" + UNRESERVED_RE + SUB_DELIMITERS_RE + ":]|%s)+" % (PCT_ENCODED)
-PORT_RE = "[0-9]{1,5}"
-
-# ####################
-# Path Matcher Section
-# ####################
-
-# See http://tools.ietf.org/html/rfc3986#section-3.3 for more information
-# about the path patterns defined below.
-segments = {
-    "segment": PCHAR + "*",
-    # Non-zero length segment
-    "segment-nz": PCHAR + "+",
-    # Non-zero length segment without ":"
-    "segment-nz-nc": PCHAR.replace(":", "") + "+",
-}
-
-# Path types taken from Section 3.3 (linked above)
-PATH_EMPTY = "^$"
-PATH_ROOTLESS = "%(segment-nz)s(/%(segment)s)*" % segments
-PATH_NOSCHEME = "%(segment-nz-nc)s(/%(segment)s)*" % segments
-PATH_ABSOLUTE = "/(%s)?" % PATH_ROOTLESS
-PATH_ABEMPTY = "(/%(segment)s)*" % segments
-PATH_RE = "^({}|{}|{}|{}|{})$".format(
-    PATH_ABEMPTY,
-    PATH_ABSOLUTE,
-    PATH_NOSCHEME,
-    PATH_ROOTLESS,
-    PATH_EMPTY,
-)
-
-FRAGMENT_RE = QUERY_RE = (
-    "^([/?:@" + UNRESERVED_RE + SUB_DELIMITERS_RE + "]|%s)*$" % PCT_ENCODED
-)
-
-# ##########################
-# Relative reference matcher
-# ##########################
-
-# See http://tools.ietf.org/html/rfc3986#section-4.2 for details
-RELATIVE_PART_RE = "(//{}{}|{}|{}|{})".format(
-    COMPONENT_PATTERN_DICT["authority"],
-    PATH_ABEMPTY,
-    PATH_ABSOLUTE,
-    PATH_NOSCHEME,
-    PATH_EMPTY,
-)
-
-# See http://tools.ietf.org/html/rfc3986#section-3 for definition
-HIER_PART_RE = "(//{}{}|{}|{}|{})".format(
-    COMPONENT_PATTERN_DICT["authority"],
-    PATH_ABEMPTY,
-    PATH_ABSOLUTE,
-    PATH_ROOTLESS,
-    PATH_EMPTY,
-)
 
 # #########################
 # End abnf_regexp.py
@@ -202,27 +103,6 @@ HIER_PART_RE = "(//{}{}|{}|{}|{})".format(
 
 # These are enumerated for the named tuple used as a superclass of
 # URIReference
-URI_COMPONENTS = ["scheme", "authority", "path", "query", "fragment"]
-
-important_characters = {
-    "generic_delimiters": GENERIC_DELIMITERS,
-    "sub_delimiters": SUB_DELIMITERS,
-    # We need to escape the '*' in this case
-    "re_sub_delimiters": SUB_DELIMITERS_RE,
-    "unreserved_chars": UNRESERVED_CHARS,
-    # We need to escape the '-' in this case:
-    "re_unreserved": UNRESERVED_RE,
-}
-
-URI_MATCHER = re.compile(URL_PARSING_RE)
-
-SUBAUTHORITY_MATCHER = re.compile(
-    (
-        "^(?:(?P<userinfo>{})@)?"  # userinfo
-        "(?P<host>{})"  # host
-        ":?(?P<port>{})?$"  # port
-    ).format(USERINFO_RE, HOST_PATTERN, PORT_RE)
-)
 
 HOST_MATCHER = re.compile("^" + HOST_RE + "$")
 IPv4_MATCHER = re.compile("^" + IPv4_RE + "$")
@@ -231,61 +111,6 @@ IPv6_MATCHER = re.compile(r"^\[" + IPv6_ADDRZ_RFC4007_RE + r"\]$")
 # Used by host validator
 IPv6_NO_RFC4007_MATCHER = re.compile(r"^\[%s\]$" % (IPv6_ADDRZ_RE))
 
-# Matcher used to validate path components
-PATH_MATCHER = re.compile(PATH_RE)
-
-
-# ##################################
-# Query and Fragment Matcher Section
-# ##################################
-
-QUERY_MATCHER = re.compile(QUERY_RE)
-
-FRAGMENT_MATCHER = QUERY_MATCHER
-
-# Scheme validation, see: http://tools.ietf.org/html/rfc3986#section-3.1
-SCHEME_MATCHER = re.compile(f"^{SCHEME_RE}$")
-
-RELATIVE_REF_MATCHER = re.compile(
-    r"^%s(\?%s)?(#%s)?$"
-    % (
-        RELATIVE_PART_RE,
-        QUERY_RE,
-        FRAGMENT_RE,
-    )
-)
-
-# See http://tools.ietf.org/html/rfc3986#section-4.3
-ABSOLUTE_URI_MATCHER = re.compile(
-    r"^%s:%s(\?%s)?$"
-    % (
-        COMPONENT_PATTERN_DICT["scheme"],
-        HIER_PART_RE,
-        QUERY_RE[1:-1],
-    )
-)
 # #########################
 # End misc.py
 # #########################
-
-
-# #########################
-# Start validators.py
-# #########################
-
-
-def valid_ipv4_host_address(host: str) -> bool:
-    """Determine if the given host is a valid IPv4 address."""
-    # If the host exists, and it might be IPv4, check each byte in the
-    # address.
-    return all([0 <= int(byte, base=10) <= 255 for byte in host.split(".")])
-
-
-# #########################
-# End validators.py
-# #########################
-
-
-def is_port_valid(port: int) -> bool:
-    """Determine if the given port is valid."""
-    return 0 <= port <= 65535
