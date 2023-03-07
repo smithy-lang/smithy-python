@@ -26,6 +26,7 @@ import static software.amazon.smithy.model.knowledge.HttpBinding.Location.QUERY;
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.QUERY_PARAMS;
 import static software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import static software.amazon.smithy.python.codegen.integration.HttpProtocolGeneratorUtils.generateErrorDispatcher;
+import static software.amazon.smithy.python.codegen.integration.HttpProtocolGeneratorUtils.getOutputShape;
 
 import java.util.List;
 import java.util.Locale;
@@ -766,11 +767,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         Shape operationOrError
     ) {
         var bindingIndex = HttpBindingIndex.of(context.model());
-
-        var outputShape = operationOrError;
-        if (operationOrError.isOperationShape()) {
-            outputShape = context.model().expectShape(operationOrError.asOperationShape().get().getOutputShape());
-        }
+        var outputShape = getOutputShape(context, operationOrError);
         var outputSymbol = context.symbolProvider().toSymbol(outputShape);
 
         writer.write("""
@@ -1032,21 +1029,29 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      * @param context The generation context.
      * @param writer The writer to write to.
      * @param operationOrError The operation or error whose output payload is being deserialized.
-     * @param binding The payload binding to deserialize.
+     * @param payloadBinding The payload binding to deserialize.
      */
     protected void deserializePayloadBody(
         GenerationContext context,
         PythonWriter writer,
         Shape operationOrError,
-        HttpBinding binding
+        HttpBinding payloadBinding
     ) {
-        // TODO: implement payload deserialization
-        // This will have a default implementation since it'll mostly be standard
+        // Add base dependency
+        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+
+        if (operationOrError.isOperationShape()) {
+            var visitor = new PayloadDeserVisitor(context, writer, payloadBinding);
+            var target = context.model().expectShape(payloadBinding.getMember().getTarget());
+            target.accept(visitor);
+        }
+
+        // TODO payload error deserialization along with protocol tests for payload errors.
     }
 
     /**
      * Given context and a source of data, generate an input value provider for the
-     * shape. This may use native types or invoke complex type serializers to
+     * shape. This may useÏ native types or invoke complex type serializers to
      * manipulate the dataSource into the proper input content.
      */
     private static class HttpMemberSerVisitor extends ShapeVisitor.Default<String> {

@@ -21,8 +21,6 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import software.amazon.smithy.aws.traits.protocols.RestJson1Trait;
 import software.amazon.smithy.model.knowledge.HttpBinding;
-import software.amazon.smithy.model.knowledge.HttpBinding.Location;
-import software.amazon.smithy.model.knowledge.HttpBindingIndex;
 import software.amazon.smithy.model.knowledge.NeighborProviderIndex;
 import software.amazon.smithy.model.neighbor.Walker;
 import software.amazon.smithy.model.shapes.MemberShape;
@@ -33,7 +31,6 @@ import software.amazon.smithy.model.traits.RequiresLengthTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.protocoltests.traits.HttpMessageTestCase;
-import software.amazon.smithy.protocoltests.traits.HttpRequestTestCase;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.HttpProtocolTestGenerator;
@@ -91,21 +88,13 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
     public void generateProtocolTests(GenerationContext context) {
         context.writerDelegator().useFileWriter("./tests/test_protocol.py", "tests.test_protocol", writer -> {
             new HttpProtocolTestGenerator(
-                context, getProtocol(), writer, (shape, testCase) -> filterTests(context, shape, testCase)
+                context, getProtocol(), writer, (shape, testCase) -> filterTests(testCase)
             ).run();
         });
     }
 
-    private boolean filterTests(GenerationContext context, Shape shape, HttpMessageTestCase testCase) {
-        if (TESTS_TO_SKIP.contains(testCase.getId())) {
-            return true;
-        }
-        var bindingIndex = HttpBindingIndex.of(context.model());
-        if (testCase instanceof HttpRequestTestCase) {
-            return false;
-        } else {
-            return bindingIndex.getResponseBindings(shape, Location.PAYLOAD).size() != 0;
-        }
+    private boolean filterTests(HttpMessageTestCase testCase) {
+        return TESTS_TO_SKIP.contains(testCase.getId());
     }
 
     @Override

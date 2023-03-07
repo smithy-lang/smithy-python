@@ -1,0 +1,171 @@
+./pants package ::
+python3 -m pip install dist/*.whl --force-reinstall
+Processing ./dist/aws_smithy_python-0.0.1-py3-none-any.whl
+Processing ./dist/smithy_python-0.0.1-py3-none-any.whl
+Collecting awscrt<1.0,>=0.15
+  Using cached awscrt-0.16.10-cp311-cp311-macosx_10_9_universal2.whl (1.3 MB)
+Collecting aiohttp<3.9.0,>=3.8.3
+  Using cached aiohttp-3.8.4-cp311-cp311-macosx_10_9_x86_64.whl (355 kB)
+Collecting attrs>=17.3.0
+  Using cached attrs-22.2.0-py3-none-any.whl (60 kB)
+Collecting charset-normalizer<4.0,>=2.0
+  Using cached charset_normalizer-3.1.0-cp311-cp311-macosx_10_9_x86_64.whl (123 kB)
+Collecting multidict<7.0,>=4.5
+  Using cached multidict-6.0.4-cp311-cp311-macosx_10_9_x86_64.whl (29 kB)
+Collecting async-timeout<5.0,>=4.0.0a3
+  Using cached async_timeout-4.0.2-py3-none-any.whl (5.8 kB)
+Collecting yarl<2.0,>=1.0
+  Using cached yarl-1.8.2-cp311-cp311-macosx_10_9_x86_64.whl (59 kB)
+Collecting frozenlist>=1.1.1
+  Using cached frozenlist-1.3.3-cp311-cp311-macosx_10_9_x86_64.whl (35 kB)
+Collecting aiosignal>=1.1.2
+  Using cached aiosignal-1.3.1-py3-none-any.whl (7.6 kB)
+Collecting idna>=2.0
+  Using cached idna-3.4-py3-none-any.whl (61 kB)
+Installing collected packages: multidict, idna, frozenlist, charset-normalizer, awscrt, attrs, async-timeout, yarl, aiosignal, aiohttp, smithy-python, aws-smithy-python
+  Attempting uninstall: multidict
+    Found existing installation: multidict 6.0.4
+    Uninstalling multidict-6.0.4:
+      Successfully uninstalled multidict-6.0.4
+  Attempting uninstall: idna
+    Found existing installation: idna 3.4
+    Uninstalling idna-3.4:
+      Successfully uninstalled idna-3.4
+  Attempting uninstall: frozenlist
+    Found existing installation: frozenlist 1.3.3
+    Uninstalling frozenlist-1.3.3:
+      Successfully uninstalled frozenlist-1.3.3
+  Attempting uninstall: charset-normalizer
+    Found existing installation: charset-normalizer 3.1.0
+    Uninstalling charset-normalizer-3.1.0:
+      Successfully uninstalled charset-normalizer-3.1.0
+  Attempting uninstall: awscrt
+    Found existing installation: awscrt 0.16.10
+    Uninstalling awscrt-0.16.10:
+      Successfully uninstalled awscrt-0.16.10
+  Attempting uninstall: attrs
+    Found existing installation: attrs 22.2.0
+    Uninstalling attrs-22.2.0:
+      Successfully uninstalled attrs-22.2.0
+  Attempting uninstall: async-timeout
+    Found existing installation: async-timeout 4.0.2
+    Uninstalling async-timeout-4.0.2:
+      Successfully uninstalled async-timeout-4.0.2
+  Attempting uninstall: yarl
+    Found existing installation: yarl 1.8.2
+    Uninstalling yarl-1.8.2:
+      Successfully uninstalled yarl-1.8.2
+  Attempting uninstall: aiosignal
+    Found existing installation: aiosignal 1.3.1
+    Uninstalling aiosignal-1.3.1:
+      Successfully uninstalled aiosignal-1.3.1
+  Attempting uninstall: aiohttp
+    Found existing installation: aiohttp 3.8.4
+    Uninstalling aiohttp-3.8.4:
+      Successfully uninstalled aiohttp-3.8.4
+  Attempting uninstall: smithy-python
+    Found existing installation: smithy-python 0.0.1
+    Uninstalling smithy-python-0.0.1:
+      Successfully uninstalled smithy-python-0.0.1
+  Attempting uninstall: aws-smithy-python
+    Found existing installation: aws-smithy-python 0.0.1
+    Uninstalling aws-smithy-python-0.0.1:
+      Successfully uninstalled aws-smithy-python-0.0.1
+Successfully installed aiohttp-3.8.4 aiosignal-1.3.1 async-timeout-4.0.2 attrs-22.2.0 aws-smithy-python-0.0.1 awscrt-0.16.10 charset-normalizer-3.1.0 frozenlist-1.3.3 idna-3.4 multidict-6.0.4 smithy-python-0.0.1 yarl-1.8.2
+cd codegen && ./gradlew clean :smithy-python-protocol-test:build
+> Task :clean UP-TO-DATE
+> Task :smithy-aws-python-codegen:clean UP-TO-DATE
+> Task :smithy-python-codegen:clean
+> Task :smithy-python-codegen-test:clean UP-TO-DATE
+> Task :smithy-python-protocol-test:clean
+> Task :smithy-python-codegen:compileJava
+> Task :smithy-python-protocol-test:compileJava NO-SOURCE
+> Task :smithy-python-codegen:processResources
+> Task :smithy-python-codegen:classes
+> Task :smithy-python-codegen:jar
+Reserved word: float is a reserved word for a member. Converting to float_
+Reserved word: float is a reserved word for a member. Converting to float_
+Reserved word: str is a reserved word for a member. Converting to str_
+Reserved word: int is a reserved word for a member. Converting to int_
+Reserved word: float is a reserved word for a member. Converting to float_
+
+> Task :smithy-python-protocol-test:smithyBuildJar
+Running smithy build
+
+Unable to find the python package black. Skipping formatting.
+Unable to find the python package mypy. Skipping type checking.
+
+> Task :smithy-python-protocol-test:smithyBuildJar
+
+> Task :smithy-python-protocol-test:processResources NO-SOURCE
+> Task :smithy-python-protocol-test:classes UP-TO-DATE
+> Task :smithy-python-protocol-test:smithyTags SKIPPED
+> Task :smithy-python-protocol-test:jar SKIPPED
+> Task :smithy-python-protocol-test:assemble UP-TO-DATE
+> Task :smithy-python-protocol-test:smithyValidate SKIPPED
+> Task :smithy-python-protocol-test:compileTestJava NO-SOURCE
+> Task :smithy-python-protocol-test:processTestResources NO-SOURCE
+> Task :smithy-python-protocol-test:testClasses UP-TO-DATE
+> Task :smithy-python-protocol-test:test NO-SOURCE
+> Task :smithy-python-protocol-test:check UP-TO-DATE
+> Task :smithy-python-protocol-test:build UP-TO-DATE
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 8.0.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+See https://docs.gradle.org/7.5.1/userguide/command_line_interface.html#sec:command_line_warnings
+
+BUILD SUCCESSFUL in 5s
+9 actionable tasks: 6 executed, 3 up-to-date
+cd codegen/smithy-python-protocol-test/build/smithyprojections/smithy-python-protocol-test/rest-json-1/python-codegen && \
+	python3 -m pip install '.[tests]' && \
+	python3 -m pytest tests
+Processing /Volumes/workplace/smithy-python/codegen/smithy-python-protocol-test/build/smithyprojections/smithy-python-protocol-test/rest-json-1/python-codegen
+  Installing build dependencies: started
+  Installing build dependencies: finished with status 'done'
+  Getting requirements to build wheel: started
+  Getting requirements to build wheel: finished with status 'done'
+  Preparing metadata (pyproject.toml): started
+  Preparing metadata (pyproject.toml): finished with status 'done'
+Requirement already satisfied: smithy-python==0.0.1 in /Users/hpm/.pyenv/versions/project3.11/lib/python3.11/site-packages (from restjson==0.0.1) (0.0.1)
+Requirement already satisfied: pytest<8.0.0,>=7.2.0 in /Users/hpm/.pyenv/versions/project3.11/lib/python3.11/site-packages (from restjson==0.0.1) (7.2.2)
+Requirement already satisfied: pytest-asyncio<0.21.0,>=0.20.3 in /Users/hpm/.pyenv/versions/project3.11/lib/python3.11/site-packages (from restjson==0.0.1) (0.20.3)
+Requirement already satisfied: awscrt<1.0,>=0.15 in /Users/hpm/.pyenv/versions/project3.11/lib/python3.11/site-packages (from smithy-python==0.0.1->restjson==0.0.1) (0.16.10)
+Requirement already satisfied: aiohttp<3.9.0,>=3.8.3 in /Users/hpm/.pyenv/versions/project3.11/lib/python3.11/site-packages (from smithy-python==0.0.1->restjson==0.0.1) (3.8.4)
+Requirement already satisfied: attrs>=19.2.0 in /Users/hpm/.pyenv/versions/project3.11/lib/python3.11/site-packages (from pytest<8.0.0,>=7.2.0->restjson==0.0.1) (22.2.0)
+Requirement already satisfied: iniconfig in /Users/hpm/.pyenv/versions/project3.11/lib/python3.11/site-packages (from pytest<8.0.0,>=7.2.0->restjson==0.0.1) (2.0.0)
+Requirement already satisfied: packaging in /Users/hpm/.pyenv/versions/project3.11/lib/python3.11/site-packages (from pytest<8.0.0,>=7.2.0->restjson==0.0.1) (23.0)
+Requirement already satisfied: pluggy<2.0,>=0.12 in /Users/hpm/.pyenv/versions/project3.11/lib/python3.11/site-packages (from pytest<8.0.0,>=7.2.0->restjson==0.0.1) (1.0.0)
+Requirement already satisfied: charset-normalizer<4.0,>=2.0 in /Users/hpm/.pyenv/versions/project3.11/lib/python3.11/site-packages (from aiohttp<3.9.0,>=3.8.3->smithy-python==0.0.1->restjson==0.0.1) (3.1.0)
+Requirement already satisfied: multidict<7.0,>=4.5 in /Users/hpm/.pyenv/versions/project3.11/lib/python3.11/site-packages (from aiohttp<3.9.0,>=3.8.3->smithy-python==0.0.1->restjson==0.0.1) (6.0.4)
+Requirement already satisfied: async-timeout<5.0,>=4.0.0a3 in /Users/hpm/.pyenv/versions/project3.11/lib/python3.11/site-packages (from aiohttp<3.9.0,>=3.8.3->smithy-python==0.0.1->restjson==0.0.1) (4.0.2)
+Requirement already satisfied: yarl<2.0,>=1.0 in /Users/hpm/.pyenv/versions/project3.11/lib/python3.11/site-packages (from aiohttp<3.9.0,>=3.8.3->smithy-python==0.0.1->restjson==0.0.1) (1.8.2)
+Requirement already satisfied: frozenlist>=1.1.1 in /Users/hpm/.pyenv/versions/project3.11/lib/python3.11/site-packages (from aiohttp<3.9.0,>=3.8.3->smithy-python==0.0.1->restjson==0.0.1) (1.3.3)
+Requirement already satisfied: aiosignal>=1.1.2 in /Users/hpm/.pyenv/versions/project3.11/lib/python3.11/site-packages (from aiohttp<3.9.0,>=3.8.3->smithy-python==0.0.1->restjson==0.0.1) (1.3.1)
+Requirement already satisfied: idna>=2.0 in /Users/hpm/.pyenv/versions/project3.11/lib/python3.11/site-packages (from yarl<2.0,>=1.0->aiohttp<3.9.0,>=3.8.3->smithy-python==0.0.1->restjson==0.0.1) (3.4)
+Building wheels for collected packages: restjson
+  Building wheel for restjson (pyproject.toml): started
+  Building wheel for restjson (pyproject.toml): finished with status 'done'
+  Created wheel for restjson: filename=restjson-0.0.1-py3-none-any.whl size=60168 sha256=6cec59c50ada81b093cfdebc3210d6061d380673b8c47d9196474a3fea9947c7
+  Stored in directory: /Users/hpm/Library/Caches/pip/wheels/a5/a1/34/1eaddd52df5146db8c7768d7c25ef9152137e3a2eece3ae0f9
+Successfully built restjson
+Installing collected packages: restjson
+  Attempting uninstall: restjson
+    Found existing installation: restjson 0.0.1
+    Uninstalling restjson-0.0.1:
+      Successfully uninstalled restjson-0.0.1
+Successfully installed restjson-0.0.1
+============================= test session starts ==============================
+platform darwin -- Python 3.11.2, pytest-7.2.2, pluggy-1.0.0
+rootdir: /Volumes/workplace/smithy-python/codegen/smithy-python-protocol-test/build/smithyprojections/smithy-python-protocol-test/rest-json-1/python-codegen, configfile: pyproject.toml
+plugins: asyncio-0.20.3
+asyncio: mode=Mode.AUTO
+collected 205 items
+
+tests/test_protocol.py ..........................xx...............x..... [ 23%]
+........................................x............................... [ 59%]
+...............................................x.......X....x........... [ 94%]
+............                                                             [100%]
+
+================== 198 passed, 6 xfailed, 1 xpassed in 4.38s ===================

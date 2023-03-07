@@ -180,6 +180,23 @@ public final class HttpProtocolGeneratorUtils {
     }
 
     /**
+     * Gets the output shape for an error or operation.
+     *
+     *  If the shape is an error, the error is returned, otherwise the operation output is returned
+     *
+     * @param context Code generation context
+     * @param operationOrError operation or error shape to find output shape for
+     * @return output shape
+     */
+    public static Shape getOutputShape(GenerationContext context, Shape operationOrError) {
+        var outputShape = operationOrError;
+        if (operationOrError.isOperationShape()) {
+            outputShape = context.model().expectShape(operationOrError.asOperationShape().get().getOutputShape());
+        }
+        return outputShape;
+    }
+
+    /**
      * A section that controls writing out the error dispatcher function.
      *
      * @param operation The operation whose deserializer is being generated.
