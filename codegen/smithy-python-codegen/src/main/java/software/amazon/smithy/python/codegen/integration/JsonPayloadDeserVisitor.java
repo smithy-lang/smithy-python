@@ -25,11 +25,11 @@ import software.amazon.smithy.model.shapes.ShapeVisitor;
 import software.amazon.smithy.model.shapes.StringShape;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.traits.StreamingTrait;
+import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonWriter;
 import software.amazon.smithy.utils.CaseUtils;
 import software.amazon.smithy.utils.SmithyUnstableApi;
-import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 
 
 /**
@@ -67,10 +67,10 @@ public final class JsonPayloadDeserVisitor extends ShapeVisitor.Default<Void> {
                 CaseUtils.toSnakeCase(member.getMemberName()));
         } else {
             writer.write("""
-                if (body := await http_response.consume_body()):
-                    kwargs[$1S] = body
+                    if (body := await http_response.consume_body()):
+                        kwargs[$1S] = body
 
-                """,
+                    """,
                 context.symbolProvider().toMemberName(member)
             );
         }
@@ -81,10 +81,10 @@ public final class JsonPayloadDeserVisitor extends ShapeVisitor.Default<Void> {
     @Override
     public Void stringShape(StringShape shape) {
         writer.write("""
-            if (body := await http_response.consume_body()):
-                kwargs[$S] = body.decode('utf-8')
+                if (body := await http_response.consume_body()):
+                    kwargs[$S] = body.decode('utf-8')
 
-            """,
+                """,
             context.symbolProvider().toMemberName(member)
         );
 
@@ -104,8 +104,8 @@ public final class JsonPayloadDeserVisitor extends ShapeVisitor.Default<Void> {
                     kwargs[$S] = $L
 
                 """,
-                context.symbolProvider().toMemberName(member),
-                memberDeserializer
+            context.symbolProvider().toMemberName(member),
+            memberDeserializer
         );
 
         return null;
@@ -115,10 +115,10 @@ public final class JsonPayloadDeserVisitor extends ShapeVisitor.Default<Void> {
     public Void documentShape(DocumentShape shape) {
         writer.addStdlibImport("json", "loads", "json_loads");
         writer.write("""
-            if (body := await http_response.consume_body()):
-                kwargs[$S] = json_loads(body)
+                if (body := await http_response.consume_body()):
+                    kwargs[$S] = json_loads(body)
 
-            """,
+                """,
             context.symbolProvider().toMemberName(member)
         );
 
