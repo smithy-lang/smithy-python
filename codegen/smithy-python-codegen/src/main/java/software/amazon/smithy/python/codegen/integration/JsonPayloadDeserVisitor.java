@@ -64,7 +64,7 @@ public final class JsonPayloadDeserVisitor extends ShapeVisitor.Default<Void> {
         if (member.getMemberTrait(context.model(), StreamingTrait.class).isPresent()) {
             writer.addImport("smithy_python.interfaces.blobs", "AsyncBytesReader");
             writer.write("kwargs[$S] = AsyncBytesReader(http_response.body)",
-                CaseUtils.toSnakeCase(member.getMemberName()));
+                context.symbolProvider().toMemberName(member));
         } else {
             writer.write("""
                     if (body := await http_response.consume_body()):
