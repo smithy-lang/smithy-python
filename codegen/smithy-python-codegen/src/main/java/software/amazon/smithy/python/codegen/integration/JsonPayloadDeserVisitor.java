@@ -37,7 +37,8 @@ import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
  */
 @SmithyUnstableApi
 public final class JsonPayloadDeserVisitor extends ShapeVisitor.Default<Void> {
-    private final Format DEFAULT_EPOCH_FORMAT = Format.EPOCH_SECONDS.EPOCH_SECONDS;
+    private static final Format DEFAULT_EPOCH_FORMAT = Format.EPOCH_SECONDS;
+
     private final GenerationContext context;
     private final PythonWriter writer;
     private final MemberShape member;
