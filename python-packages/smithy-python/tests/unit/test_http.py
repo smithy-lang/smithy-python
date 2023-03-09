@@ -185,7 +185,6 @@ async def test_endpoint_provider_with_uri_object() -> None:
         (URI(host="::"), HostType.IPv6),
         (URI(host="2001:db8::"), HostType.IPv6),
         (URI(host="192.168.1.1"), HostType.IPv4),
-        (URI(host="v3.foo$"), HostType.IPvFUTURE),
     ],
 )
 def test_host_type(input_uri: URI, host_type: HostType) -> None:
@@ -203,8 +202,7 @@ def test_host_type_after_init(host: str, initial_host_type: HostType) -> None:
     uri = URI(host=host)
     assert uri.host_type == initial_host_type
     uri.host += "/t"
-    with pytest.raises(SmithyHTTPException):
-        uri.host_type
+    assert uri.host_type == HostType.UNKNOWN
 
 
 def test_uri_init_with_unsafe_characters() -> None:

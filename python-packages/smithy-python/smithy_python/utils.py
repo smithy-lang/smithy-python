@@ -253,7 +253,7 @@ def remove_dot_segments(path: str, remove_consecutive_slashes: bool = False) -> 
 
     Optionally removes consecutive slashes.
 
-    :param path: The path to remove dot segments from.
+    :param path: The path to modify.
     :param remove_consecutive_slashes: Whether to remove consecutive slashes.
     :returns: The path with dot segments removed.
     """

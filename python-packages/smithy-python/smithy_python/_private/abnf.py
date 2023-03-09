@@ -12,7 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-"""Module vended from rfc3986 ``abnf_rexexp.py`` and ``misc.py``."""
+"""Module vended from rfc3986 ``abnf_rexexp.py`` and ``misc.py``.
+
+https://github.com/python-hyper/rfc3986/blob/main/src/rfc3986/abnf_regexp.py
+https://github.com/python-hyper/rfc3986/blob/main/src/rfc3986/misc.py
+"""
 import re
 
 # #########################

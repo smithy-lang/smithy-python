@@ -27,12 +27,11 @@ class AWSCredentialIdentity(Identity):
     ) -> None:
         """Initialize the AWSCredentialIdentity.
 
-        :param access_key_id: The access key ID. A unique identifier that AWS uses to
-        authenticate a user or application.
-        :param secret_access_key: The secret access key. A secret key that AWS uses to
-        authenticate programmatic access to AWS services along with the access key ID.
-        :param session_token: The session token. Used to provide temporary, programmatic
-        access to AWS services.
+        :param access_key_id: A unique identifier for an AWS user or role.
+        :param secret_access_key: A secret key used in conjunction with the access key
+        ID to authenticate programmatic access to AWS services.
+        :param session_token: A temporary token used to specify the current session for
+        the supplied credentials.
         :param expiration: The expiration time of the identity. If time zone is provided,
         it is updated to UTC. The value must always be in UTC.
         """

@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 
 from datetime import datetime
-from typing import Any, Protocol, TypeVar
+from typing import Protocol, TypedDict, TypeVar
 
 
 class Identity(Protocol):
@@ -30,6 +30,15 @@ IdentityType = TypeVar("IdentityType", bound=Identity)
 IdentityType_contra = TypeVar("IdentityType_contra", bound=Identity, contravariant=True)
 
 
+class IdentityProperties(TypedDict):
+    """Properties used to help determine the identity to return."""
+
+    ...
+
+
+IdentityPropertiesType = TypeVar("IdentityPropertiesType", bound=IdentityProperties)
+
+
 class IdentityResolver(Protocol):
     """Used to load a user's `Identity` from a given source.
 
@@ -37,7 +46,7 @@ class IdentityResolver(Protocol):
     """
 
     async def get_identity(
-        self, *, identity_properties: dict[str, Any]
+        self, *, identity_properties: IdentityPropertiesType
     ) -> IdentityType:
         """Load the user's identity from this resolver.
 

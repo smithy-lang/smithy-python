@@ -34,11 +34,11 @@ class HostType(Enum):
     IPv4 = "IPv4"
     """Host is an IPv4 address."""
 
-    IPvFUTURE = "IPvFUTURE"
-    """Host type is a future IP address."""
-
     DOMAIN = "DOMAIN"
-    """Host type is a domain."""
+    """Host type is a domain name."""
+
+    UNKNOWN = "UNKNOWN"
+    """Host type is unknown."""
 
 
 @dataclass(kw_only=True)
@@ -73,10 +73,7 @@ class URI(interfaces.URI):
         self._validate_host()
 
     def _validate_host(self) -> None:
-        """Validate host component.
-
-        Use regular expressions vended from ``rfc3986`` package.
-        """
+        """Validate host component."""
         if not abnf.HOST_MATCHER.match(self.host) and not abnf.IPv6_MATCHER.match(
             f"[{self.host}]"
         ):
@@ -115,11 +112,9 @@ class URI(interfaces.URI):
             return HostType.IPv6
         if abnf.IPv4_MATCHER.match(self.host):
             return HostType.IPv4
-        if IPv_FUTURE_MATCHER.match(self.host):
-            return HostType.IPvFUTURE
         if abnf.HOST_MATCHER.match(self.host):
             return HostType.DOMAIN
-        raise SmithyHTTPException(f"Could not find host type for host: {self.host}")
+        return HostType.UNKNOWN
 
     def build(self) -> str:
         """Construct URI string representation.
