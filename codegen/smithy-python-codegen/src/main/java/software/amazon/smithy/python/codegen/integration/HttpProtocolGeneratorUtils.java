@@ -181,8 +181,8 @@ public final class HttpProtocolGeneratorUtils {
 
     /**
      * Gets the output shape for an error or operation.
-     *
-     *  If the shape is an error, the error is returned, otherwise the operation output is returned
+     * <p>
+     * If the shape is an error, the error is returned, otherwise the operation output is returned.
      *
      * @param context Code generation context
      * @param operationOrError operation or error shape to find output shape for

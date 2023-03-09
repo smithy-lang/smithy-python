@@ -29,24 +29,29 @@ import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonWriter;
 import software.amazon.smithy.utils.CaseUtils;
 import software.amazon.smithy.utils.SmithyUnstableApi;
+import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
+
 
 /**
  * Visitor to generate deserialization functions for shapes marked as HttpPayloads.
  */
 @SmithyUnstableApi
-public class PayloadDeserVisitor extends ShapeVisitor.Default<Void> {
-
+public final class JsonPayloadDeserVisitor extends ShapeVisitor.Default<Void> {
+    private final Format DEFAULT_EPOCH_FORMAT = Format.EPOCH_SECONDS.EPOCH_SECONDS;
     private final GenerationContext context;
     private final PythonWriter writer;
     private final MemberShape member;
 
-    public PayloadDeserVisitor(GenerationContext context, PythonWriter writer, HttpBinding binding) {
+    public JsonPayloadDeserVisitor(GenerationContext context, PythonWriter writer, HttpBinding binding) {
         this.context = context;
         this.writer = writer;
         this.member = binding.getMember();
     }
 
-    @Override
+    private DocumentMemberDeserVisitor getMemberVisitor(MemberShape member, String dataSource) {
+        return new DocumentMemberDeserVisitor(context, writer, member, dataSource, DEFAULT_EPOCH_FORMAT);
+    }
+
     protected Void getDefault(Shape shape) {
         throw new CodegenException(
             "Shape " + shape + " of type " + shape.getType() + " is not supported as an httpPayload."
@@ -64,7 +69,9 @@ public class PayloadDeserVisitor extends ShapeVisitor.Default<Void> {
                 if (body := await http_response.consume_body()):
                     kwargs[$1S] = body
 
-                """, CaseUtils.toSnakeCase(member.getMemberName()));
+                """,
+                context.symbolProvider().toMemberName(member)
+            );
         }
 
         return null;
@@ -74,9 +81,12 @@ public class PayloadDeserVisitor extends ShapeVisitor.Default<Void> {
     public Void stringShape(StringShape shape) {
         writer.write("""
             if (body := await http_response.consume_body()):
-                kwargs[$S] = body.decode()
+                kwargs[$S] = body.decode('utf-8')
 
-            """, CaseUtils.toSnakeCase(member.getMemberName()));
+            """,
+            context.symbolProvider().toMemberName(member)
+        );
+
         return null;
     }
 
@@ -84,15 +94,17 @@ public class PayloadDeserVisitor extends ShapeVisitor.Default<Void> {
     public Void structureShape(StructureShape shape) {
         writer.addStdlibImport("json", "loads", "json_loads");
 
-        // TODO: its possible that the function here has not been initialized.
-        //  How to prevent naming conflicts without having potentially uninitialized function?
+        var target = context.model().expectShape(member.getTarget());
+        var memberVisitor = getMemberVisitor(member, "json_loads(body)");
+        var memberDeserializer = target.accept(memberVisitor);
+
         writer.write("""
                 if (body := await http_response.consume_body()):
-                    kwargs[$S] = $L(json_loads(body), config)
+                    kwargs[$S] = $L
 
                 """,
-            CaseUtils.toSnakeCase(member.getMemberName()),
-            context.protocolGenerator().getDeserializationFunctionName(context, shape.getId())
+                context.symbolProvider().toMemberName(member),
+                memberDeserializer
         );
 
         return null;
@@ -105,7 +117,10 @@ public class PayloadDeserVisitor extends ShapeVisitor.Default<Void> {
             if (body := await http_response.consume_body()):
                 kwargs[$S] = json_loads(body)
 
-            """, CaseUtils.toSnakeCase(member.getMemberName()));
+            """,
+            context.symbolProvider().toMemberName(member)
+        );
+
         return null;
     }
 }

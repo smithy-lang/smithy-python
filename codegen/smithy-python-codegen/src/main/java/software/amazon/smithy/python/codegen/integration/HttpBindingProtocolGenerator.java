@@ -1041,7 +1041,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
 
         if (operationOrError.isOperationShape()) {
-            var visitor = new PayloadDeserVisitor(context, writer, payloadBinding);
+            var visitor = new JsonPayloadDeserVisitor(context, writer, payloadBinding);
             var target = context.model().expectShape(payloadBinding.getMember().getTarget());
             target.accept(visitor);
         }
