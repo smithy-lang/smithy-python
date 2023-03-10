@@ -10,19 +10,17 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
-import re
 from collections import Counter, OrderedDict
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from enum import Enum
+from functools import cached_property
 from urllib.parse import urlunparse
 
 from .. import interfaces
 from ..exceptions import SmithyHTTPException
 from ..interfaces import FieldPosition as FieldPosition  # re-export
 from . import abnf
-
-IPv_FUTURE_MATCHER: re.Pattern[str] = re.compile(abnf.IPv_FUTURE_RE)
 
 
 class HostType(Enum):
@@ -41,9 +39,9 @@ class HostType(Enum):
     """Host type is unknown."""
 
 
-@dataclass(kw_only=True)
+@dataclass(kw_only=True, frozen=True)
 class URI(interfaces.URI):
-    """Universal Resource Identifier, target location for a :py:class:`HttpRequest`."""
+    """Universal Resource Identifier, target location for a :py:class:`HTTPRequest`."""
 
     scheme: str = "https"
     """For example ``http`` or ``https``."""
@@ -70,16 +68,13 @@ class URI(interfaces.URI):
     """Part of the URI specification, but may not be transmitted by a client."""
 
     def __post_init__(self) -> None:
-        self._validate_host()
-
-    def _validate_host(self) -> None:
         """Validate host component."""
         if not abnf.HOST_MATCHER.match(self.host) and not abnf.IPv6_MATCHER.match(
             f"[{self.host}]"
         ):
             raise SmithyHTTPException(f"Invalid host: {self.host}")
 
-    @property
+    @cached_property
     def netloc(self) -> str:
         """Construct netloc string in format ``{username}:{password}@{host}:{port}``
 
@@ -105,7 +100,7 @@ class URI(interfaces.URI):
 
         return f"{userinfo}{host}{port}"
 
-    @property
+    @cached_property
     def host_type(self) -> HostType:
         """Return the type of host."""
         if abnf.IPv6_MATCHER.match(f"[{self.host}]"):
@@ -122,7 +117,6 @@ class URI(interfaces.URI):
         Validate host. Returns a string of the form
         ``{scheme}://{username}:{password}@{host}:{port}{path}?{query}#{fragment}``
         """
-        self._validate_host()
         components = (
             self.scheme,
             self.netloc,

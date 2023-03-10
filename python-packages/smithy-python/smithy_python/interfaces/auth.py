@@ -40,8 +40,7 @@ class HTTPSigner(Protocol[IdentityType_contra, SigningPropertiesType_contra]):
         identity: IdentityType_contra,
         signing_properties: SigningPropertiesType_contra,
     ) -> HTTPRequest:
-        """Sign the provided HTTP request, and generate a new HTTP request with the
-        signature added.
+        """Generate a new signed HTTPRequest based on the one provided.
 
         :param http_request: The HTTP request to sign.
 

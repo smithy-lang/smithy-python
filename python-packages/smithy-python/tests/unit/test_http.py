@@ -192,34 +192,8 @@ def test_host_type(input_uri: URI, host_type: HostType) -> None:
 
 
 @pytest.mark.parametrize(
-    "host, initial_host_type",
-    [
-        ("001:db8:3333:4444:5555:6666:7777:8888", HostType.IPv6),
-        ("192.168.1.1", HostType.IPv4),
-    ],
+    "input_host", ["example.com\t", "umlaut-äöü.aws.dev", "foo\nbar.com"]
 )
-def test_host_type_after_init(host: str, initial_host_type: HostType) -> None:
-    uri = URI(host=host)
-    assert uri.host_type == initial_host_type
-    uri.host += "/t"
-    assert uri.host_type == HostType.UNKNOWN
-
-
-def test_uri_init_with_unsafe_characters() -> None:
+def test_uri_init_with_disallowed_characters(input_host) -> None:
     with pytest.raises(SmithyHTTPException):
-        URI(host="example.com\t")
-
-
-def test_uri_build_with_unsafe_characters() -> None:
-    uri = URI(
-        host="example.com",
-        path="/path",
-        query="foo=bar",
-        fragment="frag",
-        scheme="http",
-        username="user",
-        password="pass",
-    )
-    uri.host += "\t"
-    with pytest.raises(SmithyHTTPException):
-        uri.build()
+        URI(host=input_host)
