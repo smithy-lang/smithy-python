@@ -194,6 +194,6 @@ def test_host_type(input_uri: URI, host_type: HostType) -> None:
 @pytest.mark.parametrize(
     "input_host", ["example.com\t", "umlaut-äöü.aws.dev", "foo\nbar.com"]
 )
-def test_uri_init_with_disallowed_characters(input_host) -> None:
+def test_uri_init_with_disallowed_characters(input_host: str) -> None:
     with pytest.raises(SmithyHTTPException):
         URI(host=input_host)
