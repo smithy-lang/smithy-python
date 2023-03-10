@@ -19,7 +19,11 @@ import pytest
 from smithy_python._private import tuples_to_fields
 from smithy_python._private.http import HTTPResponse
 from smithy_python.async_utils import async_list
-from smithy_python.protocolutils import RestJsonErrorInfo, parse_rest_json_error_info, parse_rest_json_error_code
+from smithy_python.protocolutils import (
+    RestJsonErrorInfo,
+    parse_rest_json_error_code,
+    parse_rest_json_error_info,
+)
 from smithy_python.types import Document
 
 
@@ -133,16 +137,28 @@ async def test_parse_rest_json_error_info_without_accessing_body(
     "headers, body, expected",
     [
         ([], {"code": "foo"}, RestJsonErrorInfo("foo", "Unknown", {"code": "foo"})),
-        ([], {"code": "bar", "other": "other"}, RestJsonErrorInfo("bar", "Unknown", {"code": "bar", "other": "other"})),
-        ([("x-amzn-something", "com.example#oops")], {"code": "baz", "other": {"test": "thingy"}}, RestJsonErrorInfo("baz", "Unknown", {"code": "baz", "other": {"test": "thingy"}})),
-        ([], {}, RestJsonErrorInfo("unknown", "Unknown", {}))
+        (
+            [],
+            {"code": "bar", "other": "other"},
+            RestJsonErrorInfo("bar", "Unknown", {"code": "bar", "other": "other"}),
+        ),
+        (
+            [("x-amzn-something", "com.example#oops")],
+            {"code": "baz", "other": {"test": "thingy"}},
+            RestJsonErrorInfo(
+                "baz", "Unknown", {"code": "baz", "other": {"test": "thingy"}}
+            ),
+        ),
+        ([], {}, RestJsonErrorInfo("unknown", "Unknown", {})),
     ],
 )
 async def test_parse_rest_json_error_code_from_body_when_not_in_fields(
     headers: list[tuple[str, str]], body: Document, expected: RestJsonErrorInfo
 ) -> None:
     response = HTTPResponse(
-        status=400, fields=tuples_to_fields(headers), body=async_list([json.dumps(body).encode()])
+        status=400,
+        fields=tuples_to_fields(headers),
+        body=async_list([json.dumps(body).encode()]),
     )
     actual = await parse_rest_json_error_code(response)
     assert actual == expected

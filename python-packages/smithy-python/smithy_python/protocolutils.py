@@ -77,7 +77,7 @@ async def _parse_json_body(
     http_response: HTTPResponse,
     code: str | None = None,
     message: str | None = None,
-    json_body: dict[str, Document] | None = None
+    json_body: dict[str, Document] | None = None,
 ) -> RestJsonErrorInfo:
     if body := await http_response.consume_body():
         json_body = json.loads(body)
@@ -87,7 +87,9 @@ async def _parse_json_body(
             key_lower = key.lower()
             if (not code or code == "unknown") and key_lower in _REST_JSON_CODE_KEYS:
                 code = expect_type(str, value)
-            if (not message or message == "Unknown") and key_lower in _REST_JSON_MESSAGE_KEYS:
+            if (
+                not message or message == "Unknown"
+            ) and key_lower in _REST_JSON_MESSAGE_KEYS:
                 message = expect_type(str, value)
 
     return RestJsonErrorInfo(code or "unknown", message or "Unknown", json_body)
