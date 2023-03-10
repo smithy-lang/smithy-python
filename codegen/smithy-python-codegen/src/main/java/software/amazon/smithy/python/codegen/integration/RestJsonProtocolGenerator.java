@@ -282,11 +282,4 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         initialShapes.forEach(shape -> connectedShapes.addAll(shapeWalker.walkShapes(shape)));
         return connectedShapes;
     }
-
-    @Override
-    protected void resolveErrorCodeAndMessage(GenerationContext context, PythonWriter writer) {
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.protocolutils", "parse_rest_json_error_info");
-        writer.write("code, message, parsed_body = await parse_rest_json_error_info(http_response, check_body)");
-    }
 }
