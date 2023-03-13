@@ -52,6 +52,11 @@ class URI(Protocol):
         """
         ...
 
+    @property
+    def netloc(self) -> str:
+        """Construct netloc string in format ``{username}:{password}@{host}:{port}``"""
+        ...
+
 
 class Request(Protocol):
     """Protocol-agnostic representation of a request."""

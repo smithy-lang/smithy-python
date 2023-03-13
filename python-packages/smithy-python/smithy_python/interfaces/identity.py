@@ -12,13 +12,33 @@
 # language governing permissions and limitations under the License.
 
 from datetime import datetime
-from typing import Any, Protocol
+from typing import Protocol, TypedDict, TypeVar
 
 
 class Identity(Protocol):
     """An entity available to the client representing who the user is."""
 
+    # The expiration time of the identity. If time zone is provided,
+    # it is updated to UTC. The value must always be in UTC.
     expiration: datetime | None = None
+
+    @property
+    def is_expired(self) -> bool:
+        """Whether the identity is expired."""
+        ...
+
+
+IdentityType = TypeVar("IdentityType", bound=Identity)
+IdentityType_contra = TypeVar("IdentityType_contra", bound=Identity, contravariant=True)
+
+
+class IdentityProperties(TypedDict):
+    """Properties used to help determine the identity to return."""
+
+    ...
+
+
+IdentityPropertiesType = TypeVar("IdentityPropertiesType", bound=IdentityProperties)
 
 
 class IdentityResolver(Protocol):
@@ -27,7 +47,9 @@ class IdentityResolver(Protocol):
     Each `Identity` may have one or more resolver implementations.
     """
 
-    async def get_identity(self, *, identity_properties: dict[str, Any]) -> Identity:
+    async def get_identity(
+        self, *, identity_properties: IdentityPropertiesType
+    ) -> IdentityType:
         """Load the user's identity from this resolver.
 
         :param identity_properties: Properties used to help determine the
@@ -40,7 +62,7 @@ class IdentityResolverConfiguration(Protocol):
     """The identity resolvers configured in the client."""
 
     def get_identity_resolver(
-        self, *, identity_type: type[Identity]
+        self, *, identity_type: type[IdentityType]
     ) -> IdentityResolver:
         """Retrieve an identity resolver for the provided identity type.
 

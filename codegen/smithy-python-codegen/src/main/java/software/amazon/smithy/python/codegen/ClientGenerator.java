@@ -299,6 +299,7 @@ final class ClientGenerator implements Runnable {
             writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
             // TODO: implement the endpoints 2.0 spec and remove the hard-coded handling of static params.
             writer.addImport("smithy_python._private.http", "StaticEndpointParams");
+            writer.addImport("smithy_python._private", "URI");
             writer.write("""
                         # Step 7f: Invoke endpoint_resolver.resolve_endpoint
                         if config.endpoint_resolver is None:
@@ -314,14 +315,19 @@ final class ClientGenerator implements Runnable {
                             StaticEndpointParams(uri=config.endpoint_uri)
                         )
                         if not endpoint.uri.path:
-                            endpoint.uri.path = ""
+                            path = ""
                         elif endpoint.uri.path.endswith("/"):
-                            endpoint.uri.path = endpoint.uri.path[:-1]
+                            path = endpoint.uri.path[:-1]
+                        else:
+                            path = endpoint.uri.path
                         if context.transport_request.destination.path:
-                            endpoint.uri.path += context.transport_request.destination.path
-                        endpoint.uri.query = context.transport_request.destination.query
-                        endpoint.uri.host = context.transport_request.destination.host + endpoint.uri.host
-                        context._transport_request.destination = endpoint.uri
+                            path += context.transport_request.destination.path
+                        context._transport_request.destination = URI(
+                            scheme=endpoint.uri.scheme,
+                            host=context.transport_request.destination.host + endpoint.uri.host,
+                            path=path,
+                            query=context.transport_request.destination.query,
+                        )
                         context._transport_request.fields.extend(endpoint.headers)
 
                 """, errorSymbol);

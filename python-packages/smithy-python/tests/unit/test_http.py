@@ -11,7 +11,9 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
-from smithy_python._private import URI, Field, Fields
+import pytest
+
+from smithy_python._private import URI, Field, Fields, HostType
 from smithy_python._private.http import (
     HTTPRequest,
     HTTPResponse,
@@ -19,6 +21,7 @@ from smithy_python._private.http import (
     StaticEndpointResolver,
 )
 from smithy_python.async_utils import async_list
+from smithy_python.exceptions import SmithyHTTPException
 
 
 def test_uri_basic() -> None:
@@ -90,11 +93,12 @@ def test_uri_without_port_number() -> None:
     assert uri.build() == "http://abc:def@test.aws.dev/my/path?foo=bar#frag"
 
 
-def test_uri_non_ascii_hostname() -> None:
-    uri = URI(host="umlaut-äöü.aws.dev")
-    assert uri.host == "umlaut-äöü.aws.dev"
-    assert uri.netloc == "umlaut-äöü.aws.dev"
-    assert uri.build() == "https://umlaut-äöü.aws.dev"
+def test_uri_ipv6_host() -> None:
+    uri = URI(host="::1")
+    assert uri.host == "::1"
+    assert uri.netloc == "[::1]"
+    assert uri.build() == "https://[::1]"
+    assert uri.host_type == HostType.IPv6
 
 
 def test_uri_escaped_path() -> None:
@@ -171,3 +175,25 @@ async def test_endpoint_provider_with_uri_object() -> None:
     result = await resolver.resolve_endpoint(params=params)
     assert result.uri == expected
     assert result.headers == Fields([])
+
+
+@pytest.mark.parametrize(
+    "input_uri, host_type",
+    [
+        (URI(host="example.com"), HostType.DOMAIN),
+        (URI(host="001:db8:3333:4444:5555:6666:7777:8888"), HostType.IPv6),
+        (URI(host="::"), HostType.IPv6),
+        (URI(host="2001:db8::"), HostType.IPv6),
+        (URI(host="192.168.1.1"), HostType.IPv4),
+    ],
+)
+def test_host_type(input_uri: URI, host_type: HostType) -> None:
+    assert input_uri.host_type == host_type
+
+
+@pytest.mark.parametrize(
+    "input_host", ["example.com\t", "umlaut-äöü.aws.dev", "foo\nbar.com"]
+)
+def test_uri_init_with_disallowed_characters(input_host: str) -> None:
+    with pytest.raises(SmithyHTTPException):
+        URI(host=input_host)

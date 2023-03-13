@@ -13,15 +13,35 @@
 from collections import Counter, OrderedDict
 from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
+from enum import Enum
+from functools import cached_property
 from urllib.parse import urlunparse
 
 from .. import interfaces
+from ..exceptions import SmithyHTTPException
 from ..interfaces import FieldPosition as FieldPosition  # re-export
+from . import abnf
 
 
-@dataclass(kw_only=True)
+class HostType(Enum):
+    """Enumeration of possible host types."""
+
+    IPv6 = "IPv6"
+    """Host is an IPv6 address."""
+
+    IPv4 = "IPv4"
+    """Host is an IPv4 address."""
+
+    DOMAIN = "DOMAIN"
+    """Host type is a domain name."""
+
+    UNKNOWN = "UNKNOWN"
+    """Host type is unknown."""
+
+
+@dataclass(kw_only=True, frozen=True)
 class URI(interfaces.URI):
-    """Universal Resource Identifier, target location for a :py:class:`HttpRequest`."""
+    """Universal Resource Identifier, target location for a :py:class:`HTTPRequest`."""
 
     scheme: str = "https"
     """For example ``http`` or ``https``."""
@@ -47,25 +67,54 @@ class URI(interfaces.URI):
     fragment: str | None = None
     """Part of the URI specification, but may not be transmitted by a client."""
 
-    @property
+    def __post_init__(self) -> None:
+        """Validate host component."""
+        if not abnf.HOST_MATCHER.match(self.host) and not abnf.IPv6_MATCHER.match(
+            f"[{self.host}]"
+        ):
+            raise SmithyHTTPException(f"Invalid host: {self.host}")
+
+    @cached_property
     def netloc(self) -> str:
         """Construct netloc string in format ``{username}:{password}@{host}:{port}``
 
         ``username``, ``password``, and ``port`` are only included if set. ``password``
-        is ignored, unless ``username`` is also set.
+        is ignored, unless ``username`` is also set. Add square brackets around the host
+        if it is a valid IPv6 endpoint URI per :rfc:`3986#section-3.2.2`.
         """
         if self.username is not None:
             password = "" if self.password is None else f":{self.password}"
             userinfo = f"{self.username}{password}@"
         else:
             userinfo = ""
-        port = "" if self.port is None else f":{self.port}"
-        return f"{userinfo}{self.host}{port}"
+
+        if self.port is not None:
+            port = f":{self.port}"
+        else:
+            port = ""
+
+        if self.host_type == HostType.IPv6:
+            host = f"[{self.host}]"
+        else:
+            host = self.host
+
+        return f"{userinfo}{host}{port}"
+
+    @cached_property
+    def host_type(self) -> HostType:
+        """Return the type of host."""
+        if abnf.IPv6_MATCHER.match(f"[{self.host}]"):
+            return HostType.IPv6
+        if abnf.IPv4_MATCHER.match(self.host):
+            return HostType.IPv4
+        if abnf.HOST_MATCHER.match(self.host):
+            return HostType.DOMAIN
+        return HostType.UNKNOWN
 
     def build(self) -> str:
         """Construct URI string representation.
 
-        Returns a string of the form
+        Validate host. Returns a string of the form
         ``{scheme}://{username}:{password}@{host}:{port}{path}?{query}#{fragment}``
         """
         components = (

@@ -1,3 +1,16 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License"). You
+# may not use this file except in compliance with the License. A copy of
+# the License is located at
+#
+#     http://aws.amazon.com/apache2.0/
+#
+# or in the "license" file accompanying this file. This file is
+# distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
+# ANY KIND, either express or implied. See the License for the specific
+# language governing permissions and limitations under the License.
+
 import re
 from datetime import datetime, timedelta, timezone
 from decimal import Decimal
@@ -15,7 +28,7 @@ RFC3339_MICRO = "%Y-%m-%dT%H:%M:%S.%fZ"
 def ensure_utc(value: datetime) -> datetime:
     """Ensures that the given datetime is a UTC timezone-aware datetime.
 
-    If the datetime isn't timzezone-aware, its timezone is set to UTC. If it is
+    If the datetime isn't timezone-aware, its timezone is set to UTC. If it is
     aware, it's replaced with the equivalent datetime under UTC.
 
     :param value: A datetime object that may or may not be timezone-aware.
@@ -142,7 +155,7 @@ _FLOAT_REGEX = re.compile(
                    # least one number.
         (?: # Opens the exponent group.
             [eE] # The exponent starts with a case-insensitive e
-            [+-]? # The exponent may have a positive or negave sign.
+            [+-]? # The exponent may have a positive or negative sign.
             \d+ # The exponent must have one or more digits.
         )? # Closes the exponent group and makes it optional.
     ) # Closes the numeric float group.
@@ -208,7 +221,7 @@ def limited_serialize_float(given: float) -> str | float:
 
 
 def serialize_rfc3339(given: datetime) -> str:
-    """Serializes a datetime into an RFC3339 string respresentation.
+    """Serializes a datetime into an RFC3339 string representation.
 
     If ``microseconds`` is 0, no fractional part is serialized.
 
@@ -227,9 +240,36 @@ def serialize_epoch_seconds(given: datetime) -> float:
     If ``microseconds`` is 0, no fractional part is serialized.
 
     :param given: The datetime to serialize.
-    :retursn: A string containing the seconds since the UNIX epoch.
+    :returns: A string containing the seconds since the UNIX epoch.
     """
     result = given.timestamp()
     if given.microsecond == 0:
         result = int(result)
+    return result
+
+
+def remove_dot_segments(path: str, remove_consecutive_slashes: bool = False) -> str:
+    """Removes dot segments from a path per :rfc:`3986#section-5.2.4`.
+
+    Optionally removes consecutive slashes.
+
+    :param path: The path to modify.
+    :param remove_consecutive_slashes: Whether to remove consecutive slashes.
+    :returns: The path with dot segments removed.
+    """
+    output = []
+    for segment in path.split("/"):
+        if segment == ".":
+            continue
+        elif segment != "..":
+            output.append(segment)
+        elif output:
+            output.pop()
+    if path.startswith("/") and (not output or output[0]):
+        output.insert(0, "")
+    if output and path.endswith(("/.", "/..")):
+        output.append("")
+    result = "/".join(output)
+    if remove_consecutive_slashes:
+        result = result.replace("//", "/")
     return result
