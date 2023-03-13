@@ -19,6 +19,7 @@ from ..utils import ensure_utc
 class Identity(identity_interface.Identity):
     def __init__(
         self,
+        *,
         expiration: datetime | None = None,
     ) -> None:
         """Initialize an identity.

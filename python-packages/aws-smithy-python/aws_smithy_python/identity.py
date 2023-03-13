@@ -20,6 +20,7 @@ class AWSCredentialIdentity(Identity):
 
     def __init__(
         self,
+        *,
         access_key_id: str,
         secret_access_key: str,
         session_token: str | None = None,
@@ -35,7 +36,7 @@ class AWSCredentialIdentity(Identity):
         :param expiration: The expiration time of the identity. If time zone is provided,
         it is updated to UTC. The value must always be in UTC.
         """
-        super().__init__(expiration)
+        super().__init__(expiration=expiration)
         self._access_key_id: str = access_key_id
         self._secret_access_key: str = secret_access_key
         self._session_token: str | None = session_token
