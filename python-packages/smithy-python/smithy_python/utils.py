@@ -265,7 +265,7 @@ def remove_dot_segments(path: str, remove_consecutive_slashes: bool = False) -> 
             output.append(segment)
         elif output:
             output.pop()
-    if path and path.startswith("/") and (not output or output[0]):
+    if path.startswith("/") and (not output or output[0]):
         output.insert(0, "")
     if output and path.endswith(("/.", "/..")):
         output.append("")
