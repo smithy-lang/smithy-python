@@ -141,6 +141,19 @@ class URI(interfaces.URI):
             and self.fragment == other.fragment
         )
 
+    def to_dict(self) -> interfaces.URIParameters:
+        """Return a dictionary representation of the URI."""
+        return {
+            "scheme": self.scheme,
+            "username": self.username,
+            "password": self.password,
+            "host": self.host,
+            "port": self.port,
+            "path": self.path,
+            "query": self.query,
+            "fragment": self.fragment,
+        }
+
 
 class Field(interfaces.Field):
     """A name-value pair representing a single field in an HTTP Request or Response.
@@ -179,24 +192,24 @@ class Field(interfaces.Field):
         except ValueError:
             return
 
-    def as_string(self) -> str:
+    def as_string(self, delimiter: str = ", ") -> str:
         """Get comma-delimited string of all values.
 
         If the ``Field`` has zero values, the empty string is returned. If the ``Field``
         has exactly one value, the value is returned unmodified.
 
-        For ``Field``s with more than one value, the values are joined by a comma and a
-        space. For such multi-valued ``Field``s, any values that already contain
-        commas or double quotes will be surrounded by double quotes. Within any values
-        that get quoted, pre-existing double quotes and backslashes are escaped with a
-        backslash.
+        For ``Field``s with more than one value, the values are joined by the delimiter
+        argument, defaulting to a comma and a space. For such multi-valued ``Field``s,
+        any values that already contain commas or double quotes will be surrounded by
+        double quotes. Within any values that get quoted, pre-existing double quotes
+        and backslashes are escaped with a backslash.
         """
         value_count = len(self.values)
         if value_count == 0:
             return ""
         if value_count == 1:
             return self.values[0]
-        return ", ".join(quote_and_escape_field_value(val) for val in self.values)
+        return delimiter.join(quote_and_escape_field_value(val) for val in self.values)
 
     def as_tuples(self) -> list[tuple[str, str]]:
         """Get list of ``name``, ``value`` tuples where each tuple represents one
@@ -306,6 +319,10 @@ class Fields(interfaces.Fields):
 
     def __iter__(self) -> Iterator[interfaces.Field]:
         yield from self.entries.values()
+
+    def __contains__(self, name: str) -> bool:
+        """Check if a field key exists in the collection."""
+        return self._normalize_field_name(name) in self.entries
 
 
 def quote_and_escape_field_value(value: str) -> str:
