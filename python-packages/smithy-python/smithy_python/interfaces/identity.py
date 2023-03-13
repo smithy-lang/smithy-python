@@ -18,6 +18,8 @@ from typing import Protocol, TypedDict, TypeVar
 class Identity(Protocol):
     """An entity available to the client representing who the user is."""
 
+    # The expiration time of the identity. If time zone is provided,
+    # it is updated to UTC. The value must always be in UTC.
     expiration: datetime | None = None
 
     @property

@@ -21,6 +21,8 @@ from .http import HTTPRequest
 class HTTPSigner(
     HTTPSignerInterface[IdentityType_contra, SigningPropertiesType_contra]
 ):
+    """An interface for generating a signed HTTP request."""
+
     async def sign(
         self,
         *,

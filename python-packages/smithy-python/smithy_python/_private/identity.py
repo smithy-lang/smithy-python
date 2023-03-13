@@ -17,6 +17,8 @@ from ..utils import ensure_utc
 
 
 class Identity(identity_interface.Identity):
+    """An entity available to the client representing who the user is."""
+
     def __init__(
         self,
         *,
