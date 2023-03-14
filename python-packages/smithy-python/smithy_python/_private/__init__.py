@@ -185,11 +185,11 @@ class Field(interfaces.Field):
         If the ``Field`` has zero values, the empty string is returned. If the ``Field``
         has exactly one value, the value is returned unmodified.
 
-        For ``Field``s with more than one value, the values are joined by a comma and a
-        space. For such multi-valued ``Field``s, any values that already contain
-        commas or double quotes will be surrounded by double quotes. Within any values
-        that get quoted, pre-existing double quotes and backslashes are escaped with a
-        backslash.
+        For ``Field``s with more than one value, the values are joined by the delimiter
+        argument, defaulting to a comma and a space. For such multi-valued ``Field``s,
+        any values that already contain commas or double quotes will be surrounded by
+        double quotes. Within any values that get quoted, pre-existing double quotes
+        and backslashes are escaped with a backslash.
         """
         value_count = len(self.values)
         if value_count == 0:
