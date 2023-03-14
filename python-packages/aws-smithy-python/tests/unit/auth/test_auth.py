@@ -514,7 +514,7 @@ def test_should_sha256_sign_payload(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "http_request, signing_properties, for_presigning, expected_payload",
+    "http_request, signing_properties, expected_payload",
     [
         (
             HTTPRequest(
@@ -524,7 +524,6 @@ def test_should_sha256_sign_payload(
                 fields=Fields(),
             ),
             SIGNING_PROPERTIES,
-            False,
             EMPTY_SHA256_HASH,
         ),
         (
@@ -535,7 +534,6 @@ def test_should_sha256_sign_payload(
                 fields=Fields(),
             ),
             SIGNING_PROPERTIES,
-            False,
             sha256(b"foo").hexdigest(),
         ),
         (
@@ -545,19 +543,7 @@ def test_should_sha256_sign_payload(
                 method="GET",
                 fields=Fields(),
             ),
-            SIGNING_PROPERTIES,
-            True,
-            UNSIGNED_PAYLOAD,
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=async_list([]),
-                method="GET",
-                fields=Fields(),
-            ),
             {"payload_signing_enabled": False, "region": "us-east-1", "service": "s3"},
-            False,
             UNSIGNED_PAYLOAD,
         ),
         (
@@ -572,7 +558,6 @@ def test_should_sha256_sign_payload(
                 "region": "us-east-1",
                 "service": "s3",
             },
-            False,
             STREAMING_UNSIGNED_PAYLOAD_TRAILER,
         ),
     ],
@@ -581,11 +566,11 @@ async def test_payload(
     sigv4_signer: SigV4Signer,
     http_request: HTTPRequest,
     signing_properties: SigV4SigningProperties,
-    for_presigning: bool,
     expected_payload: str,
 ) -> None:
     payload = await sigv4_signer._payload(
-        http_request, signing_properties, for_presigning
+        http_request,
+        signing_properties,
     )
     assert payload == expected_payload
 
