@@ -803,10 +803,12 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      *
      * @param context The generation context.
      * @param writer The writer to write to.
+     * @param canReadResponseBody If the http response body can be parsed by the delegator.
      */
     protected abstract void resolveErrorCodeAndMessage(
         GenerationContext context,
-        PythonWriter writer
+        PythonWriter writer,
+        Boolean canReadResponseBody
     );
 
     private void deserializeHeaders(

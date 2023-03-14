@@ -24,6 +24,7 @@ import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeVisitor;
 import software.amazon.smithy.model.shapes.StringShape;
 import software.amazon.smithy.model.shapes.StructureShape;
+import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.python.codegen.GenerationContext;
@@ -92,6 +93,23 @@ public final class JsonPayloadDeserVisitor extends ShapeVisitor.Default<Void> {
 
     @Override
     public Void structureShape(StructureShape shape) {
+        generateJsonDeserializerDelegation();
+        return null;
+    }
+
+    @Override
+    public Void unionShape(UnionShape shape) {
+        generateJsonDeserializerDelegation();
+        return null;
+    }
+
+    @Override
+    public Void documentShape(DocumentShape shape) {
+        generateJsonDeserializerDelegation();
+        return null;
+    }
+
+    private void generateJsonDeserializerDelegation() {
         writer.addStdlibImport("json", "loads", "json_loads");
 
         var target = context.model().expectShape(member.getTarget());
@@ -106,21 +124,5 @@ public final class JsonPayloadDeserVisitor extends ShapeVisitor.Default<Void> {
             context.symbolProvider().toMemberName(member),
             memberDeserializer
         );
-
-        return null;
-    }
-
-    @Override
-    public Void documentShape(DocumentShape shape) {
-        writer.addStdlibImport("json", "loads", "json_loads");
-        writer.write("""
-                if (body := await http_response.consume_body()):
-                    kwargs[$S] = json_loads(body)
-
-                """,
-            context.symbolProvider().toMemberName(member)
-        );
-
-        return null;
     }
 }
