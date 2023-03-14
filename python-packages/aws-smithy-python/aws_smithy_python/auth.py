@@ -408,11 +408,11 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         if not (query := url.query):
             return ""
 
-        query_parts = []
         query_params = parse_qsl(query)
-        for key, value in query_params:
-            # URI encode all characters including `/` and `=`
-            query_parts.append((quote(key, safe=""), quote(value, safe="")))
+        # URI encode all characters including `/` and `=`
+        query_parts = [
+            (quote(key, safe=""), quote(value, safe="")) for key, value in query_params
+        ]
         # Unfortunately, keys and values must be sorted separately and only
         # after they have been encoded.
         return "&".join([f"{key}={value}" for key, value in sorted(query_parts)])
