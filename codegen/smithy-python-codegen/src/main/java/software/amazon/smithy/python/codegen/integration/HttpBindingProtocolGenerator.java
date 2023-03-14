@@ -797,6 +797,17 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         return error.getId().getName();
     }
 
+    /**
+     * Resolves the error code and message into the {@literal code} and {@literal message}
+     * variables, respectively.
+     *
+     * @param context The generation context.
+     * @param writer The writer to write to.
+     */
+    protected abstract void resolveErrorCodeAndMessage(
+        GenerationContext context,
+        PythonWriter writer
+    );
 
     private void deserializeHeaders(
         GenerationContext context,
