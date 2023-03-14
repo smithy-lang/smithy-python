@@ -57,6 +57,10 @@ class URI(Protocol):
         """Construct netloc string in format ``{username}:{password}@{host}:{port}``"""
         ...
 
+    def to_dict(self) -> dict[str, str | int | None]:
+        """Convert URI to a dictionary representation."""
+        ...
+
 
 class Request(Protocol):
     """Protocol-agnostic representation of a request."""

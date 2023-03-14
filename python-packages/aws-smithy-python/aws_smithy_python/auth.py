@@ -18,7 +18,7 @@ from typing import Callable, Literal, NotRequired
 from urllib.parse import parse_qsl, quote
 
 from smithy_python import interfaces
-from smithy_python._private import Field, Fields
+from smithy_python._private import URI, Field, Fields
 from smithy_python._private.auth import HTTPSigner
 from smithy_python._private.http import HTTPRequest
 from smithy_python.exceptions import SmithyIdentityException
@@ -164,7 +164,10 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
             identity.session_token,
         )
         # add the query params before signing
-        new_request.destination.query = url_query
+        new_destination = self._generate_new_destination(
+            new_request.destination, url_query
+        )
+        new_request.destination = new_destination
         signature = await self._generate_signature(
             new_request,
             formatted_headers,
@@ -175,7 +178,11 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
             scope,
             True,
         )
-        new_request.destination.query += f"&X-Amz-Signature={signature}"
+        final_query = f"{url_query}&X-Amz-Signature={signature}"
+        final_destination = self._generate_new_destination(
+            new_request.destination, final_query
+        )
+        new_request.destination = final_destination
         return new_request.destination.build()
 
     async def _get_signature_args(
@@ -313,6 +320,16 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         query += f"X-Amz-Security-Token={quote(session_token, safe='')}&"
         query += f"X-Amz-SignedHeaders={signed_headers}"
         return query
+
+    def _generate_new_destination(self, destination: interfaces.URI, query: str) -> URI:
+        """Generate a new destination with an updated query string."""
+        destination_components = destination.to_dict()
+        destination_components["query"] = query
+        # mypy doesn't like that we're passing a dict to a URI constructor.
+        # It doesn't detect that the values are being unpacked into individual kwargs.
+        # Currently the `arg-type` error will be raised and there is no clear way around this
+        # without messing with dataclasses internals. This may be removed if a solution is found
+        return URI(**destination_components)  # type:ignore
 
     async def _generate_signature(
         self,

@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 from collections import Counter, OrderedDict
 from collections.abc import Iterable, Iterator
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from enum import Enum
 from functools import cached_property
 from urllib.parse import urlunparse
@@ -110,6 +110,10 @@ class URI(interfaces.URI):
         if abnf.HOST_MATCHER.match(self.host):
             return HostType.DOMAIN
         return HostType.UNKNOWN
+
+    def to_dict(self) -> dict[str, str | int | None]:
+        """Return a dictionary representation of the URI."""
+        return {field.name: getattr(self, field.name) for field in fields(self)}
 
     def build(self) -> str:
         """Construct URI string representation.
