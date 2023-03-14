@@ -36,7 +36,10 @@ lockfile = "lockfiles/pytest"
 
 [coverage-py]
 interpreter_constraints = [">=3.11"]
-report = "xml"
+report = [
+    "xml",
+    "html"
+]
 
 [mypy]
 version = "mypy==1.0.0"
