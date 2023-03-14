@@ -284,9 +284,16 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
     }
 
     @Override
-    protected void resolveErrorCodeAndMessage(GenerationContext context, PythonWriter writer) {
+    protected void resolveErrorCodeAndMessage(GenerationContext context,
+                                              PythonWriter writer,
+                                              Boolean canReadResponseBody
+    ) {
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
         writer.addImport("smithy_python.protocolutils", "parse_rest_json_error_info");
-        writer.write("code, message, parsed_body = await parse_rest_json_error_info(http_response)");
+        writer.writeInline("code, message, parsed_body = await parse_rest_json_error_info(http_response");
+        if (!canReadResponseBody) {
+            writer.writeInline(", False");
+        }
+        writer.write(")");
     }
 }
