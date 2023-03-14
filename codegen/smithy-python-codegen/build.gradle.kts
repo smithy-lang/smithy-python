@@ -23,10 +23,8 @@ buildscript {
     val smithyVersion: String by project
 
     repositories {
-        mavenLocal()
         mavenCentral()
     }
-
     dependencies {
         "classpath"("software.amazon.smithy:smithy-cli:$smithyVersion")
     }

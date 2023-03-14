@@ -248,7 +248,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
             // relevant here.
             writer.addStdlibImport("typing", "cast");
             writer.write("""
-                output: dict[str, Document] = cast(dict[str, Document], error_info.json_body)
+                output: dict[str, Document] = cast(dict[str, Document], parsed_body)
 
                 """);
         }
@@ -287,6 +287,6 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
     protected void resolveErrorCodeAndMessage(GenerationContext context, PythonWriter writer) {
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
         writer.addImport("smithy_python.protocolutils", "parse_rest_json_error_info");
-        writer.write("code, message, parsed_body = await parse_rest_json_error_info(http_response, check_body)");
+        writer.write("code, message, parsed_body = await parse_rest_json_error_info(http_response)");
     }
 }

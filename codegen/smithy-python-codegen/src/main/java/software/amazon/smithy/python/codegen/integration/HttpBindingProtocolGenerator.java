@@ -718,7 +718,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 writer.consumer(w -> generateHttpResponseDeserializer(context, writer, operation)));
             writer.popState();
         });
-        generateErrorDispatcher(context, operation, this::getErrorCode);
+        generateErrorDispatcher(context, operation, this::getErrorCode, this::resolveErrorCodeAndMessage);
     }
 
     /**
@@ -737,14 +737,14 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         delegator.useFileWriter(deserFunction.getDefinitionFile(), deserFunction.getNamespace(), writer -> {
             writer.pushState(new ErrorDeserializerSection(error));
             writer.addStdlibImport("typing", "Any");
-            writer.addImport("smithy_python.protocolutils", "RestJsonErrorInfo");
             writer.write("""
                 async def $L(
                     http_response: $T,
                     config: $T,
-                    error_info: RestJsonErrorInfo
+                    parsed_body: Document | None,
+                    default_message: str,
                 ) -> $T:
-                    kwargs: dict[str, Any] = {"message": error_info.message}
+                    kwargs: dict[str, Any] = {"message": default_message}
 
                     ${C|}
 
@@ -1037,10 +1037,16 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         Shape operationOrError,
         HttpBinding payloadBinding
     ) {
+        // Add base dependency
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        var visitor = new JsonPayloadDeserVisitor(context, writer, payloadBinding);
-        var target = context.model().expectShape(payloadBinding.getMember().getTarget());
-        target.accept(visitor);
+
+        if (operationOrError.isOperationShape()) {
+            var visitor = new JsonPayloadDeserVisitor(context, writer, payloadBinding);
+            var target = context.model().expectShape(payloadBinding.getMember().getTarget());
+            target.accept(visitor);
+        }
+
+        // TODO payload error deserialization along with protocol tests for payload errors.
     }
 
     /**

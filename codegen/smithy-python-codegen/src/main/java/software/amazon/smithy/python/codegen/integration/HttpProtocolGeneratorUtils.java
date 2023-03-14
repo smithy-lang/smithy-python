@@ -16,12 +16,11 @@
 package software.amazon.smithy.python.codegen.integration;
 
 import static java.lang.String.format;
-import static software.amazon.smithy.model.knowledge.HttpBinding.Location.PAYLOAD;
 
 import java.util.Locale;
+import java.util.function.BiConsumer;
 import java.util.function.Function;
 import software.amazon.smithy.codegen.core.CodegenException;
-import software.amazon.smithy.model.knowledge.HttpBindingIndex;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
@@ -134,7 +133,8 @@ public final class HttpProtocolGeneratorUtils {
     public static void generateErrorDispatcher(
         GenerationContext context,
         OperationShape operation,
-        Function<StructureShape, String> errorShapeToCode
+        Function<StructureShape, String> errorShapeToCode,
+        BiConsumer<GenerationContext, PythonWriter> errorMessageCodeGenerator
     ) {
         var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
         var transportResponse = context.applicationProtocol().responseType();
@@ -142,26 +142,20 @@ public final class HttpProtocolGeneratorUtils {
         var errorDispatcher = context.protocolGenerator().getErrorDeserializationFunction(context, operation);
         var apiError = CodegenUtils.getApiError(context.settings());
         var unknownApiError = CodegenUtils.getUnknownApiError(context.settings());
-
         delegator.useFileWriter(errorDispatcher.getDefinitionFile(), errorDispatcher.getNamespace(), writer -> {
-            writer.pushState(new ErrorDispatcherSection(operation, errorShapeToCode));
+            writer.pushState(new ErrorDispatcherSection(operation, errorShapeToCode, errorMessageCodeGenerator));
             writer.addStdlibImport("typing", "Any");
-            writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-            writer.addImport("smithy_python.protocolutils", "parse_rest_json_error_code");
-            writer.addImport("smithy_python.protocolutils", "parse_rest_json_error_info");
-
             writer.write("""
                     async def $1L(http_response: $2T, config: $3T) -> $4T[Any]:
-                        error_info = await parse_rest_json_error_code(http_response)
-                        
-                        match error_info.code:
-                            ${6C|}
+                        ${6C|}
+
+                        match code.lower():
+                            ${7C|}
 
                             case _:
-                                error_info = await parse_rest_json_error_info(http_response, error_info)
-                                return $5T(error_info.message)
-                                 
+                                return $5T(message)
                     """, errorDispatcher.getName(), transportResponse, configSymbol, apiError, unknownApiError,
+                    writer.consumer(w -> errorMessageCodeGenerator.accept(context, w)),
                     writer.consumer(w -> errorCases(context, w, operation, errorShapeToCode)));
             writer.popState();
         });
@@ -173,31 +167,15 @@ public final class HttpProtocolGeneratorUtils {
         OperationShape operation,
         Function<StructureShape, String> errorShapeToCode
     ) {
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.protocolutils", "parse_rest_json_error_info");
-
         var errorIds = operation.getErrors(context.settings().getService(context.model()));
-        var bindingIndex = HttpBindingIndex.of(context.model());
-
         for (ShapeId errorId : errorIds) {
             var error = context.model().expectShape(errorId, StructureShape.class);
             var code = errorShapeToCode.apply(error).toLowerCase(Locale.US);
             var deserFunction = context.protocolGenerator().getErrorDeserializationFunction(context, errorId);
-
-            if (bindingIndex.getResponseBindings(error, PAYLOAD).isEmpty()) {
-                writer.write("""
+            writer.write("""
                 case $S:
-                    error_info = await parse_rest_json_error_info(http_response, error_info)
-                    return await $T(http_response, config, error_info)
+                    return await $T(http_response, config, parsed_body, message)
                 """, code, deserFunction);
-            } else {
-                // Shape has an Http payload so we cannot json parse the body
-                writer.write("""
-                case $S:
-                    return await $T(http_response, config, error_info)
-                """, code, deserFunction);
-            }
-
         }
     }
 
@@ -223,9 +201,11 @@ public final class HttpProtocolGeneratorUtils {
      *
      * @param operation The operation whose deserializer is being generated.
      * @param errorShapeToCode A function that maps an error structure to it's code on the wire.
+     * @param errorMessageCodeGenerator A consumer that generates code to extract the error message and code.
      */
     public record ErrorDispatcherSection(
         OperationShape operation,
-        Function<StructureShape, String> errorShapeToCode
+        Function<StructureShape, String> errorShapeToCode,
+        BiConsumer<GenerationContext, PythonWriter> errorMessageCodeGenerator
     ) implements CodeSection {}
 }
