@@ -1,4 +1,4 @@
-# Copyright 2023 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"). You
 # may not use this file except in compliance with the License. A copy of
@@ -246,13 +246,11 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         additional headers if provided.
         """
         fields = http_request.fields
-        to_delete = []
         # Must make a list copy of original so we aren't iterating over an iterable
         # that may change in size
         for field in list(fields):
             if field.name.lower() in DISALLOWED_USER_PROVIDED_HEADERS:
                 fields.remove_field(field.name)
-                to_delete.append(field.name)
         fields.extend(headers_to_add)
         return HTTPRequest(
             method=http_request.method,
@@ -274,7 +272,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         for field in http_request.fields:
             l_key = field.name.lower()
             if l_key not in HEADERS_EXCLUDED_FROM_SIGNING:
-                value = ",".join(field.values)
+                value = field.as_string(delimiter=",")
                 formatted_headers[l_key] = value
         if "host" not in formatted_headers:
             uri = http_request.destination
@@ -323,13 +321,17 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
 
     def _generate_new_destination(self, destination: interfaces.URI, query: str) -> URI:
         """Generate a new destination with an updated query string."""
-        destination_components = destination.to_dict()
-        destination_components["query"] = query
-        # mypy doesn't like that we're passing a dict to a URI constructor.
-        # It doesn't detect that the values are being unpacked into individual kwargs.
-        # Currently the `arg-type` error will be raised and there is no clear way around this
-        # without messing with dataclasses internals. This may be removed if a solution is found
-        return URI(**destination_components)  # type:ignore
+        # Using kwargs would be nice here, but mypy can't properly infer types with them.
+        return URI(
+            scheme=destination.scheme,
+            username=destination.username,
+            password=destination.password,
+            host=destination.host,
+            port=destination.port,
+            path=destination.path,
+            query=query,
+            fragment=destination.fragment,
+        )
 
     async def _generate_signature(
         self,

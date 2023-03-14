@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 from collections import Counter, OrderedDict
 from collections.abc import Iterable, Iterator
-from dataclasses import dataclass, fields
+from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
 from urllib.parse import urlunparse
@@ -111,10 +111,6 @@ class URI(interfaces.URI):
             return HostType.DOMAIN
         return HostType.UNKNOWN
 
-    def to_dict(self) -> dict[str, str | int | None]:
-        """Return a dictionary representation of the URI."""
-        return {field.name: getattr(self, field.name) for field in fields(self)}
-
     def build(self) -> str:
         """Construct URI string representation.
 
@@ -183,7 +179,7 @@ class Field(interfaces.Field):
         except ValueError:
             return
 
-    def as_string(self) -> str:
+    def as_string(self, delimiter: str = ", ") -> str:
         """Get comma-delimited string of all values.
 
         If the ``Field`` has zero values, the empty string is returned. If the ``Field``
@@ -200,7 +196,7 @@ class Field(interfaces.Field):
             return ""
         if value_count == 1:
             return self.values[0]
-        return ", ".join(quote_and_escape_field_value(val) for val in self.values)
+        return delimiter.join(quote_and_escape_field_value(val) for val in self.values)
 
     def as_tuples(self) -> list[tuple[str, str]]:
         """Get list of ``name``, ``value`` tuples where each tuple represents one
