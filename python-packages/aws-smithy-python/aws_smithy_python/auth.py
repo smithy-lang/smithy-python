@@ -176,7 +176,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
             signing_properties,
             date,
             scope,
-            True,
+            UNSIGNED_PAYLOAD,
         )
         final_query = f"{url_query}&X-Amz-Signature={signature}"
         final_destination = self._generate_new_destination(
@@ -342,7 +342,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         signing_properties: SigV4SigningProperties,
         date: str,
         scope: str,
-        for_presigning: bool = False,
+        payload: str | None = None,
     ) -> str:
         """Generate the signature for a request.
 
@@ -355,15 +355,15 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         service, and expiration where applicable.
         :param date: The date to use in the signature in `%Y%m%dT%H%M%SZ` format.
         :param scope: The scope to use in the signature. See `_scope` for more info.
-        :param for_presigning: Whether or not the signature is being generated for URL
-        presigning.
+        :param payload: Optional payload to sign. If not provided, the payload will
+        be generated from the request body.
         """
         canonical_request = await self._canonical_request(
             http_request,
             formatted_headers,
             signed_headers,
             signing_properties,
-            for_presigning,
+            payload,
         )
         string_to_sign = self._string_to_sign(canonical_request, date, scope)
         return self._signature(
@@ -376,7 +376,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         formatted_headers: dict[str, str],
         signed_headers: str,
         signing_properties: SigV4SigningProperties,
-        for_presigning: bool = False,
+        payload: str | None = None,
     ) -> str:
         """Generate the canonical request string.
 
@@ -393,7 +393,10 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         cr += f"{self._canonical_query_string(http_request.destination)}\n"
         cr += f"{self._canonical_headers(formatted_headers)}\n"
         cr += f"{signed_headers}\n"
-        cr += await self._payload(http_request, signing_properties, for_presigning)
+        if payload is None:
+            cr += await self._payload(http_request, signing_properties)
+        else:
+            cr += payload
         return cr
 
     def _canonical_query_string(self, url: interfaces.URI) -> str:
@@ -431,15 +434,11 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         self,
         http_request: HTTPRequestInterface,
         signing_properties: SigV4SigningProperties,
-        for_url_presigning: bool = False,
     ) -> str:
         """Generate the value for the `X-Amz-Content-SHA256` header."""
         if self._is_streaming_checksum_payload(signing_properties):
             return STREAMING_UNSIGNED_PAYLOAD_TRAILER
-        elif (
-            not self._should_sha256_sign_payload(http_request, signing_properties)
-            or for_url_presigning  # noqa: W503
-        ):
+        elif not self._should_sha256_sign_payload(http_request, signing_properties):
             return UNSIGNED_PAYLOAD
 
         if request_body := await http_request.consume_body():
