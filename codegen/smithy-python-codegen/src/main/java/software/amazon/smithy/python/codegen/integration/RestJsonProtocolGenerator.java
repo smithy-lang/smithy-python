@@ -308,4 +308,12 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         }
         writer.write(")");
     }
+
+    @Override
+    protected void errorPreParser(PythonWriter writer) {
+        writer.write("""
+                    if (body := await http_response.consume_body()):
+                        parsed_body = json_loads(body)
+                    """);
+    }
 }

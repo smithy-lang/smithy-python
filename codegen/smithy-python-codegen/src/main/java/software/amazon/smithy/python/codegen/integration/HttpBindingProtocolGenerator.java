@@ -718,7 +718,8 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 writer.consumer(w -> generateHttpResponseDeserializer(context, writer, operation)));
             writer.popState();
         });
-        generateErrorDispatcher(context, operation, this::getErrorCode, this::resolveErrorCodeAndMessage);
+        generateErrorDispatcher(context, operation, this::getErrorCode,
+            this::resolveErrorCodeAndMessage, this::errorPreParser);
     }
 
     /**
@@ -809,6 +810,18 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         GenerationContext context,
         PythonWriter writer,
         Boolean canReadResponseBody
+    );
+
+    /** PreParses the http request body for error cases without http payloads
+     *
+     * If the response body cannot be read before the specific error case (due to the operation having
+     * at least 1 error with an http payload), but the specific error case does not have an
+     * http payload, then the body must be pre-parsed for the deserializer.
+     *
+     * @param writer The writer to write to
+     */
+    protected abstract void errorPreParser(
+        PythonWriter writer
     );
 
     private void deserializeHeaders(

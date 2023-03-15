@@ -18,6 +18,7 @@ package software.amazon.smithy.python.codegen.integration;
 import static java.lang.String.format;
 
 import java.util.Locale;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.model.Model;
@@ -42,6 +43,7 @@ import software.amazon.smithy.utils.TriConsumer;
 @SmithyUnstableApi
 public final class HttpProtocolGeneratorUtils {
     // Shape is an error on an operation shape that has the httpPayload trait applied to it
+    // See: https://smithy.io/2.0/spec/selectors.html for more information on selectors
     private static final Selector PAYLOAD_ERROR_SELECTOR = Selector.parse(
         "operation -[error]-> structure :test(> member :test([trait|httpPayload]))"
     );
@@ -141,7 +143,8 @@ public final class HttpProtocolGeneratorUtils {
         GenerationContext context,
         OperationShape operation,
         Function<StructureShape, String> errorShapeToCode,
-        TriConsumer<GenerationContext, PythonWriter, Boolean> errorMessageCodeGenerator
+        TriConsumer<GenerationContext, PythonWriter, Boolean> errorMessageCodeGenerator,
+        Consumer<PythonWriter> errorPreParser
     ) {
         var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
         var transportResponse = context.applicationProtocol().responseType();
@@ -164,7 +167,7 @@ public final class HttpProtocolGeneratorUtils {
                                 return $5T(message)
                     """, errorDispatcher.getName(), transportResponse, configSymbol, apiError, unknownApiError,
                     writer.consumer(w -> errorMessageCodeGenerator.accept(context, w, canReadResponseBody)),
-                    writer.consumer(w -> errorCases(context, w, operation, errorShapeToCode)));
+                    writer.consumer(w -> errorCases(context, w, operation, errorShapeToCode, errorPreParser)));
             writer.popState();
         });
     }
@@ -188,7 +191,8 @@ public final class HttpProtocolGeneratorUtils {
         GenerationContext context,
         PythonWriter writer,
         OperationShape operation,
-        Function<StructureShape, String> errorShapeToCode
+        Function<StructureShape, String> errorShapeToCode,
+        Consumer<PythonWriter> errorPreParser
     ) {
         var errorIds = operation.getErrors(context.settings().getService(context.model()));
         for (ShapeId errorId : errorIds) {
@@ -200,13 +204,7 @@ public final class HttpProtocolGeneratorUtils {
             if (!canReadResponseBody(operation, context.model())
                 && noHttpPayloadMembers(error, context.model())
             ) {
-                // If the response body cannot be read before the specific error case (due to the operation having
-                // at least 1 error with an http payload), but the specific error case does not have an
-                // http payload, then the json body must be pre-parsed for the document deserializer.
-                writer.write("""
-                    if (body := await http_response.consume_body()):
-                        parsed_body = json_loads(body)
-                    """);
+                errorPreParser.accept(writer);
             }
             writer.write("return await $T(http_response, config, parsed_body, message)", deserFunction);
             writer.dedent();
