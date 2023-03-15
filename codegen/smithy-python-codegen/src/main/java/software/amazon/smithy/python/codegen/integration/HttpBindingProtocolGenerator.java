@@ -1033,17 +1033,12 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      * @param operationOrError The operation or error whose output payload is being deserialized.
      * @param payloadBinding The payload binding to deserialize.
      */
-    protected void deserializePayloadBody(
+    protected abstract void deserializePayloadBody(
         GenerationContext context,
         PythonWriter writer,
         Shape operationOrError,
         HttpBinding payloadBinding
-    ) {
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        var visitor = new JsonPayloadDeserVisitor(context, writer, payloadBinding);
-        var target = context.model().expectShape(payloadBinding.getMember().getTarget());
-        target.accept(visitor);
-    }
+    );
 
     /**
      * Given context and a source of data, generate an input value provider for the
