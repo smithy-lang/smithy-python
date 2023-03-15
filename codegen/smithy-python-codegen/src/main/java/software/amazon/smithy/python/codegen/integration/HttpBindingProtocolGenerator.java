@@ -1039,16 +1039,10 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         Shape operationOrError,
         HttpBinding payloadBinding
     ) {
-        // Add base dependency
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-
-        if (operationOrError.isOperationShape()) {
-            var visitor = new JsonPayloadDeserVisitor(context, writer, payloadBinding);
-            var target = context.model().expectShape(payloadBinding.getMember().getTarget());
-            target.accept(visitor);
-        }
-
-        // TODO payload error deserialization along with protocol tests for payload errors.
+        var visitor = new JsonPayloadDeserVisitor(context, writer, payloadBinding);
+        var target = context.model().expectShape(payloadBinding.getMember().getTarget());
+        target.accept(visitor);
     }
 
     /**
