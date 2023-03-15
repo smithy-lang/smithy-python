@@ -179,8 +179,8 @@ public final class HttpProtocolGeneratorUtils {
      * @param model smithy model
      */
     private static boolean canReadResponseBody(OperationShape operationShape, Model model) {
-        return PAYLOAD_ERROR_SELECTOR.matches(model)
-            .map(shapeMatch -> shapeMatch.getShape().getId())
+        return PAYLOAD_ERROR_SELECTOR.shapes(model)
+            .map(Shape::getId)
             .noneMatch(shapeId -> operationShape.getErrors().contains(shapeId));
     }
 
