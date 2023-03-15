@@ -251,7 +251,8 @@ def serialize_epoch_seconds(given: datetime) -> float:
 def remove_dot_segments(path: str, remove_consecutive_slashes: bool = False) -> str:
     """Removes dot segments from a path per :rfc:`3986#section-5.2.4`.
 
-    Optionally removes consecutive slashes.
+    Optionally removes consecutive slashes. Based on the function of the same name in
+    :mod:`rfc3986.normalizers`.
 
     :param path: The path to modify.
     :param remove_consecutive_slashes: Whether to remove consecutive slashes.
