@@ -277,7 +277,11 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
     }
 
     @Override
-    protected void deserializePayloadBody(GenerationContext context, PythonWriter writer, Shape operationOrError, HttpBinding payloadBinding) {
+    protected void deserializePayloadBody(GenerationContext context,
+                                          PythonWriter writer,
+                                          Shape operationOrError,
+                                          HttpBinding payloadBinding
+    ) {
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
         var visitor = new JsonPayloadDeserVisitor(context, writer, payloadBinding);
         var target = context.model().expectShape(payloadBinding.getMember().getTarget());
