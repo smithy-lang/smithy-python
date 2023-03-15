@@ -284,9 +284,8 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         return dict(sorted(formatted_headers.items()))
 
     def _scope(self, date: str, signing_properties: SigV4SigningProperties) -> str:
-        """Binds the signature to a specific date, AWS region, and service.
-
-        It takes the following form:
+        """Binds the signature to a specific date, AWS region, and service in the
+        following format:
 
         <YYYYMMDD>/<AWS Region>/<AWS Service>/aws4_request
         """
@@ -380,8 +379,8 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
     ) -> str:
         """Generate the canonical request string.
 
-        This is a string comprised of several components separated by newlines.
-        This is its format:
+        This is a string comprised of several components separated by newlines in the
+        following format:
 
         <HTTPMethod>\n <CanonicalURI>\n <CanonicalQueryString>\n <CanonicalHeaders>\n
         <SignedHeaders>\n <HashedPayload>
@@ -402,7 +401,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
     def _canonical_query_string(self, url: interfaces.URI) -> str:
         """Specifies the URI-encoded query string parameters.
 
-        After encoding, the parameters are sorted in alphabetical order by key name then
+        After encoding, the parameters are sorted in alphabetical order by key then
         value.
         """
         if not (query := url.query):
@@ -415,7 +414,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         ]
         # Unfortunately, keys and values must be sorted separately and only
         # after they have been encoded.
-        return "&".join([f"{key}={value}" for key, value in sorted(query_parts)])
+        return "&".join(f"{key}={value}" for key, value in sorted(query_parts))
 
     def _canonical_headers(self, headers: dict[str, str]) -> str:
         """Format headers as a newline delimited string.
@@ -423,9 +422,9 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         Keys must be lower case and values must be trimmed.
         """
         # canonical headers should contain a trailing newline character `\n`
-        return "".join(f"{key}:{self.trim(value)}\n" for key, value in headers.items())
+        return "".join(f"{key}:{self._trim(value)}\n" for key, value in headers.items())
 
-    def trim(self, value: str) -> str:
+    def _trim(self, value: str) -> str:
         """Remove excess whitespace before and after value then convert sequential
         spaces to a single space."""
         return " ".join(value.split())
@@ -465,8 +464,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         return signing_properties.get("payload_signing_enabled", True)
 
     def _string_to_sign(self, canonical_request: str, date: str, scope: str) -> str:
-        """The string that will ultimately be passed to the `signature` function for
-        signing.
+        """The string to sign.
 
         It is a concatenation of the following strings:
 
@@ -489,10 +487,10 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
     ) -> str:
         """Sign the string to sign.
 
-        In SigV4, instead of using AWS access keys to sign a
-        request, a signing key is created that is scoped to a specific region and
-        service. The date, region, service and resulting signing key are individually
-        hashed, then the composite hash is used to sign the string to sign.
+        In SigV4, instead of using AWS access keys to sign a request, a signing key is
+        created that is scoped to a specific region and service. The date, region,
+        service and resulting signing key are individually hashed, then the composite
+        hash is used to sign the string to sign.
 
         DateKey              = HMAC-SHA256("AWS4"+"<SecretAccessKey>", "<YYYYMMDD>")
         DateRegionKey        = HMAC-SHA256(<DateKey>, "<aws-region>")
