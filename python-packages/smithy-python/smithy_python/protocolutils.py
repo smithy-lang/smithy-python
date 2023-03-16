@@ -26,7 +26,7 @@ class RestJsonErrorInfo(NamedTuple):
     either didn't model the message or which are unknown.
     """
 
-    json_body: Document | None = None
+    json_body: dict[str, Document] | None = None
     """The HTTP response body parsed as JSON."""
 
 

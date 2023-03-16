@@ -741,7 +741,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 async def $L(
                     http_response: $T,
                     config: $T,
-                    parsed_body: Document | None,
+                    parsed_body: dict[str, Document]| None,
                     default_message: str,
                 ) -> $T:
                     kwargs: dict[str, Any] = {"message": default_message}
