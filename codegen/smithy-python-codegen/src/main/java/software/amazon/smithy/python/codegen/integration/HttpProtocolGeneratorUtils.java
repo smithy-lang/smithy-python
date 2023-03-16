@@ -175,7 +175,7 @@ public final class HttpProtocolGeneratorUtils {
     /**
      * Checks if the http_response.body can be read for a given operation shape.
      * <p>
-     * If any of the errors for an operation contain an HttpPayload then it is not safe to read the response
+     * If any of the errors for an operation contain an HttpPayload then it is not safe to read
      * the body of the http_response.
      *
      * @param operationShape operation shape to check
