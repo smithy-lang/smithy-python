@@ -18,7 +18,6 @@ package software.amazon.smithy.python.codegen.integration;
 import static java.lang.String.format;
 
 import java.util.Locale;
-import java.util.function.Consumer;
 import java.util.function.Function;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.model.Model;
@@ -27,7 +26,6 @@ import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.shapes.StructureShape;
-import software.amazon.smithy.model.traits.HttpPayloadTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
@@ -143,8 +141,7 @@ public final class HttpProtocolGeneratorUtils {
         GenerationContext context,
         OperationShape operation,
         Function<StructureShape, String> errorShapeToCode,
-        TriConsumer<GenerationContext, PythonWriter, Boolean> errorMessageCodeGenerator,
-        Consumer<PythonWriter> errorPreParser
+        TriConsumer<GenerationContext, PythonWriter, Boolean> errorMessageCodeGenerator
     ) {
         var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
         var transportResponse = context.applicationProtocol().responseType();
@@ -167,7 +164,7 @@ public final class HttpProtocolGeneratorUtils {
                                 return $5T(message)
                     """, errorDispatcher.getName(), transportResponse, configSymbol, apiError, unknownApiError,
                     writer.consumer(w -> errorMessageCodeGenerator.accept(context, w, canReadResponseBody)),
-                    writer.consumer(w -> errorCases(context, w, operation, errorShapeToCode, errorPreParser)));
+                    writer.consumer(w -> errorCases(context, w, operation, errorShapeToCode)));
             writer.popState();
         });
     }
@@ -191,29 +188,18 @@ public final class HttpProtocolGeneratorUtils {
         GenerationContext context,
         PythonWriter writer,
         OperationShape operation,
-        Function<StructureShape, String> errorShapeToCode,
-        Consumer<PythonWriter> errorPreParser
+        Function<StructureShape, String> errorShapeToCode
     ) {
         var errorIds = operation.getErrors(context.settings().getService(context.model()));
         for (ShapeId errorId : errorIds) {
             var error = context.model().expectShape(errorId, StructureShape.class);
             var code = errorShapeToCode.apply(error).toLowerCase(Locale.US);
             var deserFunction = context.protocolGenerator().getErrorDeserializationFunction(context, errorId);
-            writer.write("case $S:", code);
-            writer.indent();
-            if (!canReadResponseBody(operation, context.model())
-                && noHttpPayloadMembers(error, context.model())
-            ) {
-                errorPreParser.accept(writer);
-            }
-            writer.write("return await $T(http_response, config, parsed_body, message)", deserFunction);
-            writer.dedent();
+            writer.write("""
+                case $S:
+                    return await $T(http_response, config, parsed_body, message)
+                """, code, deserFunction);
         }
-    }
-
-    private static boolean noHttpPayloadMembers(Shape shape, Model model) {
-        return shape.members().stream()
-            .noneMatch(member -> member.getMemberTrait(model, HttpPayloadTrait.class).isPresent());
     }
 
     /**

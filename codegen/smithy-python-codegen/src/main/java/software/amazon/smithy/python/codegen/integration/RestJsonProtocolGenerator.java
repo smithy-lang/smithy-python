@@ -243,13 +243,15 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
 
                 """);
         } else {
-            // The method that parses the error code will also pre-parse the body.
-            // The only time it doesn't is for streaming payloads, which isn't
-            // relevant here.
-            writer.addStdlibImport("typing", "cast");
+            // The method that parses the error code will also pre-parse the body if there on no errors
+            // on that operation with an http payload. If the operation has at least 1 error with an
+            // http payload then the body cannot be safely pre-parsed and must be parsed here
+            // within the deserializer
             writer.write("""
-                output: dict[str, Document] = cast(dict[str, Document], parsed_body)
+                if not parsed_body and (body := await http_response.consume_body()):
+                    parsed_body = json_loads(body)
 
+                output = parsed_body
                 """);
         }
 
@@ -307,13 +309,5 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
             writer.writeInline(", False");
         }
         writer.write(")");
-    }
-
-    @Override
-    protected void errorPreParser(PythonWriter writer) {
-        writer.write("""
-                    if (body := await http_response.consume_body()):
-                        parsed_body = json_loads(body)
-                    """);
     }
 }
