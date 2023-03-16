@@ -243,15 +243,15 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
 
                 """);
         } else {
-            // The method that parses the error code will also pre-parse the body if there on no errors
+            // The method that parses the error code will also pre-parse the body if there are no errors
             // on that operation with an http payload. If the operation has at least 1 error with an
             // http payload then the body cannot be safely pre-parsed and must be parsed here
             // within the deserializer
             writer.write("""
-                if not parsed_body and (body := await http_response.consume_body()):
+                if (parsed_body is None) and (body := await http_response.consume_body()):
                     parsed_body = json_loads(body)
 
-                output = parsed_body
+                output: dict[str, Document] = parsed_body
                 """);
         }
 
