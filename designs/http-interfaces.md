@@ -136,6 +136,10 @@ class URI(Protocol):
     def netloc(self) -> str:
         """Construct netloc string in format ``{username}:{password}@{host}:{port}``"""
         ...
+
+    def to_dict(self) -> URIParameters:
+        """Return a dictionary representation of the URI."""
+        ...
 ```
 
 ## Fields

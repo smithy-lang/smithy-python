@@ -14,7 +14,7 @@
 from collections import OrderedDict
 from collections.abc import AsyncIterable, Iterator
 from enum import Enum
-from typing import Protocol, Self, TypedDict
+from typing import Protocol, TypedDict
 
 
 class URIParameters(TypedDict, total=False):
@@ -72,11 +72,6 @@ class URI(Protocol):
 
     def to_dict(self) -> URIParameters:
         """Return a dictionary representation of the URI."""
-        ...
-
-    @classmethod
-    def from_dict(cls, data: URIParameters) -> Self:
-        """Create a URI from a dictionary representation."""
         ...
 
 
