@@ -19,6 +19,16 @@ import pytest
 from smithy_python._private import Field, FieldPosition, Fields
 
 
+@pytest.fixture(scope="module")
+def fields() -> Fields:
+    return Fields(
+        [
+            Field(name="foo", values=["bar"]),
+            Field(name="baz", values=["qux"]),
+        ]
+    )
+
+
 def test_field_single_valued_basics() -> None:
     field = Field(name="fname", values=["fval"], kind=FieldPosition.HEADER)
     assert field.name == "fname"
@@ -161,6 +171,14 @@ def test_fields_equality(fs1: Fields, fs2: Fields) -> None:
 )
 def test_fields_inequality(fs1: Fields, fs2: Fields) -> None:
     assert fs1 != fs2
+
+
+@pytest.mark.parametrize(
+    "key, expected_result",
+    [("foo", True), ("bar", False), ("baz", True), ("abcdefg", False)],
+)
+def test_fields_contains(fields: Fields, key: str, expected_result: bool) -> None:
+    assert (key in fields) == expected_result
 
 
 @pytest.mark.parametrize(

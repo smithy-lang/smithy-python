@@ -17,7 +17,8 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from http.server import BaseHTTPRequestHandler
 from io import BytesIO
-from typing import AsyncIterable, Generator, Literal
+from typing import AsyncIterable
+from unittest import mock
 from urllib.parse import parse_qs, quote, urlparse
 
 import pytest
@@ -26,7 +27,7 @@ from smithy_python._private import URI, Field, Fields
 from smithy_python._private.http import HTTPRequest
 from smithy_python._private.identity import Identity
 from smithy_python.async_utils import async_list
-from smithy_python.exceptions import SmithyIdentityException
+from smithy_python.exceptions import SmithyHTTPException, SmithyIdentityException
 
 from aws_smithy_python.auth import (
     EMPTY_SHA256_HASH,
@@ -39,15 +40,14 @@ from aws_smithy_python.auth import (
 )
 from aws_smithy_python.identity import AWSCredentialIdentity
 
-SECRET_KEY: Literal[
-    "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"
-] = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"
-ACCESS_KEY: Literal["AKIDEXAMPLE"] = "AKIDEXAMPLE"
-SESSION_TOKEN: Literal["ABCDEFG/////123456"] = "ABCDEFG/////123456"
+SECRET_KEY: str = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"
+ACCESS_KEY: str = "AKIDEXAMPLE"
+SESSION_TOKEN: str = "ABCDEFG/////123456"
 TOKEN_PATTERN: re.Pattern[str] = re.compile(
     r"^x-amz-security-token:(.*)$", re.MULTILINE
 )
 DATE: datetime = datetime(2015, 8, 30, 12, 36, 0, tzinfo=timezone.utc)
+DATE_STR: str = DATE.strftime(SIGV4_TIMESTAMP_FORMAT)
 SIGNING_PROPERTIES: SigV4SigningProperties = {
     "service": "service",
     "region": "us-east-1",
@@ -131,8 +131,8 @@ class RawRequest(BaseHTTPRequestHandler):
 
 def _generate_test_case(path: pathlib.Path) -> tuple[bytes, str, str, str, str | None]:
     raw_request = (path / f"{path.name}.req").read_bytes()
-    canonical_request = (path / f"{path.name}.creq").read_text().replace("\r", "")
-    string_to_sign = (path / f"{path.name}.sts").read_text().replace("\r", "")
+    canonical_request = (path / f"{path.name}.creq").read_text()
+    string_to_sign = (path / f"{path.name}.sts").read_text()
     authorization_header = (path / f"{path.name}.authz").read_text()
 
     token_match = TOKEN_PATTERN.search(canonical_request)
@@ -147,12 +147,19 @@ def _is_valid_test_case(path: pathlib.Path) -> bool:
 
 def generate_test_cases(
     test_path: pathlib.Path,
-) -> Generator[tuple[bytes, str, str, str, str | None], None, None]:
+) -> list[tuple[bytes, str, str, str, str | None]]:
+    test_cases = []
     for path in test_path.glob("*"):
         if _is_valid_test_case(path):
-            yield _generate_test_case(path)
+            test_cases.append(_generate_test_case(path))
         elif path.is_dir():
-            yield from generate_test_cases(path)
+            test_cases.extend(generate_test_cases(path))
+    return test_cases
+
+
+TEST_CASES: list[tuple[bytes, str, str, str, str | None]] = generate_test_cases(
+    TESTSUITE_DIR
+)
 
 
 def generate_async_byte_list(data: BytesIO) -> AsyncIterable[bytes]:
@@ -179,10 +186,10 @@ def smithy_request_from_raw_request(raw_request: bytes) -> HTTPRequest:
     request_method = raw.command
     fields = Fields()
     for k, v in raw.headers.items():
-        try:
+        if k in fields:
             field = fields.get_field(k)
             field.add(v)
-        except KeyError:
+        else:
             field = Field(name=k, values=[v])
             fields.set_field(field)
     body = generate_async_byte_list(raw.rfile)
@@ -207,7 +214,7 @@ def smithy_request_from_raw_request(raw_request: bytes) -> HTTPRequest:
 
 @pytest.mark.parametrize(
     "raw_request, canonical_request, string_to_sign, authorization_header, token",
-    generate_test_cases(TESTSUITE_DIR),
+    TEST_CASES,
 )
 @pytest.mark.asyncio
 @freeze_time(DATE)
@@ -224,8 +231,7 @@ async def test_sigv4_signing_components(
     )
     request = smithy_request_from_raw_request(raw_request)
     sigv4_signer._validate_identity_and_signing_properties(identity, SIGNING_PROPERTIES)
-    date = sigv4_signer._get_current_time().strftime(SIGV4_TIMESTAMP_FORMAT)
-    headers_to_add = Fields([Field(name="X-Amz-Date", values=[date])])
+    headers_to_add = Fields([Field(name="X-Amz-Date", values=[DATE_STR])])
     if identity.session_token:
         headers_to_add.set_field(
             Field(name="X-Amz-Security-Token", values=[identity.session_token])
@@ -235,21 +241,24 @@ async def test_sigv4_signing_components(
     )
     formatted_headers = sigv4_signer._format_headers_for_signing(new_request)
     signed_headers = ";".join(formatted_headers)
-    actual_canonical_request = await sigv4_signer._canonical_request(
-        new_request, formatted_headers, signed_headers, SIGNING_PROPERTIES
+    actual_canonical_request = await sigv4_signer.canonical_request(
+        http_request=new_request,
+        formatted_headers=formatted_headers,
+        signed_headers=signed_headers,
+        signing_properties=SIGNING_PROPERTIES,
     )
     assert actual_canonical_request == canonical_request
     request = smithy_request_from_raw_request(raw_request)
-    scope = sigv4_signer._scope(date, SIGNING_PROPERTIES)
-    actual_string_to_sign = sigv4_signer._string_to_sign(
-        actual_canonical_request, date, scope
+    scope = sigv4_signer._scope(DATE_STR, SIGNING_PROPERTIES)
+    actual_string_to_sign = sigv4_signer.string_to_sign(
+        canonical_request=actual_canonical_request, date=DATE_STR, scope=scope
     )
     assert actual_string_to_sign == string_to_sign
 
 
 @pytest.mark.parametrize(
     "raw_request, canonical_request, string_to_sign, authorization_header, token",
-    generate_test_cases(TESTSUITE_DIR),
+    TEST_CASES,
 )
 @pytest.mark.asyncio
 @freeze_time(DATE)
@@ -274,7 +283,7 @@ async def test_sigv4_signing(
 
 @pytest.mark.parametrize(
     "raw_request, canonical_request, string_to_sign, authorization_header, token",
-    generate_test_cases(TESTSUITE_DIR),
+    TEST_CASES,
 )
 @pytest.mark.asyncio
 @freeze_time(DATE)
@@ -290,25 +299,15 @@ async def test_sigv4_generate_presigned_url(
         access_key_id=ACCESS_KEY, secret_access_key=SECRET_KEY, session_token=token
     )
     request = smithy_request_from_raw_request(raw_request)
-    # Only identities with a session token can generate presigned URLs.
-    if token is not None:
-        url = await sigv4_signer.generate_presigned_url(
-            http_request=request,
-            identity=identity,
-            signing_properties=SIGNING_PROPERTIES,
-        )
-        parsed_url = urlparse(url)
-        parsed_query = parse_qs(parsed_url.query)
-        for param in SIGV4_REQUIRED_QUERY_PARAMS:
-            assert param in parsed_query
-
-    else:
-        with pytest.raises(SmithyIdentityException):
-            await sigv4_signer.generate_presigned_url(
-                http_request=request,
-                identity=identity,
-                signing_properties=SIGNING_PROPERTIES,
-            )
+    url = await sigv4_signer.generate_presigned_url(
+        http_request=request,
+        identity=identity,
+        signing_properties=SIGNING_PROPERTIES,
+    )
+    parsed_url = urlparse(url)
+    parsed_query = parse_qs(parsed_url.query)
+    for param in SIGV4_REQUIRED_QUERY_PARAMS:
+        assert param in parsed_query
 
 
 @pytest.mark.asyncio
@@ -318,8 +317,7 @@ async def test_sigv4_generate_presigned_url_with_expires(
     aws_credential_identity: AWSCredentialIdentity,
 ) -> None:
     signing_properties = SIGNING_PROPERTIES.copy()
-    expires = 10000
-    signing_properties["expires"] = expires
+    signing_properties["expires"] = 10000
     url = await sigv4_signer.generate_presigned_url(
         http_request=http_request,
         identity=aws_credential_identity,
@@ -328,7 +326,7 @@ async def test_sigv4_generate_presigned_url_with_expires(
     parsed_url = urlparse(url)
     parsed_query = parse_qs(parsed_url.query)
     assert "X-Amz-Expires" in parsed_query
-    assert parsed_query["X-Amz-Expires"][0] == str(expires)
+    assert parsed_query["X-Amz-Expires"][0] == "10000"
 
 
 @pytest.mark.asyncio
@@ -355,19 +353,22 @@ async def test_sigv4_generate_presigned_url_with_additional_query_params(
     assert parsed_query["baz"][0] == "qux"
 
 
-@freeze_time(DATE)
-def test_get_current_time(sigv4_signer: SigV4Signer) -> None:
-    assert sigv4_signer._get_current_time() == DATE
-
-
 @pytest.mark.asyncio
 async def test_sign_wrong_identity_type_raises(
     sigv4_signer: SigV4Signer,
     http_request: HTTPRequest,
+    # mypy expects AWSCredentialIdentity because that matches the `sign` method signature
+    # but we're passing in a different type to test the error handling
     fake_identity: AWSCredentialIdentity,
 ) -> None:
     with pytest.raises(SmithyIdentityException):
         await sigv4_signer.sign(
+            http_request=http_request,
+            identity=fake_identity,
+            signing_properties={"region": "us-east-1", "service": "s3"},
+        )
+    with pytest.raises(SmithyIdentityException):
+        await sigv4_signer.generate_presigned_url(
             http_request=http_request,
             identity=fake_identity,
             signing_properties={"region": "us-east-1", "service": "s3"},
@@ -385,13 +386,13 @@ async def test_missing_required_signing_properties_raises(
     aws_credential_identity: AWSCredentialIdentity,
     signing_properties: SigV4SigningProperties,
 ) -> None:
-    with pytest.raises(SmithyIdentityException):
+    with pytest.raises(SmithyHTTPException):
         await sigv4_signer.sign(
             http_request=http_request,
             identity=aws_credential_identity,
             signing_properties=signing_properties,
         )
-    with pytest.raises(SmithyIdentityException):
+    with pytest.raises(SmithyHTTPException):
         await sigv4_signer.generate_presigned_url(
             http_request=http_request,
             identity=aws_credential_identity,
@@ -400,121 +401,8 @@ async def test_missing_required_signing_properties_raises(
 
 
 @pytest.mark.asyncio
-async def test_generate_presigned_url_no_session_token_raises(
-    sigv4_signer: SigV4Signer,
-    http_request: HTTPRequest,
-) -> None:
-    identity = AWSCredentialIdentity(
-        access_key_id=ACCESS_KEY, secret_access_key=SECRET_KEY, session_token=None
-    )
-    with pytest.raises(SmithyIdentityException):
-        await sigv4_signer.generate_presigned_url(
-            http_request=http_request,
-            identity=identity,
-            signing_properties=SIGNING_PROPERTIES,
-        )
-
-
-@pytest.mark.asyncio
-async def test_sigv4_sign_s3_content_sha_header(
-    sigv4_signer: SigV4Signer,
-    http_request: HTTPRequest,
-) -> None:
-    headers_to_add = Fields(
-        [
-            Field(
-                name="X-Amz-Date",
-                values=[
-                    sigv4_signer._get_current_time().strftime(SIGV4_TIMESTAMP_FORMAT)
-                ],
-            ),
-            Field(
-                name="X-Amz-Content-SHA256",
-                values=[await sigv4_signer._payload(http_request, SIGNING_PROPERTIES)],
-            ),
-        ]
-    )
-    request = await sigv4_signer._generate_new_request_before_signing(
-        http_request=http_request,
-        headers_to_add=headers_to_add,
-    )
-    try:
-        content_sha_header = request.fields.get_field("X-Amz-Content-SHA256")
-    except KeyError:
-        pytest.fail("X-Amz-Content-SHA256 header not found")
-    assert content_sha_header.as_string() == sha256(b"foo").hexdigest()
-
-
 @pytest.mark.parametrize(
-    "signing_properties, expected_result",
-    [
-        ({"foo": "bar"}, False),
-        ({"checksum": {"foo": "bar"}}, False),
-        ({"checksum": {"request_algorithm": {}}}, False),
-        ({"checksum": {"request_algorithm": {"foo": "bar"}}}, False),
-        ({"checksum": {"request_algorithm": {"in": "foo"}}}, False),
-        ({"checksum": {"request_algorithm": {"in": "trailer"}}}, True),
-    ],
-)
-def test_is_streaming_checksum_payload(
-    sigv4_signer: SigV4Signer,
-    signing_properties: SigV4SigningProperties,
-    expected_result: bool,
-) -> None:
-    actual_result = sigv4_signer._is_streaming_checksum_payload(signing_properties)
-    assert actual_result == expected_result
-
-
-@pytest.mark.parametrize(
-    "aws_request, signing_properties, expected_result",
-    [
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=async_list([]),
-                method="GET",
-                fields=Fields(),
-            ),
-            {},
-            True,
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com", scheme="http"),
-                body=async_list([]),
-                method="GET",
-                fields=Fields(),
-            ),
-            {},
-            True,
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=async_list([]),
-                method="GET",
-                fields=Fields(),
-            ),
-            {"payload_signing_enabled": False},
-            False,
-        ),
-    ],
-)
-def test_should_sha256_sign_payload(
-    sigv4_signer: SigV4Signer,
-    aws_request: HTTPRequest,
-    signing_properties: SigV4SigningProperties,
-    expected_result: bool,
-) -> None:
-    should_sign_payload = sigv4_signer._should_sha256_sign_payload(
-        aws_request, signing_properties
-    )
-    assert should_sign_payload == expected_result
-
-
-@pytest.mark.asyncio
-@pytest.mark.parametrize(
-    "http_request, signing_properties, expected_payload",
+    "http_request, signing_properties, input_payload, expected_payload",
     [
         (
             HTTPRequest(
@@ -524,6 +412,7 @@ def test_should_sha256_sign_payload(
                 fields=Fields(),
             ),
             SIGNING_PROPERTIES,
+            None,
             EMPTY_SHA256_HASH,
         ),
         (
@@ -534,7 +423,19 @@ def test_should_sha256_sign_payload(
                 fields=Fields(),
             ),
             SIGNING_PROPERTIES,
+            None,
             sha256(b"foo").hexdigest(),
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com", scheme="http"),
+                body=async_list([]),
+                method="GET",
+                fields=Fields(),
+            ),
+            SIGNING_PROPERTIES,
+            None,
+            EMPTY_SHA256_HASH,
         ),
         (
             HTTPRequest(
@@ -544,6 +445,7 @@ def test_should_sha256_sign_payload(
                 fields=Fields(),
             ),
             {"payload_signing_enabled": False, "region": "us-east-1", "service": "s3"},
+            None,
             UNSIGNED_PAYLOAD,
         ),
         (
@@ -558,7 +460,19 @@ def test_should_sha256_sign_payload(
                 "region": "us-east-1",
                 "service": "s3",
             },
+            None,
             STREAMING_UNSIGNED_PAYLOAD_TRAILER,
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com"),
+                body=async_list([]),
+                method="GET",
+                fields=Fields(),
+            ),
+            SIGNING_PROPERTIES,
+            "foo",
+            "foo",
         ),
     ],
 )
@@ -566,12 +480,20 @@ async def test_payload(
     sigv4_signer: SigV4Signer,
     http_request: HTTPRequest,
     signing_properties: SigV4SigningProperties,
+    input_payload: str | None,
     expected_payload: str,
 ) -> None:
-    payload = await sigv4_signer._payload(
-        http_request,
-        signing_properties,
+    formatted_headers = sigv4_signer._format_headers_for_signing(http_request)
+    signed_headers = ";".join(formatted_headers)
+    canonical_request = await sigv4_signer.canonical_request(
+        http_request=http_request,
+        formatted_headers=formatted_headers,
+        signed_headers=signed_headers,
+        signing_properties=signing_properties,
+        payload=input_payload,
     )
+    # payload is the last line of the canonical request
+    payload = canonical_request.split("\n")[-1]
     assert payload == expected_payload
 
 
@@ -676,19 +598,79 @@ async def test_payload(
             ),
             {"host": "foo:bar@example.com:8080"},
         ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com", scheme="http", port=80),
+                body=async_list([]),
+                method="GET",
+                fields=Fields(
+                    [
+                        Field(name="authorization", values=["foo"]),
+                        Field(name="x-amz-content-sha256", values=["baz"]),
+                    ]
+                ),
+            ),
+            {"host": "example.com"},
+        ),
+        (
+            HTTPRequest(
+                destination=URI(
+                    host="example.com", port=443, username="foo", password="bar"
+                ),
+                body=async_list([]),
+                method="GET",
+                fields=Fields(
+                    [
+                        Field(name="authorization", values=["foo"]),
+                        Field(name="x-amz-content-sha256", values=["baz"]),
+                    ]
+                ),
+            ),
+            {"host": "foo:bar@example.com"},
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="::80", port=80, scheme="http"),
+                body=async_list([]),
+                method="GET",
+                fields=Fields([]),
+            ),
+            {"host": "[::80]"},
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="::80", port=80),
+                body=async_list([]),
+                method="GET",
+                fields=Fields([]),
+            ),
+            {"host": "[::80]:80"},
+        ),
     ],
 )
-def test_format_headers_for_signing(
+@pytest.mark.asyncio
+@freeze_time(DATE)
+@mock.patch("aws_smithy_python.auth.SigV4Signer.canonical_request", return_value="foo")
+async def test_format_headers_for_signing(
+    canonical_request_mock: mock.Mock,
     sigv4_signer: SigV4Signer,
+    aws_credential_identity: AWSCredentialIdentity,
     http_request: HTTPRequest,
     expected_headers: dict[str, str],
 ) -> None:
-    formatted_headers = sigv4_signer._format_headers_for_signing(http_request)
-    assert formatted_headers == expected_headers
+    expected_headers.update(
+        {"x-amz-date": DATE_STR, "x-amz-security-token": SESSION_TOKEN}
+    )
+    await sigv4_signer.sign(
+        http_request=http_request,
+        identity=aws_credential_identity,
+        signing_properties=SIGNING_PROPERTIES,
+    )
+    assert canonical_request_mock.await_args[1]["formatted_headers"] == expected_headers
 
 
 @pytest.mark.parametrize(
-    "http_request, date, credential_scope, expires, signed_headers",
+    "http_request, expires, signed_headers",
     [
         (
             HTTPRequest(
@@ -702,10 +684,8 @@ def test_format_headers_for_signing(
                 ),
                 body=async_list([]),
             ),
-            "20230214",
-            "foo//",
             1000,
-            "host;x-amz-date",
+            "foo;host;x-amz-date",
         ),
         (
             HTTPRequest(
@@ -716,142 +696,29 @@ def test_format_headers_for_signing(
                 ),
                 body=async_list([]),
             ),
-            "20230214",
-            "foo//",
             1000,
             "host;x-amz-date",
         ),
     ],
 )
-def test_generate_url_query_params(
+@pytest.mark.asyncio
+@freeze_time(DATE)
+async def test_generate_url_query_params(
     sigv4_signer: SigV4Signer,
+    aws_credential_identity: AWSCredentialIdentity,
     http_request: HTTPRequest,
-    date: str,
-    credential_scope: str,
     expires: int,
     signed_headers: str,
 ) -> None:
-    url_query = sigv4_signer._generate_url_query_params(
+    sp = SIGNING_PROPERTIES.copy()
+    sp["expires"] = expires
+    presigned_url = await sigv4_signer.generate_presigned_url(
         http_request=http_request,
-        date=date,
-        credential_scope=credential_scope,
-        expires=expires,
-        signed_headers=signed_headers,
-        session_token=SESSION_TOKEN,
+        identity=aws_credential_identity,
+        signing_properties=sp,
     )
-    assert f"X-Amz-SignedHeaders={signed_headers}" in url_query
-    assert f"X-Amz-Expires={expires}" in url_query
-    assert f"X-Amz-Date={date}" in url_query
+    assert f"X-Amz-SignedHeaders={signed_headers}" in presigned_url
+    assert f"X-Amz-Expires={expires}" in presigned_url
+    assert DATE_STR in presigned_url
     for field in http_request.fields:
-        assert f"{field.name}={quote(field.as_string(), safe='')}" in url_query
-
-
-@pytest.mark.asyncio
-@freeze_time(DATE)
-@pytest.mark.parametrize(
-    "http_request, headers_to_add, expected_request",
-    [
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=async_list([]),
-                method="GET",
-                fields=Fields(
-                    [
-                        Field(name="X-Amz-Security-Token", values=[SESSION_TOKEN]),
-                        Field(name="X-Amz-Content-SHA256", values=[EMPTY_SHA256_HASH]),
-                    ]
-                ),
-            ),
-            Fields(),
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=async_list([]),
-                method="GET",
-                fields=Fields(),
-            ),
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=async_list([]),
-                method="GET",
-                fields=Fields(),
-            ),
-            Fields([Field(name="foo", values=["bar"])]),
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=async_list([]),
-                method="GET",
-                fields=Fields([Field(name="foo", values=["bar"])]),
-            ),
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=async_list([]),
-                method="GET",
-                fields=Fields(),
-            ),
-            Fields(),
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=async_list([]),
-                method="GET",
-                fields=Fields(),
-            ),
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=async_list([]),
-                method="GET",
-                fields=Fields([Field(name="foo", values=["bar"])]),
-            ),
-            Fields(),
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=async_list([]),
-                method="GET",
-                fields=Fields([Field(name="foo", values=["bar"])]),
-            ),
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=async_list([]),
-                method="GET",
-                fields=Fields(
-                    [
-                        Field(name="foo", values=["bar"]),
-                        Field(name="authorization", values=["baz"]),
-                        Field(name="x-amz-date", values=["qux"]),
-                        Field(name="x-amz-security-token", values=["quux"]),
-                        Field(name="x-amz-content-sha256", values=["quuz"]),
-                    ]
-                ),
-            ),
-            Fields(),
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=async_list([]),
-                method="GET",
-                fields=Fields([Field(name="foo", values=["bar"])]),
-            ),
-        ),
-    ],
-)
-async def test_generate_new_request_before_signing(
-    sigv4_signer: SigV4Signer,
-    http_request: HTTPRequest,
-    headers_to_add: Fields,
-    expected_request: HTTPRequest,
-) -> None:
-    new_request = await sigv4_signer._generate_new_request_before_signing(
-        http_request, headers_to_add
-    )
-    for field in new_request.fields:
-        assert field == expected_request.fields.get_field(field.name)
-    assert new_request.method == expected_request.method
-    assert new_request.destination == expected_request.destination
-    assert await new_request.consume_body() == await expected_request.consume_body()
+        assert f"{field.name}={quote(field.as_string(), safe='')}" in presigned_url

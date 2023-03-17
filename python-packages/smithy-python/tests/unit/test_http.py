@@ -36,6 +36,18 @@ def test_uri_basic() -> None:
     assert uri.query == "foo=bar"
     assert uri.netloc == "test.aws.dev"
     assert uri.build() == "https://test.aws.dev/my/path?foo=bar"
+    uri_dict = uri.to_dict()
+    assert uri_dict == {
+        "host": "test.aws.dev",
+        "path": "/my/path",
+        "query": "foo=bar",
+        "scheme": "https",
+        "port": None,
+        "username": None,
+        "password": None,
+        "fragment": None,
+    }
+    assert URI.from_dict(uri_dict) == uri
 
 
 def test_uri_all_fields_present() -> None:
@@ -60,6 +72,18 @@ def test_uri_all_fields_present() -> None:
     assert uri.fragment == "frag"
     assert uri.netloc == "abc:def@test.aws.dev:80"
     assert uri.build() == "http://abc:def@test.aws.dev:80/my/path?foo=bar#frag"
+    uri_dict = uri.to_dict()
+    assert uri_dict == {
+        "host": "test.aws.dev",
+        "path": "/my/path",
+        "query": "foo=bar",
+        "scheme": "http",
+        "port": 80,
+        "username": "abc",
+        "password": "def",
+        "fragment": "frag",
+    }
+    assert URI.from_dict(uri_dict) == uri
 
 
 def test_uri_without_scheme_field() -> None:
