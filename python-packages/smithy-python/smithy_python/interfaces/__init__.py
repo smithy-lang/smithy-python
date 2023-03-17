@@ -14,7 +14,20 @@
 from collections import OrderedDict
 from collections.abc import AsyncIterable, Iterator
 from enum import Enum
-from typing import Protocol
+from typing import Protocol, Self, TypedDict
+
+
+class URIParameters(TypedDict, total=False):
+    """Parameters for constructing a URI."""
+
+    scheme: str
+    username: str | None
+    password: str | None
+    host: str
+    port: int | None
+    path: str | None
+    query: str | None
+    fragment: str | None
 
 
 class URI(Protocol):
@@ -55,6 +68,15 @@ class URI(Protocol):
     @property
     def netloc(self) -> str:
         """Construct netloc string in format ``{username}:{password}@{host}:{port}``"""
+        ...
+
+    def to_dict(self) -> URIParameters:
+        """Return a dictionary representation of the URI."""
+        ...
+
+    @classmethod
+    def from_dict(cls, data: URIParameters) -> Self:
+        """Create a URI from a dictionary representation."""
         ...
 
 
@@ -178,4 +200,8 @@ class Fields(Protocol):
 
     def __iter__(self) -> Iterator[Field]:
         """Allow iteration over entries."""
+        ...
+
+    def __contains__(self, name: str) -> bool:
+        """Check if a field key exists in the collection."""
         ...

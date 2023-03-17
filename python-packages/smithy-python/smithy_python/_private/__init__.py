@@ -15,6 +15,7 @@ from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
+from typing import Self
 from urllib.parse import urlunparse
 
 from .. import interfaces
@@ -140,6 +141,24 @@ class URI(interfaces.URI):
             and self.password == other.password
             and self.fragment == other.fragment
         )
+
+    def to_dict(self) -> interfaces.URIParameters:
+        """Return a dictionary representation of the URI."""
+        return {
+            "scheme": self.scheme,
+            "username": self.username,
+            "password": self.password,
+            "host": self.host,
+            "port": self.port,
+            "path": self.path,
+            "query": self.query,
+            "fragment": self.fragment,
+        }
+
+    @classmethod
+    def from_dict(cls, data: interfaces.URIParameters) -> Self:
+        """Create a URI from a dictionary representation."""
+        return cls(**data)
 
 
 class Field(interfaces.Field):
@@ -306,6 +325,10 @@ class Fields(interfaces.Fields):
 
     def __iter__(self) -> Iterator[interfaces.Field]:
         yield from self.entries.values()
+
+    def __contains__(self, name: str) -> bool:
+        """Check if a field key exists in the collection."""
+        return self._normalize_field_name(name) in self.entries
 
 
 def quote_and_escape_field_value(value: str) -> str:
