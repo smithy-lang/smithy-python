@@ -225,7 +225,7 @@ final class StructureGenerator implements Runnable {
         writer.write("""
                 def _set_default_attr(self, name: str, value: Any) -> None:
                     if isinstance(value, $T):
-                        object.__setattr__(self, name, value.value())
+                        object.__setattr__(self, name, value.value)
                         self._has[name] = False
                     else:
                         setattr(self, name, value)

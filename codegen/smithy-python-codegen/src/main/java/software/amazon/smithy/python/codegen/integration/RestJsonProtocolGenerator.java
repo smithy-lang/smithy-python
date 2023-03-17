@@ -21,8 +21,6 @@ import java.util.TreeSet;
 import java.util.stream.Collectors;
 import software.amazon.smithy.aws.traits.protocols.RestJson1Trait;
 import software.amazon.smithy.model.knowledge.HttpBinding;
-import software.amazon.smithy.model.knowledge.HttpBinding.Location;
-import software.amazon.smithy.model.knowledge.HttpBindingIndex;
 import software.amazon.smithy.model.knowledge.NeighborProviderIndex;
 import software.amazon.smithy.model.neighbor.Walker;
 import software.amazon.smithy.model.shapes.MemberShape;
@@ -33,7 +31,6 @@ import software.amazon.smithy.model.traits.RequiresLengthTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.protocoltests.traits.HttpMessageTestCase;
-import software.amazon.smithy.protocoltests.traits.HttpRequestTestCase;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.HttpProtocolTestGenerator;
@@ -91,21 +88,13 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
     public void generateProtocolTests(GenerationContext context) {
         context.writerDelegator().useFileWriter("./tests/test_protocol.py", "tests.test_protocol", writer -> {
             new HttpProtocolTestGenerator(
-                context, getProtocol(), writer, (shape, testCase) -> filterTests(context, shape, testCase)
+                context, getProtocol(), writer, (shape, testCase) -> filterTests(testCase)
             ).run();
         });
     }
 
-    private boolean filterTests(GenerationContext context, Shape shape, HttpMessageTestCase testCase) {
-        if (TESTS_TO_SKIP.contains(testCase.getId())) {
-            return true;
-        }
-        var bindingIndex = HttpBindingIndex.of(context.model());
-        if (testCase instanceof HttpRequestTestCase) {
-            return false;
-        } else {
-            return bindingIndex.getResponseBindings(shape, Location.PAYLOAD).size() != 0;
-        }
+    private boolean filterTests(HttpMessageTestCase testCase) {
+        return TESTS_TO_SKIP.contains(testCase.getId());
     }
 
     @Override
@@ -254,13 +243,16 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
 
                 """);
         } else {
-            // The method that parses the error code will also pre-parse the body.
-            // The only time it doesn't is for streaming payloads, which isn't
-            // relevant here.
+            // The method that parses the error code will also pre-parse the body if there are no errors
+            // on that operation with an http payload. If the operation has at least 1 error with an
+            // http payload then the body cannot be safely pre-parsed and must be parsed here
+            // within the deserializer
             writer.addStdlibImport("typing", "cast");
             writer.write("""
-                output: dict[str, Document] = cast(dict[str, Document], parsed_body)
+                if (parsed_body is None) and (body := await http_response.consume_body()):
+                    parsed_body = json_loads(body)
 
+                output: dict[str, Document] = parsed_body if parsed_body is not None else {}
                 """);
         }
 
@@ -287,6 +279,18 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         }
     }
 
+    @Override
+    protected void deserializePayloadBody(GenerationContext context,
+                                          PythonWriter writer,
+                                          Shape operationOrError,
+                                          HttpBinding payloadBinding
+    ) {
+        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+        var visitor = new JsonPayloadDeserVisitor(context, writer, payloadBinding);
+        var target = context.model().expectShape(payloadBinding.getMember().getTarget());
+        target.accept(visitor);
+    }
+
     private Set<Shape> getConnectedShapes(GenerationContext context, Set<Shape> initialShapes) {
         var shapeWalker = new Walker(NeighborProviderIndex.of(context.model()).getProvider());
         var connectedShapes = new TreeSet<>(initialShapes);
@@ -295,9 +299,16 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
     }
 
     @Override
-    protected void resolveErrorCodeAndMessage(GenerationContext context, PythonWriter writer) {
+    protected void resolveErrorCodeAndMessage(GenerationContext context,
+                                              PythonWriter writer,
+                                              Boolean canReadResponseBody
+    ) {
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
         writer.addImport("smithy_python.protocolutils", "parse_rest_json_error_info");
-        writer.write("code, message, parsed_body = await parse_rest_json_error_info(http_response)");
+        writer.writeInline("code, message, parsed_body = await parse_rest_json_error_info(http_response");
+        if (!canReadResponseBody) {
+            writer.writeInline(", False");
+        }
+        writer.write(")");
     }
 }

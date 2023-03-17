@@ -114,6 +114,7 @@ final class SetupGenerator {
                     target-version = ["py311"]
 
                     [tool.pytest.ini_options]
+                    python_classes = ["!Test"]
                     asyncio_mode = "auto"
                     """);
 

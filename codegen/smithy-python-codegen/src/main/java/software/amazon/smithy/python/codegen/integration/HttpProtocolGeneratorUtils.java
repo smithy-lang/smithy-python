@@ -18,9 +18,10 @@ package software.amazon.smithy.python.codegen.integration;
 import static java.lang.String.format;
 
 import java.util.Locale;
-import java.util.function.BiConsumer;
 import java.util.function.Function;
 import software.amazon.smithy.codegen.core.CodegenException;
+import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.selector.Selector;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
@@ -32,12 +33,18 @@ import software.amazon.smithy.python.codegen.PythonWriter;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.utils.CodeSection;
 import software.amazon.smithy.utils.SmithyUnstableApi;
+import software.amazon.smithy.utils.TriConsumer;
 
 /**
  * Utility methods for generating HTTP-based protocols.
  */
 @SmithyUnstableApi
 public final class HttpProtocolGeneratorUtils {
+    // Shape is an error on an operation shape that has the httpPayload trait applied to it
+    // See: https://smithy.io/2.0/spec/selectors.html for more information on selectors
+    private static final Selector PAYLOAD_ERROR_SELECTOR = Selector.parse(
+        "operation -[error]-> structure :test(> member :test([trait|httpPayload]))"
+    );
 
     private HttpProtocolGeneratorUtils() {
     }
@@ -134,7 +141,7 @@ public final class HttpProtocolGeneratorUtils {
         GenerationContext context,
         OperationShape operation,
         Function<StructureShape, String> errorShapeToCode,
-        BiConsumer<GenerationContext, PythonWriter> errorMessageCodeGenerator
+        TriConsumer<GenerationContext, PythonWriter, Boolean> errorMessageCodeGenerator
     ) {
         var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
         var transportResponse = context.applicationProtocol().responseType();
@@ -142,6 +149,7 @@ public final class HttpProtocolGeneratorUtils {
         var errorDispatcher = context.protocolGenerator().getErrorDeserializationFunction(context, operation);
         var apiError = CodegenUtils.getApiError(context.settings());
         var unknownApiError = CodegenUtils.getUnknownApiError(context.settings());
+        var canReadResponseBody = canReadResponseBody(operation, context.model());
         delegator.useFileWriter(errorDispatcher.getDefinitionFile(), errorDispatcher.getNamespace(), writer -> {
             writer.pushState(new ErrorDispatcherSection(operation, errorShapeToCode, errorMessageCodeGenerator));
             writer.addStdlibImport("typing", "Any");
@@ -155,10 +163,25 @@ public final class HttpProtocolGeneratorUtils {
                             case _:
                                 return $5T(message)
                     """, errorDispatcher.getName(), transportResponse, configSymbol, apiError, unknownApiError,
-                    writer.consumer(w -> errorMessageCodeGenerator.accept(context, w)),
+                    writer.consumer(w -> errorMessageCodeGenerator.accept(context, w, canReadResponseBody)),
                     writer.consumer(w -> errorCases(context, w, operation, errorShapeToCode)));
             writer.popState();
         });
+    }
+
+    /**
+     * Checks if the http_response.body can be read for a given operation shape.
+     * <p>
+     * If any of the errors for an operation contain an HttpPayload then it is not safe to read
+     * the body of the http_response.
+     *
+     * @param operationShape operation shape to check
+     * @param model smithy model
+     */
+    private static boolean canReadResponseBody(OperationShape operationShape, Model model) {
+        return PAYLOAD_ERROR_SELECTOR.shapes(model)
+            .map(Shape::getId)
+            .noneMatch(shapeId -> operationShape.getErrors().contains(shapeId));
     }
 
     private static void errorCases(
@@ -180,6 +203,23 @@ public final class HttpProtocolGeneratorUtils {
     }
 
     /**
+     * Gets the output shape for an error or operation.
+     * <p>
+     * If the shape is an error, the error is returned, otherwise the operation output is returned.
+     *
+     * @param context Code generation context
+     * @param operationOrError operation or error shape to find output shape for
+     * @return output shape
+     */
+    public static Shape getOutputShape(GenerationContext context, Shape operationOrError) {
+        var outputShape = operationOrError;
+        if (operationOrError.isOperationShape()) {
+            outputShape = context.model().expectShape(operationOrError.asOperationShape().get().getOutputShape());
+        }
+        return outputShape;
+    }
+
+    /**
      * A section that controls writing out the error dispatcher function.
      *
      * @param operation The operation whose deserializer is being generated.
@@ -189,6 +229,6 @@ public final class HttpProtocolGeneratorUtils {
     public record ErrorDispatcherSection(
         OperationShape operation,
         Function<StructureShape, String> errorShapeToCode,
-        BiConsumer<GenerationContext, PythonWriter> errorMessageCodeGenerator
+        TriConsumer<GenerationContext, PythonWriter, Boolean> errorMessageCodeGenerator
     ) implements CodeSection {}
 }
