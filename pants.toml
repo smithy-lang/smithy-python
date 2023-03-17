@@ -48,7 +48,6 @@ interpreter_constraints = [">=3.11"]
 extra_type_stubs = [
     "types-freezegun<1.2.0",
 ]
-args = ["--enable-incomplete-feature=Unpack"]
 
 [flake8]
 version = "flake8<6.1"

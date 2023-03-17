@@ -15,7 +15,6 @@ from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
-from typing import Self
 from urllib.parse import urlunparse
 
 from .. import interfaces
@@ -154,11 +153,6 @@ class URI(interfaces.URI):
             "query": self.query,
             "fragment": self.fragment,
         }
-
-    @classmethod
-    def from_dict(cls, data: interfaces.URIParameters) -> Self:
-        """Create a URI from a dictionary representation."""
-        return cls(**data)
 
 
 class Field(interfaces.Field):

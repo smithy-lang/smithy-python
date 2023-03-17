@@ -47,7 +47,6 @@ def test_uri_basic() -> None:
         "password": None,
         "fragment": None,
     }
-    assert URI.from_dict(uri_dict) == uri
 
 
 def test_uri_all_fields_present() -> None:
@@ -83,7 +82,6 @@ def test_uri_all_fields_present() -> None:
         "password": "def",
         "fragment": "frag",
     }
-    assert URI.from_dict(uri_dict) == uri
 
 
 def test_uri_without_scheme_field() -> None:

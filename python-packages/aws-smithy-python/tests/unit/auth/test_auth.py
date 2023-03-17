@@ -231,11 +231,7 @@ async def test_sigv4_signing_components(
     )
     request = smithy_request_from_raw_request(raw_request)
     sigv4_signer._validate_identity_and_signing_properties(identity, SIGNING_PROPERTIES)
-    headers_to_add = Fields([Field(name="X-Amz-Date", values=[DATE_STR])])
-    if identity.session_token:
-        headers_to_add.set_field(
-            Field(name="X-Amz-Security-Token", values=[identity.session_token])
-        )
+    headers_to_add = sigv4_signer._headers_to_add(DATE_STR, identity)
     new_request = await sigv4_signer._generate_new_request_before_signing(
         request, headers_to_add
     )

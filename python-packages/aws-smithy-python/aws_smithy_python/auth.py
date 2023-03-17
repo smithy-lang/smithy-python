@@ -304,7 +304,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         """Generate a new URI with kwargs."""
         uri_dict = uri.to_dict()
         uri_dict.update(kwargs)
-        return URI.from_dict(uri_dict)
+        return URI(**uri_dict)
 
     async def _generate_signature(
         self,
