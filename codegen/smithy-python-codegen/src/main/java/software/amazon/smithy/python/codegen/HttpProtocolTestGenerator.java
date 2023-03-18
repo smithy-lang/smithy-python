@@ -437,11 +437,12 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 writer.write("""
                     config = $T(
                         endpoint_uri="https://example.com",
-                        http_client = $T(
+                        http_client=$T(
                             status=$L,
                             headers=$J,
                             body=b$S,
                         ),
+                        retry_strategy=SimpleRetryStrategy(),
                     )
                     """,
                     CodegenUtils.getConfigSymbol(context.settings()),
@@ -491,11 +492,12 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 writer.write("""
                     config = $T(
                         endpoint_uri="https://example.com",
-                        http_client = $T(
+                        http_client=$T(
                             status=$L,
                             headers=$J,
                             body=b$S,
                         ),
+                        retry_strategy=SimpleRetryStrategy(),
                     )
                     """,
                     CodegenUtils.getConfigSymbol(context.settings()),
