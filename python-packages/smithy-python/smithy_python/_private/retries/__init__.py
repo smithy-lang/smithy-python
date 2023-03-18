@@ -68,10 +68,11 @@ class ExponentialBackoffJitterType(Enum):
     """
 
 
-class ExponentialRetryBackoffStrategy:
+class ExponentialRetryBackoffStrategy(retries_interface.RetryBackoffStrategy):
     def __init__(
         self,
-        backoff_scale_value: float,
+        *,
+        backoff_scale_value: float | None = None,
         max_backoff: float = 20,
         jitter_type: ExponentialBackoffJitterType = ExponentialBackoffJitterType.DEFAULT,
         random: Callable[[], float] = random.random,
@@ -82,7 +83,8 @@ class ExponentialRetryBackoffStrategy:
 
         :param backoff_scale_value: Factor that linearly adjusts returned backoff delay
         values. See the methods ``_next_delay_*`` for the formula used to calculate the
-        delay for each jitter type.
+        delay for each jitter type. If set to ``None`` (the default), :py:attr:`random`
+        will be called to generate a value.
 
         :param max_backoff: Upper limit for backoff delay values returned, in seconds.
 
@@ -93,11 +95,14 @@ class ExponentialRetryBackoffStrategy:
         Use the default ``random.random`` unless you require an alternate source of
         randomness or a non-uniform distribution.
         """
-        self._backoff_scale_value = backoff_scale_value
+        if backoff_scale_value is None:
+            self._backoff_scale_value = random()
+        else:
+            self._backoff_scale_value = backoff_scale_value
         self._max_backoff = max_backoff
         self._jitter_type = jitter_type
         self._random = random
-        self._previous_delay_seconds = backoff_scale_value
+        self._previous_delay_seconds = self._backoff_scale_value
 
     def compute_next_backoff_delay(self, retry_attempt: int) -> float:
         """Calculate timespan in seconds to delay before next retry.
@@ -195,23 +200,23 @@ class SimpleRetryToken:
         return self.retry_count + 1
 
 
-class SimpleRetryStrategy:
+class SimpleRetryStrategy(retries_interface.RetryStrategy):
     def __init__(
         self,
         *,
-        backoff_strategy: retries_interface.RetryBackoffStrategy,
-        max_attempts: int,
+        backoff_strategy: retries_interface.RetryBackoffStrategy | None = None,
+        max_attempts: int = 5,
     ):
         """Basic retry strategy that simply invokes the given backoff strategy.
 
         :param backoff_strategy: The backoff strategy used by returned tokens to compute
-        the retry delay.
+        the retry delay. Defaults to :py:class:`ExponentialRetryBackoffStrategy`.
 
         :param max_attempts: Upper limit on total number of attempts made, including
         initial attempt and retries.
         """
-        self._backoff_strategy = backoff_strategy
-        self._max_attempts = max_attempts
+        self.backoff_strategy = backoff_strategy or ExponentialRetryBackoffStrategy()
+        self.max_attempts = max_attempts
 
     def acquire_initial_retry_token(
         self, *, token_scope: str | None = None
@@ -220,7 +225,7 @@ class SimpleRetryStrategy:
 
         :param token_scope: This argument is ignored by this retry strategy.
         """
-        retry_delay = self._backoff_strategy.compute_next_backoff_delay(0)
+        retry_delay = self.backoff_strategy.compute_next_backoff_delay(0)
         return SimpleRetryToken(retry_count=0, retry_delay=retry_delay)
 
     def refresh_retry_token_for_retry(
@@ -242,11 +247,11 @@ class SimpleRetryStrategy:
         :raises SmithyRetryException: If no further retry attempts are allowed.
         """
         retry_count = token_to_renew.retry_count + 1
-        if retry_count >= self._max_attempts:
+        if retry_count >= self.max_attempts:
             raise SmithyRetryException(
-                f"Reached maximum number of allowed attempts: {self._max_attempts}"
+                f"Reached maximum number of allowed attempts: {self.max_attempts}"
             )
-        retry_delay = self._backoff_strategy.compute_next_backoff_delay(retry_count)
+        retry_delay = self.backoff_strategy.compute_next_backoff_delay(retry_count)
         return SimpleRetryToken(retry_count=retry_count, retry_delay=retry_delay)
 
     def record_success(self, *, token: retries_interface.RetryToken) -> None:
