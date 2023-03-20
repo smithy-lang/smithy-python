@@ -14,7 +14,7 @@
 import random
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable
+from typing import Callable, Protocol
 
 from ...exceptions import SmithyRetryException
 from ...interfaces import retries as retries_interface
@@ -72,7 +72,7 @@ class ExponentialRetryBackoffStrategy(retries_interface.RetryBackoffStrategy):
     def __init__(
         self,
         *,
-        backoff_scale_value: float | None = None,
+        backoff_scale_value: float = 0.025,
         max_backoff: float = 20,
         jitter_type: ExponentialBackoffJitterType = ExponentialBackoffJitterType.DEFAULT,
         random: Callable[[], float] = random.random,
@@ -95,10 +95,7 @@ class ExponentialRetryBackoffStrategy(retries_interface.RetryBackoffStrategy):
         Use the default ``random.random`` unless you require an alternate source of
         randomness or a non-uniform distribution.
         """
-        if backoff_scale_value is None:
-            self._backoff_scale_value = random()
-        else:
-            self._backoff_scale_value = backoff_scale_value
+        self._backoff_scale_value = backoff_scale_value
         self._max_backoff = max_backoff
         self._jitter_type = jitter_type
         self._random = random
@@ -257,3 +254,16 @@ class SimpleRetryStrategy(retries_interface.RetryStrategy):
     def record_success(self, *, token: retries_interface.RetryToken) -> None:
         """Not used by this retry strategy."""
         pass
+
+
+class _SimpleRetryStrategyConfig(Protocol):
+    retry_strategy: retries_interface.RetryStrategy | None
+
+
+def set_simple_retry_strategy(config: _SimpleRetryStrategyConfig) -> None:
+    """Sets the retry strategy to :py:class:`SimpleRetryStrategy` if not already set.
+
+    :param config: A config object that has an retry_strategy property.
+    """
+    if config.retry_strategy is None:
+        config.retry_strategy = SimpleRetryStrategy()

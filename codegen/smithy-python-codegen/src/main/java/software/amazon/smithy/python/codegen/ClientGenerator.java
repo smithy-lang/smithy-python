@@ -83,6 +83,14 @@ final class ClientGenerator implements Runnable {
                         .build())
                     .build()
                 );
+                defaultPlugins.add(SymbolReference.builder()
+                    .symbol(Symbol.builder()
+                        .name("set_simple_retry_strategy")
+                        .namespace("smithy_python._private.retries", ".")
+                        .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                        .build())
+                    .build()
+                );
             }
 
             for (PythonIntegration integration : context.integrations()) {

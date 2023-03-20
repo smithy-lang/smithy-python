@@ -180,8 +180,6 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 String.format("%s_request_%s", testCase.getId(), operation.getId().getName()),
                 testFilter.test(operation, testCase),
                 () -> {
-
-            writer.addImport("smithy_python._private.retries", "SimpleRetryStrategy");
             var hostSplit = testCase.getHost().orElse("example.com").split("/", 2);
             var host = hostSplit[0];
             var resolvedHost = testCase.getResolvedHost().map(h -> h.split("/", 2)[0]).orElse(host);
@@ -195,8 +193,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 writer.write("""
                     config = $T(
                         endpoint_uri="https://$L/$L",
-                        http_client=$T(),
-                        retry_strategy=SimpleRetryStrategy(),
+                        http_client = $T(),
                     )
                     """,
                     CodegenUtils.getConfigSymbol(context.settings()),
@@ -437,12 +434,11 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 writer.write("""
                     config = $T(
                         endpoint_uri="https://example.com",
-                        http_client=$T(
+                        http_client = $T(
                             status=$L,
                             headers=$J,
                             body=b$S,
                         ),
-                        retry_strategy=SimpleRetryStrategy(),
                     )
                     """,
                     CodegenUtils.getConfigSymbol(context.settings()),
@@ -492,12 +488,11 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 writer.write("""
                     config = $T(
                         endpoint_uri="https://example.com",
-                        http_client=$T(
+                        http_client = $T(
                             status=$L,
                             headers=$J,
                             body=b$S,
                         ),
-                        retry_strategy=SimpleRetryStrategy(),
                     )
                     """,
                     CodegenUtils.getConfigSymbol(context.settings()),
