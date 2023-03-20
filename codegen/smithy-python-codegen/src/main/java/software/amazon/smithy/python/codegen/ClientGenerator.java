@@ -274,7 +274,7 @@ final class ClientGenerator implements Runnable {
                                 except SmithyRetryException:
                                     raise context_with_response.response
                             else:
-                                # Step 8:
+                                # Step 8: Invoke record_success
                                 retry_strategy.record_success(token=retry_token)
                                 break
                     except Exception as e:
