@@ -42,7 +42,6 @@ import software.amazon.smithy.model.knowledge.NullableIndex;
 import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
-import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
@@ -90,30 +89,6 @@ public final class CodegenUtils {
                 .name("Plugin")
                 .namespace(format("%s.config", settings.getModuleName()), ".")
                 .definitionFile(format("./%s/config.py", settings.getModuleName()))
-                .build();
-    }
-
-    /**
-     * @param settings The client settings, used to account for module configuration.
-     * @return Returns the function that wraps and casts default values.
-     */
-    static Symbol getDefaultWrapperFunction(PythonSettings settings) {
-        return Symbol.builder()
-                .name("_default")
-                .namespace(format("%s.models", settings.getModuleName()), ".")
-                .definitionFile(format("./%s/models.py", settings.getModuleName()))
-                .build();
-    }
-
-    /**
-     * @param settings The client settings, used to account for module configuration.
-     * @return Returns the symbol for the class that wraps default values.
-     */
-    static Symbol getDefaultWrapperClass(PythonSettings settings) {
-        return Symbol.builder()
-                .name("_DEFAULT")
-                .namespace(format("%s.models", settings.getModuleName()), ".")
-                .definitionFile(format("./%s/models.py", settings.getModuleName()))
                 .build();
     }
 
@@ -391,17 +366,7 @@ public final class CodegenUtils {
         var shouldDedent = false;
         var isNullable = NullableIndex.of(context.model()).isMemberNullable(member);
         var memberName = context.symbolProvider().toMemberName(member);
-        if (member.getMemberTrait(context.model(), DefaultTrait.class).isPresent()) {
-            if (!accessFalsey) {
-                writer.write("if $1L._hasattr($2S) and $1L.$2L:", variableName, memberName);
-            } else if (isNullable) {
-                writer.write("if $1L._hasattr($2S) and $1L.$2L is not None:", variableName, memberName);
-            } else {
-                writer.write("if $L._hasattr($S):", variableName, memberName);
-            }
-            writer.indent();
-            shouldDedent = true;
-        } else if (!accessFalsey) {
+        if (!accessFalsey) {
             writer.write("if $L.$L:", variableName, memberName);
             writer.indent();
             shouldDedent = true;

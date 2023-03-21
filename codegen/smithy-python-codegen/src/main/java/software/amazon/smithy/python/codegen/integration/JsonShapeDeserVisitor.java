@@ -30,7 +30,6 @@ import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeVisitor;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.UnionShape;
-import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.JsonNameTrait;
 import software.amazon.smithy.model.traits.SparseTrait;
 import software.amazon.smithy.model.traits.StringTrait;
@@ -204,9 +203,7 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
 
             var target = context.model().expectShape(member.getTarget());
 
-            if (index.isMemberNullable(member) || member.hasTrait(DefaultTrait.class)) {
-                // Note that default values are handled by the constructor, so
-                // we don't need to do anything special here.
+            if (index.isMemberNullable(member)) {
                 var memberVisitor = getMemberVisitor(member, "_" + pythonName);
                 var memberDeserializer = target.accept(memberVisitor);
                 writer.write("""
