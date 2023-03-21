@@ -182,22 +182,20 @@ final class StructureGenerator implements Runnable {
                     writer.write(formatString, memberName, symbolProvider.toSymbol(member),
                             getDefaultValue(writer, member));
                 } else {
+                    // Shapes that are simple types, lists, or maps can have default values.
+                    // https://smithy.io/2.0/spec/type-refinement-traits.html#smithy-api-default-trait
                     var target = model.expectShape(member.getTarget());
-                    var defaultNode = member.expectTrait(DefaultTrait.class).toNode();
                     var memberSymbol = symbolProvider.toSymbol(member);
                     String formatString;
-                    if (target.isDocumentShape() && (defaultNode.isArrayNode() || defaultNode.isObjectNode())) {
-                        // Mypy conveniently doesn't let empty collections pass type checks, so we have to
-                        // include an additional cast when documents are maps or lists.
-                        writer.addStdlibImport("typing", "cast");
-                        formatString = format("$L: %1$s = $T(cast(%1$s, $L)),", getTargetFormat(member));
-                        writer.write(formatString, memberName, memberSymbol,
-                                CodegenUtils.getDefaultWrapperFunction(settings), memberSymbol,
-                                getDefaultValue(writer, member));
+                    if (target.isDocumentShape() || target.isListShape() || target.isMapShape()) {
+                        // Documents, lists, and maps can have mutable defaults so just use None in the
+                        // constructor.
+                        writer.addStdlibImport("typing", "Optional");
+                        formatString = format("$L: Optional[%1$s] = None,", getTargetFormat(member));
+                        writer.write(formatString, memberName, memberSymbol);
                     } else {
-                        formatString = format("$L: %s = $T($L),", getTargetFormat(member));
-                        writer.write(formatString, memberName, memberSymbol,
-                                CodegenUtils.getDefaultWrapperFunction(settings), getDefaultValue(writer, member));
+                        formatString = format("$L: %s = $L,", getTargetFormat(member));
+                        writer.write(formatString, memberName, memberSymbol, getDefaultValue(writer, member));
                     }
                 }
             }
@@ -206,45 +204,27 @@ final class StructureGenerator implements Runnable {
         writer.indent();
 
         writeClassDocs(isError);
-        writer.write("self._has: dict[str, bool] = {}");
         if (isError) {
             writer.write("super().__init__(message)");
         }
 
         Stream.concat(requiredMembers.stream(), optionalMembers.stream()).forEach(member -> {
             String memberName = symbolProvider.toMemberName(member);
-            if (member.hasTrait(DefaultTrait.class) && !member.hasTrait(RequiredTrait.class)) {
-                writer.write("self._set_default_attr($1S, $1L)", memberName);
+            if (isOptionalDefault(member)) {
+                writer.write("self.$1L = $1L if $1L is not None else $2L",
+                    memberName, getDefaultValue(writer, member));
             } else {
                 writer.write("self.$1L = $1L", memberName);
             }
         });
         writer.dedent();
         writer.write("");
+    }
 
-        writer.write("""
-                def _set_default_attr(self, name: str, value: Any) -> None:
-                    if isinstance(value, $T):
-                        object.__setattr__(self, name, value.value)
-                        self._has[name] = False
-                    else:
-                        setattr(self, name, value)
-
-                def __setattr__(self, name: str, value: Any) -> None:
-                    object.__setattr__(self, name, value)
-                    self._has[name] = True
-
-                def _hasattr(self, name: str) -> bool:
-                    if self._has.get(name, False):
-                        return True
-                    # Lists and dicts are mutable. We could make immutable variants, but
-                    # that's kind of a bad experience. Instead we can just check to see if
-                    # the value is empty.
-                    if isinstance((v := getattr(self, name, None)), (dict, list)) and len(v) != 0:
-                        self._has[name] = True
-                        return True
-                    return False
-                """, CodegenUtils.getDefaultWrapperClass(settings));
+    private boolean isOptionalDefault(MemberShape member) {
+        var target = model.expectShape(member.getTarget());
+        return member.hasTrait(DefaultTrait.class) && !member.hasTrait(RequiredTrait.class)
+            && (target.isDocumentShape() || target.isListShape() || target.isMapShape());
     }
 
     private void writeClassDocs(boolean isError) {
@@ -366,7 +346,7 @@ final class StructureGenerator implements Runnable {
                     var memberName = symbolProvider.toMemberName(member);
                     var target = model.expectShape(member.getTarget());
                     var targetSymbol = symbolProvider.toSymbol(target);
-                    writer.openBlock("if self._hasattr($1S) and self.$1L is not None:", "", memberName, () -> {
+                    writer.openBlock("if self.$1L is not None:", "", memberName, () -> {
                         if (target.isStructureShape() || target.isUnionShape()) {
                             writer.write("d[$S] = self.$L.as_dict()", member.getMemberName(), memberName);
                         } else if (targetSymbol.getProperty("asDict").isPresent()) {
@@ -469,12 +449,12 @@ final class StructureGenerator implements Runnable {
             if (member.hasTrait(SensitiveTrait.class)) {
                 // Sensitive members must not be printed
                 writer.write("""
-                    if self._has[$1S]:
+                    if self.$1L is not None:
                         result += f"$1L=...$2L"
                     """, memberName, trailingComma);
             } else {
                 writer.write("""
-                    if self._has[$1S]:
+                    if self.$1L is not None:
                         result += f"$1L={repr(self.$1L)}$2L"
                     """, memberName, trailingComma);
             }
@@ -509,7 +489,7 @@ final class StructureGenerator implements Runnable {
                     return False
                 attributes: list[str] = $L
                 return all(
-                    self._hasattr(a) == other._hasattr(a) and getattr(self, a) == getattr(other, a)
+                    getattr(self, a) == getattr(other, a)
                     for a in attributes
                 )
             """, symbol.getName(), attributeList.toString());

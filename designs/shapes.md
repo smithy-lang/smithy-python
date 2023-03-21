@@ -399,201 +399,26 @@ aware of when using dicts.
 
 ### Default Values
 
-Default values on structures are indicated by wrapping them in a simple class.
+Default values use python's built-in default values system. Shapes that have
+immutable defaults, such as integers, have their values directly assigned in
+the constructor default. Shapes that can have immutable defaults (i.e. lists,
+maps, and documents) are assigned to `None` and have their default value set
+inside the constructor body.
 
 ```python
-class _DEFAULT:
-    def __init__(self, wrapped: Any):
-        """Wraps a value to signal it was provided by default.
-
-        These values will be immediately unwrapped in the associated
-        initializers so the values can be used as normal, the defaultedness
-        will then be tracked separately.
-        """
-        self._wrapped = wrapped
-
-    @property
-    def value(self) -> Any:
-        # Prevent mutations from leaking by simply returning copies of mutable
-        # defaults. We could also just make immutable subclasses.
-        if isinstance(self._wrapped, list):
-            return list(self._wrapped)
-        if isinstance(self._wrapped, dict):
-            return dict(self._wrapped)
-        return self._wrapped
-
-    def __repr__(self) -> str:
-        return f"_DEFAULT({repr(self._wrapped)})"
-
-    def __str__(self) -> str:
-        return str(self._wrapped)
-
-
-D = TypeVar("D")
-
-
-def _default(value: D) -> D:
-    """Wraps a value to signal it was provided by default.
-
-    These values will be immediately unwrapped in the associated
-    initializers so the values can be used as normal, the defaultedness
-    will then be tracked separately.
-
-    We use this wrapper function for brevity, but also because many completion
-    tools will show the code of the default rather than the result, and
-    `_default(7)` is a bit more clear than `cast(int, _DEFAULT(7))`.
-    """
-    return cast(D, _DEFAULT(value))
-
-
 class StructWithDefaults:
     default_int: int
-    default_list: list
+    default_list: list[int]
 
     def __init__(
         self,
         *,
-        default_int: int = _default(7),
-        default_list: list = _default([]),
-    ):
-        self._has: dict[str, bool] = {}
-        self._set_default_attr("default_int", default_int)
-        self._set_default_attr("default_list", default_list)
-
-    def _set_default_attr(self, name: str, value: Any) -> None:
-        # Setting the attributes this way saves a ton of lines of repeated
-        # code.
-        if isinstance(value, _DEFAULT):
-            object.__setattr__(self, name, value.value())
-            self._has[name] = False
-        else:
-            setattr(self, name, value)
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        object.__setattr__(self, name, value)
-        self._has[name] = True
-
-    def _hasattr(self, name: str) -> bool:
-        if self._has[name]:
-            return True
-        # Lists and dicts are mutable. We could make immutable variants, but
-        # that's kind of a bad experience. Instead we can just check to see if
-        # the value is empty.
-        if isinstance((v := getattr(self, name)), (dict, list)) and len(v) == 0:
-            self._has[name] = True
-            return True
-        return False
-```
-
-One of the goals of customizable default values is to reduce the amount of
-nullable members that are exposed. With that in mind, the typical strategy of
-assigning the default value to `None` can't be used since that implicitly adds
-`None` to the type signature. That would also make IntelliSense marginally
-worse since you can't easily see the actual default value.
-
-Instead, a default wrapper is used. The presence of the wrapper signifies to
-the initializer function that a default was used. The value is then immediately
-unwrapped so it can be used where needed. The defaultedness is stored in an
-internal dict that is updated whenever the property is re-assigned. A private
-function exists to give the serializer this information.
-
-To make this wrapper class pass the type checker, it is simply "cast" to the
-needed type. This isn't a problem since the true value is immediately unwrapped
-in the initializer. A wrapper function performs the actual wrapping. This has
-the advantage of not requiring the type signature to be repeated since it can
-be inferred from the type of the function's input. It also has the advantage of
-looking a bit nicer in many IntelliSense tools, who show the code assigned to
-as the default value rather than the resolved value.
-
-#### Alternative: Subclassing
-
-One potential alternative is to create "default" subclasses of the various
-defaultable types.
-
-```python
-class _DEFAULT_INT(int):
-    pass
-
-
-class _DEFAULT_STR(str):
-    pass
-
-
-class WithWrappers:
-    def __init__(
-        self,
-        *,
-        default_int: int = _DEFAULT_INT(7),
-        default_str: str = _DEFAULT_STR("foo"),
+        default_int: int = 7,
+        default_list: Optional[list[int]] = None,
     ):
         self.default_int = default_int
-        self.default_str = default_str
+        self.default_list = default_list if default_list is not None else []
 ```
-
-The advantage of this is that it requires no upkeep and no lying to the type
-system. These values are real, normal value that can be used everywhere their
-base classes can. During serialization we can check if it's the default
-type.
-
-Unfortunately, this isn't wholly possible because not all of the defaultable
-values can be subclassed. Neither `bool` nor `NoneType` can have subclasses,
-so we'd need to create our own sentinel values. This risks unexpected behavior
-if a customer were to use an `is` check.
-
-#### Alternative: kwargs
-
-Another possible alternative is to use the keyword arguments dictionary
-feature.
-
-```python
-class _WithKwargsType(TypedDict):
-    default_int: NotRequired[int]
-    default_str: NotRequired[str]
-    default_list: NotRequired[list[str]]
-
-
-class WithKwargs:
-    default_int: int
-    default_str: str
-    default_list: list[str]
-
-    # This syntax for typing kwargs requires PEP 692
-    def __init__(self, **kwargs: **_WithKwargsType):
-        self._has = {}
-        self.default_int = kwargs.get("default_int", 7)
-        self._has["default_int"] = "default_int" in kwargs
-        self.default_str = kwargs.get("default_str", "foo")
-        self._has["default_str"] = "default_str" in kwargs
-        self.default_list = kwargs.get("default_list", [])
-        self._has["default_list"] = "default_list" in kwargs
-
-    def __setattr__(self, name: str, value: Any) -> None:
-        object.__setattr__(self, name, value)
-        self._has[name] = True
-
-    def _hasattr(self, name: str) -> bool:
-        if self._has[name]:
-            return True
-        if isinstance((v := getattr(self, name)), (dict, list)) and len(v) == 0:
-            self._has[name] = True
-            return True
-        return False
-```
-
-This leverages another feature of python that natively allows for presence
-checks. The kwargs dictionary implicitly contains that metadata because keys
-not set simply aren't present. This otherwise uses the same internal dict
-mechanism to continue to keep track of defaultedness.
-
-The major disadvantage to this is that it essentially forgoes IntelliSense
-and type checking until [PEP 692](https://peps.python.org/pep-0692/) lands.
-This isn't expected to happen until 3.12 at the earliest, which is expected
-in late 2023 / early 2024. Then the tools need to be updated for support,
-which isn't straight-forward.
-
-Another disadvantage is that it excludes the ability to include the default
-value in the IntelliSense since the typing of kwargs relies on TypedDicts
-which don't support default values.
 
 ## Errors
 

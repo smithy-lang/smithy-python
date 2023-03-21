@@ -107,7 +107,6 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
 
     @Override
     public void customizeBeforeShapeGeneration(CustomizeDirective<GenerationContext, PythonSettings> directive) {
-        generateDefaultWrapper(directive.settings(), directive.context().writerDelegator());
         generateServiceErrors(directive.settings(), directive.context().writerDelegator());
         addDefaultEndpointProvider(directive);
         new ConfigGenerator(directive.settings(), directive.context()).run();
@@ -167,63 +166,6 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
         protocolGenerator.generateResponseDeserializers(directive.context());
 
         protocolGenerator.generateProtocolTests(directive.context());
-    }
-
-    private void generateDefaultWrapper(PythonSettings settings, WriterDelegator<PythonWriter> writers) {
-        var wrapperClass = CodegenUtils.getDefaultWrapperClass(settings);
-        writers.useFileWriter(wrapperClass.getDefinitionFile(), wrapperClass.getNamespace(), writer -> {
-            writer.addStdlibImport("typing", "Any");
-            writer.write("""
-                    class _DEFAULT:
-                        def __init__(self, wrapped: Any):
-                            ""\"Wraps a value to signal it was provided by default.
-
-                            These values will be immediately unwrapped in the associated
-                            initializers so the values can be used as normal, the defaultedness
-                            will then be tracked separately.
-                            ""\"
-                            self._wrapped = wrapped
-
-                        @property
-                        def value(self) -> Any:
-                            # Prevent mutations from leaking by simply returning copies of mutable
-                            # defaults. We could also just make immutable subclasses.
-                            if isinstance(self._wrapped, list):
-                                return list(self._wrapped)
-                            if isinstance(self._wrapped, dict):
-                                return dict(self._wrapped)
-                            return self._wrapped
-
-                        def __repr__(self) -> str:
-                            return f"_DEFAULT({repr(self._wrapped)})"
-
-                        def __str__(self) -> str:
-                            return str(self._wrapped)
-                    """);
-        });
-
-        var wrapperFunction = CodegenUtils.getDefaultWrapperFunction(settings);
-        writers.useFileWriter(wrapperFunction.getDefinitionFile(), wrapperFunction.getNamespace(), writer -> {
-            writer.addStdlibImport("typing", "TypeVar");
-            writer.addStdlibImport("typing", "cast");
-            writer.write("""
-                        _D = TypeVar("_D")
-
-
-                        def _default(value: _D) -> _D:
-                            ""\"Wraps a value to signal it was provided by default.
-
-                            These values will be immediately unwrapped in the associated
-                            initializers so the values can be used as normal, the defaultedness
-                            will then be tracked separately.
-
-                            We use this wrapper function for brevity, but also because many completion
-                            tools will show the code of the default rather than the result, and
-                            `_default(7)` is a bit more clear than `cast(int, _DEFAULT(7))`.
-                            ""\"
-                            return cast(_D, $T(value))
-                        """, wrapperClass);
-        });
     }
 
     private void generateServiceErrors(PythonSettings settings, WriterDelegator<PythonWriter> writers) {
