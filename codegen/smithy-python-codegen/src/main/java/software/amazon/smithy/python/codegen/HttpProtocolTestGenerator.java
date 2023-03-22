@@ -411,10 +411,10 @@ public final class HttpProtocolTestGenerator implements Runnable {
     private void compareMediaBlob(HttpMessageTestCase testCase, PythonWriter writer) {
         var contentType = testCase.getBodyMediaType().orElse("application/octet-stream");
         if (contentType.equals("application/json") || contentType.endsWith("+json")) {
-            writer.addStdlibImport("json", "loads", "json_loads");
+            writer.addStdlibImport("json");
             writer.write("""
-                actual_body = json_loads(actual_body_content) if actual_body_content else ""
-                expected_body = json_loads(expected_body_content)
+                actual_body = json.loads(actual_body_content) if actual_body_content else ""
+                expected_body = json.loads(expected_body_content)
                 assert actual_body == expected_body
 
                 """);

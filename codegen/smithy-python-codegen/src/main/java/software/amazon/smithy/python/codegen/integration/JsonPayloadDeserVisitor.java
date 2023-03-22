@@ -110,10 +110,10 @@ public final class JsonPayloadDeserVisitor extends ShapeVisitor.Default<Void> {
     }
 
     private void generateJsonDeserializerDelegation() {
-        writer.addStdlibImport("json", "loads", "json_loads");
+        writer.addStdlibImport("json");
 
         var target = context.model().expectShape(member.getTarget());
-        var memberVisitor = getMemberVisitor(member, "json_loads(body)");
+        var memberVisitor = getMemberVisitor(member, "json.loads(body)");
         var memberDeserializer = target.accept(memberVisitor);
 
         writer.write("""

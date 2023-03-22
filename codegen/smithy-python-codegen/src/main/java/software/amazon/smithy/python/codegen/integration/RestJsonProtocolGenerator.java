@@ -116,11 +116,11 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         serVisitor.structureMembers(bodyMembers);
 
         writer.addImport("smithy_python.interfaces.blobs", "AsyncBytesReader");
-        writer.addStdlibImport("json", "dumps", "json_dumps");
+        writer.addStdlibImport("json");
 
         var defaultTrailer = shouldWriteDefaultBody(context, operation) ? "" : " if result else b''";
         writer.write("""
-            content = json_dumps(result).encode('utf-8')$L
+            content = json.dumps(result).encode('utf-8')$L
             content_length = len(content)
             body = AsyncBytesReader(content)
             """, defaultTrailer);
@@ -195,7 +195,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
             if (target.isStringShape()) {
                 writer.write("content = $L.encode('utf-8')", memberSerializer);
             } else {
-                writer.write("content = json_dumps($L).encode('utf-8')", memberSerializer);
+                writer.write("content = json.dumps($L).encode('utf-8')", memberSerializer);
             }
             writer.write("content_length = len(content)");
             writer.write("body = AsyncBytesReader(content)");
@@ -233,13 +233,13 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
     ) {
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
         writer.addImport("smithy_python.types", "Document");
-        writer.addStdlibImport("json", "loads", "json_loads");
+        writer.addStdlibImport("json");
 
         if (operationOrError.isOperationShape()) {
             writer.write("""
                 output: dict[str, Document] = {}
                 if (body := await http_response.consume_body()):
-                    output = json_loads(body)
+                    output = json.loads(body)
 
                 """);
         } else {
@@ -250,7 +250,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
             writer.addStdlibImport("typing", "cast");
             writer.write("""
                 if (parsed_body is None) and (body := await http_response.consume_body()):
-                    parsed_body = json_loads(body)
+                    parsed_body = json.loads(body)
 
                 output: dict[str, Document] = parsed_body if parsed_body is not None else {}
                 """);
