@@ -29,7 +29,7 @@ import software.amazon.smithy.utils.StringUtils;
  */
 @SmithyInternalApi
 final class ImportDeclarations implements ImportContainer {
-    private static final String NAMESPACE_IMPORT_TEMPLATE = "import %s%n";
+    private static final String MODULE_IMPORT_TEMPLATE = "import %s%n";
 
     private final Map<String, Map<String, String>> stdlibImports = new TreeMap<>();
     private final Map<String, Map<String, String>> externalImports = new TreeMap<>();
@@ -129,7 +129,7 @@ final class ImportDeclarations implements ImportContainer {
     private void formatImportList(StringBuilder builder, Map<String, Map<String, String>> importMap) {
         for (Map.Entry<String, Map<String, String>> namespaceEntry: importMap.entrySet()) {
             if (namespaceEntry.getValue().remove("") != null) {
-                builder.append(formatNamespaceImport(namespaceEntry.getKey()));
+                builder.append(formatModuleImport(namespaceEntry.getKey()));
             }
             if (namespaceEntry.getValue().isEmpty()) {
                 continue;
@@ -143,8 +143,8 @@ final class ImportDeclarations implements ImportContainer {
         builder.append("\n");
     }
 
-    private String formatNamespaceImport(String namespace) {
-        return String.format(NAMESPACE_IMPORT_TEMPLATE, namespace);
+    private String formatModuleImport(String namespace) {
+        return String.format(MODULE_IMPORT_TEMPLATE, namespace);
     }
 
     private String formatSingleLineImport(String namespace, Map<String, String> names) {

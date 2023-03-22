@@ -154,9 +154,9 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
 
 
     /**
-     * Imports a package from the standard library without an alias.
+     * Imports a module from the standard library without an alias.
      *
-     * @param namespace Module to import the type from.
+     * @param namespace Module to import.
      * @return Returns the writer.
      */
     public PythonWriter addStdlibImport(String namespace) {
