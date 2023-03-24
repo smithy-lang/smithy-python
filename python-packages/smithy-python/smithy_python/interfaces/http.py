@@ -94,7 +94,7 @@ class HTTPRequestConfiguration:
 class HTTPClient(Protocol):
     """An asynchronous HTTP client interface."""
 
-    def __init__(self, *, client_config: HTTPRequestConfiguration | None) -> None:
+    def __init__(self, *, client_config: HTTPClientConfiguration | None) -> None:
         """
         :param client_config: Configuration that applies to all requests made with this
         client.
