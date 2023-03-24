@@ -9,25 +9,120 @@ The HTTP interfaces and data classes defined in this document will serve as the
 basis for all SDK clients built on top of smithy-python and will therefore aim
 to provide the simplest interface that is correct. These interfaces will
 directly be used by consumers of the smithy-python library, both in the context
-of white label Smithy service clients as well as all AWS service clients. These
+of custom Smithy service clients as well as all AWS service clients. These
 interfaces will serve as guidance and should not require any specific HTTP
 library, concurrency paradigm, or require a runtime dependency on the
 smithy-python package to implement.
 
 # Specification
 
-## Request and Response Interfaces
+## Requests and Responses
+
+Requests and responses are represented by minimal, async-compatible interfaces.
+Since Smithy clients are expected to be capable of using non-HTTP transport protocols,
+such as MQTT, any HTTP-specific properties will exist in their own sub-interfaces.
+
+Request bodies are defined as an `AsyncIterable[bytes]` instead of some file-like
+object. This allows flexibility both within protocols and specific transfer settings
+to defer message framing to a lower layer. There are mechanisms within protocols, such
+as HTTP’s `Content-Encoding`, which enable application-specific content framing within
+a message.
+
+```python
+class Request(Protocol):
+    """Protocol-agnostic representation of a request."""
+
+    destination: URI
+    body: AsyncIterable[bytes]
+
+    async def consume_body(self) -> bytes:
+        """Iterate over request body and return as bytes."""
+        ...
+
+
+class Response(Protocol):
+    """Protocol-agnostic representation of a response."""
+
+    @property
+    def body(self) -> AsyncIterable[bytes]:
+        """The response payload as iterable of chunks of bytes."""
+        ...
+
+    async def consume_body(self) -> bytes:
+        """Iterate over response body and return as bytes."""
+        ...
+
+
+class HTTPRequest(Request, Protocol):
+    """HTTP primitive for an Exchange to construct a version agnostic HTTP message.
+
+    :param destination: The URI where the request should be sent to.
+    :param method: The HTTP method of the request, for example "GET".
+    :param fields: ``Fields`` object containing HTTP headers and trailers.
+    :param body: A streamable collection of bytes.
+    """
+
+    method: str
+    fields: Fields
+
+
+class HTTPResponse(Response, Protocol):
+    """HTTP primitives returned from an Exchange, used to construct a client
+    response."""
+
+    @property
+    def status(self) -> int:
+        """The 3 digit response status code (1xx, 2xx, 3xx, 4xx, 5xx)."""
+        ...
+
+    @property
+    def fields(self) -> Fields:
+        """``Fields`` object containing HTTP headers and trailers."""
+        ...
+
+    @property
+    def reason(self) -> str | None:
+        """Optional string provided by the server explaining the status."""
+        ...
+```
+
+## URI
+
+URIs are represented by an explicit interface rather than an arbitrary string. This
+avoids joining and splitting an endpoint multiple times in the request/response
+lifecycle, like we do in botocore.
+
+It will be the responsibility of an HTTP client implementation to take the information
+present in the `URI` object and render it into an appropriate representation of the URI
+for the HTTP client being used.
 
 ```python
 class URI(Protocol):
-    scheme: str  # For example ``http`` or ``https``.
-    username: str | None  # Username part of the userinfo URI component.
-    password: str | None  # Password part of the userinfo URI component.
-    host: str  # The hostname, for example ``amazonaws.com``.
-    port: int | None  # An explicit port number.
-    path: str | None  # Path component of the URI.
-    query: str | None  # Query component of the URI as string.
-    fragment: str | None  # Part of the URI specification, but may not be transmitted by a client.
+    """Universal Resource Identifier, target location for a :py:class:`Request`."""
+
+    scheme: str
+    """For example ``http`` or ``mqtts``."""
+
+    username: str | None
+    """Username part of the userinfo URI component."""
+
+    password: str | None
+    """Password part of the userinfo URI component."""
+
+    host: str
+    """The hostname, for example ``amazonaws.com``."""
+
+    port: int | None
+    """An explicit port number."""
+
+    path: str | None
+    """Path component of the URI."""
+
+    query: str | None
+    """Query component of the URI as string."""
+
+    fragment: str | None
+    """The fragment component of the URI."""
 
     def build(self) -> str:
         """Construct URI string representation.
@@ -36,52 +131,153 @@ class URI(Protocol):
         ``{scheme}://{username}:{password}@{host}:{port}{path}?{query}#{fragment}``
         """
         ...
-
-
-class Request(Protocol):
-    url: URI
-    method: str # GET, PUT, etc
-    headers: List[Tuple[str, str]]
-    body: Any
-
-
-class Response(Protocol):
-    status_code: int # HTTP status code
-    headers: List[Tuple[str, str]]
-    body: Any
 ```
 
-These interfaces are relatively straightforward and self-explanatory. The
-inclusion of an explicit `URI` interface is the only thing that might be
-surprising. This interface is important to avoid joining and splitting an
-endpoint multiple times in the request response lifecycle, like we do in
-botocore. It will be the responsibility of an HTTP client implementation
-to take the information present in the `URI` object and render it into an
-appropriate representation of the URI for the HTTP client being used.
+## Fields
 
-## HTTP Session interface
+Most HTTP users will be familiar with the concept of headers. These were introduced in
+HTTP/1.0 and have since evolved through HTTP 1.1/2/3 to include things like trailers
+and other arbitrary metadata. Starting in RFC 7230 (HTTP/1.1), the term `Header` began
+being referred to interchangeably as a `Field` or `Header Field`. Starting in RFC 9114
+(HTTP/3), these are now strictly referred to as `HTTP Fields` or `Fields`.
 
-These basic data class interfaces will serve as a basis for building the
-following HTTP client interfaces while providing implementations flexibility.
-
-[Botocore][botocore-http], the [Transcribe Streaming SDK][transcribe-http], as
-well as the [Go SDK V2][go-http] all define relatively simple interfaces for
-executing an HTTP request. Using the above request response intefaces we will
-define and HTTP session to be:
+This design uses the modern `Field` concept as interfaces to more closely reflect the
+current RFCs. Notably absent is the concept of a direct header map or field map. This
+reflects the reality that headers and other fields have always allowed multiple values
+for a given key. Built-in joining methods are included to support HTTP client
+implementations that only understand headers as a simple map.
 
 ```python
-class Session(Protocol):
-    def send(self, request: Request) -> Response:
-        pass
+class FieldPosition(Enum):
+    """The type of a field.
+
+    Defines its placement in a request or response.
+    """
+
+    HEADER = 0
+    """Header field.
+
+    In HTTP this is a header as defined in RFC 9110 Section 6.3. Implementations of
+    other protocols may use this FieldPosition for similar types of metadata.
+    """
+
+    TRAILER = 1
+    """Trailer field.
+
+    In HTTP this is a trailer as defined in RFC 9110 Section 6.5. Implementations of
+    other protocols may use this FieldPosition for similar types of metadata.
+    """
+
+
+class Field(Protocol):
+    """A name-value pair representing a single field in a request or response.
+
+    The kind will dictate metadata placement within an the message, for example as
+    header or trailer field in a HTTP request as defined in RFC 9110 Section 5.
+
+    All field names are case insensitive and case-variance must be treated as
+    equivalent. Names may be normalized but should be preserved for accuracy during
+    transmission.
+    """
+
+    name: str
+    values: list[str]
+    kind: FieldPosition = FieldPosition.HEADER
+
+    def add(self, value: str) -> None:
+        """Append a value to a field."""
+        ...
+
+    def set(self, values: list[str]) -> None:
+        """Overwrite existing field values."""
+        ...
+
+    def remove(self, value: str) -> None:
+        """Remove all matching entries from list."""
+        ...
+
+    def as_string(self) -> str:
+        """Serialize the ``Field``'s values into a single line string."""
+        ...
+
+    def as_tuples(self) -> list[tuple[str, str]]:
+        """Get list of ``name``, ``value`` tuples where each tuple represents one
+        value."""
+        ...
+
+
+class Fields(Protocol):
+    """Protocol agnostic mapping of key-value pair request metadata, such as HTTP
+    fields."""
+
+    # Entries are keyed off the name of a provided Field
+    entries: OrderedDict[str, Field]
+    encoding: str | None = "utf-8"
+
+    def set_field(self, field: Field) -> None:
+        """Set entry for a Field name."""
+        ...
+
+    def get_field(self, name: str) -> Field:
+        """Retrieve Field entry."""
+        ...
+
+    def remove_field(self, name: str) -> None:
+        """Delete entry from collection."""
+        ...
+
+    def get_by_type(self, kind: FieldPosition) -> list[Field]:
+        """Helper function for retrieving specific types of fields.
+
+        Used to grab all headers or all trailers.
+        """
+        ...
+
+    def extend(self, other: "Fields") -> None:
+        """Merges ``entries`` of ``other`` into the current ``entries``.
+
+        For every `Field` in the ``entries`` of ``other``: If the normalized name
+        already exists in the current ``entries``, the values from ``other`` are
+        appended. Otherwise, the ``Field`` is added to the list of ``entries``.
+        """
+        ...
+
+    def __iter__(self) -> Iterator[Field]:
+        """Allow iteration over entries."""
+        ...
 ```
 
-And to support asynchronous clients, we will also need an asynchronous version
-of this interface:
+## HTTP client interface
+
+HTTP clients are represented by a simple interface that defines a single `send` method,
+which takes a request and some configuration and asynchronously return a response.
+Having a minimal interface makes it much easier to implement these interfaces on top of
+a variety http libraries.
 
 ```python
-class AsyncSession(Protocol):
-    async def send(self, request: Request) -> Response:
-        pass
+@dataclass(kw_only=True)
+class HTTPRequestConfiguration:
+    """Request-level HTTP configuration.
+
+    :param read_timeout: How long, in seconds, the client will attempt to read the
+    first byte over an established, open connection before timing out.
+    """
+
+    read_timeout: float | None = None
+
+
+class HTTPClient(Protocol):
+    """An asynchronous HTTP client interface."""
+
+    async def send(
+        self, *, request: HTTPRequest, request_config: HTTPRequestConfiguration | None
+    ) -> HTTPResponse:
+        """Send HTTP request over the wire and return the response.
+
+        :param request: The request including destination URI, fields, payload.
+        :param request_config: Configuration specific to this request.
+        """
+        ...
 ```
 
 # FAQs
@@ -93,40 +289,6 @@ requiring implementations to have a runtime dependency on the interfaces.
 Validation that an implemenation meets the interfaces can happen as a step
 during testing, or at the point the implementation is used under a context
 where one of these protocols is expected.
-
-## Why define headers as a list?
-
-Mappings are a convenient data structure to use for headers as setting or
-getting particular header values is common. However, strictly speaking the
-headers in an HTTP request more literally translate to a type like:
-`List[Tuple[str, str]]`. Because particular headers can appear multiple times,
-and is required functionality for certain HTTP features a `List` provides that
-without an ambiguous type definition. While using a `MutableMapping` is likely
-more ergonomic it creates certain ambiguities around the exact handling of
-repeated header fields and leads to a definition such as:
-```
-Headers = MutableMapping[str, List[str]]
-```
-Which means the intuitive ways of using this interface are either incorrect at
-a typing level e.g.
-```
-my_headers: MutableMapping[str, List[str]] = Headers()
-my_headers['foo'] = 'bar' # Incorrect, value must be List[str]
-```
-
-or require nuanced behavior not represented in the typing directly e.g.
-```
-my_headers['foo'] = ['bar']
-my_headers['foo'] = ['baz']
-my_headers['foo'] # Should this be ['baz']? ['bar', 'baz']? ['bar, baz']?
-```
-To have effective and safe usage of this type of mapping an opionated decision
-would need to be made on this type of behavior but would not be trivial to
-express in the typing system. To properly express this type of mapping we would
-need to define a custom `HeaderMapping` interface that expresses these nuances
-via it's type which increases friction for HTTP clients to impelement this
-interface. However, it should be trivial for all HTTP clients to convert their
-header representation into a `List[Tuple[str, str]]`.
 
 ## What if we need to add additional fields to these interfaces?
 
@@ -162,8 +324,3 @@ marked as retryable, etc.
 implementation
 * Custom HTTP implementations will also require a custom set of retryable
 exceptions if you want retries to work properly.
-
-
-[botocore-http]: https://github.com/boto/botocore/blob/fab5496fa8bd82854b32b5f47de0389be33c94b6/botocore/httpsession.py#L306
-[transcribe-http]: https://github.com/awslabs/amazon-transcribe-streaming-sdk/blob/a2eea97eca27c89b0a9d5e71d34a688800616e6d/amazon_transcribe/httpsession.py#L176
-[go-http]: https://github.com/aws/aws-sdk-go-v2/blob/b7d8e15425d2f86a0596e8d7db2e33bf382a21dd/service/autoscaling/api_client.go#L107-L109
