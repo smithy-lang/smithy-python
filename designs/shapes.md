@@ -22,11 +22,7 @@ are generated into python types and type hints from a Smithy model.
 | bigInteger | int |
 | bigDecimal | decimal.Decimal |
 | timestamp | datetime.datetime |
-| document | Document* = dict[str, 'Document'] | list['Document'] | str | int | float | bool | None |
-
-*Mypy only has experimental support for recursive definitions, but it should be on by default by 0.990.
-See [this issue](https://github.com/python/typing/issues/182) on the typing repo for more details. In
-the meantime we can use a flag to turn it on.
+| document | Document = dict[str, 'Document'] | list['Document'] | str | int | float | bool | None |
 
 ## Trait-influenced shapes
 
@@ -39,14 +35,11 @@ class EnumWithNames:
     SPAM_EGGS = "spam:eggs"
 
     values = frozenset(SPAM, EGGS, SPAM_EGGS)
-
-class EnumWithoutNames:
-    values = frozenset("foo", "bar")
 ```
 
 Enums are classes with a `values` property that contains an immutable set of
-all the possible values of the enum. If the enum is a named enum, static
-properties will be generated for each entry as well.
+all the possible values of the enum in addition to static properties for each
+entry.
 
 This provides customers with a way to access the simplified names for easier
 development, as well as giving them a programmatic ability to check known
@@ -159,8 +152,7 @@ unknown.
 A blob with the streaming trait will continue to support `bytes` as input.
 Additionally, it will support passing in a `ByteStream` which is any class that
 implements a `read` method that accepts a `size` param and returns bytes.
-Additionally, it will gracefully upgrade if the object is a
-`SeekableByteStream` as well as handling an `AsyncByteStream`.
+It will also accept an async variant of that same type or an `AsyncIterable`.
 
 Both `ByteStream`, `SeekableByteStream`, and `AsyncByteStream` will be
 implemented as [Protocols](https://www.python.org/dev/peps/pep-0544/),
@@ -174,15 +166,6 @@ class ByteStream(Protocol):
 
 
 @runtime_checkable
-class SeekableByteStream(ByteStream, Protocol):
-    def seek(self, offset: int, whence: int = 0) -> int:
-        ...
-
-    def tell() -> int:
-        ...
-
-
-@runtime_checkable
 class AsyncByteStream(Protocol):
     async def read(self, size: int = -1) -> bytes:
         ...
@@ -190,10 +173,10 @@ class AsyncByteStream(Protocol):
 
 StreamingBlob = Union[
     ByteStream,
-    SeekableByteStream,
     AsyncByteStream,
     bytes,
     bytearray,
+    AsyncIterable,
 ]
 ```
 
