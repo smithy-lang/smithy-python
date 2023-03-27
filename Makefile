@@ -2,9 +2,16 @@ help: ## Show this help.
 	@sed -ne '/@sed/!s/## //p' $(MAKEFILE_LIST)
 
 
-install-deps: ## Builds and installs the python packages.
+install-python-components: ## Builds and installs the python packages.
 	./pants package ::
 	python3 -m pip install dist/*.whl --force-reinstall
+
+
+install-java-components: ## Publishes java packages to maven local.
+	cd codegen && ./gradlew publishToMavenLocal
+
+
+install-components: install-python-components install-java-components ## Installs java and python components locally.
 
 
 smithy-build: ## Builds the Java code generation packages.
@@ -21,4 +28,4 @@ run-protocol-tests: ## Runs already-generated protocol tests
 	python3 -m pytest tests
 
 
-test-protocols: install-deps generate-protocol-tests run-protocol-tests ## Generates and runs protocol tests.
+test-protocols: install-python-components generate-protocol-tests run-protocol-tests ## Generates and runs protocol tests.

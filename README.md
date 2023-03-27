@@ -2,11 +2,11 @@
 
 **WARNING: All interfaces are subject to change.**
 
-We are in the very early stages of beginning work on low-level Python SDK
-modules that aim to provide basic, reusable, and composable interfaces for
-lower level SDK tasks. Using these modules customers should be able to generate
-synchronous and asynchronous service client or server implementations based on
-services defined using [Smithy](https://smithy.io/).
+We are in the early stages of beginning work on low-level Python SDK modules
+that aim to provide basic, reusable, and composable interfaces for lower level
+SDK tasks. Using these modules customers should be able to generate
+asynchronous service client implementations based on services defined using
+[Smithy](https://smithy.io/).
 
 ### What is this repository?
 
@@ -15,21 +15,103 @@ This repository contains two major components:
 1) Smithy code generators for Python
 2) Core modules and interfaces for building service clients in Python
 
-### Smithy Code Generators
+These components facilitate generating clients for any [Smithy](https://smithy.io/)
+service. The `codegen` directory contains the source code for generating clients.
+The `python-packages` directory contains the source code for the hand-written python
+components.
 
-[Smithy](https://smithy.io/) is a protocol-agnostic interface
-definition language that provides a
-[code generation framework](https://github.com/awslabs/smithy/tree/main/smithy-codegen-core)
-for building service clients, servers, and documentation. The `codegen` directory
-contains the source code for generating these tools. See the code generation
-[README](https://github.com/awslabs/smithy-python/blob/develop/codegen/README.md)
-for more information.
+This repository does *not* contain any generated clients, such as for S3 or other
+AWS services. Rather, these are the tools that facilitate the generation of those
+clients and non-AWS Smithy clients.
+
+### How do I use this?
+
+The first step is to create a Smithy pacakge. If this is your first time working
+with Smithy, follow [this quickstart guide](https://smithy.io/2.0/quickstart.html)
+to learn the basics and create a simple Smithy model.
+
+Once you have a service defined in Smithy, you will need to define what protocol
+it uses. Currently the only supported protocol is
+[restJson1](https://smithy.io/2.0/aws/protocols/aws-restjson1-protocol.html). This
+is a protocol based on AWS services, but is broadly applicable to any service that
+uses rest bindings with a JSON body type. Simply add the protocol trait to your
+service shape like so:
+
+```smithy
+use aws.protocols#restJson1
+
+/// Provides weather forecasts.
+@restJson1
+@paginated(
+    inputToken: "nextToken"
+    outputToken: "nextToken"
+    pageSize: "pageSize"
+)
+service Weather {
+    version: "2006-03-01"
+    resources: [City]
+    operations: [GetCurrentTime]
+}
+```
+
+To import the trait, you'll also need to add a dependency on `smithy-aws-traits`.
+And to generate your client, you'll also need to add a dependency on
+`smithy-python-codegen`. For example:
+
+```kotlin
+plugins {
+    id("software.amazon.smithy").version("0.6.0")
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation("software.amazon.smithy:smithy-model:1.28.1")
+    implementation("software.amazon.smithy:smithy-aws-traits:1.28.1")
+    implementation("software.amazon.smithy.python:smithy-python-codegen:0.1.0")
+}
+```
+
+`smithy-python-codegen` hasn't been published yet, so you'll need to build it yourself.
+To build and run the generator you will need the following prerequisites:
+
+* JDK 17 or newer
+* Python 3.11 or newer
+  * (optional) Install [black](https://black.readthedocs.io/en/stable/) in your
+    environment to have the generated output be auto-formatted.
+* make
+
+Now run `make install-components`. This will install the python dependencies in your
+environment and publish the code generator to maven local. For more information on
+the underlying build process, see the "Using repository tooling" section.
+
+Now upate your `smithy-build.json` to include the `python-codegen` plugin:
+
+```json
+{
+    "version": "1.0",
+    "plugins": {
+        "service": "example.weather#Weather",
+        "module": "weather",
+        "moduleVersion": "0.0.1"
+    }
+}
+```
+
+Now just build your smithy package and you'll have a generated client! The client can
+be found in `build/smithyprojections/<project-name>/<projection-name>/python-codegen`.
 
 ### Core Modules and Interfaces
 
 The `smithy-python` package provides the core modules and interfaces required
-to build a service client or server. These basic modules include things like:
+to build a service client. These basic modules include things like:
 an HTTP/1.1 and HTTP/2 client implementation, retry strategies, etc.
+
+The `aws-smithy-python` package provides implementations of those interfaces
+for AWS, such as sigv4 signers.
 
 ### What are the design goals of this project?
 
@@ -43,11 +125,6 @@ many different contexts.
 customers should have a high level of confidence that the building blocks we're
 creating are well supported, understood, and maintained. Customers should not
 have to hack on internal or undocumented interfaces to achieve their goals.
-
-* **Components must support all concurrency paradigms** - As `asyncio` and
-other asynchronous frameworks begin to gain prominence in the Python community
-we need to ensure the interfaces and abstractions we're building can work
-across many different concurrency paradigms without requiring rewrites.
 
 * **Components must be typed** - All of the buildings blocks we create must be
 typed and usable via `mypy`. Given the nature of gradual typing it's paramount
