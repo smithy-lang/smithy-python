@@ -63,6 +63,7 @@ SIGV4_REQUIRED_QUERY_PARAMS: tuple[str, str, str, str, str, str] = (
     "X-Amz-SignedHeaders",
     "X-Amz-Signature",
 )
+EMPTY_ASYNC_LIST: AsyncIterable[bytes] = async_list([])
 
 
 @pytest.fixture(scope="module")
@@ -334,7 +335,7 @@ async def test_sigv4_generate_presigned_url_with_additional_query_params(
         method="GET",
         destination=URI(host="example.com", query="foo=bar&baz=qux"),
         fields=Fields(),
-        body=async_list([]),
+        body=EMPTY_ASYNC_LIST,
     )
     url = await sigv4_signer.generate_presigned_url(
         http_request=http_request,
@@ -403,7 +404,7 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
                 method="GET",
                 fields=Fields(),
             ),
@@ -425,7 +426,7 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com", scheme="http"),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
                 method="GET",
                 fields=Fields(),
             ),
@@ -436,7 +437,7 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
                 method="GET",
                 fields=Fields(),
             ),
@@ -447,7 +448,7 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
                 method="GET",
                 fields=Fields(),
             ),
@@ -462,7 +463,7 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
                 method="GET",
                 fields=Fields(),
             ),
@@ -499,7 +500,7 @@ async def test_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
                 method="GET",
                 fields=Fields(),
             ),
@@ -508,7 +509,7 @@ async def test_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
                 method="GET",
                 fields=Fields([Field(name="foo", values=["bar"])]),
             ),
@@ -517,7 +518,7 @@ async def test_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
                 method="GET",
                 fields=Fields([Field(name="foo", values=["bar", "baz"])]),
             ),
@@ -526,7 +527,7 @@ async def test_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
                 method="GET",
                 fields=Fields([Field(name="host", values=["foo"])]),
             ),
@@ -535,7 +536,7 @@ async def test_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
                 method="GET",
                 fields=Fields(
                     [
@@ -553,7 +554,7 @@ async def test_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
                 method="GET",
                 fields=Fields(
                     [
@@ -567,7 +568,7 @@ async def test_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com", port=8080),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
                 method="GET",
                 fields=Fields(
                     [
@@ -583,7 +584,7 @@ async def test_payload(
                 destination=URI(
                     host="example.com", port=8080, username="foo", password="bar"
                 ),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
                 method="GET",
                 fields=Fields(
                     [
@@ -597,7 +598,7 @@ async def test_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com", scheme="http", port=80),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
                 method="GET",
                 fields=Fields(
                     [
@@ -613,7 +614,7 @@ async def test_payload(
                 destination=URI(
                     host="example.com", port=443, username="foo", password="bar"
                 ),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
                 method="GET",
                 fields=Fields(
                     [
@@ -627,7 +628,7 @@ async def test_payload(
         (
             HTTPRequest(
                 destination=URI(host="::80", port=80, scheme="http"),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
                 method="GET",
                 fields=Fields([]),
             ),
@@ -636,7 +637,7 @@ async def test_payload(
         (
             HTTPRequest(
                 destination=URI(host="::80", port=80),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
                 method="GET",
                 fields=Fields([]),
             ),
@@ -678,7 +679,7 @@ async def test_format_headers_for_signing(
                         Field(name="foo", values=["bar"]),
                     ]
                 ),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
             ),
             1000,
             "foo;host;x-amz-date",
@@ -690,7 +691,7 @@ async def test_format_headers_for_signing(
                 fields=Fields(
                     [Field(name="X-Amz-Security-Token", values=[SESSION_TOKEN])]
                 ),
-                body=async_list([]),
+                body=EMPTY_ASYNC_LIST,
             ),
             1000,
             "host;x-amz-date",

@@ -59,7 +59,7 @@ class SigV4SigningProperties(SigningProperties):
     checksum: NotRequired[dict[str, dict[str, str]]]
 
 
-class SignatureKwargs(TypedDict, total=False):
+class SignatureKwargs(TypedDict):
     http_request: HTTPRequest
     formatted_headers: dict[str, str]
     signed_headers: str
