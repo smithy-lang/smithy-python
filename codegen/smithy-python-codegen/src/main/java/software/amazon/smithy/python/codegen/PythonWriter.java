@@ -152,6 +152,18 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         return openComment(() -> write(formatDocs(comment.replace("\n", " "))));
     }
 
+
+    /**
+     * Imports a module from the standard library without an alias.
+     *
+     * @param namespace Module to import.
+     * @return Returns the writer.
+     */
+    public PythonWriter addStdlibImport(String namespace) {
+        getImportContainer().addStdlibImport(namespace);
+        return this;
+    }
+
     /**
      * Imports a type using an alias from the standard library only if necessary.
      *

@@ -29,6 +29,7 @@ import software.amazon.smithy.utils.StringUtils;
  */
 @SmithyInternalApi
 final class ImportDeclarations implements ImportContainer {
+    private static final String MODULE_IMPORT_TEMPLATE = "import %s%n";
 
     private final Map<String, Map<String, String>> stdlibImports = new TreeMap<>();
     private final Map<String, Map<String, String>> externalImports = new TreeMap<>();
@@ -80,6 +81,10 @@ final class ImportDeclarations implements ImportContainer {
         return prefix + namespace.split("\\.", commonSegments + 1)[commonSegments];
     }
 
+    ImportDeclarations addStdlibImport(String namespace) {
+        return addStdlibImport(namespace, "", "");
+    }
+
     ImportDeclarations addStdlibImport(String namespace, String name) {
         return addStdlibImport(namespace, name, name);
     }
@@ -123,6 +128,12 @@ final class ImportDeclarations implements ImportContainer {
 
     private void formatImportList(StringBuilder builder, Map<String, Map<String, String>> importMap) {
         for (Map.Entry<String, Map<String, String>> namespaceEntry: importMap.entrySet()) {
+            if (namespaceEntry.getValue().remove("") != null) {
+                builder.append(formatModuleImport(namespaceEntry.getKey()));
+            }
+            if (namespaceEntry.getValue().isEmpty()) {
+                continue;
+            }
             String namespaceImport = formatSingleLineImport(namespaceEntry.getKey(), namespaceEntry.getValue());
             if (namespaceImport.length() > CodegenUtils.MAX_PREFERRED_LINE_LENGTH) {
                 namespaceImport = formatMultiLineImport(namespaceEntry.getKey(), namespaceEntry.getValue());
@@ -130,6 +141,10 @@ final class ImportDeclarations implements ImportContainer {
             builder.append(namespaceImport);
         }
         builder.append("\n");
+    }
+
+    private String formatModuleImport(String namespace) {
+        return String.format(MODULE_IMPORT_TEMPLATE, namespace);
     }
 
     private String formatSingleLineImport(String namespace, Map<String, String> names) {
