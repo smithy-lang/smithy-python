@@ -137,6 +137,7 @@ final class ClientGenerator implements Runnable {
         writer.addStdlibImport("typing", "Awaitable");
         writer.addStdlibImport("typing", "cast");
         writer.addStdlibImport("copy", "deepcopy");
+        writer.addStdlibImport("asyncio", "sleep");
 
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
         writer.addImport("smithy_python.exceptions", "SmithyRetryException");
@@ -273,6 +274,7 @@ final class ClientGenerator implements Runnable {
                                     )
                                 except SmithyRetryException:
                                     raise context_with_response.response
+                                await sleep(retry_token.retry_delay)
                             else:
                                 # Step 8: Invoke record_success
                                 retry_strategy.record_success(token=retry_token)
