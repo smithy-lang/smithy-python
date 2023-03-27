@@ -219,6 +219,21 @@ To list what targets are available in a directory, run
 `./pants list path/to/dir:`. For more detailed information, see the [docs]
 (https://www.pantsbuild.org/docs/targets#target-addresses).
 
+#### Common commands - make
+
+There is also a `Makefile` that bridges the Python and Java build systems together to
+make common workflows simple, single commands. The two most important commands are:
+
+* `make install-components` which builds and installs the Java generator and the python
+  packages. The generator is published to maven local and the python packages are
+  installed into the active python environment. This command is most useful for those
+  who simply want to run the generator and use a generated client.v
+* `make test-protocols` which runs all the protocol tests. It will first (re)install
+  all necessary components to ensure that the latest is being used. This is most useful
+  for developers working on the generator and python packages.
+
+To see what else available, run `make help` or examine the file directly.
+
 ## License
 
 This project is licensed under the Apache-2.0 License.
