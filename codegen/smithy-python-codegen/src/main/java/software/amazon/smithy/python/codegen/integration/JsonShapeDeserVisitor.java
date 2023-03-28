@@ -19,7 +19,6 @@ import java.util.Collection;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.knowledge.NullableIndex;
-import software.amazon.smithy.model.shapes.DocumentShape;
 import software.amazon.smithy.model.shapes.ListShape;
 import software.amazon.smithy.model.shapes.MapShape;
 import software.amazon.smithy.model.shapes.MemberShape;
@@ -90,21 +89,6 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
     @Override
     public final Void serviceShape(ServiceShape shape) {
         throw new CodegenException("Service shapes cannot be bound to documents.");
-    }
-
-    @Override
-    public Void documentShape(DocumentShape shape) {
-        var functionName = context.protocolGenerator().getDeserializationFunctionName(context, shape.getId());
-        var config = CodegenUtils.getConfigSymbol(context.settings());
-        var symbol = context.symbolProvider().toSymbol(shape);
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.types", "Document", "Document");
-
-        writer.write("""
-            def $L(output: Document, config: $T) -> $T:
-                return output
-            """, functionName, config, symbol);
-        return null;
     }
 
     @Override
