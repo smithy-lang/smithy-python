@@ -61,6 +61,7 @@ public final class JsonPayloadDeserVisitor extends ShapeVisitor.Default<Void> {
 
     @Override
     public Void blobShape(BlobShape shape) {
+        // see: https://smithy.io/2.0/spec/streaming.html#smithy-api-streaming-trait
         if (member.getMemberTrait(context.model(), StreamingTrait.class).isPresent()) {
             writer.addImport("smithy_python.interfaces.blobs", "AsyncBytesReader");
             writer.write("kwargs[$S] = AsyncBytesReader(http_response.body)",

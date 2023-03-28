@@ -60,7 +60,10 @@ final class MapGenerator implements Runnable {
         var asDictSymbol = symbol.expectProperty("asDict", Symbol.class);
         var target = model.expectShape(shape.getValue().getTarget());
         var targetSymbol = symbolProvider.toSymbol(target);
+
+        // see: https://smithy.io/2.0/spec/type-refinement-traits.html#smithy-api-sparse-trait
         var sparseGuard = shape.hasTrait(SparseTrait.class) ? " if v is not None else None" : "";
+
         writer.addStdlibImport("typing", "Any");
         writer.addStdlibImport("typing", "Dict");
         writer.openBlock("def $L(given: $T) -> Dict[str, Any]:", "", asDictSymbol.getName(), symbol, () -> {
@@ -78,7 +81,10 @@ final class MapGenerator implements Runnable {
         var fromDictSymbol = symbol.expectProperty("fromDict", Symbol.class);
         var target = model.expectShape(shape.getValue().getTarget());
         var targetSymbol = symbolProvider.toSymbol(target);
+
+        // see: https://smithy.io/2.0/spec/type-refinement-traits.html#smithy-api-sparse-trait
         var sparseGuard = shape.hasTrait(SparseTrait.class) ? " if v is not None else None" : "";
+
         writer.addStdlibImport("typing", "Any");
         writer.addStdlibImport("typing", "Dict");
         writer.openBlock("def $L(given: Dict[str, Any]) -> $T:", "", fromDictSymbol.getName(), symbol, () -> {

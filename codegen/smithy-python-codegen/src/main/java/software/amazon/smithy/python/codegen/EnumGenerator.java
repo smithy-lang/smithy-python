@@ -70,6 +70,7 @@ final class EnumGenerator implements Runnable {
     }
 
     public String getEnumValue(MemberShape member) {
+        // see: https://smithy.io/2.0/spec/type-refinement-traits.html#smithy-api-enumvalue-trait
         return member.getTrait(EnumValueTrait.class)
                 .flatMap(EnumValueTrait::getStringValue)
                 .orElseGet(() -> member.getMemberName().toUpperCase(Locale.ENGLISH));

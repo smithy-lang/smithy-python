@@ -147,12 +147,14 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public Symbol blobShape(BlobShape shape) {
+        // see: https://smithy.io/2.0/spec/streaming.html#smithy-api-streaming-trait
         if (shape.hasTrait(StreamingTrait.class)) {
             return createSymbolBuilder(shape, "StreamingBlob", "smithy_python.interfaces.blobs")
                     .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
                     .build();
         }
 
+        // see: https://smithy.io/2.0/spec/protocol-traits.html#smithy-api-mediatype-trait
         if (shape.hasTrait(MediaTypeTrait.class)) {
             var mediaType = shape.expectTrait(MediaTypeTrait.class).getValue();
             if (MediaType.isJson(mediaType)) {
@@ -176,6 +178,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol listShape(ListShape shape) {
         Symbol reference = toSymbol(shape.getMember());
+        // see: https://smithy.io/2.0/spec/type-refinement-traits.html#smithy-api-sparse-trait
         String type = String.format(shape.hasTrait(SparseTrait.class) ? "%s | None" : "%s", reference.getName());
         var builder = createSymbolBuilder(shape, "list[" + type + "]")
                 .addReference(reference);
@@ -190,6 +193,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol mapShape(MapShape shape) {
         Symbol reference = toSymbol(shape.getValue());
+        // see: https://smithy.io/2.0/spec/type-refinement-traits.html#smithy-api-sparse-trait
         String type = String.format(shape.hasTrait(SparseTrait.class) ? "%s | None" : "%s", reference.getName());
         var builder = createSymbolBuilder(shape, "dict[str, " + type + "]")
                 .addReference(reference);
@@ -320,6 +324,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol stringShape(StringShape shape) {
         var builder = createSymbolBuilder(shape, "str");
+        // see: https://smithy.io/2.0/spec/protocol-traits.html#smithy-api-mediatype-trait
         if (shape.hasTrait(MediaTypeTrait.class)) {
             var mediaType = shape.expectTrait(MediaTypeTrait.class).getValue();
             if (MediaType.isJson(mediaType)) {

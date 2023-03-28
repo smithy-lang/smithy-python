@@ -71,6 +71,7 @@ public final class HttpProtocolGeneratorUtils {
     ) {
         writer.addImport("smithy_python.utils", "ensure_utc");
         var result = "ensure_utc(" + dataSource + ")";
+        // see: https://smithy.io/2.0/spec/protocol-traits.html#smithy-api-timestampformat-trait
         switch (format) {
             case DATE_TIME:
                 writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
@@ -107,6 +108,7 @@ public final class HttpProtocolGeneratorUtils {
     ) {
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
         writer.addImport("smithy_python.utils", "expect_type");
+        // see: https://smithy.io/2.0/spec/protocol-traits.html#smithy-api-timestampformat-trait
         switch (format) {
             case DATE_TIME -> {
                 writer.addImport("smithy_python.utils", "ensure_utc");

@@ -59,7 +59,10 @@ final class CollectionGenerator implements Runnable {
         var asDictSymbol = symbol.expectProperty("asDict", Symbol.class);
         var target = model.expectShape(shape.getMember().getTarget());
         var targetSymbol = symbolProvider.toSymbol(target);
+
+        // see: https://smithy.io/2.0/spec/type-refinement-traits.html#smithy-api-sparse-trait
         var sparseGuard = shape.hasTrait(SparseTrait.class) ? " if v is not None else None" : "";
+
         writer.addStdlibImport("typing", "List");
         writer.addStdlibImport("typing", "Any");
         writer.openBlock("def $L(given: $T) -> List[Any]:", "", asDictSymbol.getName(), symbol, () -> {
@@ -79,7 +82,10 @@ final class CollectionGenerator implements Runnable {
         var fromDictSymbol = symbol.expectProperty("fromDict", Symbol.class);
         var target = model.expectShape(shape.getMember().getTarget());
         var targetSymbol = symbolProvider.toSymbol(target);
+
+        // see: https://smithy.io/2.0/spec/type-refinement-traits.html#smithy-api-sparse-trait
         var sparseGuard = shape.hasTrait(SparseTrait.class) ? " if v is not None else None" : "";
+
         writer.addStdlibImport("typing", "List");
         writer.addStdlibImport("typing", "Any");
         writer.openBlock("def $L(given: List[Any]) -> $T:", "", fromDictSymbol.getName(), symbol, () -> {
