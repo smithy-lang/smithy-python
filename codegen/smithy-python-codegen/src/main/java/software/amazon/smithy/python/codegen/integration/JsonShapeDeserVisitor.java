@@ -104,6 +104,7 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
         var memberVisitor = getMemberVisitor(shape.getMember(), "e");
         var memberDeserializer = target.accept(memberVisitor);
 
+        // see: https://smithy.io/2.0/spec/type-refinement-traits.html#smithy-api-sparse-trait
         var sparseTrailer = "";
         if (shape.hasTrait(SparseTrait.class)) {
             sparseTrailer = " if e is not None else None";
@@ -138,6 +139,7 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
             """, functionName, config, symbol, errorSymbol);
 
         writer.indent();
+        // see: https://smithy.io/2.0/spec/type-refinement-traits.html#smithy-api-sparse-trait
         if (shape.hasTrait(SparseTrait.class)) {
             writer.write("return {k: $L if v is not None else None for k, v in output.items()}", valueDeserializer);
         } else {
@@ -215,6 +217,7 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
      * @return The string key that will be used for the member.
      */
     protected String locationName(MemberShape member) {
+        // see: https://smithy.io/2.0/spec/protocol-traits.html#smithy-api-jsonname-trait
         return member.getMemberTrait(context.model(), JsonNameTrait.class)
             .map(StringTrait::getValue)
             .orElse(member.getMemberName());

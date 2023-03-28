@@ -84,6 +84,9 @@ import software.amazon.smithy.utils.StringUtils;
 @SmithyUnstableApi
 public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator {
 
+    // When generating operations, we add input and output shapes to these
+    // sets and then use them as the list of shapes we need to generate
+    // document serializers and deserializers for.
     private final Set<Shape> serializingDocumentShapes = new TreeSet<>();
     private final Set<Shape> deserializingDocumentShapes = new TreeSet<>();
 
@@ -118,10 +121,12 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         var delegator = context.writerDelegator();
         var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
         var transportRequest = context.applicationProtocol().requestType();
+
         for (OperationShape operation : topDownIndex.getContainedOperations(context.settings().getService())) {
             var serFunction = getSerializationFunction(context, operation);
             var input = context.model().expectShape(operation.getInputShape());
             var inputSymbol = context.symbolProvider().toSymbol(input);
+
             delegator.useFileWriter(serFunction.getDefinitionFile(), serFunction.getNamespace(), writer -> {
                 writer.pushState(new RequestSerializerSection(operation));
                 writer.write("""
@@ -132,6 +137,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 writer.popState();
             });
         }
+
         generateDocumentBodyShapeSerializers(context, serializingDocumentShapes);
     }
 
@@ -159,7 +165,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         serializePath(context, writer, operation, bindingIndex);
         serializeQuery(context, writer, operation, bindingIndex);
         serializeBody(context, writer, operation, bindingIndex);
-        serializeHeaders(context, writer, operation, bindingIndex);
+        serializeHeaders(context, writer, operation);
 
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
         writer.addImport("smithy_python._private.http", "HTTPRequest", "_HTTPRequest");
@@ -194,8 +200,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
     private void serializeHeaders(
         GenerationContext context,
         PythonWriter writer,
-        OperationShape operation,
-        HttpBindingIndex bindingIndex
+        OperationShape operation
     ) {
         writer.pushState(new SerializeFieldsSection(operation));
         writer.addImports("smithy_python._private", Set.of("Field", "Fields"));
@@ -225,6 +230,9 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
     protected abstract String getDocumentContentType();
 
     private void writeContentType(GenerationContext context, PythonWriter writer, OperationShape operation) {
+        // Content type can be determined by a few factors, such as the mediaType
+        // trait or the protocol default. The HttpBindingIndex knows about these
+        // factors, so it can do most of the work of finding that for us.
         var httpIndex = HttpBindingIndex.of(context.model());
         var optionalContentType = httpIndex.determineRequestContentType(operation, getDocumentContentType());
         if (optionalContentType.isEmpty() && shouldWriteDefaultBody(context, operation)) {
@@ -235,12 +243,21 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
     }
 
     private void writeContentLength(GenerationContext context, PythonWriter writer, OperationShape operation) {
+        // If a payload is streaming, it generally won't have a content length
+        // because members with that trait can be arbitrarily large and the act
+        // of calculating the length can be difficult, particularly if the source
+        // is non-seekable.
+        // see: https://smithy.io/2.0/spec/streaming.html#smithy-api-streaming-trait
         if (isStreamingPayloadInput(context, operation)) {
+            // The requiresLength trait, however, can force a length calculation.
+            // see: https://smithy.io/2.0/spec/streaming.html#requireslength-trait
             if (requiresLength(context, operation)) {
                 writer.write("Field(name=\"Content-Length\", values=[str(content_length)]),");
             }
             return;
         }
+
+        // If there is nothing bound to the body, there's no need to add a length.
         var hasBodyBindings = HttpBindingIndex.of(context.model())
             .getRequestBindings(operation).values().stream()
             .anyMatch(binding -> binding.getLocation() == PAYLOAD || binding.getLocation() == DOCUMENT);
@@ -255,6 +272,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         if (payloadBinding.isEmpty()) {
             return false;
         }
+        // see: https://smithy.io/2.0/spec/streaming.html#smithy-api-streaming-trait
         return payloadBinding.get(0).getMember().getMemberTrait(context.model(), StreamingTrait.class).isPresent();
     }
 
@@ -263,6 +281,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         if (payloadBinding.isEmpty()) {
             return false;
         }
+        // see: https://smithy.io/2.0/spec/streaming.html#requireslength-trait
         return payloadBinding.get(0).getMember().getMemberTrait(context.model(), RequiresLengthTrait.class).isPresent();
     }
 
@@ -276,11 +295,21 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
     protected void writeDefaultHeaders(GenerationContext context, PythonWriter writer, OperationShape operation) {
     }
 
+    /**
+     * Serialize headers that are bound with the httpHeader trait, where a single
+     * member maps to a single http header key.
+     *
+     * <p>{@see https://smithy.io/2.0/spec/http-bindings.html#httpheader-trait}
+     */
     private void serializeIndividualHeaders(GenerationContext context, PythonWriter writer, OperationShape operation) {
         var index = HttpBindingIndex.of(context.model());
         var headerBindings = index.getRequestBindings(operation, HEADER);
         for (HttpBinding binding : headerBindings) {
             var target = context.model().expectShape(binding.getMember().getTarget());
+
+            // Empty strings and lists have no meaning as header values, so we don't
+            // want to try to serialize them. The falsey values for booleans,
+            // numbers, and timestamps on the other hand are serializeable.
             boolean accessFalsey = !(target.isStringShape() || target.isListShape());
 
             CodegenUtils.accessStructureMember(context, writer, "input", binding.getMember(), accessFalsey, () -> {
@@ -311,6 +340,13 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         }
     }
 
+    /**
+     * Serialize headers that are bound with the httpPrefixHeaders trait. This
+     * is where a dict is given as input and each key in the dict represents a
+     * separate header key.
+     *
+     * <p>{@see https://smithy.io/2.0/spec/http-bindings.html#httpprefixheaders-trait}
+     */
     private void serializePrefixHeaders(GenerationContext context, PythonWriter writer, OperationShape operation) {
         var index = HttpBindingIndex.of(context.model());
         var prefixHeaderBindings = index.getRequestBindings(operation, PREFIX_HEADERS);
@@ -357,6 +393,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
 
         // Get a map of member name to label bindings. The URI pattern we fetch uses the member name
         // for the content of label segments, so this lets us look up the extra info we need for those.
+        // see: https://smithy.io/2.0/spec/http-bindings.html#httplabel-trait
         var labelBindings = bindingIndex.getRequestBindings(operation, LABEL).stream()
             .collect(Collectors.toMap(HttpBinding::getMemberName, httpBinding -> httpBinding));
 
@@ -441,7 +478,11 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         OperationShape operation,
         HttpBindingIndex bindingIndex
     ) {
+        // TODO: skip all of this if there's no bindings
         writer.pushState(new SerializeQuerySection(operation));
+
+        // The http trait can add static query literals as part of its 'uri' property.
+        // see: https://smithy.io/2.0/spec/http-bindings.html#query-string-literals
         writer.writeInline("query_params: list[tuple[str, str | None]] = [");
         var httpTrait = operation.expectTrait(HttpTrait.class);
         for (Map.Entry<String, String> entry : httpTrait.getUri().getQueryLiterals().entrySet()) {
@@ -470,6 +511,12 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         writer.popState();
     }
 
+    /**
+     * Serializes individual query params bound with the queryParam trait,
+     * where a single member maps to a single query key.
+     *
+     * <p>{@see https://smithy.io/2.0/spec/http-bindings.html#httpquery-trait}
+     */
     private void serializeIndividualQueryParams(
         GenerationContext context,
         PythonWriter writer,
@@ -501,6 +548,13 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         }
     }
 
+    /**
+     * Serialize query params that are bound with the httpQueryParams trait. This
+     * is where a dict is given as input and each key in the dict represents a
+     * separate query key.
+     *
+     * <p>{@see https://smithy.io/2.0/spec/http-bindings.html#httpqueryparams-trait}
+     */
     private void serializeQueryParamsMap(
         GenerationContext context,
         PythonWriter writer,
@@ -561,7 +615,14 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         writer.addStdlibImport("typing", "AsyncIterable");
         writer.write("body: AsyncIterable[bytes] = AsyncBytesReader(b'')");
 
+        // Any member that isn't explicitly bound to some part of the http
+        // request is bound to the document, where "document" refers to a
+        // structured http body value.
         var documentBindings = bindingIndex.getRequestBindings(operation, DOCUMENT);
+
+        // A payload binding is when a particular member is bound to the
+        // http body specifically.
+        // see: https://smithy.io/2.0/spec/http-bindings.html#httppayload-trait
         var payloadBindings = bindingIndex.getRequestBindings(operation, PAYLOAD);
 
         if (!payloadBindings.isEmpty()) {
@@ -597,6 +658,9 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      * {@code body} variable that will be serialized as the request body.
      * This variable will already be defined in scope.
      *
+     * <p>Implementations MUST also set the {@code content_length} variable
+     * to an integer representing the length of the serialized body.
+     *
      * <p>Implementations MUST properly fill the body parameter even if no
      * document bindings are present.
      *
@@ -606,9 +670,9 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      * body_params: dict[str, Any] = {}
      *
      * if input.spam:
-     *   body_params['spam'] = input.spam;
+     *   body_params['spam'] = input.spam
      *
-     * body = json.dumps(body_params).encode('utf-8');
+     * body = AsyncBytesReader(json.dumps(body_params).encode('utf-8'))
      * }</pre>
      * @param context The generation context.
      * @param writer The writer to write to.
@@ -642,11 +706,18 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      * {@code body} variable that will be serialized as the request body.
      * This variable will already be defined in scope.
      *
+     * <p>Implementations MUST also set the {@code content_length} variable
+     * to an integer representing the length of the serialized body unless
+     * the body has the streaming trait without the requiresLength trait.
+     *
      * <p>For example:
      *
      * <pre>{@code
-     * body = b64encode(input.body)
+     * body = AsyncBytesReader(b64encode(input.body))
      * }</pre>
+     *
+     * {@see https://smithy.io/2.0/spec/http-bindings.html#httppayload-trait}
+     *
      * @param context The generation context.
      * @param writer The writer to write to.
      * @param operation The operation whose input is being generated.
@@ -701,9 +772,15 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
         var httpTrait = operation.expectTrait(HttpTrait.class);
         var errorFunction = context.protocolGenerator().getErrorDeserializationFunction(context, operation);
+
         delegator.useFileWriter(deserFunction.getDefinitionFile(), deserFunction.getNamespace(), writer -> {
             writer.pushState(new ResponseDeserializerSection(operation));
             writer.addStdlibImport("typing", "Any");
+
+            // The http trait can define a specific expected response code, and if we receive
+            // it then we shouldn't throw an exception. Otherwise, we can assume an error
+            // occurred if the status is 300+.
+            // see: https://smithy.io/2.0/spec/http-bindings.html#http-trait
             writer.write("""
                 async def $L(http_response: $T, config: $T) -> $T:
                     if http_response.status != $L and http_response.status >= 300:
@@ -718,6 +795,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 writer.consumer(w -> generateHttpResponseDeserializer(context, writer, operation)));
             writer.popState();
         });
+
         generateErrorDispatcher(context, operation, this::getErrorCode, this::resolveErrorCodeAndMessage);
     }
 
@@ -734,6 +812,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         var delegator = context.writerDelegator();
         var transportResponse = context.applicationProtocol().responseType();
         var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
+
         delegator.useFileWriter(deserFunction.getDefinitionFile(), deserFunction.getNamespace(), writer -> {
             writer.pushState(new ErrorDeserializerSection(error));
             writer.addStdlibImport("typing", "Any");
@@ -741,7 +820,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 async def $L(
                     http_response: $T,
                     config: $T,
-                    parsed_body: dict[str, Document]| None,
+                    parsed_body: dict[str, Document] | None,
                     default_message: str,
                 ) -> $T:
                     kwargs: dict[str, Any] = {"message": default_message}
@@ -840,7 +919,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
     /**
      * This implements deserialization for the {@literal httpHeader} trait.
      *
-     * <p>See also: <a href="https://smithy.io/2.0/spec/http-bindings.html#httpheader-trait">Smithy httpHeader docs</a>
+     * <p>{@see https://smithy.io/2.0/spec/http-bindings.html#httpheader-trait}
      */
     private void deserializeIndividualHeaders(
         GenerationContext context,
@@ -889,8 +968,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
     /**
      * This implements deserialization for the {@literal httpPrefixHeaders} trait.
      *
-     * <p>See also: <a href="https://smithy.io/2.0/spec/http-bindings.html#httpprefixheaders-trait">Smithy
-     * httpPrefixHeaders docs</a>
+     * <p>{@see https://smithy.io/2.0/spec/http-bindings.html#httpprefixheaders-trait}
      */
     private void deserializePrefixHeaders(
         GenerationContext context,
@@ -927,6 +1005,11 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
      */
     public record DeserializeFieldsSection(Shape operationOrError) implements CodeSection {}
 
+    /**
+     * Deserailizes the http status code to an output member.
+     *
+     * <p>{@see https://smithy.io/2.0/spec/http-bindings.html#httpresponsecode-trait}
+     */
     private void deserializeStatusCode(
         GenerationContext context,
         PythonWriter writer,
@@ -955,6 +1038,9 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         Shape operationOrError,
         HttpBindingIndex bindingIndex
     ) {
+        // Any member that isn't explicitly bound to some part of the http
+        // request is bound to the document, where "document" refers to a
+        // structured http body value.
         writer.pushState(new DeserializeBodySection(operationOrError));
         var documentBindings = bindingIndex.getResponseBindings(operationOrError, DOCUMENT);
         if (!documentBindings.isEmpty()) {
@@ -965,6 +1051,9 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
             }
         }
 
+        // A payload binding is when a particular member is bound to the
+        // http body specifically.
+        // see: https://smithy.io/2.0/spec/http-bindings.html#httppayload-trait
         var payloadBindings = bindingIndex.getResponseBindings(operationOrError, PAYLOAD);
         if (!payloadBindings.isEmpty()) {
             var binding = payloadBindings.get(0);
@@ -1027,6 +1116,8 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
 
     /**
      * Writes the code needed to deserialize the output payload of a response.
+     *
+     * <p>{@see https://smithy.io/2.0/spec/http-bindings.html#httppayload-trait}
      *
      * @param context The generation context.
      * @param writer The writer to write to.

@@ -222,6 +222,8 @@ final class StructureGenerator implements Runnable {
     }
 
     private boolean isOptionalDefault(MemberShape member) {
+        // If a member with a default value isn't required, it's optional.
+        // see: https://smithy.io/2.0/spec/type-refinement-traits.html#smithy-api-default-trait
         var target = model.expectShape(member.getTarget());
         return member.hasTrait(DefaultTrait.class) && !member.hasTrait(RequiredTrait.class)
             && (target.isDocumentShape() || target.isListShape() || target.isMapShape());
@@ -248,6 +250,7 @@ final class StructureGenerator implements Runnable {
     }
 
     private List<MemberShape> filterMessageMembers(List<MemberShape> members) {
+        // Only apply this to structures that are errors.
         if (!shape.hasTrait(ErrorTrait.class)) {
             return members;
         }
@@ -270,6 +273,9 @@ final class StructureGenerator implements Runnable {
     }
 
     private String getDefaultValue(PythonWriter writer, MemberShape member) {
+        // The default value is defined in the model is a exposed as generic
+        // json, so we need to convert it to the proper type based on the target.
+        // see: https://smithy.io/2.0/spec/type-refinement-traits.html#smithy-api-default-trait
         var defaultNode = member.expectTrait(DefaultTrait.class).toNode();
         var target = model.expectShape(member.getTarget());
         if (target.isTimestampShape()) {
@@ -448,6 +454,7 @@ final class StructureGenerator implements Runnable {
             var trailingComma = iter.hasNext() ? ", " : "";
             if (member.hasTrait(SensitiveTrait.class)) {
                 // Sensitive members must not be printed
+                // see: https://smithy.io/2.0/spec/documentation-traits.html#smithy-api-sensitive-trait
                 writer.write("""
                     if self.$1L is not None:
                         result += f"$1L=...$2L"

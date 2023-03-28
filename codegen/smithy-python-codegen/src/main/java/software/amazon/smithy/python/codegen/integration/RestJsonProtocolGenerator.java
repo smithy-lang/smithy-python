@@ -210,6 +210,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
     }
 
     private boolean requiresLength(GenerationContext context, MemberShape member) {
+        // see: https://smithy.io/2.0/spec/streaming.html#smithy-api-requireslength-trait
         return member.getMemberTrait(context.model(), RequiresLengthTrait.class).isPresent();
     }
 

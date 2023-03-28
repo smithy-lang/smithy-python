@@ -143,9 +143,12 @@ final class SetupGenerator {
             GenerationContext context
     ) {
         var service = context.model().expectShape(settings.getService());
+
+        // see: https://smithy.io/2.0/spec/documentation-traits.html#smithy-api-title-trait
         var title = service.getTrait(TitleTrait.class)
                 .map(StringTrait::getValue)
                 .orElse(StringUtils.capitalize(settings.getModuleName()));
+
         var description = StringUtils.isBlank(settings.getModuleDescription())
                 ? "Generated service client for " + title
                 : StringUtils.wrap(settings.getModuleDescription(), 80);
