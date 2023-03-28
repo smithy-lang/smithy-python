@@ -154,9 +154,9 @@ Additionally, it will support passing in a `ByteStream` which is any class that
 implements a `read` method that accepts a `size` param and returns bytes.
 It will also accept an async variant of that same type or an `AsyncIterable`.
 
-Both `ByteStream`, `SeekableByteStream`, and `AsyncByteStream` will be
-implemented as [Protocols](https://www.python.org/dev/peps/pep-0544/),
-which are a way of defining structural subtyping in Python.
+Both `ByteStream` and `AsyncByteStream` will be implemented as [Protocols
+](https://www.python.org/dev/peps/pep-0544/), which are a way of defining
+structural subtyping in Python.
 
 ```python
 @runtime_checkable
