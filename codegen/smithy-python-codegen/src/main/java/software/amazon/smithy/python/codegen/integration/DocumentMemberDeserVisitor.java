@@ -285,7 +285,7 @@ public class DocumentMemberDeserVisitor implements ShapeVisitor<String> {
 
     @Override
     public final String documentShape(DocumentShape shape) {
-        return getDelegateDeserializer(shape);
+        return dataSource();
     }
 
     @Override
