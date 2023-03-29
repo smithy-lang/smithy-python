@@ -17,7 +17,6 @@ package software.amazon.smithy.python.codegen.integration;
 
 
 import static java.lang.String.format;
-import static java.lang.String.join;
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.DOCUMENT;
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.HEADER;
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.LABEL;
@@ -32,7 +31,6 @@ import static software.amazon.smithy.python.codegen.integration.HttpProtocolGene
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -483,25 +481,18 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
     ) {
         writer.pushState(new SerializeQuerySection(operation));
         var httpTrait = operation.expectTrait(HttpTrait.class);
+        writeStaticQuerySegment(writer, httpTrait.getUri());
 
-        if (!hasQueryBindings(context, operation)) {
-            writeStaticQuerySegment(writer, httpTrait.getUri());
-        } else {
+        if (hasQueryBindings(context, operation)) {
             writer.write("query_params: list[tuple[str, str | None]] = []");
             serializeIndividualQueryParams(context, writer, operation, bindingIndex);
             serializeQueryParamsMap(context, writer, operation, bindingIndex);
 
-            writeStaticQuerySegment(writer, httpTrait.getUri());
-            writer.write("""
-                for param in query_params:
-                    if query:
-                        query += "&"
-                    if param[1] is None:
-                        query += urlquote(param[0], safe='')
-                    else:
-                        query += f"{urlquote(param[0], safe='')}={urlquote(param[1], safe='')}"
-                """);
+            writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+            writer.addImport("smithy_python.httputils", "join_query_params");
+            writer.write("query = join_query_params(params=query_params, prefix=query)\n");
         }
+
         writer.popState();
     }
 
