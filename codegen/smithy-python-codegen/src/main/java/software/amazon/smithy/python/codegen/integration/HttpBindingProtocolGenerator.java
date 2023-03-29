@@ -17,6 +17,7 @@ package software.amazon.smithy.python.codegen.integration;
 
 
 import static java.lang.String.format;
+import static java.lang.String.join;
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.DOCUMENT;
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.HEADER;
 import static software.amazon.smithy.model.knowledge.HttpBinding.Location.LABEL;
@@ -28,6 +29,7 @@ import static software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import static software.amazon.smithy.python.codegen.integration.HttpProtocolGeneratorUtils.generateErrorDispatcher;
 import static software.amazon.smithy.python.codegen.integration.HttpProtocolGeneratorUtils.getOutputShape;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -42,6 +44,7 @@ import software.amazon.smithy.model.knowledge.HttpBindingIndex;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
 import software.amazon.smithy.model.pattern.SmithyPattern;
 import software.amazon.smithy.model.pattern.SmithyPattern.Segment;
+import software.amazon.smithy.model.pattern.UriPattern;
 import software.amazon.smithy.model.shapes.BigDecimalShape;
 import software.amazon.smithy.model.shapes.BigIntegerShape;
 import software.amazon.smithy.model.shapes.BlobShape;
@@ -478,37 +481,60 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         OperationShape operation,
         HttpBindingIndex bindingIndex
     ) {
-        // TODO: skip all of this if there's no bindings
         writer.pushState(new SerializeQuerySection(operation));
-
-        // The http trait can add static query literals as part of its 'uri' property.
-        // see: https://smithy.io/2.0/spec/http-bindings.html#query-string-literals
-        writer.writeInline("query_params: list[tuple[str, str | None]] = [");
         var httpTrait = operation.expectTrait(HttpTrait.class);
-        for (Map.Entry<String, String> entry : httpTrait.getUri().getQueryLiterals().entrySet()) {
+
+        if (!hasQueryBindings(context, operation)) {
+            writeStaticQuerySegment(writer, httpTrait.getUri());
+        } else {
+            writer.write("query_params: list[tuple[str, str | None]] = []");
+            serializeIndividualQueryParams(context, writer, operation, bindingIndex);
+            serializeQueryParamsMap(context, writer, operation, bindingIndex);
+
+            writeStaticQuerySegment(writer, httpTrait.getUri());
+            writer.write("""
+                for param in query_params:
+                    if query:
+                        query += "&"
+                    if param[1] is None:
+                        query += urlquote(param[0], safe='')
+                    else:
+                        query += f"{urlquote(param[0], safe='')}={urlquote(param[1], safe='')}"
+                """);
+        }
+        writer.popState();
+    }
+
+    private boolean hasQueryBindings(GenerationContext context, OperationShape operation) {
+        return HttpBindingIndex.of(context.model())
+            .getRequestBindings(operation).values().stream()
+            .anyMatch(binding -> binding.getLocation() == QUERY || binding.getLocation() == QUERY_PARAMS);
+    }
+
+    // The http trait can add static query literals as part of its 'uri' property.
+    // see: https://smithy.io/2.0/spec/http-bindings.html#query-string-literals
+    private void writeStaticQuerySegment(PythonWriter writer, UriPattern uri) {
+        writer.writeInline("query: str = f'");
+
+        var queryLiterals = new ArrayList<>(uri.getQueryLiterals().entrySet());
+        if (queryLiterals.size() != 0) {
+            writer.addStdlibImport("urllib.parse", "quote", "urlquote");
+        }
+
+        for (int i = 0; i < queryLiterals.size(); i++) {
+            if (i != 0) {
+                writer.writeInline("&");
+            }
+            var entry = queryLiterals.get(i);
             if (StringUtils.isBlank(entry.getValue())) {
-                writer.write("($S, None),", entry.getKey());
+                writer.writeInline("{urlquote($S, safe=\"\")}", entry.getKey());
             } else {
-                writer.write("($S, $S),", entry.getKey(), entry.getValue());
+                writer.writeInline("{urlquote($S, safe=\"\")}={urlquote($S, safe=\"\")}",
+                    entry.getKey(), entry.getValue());
             }
         }
-        writer.write("]\n");
 
-        serializeIndividualQueryParams(context, writer, operation, bindingIndex);
-        serializeQueryParamsMap(context, writer, operation, bindingIndex);
-
-        writer.addStdlibImport("urllib.parse", "quote", "urlquote");
-        writer.write("""
-            query: str = ""
-            for i, param in enumerate(query_params):
-                if i != 0:
-                    query += "&"
-                if param[1] is None:
-                    query += urlquote(param[0], safe='')
-                else:
-                    query += f"{urlquote(param[0], safe='')}={urlquote(param[1], safe='')}"
-            """);
-        writer.popState();
+        writer.write("'\n");
     }
 
     /**
