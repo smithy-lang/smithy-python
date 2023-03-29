@@ -11,6 +11,8 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+from urllib.parse import quote as urlquote
+
 from .exceptions import SmithyException
 
 
@@ -112,3 +114,20 @@ def _consume_until(
             result += given[end_index]
         end_index += 1
     return result, end_index + 1
+
+
+def join_query_params(params: list[tuple[str, str | None]], prefix: str = "") -> str:
+    """Join a list of query parameter key-value tuples.
+
+    :param params: The list of key-value query parameter tuples.
+    :param prefix: An optional query prefix.
+    """
+    query: str = prefix
+    for param in params:
+        if query:
+            query += "&"
+        if param[1] is None:
+            query += urlquote(param[0], safe="")
+        else:
+            query += f"{urlquote(param[0], safe='')}={urlquote(param[1], safe='')}"
+    return query

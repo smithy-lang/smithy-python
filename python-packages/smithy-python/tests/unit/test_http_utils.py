@@ -15,7 +15,7 @@
 import pytest
 
 from smithy_python.exceptions import SmithyException
-from smithy_python.httputils import split_header
+from smithy_python.httputils import join_query_params, split_header
 
 
 @pytest.mark.parametrize(
@@ -71,3 +71,28 @@ def test_split_imf_fixdate_header(given: str, expected: list[str]) -> None:
 def test_split_header_raises(given: str) -> None:
     with pytest.raises(SmithyException):
         split_header(given)
+
+
+@pytest.mark.parametrize(
+    "given, expected",
+    [
+        ([("foo", None)], "foo"),
+        ([("foo&bar", None)], "foo%26bar"),
+        ([("foo", "")], "foo="),
+        ([("foo&bar", "")], "foo%26bar="),
+        ([("foo", "bar")], "foo=bar"),
+        ([("foo&bar", "spam&eggs")], "foo%26bar=spam%26eggs"),
+        ([("foo", "bar"), ("spam", "eggs")], "foo=bar&spam=eggs"),
+        (
+            [("foo&bar", "spam&eggs"), ("foo&bar", "spam&eggs")],
+            "foo%26bar=spam%26eggs&foo%26bar=spam%26eggs",
+        ),
+    ],
+)
+def test_join_query_params(given: list[tuple[str, str | None]], expected: str) -> None:
+    assert join_query_params(given) == expected
+
+
+def test_join_query_params_adds_and_if_prefix_non_empty() -> None:
+    actual = join_query_params(params=[("spam", "eggs")], prefix="foo")
+    assert actual == "foo&spam=eggs"
