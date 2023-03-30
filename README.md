@@ -88,15 +88,17 @@ Now run `make install-components`. This will install the python dependencies in 
 environment and publish the code generator to maven local. For more information on
 the underlying build process, see the "Using repository tooling" section.
 
-Now upate your `smithy-build.json` to include the `python-codegen` plugin:
+Now upate your `smithy-build.json` to include the `python-client-codegen` plugin:
 
 ```json
 {
     "version": "1.0",
     "plugins": {
-        "service": "example.weather#Weather",
-        "module": "weather",
-        "moduleVersion": "0.0.1"
+        "python-client-codegen": {
+            "service": "example.weather#Weather",
+            "module": "weather",
+            "moduleVersion": "0.0.1"
+        }
     }
 }
 ```

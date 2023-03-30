@@ -23,7 +23,7 @@ generate-protocol-tests: ## Generates the protocol tests, rebuilding necessary J
 
 
 run-protocol-tests: ## Runs already-generated protocol tests
-	cd codegen/smithy-python-protocol-test/build/smithyprojections/smithy-python-protocol-test/rest-json-1/python-codegen && \
+	cd codegen/smithy-python-protocol-test/build/smithyprojections/smithy-python-protocol-test/rest-json-1/python-client-codegen && \
 	python3 -m pip install '.[tests]' && \
 	python3 -m pytest tests
 

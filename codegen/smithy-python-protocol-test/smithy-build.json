@@ -9,7 +9,7 @@
                 }
             }],
             "plugins": {
-                "python-codegen": {
+                "python-client-codegen": {
                     "service": "aws.protocoltests.restjson#RestJson",
                     "module": "restjson",
                     "moduleVersion": "0.0.1"

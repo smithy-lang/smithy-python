@@ -48,7 +48,7 @@ in `smithy-build.json` for each service that has tests for the protocol. For exa
                 }
             }],
             "plugins": {
-                "python-codegen": {
+                "python-client-codegen": {
                     "service": "aws.protocoltests.restjson#RestJson",
                     "module": "restjson",
                     "moduleVersion": "0.0.1"
@@ -63,7 +63,7 @@ in `smithy-build.json` for each service that has tests for the protocol. For exa
                 }
             }],
             "plugins": {
-                "python-codegen": {
+                "python-client-codegen": {
                     "service": "com.example#MyNewProtocolTestService",
                     "module": "mynewprotocol",
                     "moduleVersion": "0.0.1"

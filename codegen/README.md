@@ -40,8 +40,8 @@ Smithy Code Generator](https://smithy.io/2.0/guides/building-codegen/index.html)
 covers the overall design of Smithy generators.
 
 
-[`PythonCodegenPlugin`
-](https://github.com/awslabs/smithy-python/blob/develop/codegen/smithy-python-codegen/src/main/java/software/amazon/smithy/python/codegen/PythonCodegenPlugin.java),
+[`PythonClientCodegenPlugin`
+](https://github.com/awslabs/smithy-python/blob/develop/codegen/smithy-python-codegen/src/main/java/software/amazon/smithy/python/codegen/PythonClientCodegenPlugin.java),
 a [Smithy build plugin
 ](https://smithy.io/2.0/guides/building-codegen/creating-codegen-repo.html#creating-a-smithy-build-plugin),
 is the entry point where this code generator links to the Smithy build process
