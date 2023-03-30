@@ -34,20 +34,5 @@ jobs:
         with:
           python-version: 3.11
 
-      - name: Install Python packages
-        run: |
-          ./pants --no-dynamic-ui package ::
-          python3.11 -m pip install dist/*.whl
-
-      - name: Generate protocol tests
-        run: cd codegen && ./gradlew clean build -Plog-tests
-
-      - name: Set up protocol test package
-        run: |
-          cd codegen/smithy-python-protocol-test/build/smithyprojections/smithy-python-protocol-test/rest-json-1/python-codegen
-          python3.11 -m pip install '.[tests]'
-
       - name: Run protocol tests
-        run: |
-          cd codegen/smithy-python-protocol-test/build/smithyprojections/smithy-python-protocol-test/rest-json-1/python-codegen
-          python3.11 -m pytest tests
+        run: make test-protocols
