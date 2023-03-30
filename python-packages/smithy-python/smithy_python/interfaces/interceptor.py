@@ -1,4 +1,4 @@
-from copy import deepcopy
+from copy import copy, deepcopy
 from typing import Any, Generic, TypeVar
 
 Request = TypeVar("Request")
@@ -94,10 +94,10 @@ class InterceptorContext(
     ) -> "InterceptorContext[Request, Response, TransportRequest, TransportResponse]":
         """Copy the context object, optionally overriding certain properties."""
         if transport_request is None:
-            transport_request = self._transport_request
+            transport_request = copy(self._transport_request)
 
         if transport_response is None:
-            transport_response = self._transport_response
+            transport_response = copy(self._transport_response)
 
         context = InterceptorContext(
             request=request if request is not None else self._request,

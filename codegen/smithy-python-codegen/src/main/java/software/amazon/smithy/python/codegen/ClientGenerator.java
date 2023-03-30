@@ -83,6 +83,14 @@ final class ClientGenerator implements Runnable {
                         .build())
                     .build()
                 );
+                defaultPlugins.add(SymbolReference.builder()
+                    .symbol(Symbol.builder()
+                        .name("set_simple_retry_strategy")
+                        .namespace("smithy_python._private.retries", ".")
+                        .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                        .build())
+                    .build()
+                );
             }
 
             for (PythonIntegration integration : context.integrations()) {
@@ -129,10 +137,14 @@ final class ClientGenerator implements Runnable {
         writer.addStdlibImport("typing", "Awaitable");
         writer.addStdlibImport("typing", "cast");
         writer.addStdlibImport("copy", "deepcopy");
+        writer.addStdlibImport("asyncio", "sleep");
 
         writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+        writer.addImport("smithy_python.exceptions", "SmithyRetryException");
         writer.addImport("smithy_python.interfaces.interceptor", "Interceptor");
         writer.addImport("smithy_python.interfaces.interceptor", "InterceptorContext");
+        writer.addImport("smithy_python.interfaces.retries", "RetryErrorInfo");
+        writer.addImport("smithy_python.interfaces.retries", "RetryErrorType");
 
         writer.indent();
         writer.write("""
@@ -224,8 +236,12 @@ final class ClientGenerator implements Runnable {
                             )
 
                         # Step 7: Acquire the retry token.
-                        # TODO: wire this up once it's on the config
-                        # retry_token = config.retry_strategy.acquire_initial_retry_token()
+                        retry_strategy = config.retry_strategy
+                        if retry_strategy is None:
+                            raise ServiceError(
+                                "No retry_strategy found on the operation config."
+                            )
+                        retry_token = retry_strategy.acquire_initial_retry_token()
 
                         while True:
                             # Make an attempt, creating a copy of the context so we don't pass
@@ -248,16 +264,20 @@ final class ClientGenerator implements Runnable {
 
                             if isinstance(context_with_response.response, Exception):
                                 # Step 7u: Reacquire retry token if the attempt failed
-                                # TODO: wire this up once it's on the config. Also, determine the error type.
-                                # retry_token = retry_strategy.refresh_retry_token_for_retry(
-                                #     token_to_renew=retry_token,
-                                #     error_info=RetryErrorInfo(
-                                #         error_type=RetryErrorType.CLIENT_ERROR,
-                                #     )
-                                # )
-                                raise context_with_response.response
+                                try:
+                                    retry_token = retry_strategy.refresh_retry_token_for_retry(
+                                        token_to_renew=retry_token,
+                                        error_info=RetryErrorInfo(
+                                            # TODO: Determine the error type.
+                                            error_type=RetryErrorType.CLIENT_ERROR,
+                                        )
+                                    )
+                                except SmithyRetryException:
+                                    raise context_with_response.response
+                                await sleep(retry_token.retry_delay)
                             else:
-                                # Step 8: retry_strategy.record_success(token=retry_token)
+                                # Step 8: Invoke record_success
+                                retry_strategy.record_success(token=retry_token)
                                 break
                     except Exception as e:
                         if context.response is not None:
