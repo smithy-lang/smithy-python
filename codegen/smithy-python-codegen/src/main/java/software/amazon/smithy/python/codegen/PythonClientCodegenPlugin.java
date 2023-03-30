@@ -25,10 +25,10 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
  * Plugin to trigger Python code generation.
  */
 @SmithyUnstableApi
-public final class PythonCodegenPlugin implements SmithyBuildPlugin {
+public final class PythonClientCodegenPlugin implements SmithyBuildPlugin {
     @Override
     public String getName() {
-        return "python-codegen";
+        return "python-client-codegen";
     }
 
     @Override

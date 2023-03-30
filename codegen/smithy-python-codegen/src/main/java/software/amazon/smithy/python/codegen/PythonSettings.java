@@ -27,7 +27,7 @@ import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
- * Settings used by {@link PythonCodegenPlugin}.
+ * Settings used by {@link PythonClientCodegenPlugin}.
  * TODO: make this immutable
  */
 @SmithyUnstableApi
