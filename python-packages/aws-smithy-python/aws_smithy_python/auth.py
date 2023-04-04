@@ -222,11 +222,11 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         )
 
     def _generate_new_uri(
-        self, uri: interfaces.URI, kwargs: interfaces.URIParameters
+        self, uri: interfaces.URI, params: interfaces.URIParameters
     ) -> URI:
         """Generate a new URI with kwargs."""
         uri_dict = uri.to_dict()
-        uri_dict.update(kwargs)
+        uri_dict.update(params)
         return URI(**uri_dict)
 
     async def _generate_signature(
@@ -341,9 +341,10 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         signing_properties: SigV4SigningProperties,
     ) -> str:
         """Generate the value for the `X-Amz-Content-SHA256` header."""
-        if self._is_streaming_checksum_payload(signing_properties):
-            return STREAMING_UNSIGNED_PAYLOAD_TRAILER
-        elif not self._should_sha256_sign_payload(http_request, signing_properties):
+        # TODO: Add _is_streaming_checksum_payload after checksum implementation is
+        # complete
+
+        if not self._should_sha256_sign_payload(http_request, signing_properties):
             return UNSIGNED_PAYLOAD
 
         if request_body := await http_request.consume_body():
@@ -354,9 +355,8 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
     def _is_streaming_checksum_payload(
         self, signing_properties: SigV4SigningProperties
     ) -> bool:
-        checksum = signing_properties.get("checksum", {})
-        algorithm = checksum.get("request_algorithm", {})
-        return algorithm.get("in") == "trailer"
+        # TODO: Implement this after checksum implementation is complete
+        raise NotImplementedError()
 
     def _should_sha256_sign_payload(
         self,
@@ -427,7 +427,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
 
         This is a string formatted as:
 
-        "AWS4-HMAC-SHA256" + "," + <SignedHeaders> + "," + <Signature>
+        "AWS4-HMAC-SHA256" + ", " + <SignedHeaders> + ", " + <Signature>
         """
         auth_str = f"AWS4-HMAC-SHA256 {credential_scope}, "
         auth_str += f"SignedHeaders={signed_headers}, "
