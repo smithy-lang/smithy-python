@@ -64,7 +64,10 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
 
         // These require support of the endpoint trait
         "RestJsonEndpointTraitWithHostLabel",
-        "RestJsonEndpointTrait"
+        "RestJsonEndpointTrait",
+
+        // TODO: support parsing http dates with fractional seconds
+        "RestJsonHttpDateWithFractionalSeconds"
     );
 
     @Override
