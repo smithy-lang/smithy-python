@@ -17,7 +17,6 @@ package software.amazon.smithy.python.codegen;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
-import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
 import software.amazon.smithy.model.shapes.OperationShape;
@@ -74,24 +73,6 @@ final class ClientGenerator implements Runnable {
             });
 
             var defaultPlugins = new LinkedHashSet<SymbolReference>();
-            if (context.applicationProtocol().isHttpProtocol()) {
-                defaultPlugins.add(SymbolReference.builder()
-                    .symbol(Symbol.builder()
-                        .name("set_static_endpoint_resolver")
-                        .namespace("smithy_python._private.http", ".")
-                        .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
-                        .build())
-                    .build()
-                );
-                defaultPlugins.add(SymbolReference.builder()
-                    .symbol(Symbol.builder()
-                        .name("set_simple_retry_strategy")
-                        .namespace("smithy_python._private.retries", ".")
-                        .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
-                        .build())
-                    .build()
-                );
-            }
 
             for (PythonIntegration integration : context.integrations()) {
                 for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins()) {
@@ -181,7 +162,7 @@ final class ClientGenerator implements Runnable {
                         transport_request=None,
                         transport_response=None,
                     )
-                    _client_interceptors = config.interceptors or []
+                    _client_interceptors = config.interceptors
                     client_interceptors = cast(
                         list[Interceptor[Input, Output, $2T, $3T]], _client_interceptors
                     )
@@ -197,7 +178,7 @@ final class ClientGenerator implements Runnable {
                         for plugin in plugins:
                             plugin(config)
 
-                        _client_interceptors = config.interceptors or []
+                        _client_interceptors = config.interceptors
                         interceptors = cast(
                             list[Interceptor[Input, Output, $2T, $3T]],
                             _client_interceptors,
@@ -237,10 +218,6 @@ final class ClientGenerator implements Runnable {
 
                         # Step 7: Acquire the retry token.
                         retry_strategy = config.retry_strategy
-                        if retry_strategy is None:
-                            raise ServiceError(
-                                "No retry_strategy found on the operation config."
-                            )
                         retry_token = retry_strategy.acquire_initial_retry_token()
 
                         while True:
@@ -386,9 +363,6 @@ final class ClientGenerator implements Runnable {
             writer.addImport("smithy_python.interfaces.http", "HTTPRequestConfiguration");
             writer.write("""
                         # Step 7m: Invoke http_client.send
-                        if config.http_client is None:
-                            raise $3T("No http_client found on the operation config.")
-
                         request_config = config.http_request_config or HTTPRequestConfiguration()
                         context_with_response = cast(
                             InterceptorContext[Input, None, $1T, $2T], context
@@ -398,7 +372,7 @@ final class ClientGenerator implements Runnable {
                             request_config=request_config,
                         )
 
-                """, transportRequest, transportResponse, errorSymbol);
+                """, transportRequest, transportResponse);
         }
         writer.popState();
 

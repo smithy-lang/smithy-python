@@ -52,7 +52,6 @@ import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.integration.ProtocolGenerator;
 import software.amazon.smithy.python.codegen.integration.PythonIntegration;
-import software.amazon.smithy.python.codegen.sections.EndpointProviderSection;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 @SmithyUnstableApi
@@ -108,46 +107,7 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
     @Override
     public void customizeBeforeShapeGeneration(CustomizeDirective<GenerationContext, PythonSettings> directive) {
         generateServiceErrors(directive.settings(), directive.context().writerDelegator());
-        addDefaultEndpointProvider(directive);
         new ConfigGenerator(directive.settings(), directive.context()).run();
-    }
-
-    public void addDefaultEndpointProvider(CustomizeDirective<GenerationContext, PythonSettings> directive) {
-        // Only add an endpoint provider in HTTP protocols. Some similar interface may be reasonable for
-        // other application protocols, but there are still some potential http-isms in the shared interfaces
-        // that we'll need to evaluate first.
-        if (!directive.context().applicationProtocol().isHttpProtocol()) {
-            return;
-        }
-        var endpointParams = CodegenUtils.getEndpointParams(directive.settings());
-        var endpointResolver = CodegenUtils.getEndpointResolver(directive.settings());
-
-        // Sections like this allow us to write a default implementation that others can overwrite later on
-        // using CodeInterceptors (which is distinct from the runtime interceptor concept). A CodeInterceptor
-        // is called when a matching CodeSection like this is popped, and it can modify what was generated
-        // or overwrite it entirely. The advantage of typed sections like this is it allows us to pass params.
-        var endpointsSection = new EndpointProviderSection(endpointResolver, endpointParams);
-        var delegator = directive.context().writerDelegator();
-        delegator.useFileWriter(endpointParams.getDefinitionFile(), endpointParams.getNamespace(), writer -> {
-            writer.pushState(endpointsSection);
-            writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-
-            // TODO: Update these when the default implementations are moved.
-            writer.getImportContainer().addImport(
-                    "smithy_python._private.http", "StaticEndpointParams", "StaticEndpointParams");
-            writer.getImportContainer().addImport(
-                    "smithy_python._private.http", "StaticEndpointResolver", "StaticEndpointResolver");
-
-            // We theoretically could just generate the entire code content of these,
-            // but then it's a bit harder to test.
-            writer.write("""
-                    $L = StaticEndpointParams
-                    $L = StaticEndpointResolver
-                    """, endpointParams.getName(), endpointResolver.getName());
-
-            // Popping the state will allow interceptors to provide their own implementations.
-            writer.popState();
-        });
     }
 
     @Override

@@ -17,6 +17,7 @@ package software.amazon.smithy.python.codegen;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
@@ -28,28 +29,100 @@ import software.amazon.smithy.python.codegen.integration.RuntimeClientPlugin;
  */
 final class ConfigGenerator implements Runnable {
 
-    // This list contains any fields that should unconditionally be added to every
+    // This list contains any properties that should unconditionally be added to every
     // config object. This should be as minimal as possible, and importantly should
     // not contain any HTTP related config since Smithy is transport agnostic.
-    private static final List<ConfigField> BASE_FIELDS = Arrays.asList(
-            new ConfigField(
-                "interceptors",
-                Symbol.builder()
-                    .name("list[_ServiceInterceptor]")
-                    .build(),
-                true,
-                "The list of interceptors, which are hooks that are called during the execution of a request."
-            ),
-            new ConfigField(
-                "retry_strategy",
-                Symbol.builder()
-                    .name("RetryStrategy")
-                    .namespace("smithy_python.interfaces.retries", ".")
+    private static final List<ConfigProperty> BASE_PROPERTIES = Arrays.asList(
+        ConfigProperty.builder()
+            .name("interceptors")
+            .type(Symbol.builder()
+                .name("list[_ServiceInterceptor]")
+                .build())
+            .documentation(
+                "The list of interceptors, which are hooks that are called during the execution of a request.")
+            .nullable(false)
+            .initialize(writer -> writer.write("self.interceptors = interceptors or []"))
+            .build(),
+        ConfigProperty.builder()
+            .name("retry_strategy")
+            .type(Symbol.builder()
+                .name("RetryStrategy")
+                .namespace("smithy_python.interfaces.retries", ".")
+                .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                .build())
+            .documentation("The retry strategy for issuing retry tokens and computing retry delays.")
+            .nullable(false)
+            .initialize(writer -> {
+                writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+                writer.addImport("smithy_python._private.retries", "SimpleRetryStrategy");
+                writer.write("self.retry_strategy = retry_strategy or SimpleRetryStrategy()");
+            })
+            .build()
+    );
+
+    // This list contains any properties that must be added to any http-based
+    // service client.
+    private static final List<ConfigProperty> HTTP_PROPERTIES = Arrays.asList(
+        ConfigProperty.builder()
+            .name("http_client")
+            .type(Symbol.builder()
+                .name("HTTPClient")
+                .namespace("smithy_python.interfaces.http", ".")
+                .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                .build())
+            .documentation("The HTTP client used to make requests.")
+            .nullable(false)
+            .initialize(writer -> {
+                writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+                writer.addImport("smithy_python._private.http.aiohttp_client", "AIOHTTPClient");
+                writer.write("self.http_client = http_client or AIOHTTPClient()");
+            })
+            .build(),
+        ConfigProperty.builder()
+            .name("http_request_config")
+            .type(Symbol.builder()
+                .name("HTTPRequestConfiguration")
+                .namespace("smithy_python.interfaces.http", ".")
+                .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                .build())
+            .documentation("Configuration for individual HTTP requests.")
+            .build(),
+        ConfigProperty.builder()
+            .name("endpoint_resolver")
+            .type(Symbol.builder()
+                .name("EndpointResolver[Any]")
+                .addReference(Symbol.builder()
+                    .name("Any")
+                    .namespace("typing", ".")
+                    .putProperty("stdlib", true)
+                    .build())
+                .addReference(Symbol.builder()
+                    .name("EndpointResolver")
+                    .namespace("smithy_python.interfaces.http", ".")
                     .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
-                    .build(),
-                true,
-                "The retry strategy for issuing retry tokens and computing retry delays."
-            )
+                    .build())
+                .build())
+            .documentation("""
+                    The endpoint resolver used to resolve the final endpoint per-operation based on the \
+                    configuration.""")
+            .nullable(false)
+            .initialize(writer -> {
+                writer.addImport("smithy_python._private.http", "StaticEndpointResolver");
+                writer.write("self.endpoint_resolver = endpoint_resolver or StaticEndpointResolver()");
+            })
+            .build(),
+        ConfigProperty.builder()
+            .name("endpoint_uri")
+            .type(Symbol.builder()
+                .name("str | URI")
+                .addReference(Symbol.builder()
+                    .name("URI")
+                    .namespace("smithy_python.interfaces", ".")
+                    .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                    .build())
+                .build())
+            .documentation("A static URI to route requests to.")
+            .build()
     );
 
     private final PythonSettings settings;
@@ -58,61 +131,6 @@ final class ConfigGenerator implements Runnable {
     ConfigGenerator(PythonSettings settings, GenerationContext context) {
         this.context = context;
         this.settings = settings;
-    }
-
-    private static List<ConfigField> getHttpFields(PythonSettings settings) {
-        var endpointParams = CodegenUtils.getEndpointParams(settings);
-        return Arrays.asList(
-                new ConfigField(
-                    "http_client",
-                    Symbol.builder()
-                        .name("HTTPClient")
-                        .namespace("smithy_python.interfaces.http", ".")
-                        .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
-                        .build(),
-                    true,
-                    "The HTTP client used to make requests."
-                ),
-                new ConfigField(
-                    "http_request_config",
-                    Symbol.builder()
-                        .name("HTTPRequestConfiguration")
-                        .namespace("smithy_python.interfaces.http", ".")
-                        .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
-                        .build(),
-                    true,
-                    "Configuration for individual HTTP requests."
-                ),
-                new ConfigField(
-                    "endpoint_resolver",
-                    Symbol.builder()
-                        .name(String.format("EndpointResolver[%s]", endpointParams.getName()))
-                        .addReference(endpointParams)
-                        .addReference(Symbol.builder()
-                            .name("EndpointResolver")
-                            .namespace("smithy_python.interfaces.http", ".")
-                            .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
-                            .build())
-                        .build(),
-                    true,
-                    """
-                        The endpoint resolver used to resolve the final endpoint per-operation based on the \
-                        configuration."""
-                ),
-                new ConfigField(
-                    "endpoint_uri",
-                    Symbol.builder()
-                        .name("str | URI")
-                        .addReference(Symbol.builder()
-                            .name("URI")
-                            .namespace("smithy_python.interfaces", ".")
-                            .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
-                            .build())
-                        .build(),
-                    true,
-                    "A static URI to route requests to."
-                )
-        );
     }
 
     @Override
@@ -167,60 +185,86 @@ final class ConfigGenerator implements Runnable {
     private void generateConfig(GenerationContext context, PythonWriter writer) {
         var symbol = CodegenUtils.getConfigSymbol(context.settings());
 
-        // Initialize the list of config fields with our base fields. Here a new
+        // Initialize the list of config properties with our base properties. Here a new
         // list is constructed because that base list is immutable.
-        var fields = new ArrayList<>(BASE_FIELDS);
+        var properties = new ArrayList<>(BASE_PROPERTIES);
 
-        // Smithy is transport agnostic, so we don't add http-related fields by default.
+        // Smithy is transport agnostic, so we don't add http-related properties by default.
         // Nevertheless, HTTP is the most common use case so we standardize those settings
         // and add them in if the protocol is going to need them.
         if (context.applicationProtocol().isHttpProtocol()) {
-            fields.addAll(getHttpFields(context.settings()));
+            properties.addAll(HTTP_PROPERTIES);
         }
 
         var model = context.model();
         var service = context.settings().getService(model);
 
-        // Add any relevant config fields from plugins.
+        // Add any relevant config properties from plugins.
         for (PythonIntegration integration : context.integrations()) {
             for (RuntimeClientPlugin plugin : integration.getClientPlugins()) {
                 if (plugin.matchesService(model, service)) {
-                    fields.addAll(plugin.getConfigFields());
+                    properties.addAll(plugin.getConfigProperties());
                 }
             }
         }
 
         writer.addStdlibImport("dataclasses", "dataclass");
-        writer.write("@dataclass(kw_only=True)");
-        writer.openBlock("class $L:", "", symbol.getName(), () -> {
-            writer.writeDocs(() -> {
-                writer.write("Configuration for $L\n", context.settings().getService().getName());
+        writer.write("""
+            @dataclass(init=False)
+            class $L:
+                \"""Configuration for $L.\"""
 
-                // This way of using iterators lets us easily have different behavior for the
-                // last field, namely to not add an extra blank line.
-                var iter = fields.iterator();
-                while (iter.hasNext()) {
-                    // Write out the documentation for the fields.
-                    var field = iter.next();
-                    writer.write(writer.formatDocs(String.format(
-                            ":param %s: %s", field.name(), field.documentation())));
-                    if (iter.hasNext()) {
-                        // Put a blank line between fields, but don't leave one at the end of the doc string.
-                        writer.write("");
-                    }
-                }
-            });
+                ${C|}
 
-            for (ConfigField field : fields) {
-                var formatString = "$L: $T";
-                if (field.isOptional()) {
-                    // We *could* provide a hook to set a default value, but that's a bit awkward and fraught with
-                    // footgun issues. Instead, people can set a default using `plugins` which are capable of
-                    // modifying the config object.
-                    formatString += " | None = None";
-                }
-                writer.write(formatString, field.name(), field.type());
+                def __init__(
+                    self,
+                    *,
+                    ${C|}
+                ):
+                    \"""Constructor.
+
+                    ${C|}
+                    \"""
+                    ${C|}
+            """, symbol.getName(), context.settings().getService().getName(),
+            writer.consumer(w -> writePropertyDeclarations(w, properties)),
+            writer.consumer(w -> writeInitParams(w, properties)),
+            writer.consumer(w -> documentProperties(w, properties)),
+            writer.consumer(w -> initializeProperties(w, properties)));
+    }
+
+    private void writePropertyDeclarations(PythonWriter writer, Collection<ConfigProperty> properties) {
+        for (ConfigProperty property : properties) {
+            var formatString = property.isNullable()
+                ? "$L: $T | None"
+                : "$L: $T";
+            writer.write(formatString, property.name(), property.type());
+        }
+    }
+
+    private void writeInitParams(PythonWriter writer, Collection<ConfigProperty> properties) {
+        for (ConfigProperty property : properties) {
+            writer.write("$L: $T | None = None,", property.name(), property.type());
+        }
+    }
+
+    private void documentProperties(PythonWriter writer, Collection<ConfigProperty> properties) {
+        var iter = properties.iterator();
+        while (iter.hasNext()) {
+            var property = iter.next();
+            var docs = writer.formatDocs(String.format(":param %s: %s", property.name(), property.documentation()));
+
+            if (iter.hasNext()) {
+                docs += "\n";
             }
-        });
+
+            writer.write(docs);
+        }
+    }
+
+    private void initializeProperties(PythonWriter writer, Collection<ConfigProperty> properties) {
+        for (ConfigProperty property : properties) {
+            property.initialize(writer);
+        }
     }
 }

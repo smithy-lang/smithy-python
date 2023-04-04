@@ -15,7 +15,6 @@
 
 from collections.abc import AsyncIterable
 from dataclasses import dataclass, field
-from typing import Protocol
 from urllib.parse import urlparse
 
 from ... import interfaces
@@ -115,16 +114,3 @@ class StaticEndpointResolver(http_interface.EndpointResolver[StaticEndpointParam
                 port=parsed.port,
             )
         )
-
-
-class _StaticEndpointConfig(Protocol):
-    endpoint_resolver: http_interface.EndpointResolver[StaticEndpointParams] | None
-
-
-def set_static_endpoint_resolver(config: _StaticEndpointConfig) -> None:
-    """Sets the endpoint resolver to the static endpoint resolver if not already set.
-
-    :param config: A config object that has an endpoint_resolver property.
-    """
-    if config.endpoint_resolver is None:
-        config.endpoint_resolver = StaticEndpointResolver()
