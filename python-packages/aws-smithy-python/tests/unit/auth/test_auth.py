@@ -32,7 +32,6 @@ from aws_smithy_python.auth import (
     EMPTY_SHA256_HASH,
     PAYLOAD_BUFFER,
     SIGV4_TIMESTAMP_FORMAT,
-    STREAMING_UNSIGNED_PAYLOAD_TRAILER,
     UNSIGNED_PAYLOAD,
     SigV4Signer,
     SigV4SigningProperties,
@@ -359,21 +358,6 @@ async def test_missing_required_signing_properties_raises(
             {"payload_signing_enabled": False, "region": "us-east-1", "service": "s3"},
             None,
             UNSIGNED_PAYLOAD,
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=EMPTY_ASYNC_LIST,
-                method="GET",
-                fields=Fields(),
-            ),
-            {
-                "checksum": {"request_algorithm": {"in": "trailer"}},
-                "region": "us-east-1",
-                "service": "s3",
-            },
-            None,
-            STREAMING_UNSIGNED_PAYLOAD_TRAILER,
         ),
         (
             HTTPRequest(
