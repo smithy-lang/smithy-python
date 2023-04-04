@@ -19,7 +19,6 @@ from http.server import BaseHTTPRequestHandler
 from io import BytesIO
 from typing import AsyncIterable
 from unittest import mock
-from urllib.parse import parse_qs, quote, urlparse
 
 import pytest
 from freezegun import freeze_time
@@ -55,7 +54,7 @@ SIGNING_PROPERTIES: SigV4SigningProperties = {
 TESTSUITE_DIR: pathlib.Path = (
     pathlib.Path(__file__).absolute().parent / "aws4_testsuite"
 )
-SIGV4_REQUIRED_QUERY_PARAMS: tuple[str, str, str, str, str, str] = (
+SIGV4_REQUIRED_QUERY_PARAMS: tuple[str, ...] = (
     "X-Amz-Algorithm",
     "X-Amz-Credential",
     "X-Amz-Date",
@@ -278,78 +277,6 @@ async def test_sigv4_signing(
     assert actual_auth_header == authorization_header
 
 
-@pytest.mark.parametrize(
-    "raw_request, canonical_request, string_to_sign, authorization_header, token",
-    TEST_CASES,
-)
-@pytest.mark.asyncio
-@freeze_time(DATE)
-async def test_sigv4_generate_presigned_url(
-    sigv4_signer: SigV4Signer,
-    raw_request: bytes,
-    canonical_request: str,
-    string_to_sign: str,
-    authorization_header: str,
-    token: str | None,
-) -> None:
-    identity = AWSCredentialIdentity(
-        access_key_id=ACCESS_KEY, secret_access_key=SECRET_KEY, session_token=token
-    )
-    request = smithy_request_from_raw_request(raw_request)
-    url = await sigv4_signer.generate_presigned_url(
-        http_request=request,
-        identity=identity,
-        signing_properties=SIGNING_PROPERTIES,
-    )
-    parsed_url = urlparse(url)
-    parsed_query = parse_qs(parsed_url.query)
-    for param in SIGV4_REQUIRED_QUERY_PARAMS:
-        assert param in parsed_query
-
-
-@pytest.mark.asyncio
-async def test_sigv4_generate_presigned_url_with_expires(
-    sigv4_signer: SigV4Signer,
-    http_request: HTTPRequest,
-    aws_credential_identity: AWSCredentialIdentity,
-) -> None:
-    signing_properties = SIGNING_PROPERTIES.copy()
-    signing_properties["expires"] = 10000
-    url = await sigv4_signer.generate_presigned_url(
-        http_request=http_request,
-        identity=aws_credential_identity,
-        signing_properties=signing_properties,
-    )
-    parsed_url = urlparse(url)
-    parsed_query = parse_qs(parsed_url.query)
-    assert "X-Amz-Expires" in parsed_query
-    assert parsed_query["X-Amz-Expires"][0] == "10000"
-
-
-@pytest.mark.asyncio
-async def test_sigv4_generate_presigned_url_with_additional_query_params(
-    sigv4_signer: SigV4Signer,
-    aws_credential_identity: AWSCredentialIdentity,
-) -> None:
-    http_request = HTTPRequest(
-        method="GET",
-        destination=URI(host="example.com", query="foo=bar&baz=qux"),
-        fields=Fields(),
-        body=EMPTY_ASYNC_LIST,
-    )
-    url = await sigv4_signer.generate_presigned_url(
-        http_request=http_request,
-        identity=aws_credential_identity,
-        signing_properties=SIGNING_PROPERTIES,
-    )
-    parsed_url = urlparse(url)
-    parsed_query = parse_qs(parsed_url.query)
-    assert "foo" in parsed_query
-    assert parsed_query["foo"][0] == "bar"
-    assert "baz" in parsed_query
-    assert parsed_query["baz"][0] == "qux"
-
-
 @pytest.mark.asyncio
 async def test_sign_wrong_identity_type_raises(
     sigv4_signer: SigV4Signer,
@@ -360,12 +287,6 @@ async def test_sign_wrong_identity_type_raises(
 ) -> None:
     with pytest.raises(SmithyIdentityException):
         await sigv4_signer.sign(
-            http_request=http_request,
-            identity=fake_identity,
-            signing_properties={"region": "us-east-1", "service": "s3"},
-        )
-    with pytest.raises(SmithyIdentityException):
-        await sigv4_signer.generate_presigned_url(
             http_request=http_request,
             identity=fake_identity,
             signing_properties={"region": "us-east-1", "service": "s3"},
@@ -385,12 +306,6 @@ async def test_missing_required_signing_properties_raises(
 ) -> None:
     with pytest.raises(SmithyHTTPException):
         await sigv4_signer.sign(
-            http_request=http_request,
-            identity=aws_credential_identity,
-            signing_properties=signing_properties,
-        )
-    with pytest.raises(SmithyHTTPException):
-        await sigv4_signer.generate_presigned_url(
             http_request=http_request,
             identity=aws_credential_identity,
             signing_properties=signing_properties,
@@ -664,58 +579,3 @@ async def test_format_headers_for_signing(
         signing_properties=SIGNING_PROPERTIES,
     )
     assert canonical_request_mock.await_args[1]["formatted_headers"] == expected_headers
-
-
-@pytest.mark.parametrize(
-    "http_request, expires, signed_headers",
-    [
-        (
-            HTTPRequest(
-                destination=URI(host="example.com", query="foo=bar"),
-                method="GET",
-                fields=Fields(
-                    [
-                        Field(name="X-Amz-Security-Token", values=[SESSION_TOKEN]),
-                        Field(name="foo", values=["bar"]),
-                    ]
-                ),
-                body=EMPTY_ASYNC_LIST,
-            ),
-            1000,
-            "foo;host;x-amz-date",
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                method="GET",
-                fields=Fields(
-                    [Field(name="X-Amz-Security-Token", values=[SESSION_TOKEN])]
-                ),
-                body=EMPTY_ASYNC_LIST,
-            ),
-            1000,
-            "host;x-amz-date",
-        ),
-    ],
-)
-@pytest.mark.asyncio
-@freeze_time(DATE)
-async def test_generate_url_query_params(
-    sigv4_signer: SigV4Signer,
-    aws_credential_identity: AWSCredentialIdentity,
-    http_request: HTTPRequest,
-    expires: int,
-    signed_headers: str,
-) -> None:
-    sp = SIGNING_PROPERTIES.copy()
-    sp["expires"] = expires
-    presigned_url = await sigv4_signer.generate_presigned_url(
-        http_request=http_request,
-        identity=aws_credential_identity,
-        signing_properties=sp,
-    )
-    assert f"X-Amz-SignedHeaders={signed_headers}" in presigned_url
-    assert f"X-Amz-Expires={expires}" in presigned_url
-    assert DATE_STR in presigned_url
-    for field in http_request.fields:
-        assert f"{field.name}={quote(field.as_string(), safe='')}" in presigned_url

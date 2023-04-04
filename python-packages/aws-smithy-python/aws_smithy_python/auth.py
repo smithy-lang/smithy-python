@@ -28,20 +28,21 @@ from smithy_python.utils import remove_dot_segments
 
 from aws_smithy_python.identity import AWSCredentialIdentity
 
-REQUIRED_SIGNING_PROPERTIES: tuple[str, str] = ("region", "service")
+REQUIRED_SIGNING_PROPERTIES: tuple[str, ...] = ("region", "service")
 UNSIGNED_PAYLOAD: str = "UNSIGNED-PAYLOAD"
 STREAMING_UNSIGNED_PAYLOAD_TRAILER: str = "STREAMING-UNSIGNED-PAYLOAD-TRAILER"
 SIGV4_TIMESTAMP_FORMAT: str = "%Y%m%dT%H%M%SZ"
-HEADERS_EXCLUDED_FROM_SIGNING: tuple[str, str, str, str, str] = (
+HEADERS_EXCLUDED_FROM_SIGNING: tuple[str, ...] = (
     "authorization",
     "expect",
     "user-agent",
     "x-amz-content-sha256",
     "x-amzn-trace-id",
 )
-DISALLOWED_USER_PROVIDED_HEADERS: tuple[
-    str, str, str, str, str, str, str
-] = HEADERS_EXCLUDED_FROM_SIGNING + ("x-amz-date", "x-amz-security-token")
+DISALLOWED_USER_PROVIDED_HEADERS: tuple[str, ...] = HEADERS_EXCLUDED_FROM_SIGNING + (
+    "x-amz-date",
+    "x-amz-security-token",
+)
 
 DEFAULT_EXPIRES: int = 3600
 PAYLOAD_BUFFER: int = 1024**2
@@ -106,57 +107,6 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         new_request = signature_kwargs["http_request"]
         new_request.fields.set_field(auth_header)
         return new_request
-
-    async def generate_presigned_url(
-        self,
-        *,
-        http_request: HTTPRequestInterface,
-        identity: AWSCredentialIdentity,
-        signing_properties: SigV4SigningProperties,
-    ) -> str:
-        """Sign a request using query parameters.
-
-        Specifications can be found at:
-        https://docs.aws.amazon.com/general/latest/gr/create-signed-request.html
-
-        :param http_request: The request to sign.
-        :param identity: The identity to use for signing. Contains authentication
-        credentials.
-        :param signing_properties: The properties to use for signing. Can indicate
-        whether or not to sign the payload, the type of payload, region, service,
-        and expiration where applicable.
-        """
-        signature_kwargs = await self._get_signature_kwargs(
-            http_request, identity, signing_properties
-        )
-        expires = signing_properties.get("expires", DEFAULT_EXPIRES)
-        credential_scope = f"{identity.access_key_id}/{signature_kwargs['scope']}"
-        # All query parameters besides `X-Amz-Signature` must be included in
-        # the canonical request and string to sign.
-        url_query = self._generate_url_query_params(
-            http_request=signature_kwargs["http_request"],
-            date=signature_kwargs["date"],
-            credential_scope=credential_scope,
-            expires=expires,
-            signed_headers=signature_kwargs["signed_headers"],
-            session_token=identity.session_token,
-        )
-        new_request = signature_kwargs["http_request"]
-        # add the query params before signing
-        new_request.destination = self._generate_new_uri(
-            new_request.destination, {"query": url_query}
-        )
-        signature = await self._generate_signature(
-            secret_access_key=identity.secret_access_key,
-            signing_properties=signing_properties,
-            payload=UNSIGNED_PAYLOAD,
-            **signature_kwargs,
-        )
-        new_request.destination = self._generate_new_uri(
-            new_request.destination,
-            {"query": f"{url_query}&X-Amz-Signature={signature}"},
-        )
-        return new_request.destination.build()
 
     async def _get_signature_kwargs(
         self,
@@ -273,31 +223,6 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
             f"{signing_properties['service']}/aws4_request"
         )
 
-    def _generate_url_query_params(
-        self,
-        http_request: HTTPRequestInterface,
-        date: str,
-        credential_scope: str,
-        expires: int,
-        signed_headers: str,
-        session_token: str | None,
-    ) -> str:
-        """Add all required query parameters to the request URI in alphabetical order by
-        key."""
-        if (query := http_request.destination.query) is not None and len(query) > 0:
-            query += "&"
-        else:
-            query = ""
-        query += "X-Amz-Algorithm=AWS4-HMAC-SHA256&"
-        # URI encode forward slashes
-        query += f"X-Amz-Credential={quote(credential_scope, safe='')}&"
-        query += f"X-Amz-Date={date}&"
-        query += f"X-Amz-Expires={expires}&"
-        if session_token is not None:
-            query += f"X-Amz-Security-Token={quote(session_token, safe='')}&"
-        query += f"X-Amz-SignedHeaders={signed_headers}"
-        return query
-
     def _generate_new_uri(
         self, uri: interfaces.URI, kwargs: interfaces.URIParameters
     ) -> URI:
@@ -323,9 +248,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         :param formatted_headers: The formatted header keys and values to sign.
         :param signed_headers: The semicolon-delimited header keys to sign.
         :param secret_access_key: The secret access key to use in the signature.
-        :param signing_properties: The signing properties to use in signing. Can
-        indicate whether or not to sign the payload, the type of payload, region,
-        service, and expiration where applicable.
+        :param signing_properties: The signing properties to use in signing.
         :param date: The date to use in the signature in `%Y%m%dT%H%M%SZ` format.
         :param scope: The scope to use in the signature. See `_scope` for more info.
         :param payload: Optional payload to sign. If not provided, the payload will
@@ -366,9 +289,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         that are used to generate the canonical request.
         :param formatted_headers: The formatted header keys and values to sign.
         :param signed_headers: The semicolon-delimited header keys to sign.
-        :param signing_properties: The signing properties to use in signing. Can indicate
-        whether or not to sign the payload, the type of payload, region, service, and
-        expiration where applicable.
+        :param signing_properties: The signing properties to use in signing.
         :param payload: Optional payload to sign. If not provided, the payload will be
         generated from the request body.
         """
