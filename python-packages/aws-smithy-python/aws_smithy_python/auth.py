@@ -86,9 +86,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         :param http_request: The request to sign.
         :param identity: The identity to use for signing. Contains authentication
         credentials.
-        :param signing_properties: The properties to use for signing. Can indicate
-        whether or not to sign the payload, the type of payload, region, service,
-        and expiration where applicable.
+        :param signing_properties: The properties to use for signing.
         """
         signature_kwargs = await self._get_signature_kwargs(
             http_request, identity, signing_properties
