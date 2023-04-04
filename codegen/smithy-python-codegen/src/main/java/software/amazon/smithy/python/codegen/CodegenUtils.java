@@ -146,30 +146,6 @@ public final class CodegenUtils {
     }
 
     /**
-     * @param settings The client settings, used to account for module configuration.
-     * @return Returns the symbol for the client-specific endpoint resolver.
-     */
-    static Symbol getEndpointResolver(PythonSettings settings) {
-        return Symbol.builder()
-                .name("EndpointResolver")
-                .namespace(format("%s.endpoints", settings.getModuleName()), ".")
-                .definitionFile(format("./%s/endpoints.py", settings.getModuleName()))
-                .build();
-    }
-
-    /**
-     * @param settings The client settings, used to account for module configuration.
-     * @return Returns the symbol for the client-specific endpoint parameters.
-     */
-    static Symbol getEndpointParams(PythonSettings settings) {
-        return Symbol.builder()
-                .name("EndpointParams")
-                .namespace(format("%s.endpoints", settings.getModuleName()), ".")
-                .definitionFile(format("./%s/endpoints.py", settings.getModuleName()))
-                .build();
-    }
-
-    /**
      * Determines whether a given member is probably the main "message" of an error shape.
      *
      * @param model The whole service model.

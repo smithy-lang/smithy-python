@@ -26,7 +26,7 @@ import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
-import software.amazon.smithy.python.codegen.ConfigField;
+import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.utils.SmithyBuilder;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 import software.amazon.smithy.utils.ToSmithyBuilder;
@@ -44,13 +44,13 @@ import software.amazon.smithy.utils.ToSmithyBuilder;
 public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientPlugin> {
     private final BiPredicate<Model, ServiceShape> servicePredicate;
     private final OperationPredicate operationPredicate;
-    private final List<ConfigField> configFields;
+    private final List<ConfigProperty> configProperties;
     private final SymbolReference pythonPlugin;
 
     private RuntimeClientPlugin(Builder builder) {
         servicePredicate = builder.servicePredicate;
         operationPredicate = builder.operationPredicate;
-        configFields = Collections.unmodifiableList(builder.configFields);
+        configProperties = Collections.unmodifiableList(builder.configProperties);
         this.pythonPlugin = builder.pythonPlugin;
     }
 
@@ -103,12 +103,12 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
     }
 
     /**
-     * Gets the config fields that will be added to the client config by this plugin.
+     * Gets the config properties that will be added to the client config by this plugin.
      *
-     * @return Returns the config fields to add to the client config.
+     * @return Returns the config properties to add to the client config.
      */
-    public List<ConfigField> getConfigFields() {
-        return configFields;
+    public List<ConfigProperty> getConfigProperties() {
+        return configProperties;
     }
 
     /**
@@ -136,7 +136,7 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
     public static final class Builder implements SmithyBuilder<RuntimeClientPlugin> {
         private BiPredicate<Model, ServiceShape> servicePredicate = (model, service) -> true;
         private OperationPredicate operationPredicate = (model, service, operation) -> false;
-        private List<ConfigField> configFields = new ArrayList<>();
+        private List<ConfigProperty> configProperties = new ArrayList<>();
         private SymbolReference pythonPlugin = null;
 
         Builder() {
@@ -208,24 +208,24 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
         }
 
         /**
-         * Sets the list of config fields to add to the client's config object.
+         * Sets the list of config properties to add to the client's config object.
          *
-         * @param configFields The list of config fields to add to the client's config object.
+         * @param configProperties The list of config properties to add to the client's config object.
          * @return Returns the builder.
          */
-        public Builder configFields(List<ConfigField> configFields) {
-            this.configFields = configFields;
+        public Builder configProperties(List<ConfigProperty> configProperties) {
+            this.configProperties = configProperties;
             return this;
         }
 
         /**
-         * Adds a single config field which will be added to the client's config object.
+         * Adds a single config property which will be added to the client's config object.
          *
-         * @param configField A config field to add to the client's config object.
+         * @param configProperty A config property to add to the client's config object.
          * @return Returns the builder.
          */
-        public Builder addConfigField(ConfigField configField) {
-            this.configFields.add(configField);
+        public Builder addConfigProperty(ConfigProperty configProperty) {
+            this.configProperties.add(configProperty);
             return this;
         }
 
