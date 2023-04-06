@@ -14,6 +14,7 @@
 import hmac
 from datetime import datetime, timezone
 from hashlib import sha256
+from io import BytesIO
 from typing import NotRequired, TypedDict
 from urllib.parse import parse_qsl, quote
 
@@ -21,6 +22,7 @@ from smithy_python import interfaces
 from smithy_python._private import URI, Field, Fields
 from smithy_python._private.auth import HTTPSigner
 from smithy_python._private.http import HTTPRequest
+from smithy_python.async_utils import async_list
 from smithy_python.exceptions import SmithyHTTPException, SmithyIdentityException
 from smithy_python.interfaces.auth import SigningProperties
 from smithy_python.interfaces.http import HTTPRequest as HTTPRequestInterface
@@ -344,13 +346,25 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         # TODO: Add _is_streaming_checksum_payload after checksum implementation is
         # complete
 
+        # TODO: Need to add configuration in `signing_properties` to not sign large
+        # request bodies because of performance issues. Exact size limit TBD.
         if not self._should_sha256_sign_payload(http_request, signing_properties):
             return UNSIGNED_PAYLOAD
 
-        if request_body := await http_request.consume_body():
-            return sha256(request_body).hexdigest()
-
-        return EMPTY_SHA256_HASH
+        request_body = http_request.body
+        checksum = sha256()
+        buffer = []
+        async for chunk in request_body:
+            # Create smaller chunks in case the chunk is too large
+            stream = BytesIO(chunk)
+            while True:
+                if not (sub_chunk := stream.read(PAYLOAD_BUFFER)):
+                    break
+                checksum.update(sub_chunk)
+            buffer.append(chunk)
+        # reset request body iterable to be read again later
+        http_request.body = async_list(buffer)
+        return checksum.hexdigest()
 
     def _is_streaming_checksum_payload(
         self, signing_properties: SigV4SigningProperties

@@ -313,7 +313,7 @@ async def test_missing_required_signing_properties_raises(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    "http_request, signing_properties, input_payload, expected_payload",
+    "http_request, signing_properties, input_payload, expected_payload, expected_body",
     [
         (
             HTTPRequest(
@@ -325,6 +325,7 @@ async def test_missing_required_signing_properties_raises(
             SIGNING_PROPERTIES,
             None,
             EMPTY_SHA256_HASH,
+            b"",
         ),
         (
             HTTPRequest(
@@ -336,6 +337,7 @@ async def test_missing_required_signing_properties_raises(
             SIGNING_PROPERTIES,
             None,
             sha256(b"foo").hexdigest(),
+            b"foo",
         ),
         (
             HTTPRequest(
@@ -347,6 +349,7 @@ async def test_missing_required_signing_properties_raises(
             SIGNING_PROPERTIES,
             None,
             EMPTY_SHA256_HASH,
+            b"",
         ),
         (
             HTTPRequest(
@@ -358,6 +361,31 @@ async def test_missing_required_signing_properties_raises(
             {"payload_signing_enabled": False, "region": "us-east-1", "service": "s3"},
             None,
             UNSIGNED_PAYLOAD,
+            b"",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com"),
+                body=async_list([b"a" * PAYLOAD_BUFFER * 2, b"b" * PAYLOAD_BUFFER * 2]),
+                method="GET",
+                fields=Fields(),
+            ),
+            SIGNING_PROPERTIES,
+            None,
+            sha256(b"a" * PAYLOAD_BUFFER * 2 + b"b" * PAYLOAD_BUFFER * 2).hexdigest(),
+            b"a" * PAYLOAD_BUFFER * 2 + b"b" * PAYLOAD_BUFFER * 2,
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com"),
+                body=async_list([b"foo", b"bar", b"hello", b"world"]),
+                method="GET",
+                fields=Fields(),
+            ),
+            SIGNING_PROPERTIES,
+            None,
+            sha256(b"foobarhelloworld").hexdigest(),
+            b"foobarhelloworld",
         ),
         (
             HTTPRequest(
@@ -369,6 +397,7 @@ async def test_missing_required_signing_properties_raises(
             SIGNING_PROPERTIES,
             "foo",
             "foo",
+            b"",
         ),
     ],
 )
@@ -378,6 +407,7 @@ async def test_payload(
     signing_properties: SigV4SigningProperties,
     input_payload: str | None,
     expected_payload: str,
+    expected_body: bytes,
 ) -> None:
     formatted_headers = sigv4_signer._format_headers_for_signing(http_request)
     signed_headers = ";".join(formatted_headers)
@@ -391,6 +421,8 @@ async def test_payload(
     # payload is the last line of the canonical request
     payload = canonical_request.split("\n")[-1]
     assert payload == expected_payload
+    # body stream should have been reset to the beginning
+    assert await http_request.consume_body() == expected_body
 
 
 @pytest.mark.parametrize(
