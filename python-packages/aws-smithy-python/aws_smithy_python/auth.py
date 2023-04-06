@@ -15,7 +15,7 @@ import hmac
 from datetime import datetime, timezone
 from hashlib import sha256
 from io import BytesIO
-from typing import NotRequired, TypedDict
+from typing import AsyncGenerator, NotRequired, TypedDict
 from urllib.parse import parse_qsl, quote
 
 from smithy_python import interfaces
@@ -351,16 +351,10 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         if not self._should_sha256_sign_payload(http_request, signing_properties):
             return UNSIGNED_PAYLOAD
 
-        request_body = http_request.body
         checksum = sha256()
         buffer = []
-        async for chunk in request_body:
-            # Create smaller chunks in case the chunk is too large
-            stream = BytesIO(chunk)
-            while True:
-                if not (sub_chunk := stream.read(PAYLOAD_BUFFER)):
-                    break
-                checksum.update(sub_chunk)
+        async for chunk in self._read_request_body(http_request):
+            checksum.update(chunk)
             buffer.append(chunk)
         # reset request body iterable to be read again later
         http_request.body = async_list(buffer)
@@ -382,6 +376,19 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
             return True
 
         return signing_properties.get("payload_signing_enabled", True)
+
+    async def _read_request_body(
+        self, http_request: HTTPRequestInterface
+    ) -> AsyncGenerator[bytes, None]:
+        """Read the request body into smaller chunks."""
+        body = http_request.body
+        async for chunk in body:
+            stream = BytesIO(chunk)
+            while True:
+                # Create smaller chunks in case the chunk is too large
+                if not (sub_chunk := stream.read(PAYLOAD_BUFFER)):
+                    break
+                yield sub_chunk
 
     def string_to_sign(self, *, canonical_request: str, date: str, scope: str) -> str:
         """The string to sign.
