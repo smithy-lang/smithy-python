@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 
 import hmac
+import warnings
 from datetime import datetime, timezone
 from hashlib import sha256
 from io import BytesIO
@@ -351,6 +352,10 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         if not self._should_sha256_sign_payload(http_request, signing_properties):
             return UNSIGNED_PAYLOAD
 
+        warnings.warn(
+            "Payload signing is enabled. This may cause "
+            "performance issues for large request bodies."
+        )
         checksum = sha256()
         buffer = []
         async for chunk in self._read_request_body(http_request):

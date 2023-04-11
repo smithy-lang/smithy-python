@@ -13,6 +13,7 @@
 
 import pathlib
 import re
+import warnings
 from datetime import datetime, timezone
 from hashlib import sha256
 from http.server import BaseHTTPRequestHandler
@@ -236,12 +237,13 @@ async def test_sigv4_signing_components(
     )
     formatted_headers = sigv4_signer._format_headers_for_signing(new_request)
     signed_headers = ";".join(formatted_headers)
-    actual_canonical_request = await sigv4_signer.canonical_request(
-        http_request=new_request,
-        formatted_headers=formatted_headers,
-        signed_headers=signed_headers,
-        signing_properties=SIGNING_PROPERTIES,
-    )
+    with pytest.warns():
+        actual_canonical_request = await sigv4_signer.canonical_request(
+            http_request=new_request,
+            formatted_headers=formatted_headers,
+            signed_headers=signed_headers,
+            signing_properties=SIGNING_PROPERTIES,
+        )
     assert actual_canonical_request == canonical_request
     request = smithy_request_from_raw_request(raw_request)
     scope = sigv4_signer._scope(DATE_STR, SIGNING_PROPERTIES)
@@ -269,9 +271,12 @@ async def test_sigv4_signing(
         access_key_id=ACCESS_KEY, secret_access_key=SECRET_KEY, session_token=token
     )
     request = smithy_request_from_raw_request(raw_request)
-    new_request = await sigv4_signer.sign(
-        http_request=request, identity=identity, signing_properties=SIGNING_PROPERTIES
-    )
+    with pytest.warns():
+        new_request = await sigv4_signer.sign(
+            http_request=request,
+            identity=identity,
+            signing_properties=SIGNING_PROPERTIES,
+        )
     actual_auth_header = new_request.fields.get_field("Authorization").as_string()
     assert actual_auth_header == authorization_header
 
@@ -354,18 +359,6 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=EMPTY_ASYNC_LIST,
-                method="GET",
-                fields=Fields(),
-            ),
-            {"payload_signing_enabled": False, "region": "us-east-1", "service": "s3"},
-            None,
-            UNSIGNED_PAYLOAD,
-            b"",
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
                 body=async_list([b"a" * PAYLOAD_BUFFER * 2, b"b" * PAYLOAD_BUFFER * 2]),
                 method="GET",
                 fields=Fields(),
@@ -387,6 +380,51 @@ async def test_missing_required_signing_properties_raises(
             sha256(b"foobarhelloworld").hexdigest(),
             b"foobarhelloworld",
         ),
+    ],
+)
+async def test_signed_payload(
+    sigv4_signer: SigV4Signer,
+    http_request: HTTPRequest,
+    signing_properties: SigV4SigningProperties,
+    input_payload: str | None,
+    expected_payload: str,
+    expected_body: bytes,
+) -> None:
+    formatted_headers = sigv4_signer._format_headers_for_signing(http_request)
+    signed_headers = ";".join(formatted_headers)
+    # Unless explicitly disabled, payload signing is enabled and this warning
+    # will be emitted even if the payload is empty
+    with pytest.warns():
+        canonical_request = await sigv4_signer.canonical_request(
+            http_request=http_request,
+            formatted_headers=formatted_headers,
+            signed_headers=signed_headers,
+            signing_properties=signing_properties,
+            payload=input_payload,
+        )
+    # payload is the last line of the canonical request
+    payload = canonical_request.split("\n")[-1]
+    assert payload == expected_payload
+    # body stream should have been reset to the beginning
+    assert await http_request.consume_body() == expected_body
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "http_request, signing_properties, input_payload, expected_payload, expected_body",
+    [
+        (
+            HTTPRequest(
+                destination=URI(host="example.com"),
+                body=EMPTY_ASYNC_LIST,
+                method="GET",
+                fields=Fields(),
+            ),
+            {"payload_signing_enabled": False, "region": "us-east-1", "service": "s3"},
+            None,
+            UNSIGNED_PAYLOAD,
+            b"",
+        ),
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
@@ -401,7 +439,7 @@ async def test_missing_required_signing_properties_raises(
         ),
     ],
 )
-async def test_payload(
+async def test_unsigned_payload(
     sigv4_signer: SigV4Signer,
     http_request: HTTPRequest,
     signing_properties: SigV4SigningProperties,
@@ -411,13 +449,16 @@ async def test_payload(
 ) -> None:
     formatted_headers = sigv4_signer._format_headers_for_signing(http_request)
     signed_headers = ";".join(formatted_headers)
-    canonical_request = await sigv4_signer.canonical_request(
-        http_request=http_request,
-        formatted_headers=formatted_headers,
-        signed_headers=signed_headers,
-        signing_properties=signing_properties,
-        payload=input_payload,
-    )
+    # asserting no warnings are emitted
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        canonical_request = await sigv4_signer.canonical_request(
+            http_request=http_request,
+            formatted_headers=formatted_headers,
+            signed_headers=signed_headers,
+            signing_properties=signing_properties,
+            payload=input_payload,
+        )
     # payload is the last line of the canonical request
     payload = canonical_request.split("\n")[-1]
     assert payload == expected_payload
