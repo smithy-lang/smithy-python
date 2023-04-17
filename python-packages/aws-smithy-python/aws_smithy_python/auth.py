@@ -13,6 +13,7 @@
 
 import hmac
 import warnings
+from copy import deepcopy
 from datetime import datetime, timezone
 from hashlib import sha256
 from io import BytesIO
@@ -20,7 +21,7 @@ from typing import AsyncGenerator, NotRequired, TypedDict
 from urllib.parse import parse_qsl, quote
 
 from smithy_python import interfaces
-from smithy_python._private import URI, Field, Fields
+from smithy_python._private import URI, Field
 from smithy_python._private.auth import HTTPSigner
 from smithy_python._private.http import HTTPRequest
 from smithy_python.async_utils import async_list
@@ -42,11 +43,6 @@ HEADERS_EXCLUDED_FROM_SIGNING: tuple[str, ...] = (
     "x-amz-content-sha256",
     "x-amzn-trace-id",
 )
-DISALLOWED_USER_PROVIDED_HEADERS: tuple[str, ...] = HEADERS_EXCLUDED_FROM_SIGNING + (
-    "x-amz-date",
-    "x-amz-security-token",
-)
-
 DEFAULT_EXPIRES: int = 3600
 PAYLOAD_BUFFER: int = 1024**2
 EMPTY_SHA256_HASH: str = (
@@ -124,11 +120,12 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
 
         self._validate_identity_and_signing_properties(identity, signing_properties)
         date = datetime.now(tz=timezone.utc).strftime(SIGV4_TIMESTAMP_FORMAT)
-        headers_to_add = self._headers_to_add(date, identity)
-        new_request = await self._generate_new_request_before_signing(
-            http_request, headers_to_add
+        (
+            new_request,
+            formatted_headers,
+        ) = await self._generate_new_request_and_format_headers_for_signing(
+            http_request, identity, date
         )
-        formatted_headers = self._format_headers_for_signing(new_request)
         # Signed headers are comprised of just the header keys delimited by
         # a semicolon.
         signed_headers = ";".join(formatted_headers)
@@ -157,52 +154,35 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
                 f"but received {type(identity)}."
             )
 
-    def _headers_to_add(self, date: str, identity: AWSCredentialIdentity) -> Fields:
-        headers_to_add = Fields([Field(name="X-Amz-Date", values=[date])])
-        if identity.session_token:
-            headers_to_add.set_field(
-                Field(name="X-Amz-Security-Token", values=[identity.session_token])
-            )
-        return headers_to_add
-
-    async def _generate_new_request_before_signing(
+    async def _generate_new_request_and_format_headers_for_signing(
         self,
         http_request: HTTPRequestInterface,
-        headers_to_add: Fields,
-    ) -> HTTPRequest:
+        identity: AWSCredentialIdentity,
+        date: str,
+    ) -> tuple[HTTPRequest, dict[str, str]]:
         """Generate a new request with only allowed headers.
 
         Remove headers that are excluded from SigV4 signature computation. Adds
         additional headers if provided.
         """
-        fields = Fields(
-            [
-                field
-                for field in http_request.fields
-                if field.name.lower() not in DISALLOWED_USER_PROVIDED_HEADERS
-            ]
-        )
-        fields.extend(headers_to_add)
-        return HTTPRequest(
-            method=http_request.method,
-            destination=http_request.destination,
-            fields=fields,
-            body=http_request.body,
-        )
+        fields = deepcopy(http_request.fields)
+        # Use set_field to overwrite any existing headers instead of extend which
+        # appends to the existing header if it exists.
+        fields.set_field(Field(name="X-Amz-Date", values=[date]))
+        if identity.session_token:
+            fields.set_field(
+                Field(name="X-Amz-Security-Token", values=[identity.session_token])
+            )
+        elif "X-Amz-Security-Token" in fields:
+            fields.remove_field("X-Amz-Security-Token")
 
-    def _format_headers_for_signing(
-        self, http_request: HTTPRequestInterface
-    ) -> dict[str, str]:
-        """Format headers for signing http requests.
-
-        Only use headers that aren't excluded, add `host` header if not present and
-        return as a sorted dictionary. Both canonical and signed headers are expected in
-        alphabetical order.
-        """
         formatted_headers = {}
-        for field in http_request.fields:
+        # copy the fields to avoid mutating the original ordered dict
+        for field in list(fields):
             l_key = field.name.lower()
-            if l_key not in HEADERS_EXCLUDED_FROM_SIGNING:
+            if l_key in HEADERS_EXCLUDED_FROM_SIGNING:
+                fields.remove_field(field.name)
+            else:
                 value = field.as_string(delimiter=",")
                 formatted_headers[l_key] = value
         if "host" not in formatted_headers:
@@ -211,7 +191,16 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
                 # remove port from netloc
                 uri = self._generate_new_uri(uri, {"port": None})
             formatted_headers["host"] = uri.netloc
-        return dict(sorted(formatted_headers.items()))
+        sorted_formatted_headers = dict(sorted(formatted_headers.items()))
+        return (
+            HTTPRequest(
+                method=http_request.method,
+                destination=http_request.destination,
+                fields=fields,
+                body=http_request.body,
+            ),
+            sorted_formatted_headers,
+        )
 
     def _scope(self, date: str, signing_properties: SigV4SigningProperties) -> str:
         """Binds the signature to a specific date, AWS region, and service in the
