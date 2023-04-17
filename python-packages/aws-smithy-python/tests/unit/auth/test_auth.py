@@ -231,11 +231,12 @@ async def test_sigv4_signing_components(
     )
     request = smithy_request_from_raw_request(raw_request)
     sigv4_signer._validate_identity_and_signing_properties(identity, SIGNING_PROPERTIES)
-    headers_to_add = sigv4_signer._headers_to_add(DATE_STR, identity)
-    new_request = await sigv4_signer._generate_new_request_before_signing(
-        request, headers_to_add
+    (
+        new_request,
+        formatted_headers,
+    ) = await sigv4_signer._generate_new_request_and_format_headers_for_signing(
+        request, identity, DATE_STR
     )
-    formatted_headers = sigv4_signer._format_headers_for_signing(new_request)
     signed_headers = ";".join(formatted_headers)
     with pytest.warns():
         actual_canonical_request = await sigv4_signer.canonical_request(
@@ -384,13 +385,19 @@ async def test_missing_required_signing_properties_raises(
 )
 async def test_signed_payload(
     sigv4_signer: SigV4Signer,
+    aws_credential_identity: AWSCredentialIdentity,
     http_request: HTTPRequest,
     signing_properties: SigV4SigningProperties,
     input_payload: str | None,
     expected_payload: str,
     expected_body: bytes,
 ) -> None:
-    formatted_headers = sigv4_signer._format_headers_for_signing(http_request)
+    (
+        _,
+        formatted_headers,
+    ) = await sigv4_signer._generate_new_request_and_format_headers_for_signing(
+        http_request, aws_credential_identity, DATE_STR
+    )
     signed_headers = ";".join(formatted_headers)
     # Unless explicitly disabled, payload signing is enabled and this warning
     # will be emitted even if the payload is empty
@@ -442,12 +449,18 @@ async def test_signed_payload(
 async def test_unsigned_payload(
     sigv4_signer: SigV4Signer,
     http_request: HTTPRequest,
+    aws_credential_identity: AWSCredentialIdentity,
     signing_properties: SigV4SigningProperties,
     input_payload: str | None,
     expected_payload: str,
     expected_body: bytes,
 ) -> None:
-    formatted_headers = sigv4_signer._format_headers_for_signing(http_request)
+    (
+        _,
+        formatted_headers,
+    ) = await sigv4_signer._generate_new_request_and_format_headers_for_signing(
+        http_request, aws_credential_identity, DATE_STR
+    )
     signed_headers = ";".join(formatted_headers)
     # asserting no warnings are emitted
     with warnings.catch_warnings():
