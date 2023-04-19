@@ -162,12 +162,13 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
     ) -> tuple[HTTPRequest, dict[str, str]]:
         """Generate a new request with only allowed headers.
 
-        Remove headers that are excluded from SigV4 signature computation. Adds
-        additional headers if provided.
+        Also format allowed headers for signing. Remove headers that are excluded from
+        SigV4 signature computation.
         """
-        fields = deepcopy(http_request.fields)
-        # Use set_field to overwrite any existing headers instead of extend which
-        # appends to the existing header if it exists.
+        new_request = deepcopy(http_request)
+        fields = new_request.fields
+        # Use `set_field `to overwrite any existing headers instead of `extend`
+        # which appends to the existing header.
         fields.set_field(Field(name="X-Amz-Date", values=[date]))
         if identity.session_token:
             fields.set_field(
@@ -186,21 +187,15 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
                 value = field.as_string(delimiter=",")
                 formatted_headers[l_key] = value
         if "host" not in formatted_headers:
-            uri = http_request.destination
+            uri = new_request.destination
             if uri.port is not None and DEFAULT_PORTS.get(uri.scheme) == uri.port:
                 # remove port from netloc
                 uri = self._generate_new_uri(uri, {"port": None})
+                new_request.destination = uri
             formatted_headers["host"] = uri.netloc
+            fields.set_field(Field(name="Host", values=[uri.netloc]))
         sorted_formatted_headers = dict(sorted(formatted_headers.items()))
-        return (
-            HTTPRequest(
-                method=http_request.method,
-                destination=http_request.destination,
-                fields=fields,
-                body=http_request.body,
-            ),
-            sorted_formatted_headers,
-        )
+        return new_request, sorted_formatted_headers
 
     def _scope(self, date: str, signing_properties: SigV4SigningProperties) -> str:
         """Binds the signature to a specific date, AWS region, and service in the

@@ -14,6 +14,7 @@
 # TODO: move all of this out of _private
 
 from collections.abc import AsyncIterable
+from copy import deepcopy
 from dataclasses import dataclass, field
 from urllib.parse import urlparse
 
@@ -37,6 +38,23 @@ class HTTPRequest(http_interface.HTTPRequest):
         async for chunk in self.body:
             body += chunk
         return body
+
+    def __deepcopy__(self: Self, memo: dict[int, object] | None = None) -> Self:
+        if memo is None:
+            memo = {}
+
+        if id(self) in memo:
+            return memo[id(self)]
+
+        # the body can't be copied because its an iterator
+        new_instance = self.__class__(
+            destination=deepcopy(self.destination),
+            body=self.body,
+            method=self.method,
+            fields=deepcopy(self.fields),
+        )
+        memo[id(self)] = new_instance
+        return new_instance
 
 
 # HTTPResponse implements interfaces.http.HTTPResponse but cannot be explicitly
