@@ -9,6 +9,7 @@ use smithy.waiters#waitable
 /// Provides weather forecasts.
 @fakeProtocol
 @paginated(inputToken: "nextToken", outputToken: "nextToken", pageSize: "pageSize")
+@httpApiKeyAuth(name: "weather-auth", in: "header")
 service Weather {
     version: "2006-03-01"
     resources: [City]
