@@ -23,7 +23,6 @@ from urllib.parse import parse_qsl, quote
 from smithy_python import interfaces
 from smithy_python._private import URI, Field
 from smithy_python._private.auth import HTTPSigner
-from smithy_python._private.http import HTTPRequest
 from smithy_python.async_utils import async_list
 from smithy_python.exceptions import SmithyHTTPException, SmithyIdentityException
 from smithy_python.interfaces.auth import SigningProperties
@@ -60,7 +59,7 @@ class SigV4SigningProperties(SigningProperties):
 
 
 class SignatureKwargs(TypedDict):
-    http_request: HTTPRequest
+    http_request: HTTPRequestInterface
     formatted_headers: dict[str, str]
     signed_headers: str
     date: str
@@ -76,7 +75,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         http_request: HTTPRequestInterface,
         identity: AWSCredentialIdentity,
         signing_properties: SigV4SigningProperties,
-    ) -> HTTPRequest:
+    ) -> HTTPRequestInterface:
         """Sign a request using the `Authorization` header.
 
         Specifications can be found at:
@@ -159,7 +158,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         http_request: HTTPRequestInterface,
         identity: AWSCredentialIdentity,
         date: str,
-    ) -> tuple[HTTPRequest, dict[str, str]]:
+    ) -> tuple[HTTPRequestInterface, dict[str, str]]:
         """Generate a new request with only allowed headers.
 
         Also format allowed headers for signing. Remove headers that are excluded from
