@@ -20,9 +20,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import software.amazon.smithy.codegen.core.Symbol;
+import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
 import software.amazon.smithy.python.codegen.integration.PythonIntegration;
 import software.amazon.smithy.python.codegen.integration.RuntimeClientPlugin;
+import software.amazon.smithy.python.codegen.sections.ConfigSection;
+import software.amazon.smithy.utils.CodeInterceptor;
 
 /**
  * Generates the client's config object.
@@ -125,6 +128,37 @@ final class ConfigGenerator implements Runnable {
             .build()
     );
 
+    private static final List<ConfigProperty> HTTP_AUTH_PROPERTIES = List.of(
+        ConfigProperty.builder()
+            .name("http_auth_schemes")
+            .type(Symbol.builder()
+                .name("dict[str, HTTPAuthScheme[Any, Any]]")
+                .addReference(Symbol.builder()
+                    .name("HTTPAuthScheme")
+                    .namespace("smithy_python.interfaces.auth", ".")
+                    .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                    .build())
+                .addReference(Symbol.builder()
+                    .name("Any")
+                    .namespace("typing", ".")
+                    .putProperty("stdlib", true)
+                    .build())
+                .build())
+            .documentation("A map of http auth scheme ids to http auth schemes.")
+            .nullable(false)
+            .initialize(writer -> writer.write("self.http_auth_schemes = http_auth_schemes or {}"))
+            .build(),
+        ConfigProperty.builder()
+            .name("http_auth_scheme_resolver")
+            .type(Symbol.builder()
+                .name("AuthSchemeResolver")
+                .namespace("smithy_python.interfaces.auth", ".")
+                .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                .build())
+            .documentation("An http auth scheme resolver that determines the auth scheme for each operation.")
+            .build()
+    );
+
     private final PythonSettings settings;
     private final GenerationContext context;
 
@@ -152,7 +186,6 @@ final class ConfigGenerator implements Runnable {
             writer.write("$L: TypeAlias = Callable[[$T], None]", plugin.getName(), config);
         });
     }
-
 
     private void writeInterceptorsType(PythonWriter writer) {
         var symbolProvider = context.symbolProvider();
@@ -192,8 +225,13 @@ final class ConfigGenerator implements Runnable {
         // Smithy is transport agnostic, so we don't add http-related properties by default.
         // Nevertheless, HTTP is the most common use case so we standardize those settings
         // and add them in if the protocol is going to need them.
+        var serviceIndex = ServiceIndex.of(context.model());
         if (context.applicationProtocol().isHttpProtocol()) {
             properties.addAll(HTTP_PROPERTIES);
+            if (!serviceIndex.getAuthSchemes(settings.getService()).isEmpty()) {
+                properties.addAll(HTTP_AUTH_PROPERTIES);
+                writer.onSection(new AddAuthHelper());
+            }
         }
 
         var model = context.model();
@@ -208,6 +246,8 @@ final class ConfigGenerator implements Runnable {
             }
         }
 
+        var finalProperties = List.copyOf(properties);
+        writer.pushState(new ConfigSection(finalProperties));
         writer.addStdlibImport("dataclasses", "dataclass");
         writer.write("""
             @dataclass(init=False)
@@ -227,10 +267,11 @@ final class ConfigGenerator implements Runnable {
                     \"""
                     ${C|}
             """, symbol.getName(), context.settings().getService().getName(),
-            writer.consumer(w -> writePropertyDeclarations(w, properties)),
-            writer.consumer(w -> writeInitParams(w, properties)),
-            writer.consumer(w -> documentProperties(w, properties)),
-            writer.consumer(w -> initializeProperties(w, properties)));
+            writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
+            writer.consumer(w -> writeInitParams(w, finalProperties)),
+            writer.consumer(w -> documentProperties(w, finalProperties)),
+            writer.consumer(w -> initializeProperties(w, finalProperties)));
+        writer.popState();
     }
 
     private void writePropertyDeclarations(PythonWriter writer, Collection<ConfigProperty> properties) {
@@ -265,6 +306,35 @@ final class ConfigGenerator implements Runnable {
     private void initializeProperties(PythonWriter writer, Collection<ConfigProperty> properties) {
         for (ConfigProperty property : properties) {
             property.initialize(writer);
+        }
+    }
+
+    private static final class AddAuthHelper implements CodeInterceptor<ConfigSection, PythonWriter> {
+        @Override
+        public Class<ConfigSection> sectionType() {
+            return ConfigSection.class;
+        }
+
+        @Override
+        public void write(PythonWriter writer, String previousText, ConfigSection section) {
+            // First write the previous text, the generated config, back out. The entire
+            // section would otherwise be erased and replaced with what is written in this
+            // method.
+            writer.write(previousText);
+
+            // Add the helper function to the end of the config definition.
+            // Note that this is indented to keep it at the proper indentation level.
+            writer.write("""
+
+                    def add_http_auth_scheme(self, scheme: HTTPAuthScheme[Any, Any]) -> None:
+                        \"""Add an auth scheme to the collection of available auth schemes.
+
+                        Using this method ensures the correct key is used.
+
+                        :param scheme: The auth scheme to add.
+                        \"""
+                        self.http_auth_schemes[scheme.scheme_id] = scheme
+                """);
         }
     }
 }
