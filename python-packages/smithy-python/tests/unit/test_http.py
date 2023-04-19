@@ -11,6 +11,8 @@
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
 
+from copy import deepcopy
+
 import pytest
 
 from smithy_python._private import URI, Field, Fields, HostType
@@ -151,6 +153,27 @@ async def test_request() -> None:
     assert request.fields == headers
     request_body = b"".join([chunk async for chunk in request.body])
     assert request_body == b"test body"
+
+
+async def test_request_deepcopy() -> None:
+    uri = URI(host="test.aws.dev")
+    headers = Fields([Field(name="foo", values=["bar"])])
+    request = HTTPRequest(
+        method="GET",
+        destination=uri,
+        fields=headers,
+        body=async_list([b"test body"]),
+    )
+
+    request_copy = deepcopy(request)
+    assert request_copy.method is request.method
+    assert request_copy.destination is not uri
+    assert request_copy.destination == uri
+    assert request_copy.fields is not headers
+    assert request_copy.fields == headers
+    assert request_copy.body is request.body
+    request_copy_body = b"".join([chunk async for chunk in request_copy.body])
+    assert request_copy_body == b"test body"
 
 
 async def test_response() -> None:
