@@ -15,7 +15,6 @@ from ..interfaces.auth import HTTPSigner as HTTPSignerInterface
 from ..interfaces.auth import SigningPropertiesType_contra
 from ..interfaces.http import HTTPRequest as HTTPRequestInterface
 from ..interfaces.identity import IdentityType_contra
-from .http import HTTPRequest
 
 
 class HTTPSigner(
@@ -29,7 +28,7 @@ class HTTPSigner(
         http_request: HTTPRequestInterface,
         identity: IdentityType_contra,
         signing_properties: SigningPropertiesType_contra,
-    ) -> HTTPRequest:
+    ) -> HTTPRequestInterface:
         """Generate a new signed HTTPRequest based on the one provided.
 
         :param http_request: The HTTP request to sign.

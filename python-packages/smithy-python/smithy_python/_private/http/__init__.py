@@ -39,7 +39,9 @@ class HTTPRequest(http_interface.HTTPRequest):
             body += chunk
         return body
 
-    def __deepcopy__(self: Self, memo: dict[int, object] | None = None) -> Self:
+    def __deepcopy__(
+        self, memo: dict[int, http_interface.HTTPRequest] | None = None
+    ) -> http_interface.HTTPRequest:
         if memo is None:
             memo = {}
 
