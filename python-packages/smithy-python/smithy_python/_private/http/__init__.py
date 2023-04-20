@@ -55,7 +55,7 @@ class HTTPRequest(http_interface.HTTPRequest):
             method=self.method,
             fields=deepcopy(self.fields, memo),
         )
-        memo[id(self)] = new_instance
+        memo[id(new_instance)] = new_instance
         return new_instance
 
 
