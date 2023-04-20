@@ -38,7 +38,7 @@ class IdentityProperties(TypedDict):
     ...
 
 
-IdentityPropertiesType = TypeVar("IdentityPropertiesType", bound=IdentityProperties)
+IdentityPropertiesType_contra = TypeVar("IdentityPropertiesType", bound=IdentityProperties, contravariant=True)
 
 
 class IdentityResolver(Protocol):
@@ -48,7 +48,7 @@ class IdentityResolver(Protocol):
     """
 
     async def get_identity(
-        self, *, identity_properties: IdentityPropertiesType
+        self, *, identity_properties: IdentityPropertiesType_contra
     ) -> IdentityType:
         """Load the user's identity from this resolver.
 

@@ -17,7 +17,9 @@ package software.amazon.smithy.python.codegen;
 
 import java.util.Collection;
 import java.util.LinkedHashSet;
+import java.util.Set;
 import software.amazon.smithy.codegen.core.SymbolReference;
+import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
@@ -25,8 +27,11 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.python.codegen.integration.PythonIntegration;
 import software.amazon.smithy.python.codegen.integration.RuntimeClientPlugin;
+import software.amazon.smithy.python.codegen.sections.InitializeHttpAuthParametersSection;
 import software.amazon.smithy.python.codegen.sections.ResolveEndpointSection;
+import software.amazon.smithy.python.codegen.sections.ResolveIdentitySection;
 import software.amazon.smithy.python.codegen.sections.SendRequestSection;
+import software.amazon.smithy.python.codegen.sections.SignRequestSection;
 
 /**
  * Generates the actual client and implements operations.
@@ -136,10 +141,11 @@ final class ClientGenerator implements Runnable {
                     serialize: Callable[[Input, $5T], Awaitable[$2T]],
                     deserialize: Callable[[$3T, $5T], Awaitable[Output]],
                     config: $5T,
+                    operation_name: str,
                 ) -> Output:
                     try:
                         return await self._handle_execution(
-                            input, plugins, serialize, deserialize, config
+                            input, plugins, serialize, deserialize, config, operation_name
                         )
                     except Exception as e:
                         # Make sure every exception that we throw is an instance of $4T so
@@ -155,6 +161,7 @@ final class ClientGenerator implements Runnable {
                     serialize: Callable[[Input, $5T], Awaitable[$2T]],
                     deserialize: Callable[[$3T, $5T], Awaitable[Output]],
                     config: $5T,
+                    operation_name: str,
                 ) -> Output:
                     context: InterceptorContext[Input, None, None, None] = InterceptorContext(
                         request=input,
@@ -228,6 +235,7 @@ final class ClientGenerator implements Runnable {
                                 interceptors,
                                 context_with_transport_request.copy(),
                                 config,
+                                operation_name,
                             )
 
                             # We perform this type-ignored re-assignment because `context` needs
@@ -276,6 +284,7 @@ final class ClientGenerator implements Runnable {
                     interceptors: list[Interceptor[Input, Output, $2T, $3T]],
                     context: InterceptorContext[Input, None, $2T, None],
                     config: $5T,
+                    operation_name: str,
                 ) -> InterceptorContext[Input, Output, $2T, $3T | None]:
                     try:
                         # assert config.interceptors is not None
@@ -283,13 +292,60 @@ final class ClientGenerator implements Runnable {
                         for interceptor in interceptors:
                             interceptor.read_before_attempt(context)
 
-                        # Steps 7b-e haven't had their python designs finalized yet
-                        # Step 7b: Invoke service_auth_scheme_resolver.resolve_auth_scheme
-                        # Step 7c: Invoke auth_scheme.identity_resolver
-                        # Step 7d: Invoke auth_scheme.signer
-                        # Step 7e: Invoke identity_resolver.resolve_identity
-
                 """, pluginSymbol, transportRequest, transportResponse, errorSymbol, configSymbol);
+
+        boolean supportsAuth = !ServiceIndex.of(context.model()).getAuthSchemes(service).isEmpty();
+        writer.pushState(new ResolveIdentitySection());
+        if (context.applicationProtocol().isHttpProtocol() && supportsAuth) {
+            // Depending on how complicated this gets, we might have to pass through
+            // a function to resolve this to get per-operation resolution.
+            writer.addStdlibImport("typing", "Any");
+            writer.pushState(new InitializeHttpAuthParametersSection());
+            writer.write("""
+                        # Step 7b: Invoke service_auth_scheme_resolver.resolve_auth_scheme
+                        auth_parameters: Any = {
+                            "operation": operation_name
+                        }
+
+                """);
+            writer.popState();
+
+            // TODO: Generate the auth scheme resolver and options
+            writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+            writer.addImport("smithy_python.interfaces.identity", "Identity");
+            writer.addImports("smithy_python.interfaces.auth", Set.of("HTTPSigner", "HTTPAuthOption"));
+            writer.write("""
+                        if not config.http_auth_scheme_resolver:
+                            raise $1T("No http_auth_scheme_resolver found on the operation config.")
+
+                        auth_options = config.http_auth_scheme_resolver.resolve_auth_scheme(
+                            auth_parameters=auth_parameters
+                        )
+                        auth_option: HTTPAuthOption | None = None
+                        for option in auth_options:
+                            if option.scheme_id in config.http_auth_schemes:
+                                auth_option = option
+
+                        signer: HTTPSigner[Any, Any] | None = None
+                        identity: Identity | None = None
+
+                        if auth_option:
+                            auth_scheme = config.http_auth_schemes[auth_option.scheme_id]
+
+                            # Step 7c: Invoke auth_scheme.identity_resolver
+                            identity_resolver = auth_scheme.identity_resolver
+
+                            # Step 7d: Invoke auth_scheme.signer
+                            signer = auth_scheme.signer
+
+                            # Step 7e: Invoke identity_resolver.get_identity
+                            identity = await identity_resolver.get_identity(
+                                identity_properties=auth_option.identity_properties
+                            )
+
+                """, errorSymbol);
+        }
+        writer.popState();
 
         writer.pushState(new ResolveEndpointSection());
         if (context.applicationProtocol().isHttpProtocol()) {
@@ -340,9 +396,23 @@ final class ClientGenerator implements Runnable {
                         for interceptor in interceptors:
                             interceptor.read_before_signing(context)
 
-                        # Step 7i: Invoke signer.sign_request
-                        # This step hasn't had its python design finalized yet
+                """);
 
+        writer.pushState(new SignRequestSection());
+        if (context.applicationProtocol().isHttpProtocol() && supportsAuth) {
+            writer.write("""
+                        # Step 7i: sign the request
+                        if auth_option and signer:
+                            context._transport_request = await signer.sign(
+                                http_request=context.transport_request,
+                                identity=identity,
+                                signing_properties=auth_option.signer_properties,
+                            )
+                """);
+        }
+        writer.popState();
+
+        writer.write("""
                         # Step 7j: Invoke read_after_signing
                         for interceptor in interceptors:
                             interceptor.read_after_signing(context)
@@ -560,8 +630,9 @@ final class ClientGenerator implements Runnable {
                         serialize=$T,
                         deserialize=$T,
                         config=self._config,
+                        operation_name=$S,
                     )
-                    """, serSymbol, deserSymbol);
+                    """, serSymbol, deserSymbol, operation.getId().getName());
             }
         });
     }

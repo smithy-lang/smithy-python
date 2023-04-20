@@ -5,8 +5,10 @@ namespace example.weather
 use smithy.test#httpRequestTests
 use smithy.test#httpResponseTests
 use smithy.waiters#waitable
+use aws.protocols#restJson1
 
 /// Provides weather forecasts.
+@restJson1
 @fakeProtocol
 @paginated(inputToken: "nextToken", outputToken: "nextToken", pageSize: "pageSize")
 @httpApiKeyAuth(name: "weather-auth", in: "header")
