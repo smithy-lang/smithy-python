@@ -183,8 +183,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
             if l_key in HEADERS_EXCLUDED_FROM_SIGNING:
                 fields.remove_field(field.name)
             else:
-                value = field.as_string(delimiter=",")
-                formatted_headers[l_key] = value
+                formatted_headers[l_key] = field.as_string(delimiter=",")
         if "host" not in formatted_headers:
             uri = new_request.destination
             if uri.port is not None and DEFAULT_PORTS.get(uri.scheme) == uri.port:
