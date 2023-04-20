@@ -50,10 +50,10 @@ class HTTPRequest(http_interface.HTTPRequest):
 
         # the body can't be copied because its an iterator
         new_instance = self.__class__(
-            destination=deepcopy(self.destination),
+            destination=deepcopy(self.destination, memo),
             body=self.body,
             method=self.method,
-            fields=deepcopy(self.fields),
+            fields=deepcopy(self.fields, memo),
         )
         memo[id(self)] = new_instance
         return new_instance
