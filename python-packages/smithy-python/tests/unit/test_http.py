@@ -175,6 +175,10 @@ async def test_request_deepcopy() -> None:
     request_copy_body = b"".join([chunk async for chunk in request_copy.body])
     assert request_copy_body == b"test body"
 
+    memo = {id(request_copy): request_copy}
+    request_copy_deepcopy = deepcopy(request_copy, memo)
+    assert request_copy_deepcopy is request_copy
+
 
 async def test_response() -> None:
     headers = Fields([Field(name="foo", values=["bar"])])
