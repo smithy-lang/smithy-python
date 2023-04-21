@@ -315,9 +315,6 @@ final class ClientGenerator implements Runnable {
             writer.addImport("smithy_python.interfaces.identity", "Identity");
             writer.addImports("smithy_python.interfaces.auth", Set.of("HTTPSigner", "HTTPAuthOption"));
             writer.write("""
-                        if not config.http_auth_scheme_resolver:
-                            raise $1T("No http_auth_scheme_resolver found on the operation config.")
-
                         auth_options = config.http_auth_scheme_resolver.resolve_auth_scheme(
                             auth_parameters=auth_parameters
                         )
@@ -343,7 +340,7 @@ final class ClientGenerator implements Runnable {
                                 identity_properties=auth_option.identity_properties
                             )
 
-                """, errorSymbol);
+                """);
         }
         writer.popState();
 

@@ -16,7 +16,7 @@ import software.amazon.smithy.utils.ToSmithyBuilder;
  *
  * <p>This allows for automatically populating the intermediate config.
  */
-public class DerivedProperty implements ToSmithyBuilder<DerivedProperty> {
+public final class DerivedProperty implements ToSmithyBuilder<DerivedProperty> {
     private final String name;
     private final Source source;
     private final Symbol type;

@@ -128,43 +128,44 @@ final class ConfigGenerator implements Runnable {
             .build()
     );
 
-    private static final List<ConfigProperty> HTTP_AUTH_PROPERTIES = List.of(
-        ConfigProperty.builder()
-            .name("http_auth_schemes")
-            .type(Symbol.builder()
-                .name("dict[str, HTTPAuthScheme[Any, Any]]")
-                .addReference(Symbol.builder()
-                    .name("HTTPAuthScheme")
-                    .namespace("smithy_python.interfaces.auth", ".")
-                    .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
-                    .build())
-                .addReference(Symbol.builder()
-                    .name("Any")
-                    .namespace("typing", ".")
-                    .putProperty("stdlib", true)
-                    .build())
-                .build())
-            .documentation("A map of http auth scheme ids to http auth schemes.")
-            .nullable(false)
-            .initialize(writer -> writer.write("self.http_auth_schemes = http_auth_schemes or {}"))
-            .build(),
-        ConfigProperty.builder()
-            .name("http_auth_scheme_resolver")
-            .type(Symbol.builder()
-                .name("AuthSchemeResolver")
-                .namespace("smithy_python.interfaces.auth", ".")
-                .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
-                .build())
-            .documentation("An http auth scheme resolver that determines the auth scheme for each operation.")
-            .build()
-    );
-
     private final PythonSettings settings;
     private final GenerationContext context;
 
     ConfigGenerator(PythonSettings settings, GenerationContext context) {
         this.context = context;
         this.settings = settings;
+    }
+
+    private static List<ConfigProperty> getHttpAuthProperties(PythonSettings settings) {
+        return List.of(
+            ConfigProperty.builder()
+                .name("http_auth_schemes")
+                .type(Symbol.builder()
+                    .name("dict[str, HTTPAuthScheme[Any, Any]]")
+                    .addReference(Symbol.builder()
+                        .name("HTTPAuthScheme")
+                        .namespace("smithy_python.interfaces.auth", ".")
+                        .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                        .build())
+                    .addReference(Symbol.builder()
+                        .name("Any")
+                        .namespace("typing", ".")
+                        .putProperty("stdlib", true)
+                        .build())
+                    .build())
+                .documentation("A map of http auth scheme ids to http auth schemes.")
+                .nullable(false)
+                .initialize(writer -> writer.write("self.http_auth_schemes = http_auth_schemes or {}"))
+                .build(),
+            ConfigProperty.builder()
+                .name("http_auth_scheme_resolver")
+                .type(CodegenUtils.getHttpAuthSchemeResolverSymbol(settings))
+                .documentation("An http auth scheme resolver that determines the auth scheme for each operation.")
+                .nullable(false)
+                .initialize(writer -> writer.write(
+                    "self.http_auth_scheme_resolver = http_auth_scheme_resolver or HTTPAuthSchemeResolver()"))
+                .build()
+        );
     }
 
     @Override
@@ -229,7 +230,7 @@ final class ConfigGenerator implements Runnable {
         if (context.applicationProtocol().isHttpProtocol()) {
             properties.addAll(HTTP_PROPERTIES);
             if (!serviceIndex.getAuthSchemes(settings.getService()).isEmpty()) {
-                properties.addAll(HTTP_AUTH_PROPERTIES);
+                properties.addAll(getHttpAuthProperties(settings));
                 writer.onSection(new AddAuthHelper());
             }
         }

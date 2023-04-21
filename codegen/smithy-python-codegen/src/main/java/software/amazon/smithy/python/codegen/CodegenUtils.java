@@ -146,6 +146,34 @@ public final class CodegenUtils {
     }
 
     /**
+     * Gets the symbol for the http auth parameters object.
+     *
+     * @param settings The client settings, used to account for module configuration.
+     * @return Returns the symbol for http auth params.
+     */
+    public static Symbol getHttpAuthParamsSymbol(PythonSettings settings) {
+        return Symbol.builder()
+            .name("HTTPAuthParams")
+            .namespace(format("%s.auth", settings.getModuleName()), ".")
+            .definitionFile(format("./%s/auth.py", settings.getModuleName()))
+            .build();
+    }
+
+    /**
+     * Gets the symbol for the http auth scheme resolver.
+     *
+     * @param settings The client settings, used to account for module configuration.
+     * @return Returns the http auth scheme resolver symbol.
+     */
+    public static Symbol getHttpAuthSchemeResolverSymbol(PythonSettings settings) {
+        return Symbol.builder()
+            .name("HTTPAuthSchemeResolver")
+            .namespace(format("%s.auth", settings.getModuleName()), ".")
+            .definitionFile(format("./%s/auth.py", settings.getModuleName()))
+            .build();
+    }
+
+    /**
      * Determines whether a given member is probably the main "message" of an error shape.
      *
      * @param model The whole service model.
