@@ -167,8 +167,7 @@ async def test_request_deepcopy() -> None:
 
     request_copy = deepcopy(request)
     assert request_copy.method is request.method
-    assert request_copy.destination is not uri
-    assert request_copy.destination == uri
+    assert request_copy.destination is uri
     assert request_copy.fields is not headers
     assert request_copy.fields == headers
     assert request_copy.body is request.body
