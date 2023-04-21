@@ -19,7 +19,7 @@ plugins {
     signing
     checkstyle
     jacoco
-    id("com.github.spotbugs") version "5.0.3"
+    id("com.github.spotbugs") version "5.0.14"
     id("io.codearte.nexus-staging") version "0.30.0"
 }
 
@@ -230,9 +230,9 @@ subprojects {
         // Configure jacoco to generate an HTML report.
         tasks.jacocoTestReport {
             reports {
-                xml.isEnabled = false
-                csv.isEnabled = false
-                html.destination = file("$buildDir/reports/jacoco")
+                xml.required.set(false)
+                csv.required.set(false)
+                html.outputLocation.set(file("$buildDir/reports/jacoco"))
             }
         }
 
