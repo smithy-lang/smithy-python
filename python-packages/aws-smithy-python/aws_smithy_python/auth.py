@@ -119,12 +119,8 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
 
         self._validate_identity_and_signing_properties(identity, signing_properties)
         date = datetime.now(tz=timezone.utc).strftime(SIGV4_TIMESTAMP_FORMAT)
-        (
-            new_request,
-            formatted_headers,
-        ) = await self._generate_new_request_and_format_headers_for_signing(
-            http_request, identity, date
-        )
+        new_request = await self._generate_new_request(http_request, identity, date)
+        formatted_headers = self._format_headers_for_signing(new_request)
         # Signed headers are comprised of just the header keys delimited by
         # a semicolon.
         signed_headers = ";".join(formatted_headers)
@@ -153,17 +149,13 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
                 f"but received {type(identity)}."
             )
 
-    async def _generate_new_request_and_format_headers_for_signing(
+    async def _generate_new_request(
         self,
         http_request: HTTPRequestInterface,
         identity: AWSCredentialIdentity,
         date: str,
     ) -> tuple[HTTPRequestInterface, dict[str, str]]:
-        """Generate a new request with only allowed headers.
-
-        Also format allowed headers for signing. Remove headers that are excluded from
-        SigV4 signature computation.
-        """
+        """Generate a new request with only allowed headers."""
         new_request = deepcopy(http_request)
         fields = new_request.fields
         # Use `set_field `to overwrite any existing headers instead of `extend`
@@ -176,24 +168,29 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         elif "X-Amz-Security-Token" in fields:
             fields.remove_field("X-Amz-Security-Token")
 
-        formatted_headers = {}
-        # copy the fields to avoid mutating the original ordered dict
-        for field in list(fields):
-            l_key = field.name.lower()
-            if l_key in HEADERS_EXCLUDED_FROM_SIGNING:
-                fields.remove_field(field.name)
-            else:
-                formatted_headers[l_key] = field.as_string(delimiter=",")
+        return new_request
+
+    def _format_headers_for_signing(
+        self, http_request: HTTPRequestInterface
+    ) -> dict[str, str]:
+        """Format headers for signing.
+
+        Remove any headers that should not be signed, and add the host header if not
+        present.
+        """
+        fields = http_request.fields
+        formatted_headers = {
+            field.name.lower(): field.as_string(delimiter=",")
+            for field in fields
+            if field.name.lower() not in HEADERS_EXCLUDED_FROM_SIGNING
+        }
         if "host" not in formatted_headers:
-            uri = new_request.destination
+            uri = http_request.destination
             if uri.port is not None and DEFAULT_PORTS.get(uri.scheme) == uri.port:
                 # remove port from netloc
                 uri = self._generate_new_uri(uri, {"port": None})
-                new_request.destination = uri
             formatted_headers["host"] = uri.netloc
-            fields.set_field(Field(name="Host", values=[uri.netloc]))
-        sorted_formatted_headers = dict(sorted(formatted_headers.items()))
-        return new_request, sorted_formatted_headers
+        return dict(sorted(formatted_headers.items()))
 
     def _scope(self, date: str, signing_properties: SigV4SigningProperties) -> str:
         """Binds the signature to a specific date, AWS region, and service in the

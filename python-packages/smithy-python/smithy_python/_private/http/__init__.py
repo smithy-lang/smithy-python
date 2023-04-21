@@ -48,9 +48,10 @@ class HTTPRequest(http_interface.HTTPRequest):
         if id(self) in memo:
             return memo[id(self)]
 
+        # the destination doesn't need to be copied because it's immutable
         # the body can't be copied because its an iterator
         new_instance = self.__class__(
-            destination=deepcopy(self.destination, memo),
+            destination=self.destination,
             body=self.body,
             method=self.method,
             fields=deepcopy(self.fields, memo),
