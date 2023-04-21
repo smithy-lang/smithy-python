@@ -44,6 +44,7 @@ import software.amazon.smithy.codegen.core.directed.GenerateServiceDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateStructureDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateUnionDirective;
 import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.model.neighbor.Walker;
 import software.amazon.smithy.model.shapes.CollectionShape;
 import software.amazon.smithy.model.shapes.MapShape;
@@ -108,6 +109,12 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
     public void customizeBeforeShapeGeneration(CustomizeDirective<GenerationContext, PythonSettings> directive) {
         generateServiceErrors(directive.settings(), directive.context().writerDelegator());
         new ConfigGenerator(directive.settings(), directive.context()).run();
+
+        var serviceIndex = ServiceIndex.of(directive.model());
+        if (directive.context().applicationProtocol().isHttpProtocol()
+                && !serviceIndex.getAuthSchemes(directive.service()).isEmpty()) {
+            new HttpAuthGenerator(directive.context(), directive.settings()).run();
+        }
     }
 
     @Override
