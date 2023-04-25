@@ -1,0 +1,32 @@
+import asyncio
+from smithy_python.async_utils import AsyncList, RewindableAsyncIterable
+x = RewindableAsyncIterable([b'a'*50, b'b'*50])
+async def foo(x):
+    async for i in x:
+        # breakpoint()
+        print(i)
+    print('done')
+asyncio.run(x.seek(75))
+asyncio.run(foo(x))
+asyncio.run(x.seek(25))
+asyncio.run(foo(x))
+asyncio.run(x.seek(50))
+# print(asyncio.run(x.seek(0)))
+asyncio.run(foo(x))
+asyncio.run(x.seek(0))
+asyncio.run(foo(x))
+asyncio.run(x.seek(40))
+asyncio.run(foo(x))
+asyncio.run(x.seek(60))
+asyncio.run(foo(x))
+asyncio.run(x.seek(35))
+asyncio.run(foo(x))
+asyncio.run(x.seek(15))
+asyncio.run(foo(x))
+asyncio.run(x.seek(100))
+asyncio.run(foo(x))
+# print(asyncio.run(x.tell()))
+
+# x = RewindableAsyncIterable([1,2,3,4,5])
+# asyncio.run(foo(x))
+# asyncio.run(foo(x))
