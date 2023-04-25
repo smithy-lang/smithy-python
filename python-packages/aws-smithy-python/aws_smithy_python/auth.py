@@ -17,13 +17,13 @@ from copy import deepcopy
 from datetime import datetime, timezone
 from hashlib import sha256
 from io import BytesIO
-from typing import AsyncGenerator, NotRequired, TypedDict
+from typing import Any, AsyncGenerator, AsyncIterable, NotRequired, TypedDict
 from urllib.parse import parse_qsl, quote
 
 from smithy_python import interfaces
 from smithy_python._private import URI, Field
 from smithy_python._private.auth import HTTPSigner
-from smithy_python.async_utils import async_list
+from smithy_python.async_utils import AsyncList
 from smithy_python.exceptions import SmithyHTTPException, SmithyIdentityException
 from smithy_python.interfaces.auth import SigningProperties
 from smithy_python.interfaces.http import HTTPRequest as HTTPRequestInterface
@@ -154,7 +154,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         http_request: HTTPRequestInterface,
         identity: AWSCredentialIdentity,
         date: str,
-    ) -> tuple[HTTPRequestInterface, dict[str, str]]:
+    ) -> HTTPRequestInterface:
         """Generate a new request with only allowed headers."""
         new_request = deepcopy(http_request)
         fields = new_request.fields
@@ -336,12 +336,18 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
             "performance issues for large request bodies."
         )
         checksum = sha256()
-        buffer = []
-        async for chunk in self._read_request_body(http_request):
-            checksum.update(chunk)
-            buffer.append(chunk)
-        # reset request body iterable to be read again later
-        http_request.body = async_list(buffer)
+        body = http_request.body
+        if hasattr(body, "seek") and hasattr(body, "tell"):
+            position = body.tell()
+            async for chunk in body:
+                checksum.update(chunk)
+            await body.seek(position)
+        else:
+            buffer = []
+            async for chunk in body:
+                buffer.append(chunk)
+                checksum.update(chunk)
+            http_request.body = AsyncList(buffer)
         return checksum.hexdigest()
 
     def _is_streaming_checksum_payload(
@@ -361,17 +367,21 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
 
         return signing_properties.get("payload_signing_enabled", True)
 
-    async def _read_request_body(
-        self, http_request: HTTPRequestInterface
+    async def _apply_checksum(
+        self, body: AsyncIterable[bytes], checksum: Any
     ) -> AsyncGenerator[bytes, None]:
-        """Read the request body into smaller chunks."""
-        body = http_request.body
+        """Apply the checksum to the body and yield the chunks.
+
+        If the size of each chunk exceeds payload buffer size, the chunk will be broken
+        up into smaller chunks.
+        """
         async for chunk in body:
             stream = BytesIO(chunk)
             while True:
                 # Create smaller chunks in case the chunk is too large
                 if not (sub_chunk := stream.read(PAYLOAD_BUFFER)):
                     break
+                checksum.update(sub_chunk)
                 yield sub_chunk
 
     def string_to_sign(self, *, canonical_request: str, date: str, scope: str) -> str:

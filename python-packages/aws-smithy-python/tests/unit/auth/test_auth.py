@@ -26,7 +26,7 @@ from freezegun import freeze_time
 from smithy_python._private import URI, Field, Fields
 from smithy_python._private.http import HTTPRequest
 from smithy_python._private.identity import Identity
-from smithy_python.async_utils import async_list
+from smithy_python.async_utils import AsyncList, RewindableAsyncIterable
 from smithy_python.exceptions import SmithyHTTPException, SmithyIdentityException
 
 from aws_smithy_python.auth import (
@@ -62,7 +62,10 @@ SIGV4_REQUIRED_QUERY_PARAMS: tuple[str, ...] = (
     "X-Amz-SignedHeaders",
     "X-Amz-Signature",
 )
-EMPTY_ASYNC_LIST: AsyncIterable[bytes] = async_list([])
+EMPTY_ASYNC_LIST: AsyncList[bytes] = AsyncList([])
+EMPTY_REWINDABLE_ASYNC_ITERABLE: RewindableAsyncIterable[
+    bytes
+] = RewindableAsyncIterable([])
 
 
 @pytest.fixture(scope="module")
@@ -78,7 +81,7 @@ def http_request() -> HTTPRequest:
             ]
         ),
         method="GET",
-        body=async_list([b"foo"]),
+        body=AsyncList([b"foo"]),
     )
 
 
@@ -162,16 +165,22 @@ TEST_CASES: list[tuple[bytes, str, str, str, str | None]] = generate_test_cases(
 )
 
 
-def generate_async_byte_list(data: BytesIO) -> AsyncIterable[bytes]:
+def generate_async_byte_list(
+    data: BytesIO, rewindable: bool = False
+) -> AsyncIterable[bytes]:
     stream = []
     part = data.read(PAYLOAD_BUFFER)
     while part:
         stream.append(part)
         part = data.read(PAYLOAD_BUFFER)
-    return async_list(stream)
+    if rewindable:
+        return RewindableAsyncIterable(stream)
+    return AsyncList(stream)
 
 
-def smithy_request_from_raw_request(raw_request: bytes) -> HTTPRequest:
+def smithy_request_from_raw_request(
+    raw_request: bytes, rewindable: bool = False
+) -> HTTPRequest:
     decoded = raw_request.decode()
     # The BaseHTTPRequestHandler chokes on extra spaces in the path,
     # so we need to replace them with the URL encoded whitespace `%20`.
@@ -256,6 +265,44 @@ async def test_sigv4_signing_components(
 )
 @pytest.mark.asyncio
 @freeze_time(DATE)
+async def test_sigv4_signing_components_rewindable_body(
+    sigv4_signer: SigV4Signer,
+    raw_request: bytes,
+    canonical_request: str,
+    string_to_sign: str,
+    authorization_header: str,
+    token: str | None,
+) -> None:
+    identity = AWSCredentialIdentity(
+        access_key_id=ACCESS_KEY, secret_access_key=SECRET_KEY, session_token=token
+    )
+    request = smithy_request_from_raw_request(raw_request, True)
+    sigv4_signer._validate_identity_and_signing_properties(identity, SIGNING_PROPERTIES)
+    new_request = await sigv4_signer._generate_new_request(request, identity, DATE_STR)
+    formatted_headers = sigv4_signer._format_headers_for_signing(new_request)
+    signed_headers = ";".join(formatted_headers)
+    with pytest.warns():
+        actual_canonical_request = await sigv4_signer.canonical_request(
+            http_request=new_request,
+            formatted_headers=formatted_headers,
+            signed_headers=signed_headers,
+            signing_properties=SIGNING_PROPERTIES,
+        )
+    assert actual_canonical_request == canonical_request
+    request = smithy_request_from_raw_request(raw_request)
+    scope = sigv4_signer._scope(DATE_STR, SIGNING_PROPERTIES)
+    actual_string_to_sign = sigv4_signer.string_to_sign(
+        canonical_request=actual_canonical_request, date=DATE_STR, scope=scope
+    )
+    assert actual_string_to_sign == string_to_sign
+
+
+@pytest.mark.parametrize(
+    "raw_request, canonical_request, string_to_sign, authorization_header, token",
+    TEST_CASES,
+)
+@pytest.mark.asyncio
+@freeze_time(DATE)
 async def test_sigv4_signing(
     sigv4_signer: SigV4Signer,
     raw_request: bytes,
@@ -268,6 +315,34 @@ async def test_sigv4_signing(
         access_key_id=ACCESS_KEY, secret_access_key=SECRET_KEY, session_token=token
     )
     request = smithy_request_from_raw_request(raw_request)
+    with pytest.warns():
+        new_request = await sigv4_signer.sign(
+            http_request=request,
+            identity=identity,
+            signing_properties=SIGNING_PROPERTIES,
+        )
+    actual_auth_header = new_request.fields.get_field("Authorization").as_string()
+    assert actual_auth_header == authorization_header
+
+
+@pytest.mark.parametrize(
+    "raw_request, canonical_request, string_to_sign, authorization_header, token",
+    TEST_CASES,
+)
+@pytest.mark.asyncio
+@freeze_time(DATE)
+async def test_sigv4_signing_rewindable_body(
+    sigv4_signer: SigV4Signer,
+    raw_request: bytes,
+    canonical_request: str,
+    string_to_sign: str,
+    authorization_header: str,
+    token: str | None,
+) -> None:
+    identity = AWSCredentialIdentity(
+        access_key_id=ACCESS_KEY, secret_access_key=SECRET_KEY, session_token=token
+    )
+    request = smithy_request_from_raw_request(raw_request, True)
     with pytest.warns():
         new_request = await sigv4_signer.sign(
             http_request=request,
@@ -332,7 +407,7 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=async_list([b"foo"]),
+                body=AsyncList([b"foo"]),
                 method="GET",
                 fields=Fields(),
             ),
@@ -356,7 +431,7 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=async_list([b"a" * PAYLOAD_BUFFER * 2, b"b" * PAYLOAD_BUFFER * 2]),
+                body=AsyncList([b"a" * PAYLOAD_BUFFER * 2, b"b" * PAYLOAD_BUFFER * 2]),
                 method="GET",
                 fields=Fields(),
             ),
@@ -368,7 +443,69 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=async_list([b"foo", b"bar", b"hello", b"world"]),
+                body=AsyncList([b"foo", b"bar", b"hello", b"world"]),
+                method="GET",
+                fields=Fields(),
+            ),
+            SIGNING_PROPERTIES,
+            None,
+            sha256(b"foobarhelloworld").hexdigest(),
+            b"foobarhelloworld",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com"),
+                body=EMPTY_REWINDABLE_ASYNC_ITERABLE,
+                method="GET",
+                fields=Fields(),
+            ),
+            SIGNING_PROPERTIES,
+            None,
+            EMPTY_SHA256_HASH,
+            b"",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com"),
+                body=RewindableAsyncIterable([b"foo"]),
+                method="GET",
+                fields=Fields(),
+            ),
+            SIGNING_PROPERTIES,
+            None,
+            sha256(b"foo").hexdigest(),
+            b"foo",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com", scheme="http"),
+                body=EMPTY_REWINDABLE_ASYNC_ITERABLE,
+                method="GET",
+                fields=Fields(),
+            ),
+            SIGNING_PROPERTIES,
+            None,
+            EMPTY_SHA256_HASH,
+            b"",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com"),
+                body=RewindableAsyncIterable(
+                    [b"a" * PAYLOAD_BUFFER * 2, b"b" * PAYLOAD_BUFFER * 2]
+                ),
+                method="GET",
+                fields=Fields(),
+            ),
+            SIGNING_PROPERTIES,
+            None,
+            sha256(b"a" * PAYLOAD_BUFFER * 2 + b"b" * PAYLOAD_BUFFER * 2).hexdigest(),
+            b"a" * PAYLOAD_BUFFER * 2 + b"b" * PAYLOAD_BUFFER * 2,
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com"),
+                body=RewindableAsyncIterable([b"foo", b"bar", b"hello", b"world"]),
                 method="GET",
                 fields=Fields(),
             ),
@@ -426,6 +563,30 @@ async def test_signed_payload(
             HTTPRequest(
                 destination=URI(host="example.com"),
                 body=EMPTY_ASYNC_LIST,
+                method="GET",
+                fields=Fields(),
+            ),
+            SIGNING_PROPERTIES,
+            "foo",
+            "foo",
+            b"",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com"),
+                body=EMPTY_REWINDABLE_ASYNC_ITERABLE,
+                method="GET",
+                fields=Fields(),
+            ),
+            {"payload_signing_enabled": False, "region": "us-east-1", "service": "s3"},
+            None,
+            UNSIGNED_PAYLOAD,
+            b"",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com"),
+                body=EMPTY_REWINDABLE_ASYNC_ITERABLE,
                 method="GET",
                 fields=Fields(),
             ),

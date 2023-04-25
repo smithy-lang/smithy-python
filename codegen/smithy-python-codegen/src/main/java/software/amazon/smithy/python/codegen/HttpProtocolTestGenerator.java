@@ -620,7 +620,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
         );
         writer.addImport("smithy_python._private", "tuples_to_fields");
         writer.addImport("smithy_python._private.http", "HTTPResponse", "_HTTPResponse");
-        writer.addImport("smithy_python.async_utils", "async_list");
+        writer.addImport("smithy_python.async_utils", "AsyncList");
 
         writer.write("""
                         class $1L($2T):
@@ -655,7 +655,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 return _HTTPResponse(
                                     status=self.status,
                                     fields=self.fields,
-                                    body=async_list([self.body]),
+                                    body=AsyncList([self.body]),
                                 )
                         """,
             TEST_HTTP_SERVICE_ERR_SYMBOL,
