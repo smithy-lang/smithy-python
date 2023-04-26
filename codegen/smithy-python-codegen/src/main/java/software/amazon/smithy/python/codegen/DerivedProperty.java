@@ -116,12 +116,24 @@ public final class DerivedProperty implements ToSmithyBuilder<DerivedProperty> {
         /**
          * Indicates that the property is derived from the service config object.
          */
-        CONFIG,
+        CONFIG {
+            @Override
+            public String scopeLocation() {
+                return "config";
+            }
+        },
 
         /**
          * Indicates that the property is derived from the operation input.
          */
-        INPUT
+        INPUT {
+            @Override
+            public String scopeLocation() {
+                return "context.input";
+            }
+        };
+
+        public abstract String scopeLocation();
     }
 
     /**

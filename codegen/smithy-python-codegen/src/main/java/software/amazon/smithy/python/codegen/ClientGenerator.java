@@ -303,11 +303,13 @@ final class ClientGenerator implements Runnable {
             writer.pushState(new InitializeHttpAuthParametersSection());
             writer.write("""
                         # Step 7b: Invoke service_auth_scheme_resolver.resolve_auth_scheme
-                        auth_parameters: Any = {
-                            "operation": operation_name
-                        }
+                        auth_parameters: $1T = $1T(
+                            operation=operation_name,
+                            ${2C|}
+                        )
 
-                """);
+                """, CodegenUtils.getHttpAuthParamsSymbol(context.settings()),
+                writer.consumer(this::initializeHttpAuthParameters));
             writer.popState();
 
             // TODO: Generate the auth scheme resolver and options
@@ -556,6 +558,28 @@ final class ClientGenerator implements Runnable {
                     return context.response
                 """, transportRequest, transportResponse);
         writer.dedent();
+    }
+
+    private void initializeHttpAuthParameters(PythonWriter writer) {
+        var derived = new LinkedHashSet<DerivedProperty>();
+        for (PythonIntegration integration : context.integrations()) {
+            for (RuntimeClientPlugin plugin : integration.getClientPlugins()) {
+                if (plugin.matchesService(context.model(), service)
+                        && plugin.getAuthScheme().isPresent()
+                        && plugin.getAuthScheme().get().getApplicationProtocol().isHttpProtocol()) {
+                    derived.addAll(plugin.getAuthScheme().get().getAuthProperties());
+                }
+            }
+        }
+
+        for (DerivedProperty property : derived) {
+            var source = property.source().scopeLocation();
+            if (property.initializationFunction().isPresent()) {
+                writer.write("$L=$T($L),", property.name(), property.initializationFunction().get(), source);
+            } else if (property.sourcePropertyName().isPresent()) {
+                writer.write("$L=$L.$L,", property.name(), source, property.sourcePropertyName().get());
+            }
+        }
     }
 
     private void writeDefaultPlugins(PythonWriter writer, Collection<SymbolReference> plugins) {

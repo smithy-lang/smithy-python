@@ -18,6 +18,7 @@ package software.amazon.smithy.python.codegen;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
@@ -136,7 +137,7 @@ final class ConfigGenerator implements Runnable {
         this.settings = settings;
     }
 
-    private static List<ConfigProperty> getHttpAuthProperties(PythonSettings settings) {
+    private static List<ConfigProperty> getHttpAuthProperties(GenerationContext context) {
         return List.of(
             ConfigProperty.builder()
                 .name("http_auth_schemes")
@@ -155,17 +156,42 @@ final class ConfigGenerator implements Runnable {
                     .build())
                 .documentation("A map of http auth scheme ids to http auth schemes.")
                 .nullable(false)
-                .initialize(writer -> writer.write("self.http_auth_schemes = http_auth_schemes or {}"))
+                .initialize(writer -> writeDefaultHttpAuthSchemes(context, writer))
                 .build(),
             ConfigProperty.builder()
                 .name("http_auth_scheme_resolver")
-                .type(CodegenUtils.getHttpAuthSchemeResolverSymbol(settings))
+                .type(CodegenUtils.getHttpAuthSchemeResolverSymbol(context.settings()))
                 .documentation("An http auth scheme resolver that determines the auth scheme for each operation.")
                 .nullable(false)
                 .initialize(writer -> writer.write(
                     "self.http_auth_scheme_resolver = http_auth_scheme_resolver or HTTPAuthSchemeResolver()"))
                 .build()
         );
+    }
+
+    private static void writeDefaultHttpAuthSchemes(GenerationContext context, PythonWriter writer) {
+        var supportedAuthSchemes = new LinkedHashMap<String, Symbol>();
+        var service = context.settings().getService(context.model());
+        for (PythonIntegration integration : context.integrations()) {
+            for (RuntimeClientPlugin plugin : integration.getClientPlugins()) {
+                if (plugin.matchesService(context.model(), service)
+                        && plugin.getAuthScheme().isPresent()
+                        && plugin.getAuthScheme().get().getApplicationProtocol().isHttpProtocol()) {
+                    var scheme = plugin.getAuthScheme().get();
+                    supportedAuthSchemes.put(scheme.getAuthTrait().toString(), scheme.getAuthSchemeSymbol(context));
+                }
+            }
+        }
+        writer.pushState();
+        writer.putContext("authSchemes", supportedAuthSchemes);
+        writer.write("""
+            self.http_auth_schemes = http_auth_schemes or {
+                ${#authSchemes}
+                ${key:S}: ${value:T}(),
+                ${/authSchemes}
+            }
+            """);
+        writer.popState();
     }
 
     @Override
@@ -230,7 +256,7 @@ final class ConfigGenerator implements Runnable {
         if (context.applicationProtocol().isHttpProtocol()) {
             properties.addAll(HTTP_PROPERTIES);
             if (!serviceIndex.getAuthSchemes(settings.getService()).isEmpty()) {
-                properties.addAll(getHttpAuthProperties(settings));
+                properties.addAll(getHttpAuthProperties(context));
                 writer.onSection(new AddAuthHelper());
             }
         }

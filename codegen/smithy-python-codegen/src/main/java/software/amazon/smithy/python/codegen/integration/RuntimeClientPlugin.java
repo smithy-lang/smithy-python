@@ -42,16 +42,22 @@ import software.amazon.smithy.utils.ToSmithyBuilder;
  */
 @SmithyUnstableApi
 public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientPlugin> {
+
+    private static final OperationPredicate OPERATION_ALWAYS_FALSE = (model, service, operation) -> false;
+
     private final BiPredicate<Model, ServiceShape> servicePredicate;
     private final OperationPredicate operationPredicate;
     private final List<ConfigProperty> configProperties;
     private final SymbolReference pythonPlugin;
+
+    private final AuthScheme authScheme;
 
     private RuntimeClientPlugin(Builder builder) {
         servicePredicate = builder.servicePredicate;
         operationPredicate = builder.operationPredicate;
         configProperties = Collections.unmodifiableList(builder.configProperties);
         this.pythonPlugin = builder.pythonPlugin;
+        this.authScheme = builder.authScheme;
     }
 
     /**
@@ -115,7 +121,14 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
      * @return Returns an optional reference to a callable that modifies client config.
      */
     public Optional<SymbolReference> getPythonPlugin() {
-        return Optional.of(pythonPlugin);
+        return Optional.ofNullable(pythonPlugin);
+    }
+
+    /**
+     * @return Returns an optional auth scheme to register.
+     */
+    public Optional<AuthScheme> getAuthScheme() {
+        return Optional.ofNullable(authScheme);
     }
 
     /**
@@ -127,7 +140,18 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
 
     @Override
     public SmithyBuilder<RuntimeClientPlugin> toBuilder() {
-        return new Builder();
+        var builder = builder()
+            .pythonPlugin(pythonPlugin)
+            .authScheme(authScheme)
+            .configProperties(configProperties);
+
+        if (operationPredicate == OPERATION_ALWAYS_FALSE) {
+            builder.servicePredicate(servicePredicate);
+        } else {
+            builder.operationPredicate(operationPredicate);
+        }
+
+        return builder;
     }
 
     /**
@@ -135,9 +159,10 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
      */
     public static final class Builder implements SmithyBuilder<RuntimeClientPlugin> {
         private BiPredicate<Model, ServiceShape> servicePredicate = (model, service) -> true;
-        private OperationPredicate operationPredicate = (model, service, operation) -> false;
+        private OperationPredicate operationPredicate = OPERATION_ALWAYS_FALSE;
         private List<ConfigProperty> configProperties = new ArrayList<>();
         private SymbolReference pythonPlugin = null;
+        private AuthScheme authScheme = null;
 
         Builder() {
         }
@@ -203,7 +228,7 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
          */
         public Builder servicePredicate(BiPredicate<Model, ServiceShape> servicePredicate) {
             this.servicePredicate = Objects.requireNonNull(servicePredicate);
-            operationPredicate = (model, service, operation) -> false;
+            operationPredicate = OPERATION_ALWAYS_FALSE;
             return this;
         }
 
@@ -237,6 +262,18 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
          */
         public Builder pythonPlugin(SymbolReference pythonPlugin) {
             this.pythonPlugin = pythonPlugin;
+            return this;
+        }
+
+        /**
+         * Configures an auth scheme which will be added to the client's supported
+         * auth schemes.
+         *
+         * @param authScheme The auth scheme to register.
+         * @return Returns the builder.
+         */
+        public Builder authScheme(AuthScheme authScheme) {
+            this.authScheme = authScheme;
             return this;
         }
     }
