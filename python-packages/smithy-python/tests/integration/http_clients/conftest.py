@@ -15,7 +15,7 @@ import pytest
 
 from smithy_python._private import URI, Field, Fields
 from smithy_python._private.http import HTTPRequest
-from smithy_python.async_utils import AsyncList
+from smithy_python.async_utils import async_list
 
 
 @pytest.fixture
@@ -30,5 +30,5 @@ def sample_request() -> HTTPRequest:
         method="GET",
         destination=URI(host="aws.amazon.com"),
         fields=headers,
-        body=AsyncList([]),
+        body=async_list([]),
     )

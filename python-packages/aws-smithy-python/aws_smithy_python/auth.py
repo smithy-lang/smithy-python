@@ -23,9 +23,10 @@ from urllib.parse import parse_qsl, quote
 from smithy_python import interfaces
 from smithy_python._private import URI, Field
 from smithy_python._private.auth import HTTPSigner
-from smithy_python.async_utils import AsyncList
+from smithy_python.async_utils import async_list
 from smithy_python.exceptions import SmithyHTTPException, SmithyIdentityException
 from smithy_python.interfaces.auth import SigningProperties
+from smithy_python.interfaces.blobs import AsyncBytesReader
 from smithy_python.interfaces.http import HTTPRequest as HTTPRequestInterface
 from smithy_python.utils import remove_dot_segments
 
@@ -339,15 +340,18 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         body = http_request.body
         if hasattr(body, "seek") and hasattr(body, "tell"):
             position = body.tell()
-            async for chunk in body:
-                checksum.update(chunk)
+            if hasattr(body, "read"):
+                checksum.update(await body.read())
+            else:
+                async for chunk in body:
+                    checksum.update(chunk)
             await body.seek(position)
         else:
             buffer = []
             async for chunk in body:
                 buffer.append(chunk)
                 checksum.update(chunk)
-            http_request.body = AsyncList(buffer)
+            http_request.body = AsyncBytesReader(async_list(buffer))
         return checksum.hexdigest()
 
     def _is_streaming_checksum_payload(

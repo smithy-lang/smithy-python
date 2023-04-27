@@ -22,7 +22,7 @@ from smithy_python._private.http import (
     StaticEndpointParams,
     StaticEndpointResolver,
 )
-from smithy_python.async_utils import AsyncList
+from smithy_python.async_utils import async_list
 from smithy_python.exceptions import SmithyHTTPException
 
 
@@ -145,7 +145,7 @@ async def test_request() -> None:
         method="GET",
         destination=uri,
         fields=headers,
-        body=AsyncList([b"test body"]),
+        body=async_list([b"test body"]),
     )
 
     assert request.method == "GET"
@@ -162,7 +162,7 @@ async def test_request_deepcopy() -> None:
         method="GET",
         destination=uri,
         fields=headers,
-        body=AsyncList([b"test body"]),
+        body=async_list([b"test body"]),
     )
 
     request_copy = deepcopy(request)
@@ -184,7 +184,7 @@ async def test_response() -> None:
     response = HTTPResponse(
         status=200,
         fields=headers,
-        body=AsyncList([b"test body"]),
+        body=async_list([b"test body"]),
     )
 
     assert response.status == 200
