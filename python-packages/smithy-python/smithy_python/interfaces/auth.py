@@ -15,7 +15,12 @@ from dataclasses import dataclass
 from typing import Any, Protocol, TypedDict, TypeVar
 
 from .http import HTTPRequest
-from .identity import IdentityResolver, IdentityType, IdentityType_contra
+from .identity import (
+    IdentityPropertiesType,
+    IdentityResolver,
+    IdentityType,
+    IdentityType_contra,
+)
 
 
 class SigningProperties(TypedDict):
@@ -53,14 +58,16 @@ class HTTPSigner(Protocol[IdentityType_contra, SigningPropertiesType_contra]):
 
 
 @dataclass(kw_only=True)
-class HTTPAuthScheme(Protocol[IdentityType, SigningPropertiesType]):
+class HTTPAuthScheme(
+    Protocol[IdentityType, IdentityPropertiesType, SigningPropertiesType]
+):
     """Represents a way a service will authenticate the user's identity."""
 
     # A unique identifier for the authentication scheme.
     scheme_id: str
 
     # An API that can be queried to resolve an identity.
-    identity_resolver: IdentityResolver
+    identity_resolver: IdentityResolver[IdentityType, IdentityPropertiesType]
 
     # An API that can be used to sign HTTP requests.
     signer: HTTPSigner[IdentityType, SigningPropertiesType]
