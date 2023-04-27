@@ -409,15 +409,13 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         DateRegionServiceKey = HMAC-SHA256(<DateRegionKey>, "<aws-service>")
         SigningKey           = HMAC-SHA256(<DateRegionServiceKey>, "aws4_request")
         """
-        k_date = self._hash(f"AWS4{secret_key}", date[0:8])
+        k_date = self._hash(f"AWS4{secret_key}".encode(), date[0:8])
         k_region = self._hash(k_date, signing_properties["region"])
         k_service = self._hash(k_region, signing_properties["service"])
         k_signing = self._hash(k_service, "aws4_request")
         return self._hash(k_signing, string_to_sign).hex()
 
-    def _hash(self, key: str | bytes, value: str) -> bytes:
-        if isinstance(key, str):
-            key = key.encode()
+    def _hash(self, key: bytes, value: str) -> bytes:
         return hmac.new(key, value.encode(), sha256).digest()
 
     def _authorization_header(
