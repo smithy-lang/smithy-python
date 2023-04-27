@@ -331,6 +331,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         # request bodies because of performance issues. Exact size limit TBD.
         if not self._should_sha256_sign_payload(http_request, signing_properties):
             return UNSIGNED_PAYLOAD
+        return UNSIGNED_PAYLOAD
 
         warnings.warn(
             "Payload signing is enabled. This may cause "
