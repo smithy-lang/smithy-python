@@ -4,3 +4,4 @@
 #
 
 software.amazon.smithy.python.codegen.integration.RestJsonIntegration
+software.amazon.smithy.python.codegen.integration.HttpApiKeyAuth
