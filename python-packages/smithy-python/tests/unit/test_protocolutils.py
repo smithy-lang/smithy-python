@@ -18,7 +18,7 @@ import pytest
 
 from smithy_python._private import tuples_to_fields
 from smithy_python._private.http import HTTPResponse
-from smithy_python.async_utils import AsyncList
+from smithy_python.async_utils import async_list
 from smithy_python.protocolutils import RestJsonErrorInfo, parse_rest_json_error_info
 from smithy_python.types import Document
 
@@ -88,7 +88,7 @@ async def test_parse_rest_json_error_info(
     response = HTTPResponse(
         status=400,
         fields=tuples_to_fields(headers),
-        body=AsyncList([json.dumps(body).encode()]),
+        body=async_list([json.dumps(body).encode()]),
     )
     actual = await parse_rest_json_error_info(response)
     assert actual == expected

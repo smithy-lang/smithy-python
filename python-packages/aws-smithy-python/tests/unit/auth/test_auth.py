@@ -26,8 +26,9 @@ from freezegun import freeze_time
 from smithy_python._private import URI, Field, Fields
 from smithy_python._private.http import HTTPRequest
 from smithy_python._private.identity import Identity
-from smithy_python.async_utils import AsyncList, RewindableAsyncIterable
+from smithy_python.async_utils import async_list
 from smithy_python.exceptions import SmithyHTTPException, SmithyIdentityException
+from smithy_python.interfaces.blobs import AsyncBytesReader, SeekableAsyncBytesReader
 
 from aws_smithy_python.auth import (
     EMPTY_SHA256_HASH,
@@ -62,10 +63,10 @@ SIGV4_REQUIRED_QUERY_PARAMS: tuple[str, ...] = (
     "X-Amz-SignedHeaders",
     "X-Amz-Signature",
 )
-EMPTY_ASYNC_LIST: AsyncList[bytes] = AsyncList([])
-EMPTY_REWINDABLE_ASYNC_ITERABLE: RewindableAsyncIterable[
-    bytes
-] = RewindableAsyncIterable([])
+EMPTY_ASYNC_BYTES_READER: AsyncBytesReader = AsyncBytesReader(async_list([]))
+EMPTY_SEEKABLE_ASYNC_BYTES_READER: SeekableAsyncBytesReader = SeekableAsyncBytesReader(
+    async_list([])
+)
 
 
 @pytest.fixture(scope="module")
@@ -81,7 +82,7 @@ def http_request() -> HTTPRequest:
             ]
         ),
         method="GET",
-        body=AsyncList([b"foo"]),
+        body=AsyncBytesReader(async_list([b"foo"])),
     )
 
 
@@ -166,16 +167,16 @@ TEST_CASES: list[tuple[bytes, str, str, str, str | None]] = generate_test_cases(
 
 
 def generate_async_byte_list(
-    data: BytesIO, rewindable: bool = False
+    data: BytesIO, seekable: bool = False
 ) -> AsyncIterable[bytes]:
     stream = []
     part = data.read(PAYLOAD_BUFFER)
     while part:
         stream.append(part)
         part = data.read(PAYLOAD_BUFFER)
-    if rewindable:
-        return RewindableAsyncIterable(stream)
-    return AsyncList(stream)
+    if seekable:
+        return SeekableAsyncBytesReader(async_list(stream))
+    return AsyncBytesReader(async_list(stream))
 
 
 def smithy_request_from_raw_request(
@@ -395,7 +396,7 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=EMPTY_ASYNC_LIST,
+                body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields(),
             ),
@@ -407,7 +408,7 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=AsyncList([b"foo"]),
+                body=AsyncBytesReader(async_list([b"foo"])),
                 method="GET",
                 fields=Fields(),
             ),
@@ -419,7 +420,7 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com", scheme="http"),
-                body=EMPTY_ASYNC_LIST,
+                body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields(),
             ),
@@ -431,19 +432,7 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=AsyncList([b"a" * PAYLOAD_BUFFER * 2, b"b" * PAYLOAD_BUFFER * 2]),
-                method="GET",
-                fields=Fields(),
-            ),
-            SIGNING_PROPERTIES,
-            None,
-            sha256(b"a" * PAYLOAD_BUFFER * 2 + b"b" * PAYLOAD_BUFFER * 2).hexdigest(),
-            b"a" * PAYLOAD_BUFFER * 2 + b"b" * PAYLOAD_BUFFER * 2,
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=AsyncList([b"foo", b"bar", b"hello", b"world"]),
+                body=AsyncBytesReader(async_list([b"foo", b"bar", b"hello", b"world"])),
                 method="GET",
                 fields=Fields(),
             ),
@@ -455,7 +444,7 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=EMPTY_REWINDABLE_ASYNC_ITERABLE,
+                body=EMPTY_SEEKABLE_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields(),
             ),
@@ -467,7 +456,7 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=RewindableAsyncIterable([b"foo"]),
+                body=SeekableAsyncBytesReader(async_list([b"foo"])),
                 method="GET",
                 fields=Fields(),
             ),
@@ -479,7 +468,7 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com", scheme="http"),
-                body=EMPTY_REWINDABLE_ASYNC_ITERABLE,
+                body=EMPTY_SEEKABLE_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields(),
             ),
@@ -491,21 +480,9 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=RewindableAsyncIterable(
-                    [b"a" * PAYLOAD_BUFFER * 2, b"b" * PAYLOAD_BUFFER * 2]
+                body=SeekableAsyncBytesReader(
+                    async_list([b"foo", b"bar", b"hello", b"world"])
                 ),
-                method="GET",
-                fields=Fields(),
-            ),
-            SIGNING_PROPERTIES,
-            None,
-            sha256(b"a" * PAYLOAD_BUFFER * 2 + b"b" * PAYLOAD_BUFFER * 2).hexdigest(),
-            b"a" * PAYLOAD_BUFFER * 2 + b"b" * PAYLOAD_BUFFER * 2,
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=RewindableAsyncIterable([b"foo", b"bar", b"hello", b"world"]),
                 method="GET",
                 fields=Fields(),
             ),
@@ -550,7 +527,7 @@ async def test_signed_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=EMPTY_ASYNC_LIST,
+                body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields(),
             ),
@@ -562,7 +539,7 @@ async def test_signed_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=EMPTY_ASYNC_LIST,
+                body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields(),
             ),
@@ -574,7 +551,7 @@ async def test_signed_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=EMPTY_REWINDABLE_ASYNC_ITERABLE,
+                body=EMPTY_SEEKABLE_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields(),
             ),
@@ -586,7 +563,7 @@ async def test_signed_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=EMPTY_REWINDABLE_ASYNC_ITERABLE,
+                body=EMPTY_SEEKABLE_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields(),
             ),
@@ -631,7 +608,7 @@ async def test_unsigned_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=EMPTY_ASYNC_LIST,
+                body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields(),
             ),
@@ -640,7 +617,7 @@ async def test_unsigned_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=EMPTY_ASYNC_LIST,
+                body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields([Field(name="foo", values=["bar"])]),
             ),
@@ -649,7 +626,7 @@ async def test_unsigned_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=EMPTY_ASYNC_LIST,
+                body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields([Field(name="foo", values=["bar", "baz"])]),
             ),
@@ -658,7 +635,7 @@ async def test_unsigned_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=EMPTY_ASYNC_LIST,
+                body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields([Field(name="host", values=["foo"])]),
             ),
@@ -667,7 +644,7 @@ async def test_unsigned_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=EMPTY_ASYNC_LIST,
+                body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields(
                     [
@@ -685,7 +662,7 @@ async def test_unsigned_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=EMPTY_ASYNC_LIST,
+                body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields(
                     [
@@ -699,7 +676,7 @@ async def test_unsigned_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com", port=8080),
-                body=EMPTY_ASYNC_LIST,
+                body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields(
                     [
@@ -715,7 +692,7 @@ async def test_unsigned_payload(
                 destination=URI(
                     host="example.com", port=8080, username="foo", password="bar"
                 ),
-                body=EMPTY_ASYNC_LIST,
+                body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields(
                     [
@@ -729,7 +706,7 @@ async def test_unsigned_payload(
         (
             HTTPRequest(
                 destination=URI(host="example.com", scheme="http", port=80),
-                body=EMPTY_ASYNC_LIST,
+                body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields(
                     [
@@ -745,7 +722,7 @@ async def test_unsigned_payload(
                 destination=URI(
                     host="example.com", port=443, username="foo", password="bar"
                 ),
-                body=EMPTY_ASYNC_LIST,
+                body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields(
                     [
@@ -759,7 +736,7 @@ async def test_unsigned_payload(
         (
             HTTPRequest(
                 destination=URI(host="::80", port=80, scheme="http"),
-                body=EMPTY_ASYNC_LIST,
+                body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields([]),
             ),
@@ -768,7 +745,7 @@ async def test_unsigned_payload(
         (
             HTTPRequest(
                 destination=URI(host="::80", port=80),
-                body=EMPTY_ASYNC_LIST,
+                body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields([]),
             ),

@@ -16,7 +16,7 @@ from urllib.parse import parse_qs, urlunparse
 import aiohttp
 
 from ... import interfaces
-from ...async_utils import AsyncList
+from ...async_utils import async_list
 from .. import Field, FieldPosition, Fields
 from . import HTTPResponse
 
@@ -95,6 +95,6 @@ class AIOHTTPClient(interfaces.http.HTTPClient):
         return HTTPResponse(
             status=aiohttp_resp.status,
             fields=headers,
-            body=AsyncList([await aiohttp_resp.read()]),
+            body=async_list([await aiohttp_resp.read()]),
             reason=aiohttp_resp.reason,
         )
