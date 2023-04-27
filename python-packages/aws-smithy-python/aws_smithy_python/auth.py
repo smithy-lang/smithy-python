@@ -16,8 +16,7 @@ import warnings
 from copy import deepcopy
 from datetime import datetime, timezone
 from hashlib import sha256
-from io import BytesIO
-from typing import Any, AsyncGenerator, AsyncIterable, NotRequired, TypedDict
+from typing import NotRequired, TypedDict
 from urllib.parse import parse_qsl, quote
 
 from smithy_python import interfaces
@@ -44,7 +43,6 @@ HEADERS_EXCLUDED_FROM_SIGNING: tuple[str, ...] = (
     "x-amzn-trace-id",
 )
 DEFAULT_EXPIRES: int = 3600
-PAYLOAD_BUFFER: int = 1024**2
 EMPTY_SHA256_HASH: str = (
     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 )
@@ -370,23 +368,6 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
             return True
 
         return signing_properties.get("payload_signing_enabled", True)
-
-    async def _apply_checksum(
-        self, body: AsyncIterable[bytes], checksum: Any
-    ) -> AsyncGenerator[bytes, None]:
-        """Apply the checksum to the body and yield the chunks.
-
-        If the size of each chunk exceeds payload buffer size, the chunk will be broken
-        up into smaller chunks.
-        """
-        async for chunk in body:
-            stream = BytesIO(chunk)
-            while True:
-                # Create smaller chunks in case the chunk is too large
-                if not (sub_chunk := stream.read(PAYLOAD_BUFFER)):
-                    break
-                checksum.update(sub_chunk)
-                yield sub_chunk
 
     def string_to_sign(self, *, canonical_request: str, date: str, scope: str) -> str:
         """The string to sign.

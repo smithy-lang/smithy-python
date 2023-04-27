@@ -32,7 +32,6 @@ from smithy_python.interfaces.blobs import AsyncBytesReader, SeekableAsyncBytesR
 
 from aws_smithy_python.auth import (
     EMPTY_SHA256_HASH,
-    PAYLOAD_BUFFER,
     SIGV4_TIMESTAMP_FORMAT,
     UNSIGNED_PAYLOAD,
     SigV4Signer,
@@ -170,10 +169,10 @@ def generate_async_byte_list(
     data: BytesIO, seekable: bool = False
 ) -> AsyncIterable[bytes]:
     stream = []
-    part = data.read(PAYLOAD_BUFFER)
+    part = data.read()
     while part:
         stream.append(part)
-        part = data.read(PAYLOAD_BUFFER)
+        part = data.read()
     if seekable:
         return SeekableAsyncBytesReader(async_list(stream))
     return AsyncBytesReader(async_list(stream))
