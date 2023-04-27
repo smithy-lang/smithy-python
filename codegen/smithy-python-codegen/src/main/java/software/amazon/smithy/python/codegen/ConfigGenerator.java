@@ -142,7 +142,7 @@ final class ConfigGenerator implements Runnable {
             ConfigProperty.builder()
                 .name("http_auth_schemes")
                 .type(Symbol.builder()
-                    .name("dict[str, HTTPAuthScheme[Any, Any]]")
+                    .name("dict[str, HTTPAuthScheme[Any, Any, Any]]")
                     .addReference(Symbol.builder()
                         .name("HTTPAuthScheme")
                         .namespace("smithy_python.interfaces.auth", ".")
@@ -353,7 +353,7 @@ final class ConfigGenerator implements Runnable {
             // Note that this is indented to keep it at the proper indentation level.
             writer.write("""
 
-                    def add_http_auth_scheme(self, scheme: HTTPAuthScheme[Any, Any]) -> None:
+                    def add_http_auth_scheme(self, scheme: HTTPAuthScheme[Any, Any, Any]) -> None:
                         \"""Add an auth scheme to the collection of available auth schemes.
 
                         Using this method ensures the correct key is used.
