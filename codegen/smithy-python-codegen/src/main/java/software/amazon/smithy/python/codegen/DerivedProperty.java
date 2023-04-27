@@ -133,6 +133,9 @@ public final class DerivedProperty implements ToSmithyBuilder<DerivedProperty> {
             }
         };
 
+        /**
+         * @return Returns the symbol in scope mapping to the location.
+         */
         public abstract String scopeLocation();
     }
 

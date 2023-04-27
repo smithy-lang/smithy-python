@@ -297,9 +297,6 @@ final class ClientGenerator implements Runnable {
         boolean supportsAuth = !ServiceIndex.of(context.model()).getAuthSchemes(service).isEmpty();
         writer.pushState(new ResolveIdentitySection());
         if (context.applicationProtocol().isHttpProtocol() && supportsAuth) {
-            // Depending on how complicated this gets, we might have to pass through
-            // a function to resolve this to get per-operation resolution.
-            writer.addStdlibImport("typing", "Any");
             writer.pushState(new InitializeHttpAuthParametersSection());
             writer.write("""
                         # Step 7b: Invoke service_auth_scheme_resolver.resolve_auth_scheme
@@ -312,10 +309,10 @@ final class ClientGenerator implements Runnable {
                 writer.consumer(this::initializeHttpAuthParameters));
             writer.popState();
 
-            // TODO: Generate the auth scheme resolver and options
             writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
             writer.addImport("smithy_python.interfaces.identity", "Identity");
             writer.addImports("smithy_python.interfaces.auth", Set.of("HTTPSigner", "HTTPAuthOption"));
+            writer.addStdlibImport("typing", "Any");
             writer.write("""
                         auth_options = config.http_auth_scheme_resolver.resolve_auth_scheme(
                             auth_parameters=auth_parameters
