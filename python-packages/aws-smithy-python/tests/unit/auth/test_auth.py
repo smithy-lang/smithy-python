@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from http.server import BaseHTTPRequestHandler
 from io import BytesIO
-from typing import AsyncIterable
+from typing import AsyncIterable, Generator
 from unittest import mock
 
 import pytest
@@ -62,6 +62,7 @@ SIGV4_REQUIRED_QUERY_PARAMS: tuple[str, ...] = (
     "X-Amz-SignedHeaders",
     "X-Amz-Signature",
 )
+EMPTY_ASYNC_LIST: AsyncIterable[bytes] = async_list([])
 EMPTY_ASYNC_BYTES_READER: AsyncBytesReader = AsyncBytesReader(async_list([]))
 EMPTY_SEEKABLE_ASYNC_BYTES_READER: SeekableAsyncBytesReader = SeekableAsyncBytesReader(
     async_list([])
@@ -165,7 +166,9 @@ TEST_CASES: list[tuple[bytes, str, str, str, str | None]] = generate_test_cases(
 )
 
 
-def generate_async_request_bodies(data: BytesIO) -> AsyncIterable[bytes]:
+def generate_async_request_bodies(
+    data: BytesIO,
+) -> tuple[AsyncIterable[bytes], AsyncBytesReader, SeekableAsyncBytesReader]:
     stream = []
     while True:
         part = data.read()
@@ -179,7 +182,9 @@ def generate_async_request_bodies(data: BytesIO) -> AsyncIterable[bytes]:
     )
 
 
-def smithy_requests_from_raw_request(raw_request: bytes) -> HTTPRequest:
+def smithy_requests_from_raw_request(
+    raw_request: bytes,
+) -> Generator[HTTPRequest, None, None]:
     decoded = raw_request.decode()
     # The BaseHTTPRequestHandler chokes on extra spaces in the path,
     # so we need to replace them with the URL encoded whitespace `%20`.
@@ -336,6 +341,54 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
+                body=EMPTY_ASYNC_LIST,
+                method="GET",
+                fields=Fields(),
+            ),
+            SIGNING_PROPERTIES,
+            None,
+            EMPTY_SHA256_HASH,
+            b"",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com"),
+                body=async_list([b"foo"]),
+                method="GET",
+                fields=Fields(),
+            ),
+            SIGNING_PROPERTIES,
+            None,
+            sha256(b"foo").hexdigest(),
+            b"foo",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com", scheme="http"),
+                body=EMPTY_ASYNC_LIST,
+                method="GET",
+                fields=Fields(),
+            ),
+            SIGNING_PROPERTIES,
+            None,
+            EMPTY_SHA256_HASH,
+            b"",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com"),
+                body=async_list([b"foo", b"bar", b"hello", b"world"]),
+                method="GET",
+                fields=Fields(),
+            ),
+            SIGNING_PROPERTIES,
+            None,
+            sha256(b"foobarhelloworld").hexdigest(),
+            b"foobarhelloworld",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com"),
                 body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields(),
@@ -464,6 +517,30 @@ async def test_signed_payload(
 @pytest.mark.parametrize(
     "http_request, signing_properties, input_payload, expected_payload, expected_body",
     [
+        (
+            HTTPRequest(
+                destination=URI(host="example.com"),
+                body=EMPTY_ASYNC_LIST,
+                method="GET",
+                fields=Fields(),
+            ),
+            {"payload_signing_enabled": False, "region": "us-east-1", "service": "s3"},
+            None,
+            UNSIGNED_PAYLOAD,
+            b"",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com"),
+                body=EMPTY_ASYNC_LIST,
+                method="GET",
+                fields=Fields(),
+            ),
+            SIGNING_PROPERTIES,
+            "foo",
+            "foo",
+            b"",
+        ),
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
@@ -678,7 +755,7 @@ async def test_unsigned_payload(
                 destination=URI(host="::80", port=80, scheme="http"),
                 body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
-                fields=Fields([]),
+                fields=Fields(),
             ),
             {"host": "[::80]"},
         ),
@@ -687,7 +764,7 @@ async def test_unsigned_payload(
                 destination=URI(host="::80", port=80),
                 body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
-                fields=Fields([]),
+                fields=Fields(),
             ),
             {"host": "[::80]:80"},
         ),
