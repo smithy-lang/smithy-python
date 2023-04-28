@@ -165,22 +165,21 @@ TEST_CASES: list[tuple[bytes, str, str, str, str | None]] = generate_test_cases(
 )
 
 
-def generate_async_byte_list(
-    data: BytesIO, seekable: bool = False
-) -> AsyncIterable[bytes]:
+def generate_async_request_bodies(data: BytesIO) -> AsyncIterable[bytes]:
     stream = []
-    part = data.read()
-    while part:
-        stream.append(part)
+    while True:
         part = data.read()
-    if seekable:
-        return SeekableAsyncBytesReader(async_list(stream))
-    return AsyncBytesReader(async_list(stream))
+        if not part:
+            break
+        stream.append(part)
+    return (
+        async_list(stream),
+        AsyncBytesReader(async_list(stream)),
+        SeekableAsyncBytesReader(async_list(stream)),
+    )
 
 
-def smithy_request_from_raw_request(
-    raw_request: bytes, rewindable: bool = False
-) -> HTTPRequest:
+def smithy_requests_from_raw_request(raw_request: bytes) -> HTTPRequest:
     decoded = raw_request.decode()
     # The BaseHTTPRequestHandler chokes on extra spaces in the path,
     # so we need to replace them with the URL encoded whitespace `%20`.
@@ -201,7 +200,7 @@ def smithy_request_from_raw_request(
         else:
             field = Field(name=k, values=[v])
             fields.set_field(field)
-    body = generate_async_byte_list(raw.rfile)
+    request_bodies = generate_async_request_bodies(raw.rfile)
     # For whatever reason, the BaseHTTPRequestHandler encodes
     # the first line of the response as 'iso-8859-1',
     # so we need to decode this into utf-8.
@@ -213,11 +212,14 @@ def smithy_request_from_raw_request(
         query = ""
     host = raw.headers.get("host", "")
     url = URI(host=host, path=path, query=query)
-    return HTTPRequest(
-        destination=url,
-        method=request_method,
-        fields=fields,
-        body=body,
+    return (
+        HTTPRequest(
+            destination=url,
+            method=request_method,
+            fields=fields,
+            body=body,
+        )
+        for body in request_bodies
     )
 
 
@@ -238,63 +240,28 @@ async def test_sigv4_signing_components(
     identity = AWSCredentialIdentity(
         access_key_id=ACCESS_KEY, secret_access_key=SECRET_KEY, session_token=token
     )
-    request = smithy_request_from_raw_request(raw_request)
+    requests = smithy_requests_from_raw_request(raw_request)
     sigv4_signer._validate_identity_and_signing_properties(identity, SIGNING_PROPERTIES)
-    new_request = await sigv4_signer._generate_new_request(request, identity, DATE_STR)
-    formatted_headers = sigv4_signer._format_headers_for_signing(new_request)
-    signed_headers = ";".join(formatted_headers)
-    with pytest.warns():
-        actual_canonical_request = await sigv4_signer.canonical_request(
-            http_request=new_request,
-            formatted_headers=formatted_headers,
-            signed_headers=signed_headers,
-            signing_properties=SIGNING_PROPERTIES,
+    # testing requests with different types of bodies
+    for request in requests:
+        new_request = await sigv4_signer._generate_new_request(
+            request, identity, DATE_STR
         )
-    assert actual_canonical_request == canonical_request
-    request = smithy_request_from_raw_request(raw_request)
-    scope = sigv4_signer._scope(DATE_STR, SIGNING_PROPERTIES)
-    actual_string_to_sign = sigv4_signer.string_to_sign(
-        canonical_request=actual_canonical_request, date=DATE_STR, scope=scope
-    )
-    assert actual_string_to_sign == string_to_sign
-
-
-@pytest.mark.parametrize(
-    "raw_request, canonical_request, string_to_sign, authorization_header, token",
-    TEST_CASES,
-)
-@pytest.mark.asyncio
-@freeze_time(DATE)
-async def test_sigv4_signing_components_rewindable_body(
-    sigv4_signer: SigV4Signer,
-    raw_request: bytes,
-    canonical_request: str,
-    string_to_sign: str,
-    authorization_header: str,
-    token: str | None,
-) -> None:
-    identity = AWSCredentialIdentity(
-        access_key_id=ACCESS_KEY, secret_access_key=SECRET_KEY, session_token=token
-    )
-    request = smithy_request_from_raw_request(raw_request, True)
-    sigv4_signer._validate_identity_and_signing_properties(identity, SIGNING_PROPERTIES)
-    new_request = await sigv4_signer._generate_new_request(request, identity, DATE_STR)
-    formatted_headers = sigv4_signer._format_headers_for_signing(new_request)
-    signed_headers = ";".join(formatted_headers)
-    with pytest.warns():
-        actual_canonical_request = await sigv4_signer.canonical_request(
-            http_request=new_request,
-            formatted_headers=formatted_headers,
-            signed_headers=signed_headers,
-            signing_properties=SIGNING_PROPERTIES,
+        formatted_headers = sigv4_signer._format_headers_for_signing(new_request)
+        signed_headers = ";".join(formatted_headers)
+        with pytest.warns():
+            actual_canonical_request = await sigv4_signer.canonical_request(
+                http_request=new_request,
+                formatted_headers=formatted_headers,
+                signed_headers=signed_headers,
+                signing_properties=SIGNING_PROPERTIES,
+            )
+        assert actual_canonical_request == canonical_request
+        scope = sigv4_signer._scope(DATE_STR, SIGNING_PROPERTIES)
+        actual_string_to_sign = sigv4_signer.string_to_sign(
+            canonical_request=actual_canonical_request, date=DATE_STR, scope=scope
         )
-    assert actual_canonical_request == canonical_request
-    request = smithy_request_from_raw_request(raw_request)
-    scope = sigv4_signer._scope(DATE_STR, SIGNING_PROPERTIES)
-    actual_string_to_sign = sigv4_signer.string_to_sign(
-        canonical_request=actual_canonical_request, date=DATE_STR, scope=scope
-    )
-    assert actual_string_to_sign == string_to_sign
+        assert actual_string_to_sign == string_to_sign
 
 
 @pytest.mark.parametrize(
@@ -314,43 +281,17 @@ async def test_sigv4_signing(
     identity = AWSCredentialIdentity(
         access_key_id=ACCESS_KEY, secret_access_key=SECRET_KEY, session_token=token
     )
-    request = smithy_request_from_raw_request(raw_request)
-    with pytest.warns():
-        new_request = await sigv4_signer.sign(
-            http_request=request,
-            identity=identity,
-            signing_properties=SIGNING_PROPERTIES,
-        )
-    actual_auth_header = new_request.fields.get_field("Authorization").as_string()
-    assert actual_auth_header == authorization_header
-
-
-@pytest.mark.parametrize(
-    "raw_request, canonical_request, string_to_sign, authorization_header, token",
-    TEST_CASES,
-)
-@pytest.mark.asyncio
-@freeze_time(DATE)
-async def test_sigv4_signing_rewindable_body(
-    sigv4_signer: SigV4Signer,
-    raw_request: bytes,
-    canonical_request: str,
-    string_to_sign: str,
-    authorization_header: str,
-    token: str | None,
-) -> None:
-    identity = AWSCredentialIdentity(
-        access_key_id=ACCESS_KEY, secret_access_key=SECRET_KEY, session_token=token
-    )
-    request = smithy_request_from_raw_request(raw_request, True)
-    with pytest.warns():
-        new_request = await sigv4_signer.sign(
-            http_request=request,
-            identity=identity,
-            signing_properties=SIGNING_PROPERTIES,
-        )
-    actual_auth_header = new_request.fields.get_field("Authorization").as_string()
-    assert actual_auth_header == authorization_header
+    requests = smithy_requests_from_raw_request(raw_request)
+    # testing requests with different types of bodies
+    for request in requests:
+        with pytest.warns():
+            new_request = await sigv4_signer.sign(
+                http_request=request,
+                identity=identity,
+                signing_properties=SIGNING_PROPERTIES,
+            )
+        actual_auth_header = new_request.fields.get_field("Authorization").as_string()
+        assert actual_auth_header == authorization_header
 
 
 @pytest.mark.asyncio
