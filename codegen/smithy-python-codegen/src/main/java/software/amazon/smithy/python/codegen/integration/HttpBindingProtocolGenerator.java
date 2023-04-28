@@ -484,13 +484,17 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         writeStaticQuerySegment(writer, httpTrait.getUri());
 
         if (hasQueryBindings(context, operation)) {
-            writer.write("query_params: list[tuple[str, str | None]] = []");
-            serializeIndividualQueryParams(context, writer, operation, bindingIndex);
-            serializeQueryParamsMap(context, writer, operation, bindingIndex);
-
             writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
             writer.addImport("smithy_python.httputils", "join_query_params");
-            writer.write("query = join_query_params(params=query_params, prefix=query)\n");
+            writer.write("""
+                query_params: list[tuple[str, str | None]] = []
+                ${C|}
+                ${C|}
+                query = join_query_params(params=query_params, prefix=query)
+
+                """,
+                writer.consumer(w -> serializeIndividualQueryParams(context, w, operation, bindingIndex)),
+                writer.consumer(w -> serializeQueryParamsMap(context, w, operation, bindingIndex)));
         }
 
         writer.popState();
