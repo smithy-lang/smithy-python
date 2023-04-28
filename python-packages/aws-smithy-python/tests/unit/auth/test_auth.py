@@ -87,6 +87,16 @@ def http_request() -> HTTPRequest:
 
 
 @pytest.fixture(scope="module")
+def http_request_with_user_provided_security_token() -> HTTPRequest:
+    return HTTPRequest(
+        destination=URI(host="example.com"),
+        body=EMPTY_ASYNC_BYTES_READER,
+        method="GET",
+        fields=Fields([Field(name="X-Amz-Security-Token", values=["foo"])]),
+    )
+
+
+@pytest.fixture(scope="module")
 def aws_credential_identity() -> AWSCredentialIdentity:
     return AWSCredentialIdentity(
         access_key_id=ACCESS_KEY,
@@ -792,18 +802,33 @@ async def test_format_headers_for_signing(
 
 
 @pytest.mark.asyncio
-async def test_user_provided_token_header_removed(sigv4_signer: SigV4Signer) -> None:
-    request = HTTPRequest(
-        destination=URI(host="example.com"),
-        body=EMPTY_ASYNC_BYTES_READER,
-        method="GET",
-        fields=Fields([Field(name="X-Amz-Security-Token", values=["foo"])]),
-    )
+async def test_user_provided_token_header_removed(
+    sigv4_signer: SigV4Signer,
+    http_request_with_user_provided_security_token: HTTPRequest,
+) -> None:
     identity = AWSCredentialIdentity(access_key_id="foo", secret_access_key="bar")
     with pytest.warns():
         new_request = await sigv4_signer.sign(
-            http_request=request,
+            http_request=http_request_with_user_provided_security_token,
             identity=identity,
             signing_properties=SIGNING_PROPERTIES,
         )
     assert "X-Amz-Security-Token" not in new_request.fields
+
+
+@pytest.mark.asyncio
+async def test_replace_user_provided_token_header(
+    sigv4_signer: SigV4Signer,
+    http_request_with_user_provided_security_token: HTTPRequest,
+    aws_credential_identity: AWSCredentialIdentity,
+) -> None:
+
+    with pytest.warns():
+        new_request = await sigv4_signer.sign(
+            http_request=http_request_with_user_provided_security_token,
+            identity=aws_credential_identity,
+            signing_properties=SIGNING_PROPERTIES,
+        )
+    token_field = new_request.fields.get_field("X-Amz-Security-Token").as_string()
+    assert token_field != "foo"
+    assert token_field == aws_credential_identity.session_token
