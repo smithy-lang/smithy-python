@@ -789,3 +789,21 @@ async def test_format_headers_for_signing(
         signing_properties=SIGNING_PROPERTIES,
     )
     assert canonical_request_mock.await_args[1]["formatted_headers"] == expected_headers
+
+
+@pytest.mark.asyncio
+async def test_user_provided_token_header_removed(sigv4_signer: SigV4Signer) -> None:
+    request = HTTPRequest(
+        destination=URI(host="example.com"),
+        body=EMPTY_ASYNC_BYTES_READER,
+        method="GET",
+        fields=Fields([Field(name="X-Amz-Security-Token", values=["foo"])]),
+    )
+    identity = AWSCredentialIdentity(access_key_id="foo", secret_access_key="bar")
+    with pytest.warns():
+        new_request = await sigv4_signer.sign(
+            http_request=request,
+            identity=identity,
+            signing_properties=SIGNING_PROPERTIES,
+        )
+    assert "X-Amz-Security-Token" not in new_request.fields
