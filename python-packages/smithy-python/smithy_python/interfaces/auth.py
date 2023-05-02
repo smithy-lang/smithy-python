@@ -16,7 +16,8 @@ from typing import Any, Protocol, TypedDict, TypeVar
 
 from .http import HTTPRequest
 from .identity import (
-    IdentityPropertiesType,
+    IdentityConfig_contra,
+    IdentityPropertiesType_contra,
     IdentityResolver,
     IdentityType,
     IdentityType_contra,
@@ -57,20 +58,27 @@ class HTTPSigner(Protocol[IdentityType_contra, SigningPropertiesType_contra]):
         ...
 
 
-@dataclass(kw_only=True)
 class HTTPAuthScheme(
-    Protocol[IdentityType, IdentityPropertiesType, SigningPropertiesType]
+    Protocol[
+        IdentityType,
+        IdentityConfig_contra,
+        IdentityPropertiesType_contra,
+        SigningPropertiesType,
+    ]
 ):
     """Represents a way a service will authenticate the user's identity."""
 
     # A unique identifier for the authentication scheme.
     scheme_id: str
 
-    # An API that can be queried to resolve an identity.
-    identity_resolver: IdentityResolver[IdentityType, IdentityPropertiesType]
-
     # An API that can be used to sign HTTP requests.
     signer: HTTPSigner[IdentityType, SigningPropertiesType]
+
+    def identity_resolver(
+        self, config: IdentityConfig_contra
+    ) -> IdentityResolver[IdentityType, IdentityPropertiesType_contra]:
+        """An API that can be queried to resolve identity."""
+        ...
 
 
 @dataclass(kw_only=True)
