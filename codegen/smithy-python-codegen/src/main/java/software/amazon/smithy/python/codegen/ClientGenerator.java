@@ -329,7 +329,7 @@ final class ClientGenerator implements Runnable {
                             auth_scheme = config.http_auth_schemes[auth_option.scheme_id]
 
                             # Step 7c: Invoke auth_scheme.identity_resolver
-                            identity_resolver = auth_scheme.identity_resolver
+                            identity_resolver = auth_scheme.identity_resolver(config)
 
                             # Step 7d: Invoke auth_scheme.signer
                             signer = auth_scheme.signer

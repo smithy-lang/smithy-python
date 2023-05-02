@@ -44,6 +44,8 @@ IdentityPropertiesType_contra = TypeVar(
     "IdentityPropertiesType_contra", bound=IdentityProperties, contravariant=True
 )
 
+IdentityConfig_contra = TypeVar("IdentityConfig_contra", contravariant=True)
+
 
 class IdentityResolver(Protocol[IdentityType_cov, IdentityPropertiesType_contra]):
     """Used to load a user's `Identity` from a given source.
