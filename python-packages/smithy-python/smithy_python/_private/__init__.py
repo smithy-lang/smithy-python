@@ -142,7 +142,7 @@ class URI(interfaces.URI):
         )
 
     def to_dict(self) -> interfaces.URIParameters:
-        """Return a dictionary representation of the URI."""
+        """Return a dictionary representation of the URI components."""
         return {
             "scheme": self.scheme,
             "username": self.username,
@@ -199,10 +199,9 @@ class Field(interfaces.Field):
         has exactly one value, the value is returned unmodified.
 
         For ``Field``s with more than one value, the values are joined by the delimiter
-        argument, defaulting to a comma and a space. For such multi-valued ``Field``s,
-        any values that already contain commas or double quotes will be surrounded by
-        double quotes. Within any values that get quoted, pre-existing double quotes
-        and backslashes are escaped with a backslash.
+        argument. For such multi-valued ``Field``s, any values that already contain commas
+        or double quotes will be surrounded by double quotes. Within any values that get
+        quoted, pre-existing double quotes and backslashes are escaped with a backslash.
         """
         value_count = len(self.values)
         if value_count == 0:

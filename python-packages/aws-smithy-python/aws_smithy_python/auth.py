@@ -60,7 +60,6 @@ class SigV4SigningProperties(SigningProperties):
 class SignatureKwargs(TypedDict):
     http_request: HTTPRequestInterface
     formatted_headers: dict[str, str]
-    signed_headers: str
     date: str
     scope: str
 
@@ -96,8 +95,9 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         credential_scope = (
             f"Credential={identity.access_key_id}/{signature_kwargs['scope']}"
         )
+        signed_headers = ";".join(signature_kwargs["formatted_headers"])
         auth_header = self._authorization_header(
-            signature, credential_scope, signature_kwargs["signed_headers"]
+            signature, credential_scope, signed_headers
         )
         new_request = signature_kwargs["http_request"]
         new_request.fields.set_field(auth_header)
@@ -120,14 +120,10 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         date = datetime.now(tz=timezone.utc).strftime(SIGV4_TIMESTAMP_FORMAT)
         new_request = await self._generate_new_request(http_request, identity, date)
         formatted_headers = self._format_headers_for_signing(new_request)
-        # Signed headers are comprised of just the header keys delimited by
-        # a semicolon.
-        signed_headers = ";".join(formatted_headers)
         scope = self._scope(date, signing_properties)
         return {
             "http_request": new_request,
             "formatted_headers": formatted_headers,
-            "signed_headers": signed_headers,
             "date": date,
             "scope": scope,
         }
@@ -214,7 +210,6 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         self,
         http_request: HTTPRequestInterface,
         formatted_headers: dict[str, str],
-        signed_headers: str,
         secret_access_key: str,
         signing_properties: SigV4SigningProperties,
         date: str,
@@ -225,7 +220,6 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
 
         :param http_request: The request to sign.
         :param formatted_headers: The formatted header keys and values to sign.
-        :param signed_headers: The semicolon-delimited header keys to sign.
         :param secret_access_key: The secret access key to use in the signature.
         :param signing_properties: The signing properties to use in signing.
         :param date: The date to use in the signature in `%Y%m%dT%H%M%SZ` format.
@@ -236,7 +230,6 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         canonical_request = await self.canonical_request(
             http_request=http_request,
             formatted_headers=formatted_headers,
-            signed_headers=signed_headers,
             signing_properties=signing_properties,
             payload=payload,
         )
@@ -252,7 +245,6 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         *,
         http_request: HTTPRequestInterface,
         formatted_headers: dict[str, str],
-        signed_headers: str,
         signing_properties: SigV4SigningProperties,
         payload: str | None = None,
     ) -> str:
@@ -267,7 +259,6 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         :param http_request: The request to sign. It contains most of the components
         that are used to generate the canonical request.
         :param formatted_headers: The formatted header keys and values to sign.
-        :param signed_headers: The semicolon-delimited header keys to sign.
         :param signing_properties: The signing properties to use in signing.
         :param payload: Optional payload to sign. If not provided, the payload will be
         generated from the request body.
@@ -278,7 +269,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         cr += f"{quoted_path}\n"
         cr += f"{self._canonical_query_string(http_request.destination)}\n"
         cr += f"{self._canonical_headers(formatted_headers)}\n"
-        cr += f"{signed_headers}\n"
+        cr += f"{';'.join(formatted_headers)}\n"
         if payload is None:
             cr += await self._payload(http_request, signing_properties)
         else:
@@ -291,10 +282,10 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         After encoding, the parameters are sorted in alphabetical order by key then
         value.
         """
-        if not (query := url.query):
+        if not url.query:
             return ""
 
-        query_params = parse_qsl(query)
+        query_params = parse_qsl(url.query)
         # URI encode all characters including `/` and `=`
         query_parts = [
             (quote(key, safe=""), quote(value, safe="")) for key, value in query_params

@@ -71,7 +71,7 @@ class URI(Protocol):
         ...
 
     def to_dict(self) -> URIParameters:
-        """Return a dictionary representation of the URI."""
+        """Return a dictionary representation of the URI components."""
         ...
 
 
