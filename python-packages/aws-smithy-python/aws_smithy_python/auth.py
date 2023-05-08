@@ -16,7 +16,7 @@ import warnings
 from copy import deepcopy
 from datetime import datetime, timezone
 from hashlib import sha256
-from typing import NotRequired, TypedDict
+from typing import NotRequired
 from urllib.parse import parse_qsl, quote
 
 from smithy_python import interfaces
@@ -57,15 +57,12 @@ class SigV4SigningProperties(SigningProperties):
     checksum: NotRequired[dict[str, dict[str, str]]]
 
 
-class SignatureKwargs(TypedDict):
-    http_request: HTTPRequestInterface
-    formatted_headers: dict[str, str]
-    date: str
-    scope: str
-
-
 class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
     """Sign requests using the AWS Signature Version 4 algorithm."""
+
+    def __init__(self) -> None:
+        """Initialize the signer."""
+        self._signed_headers: str = ""
 
     async def sign(
         self,
@@ -84,49 +81,37 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         credentials.
         :param signing_properties: The properties to use for signing.
         """
-        signature_kwargs = await self._get_signature_kwargs(
+        date, scope = await self._get_signature_args(
             http_request, identity, signing_properties
         )
+        new_request = deepcopy(http_request)
         signature = await self._generate_signature(
-            secret_access_key=identity.secret_access_key,
+            http_request=new_request,
+            identity=identity,
             signing_properties=signing_properties,
-            **signature_kwargs,
+            date=date,
+            scope=scope,
         )
-        credential_scope = (
-            f"Credential={identity.access_key_id}/{signature_kwargs['scope']}"
-        )
-        signed_headers = ";".join(signature_kwargs["formatted_headers"])
-        auth_header = self._authorization_header(
-            signature, credential_scope, signed_headers
-        )
-        new_request = signature_kwargs["http_request"]
+        credential_scope = f"Credential={identity.access_key_id}/{scope}"
+        auth_header = self._authorization_header(signature, credential_scope)
         new_request.fields.set_field(auth_header)
         return new_request
 
-    async def _get_signature_kwargs(
+    async def _get_signature_args(
         self,
         http_request: HTTPRequestInterface,
         identity: AWSCredentialIdentity,
         signing_properties: SigV4SigningProperties,
-    ) -> SignatureKwargs:
+    ) -> tuple[str, str]:
         """Get the arguments needed to generate a signature.
 
-        Check that the identity and signing properties are valid, generate the headers
-        to add to the request, create a new request with the headers added, format the
-        headers for signing, and generate the scope.
+        Check that the identity and signing properties are valid, format the headers for
+        signing, and generate the scope.
         """
-
         self._validate_identity_and_signing_properties(identity, signing_properties)
         date = datetime.now(tz=timezone.utc).strftime(SIGV4_TIMESTAMP_FORMAT)
-        new_request = await self._generate_new_request(http_request, identity, date)
-        formatted_headers = self._format_headers_for_signing(new_request)
         scope = self._scope(date, signing_properties)
-        return {
-            "http_request": new_request,
-            "formatted_headers": formatted_headers,
-            "date": date,
-            "scope": scope,
-        }
+        return date, scope
 
     def _validate_identity_and_signing_properties(
         self,
@@ -144,15 +129,100 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
                 f"but received {type(identity)}."
             )
 
-    async def _generate_new_request(
+    def _scope(self, date: str, signing_properties: SigV4SigningProperties) -> str:
+        """Binds the signature to a specific date, AWS region, and service in the
+        following format:
+
+        <YYYYMMDD>/<AWS Region>/<AWS Service>/aws4_request
+        """
+        return (
+            f"{date[0:8]}/{signing_properties['region']}/"
+            f"{signing_properties['service']}/aws4_request"
+        )
+
+    async def _generate_signature(
+        self,
+        http_request: HTTPRequestInterface,
+        identity: AWSCredentialIdentity,
+        signing_properties: SigV4SigningProperties,
+        date: str,
+        scope: str,
+    ) -> str:
+        """Generate the signature for a request.
+
+        :param http_request: The request to sign.
+        :param formatted_headers: The formatted header keys and values to sign.
+        :param identity: The identity to use for signing. Contains authentication
+        credentials.
+        :param signing_properties: The signing properties to use in signing.
+        :param date: The date to use in the signature in `%Y%m%dT%H%M%SZ` format.
+        :param scope: The scope to use in the signature. See `_scope` for more info.
+        """
+        canonical_request = await self.canonical_request(
+            http_request=http_request,
+            identity=identity,
+            signing_properties=signing_properties,
+            date=date,
+        )
+        string_to_sign = self.string_to_sign(
+            canonical_request=canonical_request, date=date, scope=scope
+        )
+        return self._signature(
+            string_to_sign, date, identity.secret_access_key, signing_properties
+        )
+
+    async def canonical_request(
+        self,
+        *,
+        http_request: HTTPRequestInterface,
+        identity: AWSCredentialIdentity,
+        signing_properties: SigV4SigningProperties,
+        date: str,
+        payload: str | None = None,
+    ) -> str:
+        """Generate the canonical request string.
+
+        This is a string comprised of several components separated by newlines in the
+        following format:
+
+        <HTTPMethod>\n <CanonicalURI>\n <CanonicalQueryString>\n <CanonicalHeaders>\n
+        <SignedHeaders>\n <HashedPayload>
+
+        :param http_request: The request to sign. It contains most of the components
+        that are used to generate the canonical request.
+        :param identity: The identity to use for signing. Contains authentication
+        credentials.
+        :param signing_properties: The signing properties to use in signing.
+        :param payload: Optional payload to sign. If not provided, the payload will be
+        generated from the request body.
+        """
+        formatted_headers = self._format_headers_for_signing(
+            http_request=http_request, identity=identity, date=date
+        )
+        cr = f"{http_request.method.upper()}\n"
+        path = http_request.destination.path or "/"
+        quoted_path = quote(remove_dot_segments(path, True), safe="/%")
+        cr += f"{quoted_path}\n"
+        cr += f"{self._canonical_query_string(http_request.destination)}\n"
+        cr += f"{self._canonical_headers(formatted_headers)}\n"
+        self._signed_headers = ";".join(formatted_headers)
+        cr += f"{self._signed_headers}\n"
+        payload = payload or await self._payload(http_request, signing_properties)
+        cr += payload
+        return cr
+
+    def _format_headers_for_signing(
         self,
         http_request: HTTPRequestInterface,
         identity: AWSCredentialIdentity,
         date: str,
-    ) -> HTTPRequestInterface:
-        """Generate a new request with only allowed headers."""
-        new_request = deepcopy(http_request)
-        fields = new_request.fields
+    ) -> dict[str, str]:
+        """Format headers for signing.
+
+        Inject headers to the request. Ignore any headers that should not be signed, and
+        add the host header if not already present.
+        """
+        fields = http_request.fields
         # Use `set_field `to overwrite any existing headers instead of `extend`
         # which appends to the existing header.
         fields.set_field(Field(name="X-Amz-Date", values=[date]))
@@ -163,17 +233,6 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         elif "X-Amz-Security-Token" in fields:
             fields.remove_field("X-Amz-Security-Token")
 
-        return new_request
-
-    def _format_headers_for_signing(
-        self, http_request: HTTPRequestInterface
-    ) -> dict[str, str]:
-        """Format headers for signing.
-
-        Remove any headers that should not be signed, and add the host header if not
-        present.
-        """
-        fields = http_request.fields
         formatted_headers = {
             field.name.lower(): field.as_string(delimiter=",")
             for field in fields
@@ -187,17 +246,6 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
             formatted_headers["host"] = uri.netloc
         return dict(sorted(formatted_headers.items()))
 
-    def _scope(self, date: str, signing_properties: SigV4SigningProperties) -> str:
-        """Binds the signature to a specific date, AWS region, and service in the
-        following format:
-
-        <YYYYMMDD>/<AWS Region>/<AWS Service>/aws4_request
-        """
-        return (
-            f"{date[0:8]}/{signing_properties['region']}/"
-            f"{signing_properties['service']}/aws4_request"
-        )
-
     def _generate_new_uri(
         self, uri: interfaces.URI, params: interfaces.URIParameters
     ) -> URI:
@@ -205,76 +253,6 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         uri_dict = uri.to_dict()
         uri_dict.update(params)
         return URI(**uri_dict)
-
-    async def _generate_signature(
-        self,
-        http_request: HTTPRequestInterface,
-        formatted_headers: dict[str, str],
-        secret_access_key: str,
-        signing_properties: SigV4SigningProperties,
-        date: str,
-        scope: str,
-        payload: str | None = None,
-    ) -> str:
-        """Generate the signature for a request.
-
-        :param http_request: The request to sign.
-        :param formatted_headers: The formatted header keys and values to sign.
-        :param secret_access_key: The secret access key to use in the signature.
-        :param signing_properties: The signing properties to use in signing.
-        :param date: The date to use in the signature in `%Y%m%dT%H%M%SZ` format.
-        :param scope: The scope to use in the signature. See `_scope` for more info.
-        :param payload: Optional payload to sign. If not provided, the payload will
-        be generated from the request body.
-        """
-        canonical_request = await self.canonical_request(
-            http_request=http_request,
-            formatted_headers=formatted_headers,
-            signing_properties=signing_properties,
-            payload=payload,
-        )
-        string_to_sign = self.string_to_sign(
-            canonical_request=canonical_request, date=date, scope=scope
-        )
-        return self._signature(
-            string_to_sign, date, secret_access_key, signing_properties
-        )
-
-    async def canonical_request(
-        self,
-        *,
-        http_request: HTTPRequestInterface,
-        formatted_headers: dict[str, str],
-        signing_properties: SigV4SigningProperties,
-        payload: str | None = None,
-    ) -> str:
-        """Generate the canonical request string.
-
-        This is a string comprised of several components separated by newlines in the
-        following format:
-
-        <HTTPMethod>\n <CanonicalURI>\n <CanonicalQueryString>\n <CanonicalHeaders>\n
-        <SignedHeaders>\n <HashedPayload>
-
-        :param http_request: The request to sign. It contains most of the components
-        that are used to generate the canonical request.
-        :param formatted_headers: The formatted header keys and values to sign.
-        :param signing_properties: The signing properties to use in signing.
-        :param payload: Optional payload to sign. If not provided, the payload will be
-        generated from the request body.
-        """
-        cr = f"{http_request.method.upper()}\n"
-        path = http_request.destination.path or "/"
-        quoted_path = quote(remove_dot_segments(path, True), safe="/%")
-        cr += f"{quoted_path}\n"
-        cr += f"{self._canonical_query_string(http_request.destination)}\n"
-        cr += f"{self._canonical_headers(formatted_headers)}\n"
-        cr += f"{';'.join(formatted_headers)}\n"
-        if payload is None:
-            cr += await self._payload(http_request, signing_properties)
-        else:
-            cr += payload
-        return cr
 
     def _canonical_query_string(self, url: interfaces.URI) -> str:
         """Specifies the URI-encoded query string parameters.
@@ -409,9 +387,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
     def _hash(self, key: bytes, value: str) -> bytes:
         return hmac.new(key, value.encode(), sha256).digest()
 
-    def _authorization_header(
-        self, signature: str, credential_scope: str, signed_headers: str
-    ) -> Field:
+    def _authorization_header(self, signature: str, credential_scope: str) -> Field:
         """Generate the `Authorization` header.
 
         This is a string formatted as:
@@ -419,6 +395,6 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         "AWS4-HMAC-SHA256" + ", " + <SignedHeaders> + ", " + <Signature>
         """
         auth_str = f"AWS4-HMAC-SHA256 {credential_scope}, "
-        auth_str += f"SignedHeaders={signed_headers}, "
+        auth_str += f"SignedHeaders={self._signed_headers}, "
         auth_str += f"Signature={signature}"
         return Field(name="Authorization", values=[auth_str])

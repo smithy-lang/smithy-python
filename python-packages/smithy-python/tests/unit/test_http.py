@@ -24,6 +24,7 @@ from smithy_python._private.http import (
 )
 from smithy_python.async_utils import async_list
 from smithy_python.exceptions import SmithyHTTPException
+from smithy_python.interfaces import URIParameters
 
 
 def test_uri_basic() -> None:
@@ -38,17 +39,6 @@ def test_uri_basic() -> None:
     assert uri.query == "foo=bar"
     assert uri.netloc == "test.aws.dev"
     assert uri.build() == "https://test.aws.dev/my/path?foo=bar"
-    uri_dict = uri.to_dict()
-    assert uri_dict == {
-        "host": "test.aws.dev",
-        "path": "/my/path",
-        "query": "foo=bar",
-        "scheme": "https",
-        "port": None,
-        "username": None,
-        "password": None,
-        "fragment": None,
-    }
 
 
 def test_uri_all_fields_present() -> None:
@@ -73,17 +63,55 @@ def test_uri_all_fields_present() -> None:
     assert uri.fragment == "frag"
     assert uri.netloc == "abc:def@test.aws.dev:80"
     assert uri.build() == "http://abc:def@test.aws.dev:80/my/path?foo=bar#frag"
-    uri_dict = uri.to_dict()
-    assert uri_dict == {
-        "host": "test.aws.dev",
-        "path": "/my/path",
-        "query": "foo=bar",
-        "scheme": "http",
-        "port": 80,
-        "username": "abc",
-        "password": "def",
-        "fragment": "frag",
-    }
+
+
+@pytest.mark.parametrize(
+    "input_uri, expected_dict",
+    [
+        (
+            URI(
+                host="test.aws.dev",
+                path="/my/path",
+                scheme="http",
+                query="foo=bar",
+                port=80,
+                username="abc",
+                password="def",
+                fragment="frag",
+            ),
+            {
+                "host": "test.aws.dev",
+                "path": "/my/path",
+                "query": "foo=bar",
+                "scheme": "http",
+                "port": 80,
+                "username": "abc",
+                "password": "def",
+                "fragment": "frag",
+            },
+        ),
+        (
+            URI(
+                host="test.aws.dev",
+                path="/my/path",
+                query="foo=bar",
+            ),
+            {
+                "host": "test.aws.dev",
+                "path": "/my/path",
+                "query": "foo=bar",
+                "scheme": "https",
+                "port": None,
+                "username": None,
+                "password": None,
+                "fragment": None,
+            },
+        ),
+    ],
+)
+def test_uri_to_dict(input_uri: URI, expected_dict: URIParameters) -> None:
+    uri_dict = input_uri.to_dict()
+    assert uri_dict == expected_dict
 
 
 def test_uri_without_scheme_field() -> None:
