@@ -134,25 +134,9 @@ class RawRequest(BaseHTTPRequestHandler):
         self.error_message = message
 
 
-def _generate_test_case(path: pathlib.Path) -> tuple[bytes, str, str, str, str | None]:
-    raw_request = (path / f"{path.name}.req").read_bytes()
-    canonical_request = (path / f"{path.name}.creq").read_text()
-    string_to_sign = (path / f"{path.name}.sts").read_text()
-    authorization_header = (path / f"{path.name}.authz").read_text()
-
-    token_match = TOKEN_PATTERN.search(canonical_request)
-    token = token_match.group(1) if token_match else None
-
-    return (raw_request, canonical_request, string_to_sign, authorization_header, token)
-
-
-def _is_valid_test_case(path: pathlib.Path) -> bool:
-    return path.is_dir() and any(f.suffix.endswith(".req") for f in path.iterdir())
-
-
 def generate_test_cases(
     test_path: pathlib.Path,
-) -> Generator[tuple[bytes, str, str, str, str | None], None, None]:
+) -> Generator[tuple[HTTPRequest, str, str, str, str | None], None, None]:
     for path in test_path.glob("*"):
         if _is_valid_test_case(path):
             yield _generate_test_case(path)
@@ -160,18 +144,33 @@ def generate_test_cases(
             yield from generate_test_cases(path)
 
 
-def generate_async_list(data: BytesIO) -> AsyncIterable[bytes]:
-    stream = []
-    while True:
-        part = data.read()
-        if not part:
-            break
-        stream.append(part)
-    return async_list(stream)
+def _is_valid_test_case(path: pathlib.Path) -> bool:
+    return path.is_dir() and any(f.suffix.endswith(".req") for f in path.iterdir())
 
 
-def smithy_request_from_raw_request(
-    raw_request: bytes,
+def _generate_test_case(
+    path: pathlib.Path,
+) -> tuple[HTTPRequest, str, str, str, str | None]:
+    raw_request = (path / f"{path.name}.req").read_bytes()
+    canonical_request = (path / f"{path.name}.creq").read_text()
+    string_to_sign = (path / f"{path.name}.sts").read_text()
+    authorization_header = (path / f"{path.name}.authz").read_text()
+
+    token_match = TOKEN_PATTERN.search(canonical_request)
+    token = token_match.group(1) if token_match else None
+    smithy_request = _smithy_request_from_raw_request(raw_request, token)
+
+    return (
+        smithy_request,
+        canonical_request,
+        string_to_sign,
+        authorization_header,
+        token,
+    )
+
+
+def _smithy_request_from_raw_request(
+    raw_request: bytes, token: str | None = None
 ) -> HTTPRequest:
     decoded = raw_request.decode()
     # The BaseHTTPRequestHandler chokes on extra spaces in the path,
@@ -193,7 +192,10 @@ def smithy_request_from_raw_request(
         else:
             field = Field(name=k, values=[v])
             fields.set_field(field)
-    body = generate_async_list(raw.rfile)
+    fields.set_field(Field(name="X-Amz-Date", values=[DATE_STR]))
+    if token is not None:
+        fields.set_field(Field(name="X-Amz-Security-Token", values=[token]))
+    body = _generate_async_list(raw.rfile)
     # For whatever reason, the BaseHTTPRequestHandler encodes
     # the first line of the response as 'iso-8859-1',
     # so we need to decode this into utf-8.
@@ -211,6 +213,16 @@ def smithy_request_from_raw_request(
         fields=fields,
         body=body,
     )
+
+
+def _generate_async_list(data: BytesIO) -> AsyncIterable[bytes]:
+    stream = []
+    while True:
+        part = data.read()
+        if not part:
+            break
+        stream.append(part)
+    return async_list(stream)
 
 
 def pytest_warns() -> ContextManager[warnings.WarningMessage]:
@@ -238,14 +250,14 @@ def warnings_simplefilter() -> None:
 
 
 @pytest.mark.parametrize(
-    "raw_request, canonical_request, string_to_sign, authorization_header, token",
+    "http_request, canonical_request, string_to_sign, authorization_header, token",
     generate_test_cases(TESTSUITE_DIR),
 )
 @pytest.mark.asyncio
 @freeze_time(DATE)
 async def test_sigv4_signing(
     sigv4_signer: SigV4Signer,
-    raw_request: bytes,
+    http_request: HTTPRequest,
     canonical_request: str,
     string_to_sign: str,
     authorization_header: str,
@@ -254,13 +266,10 @@ async def test_sigv4_signing(
     identity = AWSCredentialIdentity(
         access_key_id=ACCESS_KEY, secret_access_key=SECRET_KEY, session_token=token
     )
-    request = smithy_request_from_raw_request(raw_request)
     with pytest_warns():
         actual_canonical_request = await sigv4_signer.canonical_request(
-            http_request=request,
-            identity=identity,
+            http_request=http_request,
             signing_properties=SIGNING_PROPERTIES,
-            date=DATE_STR,
         )
         assert actual_canonical_request == canonical_request
         actual_string_to_sign = sigv4_signer.string_to_sign(
@@ -268,7 +277,7 @@ async def test_sigv4_signing(
         )
         assert actual_string_to_sign == string_to_sign
         new_request = await sigv4_signer.sign(
-            http_request=request,
+            http_request=http_request,
             identity=identity,
             signing_properties=SIGNING_PROPERTIES,
         )
@@ -577,7 +586,6 @@ async def test_missing_required_signing_properties_raises(
 async def test_payload(
     sigv4_signer: SigV4Signer,
     http_request: HTTPRequest,
-    aws_credential_identity: AWSCredentialIdentity,
     warning_ctx_mgr: Callable[[], ContextManager[warnings.WarningMessage]],
     warning_filter: Callable[[], None],
     signing_properties: SigV4SigningProperties,
@@ -589,9 +597,7 @@ async def test_payload(
         warning_filter()
         canonical_request = await sigv4_signer.canonical_request(
             http_request=http_request,
-            identity=aws_credential_identity,
             signing_properties=signing_properties,
-            date=DATE_STR,
             payload=input_payload,
         )
     # payload is the last line of the canonical request
@@ -678,16 +684,12 @@ async def test_replace_user_provided_token_header(
 @pytest.mark.asyncio
 async def test_port_removed_from_host(
     sigv4_signer: SigV4Signer,
-    aws_credential_identity: AWSCredentialIdentity,
     http_request: HTTPRequest,
     expected_host: str,
 ) -> None:
     with pytest_warns():
         cr = await sigv4_signer.canonical_request(
-            http_request=http_request,
-            identity=aws_credential_identity,
-            signing_properties=SIGNING_PROPERTIES,
-            date=DATE_STR,
+            http_request=http_request, signing_properties=SIGNING_PROPERTIES
         )
         # with the above examples `host` will always be on the fourth line of
         # the canonical request
