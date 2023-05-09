@@ -54,14 +54,6 @@ SCOPE: str = f"{DATE_STR[0:8]}/us-east-1/service/aws4_request"
 TESTSUITE_DIR: pathlib.Path = (
     pathlib.Path(__file__).absolute().parent / "aws4_testsuite"
 )
-SIGV4_REQUIRED_QUERY_PARAMS: tuple[str, ...] = (
-    "X-Amz-Algorithm",
-    "X-Amz-Credential",
-    "X-Amz-Date",
-    "X-Amz-Expires",
-    "X-Amz-SignedHeaders",
-    "X-Amz-Signature",
-)
 EMPTY_ASYNC_LIST: AsyncIterable[bytes] = async_list([])
 EMPTY_ASYNC_BYTES_READER: AsyncBytesReader = AsyncBytesReader(async_list([]))
 EMPTY_SEEKABLE_ASYNC_BYTES_READER: SeekableAsyncBytesReader = SeekableAsyncBytesReader(
@@ -119,24 +111,9 @@ def sigv4_signer() -> SigV4Signer:
     return SigV4Signer()
 
 
-class RawRequest(BaseHTTPRequestHandler):
-    def __init__(self, raw_request: bytes):
-        self.rfile: BytesIO = BytesIO(raw_request)
-        self.raw_requestline: bytes = self.rfile.readline()
-        self.error_code: int | None = None
-        self.error_message: str | None = None
-        self.parse_request()
-
-    def send_error(
-        self, code: int, message: str | None = None, explain: str | None = None
-    ) -> None:
-        self.error_code = code
-        self.error_message = message
-
-
 def generate_test_cases(
     test_path: pathlib.Path,
-) -> Generator[tuple[HTTPRequest, str, str, str, str | None], None, None]:
+) -> Generator[tuple[HTTPRequest, AWSCredentialIdentity, str, str, str], None, None]:
     for path in test_path.glob("*"):
         if _is_valid_test_case(path):
             yield _generate_test_case(path)
@@ -150,7 +127,7 @@ def _is_valid_test_case(path: pathlib.Path) -> bool:
 
 def _generate_test_case(
     path: pathlib.Path,
-) -> tuple[HTTPRequest, str, str, str, str | None]:
+) -> tuple[HTTPRequest, AWSCredentialIdentity, str, str, str]:
     raw_request = (path / f"{path.name}.req").read_bytes()
     canonical_request = (path / f"{path.name}.creq").read_text()
     string_to_sign = (path / f"{path.name}.sts").read_text()
@@ -162,11 +139,28 @@ def _generate_test_case(
 
     return (
         smithy_request,
+        AWSCredentialIdentity(
+            access_key_id=ACCESS_KEY, secret_access_key=SECRET_KEY, session_token=token
+        ),
         canonical_request,
         string_to_sign,
         authorization_header,
-        token,
     )
+
+
+class RawRequest(BaseHTTPRequestHandler):
+    def __init__(self, raw_request: bytes):
+        self.rfile: BytesIO = BytesIO(raw_request)
+        self.raw_requestline: bytes = self.rfile.readline()
+        self.error_code: int | None = None
+        self.error_message: str | None = None
+        self.parse_request()
+
+    def send_error(
+        self, code: int, message: str | None = None, explain: str | None = None
+    ) -> None:
+        self.error_code = code
+        self.error_message = message
 
 
 def _smithy_request_from_raw_request(
@@ -250,7 +244,7 @@ def warnings_simplefilter() -> None:
 
 
 @pytest.mark.parametrize(
-    "http_request, canonical_request, string_to_sign, authorization_header, token",
+    "http_request, identity, canonical_request, string_to_sign, authorization_header",
     generate_test_cases(TESTSUITE_DIR),
 )
 @pytest.mark.asyncio
@@ -258,14 +252,11 @@ def warnings_simplefilter() -> None:
 async def test_sigv4_signing(
     sigv4_signer: SigV4Signer,
     http_request: HTTPRequest,
+    identity: AWSCredentialIdentity,
     canonical_request: str,
     string_to_sign: str,
     authorization_header: str,
-    token: str | None,
 ) -> None:
-    identity = AWSCredentialIdentity(
-        access_key_id=ACCESS_KEY, secret_access_key=SECRET_KEY, session_token=token
-    )
     with pytest_warns():
         actual_canonical_request = await sigv4_signer.canonical_request(
             http_request=http_request,
@@ -636,7 +627,6 @@ async def test_replace_user_provided_token_header(
             signing_properties=SIGNING_PROPERTIES,
         )
     token_field = new_request.fields.get_field("X-Amz-Security-Token").as_string()
-    assert token_field != "foo"
     assert token_field == aws_credential_identity.session_token
 
 

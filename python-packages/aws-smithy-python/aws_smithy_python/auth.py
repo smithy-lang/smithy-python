@@ -84,7 +84,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         credentials.
         :param signing_properties: The properties to use for signing.
         """
-        signature_kwargs = await self._get_signature_kwargs(
+        signature_kwargs = self._get_signature_kwargs(
             http_request, identity, signing_properties
         )
         signature = await self._generate_signature(
@@ -103,7 +103,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         new_request.fields.set_field(auth_header)
         return new_request
 
-    async def _get_signature_kwargs(
+    def _get_signature_kwargs(
         self,
         http_request: HTTPRequestInterface,
         identity: AWSCredentialIdentity,
@@ -257,8 +257,6 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
 
         :param http_request: The request to sign. It contains most of the components
         that are used to generate the canonical request.
-        :param identity: The identity to use for signing. Contains authentication
-        credentials.
         :param signing_properties: The signing properties to use in signing.
         :param formatted_headers: Optional formatted header keys and values to sign. If
         not provided, the headers will be computed by the signer.
@@ -305,8 +303,11 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         return "".join(f"{key}:{self._trim(value)}\n" for key, value in headers.items())
 
     def _trim(self, value: str) -> str:
-        """Remove excess whitespace before and after value then convert sequential
-        spaces to a single space."""
+        """Trim a header value.
+
+        Remove excess whitespace before and after value then convert sequential spaces
+        to a single space.
+        """
         return " ".join(value.split())
 
     async def _payload(
