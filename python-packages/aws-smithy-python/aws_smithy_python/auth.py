@@ -88,7 +88,6 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
             http_request, identity, signing_properties
         )
         signature = await self._generate_signature(
-            identity=identity,
             signing_properties=signing_properties,
             secret_access_key=identity.secret_access_key,
             **signature_kwargs,
