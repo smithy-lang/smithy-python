@@ -249,19 +249,19 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
     ) -> str:
         """Generate the canonical request string.
 
-        This is a string comprised of several components separated by newlines in the
-        following format:
+        This is a string comprised of several components separated by newlines
+        in the following format:
 
-        <HTTPMethod>\n <CanonicalURI>\n <CanonicalQueryString>\n <CanonicalHeaders>\n
-        <SignedHeaders>\n <HashedPayload>
+        <HTTPMethod>\n <CanonicalURI>\n <CanonicalQueryString>\n
+        <CanonicalHeaders>\n <SignedHeaders>\n <HashedPayload>
 
-        :param http_request: The request to sign. It contains most of the components
-        that are used to generate the canonical request.
+        :param http_request: The request to sign. It contains most of the
+        components that are used to generate the canonical request.
         :param signing_properties: The signing properties to use in signing.
-        :param formatted_headers: Optional formatted header keys and values to sign. If
-        not provided, the headers will be computed by the signer.
-        :param payload: Optional payload to sign. If not provided, the payload will be
-        generated from the request body.
+        :param formatted_headers: Optional formatted header keys and values
+        to sign. If not provided, the headers will be computed by the signer.
+        :param payload: Optional payload to sign. If not provided, the payload
+        will be generated from the request body.
         """
         cr = f"{http_request.method.upper()}\n"
         path = http_request.destination.path or "/"
@@ -315,7 +315,11 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         http_request: HTTPRequestInterface,
         signing_properties: SigV4SigningProperties,
     ) -> str:
-        """Generate the value for the `X-Amz-Content-SHA256` header."""
+        """Generate the value for the `X-Amz-Content-SHA256` header.
+
+        If the body is seekable, reset the position after reading it. If not, read the
+        body into a buffer and reset the body to the buffer.
+        """
         # TODO: Add _is_streaming_checksum_payload after checksum implementation is
         # complete
 
@@ -368,11 +372,11 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
 
         It is a concatenation of the following strings:
 
-        "AWS4-HMAC-SHA256" + "\n" + timeStampISO8601Format + "\n" + <Scope> + "\n" +
-        Hex(SHA256Hash(<CanonicalRequest>))
+        "AWS4-HMAC-SHA256" + "\n" + timeStampISO8601Format + "\n" +
+        <Scope> + "\n" + Hex(SHA256Hash(<CanonicalRequest>))
 
-        :param canonical_request: The canonical request string. For more information see
-        `canonical_request` method.
+        :param canonical_request: The canonical request string. For more
+        information see `canonical_request` method.
         :param date: The date to use in the signature in `%Y%m%dT%H%M%SZ` format.
         :param scope: The scope to use in the signature. It takes the form of
         "<YYYYMMDD>/<AWS Region>/<AWS Service>/aws4_request".
@@ -393,10 +397,10 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
     ) -> str:
         """Sign the string to sign.
 
-        In SigV4, instead of using AWS access keys to sign a request, a signing key is
-        created that is scoped to a specific region and service. The date, region,
-        service and resulting signing key are individually hashed, then the composite
-        hash is used to sign the string to sign.
+        In SigV4, instead of using AWS access keys to sign a request, a signing
+        key is created that is scoped to a specific region and service. The date,
+        region, service and resulting signing key are individually hashed, then
+        the composite hash is used to sign the string to sign.
 
         DateKey              = HMAC-SHA256("AWS4"+"<SecretAccessKey>", "<YYYYMMDD>")
         DateRegionKey        = HMAC-SHA256(<DateKey>, "<aws-region>")
