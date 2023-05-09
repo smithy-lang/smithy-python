@@ -632,3 +632,64 @@ async def test_replace_user_provided_token_header(
     token_field = new_request.fields.get_field("X-Amz-Security-Token").as_string()
     assert token_field != "foo"
     assert token_field == aws_credential_identity.session_token
+
+
+@pytest.mark.parametrize(
+    "http_request, expected_host",
+    [
+        (
+            HTTPRequest(
+                destination=URI(host="example.com", port=443),
+                body=EMPTY_ASYNC_LIST,
+                method="GET",
+                fields=Fields(),
+            ),
+            "example.com",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com", port=80),
+                body=EMPTY_ASYNC_LIST,
+                method="GET",
+                fields=Fields(),
+            ),
+            "example.com:80",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com", port=443, scheme="http"),
+                body=EMPTY_ASYNC_LIST,
+                method="GET",
+                fields=Fields(),
+            ),
+            "example.com:443",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com", port=80, scheme="http"),
+                body=EMPTY_ASYNC_LIST,
+                method="GET",
+                fields=Fields(),
+            ),
+            "example.com",
+        ),
+    ],
+)
+@pytest.mark.asyncio
+async def test_port_removed_from_host(
+    sigv4_signer: SigV4Signer,
+    aws_credential_identity: AWSCredentialIdentity,
+    http_request: HTTPRequest,
+    expected_host: str,
+) -> None:
+    with pytest_warns():
+        cr = await sigv4_signer.canonical_request(
+            http_request=http_request,
+            identity=aws_credential_identity,
+            signing_properties=SIGNING_PROPERTIES,
+            date=DATE_STR,
+        )
+        # with the above examples `host` will always be on the fourth line of
+        # the canonical request
+        host_header = cr.splitlines()[3]
+        assert host_header == f"host:{expected_host}"
