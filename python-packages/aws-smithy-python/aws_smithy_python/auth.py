@@ -22,11 +22,11 @@ from urllib.parse import parse_qsl, quote
 from smithy_python import interfaces
 from smithy_python._private import URI, Field
 from smithy_python._private.auth import HTTPSigner
+from smithy_python._private.http import HTTPRequest
 from smithy_python.async_utils import async_list
 from smithy_python.exceptions import SmithyHTTPException, SmithyIdentityException
 from smithy_python.interfaces.auth import SigningProperties
 from smithy_python.interfaces.blobs import AsyncBytesReader
-from smithy_python.interfaces.http import HTTPRequest as HTTPRequestInterface
 from smithy_python.utils import remove_dot_segments
 
 from aws_smithy_python.identity import AWSCredentialIdentity
@@ -58,22 +58,24 @@ class SigV4SigningProperties(SigningProperties):
 
 
 class SignatureKwargs(TypedDict):
-    http_request: HTTPRequestInterface
+    http_request: HTTPRequest
     signed_headers: str
     date: str
     scope: str
 
 
-class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
+class SigV4Signer(
+    HTTPSigner[HTTPRequest, AWSCredentialIdentity, SigV4SigningProperties]
+):
     """Sign requests using the AWS Signature Version 4 algorithm."""
 
     async def sign(
         self,
         *,
-        http_request: HTTPRequestInterface,
+        http_request: HTTPRequest,
         identity: AWSCredentialIdentity,
         signing_properties: SigV4SigningProperties,
-    ) -> HTTPRequestInterface:
+    ) -> HTTPRequest:
         """Sign a request using the `Authorization` header.
 
         Specifications can be found at:
@@ -110,7 +112,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
 
     def _get_signature_kwargs(
         self,
-        http_request: HTTPRequestInterface,
+        http_request: HTTPRequest,
         identity: AWSCredentialIdentity,
         signing_properties: SigV4SigningProperties,
     ) -> SignatureKwargs:
@@ -156,10 +158,10 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
 
     def _generate_new_request(
         self,
-        http_request: HTTPRequestInterface,
+        http_request: HTTPRequest,
         identity: AWSCredentialIdentity,
         date: str,
-    ) -> HTTPRequestInterface:
+    ) -> HTTPRequest:
         """Generate a new request.
 
         Inject the `X-Amz-Date` header and `X-Amz-Security-Token` header if the identity
@@ -179,9 +181,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
 
         return new_request
 
-    def _format_headers_for_signing(
-        self, http_request: HTTPRequestInterface
-    ) -> dict[str, str]:
+    def _format_headers_for_signing(self, http_request: HTTPRequest) -> dict[str, str]:
         """Format headers for signing.
 
         Ignore any headers that should not be signed, and add the host header if not
@@ -222,7 +222,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
 
     async def _generate_signature(
         self,
-        http_request: HTTPRequestInterface,
+        http_request: HTTPRequest,
         signing_properties: SigV4SigningProperties,
         date: str,
         scope: str,
@@ -253,7 +253,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
     async def canonical_request(
         self,
         *,
-        http_request: HTTPRequestInterface,
+        http_request: HTTPRequest,
         signing_properties: SigV4SigningProperties,
     ) -> str:
         """Generate the canonical request string.
@@ -323,7 +323,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
 
     async def _payload(
         self,
-        http_request: HTTPRequestInterface,
+        http_request: HTTPRequest,
         signing_properties: SigV4SigningProperties,
     ) -> str:
         """Generate the value for the `X-Amz-Content-SHA256` header.
@@ -371,7 +371,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
 
     def _should_sha256_sign_payload(
         self,
-        http_request: HTTPRequestInterface,
+        http_request: HTTPRequest,
         signing_properties: SigV4SigningProperties,
     ) -> bool:
         # All insecure connections should be signed

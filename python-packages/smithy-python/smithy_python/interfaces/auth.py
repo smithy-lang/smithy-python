@@ -14,7 +14,7 @@
 from dataclasses import dataclass
 from typing import Any, Protocol, TypedDict, TypeVar
 
-from .http import HTTPRequest
+from .http import HTTPRequestType
 from .identity import (
     IdentityConfig_contra,
     IdentityPropertiesType_contra,
@@ -36,16 +36,18 @@ SigningPropertiesType_contra = TypeVar(
 )
 
 
-class HTTPSigner(Protocol[IdentityType_contra, SigningPropertiesType_contra]):
+class HTTPSigner(
+    Protocol[HTTPRequestType, IdentityType_contra, SigningPropertiesType_contra]
+):
     """An interface for generating a signed HTTP request."""
 
     async def sign(
         self,
         *,
-        http_request: HTTPRequest,
+        http_request: HTTPRequestType,
         identity: IdentityType_contra,
         signing_properties: SigningPropertiesType_contra,
-    ) -> HTTPRequest:
+    ) -> HTTPRequestType:
         """Generate a new signed HTTPRequest based on the one provided.
 
         :param http_request: The HTTP request to sign.
@@ -60,6 +62,7 @@ class HTTPSigner(Protocol[IdentityType_contra, SigningPropertiesType_contra]):
 
 class HTTPAuthScheme(
     Protocol[
+        HTTPRequestType,
         IdentityType,
         IdentityConfig_contra,
         IdentityPropertiesType_contra,
@@ -72,7 +75,7 @@ class HTTPAuthScheme(
     scheme_id: str
 
     # An API that can be used to sign HTTP requests.
-    signer: HTTPSigner[IdentityType, SigningPropertiesType]
+    signer: HTTPSigner[HTTPRequestType, IdentityType, SigningPropertiesType]
 
     def identity_resolver(
         self, *, config: IdentityConfig_contra

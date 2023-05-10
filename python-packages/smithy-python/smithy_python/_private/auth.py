@@ -13,22 +13,24 @@
 
 from ..interfaces.auth import HTTPSigner as HTTPSignerInterface
 from ..interfaces.auth import SigningPropertiesType_contra
-from ..interfaces.http import HTTPRequest as HTTPRequestInterface
+from ..interfaces.http import HTTPRequestType
 from ..interfaces.identity import IdentityType_contra
 
 
 class HTTPSigner(
-    HTTPSignerInterface[IdentityType_contra, SigningPropertiesType_contra]
+    HTTPSignerInterface[
+        HTTPRequestType, IdentityType_contra, SigningPropertiesType_contra
+    ]
 ):
     """An interface for generating a signed HTTP request."""
 
     async def sign(
         self,
         *,
-        http_request: HTTPRequestInterface,
+        http_request: HTTPRequestType,
         identity: IdentityType_contra,
         signing_properties: SigningPropertiesType_contra,
-    ) -> HTTPRequestInterface:
+    ) -> HTTPRequestType:
         """Generate a new signed HTTPRequest based on the one provided.
 
         :param http_request: The HTTP request to sign.

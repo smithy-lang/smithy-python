@@ -31,6 +31,9 @@ class HTTPRequest(Request, Protocol):
     fields: Fields
 
 
+HTTPRequestType = TypeVar("HTTPRequestType", bound=HTTPRequest)
+
+
 class HTTPResponse(Response, Protocol):
     """HTTP primitives returned from an Exchange, used to construct a client
     response."""
