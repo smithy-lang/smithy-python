@@ -314,8 +314,8 @@ async def test_missing_required_signing_properties_raises(
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     (
-        "http_request, warning_ctx_mgr, warning_filter, signing_properties, "
-        "input_payload, expected_payload, expected_body"
+        "http_request, warning_ctx_mgr, warning_filter, "
+        "signing_properties, expected_payload, expected_body"
     ),
     [
         (
@@ -328,7 +328,32 @@ async def test_missing_required_signing_properties_raises(
             pytest_warns,
             noop,
             SIGNING_PROPERTIES,
-            None,
+            EMPTY_SHA256_HASH,
+            b"",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com"),
+                body=EMPTY_ASYNC_BYTES_READER,
+                method="GET",
+                fields=Fields(),
+            ),
+            pytest_warns,
+            noop,
+            SIGNING_PROPERTIES,
+            EMPTY_SHA256_HASH,
+            b"",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com"),
+                body=EMPTY_SEEKABLE_ASYNC_BYTES_READER,
+                method="GET",
+                fields=Fields(),
+            ),
+            pytest_warns,
+            noop,
+            SIGNING_PROPERTIES,
             EMPTY_SHA256_HASH,
             b"",
         ),
@@ -342,51 +367,8 @@ async def test_missing_required_signing_properties_raises(
             pytest_warns,
             noop,
             SIGNING_PROPERTIES,
-            None,
             sha256(b"foo").hexdigest(),
             b"foo",
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com", scheme="http"),
-                body=EMPTY_ASYNC_LIST,
-                method="GET",
-                fields=Fields(),
-            ),
-            pytest_warns,
-            noop,
-            SIGNING_PROPERTIES,
-            None,
-            EMPTY_SHA256_HASH,
-            b"",
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=async_list([b"foo", b"bar", b"hello", b"world"]),
-                method="GET",
-                fields=Fields(),
-            ),
-            pytest_warns,
-            noop,
-            SIGNING_PROPERTIES,
-            None,
-            sha256(b"foobarhelloworld").hexdigest(),
-            b"foobarhelloworld",
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=EMPTY_ASYNC_BYTES_READER,
-                method="GET",
-                fields=Fields(),
-            ),
-            pytest_warns,
-            noop,
-            SIGNING_PROPERTIES,
-            None,
-            EMPTY_SHA256_HASH,
-            b"",
         ),
         (
             HTTPRequest(
@@ -398,51 +380,8 @@ async def test_missing_required_signing_properties_raises(
             pytest_warns,
             noop,
             SIGNING_PROPERTIES,
-            None,
             sha256(b"foo").hexdigest(),
             b"foo",
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com", scheme="http"),
-                body=EMPTY_ASYNC_BYTES_READER,
-                method="GET",
-                fields=Fields(),
-            ),
-            pytest_warns,
-            noop,
-            SIGNING_PROPERTIES,
-            None,
-            EMPTY_SHA256_HASH,
-            b"",
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=AsyncBytesReader(async_list([b"foo", b"bar", b"hello", b"world"])),
-                method="GET",
-                fields=Fields(),
-            ),
-            pytest_warns,
-            noop,
-            SIGNING_PROPERTIES,
-            None,
-            sha256(b"foobarhelloworld").hexdigest(),
-            b"foobarhelloworld",
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=EMPTY_SEEKABLE_ASYNC_BYTES_READER,
-                method="GET",
-                fields=Fields(),
-            ),
-            pytest_warns,
-            noop,
-            SIGNING_PROPERTIES,
-            None,
-            EMPTY_SHA256_HASH,
-            b"",
         ),
         (
             HTTPRequest(
@@ -454,23 +393,34 @@ async def test_missing_required_signing_properties_raises(
             pytest_warns,
             noop,
             SIGNING_PROPERTIES,
-            None,
             sha256(b"foo").hexdigest(),
             b"foo",
         ),
         (
             HTTPRequest(
-                destination=URI(host="example.com", scheme="http"),
-                body=EMPTY_SEEKABLE_ASYNC_BYTES_READER,
+                destination=URI(host="example.com"),
+                body=async_list([b"foo", b"bar", b"hello", b"world"]),
                 method="GET",
                 fields=Fields(),
             ),
             pytest_warns,
             noop,
             SIGNING_PROPERTIES,
-            None,
-            EMPTY_SHA256_HASH,
-            b"",
+            sha256(b"foobarhelloworld").hexdigest(),
+            b"foobarhelloworld",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com"),
+                body=AsyncBytesReader(async_list([b"foo", b"bar", b"hello", b"world"])),
+                method="GET",
+                fields=Fields(),
+            ),
+            pytest_warns,
+            noop,
+            SIGNING_PROPERTIES,
+            sha256(b"foobarhelloworld").hexdigest(),
+            b"foobarhelloworld",
         ),
         (
             HTTPRequest(
@@ -484,22 +434,33 @@ async def test_missing_required_signing_properties_raises(
             pytest_warns,
             noop,
             SIGNING_PROPERTIES,
-            None,
             sha256(b"foobarhelloworld").hexdigest(),
             b"foobarhelloworld",
         ),
         (
             HTTPRequest(
-                destination=URI(host="example.com"),
-                body=EMPTY_ASYNC_LIST,
+                destination=URI(host="example.com", scheme="http"),
+                body=EMPTY_ASYNC_BYTES_READER,
                 method="GET",
                 fields=Fields(),
             ),
-            warnings.catch_warnings,
-            warnings_simplefilter,
-            {"payload_signing_enabled": False, "region": "us-east-1", "service": "s3"},
-            None,
-            UNSIGNED_PAYLOAD,
+            pytest_warns,
+            noop,
+            SIGNING_PROPERTIES,
+            EMPTY_SHA256_HASH,
+            b"",
+        ),
+        (
+            HTTPRequest(
+                destination=URI(host="example.com", scheme="http"),
+                body=EMPTY_SEEKABLE_ASYNC_BYTES_READER,
+                method="GET",
+                fields=Fields(),
+            ),
+            pytest_warns,
+            noop,
+            SIGNING_PROPERTIES,
+            EMPTY_SHA256_HASH,
             b"",
         ),
         (
@@ -511,9 +472,8 @@ async def test_missing_required_signing_properties_raises(
             ),
             warnings.catch_warnings,
             warnings_simplefilter,
-            SIGNING_PROPERTIES,
-            "foo",
-            "foo",
+            {"payload_signing_enabled": False, "region": "us-east-1", "service": "s3"},
+            UNSIGNED_PAYLOAD,
             b"",
         ),
         (
@@ -526,22 +486,7 @@ async def test_missing_required_signing_properties_raises(
             warnings.catch_warnings,
             warnings_simplefilter,
             {"payload_signing_enabled": False, "region": "us-east-1", "service": "s3"},
-            None,
             UNSIGNED_PAYLOAD,
-            b"",
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=EMPTY_ASYNC_BYTES_READER,
-                method="GET",
-                fields=Fields(),
-            ),
-            warnings.catch_warnings,
-            warnings_simplefilter,
-            SIGNING_PROPERTIES,
-            "foo",
-            "foo",
             b"",
         ),
         (
@@ -554,22 +499,7 @@ async def test_missing_required_signing_properties_raises(
             warnings.catch_warnings,
             warnings_simplefilter,
             {"payload_signing_enabled": False, "region": "us-east-1", "service": "s3"},
-            None,
             UNSIGNED_PAYLOAD,
-            b"",
-        ),
-        (
-            HTTPRequest(
-                destination=URI(host="example.com"),
-                body=EMPTY_SEEKABLE_ASYNC_BYTES_READER,
-                method="GET",
-                fields=Fields(),
-            ),
-            warnings.catch_warnings,
-            warnings_simplefilter,
-            SIGNING_PROPERTIES,
-            "foo",
-            "foo",
             b"",
         ),
     ],
@@ -580,7 +510,6 @@ async def test_payload(
     warning_ctx_mgr: Callable[[], ContextManager[warnings.WarningMessage]],
     warning_filter: Callable[[], None],
     signing_properties: SigV4SigningProperties,
-    input_payload: str | None,
     expected_payload: str,
     expected_body: bytes,
 ) -> None:
@@ -589,7 +518,6 @@ async def test_payload(
         canonical_request = await sigv4_signer.canonical_request(
             http_request=http_request,
             signing_properties=signing_properties,
-            payload=input_payload,
         )
     # payload is the last line of the canonical request
     payload = canonical_request.split("\n")[-1]
