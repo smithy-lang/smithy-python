@@ -85,7 +85,9 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         :param signing_properties: The properties to use for signing.
         """
         signature_kwargs = self._get_signature_kwargs(
-            http_request, identity, signing_properties
+            http_request=http_request,
+            identity=identity,
+            signing_properties=signing_properties,
         )
         signature = await self._generate_signature(
             http_request=signature_kwargs["http_request"],
@@ -98,10 +100,12 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
             f"Credential={identity.access_key_id}/{signature_kwargs['scope']}"
         )
         auth_header = self._authorization_header(
-            credential_scope, signature_kwargs["signed_headers"], signature
+            credential_scope=credential_scope,
+            signed_headers=signature_kwargs["signed_headers"],
+            signature=signature,
         )
         new_request = signature_kwargs["http_request"]
-        new_request.fields.set_field(auth_header)
+        new_request.fields.set_field(field=auth_header)
         return new_request
 
     def _get_signature_kwargs(
@@ -116,11 +120,17 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         to add to the request, create a new request with the headers added, get the
         signed headers, and generate the scope.
         """
-        self._validate_identity_and_signing_properties(identity, signing_properties)
+        self._validate_identity_and_signing_properties(
+            identity=identity, signing_properties=signing_properties
+        )
         date = datetime.now(tz=timezone.utc).strftime(SIGV4_TIMESTAMP_FORMAT)
-        new_request = self._generate_new_request(http_request, identity, date)
-        signed_headers = ";".join(self._format_headers_for_signing(new_request))
-        scope = self._scope(date, signing_properties)
+        new_request = self._generate_new_request(
+            http_request=http_request, identity=identity, date=date
+        )
+        signed_headers = ";".join(
+            self._format_headers_for_signing(http_request=new_request)
+        )
+        scope = self._scope(date=date, signing_properties=signing_properties)
         return {
             "http_request": new_request,
             "signed_headers": signed_headers,
@@ -187,7 +197,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
             uri = http_request.destination
             if uri.port is not None and DEFAULT_PORTS.get(uri.scheme) == uri.port:
                 # remove port from netloc
-                uri = self._generate_new_uri(uri, {"port": None})
+                uri = self._generate_new_uri(uri=uri, params={"port": None})
             formatted_headers["host"] = uri.netloc
         return dict(sorted(formatted_headers.items()))
 
@@ -234,7 +244,10 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
             canonical_request=canonical_request, date=date, scope=scope
         )
         return self._signature(
-            string_to_sign, date, secret_access_key, signing_properties
+            string_to_sign=string_to_sign,
+            date=date,
+            secret_key=secret_access_key,
+            signing_properties=signing_properties,
         )
 
     async def canonical_request(
@@ -257,27 +270,34 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         """
         cr = f"{http_request.method.upper()}\n"
         path = http_request.destination.path or "/"
-        cr += f"{quote(remove_dot_segments(path, True), safe='/%')}\n"
-        cr += f"{self._canonical_query_string(http_request.destination)}\n"
+        quoted_path = quote(
+            string=remove_dot_segments(path=path, remove_consecutive_slashes=True),
+            safe="/%",
+        )
+        cr += f"{quoted_path}\n"
+        cr += f"{self._canonical_query_string(uri=http_request.destination)}\n"
         fh = self._format_headers_for_signing(http_request=http_request)
-        cr += f"{self._canonical_headers(fh)}\n"
+        cr += f"{self._canonical_headers(headers=fh)}\n"
         cr += f"{';'.join(fh)}\n"
-        cr += await self._payload(http_request, signing_properties)
+        cr += await self._payload(
+            http_request=http_request, signing_properties=signing_properties
+        )
         return cr
 
-    def _canonical_query_string(self, url: interfaces.URI) -> str:
+    def _canonical_query_string(self, uri: interfaces.URI) -> str:
         """Specifies the URI-encoded query string parameters.
 
         After encoding, the parameters are sorted in alphabetical order by key then
         value.
         """
-        if not url.query:
+        if not uri.query:
             return ""
 
-        query_params = parse_qsl(url.query)
+        query_params = parse_qsl(qs=uri.query)
         # URI encode all characters including `/` and `=`
         query_parts = [
-            (quote(key, safe=""), quote(value, safe="")) for key, value in query_params
+            (quote(string=key, safe=""), quote(string=value, safe=""))
+            for key, value in query_params
         ]
         # Unfortunately, keys and values must be sorted separately and only
         # after they have been encoded.
@@ -289,7 +309,9 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         Keys must be lower case and values must be trimmed.
         """
         # canonical headers should contain a trailing newline character `\n`
-        return "".join(f"{key}:{self._trim(value)}\n" for key, value in headers.items())
+        return "".join(
+            f"{key}:{self._trim(value=value)}\n" for key, value in headers.items()
+        )
 
     def _trim(self, value: str) -> str:
         """Trim a header value.
@@ -314,7 +336,9 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
 
         # TODO: Need to add configuration in `signing_properties` to not sign large
         # request bodies because of performance issues. Exact size limit TBD.
-        if not self._should_sha256_sign_payload(http_request, signing_properties):
+        if not self._should_sha256_sign_payload(
+            http_request=http_request, signing_properties=signing_properties
+        ):
             return UNSIGNED_PAYLOAD
 
         warnings.warn(
@@ -336,7 +360,7 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
             async for chunk in body:
                 buffer.append(chunk)
                 checksum.update(chunk)
-            http_request.body = AsyncBytesReader(async_list(buffer))
+            http_request.body = AsyncBytesReader(data=async_list(lst=buffer))
         return checksum.hexdigest()
 
     def _is_streaming_checksum_payload(
@@ -395,14 +419,14 @@ class SigV4Signer(HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]):
         DateRegionServiceKey = HMAC-SHA256(<DateRegionKey>, "<aws-service>")
         SigningKey           = HMAC-SHA256(<DateRegionServiceKey>, "aws4_request")
         """
-        k_date = self._hash(f"AWS4{secret_key}".encode(), date[0:8])
-        k_region = self._hash(k_date, signing_properties["region"])
-        k_service = self._hash(k_region, signing_properties["service"])
-        k_signing = self._hash(k_service, "aws4_request")
-        return self._hash(k_signing, string_to_sign).hex()
+        k_date = self._hash(key=f"AWS4{secret_key}".encode(), value=date[0:8])
+        k_region = self._hash(key=k_date, value=signing_properties["region"])
+        k_service = self._hash(key=k_region, value=signing_properties["service"])
+        k_signing = self._hash(key=k_service, value="aws4_request")
+        return self._hash(key=k_signing, value=string_to_sign).hex()
 
     def _hash(self, key: bytes, value: str) -> bytes:
-        return hmac.new(key, value.encode(), sha256).digest()
+        return hmac.new(key=key, msg=value.encode(), digestmod=sha256).digest()
 
     def _authorization_header(
         self, credential_scope: str, signed_headers: str, signature: str

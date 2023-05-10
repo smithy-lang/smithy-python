@@ -42,9 +42,11 @@ SECRET_KEY: str = "wJalrXUtnFEMI/K7MDENG+bPxRfiCYEXAMPLEKEY"
 ACCESS_KEY: str = "AKIDEXAMPLE"
 SESSION_TOKEN: str = "ABCDEFG/////123456"
 TOKEN_PATTERN: re.Pattern[str] = re.compile(
-    r"^x-amz-security-token:(.*)$", re.MULTILINE
+    pattern=r"^x-amz-security-token:(.*)$", flags=re.MULTILINE
 )
-DATE: datetime = datetime(2015, 8, 30, 12, 36, 0, tzinfo=timezone.utc)
+DATE: datetime = datetime(
+    year=2015, month=8, day=30, hour=12, minute=36, second=0, tzinfo=timezone.utc
+)
 DATE_STR: str = DATE.strftime(SIGV4_TIMESTAMP_FORMAT)
 SIGNING_PROPERTIES: SigV4SigningProperties = {
     "service": "service",
@@ -54,10 +56,10 @@ SCOPE: str = f"{DATE_STR[0:8]}/us-east-1/service/aws4_request"
 TESTSUITE_DIR: pathlib.Path = (
     pathlib.Path(__file__).absolute().parent / "aws4_testsuite"
 )
-EMPTY_ASYNC_LIST: AsyncIterable[bytes] = async_list([])
-EMPTY_ASYNC_BYTES_READER: AsyncBytesReader = AsyncBytesReader(async_list([]))
+EMPTY_ASYNC_LIST: AsyncIterable[bytes] = async_list(lst=[])
+EMPTY_ASYNC_BYTES_READER: AsyncBytesReader = AsyncBytesReader(data=async_list(lst=[]))
 EMPTY_SEEKABLE_ASYNC_BYTES_READER: SeekableAsyncBytesReader = SeekableAsyncBytesReader(
-    async_list([])
+    data=async_list(lst=[])
 )
 
 
@@ -74,7 +76,7 @@ def http_request() -> HTTPRequest:
             ]
         ),
         method="GET",
-        body=AsyncBytesReader(async_list([b"foo"])),
+        body=AsyncBytesReader(data=async_list([b"foo"])),
     )
 
 
@@ -84,7 +86,7 @@ def http_request_with_user_provided_security_token() -> HTTPRequest:
         destination=URI(host="example.com"),
         body=EMPTY_ASYNC_BYTES_READER,
         method="GET",
-        fields=Fields([Field(name="X-Amz-Security-Token", values=["foo"])]),
+        fields=Fields(initial=[Field(name="X-Amz-Security-Token", values=["foo"])]),
     )
 
 
@@ -115,10 +117,10 @@ def generate_test_cases(
     test_path: pathlib.Path,
 ) -> Generator[tuple[HTTPRequest, AWSCredentialIdentity, str, str, str], None, None]:
     for path in test_path.glob("*"):
-        if _is_valid_test_case(path):
-            yield _generate_test_case(path)
+        if _is_valid_test_case(path=path):
+            yield _generate_test_case(path=path)
         elif path.is_dir():
-            yield from generate_test_cases(path)
+            yield from generate_test_cases(test_path=path)
 
 
 def _is_valid_test_case(path: pathlib.Path) -> bool:
@@ -133,9 +135,11 @@ def _generate_test_case(
     string_to_sign = (path / f"{path.name}.sts").read_text()
     authorization_header = (path / f"{path.name}.authz").read_text()
 
-    token_match = TOKEN_PATTERN.search(canonical_request)
+    token_match = TOKEN_PATTERN.search(string=canonical_request)
     token = token_match.group(1) if token_match else None
-    smithy_request = _smithy_request_from_raw_request(raw_request, token)
+    smithy_request = _smithy_request_from_raw_request(
+        raw_request=raw_request, token=token
+    )
 
     return (
         smithy_request,
@@ -150,7 +154,7 @@ def _generate_test_case(
 
 class RawRequest(BaseHTTPRequestHandler):
     def __init__(self, raw_request: bytes):
-        self.rfile: BytesIO = BytesIO(raw_request)
+        self.rfile: BytesIO = BytesIO(initial_bytes=raw_request)
         self.raw_requestline: bytes = self.rfile.readline()
         self.error_code: int | None = None
         self.error_message: str | None = None
@@ -172,7 +176,7 @@ def _smithy_request_from_raw_request(
     if "example space" in decoded:
         decoded = decoded.replace("example space", "example%20space")
         raw_request = decoded.encode()
-    raw = RawRequest(raw_request)
+    raw = RawRequest(raw_request=raw_request)
     if raw.error_code is not None:
         decoded = raw_request.decode()
         raise Exception(raw.error_message)
@@ -181,22 +185,22 @@ def _smithy_request_from_raw_request(
     fields = Fields()
     for k, v in raw.headers.items():
         if k in fields:
-            field = fields.get_field(k)
-            field.add(v)
+            field = fields.get_field(name=k)
+            field.add(value=v)
         else:
             field = Field(name=k, values=[v])
-            fields.set_field(field)
+            fields.set_field(field=field)
     fields.set_field(Field(name="X-Amz-Date", values=[DATE_STR]))
     if token is not None:
         fields.set_field(Field(name="X-Amz-Security-Token", values=[token]))
-    body = _generate_async_list(raw.rfile)
+    body = _generate_async_list(data=raw.rfile)
     # For whatever reason, the BaseHTTPRequestHandler encodes
     # the first line of the response as 'iso-8859-1',
     # so we need to decode this into utf-8.
     if isinstance(path := raw.path, str):
-        path = path.encode("iso-8859-1").decode("utf-8")
+        path = path.encode(encoding="iso-8859-1").decode(encoding="utf-8")
     if "?" in path:
-        path, query = path.split("?", 1)
+        path, query = path.split(sep="?", maxsplit=1)
     else:
         query = ""
     host = raw.headers.get("host", "")
@@ -216,7 +220,7 @@ def _generate_async_list(data: BytesIO) -> AsyncIterable[bytes]:
         if not part:
             break
         stream.append(part)
-    return async_list(stream)
+    return async_list(lst=stream)
 
 
 def pytest_warns() -> ContextManager[warnings.WarningMessage]:
@@ -226,7 +230,7 @@ def pytest_warns() -> ContextManager[warnings.WarningMessage]:
     return cast(
         ContextManager[warnings.WarningMessage],
         pytest.warns(
-            UserWarning,
+            expected_warning=UserWarning,
             match=(
                 "Payload signing is enabled. This may cause "
                 "performance issues for large request bodies."
@@ -240,15 +244,15 @@ def noop() -> None:
 
 
 def warnings_simplefilter() -> None:
-    warnings.simplefilter("error")
+    warnings.simplefilter(action="error")
 
 
 @pytest.mark.parametrize(
-    "http_request, identity, canonical_request, string_to_sign, authorization_header",
-    generate_test_cases(TESTSUITE_DIR),
+    argnames="http_request, identity, canonical_request, string_to_sign, authorization_header",
+    argvalues=generate_test_cases(test_path=TESTSUITE_DIR),
 )
 @pytest.mark.asyncio
-@freeze_time(DATE)
+@freeze_time(time_to_freeze=DATE)
 async def test_sigv4_signing(
     sigv4_signer: SigV4Signer,
     http_request: HTTPRequest,
@@ -272,7 +276,9 @@ async def test_sigv4_signing(
             identity=identity,
             signing_properties=SIGNING_PROPERTIES,
         )
-        actual_auth_header = new_request.fields.get_field("Authorization").as_string()
+        actual_auth_header = new_request.fields.get_field(
+            name="Authorization"
+        ).as_string()
         assert actual_auth_header == authorization_header
 
 
@@ -284,7 +290,7 @@ async def test_sign_wrong_identity_type_raises(
     # but we're passing in a different type to test the error handling
     fake_identity: AWSCredentialIdentity,
 ) -> None:
-    with pytest.raises(SmithyIdentityException):
+    with pytest.raises(expected_exception=SmithyIdentityException):
         await sigv4_signer.sign(
             http_request=http_request,
             identity=fake_identity,
@@ -293,8 +299,8 @@ async def test_sign_wrong_identity_type_raises(
 
 
 @pytest.mark.parametrize(
-    "signing_properties",
-    [{"region": "us-east-1"}, {"foo": "bar"}, {}, {"service": "s3"}],
+    argnames="signing_properties",
+    argvalues=[{"region": "us-east-1"}, {"foo": "bar"}, {}, {"service": "s3"}],
 )
 @pytest.mark.asyncio
 async def test_missing_required_signing_properties_raises(
@@ -303,7 +309,7 @@ async def test_missing_required_signing_properties_raises(
     aws_credential_identity: AWSCredentialIdentity,
     signing_properties: SigV4SigningProperties,
 ) -> None:
-    with pytest.raises(SmithyHTTPException):
+    with pytest.raises(expected_exception=SmithyHTTPException):
         await sigv4_signer.sign(
             http_request=http_request,
             identity=aws_credential_identity,
@@ -313,11 +319,11 @@ async def test_missing_required_signing_properties_raises(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    (
+    argnames=(
         "http_request, warning_ctx_mgr, warning_filter, "
         "signing_properties, expected_payload, expected_body"
     ),
-    [
+    argvalues=[
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
@@ -373,7 +379,7 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=AsyncBytesReader(async_list([b"foo"])),
+                body=AsyncBytesReader(data=async_list(lst=[b"foo"])),
                 method="GET",
                 fields=Fields(),
             ),
@@ -386,7 +392,7 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=SeekableAsyncBytesReader(async_list([b"foo"])),
+                body=SeekableAsyncBytesReader(data=async_list(lst=[b"foo"])),
                 method="GET",
                 fields=Fields(),
             ),
@@ -399,7 +405,7 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=async_list([b"foo", b"bar", b"hello", b"world"]),
+                body=async_list(lst=[b"foo", b"bar", b"hello", b"world"]),
                 method="GET",
                 fields=Fields(),
             ),
@@ -412,7 +418,9 @@ async def test_missing_required_signing_properties_raises(
         (
             HTTPRequest(
                 destination=URI(host="example.com"),
-                body=AsyncBytesReader(async_list([b"foo", b"bar", b"hello", b"world"])),
+                body=AsyncBytesReader(
+                    data=async_list(lst=[b"foo", b"bar", b"hello", b"world"])
+                ),
                 method="GET",
                 fields=Fields(),
             ),
@@ -426,7 +434,7 @@ async def test_missing_required_signing_properties_raises(
             HTTPRequest(
                 destination=URI(host="example.com"),
                 body=SeekableAsyncBytesReader(
-                    async_list([b"foo", b"bar", b"hello", b"world"])
+                    data=async_list(lst=[b"foo", b"bar", b"hello", b"world"])
                 ),
                 method="GET",
                 fields=Fields(),
@@ -554,13 +562,13 @@ async def test_replace_user_provided_token_header(
             identity=aws_credential_identity,
             signing_properties=SIGNING_PROPERTIES,
         )
-    token_field = new_request.fields.get_field("X-Amz-Security-Token").as_string()
+    token_field = new_request.fields.get_field(name="X-Amz-Security-Token").as_string()
     assert token_field == aws_credential_identity.session_token
 
 
 @pytest.mark.parametrize(
-    "http_request, expected_host",
-    [
+    argnames="http_request, expected_host",
+    argvalues=[
         (
             HTTPRequest(
                 destination=URI(host="example.com", port=443),
