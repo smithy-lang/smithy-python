@@ -353,8 +353,8 @@ final class ConfigGenerator implements Runnable {
             // Note that this is indented to keep it at the proper indentation level.
             writer.write("""
 
-                    def add_http_auth_scheme(self, scheme: HTTPAuthScheme[Any, Any, Any, Any]) -> None:
-                        \"""Add an auth scheme to the collection of available auth schemes.
+                    def set_http_auth_scheme(self, scheme: HTTPAuthScheme[Any, Any, Any, Any]) -> None:
+                        \"""Sets the implementation of an auth scheme.
 
                         Using this method ensures the correct key is used.
 
