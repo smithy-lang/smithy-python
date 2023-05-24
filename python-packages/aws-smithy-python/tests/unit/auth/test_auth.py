@@ -18,7 +18,7 @@ from datetime import datetime, timezone
 from hashlib import sha256
 from http.server import BaseHTTPRequestHandler
 from io import BytesIO
-from typing import AsyncIterable, Callable, ContextManager, Generator, cast
+from typing import AsyncIterable, Generator
 
 import pytest
 from freezegun import freeze_time
@@ -223,30 +223,6 @@ def _generate_async_list(data: BytesIO) -> AsyncIterable[bytes]:
     return async_list(lst=stream)
 
 
-def pytest_warns() -> ContextManager[warnings.WarningMessage]:
-    # pytest.warns is a context manager of type _pytest.recwarn.WarningsRecorder
-    # to avoid typing with this internal class, we use the `cast` function to
-    # cast the return value to the type we want
-    return cast(
-        ContextManager[warnings.WarningMessage],
-        pytest.warns(
-            expected_warning=UserWarning,
-            match=(
-                "Payload signing is enabled. This may cause "
-                "performance issues for large request bodies."
-            ),
-        ),
-    )
-
-
-def noop() -> None:
-    pass
-
-
-def warnings_simplefilter() -> None:
-    warnings.simplefilter(action="error")
-
-
 @pytest.mark.parametrize(
     argnames="http_request, identity, canonical_request, string_to_sign, authorization_header",
     argvalues=generate_test_cases(test_path=TESTSUITE_DIR),
@@ -261,25 +237,23 @@ async def test_sigv4_signing(
     string_to_sign: str,
     authorization_header: str,
 ) -> None:
-    with pytest_warns():
+    with pytest.warns(UserWarning, match="Payload signing is enabled"):
         actual_canonical_request = await sigv4_signer.canonical_request(
             http_request=http_request,
             signing_properties=SIGNING_PROPERTIES,
         )
-        assert actual_canonical_request == canonical_request
-        actual_string_to_sign = sigv4_signer.string_to_sign(
-            canonical_request=actual_canonical_request, date=DATE_STR, scope=SCOPE
-        )
-        assert actual_string_to_sign == string_to_sign
-        new_request = await sigv4_signer.sign(
-            http_request=http_request,
-            identity=identity,
-            signing_properties=SIGNING_PROPERTIES,
-        )
-        actual_auth_header = new_request.fields.get_field(
-            name="Authorization"
-        ).as_string()
-        assert actual_auth_header == authorization_header
+    assert actual_canonical_request == canonical_request
+    actual_string_to_sign = sigv4_signer.string_to_sign(
+        canonical_request=actual_canonical_request, date=DATE_STR, scope=SCOPE
+    )
+    assert actual_string_to_sign == string_to_sign
+    new_request = await sigv4_signer.sign(
+        http_request=http_request,
+        identity=identity,
+        signing_properties=SIGNING_PROPERTIES,
+    )
+    actual_auth_header = new_request.fields.get_field(name="Authorization").as_string()
+    assert actual_auth_header == authorization_header
 
 
 @pytest.mark.asyncio
@@ -320,7 +294,7 @@ async def test_missing_required_signing_properties_raises(
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     argnames=(
-        "http_request, warning_ctx_mgr, warning_filter, "
+        "http_request, num_warnings_emitted, "
         "signing_properties, expected_payload, expected_body"
     ),
     argvalues=[
@@ -331,8 +305,7 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            pytest_warns,
-            noop,
+            1,
             SIGNING_PROPERTIES,
             EMPTY_SHA256_HASH,
             b"",
@@ -344,8 +317,7 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            pytest_warns,
-            noop,
+            1,
             SIGNING_PROPERTIES,
             EMPTY_SHA256_HASH,
             b"",
@@ -357,8 +329,7 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            pytest_warns,
-            noop,
+            1,
             SIGNING_PROPERTIES,
             EMPTY_SHA256_HASH,
             b"",
@@ -370,8 +341,7 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            pytest_warns,
-            noop,
+            1,
             SIGNING_PROPERTIES,
             sha256(b"foo").hexdigest(),
             b"foo",
@@ -383,8 +353,7 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            pytest_warns,
-            noop,
+            1,
             SIGNING_PROPERTIES,
             sha256(b"foo").hexdigest(),
             b"foo",
@@ -396,8 +365,7 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            pytest_warns,
-            noop,
+            1,
             SIGNING_PROPERTIES,
             sha256(b"foo").hexdigest(),
             b"foo",
@@ -409,8 +377,7 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            pytest_warns,
-            noop,
+            1,
             SIGNING_PROPERTIES,
             sha256(b"foobarhelloworld").hexdigest(),
             b"foobarhelloworld",
@@ -424,8 +391,7 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            pytest_warns,
-            noop,
+            1,
             SIGNING_PROPERTIES,
             sha256(b"foobarhelloworld").hexdigest(),
             b"foobarhelloworld",
@@ -439,8 +405,7 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            pytest_warns,
-            noop,
+            1,
             SIGNING_PROPERTIES,
             sha256(b"foobarhelloworld").hexdigest(),
             b"foobarhelloworld",
@@ -452,8 +417,7 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            pytest_warns,
-            noop,
+            1,
             SIGNING_PROPERTIES,
             EMPTY_SHA256_HASH,
             b"",
@@ -465,8 +429,7 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            pytest_warns,
-            noop,
+            1,
             SIGNING_PROPERTIES,
             EMPTY_SHA256_HASH,
             b"",
@@ -478,8 +441,7 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            warnings.catch_warnings,
-            warnings_simplefilter,
+            0,
             {"payload_signing_enabled": False, "region": "us-east-1", "service": "s3"},
             UNSIGNED_PAYLOAD,
             b"",
@@ -491,8 +453,7 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            warnings.catch_warnings,
-            warnings_simplefilter,
+            0,
             {"payload_signing_enabled": False, "region": "us-east-1", "service": "s3"},
             UNSIGNED_PAYLOAD,
             b"",
@@ -504,8 +465,7 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            warnings.catch_warnings,
-            warnings_simplefilter,
+            0,
             {"payload_signing_enabled": False, "region": "us-east-1", "service": "s3"},
             UNSIGNED_PAYLOAD,
             b"",
@@ -515,18 +475,22 @@ async def test_missing_required_signing_properties_raises(
 async def test_payload(
     sigv4_signer: SigV4Signer,
     http_request: HTTPRequest,
-    warning_ctx_mgr: Callable[[], ContextManager[warnings.WarningMessage]],
-    warning_filter: Callable[[], None],
+    num_warnings_emitted: int,
     signing_properties: SigV4SigningProperties,
     expected_payload: str,
     expected_body: bytes,
 ) -> None:
-    with warning_ctx_mgr():
-        warning_filter()
+    with warnings.catch_warnings(record=True) as caught_warnings:
         canonical_request = await sigv4_signer.canonical_request(
             http_request=http_request,
             signing_properties=signing_properties,
         )
+    filtered_warnings = [
+        w
+        for w in caught_warnings
+        if w.category == UserWarning and "Payload signing is enabled" in str(w.message)
+    ]
+    assert len(filtered_warnings) == num_warnings_emitted
     # payload is the last line of the canonical request
     payload = canonical_request.split("\n")[-1]
     assert payload == expected_payload
@@ -540,7 +504,7 @@ async def test_user_provided_token_header_removed(
     http_request_with_user_provided_security_token: HTTPRequest,
 ) -> None:
     identity = AWSCredentialIdentity(access_key_id="foo", secret_access_key="bar")
-    with pytest_warns():
+    with pytest.warns(UserWarning, match="Payload signing is enabled"):
         new_request = await sigv4_signer.sign(
             http_request=http_request_with_user_provided_security_token,
             identity=identity,
@@ -556,7 +520,7 @@ async def test_replace_user_provided_token_header(
     aws_credential_identity: AWSCredentialIdentity,
 ) -> None:
 
-    with pytest_warns():
+    with pytest.warns(UserWarning, match="Payload signing is enabled"):
         new_request = await sigv4_signer.sign(
             http_request=http_request_with_user_provided_security_token,
             identity=aws_credential_identity,
@@ -613,11 +577,11 @@ async def test_port_removed_from_host(
     http_request: HTTPRequest,
     expected_host: str,
 ) -> None:
-    with pytest_warns():
+    with pytest.warns(UserWarning, match="Payload signing is enabled"):
         cr = await sigv4_signer.canonical_request(
             http_request=http_request, signing_properties=SIGNING_PROPERTIES
         )
-        # with the above examples `host` will always be on the fourth line of
-        # the canonical request
-        host_header = cr.splitlines()[3]
-        assert host_header == f"host:{expected_host}"
+    # with the above examples `host` will always be on the fourth line of
+    # the canonical request
+    host_header = cr.splitlines()[3]
+    assert host_header == f"host:{expected_host}"

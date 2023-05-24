@@ -268,21 +268,22 @@ class SigV4Signer(
         components that are used to generate the canonical request.
         :param signing_properties: The signing properties to use in signing.
         """
-        cr = f"{http_request.method.upper()}\n"
         path = http_request.destination.path or "/"
-        quoted_path = quote(
-            string=remove_dot_segments(path=path, remove_consecutive_slashes=True),
-            safe="/%",
-        )
-        cr += f"{quoted_path}\n"
-        cr += f"{self._canonical_query_string(uri=http_request.destination)}\n"
-        fh = self._format_headers_for_signing(http_request=http_request)
-        cr += f"{self._canonical_headers(headers=fh)}\n"
-        cr += f"{';'.join(fh)}\n"
-        cr += await self._payload(
+        formatted_path = remove_dot_segments(path=path, remove_consecutive_slashes=True)
+        quoted_path = quote(string=formatted_path, safe="/%")
+        formatted_headers = self._format_headers_for_signing(http_request=http_request)
+        payload = await self._payload(
             http_request=http_request, signing_properties=signing_properties
         )
-        return cr
+
+        return (
+            f"{http_request.method.upper()}\n"
+            f"{quoted_path}\n"
+            f"{self._canonical_query_string(uri=http_request.destination)}\n"
+            f"{self._canonical_headers(headers=formatted_headers)}\n"
+            f"{';'.join(formatted_headers)}\n"
+            f"{payload}"
+        )
 
     def _canonical_query_string(self, uri: interfaces.URI) -> str:
         """Specifies the URI-encoded query string parameters.
@@ -299,8 +300,8 @@ class SigV4Signer(
             (quote(string=key, safe=""), quote(string=value, safe=""))
             for key, value in query_params
         ]
-        # Unfortunately, keys and values must be sorted separately and only
-        # after they have been encoded.
+        # Keys and values must be sorted separately and only after they have
+        # been encoded.
         return "&".join(f"{key}={value}" for key, value in sorted(query_parts))
 
     def _canonical_headers(self, headers: dict[str, str]) -> str:
@@ -331,8 +332,8 @@ class SigV4Signer(
         If the body is seekable, reset the position after reading it. If not, read the
         body into a buffer and reset the body to the buffer.
         """
-        # TODO: Add _is_streaming_checksum_payload after checksum implementation is
-        # complete
+        # TODO: Add check for streaming checksum payload after checksum implementation
+        # is complete
 
         # TODO: Need to add configuration in `signing_properties` to not sign large
         # request bodies because of performance issues. Exact size limit TBD.
@@ -349,11 +350,8 @@ class SigV4Signer(
         body = http_request.body
         if hasattr(body, "seek") and hasattr(body, "tell"):
             position = body.tell()
-            if hasattr(body, "read"):
-                checksum.update(await body.read())
-            else:
-                async for chunk in body:
-                    checksum.update(chunk)
+            async for chunk in body:
+                checksum.update(chunk)
             await body.seek(position)
         else:
             buffer = []
@@ -362,12 +360,6 @@ class SigV4Signer(
                 checksum.update(chunk)
             http_request.body = AsyncBytesReader(data=async_list(lst=buffer))
         return checksum.hexdigest()
-
-    def _is_streaming_checksum_payload(
-        self, signing_properties: SigV4SigningProperties
-    ) -> bool:
-        # TODO: Implement this after checksum implementation is complete
-        raise NotImplementedError()
 
     def _should_sha256_sign_payload(
         self,
@@ -409,10 +401,9 @@ class SigV4Signer(
     ) -> str:
         """Sign the string to sign.
 
-        In SigV4, instead of using AWS access keys to sign a request, a signing
-        key is created that is scoped to a specific region and service. The date,
-        region, service and resulting signing key are individually hashed, then
-        the composite hash is used to sign the string to sign.
+        In SigV4, a signing key is created that is scoped to a specific region and
+        service. The date, region, service and resulting signing key are individually
+        hashed, then the composite hash is used to sign the string to sign.
 
         DateKey              = HMAC-SHA256("AWS4"+"<SecretAccessKey>", "<YYYYMMDD>")
         DateRegionKey        = HMAC-SHA256(<DateKey>, "<aws-region>")
