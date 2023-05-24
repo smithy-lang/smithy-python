@@ -52,7 +52,11 @@ SIGNING_PROPERTIES: SigV4SigningProperties = {
     "service": "service",
     "region": "us-east-1",
 }
-SCOPE: str = f"{DATE_STR[0:8]}/us-east-1/service/aws4_request"
+DISABLED_SIGNING_PROPERTIES: SigV4SigningProperties = {
+    "service": "service",
+    "region": "us-east-1",
+    "payload_signing_enabled": False,
+}
 TESTSUITE_DIR: pathlib.Path = (
     pathlib.Path(__file__).absolute().parent / "aws4_testsuite"
 )
@@ -242,16 +246,17 @@ async def test_sigv4_signing(
             http_request=http_request,
             signing_properties=SIGNING_PROPERTIES,
         )
-    assert actual_canonical_request == canonical_request
-    actual_string_to_sign = sigv4_signer.string_to_sign(
-        canonical_request=actual_canonical_request, date=DATE_STR, scope=SCOPE
-    )
-    assert actual_string_to_sign == string_to_sign
-    new_request = await sigv4_signer.sign(
-        http_request=http_request,
-        identity=identity,
-        signing_properties=SIGNING_PROPERTIES,
-    )
+        assert actual_canonical_request == canonical_request
+        actual_string_to_sign = sigv4_signer.string_to_sign(
+            canonical_request=actual_canonical_request,
+            signing_properties=SIGNING_PROPERTIES,
+        )
+        assert actual_string_to_sign == string_to_sign
+        new_request = await sigv4_signer.sign(
+            http_request=http_request,
+            identity=identity,
+            signing_properties=SIGNING_PROPERTIES,
+        )
     actual_auth_header = new_request.fields.get_field(name="Authorization").as_string()
     assert actual_auth_header == authorization_header
 
@@ -293,10 +298,7 @@ async def test_missing_required_signing_properties_raises(
 
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
-    argnames=(
-        "http_request, num_warnings_emitted, "
-        "signing_properties, expected_payload, expected_body"
-    ),
+    argnames=("http_request, signing_properties, expected_payload, expected_body"),
     argvalues=[
         (
             HTTPRequest(
@@ -305,7 +307,6 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            1,
             SIGNING_PROPERTIES,
             EMPTY_SHA256_HASH,
             b"",
@@ -317,7 +318,6 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            1,
             SIGNING_PROPERTIES,
             EMPTY_SHA256_HASH,
             b"",
@@ -329,7 +329,6 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            1,
             SIGNING_PROPERTIES,
             EMPTY_SHA256_HASH,
             b"",
@@ -341,7 +340,6 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            1,
             SIGNING_PROPERTIES,
             sha256(b"foo").hexdigest(),
             b"foo",
@@ -353,7 +351,6 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            1,
             SIGNING_PROPERTIES,
             sha256(b"foo").hexdigest(),
             b"foo",
@@ -365,7 +362,6 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            1,
             SIGNING_PROPERTIES,
             sha256(b"foo").hexdigest(),
             b"foo",
@@ -377,7 +373,6 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            1,
             SIGNING_PROPERTIES,
             sha256(b"foobarhelloworld").hexdigest(),
             b"foobarhelloworld",
@@ -391,7 +386,6 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            1,
             SIGNING_PROPERTIES,
             sha256(b"foobarhelloworld").hexdigest(),
             b"foobarhelloworld",
@@ -405,7 +399,6 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            1,
             SIGNING_PROPERTIES,
             sha256(b"foobarhelloworld").hexdigest(),
             b"foobarhelloworld",
@@ -417,7 +410,6 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            1,
             SIGNING_PROPERTIES,
             EMPTY_SHA256_HASH,
             b"",
@@ -429,7 +421,6 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            1,
             SIGNING_PROPERTIES,
             EMPTY_SHA256_HASH,
             b"",
@@ -441,8 +432,7 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            0,
-            {"payload_signing_enabled": False, "region": "us-east-1", "service": "s3"},
+            DISABLED_SIGNING_PROPERTIES,
             UNSIGNED_PAYLOAD,
             b"",
         ),
@@ -453,8 +443,7 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            0,
-            {"payload_signing_enabled": False, "region": "us-east-1", "service": "s3"},
+            DISABLED_SIGNING_PROPERTIES,
             UNSIGNED_PAYLOAD,
             b"",
         ),
@@ -465,24 +454,47 @@ async def test_missing_required_signing_properties_raises(
                 method="GET",
                 fields=Fields(),
             ),
-            0,
-            {"payload_signing_enabled": False, "region": "us-east-1", "service": "s3"},
+            DISABLED_SIGNING_PROPERTIES,
             UNSIGNED_PAYLOAD,
             b"",
         ),
     ],
 )
+@pytest.mark.filterwarnings("ignore:Payload signing is enabled")
 async def test_payload(
     sigv4_signer: SigV4Signer,
     http_request: HTTPRequest,
-    num_warnings_emitted: int,
     signing_properties: SigV4SigningProperties,
     expected_payload: str,
     expected_body: bytes,
 ) -> None:
+    canonical_request = await sigv4_signer.canonical_request(
+        http_request=http_request,
+        signing_properties=signing_properties,
+    )
+    # payload is the last line of the canonical request
+    payload = canonical_request.split("\n")[-1]
+    assert payload == expected_payload
+    # body stream should have been reset to the beginning
+    assert await http_request.consume_body() == expected_body
+
+
+@pytest.mark.parametrize(
+    argnames="signing_properties, num_expected_warnings",
+    argvalues=[(SIGNING_PROPERTIES, 1), (DISABLED_SIGNING_PROPERTIES, 0)],
+)
+@pytest.mark.asyncio
+async def test_warnings(
+    sigv4_signer: SigV4Signer,
+    http_request: HTTPRequest,
+    aws_credential_identity: AWSCredentialIdentity,
+    signing_properties: SigV4SigningProperties,
+    num_expected_warnings: int,
+) -> None:
     with warnings.catch_warnings(record=True) as caught_warnings:
-        canonical_request = await sigv4_signer.canonical_request(
+        await sigv4_signer.sign(
             http_request=http_request,
+            identity=aws_credential_identity,
             signing_properties=signing_properties,
         )
     filtered_warnings = [
@@ -490,12 +502,7 @@ async def test_payload(
         for w in caught_warnings
         if w.category == UserWarning and "Payload signing is enabled" in str(w.message)
     ]
-    assert len(filtered_warnings) == num_warnings_emitted
-    # payload is the last line of the canonical request
-    payload = canonical_request.split("\n")[-1]
-    assert payload == expected_payload
-    # body stream should have been reset to the beginning
-    assert await http_request.consume_body() == expected_body
+    assert len(filtered_warnings) == num_expected_warnings
 
 
 @pytest.mark.asyncio

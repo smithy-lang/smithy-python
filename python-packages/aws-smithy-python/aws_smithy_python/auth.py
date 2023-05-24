@@ -14,9 +14,9 @@
 import hmac
 import warnings
 from copy import deepcopy
-from datetime import datetime, timezone
+from datetime import datetime
 from hashlib import sha256
-from typing import NotRequired, TypedDict
+from typing import Required, TypedDict
 from urllib.parse import parse_qsl, quote
 
 from smithy_python import interfaces
@@ -49,18 +49,17 @@ EMPTY_SHA256_HASH: str = (
 DEFAULT_PORTS: dict[str, int] = {"https": 443, "http": 80}
 
 
-class SigV4SigningProperties(SigningProperties):
-    region: str
-    service: str
-    expires: NotRequired[int]
-    payload_signing_enabled: NotRequired[bool]
-    checksum: NotRequired[dict[str, dict[str, str]]]
+class SigV4SigningProperties(SigningProperties, total=False):
+    region: Required[str]
+    service: Required[str]
+    date: str
+    expires: int
+    payload_signing_enabled: bool
 
 
 class SignatureKwargs(TypedDict):
     http_request: HTTPRequest
     signed_headers: str
-    date: str
     scope: str
 
 
@@ -86,6 +85,10 @@ class SigV4Signer(
         credentials.
         :param signing_properties: The properties to use for signing.
         """
+        if "date" not in signing_properties:
+            signing_properties["date"] = datetime.utcnow().strftime(
+                SIGV4_TIMESTAMP_FORMAT
+            )
         signature_kwargs = self._get_signature_kwargs(
             http_request=http_request,
             identity=identity,
@@ -94,8 +97,6 @@ class SigV4Signer(
         signature = await self._generate_signature(
             http_request=signature_kwargs["http_request"],
             signing_properties=signing_properties,
-            date=signature_kwargs["date"],
-            scope=signature_kwargs["scope"],
             secret_access_key=identity.secret_access_key,
         )
         credential_scope = (
@@ -125,18 +126,18 @@ class SigV4Signer(
         self._validate_identity_and_signing_properties(
             identity=identity, signing_properties=signing_properties
         )
-        date = datetime.now(tz=timezone.utc).strftime(SIGV4_TIMESTAMP_FORMAT)
         new_request = self._generate_new_request(
-            http_request=http_request, identity=identity, date=date
+            http_request=http_request,
+            identity=identity,
+            date=signing_properties["date"],
         )
         signed_headers = ";".join(
             self._format_headers_for_signing(http_request=new_request)
         )
-        scope = self._scope(date=date, signing_properties=signing_properties)
+        scope = self._scope(signing_properties=signing_properties)
         return {
             "http_request": new_request,
             "signed_headers": signed_headers,
-            "date": date,
             "scope": scope,
         }
 
@@ -209,14 +210,14 @@ class SigV4Signer(
         uri_dict.update(params)
         return URI(**uri_dict)
 
-    def _scope(self, date: str, signing_properties: SigV4SigningProperties) -> str:
+    def _scope(self, signing_properties: SigV4SigningProperties) -> str:
         """Binds the signature to a specific date, AWS region, and service in the
         following format:
 
         <YYYYMMDD>/<AWS Region>/<AWS Service>/aws4_request
         """
         return (
-            f"{date[0:8]}/{signing_properties['region']}/"
+            f"{signing_properties['date'][0:8]}/{signing_properties['region']}/"
             f"{signing_properties['service']}/aws4_request"
         )
 
@@ -224,15 +225,12 @@ class SigV4Signer(
         self,
         http_request: HTTPRequest,
         signing_properties: SigV4SigningProperties,
-        date: str,
-        scope: str,
         secret_access_key: str,
     ) -> str:
         """Generate the signature for a request.
 
         :param http_request: The request to sign.
         :param signing_properties: The signing properties to use in signing.
-        :param date: The date to use in the signature in `%Y%m%dT%H%M%SZ` format.
         :param scope: The scope to use in the signature. See `_scope` for more info.
         :param secret_access_key: The secret access key to use in the signature.
         """
@@ -241,11 +239,10 @@ class SigV4Signer(
             signing_properties=signing_properties,
         )
         string_to_sign = self.string_to_sign(
-            canonical_request=canonical_request, date=date, scope=scope
+            canonical_request=canonical_request, signing_properties=signing_properties
         )
         return self._signature(
             string_to_sign=string_to_sign,
-            date=date,
             secret_key=secret_access_key,
             signing_properties=signing_properties,
         )
@@ -372,7 +369,9 @@ class SigV4Signer(
 
         return signing_properties.get("payload_signing_enabled", True)
 
-    def string_to_sign(self, *, canonical_request: str, date: str, scope: str) -> str:
+    def string_to_sign(
+        self, *, canonical_request: str, signing_properties: SigV4SigningProperties
+    ) -> str:
         """The string to sign.
 
         It is a concatenation of the following strings:
@@ -382,20 +381,22 @@ class SigV4Signer(
 
         :param canonical_request: The canonical request string. See
         `canonical_request` for more info.
-        :param date: The date to use in the signature in `%Y%m%dT%H%M%SZ` format.
-        :param scope: The scope to use in the signature. See `_scope` for more info.
+        :signing_properties: The signing properties to use in signing.
         """
+        if "date" not in signing_properties:
+            signing_properties["date"] = datetime.utcnow().strftime(
+                SIGV4_TIMESTAMP_FORMAT
+            )
         return (
             "AWS4-HMAC-SHA256\n"
-            f"{date}\n"
-            f"{scope}\n"
+            f"{signing_properties['date']}\n"
+            f"{self._scope(signing_properties=signing_properties)}\n"
             f"{sha256(canonical_request.encode()).hexdigest()}"
         )
 
     def _signature(
         self,
         string_to_sign: str,
-        date: str,
         secret_key: str,
         signing_properties: SigV4SigningProperties,
     ) -> str:
@@ -410,7 +411,9 @@ class SigV4Signer(
         DateRegionServiceKey = HMAC-SHA256(<DateRegionKey>, "<aws-service>")
         SigningKey           = HMAC-SHA256(<DateRegionServiceKey>, "aws4_request")
         """
-        k_date = self._hash(key=f"AWS4{secret_key}".encode(), value=date[0:8])
+        k_date = self._hash(
+            key=f"AWS4{secret_key}".encode(), value=signing_properties["date"][0:8]
+        )
         k_region = self._hash(key=k_date, value=signing_properties["region"])
         k_service = self._hash(key=k_region, value=signing_properties["service"])
         k_signing = self._hash(key=k_service, value="aws4_request")

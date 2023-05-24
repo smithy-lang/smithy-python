@@ -24,7 +24,7 @@ from .identity import (
 )
 
 
-class SigningProperties(TypedDict):
+class SigningProperties(TypedDict, total=False):
     """Additional properties loaded to modify the signing process."""
 
     ...
