@@ -75,7 +75,7 @@ class HTTPAuthScheme(
     signer: HTTPSigner[IdentityType, SigningPropertiesType]
 
     def identity_resolver(
-        self, config: IdentityConfig_contra
+        self, *, config: IdentityConfig_contra
     ) -> IdentityResolver[IdentityType, IdentityPropertiesType_contra]:
         """An API that can be queried to resolve identity."""
         ...
