@@ -63,6 +63,13 @@ class SignatureKwargs(TypedDict):
     scope: str
 
 
+class _TempDate(str):
+    """Sentinel value for temporary date."""
+
+    def __new__(cls, content: str) -> "_TempDate":
+        return super().__new__(cls, content)
+
+
 class SigV4Signer(
     HTTPSigner[HTTPRequest, AWSCredentialIdentity, SigV4SigningProperties]
 ):
@@ -85,10 +92,7 @@ class SigV4Signer(
         credentials.
         :param signing_properties: The properties to use for signing.
         """
-        if "date" not in signing_properties:
-            signing_properties["date"] = datetime.utcnow().strftime(
-                SIGV4_TIMESTAMP_FORMAT
-            )
+        self._set_date(signing_properties=signing_properties)
         signature_kwargs = self._get_signature_kwargs(
             http_request=http_request,
             identity=identity,
@@ -110,6 +114,15 @@ class SigV4Signer(
         new_request = signature_kwargs["http_request"]
         new_request.fields.set_field(field=auth_header)
         return new_request
+
+    def _set_date(self, signing_properties: SigV4SigningProperties) -> None:
+        date = signing_properties.get("date")
+        if date is None or isinstance(date, _TempDate):
+            # Override emphemeral _TempDates from previous runs to
+            # ensure we're always signing with a current date.
+            signing_properties["date"] = _TempDate(
+                datetime.utcnow().strftime(SIGV4_TIMESTAMP_FORMAT)
+            )
 
     def _get_signature_kwargs(
         self,
@@ -231,7 +244,6 @@ class SigV4Signer(
 
         :param http_request: The request to sign.
         :param signing_properties: The signing properties to use in signing.
-        :param scope: The scope to use in the signature. See `_scope` for more info.
         :param secret_access_key: The secret access key to use in the signature.
         """
         canonical_request = await self.canonical_request(
@@ -383,10 +395,7 @@ class SigV4Signer(
         `canonical_request` for more info.
         :signing_properties: The signing properties to use in signing.
         """
-        if "date" not in signing_properties:
-            signing_properties["date"] = datetime.utcnow().strftime(
-                SIGV4_TIMESTAMP_FORMAT
-            )
+        self._set_date(signing_properties=signing_properties)
         return (
             "AWS4-HMAC-SHA256\n"
             f"{signing_properties['date']}\n"

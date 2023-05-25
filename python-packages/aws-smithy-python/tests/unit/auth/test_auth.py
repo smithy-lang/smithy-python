@@ -14,7 +14,7 @@
 import pathlib
 import re
 import warnings
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from hashlib import sha256
 from http.server import BaseHTTPRequestHandler
 from io import BytesIO
@@ -592,3 +592,48 @@ async def test_port_removed_from_host(
     # the canonical request
     host_header = cr.splitlines()[3]
     assert host_header == f"host:{expected_host}"
+
+
+@pytest.mark.asyncio
+async def test_ephemeral_date(
+    sigv4_signer: SigV4Signer,
+    http_request: HTTPRequest,
+    aws_credential_identity: AWSCredentialIdentity,
+) -> None:
+    signing_properties = SIGNING_PROPERTIES.copy()
+    for i in range(5):
+        old_date = signing_properties.get("date")
+        future_time = datetime.utcnow() + timedelta(minutes=i + 1)
+        with freeze_time(future_time):
+            with pytest.warns(UserWarning, match="Payload signing is enabled"):
+                new_request = await sigv4_signer.sign(
+                    http_request=http_request,
+                    identity=aws_credential_identity,
+                    signing_properties=signing_properties,
+                )
+        new_date = signing_properties["date"]
+        assert old_date != new_date
+        assert new_request.fields.get_field("X-Amz-Date").as_string() == new_date
+
+
+@pytest.mark.asyncio
+async def test_non_ephemeral_date(
+    sigv4_signer: SigV4Signer,
+    http_request: HTTPRequest,
+    aws_credential_identity: AWSCredentialIdentity,
+) -> None:
+    signing_properties = SIGNING_PROPERTIES.copy()
+    signing_properties["date"] = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    for i in range(5):
+        old_date = signing_properties["date"]
+        future_time = datetime.utcnow() + timedelta(minutes=i + 1)
+        with freeze_time(future_time):
+            with pytest.warns(UserWarning, match="Payload signing is enabled"):
+                new_request = await sigv4_signer.sign(
+                    http_request=http_request,
+                    identity=aws_credential_identity,
+                    signing_properties=signing_properties,
+                )
+        new_date = signing_properties["date"]
+        assert old_date == new_date
+        assert new_request.fields.get_field("X-Amz-Date").as_string() == old_date
