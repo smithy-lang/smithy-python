@@ -92,7 +92,13 @@ class SigV4Signer(
         credentials.
         :param signing_properties: The properties to use for signing.
         """
-        self._set_date(signing_properties=signing_properties)
+        date = signing_properties.get("date")
+        if date is None or isinstance(date, _TempDate):
+            # Override emphemeral _TempDates from previous runs to
+            # ensure we're always signing with a current date.
+            signing_properties["date"] = _TempDate(
+                datetime.utcnow().strftime(SIGV4_TIMESTAMP_FORMAT)
+            )
         signature_kwargs = self._get_signature_kwargs(
             http_request=http_request,
             identity=identity,
@@ -114,15 +120,6 @@ class SigV4Signer(
         new_request = signature_kwargs["http_request"]
         new_request.fields.set_field(field=auth_header)
         return new_request
-
-    def _set_date(self, signing_properties: SigV4SigningProperties) -> None:
-        date = signing_properties.get("date")
-        if date is None or isinstance(date, _TempDate):
-            # Override emphemeral _TempDates from previous runs to
-            # ensure we're always signing with a current date.
-            signing_properties["date"] = _TempDate(
-                datetime.utcnow().strftime(SIGV4_TIMESTAMP_FORMAT)
-            )
 
     def _get_signature_kwargs(
         self,
@@ -395,7 +392,11 @@ class SigV4Signer(
         `canonical_request` for more info.
         :signing_properties: The signing properties to use in signing.
         """
-        self._set_date(signing_properties=signing_properties)
+        date = signing_properties.get("date")
+        if date is None:
+            signing_properties["date"] = _TempDate(
+                datetime.utcnow().strftime(SIGV4_TIMESTAMP_FORMAT)
+            )
         return (
             "AWS4-HMAC-SHA256\n"
             f"{signing_properties['date']}\n"

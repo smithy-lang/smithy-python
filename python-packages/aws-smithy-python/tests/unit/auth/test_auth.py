@@ -601,9 +601,9 @@ async def test_ephemeral_date(
     aws_credential_identity: AWSCredentialIdentity,
 ) -> None:
     signing_properties = SIGNING_PROPERTIES.copy()
-    for i in range(5):
+    for num in range(1, 6):
         old_date = signing_properties.get("date")
-        future_time = datetime.utcnow() + timedelta(minutes=i + 1)
+        future_time = datetime.utcnow() + timedelta(minutes=num)
         with freeze_time(future_time):
             with pytest.warns(UserWarning, match="Payload signing is enabled"):
                 new_request = await sigv4_signer.sign(
@@ -624,9 +624,9 @@ async def test_non_ephemeral_date(
 ) -> None:
     signing_properties = SIGNING_PROPERTIES.copy()
     signing_properties["date"] = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
-    for i in range(5):
+    for num in range(1, 6):
         old_date = signing_properties["date"]
-        future_time = datetime.utcnow() + timedelta(minutes=i + 1)
+        future_time = datetime.utcnow() + timedelta(minutes=num)
         with freeze_time(future_time):
             with pytest.warns(UserWarning, match="Payload signing is enabled"):
                 new_request = await sigv4_signer.sign(
