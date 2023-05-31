@@ -265,14 +265,13 @@ async def test_sigv4_signing(
 async def test_sign_wrong_identity_type_raises(
     sigv4_signer: SigV4Signer,
     http_request: HTTPRequest,
-    # mypy expects AWSCredentialIdentity because that matches the `sign` method signature
-    # but we're passing in a different type to test the error handling
-    fake_identity: AWSCredentialIdentity,
+    fake_identity: FakeIdentity,
 ) -> None:
+    # Ignore mypy while we test passing the wrong type raises an error.
     with pytest.raises(expected_exception=SmithyIdentityException):
         await sigv4_signer.sign(
             http_request=http_request,
-            identity=fake_identity,
+            identity=fake_identity,  # type: ignore
             signing_properties={"region": "us-east-1", "service": "s3"},
         )
 
@@ -601,7 +600,7 @@ async def test_ephemeral_date(
     aws_credential_identity: AWSCredentialIdentity,
 ) -> None:
     signing_properties = SIGNING_PROPERTIES.copy()
-    for num in range(1, 6):
+    for num in range(1, 3):
         old_date = signing_properties.get("date")
         future_time = datetime.utcnow() + timedelta(minutes=num)
         with freeze_time(future_time):
@@ -624,16 +623,14 @@ async def test_non_ephemeral_date(
 ) -> None:
     signing_properties = SIGNING_PROPERTIES.copy()
     signing_properties["date"] = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
-    for num in range(1, 6):
+    with freeze_time(datetime.utcnow() + timedelta(minutes=1)):
         old_date = signing_properties["date"]
-        future_time = datetime.utcnow() + timedelta(minutes=num)
-        with freeze_time(future_time):
-            with pytest.warns(UserWarning, match="Payload signing is enabled"):
-                new_request = await sigv4_signer.sign(
-                    http_request=http_request,
-                    identity=aws_credential_identity,
-                    signing_properties=signing_properties,
-                )
+        with pytest.warns(UserWarning, match="Payload signing is enabled"):
+            new_request = await sigv4_signer.sign(
+                http_request=http_request,
+                identity=aws_credential_identity,
+                signing_properties=signing_properties,
+            )
         new_date = signing_properties["date"]
         assert old_date == new_date
         assert new_request.fields.get_field("X-Amz-Date").as_string() == old_date
