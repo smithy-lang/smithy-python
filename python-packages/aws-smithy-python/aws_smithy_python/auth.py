@@ -42,7 +42,6 @@ HEADERS_EXCLUDED_FROM_SIGNING: tuple[str, ...] = (
     "x-amz-content-sha256",
     "x-amzn-trace-id",
 )
-DEFAULT_EXPIRES: int = 3600
 EMPTY_SHA256_HASH: str = (
     "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 )
