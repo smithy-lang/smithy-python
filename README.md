@@ -1,4 +1,4 @@
-## Smithy Python
+## Smithy for Python
 
 **WARNING: All interfaces are subject to change.**
 
