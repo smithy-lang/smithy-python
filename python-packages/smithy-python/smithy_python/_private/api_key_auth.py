@@ -76,18 +76,23 @@ class ApiKeyConfig(Protocol):
 @dataclass(init=False)
 class ApiKeyAuthScheme(
     HTTPAuthScheme[
-        ApiKeyIdentity, ApiKeyConfig, IdentityProperties, ApiKeySigningProperties
+        HTTPRequest,
+        ApiKeyIdentity,
+        ApiKeyConfig,
+        IdentityProperties,
+        ApiKeySigningProperties,
     ]
 ):
     """An auth scheme containing necessary data and tools for api key auth."""
 
     scheme_id: str
-    signer: HTTPSigner[ApiKeyIdentity, ApiKeySigningProperties]
+    signer: HTTPSigner[HTTPRequest, ApiKeyIdentity, ApiKeySigningProperties]
 
     def __init__(
         self,
         *,
-        signer: HTTPSigner[ApiKeyIdentity, ApiKeySigningProperties] | None = None,
+        signer: HTTPSigner[HTTPRequest, ApiKeyIdentity, ApiKeySigningProperties]
+        | None = None,
     ) -> None:
         """Constructor.
 
@@ -108,7 +113,7 @@ class ApiKeyAuthScheme(
         return config.api_key_identity_resolver
 
 
-class ApiKeySigner(HTTPSigner[ApiKeyIdentity, ApiKeySigningProperties]):
+class ApiKeySigner(HTTPSigner[HTTPRequest, ApiKeyIdentity, ApiKeySigningProperties]):
     """A signer that signs http requests with an api key."""
 
     async def sign(
