@@ -93,7 +93,7 @@ class SigV4Signer(
         """
         date = signing_properties.get("date")
         if date is None or isinstance(date, _TempDate):
-            # Override emphemeral _TempDates from previous runs to
+            # Override ephemeral _TempDates from previous runs to
             # ensure we're always signing with a current date.
             signing_properties["date"] = _TempDate(
                 datetime.utcnow().strftime(SIGV4_TIMESTAMP_FORMAT)
@@ -263,12 +263,6 @@ class SigV4Signer(
     ) -> str:
         """Generate the canonical request string.
 
-        This is a string comprised of several components separated by newlines
-        in the following format:
-
-        <HTTPMethod>\n <CanonicalURI>\n <CanonicalQueryString>\n
-        <CanonicalHeaders>\n <SignedHeaders>\n <HashedPayload>
-
         :param http_request: The request to sign. It contains most of the
         components that are used to generate the canonical request.
         :param signing_properties: The signing properties to use in signing.
@@ -381,11 +375,6 @@ class SigV4Signer(
         self, *, canonical_request: str, signing_properties: SigV4SigningProperties
     ) -> str:
         """The string to sign.
-
-        It is a concatenation of the following strings:
-
-        "AWS4-HMAC-SHA256" + "\n" + timeStampISO8601Format + "\n" +
-        <Scope> + "\n" + Hex(SHA256Hash(<CanonicalRequest>))
 
         :param canonical_request: The canonical request string. See
         `canonical_request` for more info.
