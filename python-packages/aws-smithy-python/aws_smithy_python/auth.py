@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 
 import hmac
+import io
 import warnings
 from copy import deepcopy
 from datetime import datetime
@@ -23,7 +24,6 @@ from smithy_python import interfaces
 from smithy_python._private import URI, Field
 from smithy_python._private.auth import HTTPSigner
 from smithy_python._private.http import HTTPRequest
-from smithy_python.async_utils import async_list
 from smithy_python.exceptions import SmithyHTTPException, SmithyIdentityException
 from smithy_python.interfaces.auth import SigningProperties
 from smithy_python.interfaces.blobs import AsyncBytesReader
@@ -353,11 +353,14 @@ class SigV4Signer(
                 checksum.update(chunk)
             await body.seek(position)
         else:
-            buffer = []
+            # BytesIO was chosen here because after extensive testing it was found
+            # to be more efficient with resident memory than a list of bytes.
+            buffer = io.BytesIO()
             async for chunk in body:
-                buffer.append(chunk)
+                buffer.write(chunk)
                 checksum.update(chunk)
-            http_request.body = AsyncBytesReader(data=async_list(lst=buffer))
+            buffer.seek(0)
+            http_request.body = AsyncBytesReader(data=buffer)
         return checksum.hexdigest()
 
     def _should_sha256_sign_payload(
