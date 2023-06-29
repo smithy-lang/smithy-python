@@ -353,8 +353,6 @@ class SigV4Signer(
                 checksum.update(chunk)
             await body.seek(position)
         else:
-            # BytesIO was chosen here because after extensive testing it was found
-            # to be more efficient with resident memory than a list of bytes.
             buffer = io.BytesIO()
             async for chunk in body:
                 buffer.write(chunk)
