@@ -236,6 +236,13 @@ make common workflows simple, single commands. The two most important commands a
 
 To see what else available, run `make help` or examine the file directly.
 
+## Security issue notifications
+
+If you discover a potential security issue in this project we ask that you
+notify AWS/Amazon Security via our
+[vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/).
+Please do **not** create a public github issue.
+
 ## License
 
 This project is licensed under the Apache-2.0 License.
