@@ -8,6 +8,9 @@ SDK tasks. Using these modules customers should be able to generate
 asynchronous service client implementations based on services defined using
 [Smithy](https://smithy.io/).
 
+This code generator, and the clients it generates, are unstable and should not
+be used in production systems yet.
+
 ### What is this repository?
 
 This repository contains two major components:
