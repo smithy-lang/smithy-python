@@ -9,6 +9,7 @@ backend_packages = [
     "pants.backend.python.typecheck.mypy",
     "pants.backend.python.lint.pyupgrade",
     "pants.backend.python.lint.docformatter",
+    "pants.backend.python.lint.bandit",
 ]
 
 [source]
@@ -63,6 +64,9 @@ version = "docformatter==1.5.1"
 args = ["--wrap-summaries 88", "--wrap-descriptions 88"]
 lockfile = "lockfiles/docformatter"
 interpreter_constraints = [">=3.11"]
+
+[bandit]
+args = ["-x tests"]
 
 [anonymous-telemetry]
 enabled = false
