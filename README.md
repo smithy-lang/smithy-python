@@ -197,8 +197,10 @@ for all its packages, so you will need that too to work on it.
 Pants provides a number of python commands it calls goals, documente [here]
 (https://www.pantsbuild.org/docs/python-goals). In short:
 
-* `./pants fmt ::` - This will run our formatters on all of the python library
-  code. Use this before you make a commit.
+* `./pants fmt ::` - This will run some of our formatters on all of the python
+  library code. Use this before you make a commit.
+* `./pants fix ::` - This will run the rest of the formatters on python library
+  code. Also use this before commits.
 * `./pants lint ::` - This will run our linters on all of the python library
   code. You should also use this before you make a commit, and particularly
   before you make a pull request.
