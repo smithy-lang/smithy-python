@@ -1,5 +1,5 @@
+from collections.abc import AsyncIterable, AsyncIterator
 from dataclasses import dataclass
-from typing import AsyncIterable, AsyncIterator
 
 import pytest
 from smithy_python._private import URI, Field, Fields
