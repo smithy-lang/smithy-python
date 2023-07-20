@@ -1,5 +1,5 @@
 [GLOBAL]
-pants_version = "2.14.0"
+pants_version = "2.15.0"
 
 backend_packages = [
     "pants.backend.python",
@@ -7,7 +7,7 @@ backend_packages = [
     "pants.backend.python.lint.isort",
     "pants.backend.python.lint.flake8",
     "pants.backend.python.typecheck.mypy",
-    "pants.backend.experimental.python.lint.pyupgrade",
+    "pants.backend.python.lint.pyupgrade",
     "pants.backend.python.lint.docformatter",
 ]
 
@@ -62,9 +62,6 @@ interpreter_constraints = [">=3.11"]
 version = "docformatter==1.5.1"
 args = ["--wrap-summaries 88", "--wrap-descriptions 88"]
 lockfile = "lockfiles/docformatter"
-interpreter_constraints = [">=3.11"]
-
-[poetry]
 interpreter_constraints = [">=3.11"]
 
 [anonymous-telemetry]

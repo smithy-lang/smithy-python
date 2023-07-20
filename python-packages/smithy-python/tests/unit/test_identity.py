@@ -15,7 +15,6 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 from freezegun import freeze_time
-
 from smithy_python._private.identity import Identity
 
 
