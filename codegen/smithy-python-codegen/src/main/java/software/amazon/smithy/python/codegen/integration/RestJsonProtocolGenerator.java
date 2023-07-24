@@ -66,8 +66,10 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         "RestJsonEndpointTraitWithHostLabel",
         "RestJsonEndpointTrait",
 
-        // TODO: support parsing http dates with fractional seconds
-        "RestJsonHttpDateWithFractionalSeconds"
+        // TODO: support the request compression trait
+        // https://smithy.io/2.0/spec/behavior-traits.html#smithy-api-requestcompression-trait
+        "SDKAppliedContentEncoding_restJson1",
+        "SDKAppendedGzipAfterProvidedEncoding_restJson1"
     );
 
     @Override
