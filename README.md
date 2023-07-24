@@ -36,79 +36,114 @@ to learn the basics and create a simple Smithy model.
 
 Once you have a service defined in Smithy, you will need to define what protocol
 it uses. Currently the only supported protocol is
-[restJson1](https://smithy.io/2.0/aws/protocols/aws-restjson1-protocol.html). This
-is a protocol based on AWS services, but is broadly applicable to any service that
-uses rest bindings with a JSON body type. Simply add the protocol trait to your
-service shape like so:
+[restJson1](https://smithy.io/2.0/aws/protocols/aws-restjson1-protocol.html).
+This is a protocol based on AWS services, but is broadly applicable to any
+service that uses rest bindings with a JSON body type. Simply add the protocol
+trait to your service shape and you'll be ready.
+
+The following is a basic example service model that echoes messages sent to it.
+To use this model to generate a client, save it to a file called `main.smithy`
+in a folder called `model`.
 
 ```smithy
+$version: "2.0"
+
+namespace com.example
+
 use aws.protocols#restJson1
 
-/// Provides weather forecasts.
+/// Echoes input
 @restJson1
-@paginated(
-    inputToken: "nextToken"
-    outputToken: "nextToken"
-    pageSize: "pageSize"
-)
-service Weather {
+service EchoService {
     version: "2006-03-01"
-    resources: [City]
-    operations: [GetCurrentTime]
+    operations: [EchoMessage]
+}
+
+@http(uri: "/echo", method: "POST")
+operation EchoMessage {
+    input := {
+        @httpHeader("x-echo-message")
+        message: String
+    }
+    output := {
+        message: String
+    }
 }
 ```
 
-To import the trait, you'll also need to add a dependency on `smithy-aws-traits`.
-And to generate your client, you'll also need to add a dependency on
-`smithy-python-codegen`. For example:
-
-```kotlin
-plugins {
-    id("software.amazon.smithy").version("0.6.0")
-}
-
-repositories {
-    mavenLocal()
-    mavenCentral()
-}
-
-dependencies {
-    implementation("software.amazon.smithy:smithy-model:1.28.1")
-    implementation("software.amazon.smithy:smithy-aws-traits:1.28.1")
-    implementation("software.amazon.smithy.python:smithy-python-codegen:0.1.0")
-}
-```
-
-`smithy-python-codegen` hasn't been published yet, so you'll need to build it yourself.
-To build and run the generator you will need the following prerequisites:
-
-* JDK 17 or newer
-* Python 3.11 or newer
-  * (optional) Install [black](https://black.readthedocs.io/en/stable/) in your
-    environment to have the generated output be auto-formatted.
-* make
-
-Now run `make install-components`. This will install the python dependencies in your
-environment and publish the code generator to maven local. For more information on
-the underlying build process, see the "Using repository tooling" section.
-
-Now upate your `smithy-build.json` to include the `python-client-codegen` plugin:
+You also will need a build configuration file named `smithy-build.json`, which
+for this example service should look the following json. For more information on
+this file, see the
+[smithy-build docs](https://smithy.io/2.0/guides/building-models/build-config.html).
 
 ```json
 {
     "version": "1.0",
-    "plugins": {
-        "python-client-codegen": {
-            "service": "example.weather#Weather",
-            "module": "weather",
-            "moduleVersion": "0.0.1"
+    "sources": ["model"],
+    "maven": {
+        "dependencies": [
+            "software.amazon.smithy:smithy-model:[1.34.0,2.0)",
+            "software.amazon.smithy:smithy-aws-traits:[1.34.0,2.0)",
+            "software.amazon.smithy.python:smithy-python-codegen:0.1.0"
+        ]
+    },
+    "projections": {
+        "client": {
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "com.example#EchoService",
+                    "module": "echo",
+                    "moduleVersion": "0.0.1"
+                }
+            }
         }
     }
 }
 ```
 
-Now just build your smithy package and you'll have a generated client! The client can
-be found in `build/smithyprojections/<project-name>/<projection-name>/python-codegen`.
+The code generator, `smithy-python-codegen`, hasn't been published yet, so
+you'll need to build it yourself. To build and run the generator you will need
+the following prerequisites:
+
+* Python 3.11 or newer
+  * (optional) Install [black](https://black.readthedocs.io/en/stable/) in your
+    environment to have the generated output be auto-formatted.
+* The [Smithy CLI](https://smithy.io/2.0/guides/smithy-cli/cli_installation.html)
+* JDK 17 or newer
+* make
+
+Now run `make install-components` from the root of this repository. This will
+install the python dependencies in your environment and make the code generator
+available locally. For more information on the underlying build process, see the
+"Using repository tooling" section.
+
+Now from your model directory run `smithy build` and you'll have a generated
+client! The client can be found in `build/smithy/client/python-client-codegen`.
+The following is a snippet showing how you might use it:
+
+```python
+import asyncio
+
+from echo.client import EchoService
+from echo.config import Config
+from echo.models import EchoInput
+
+
+async def main():
+    client = EchoService(Config(endpoint_uri="https://example.com/"))
+    response = await client.echo(EchoInput(message="spam"))
+    print(response.message)
+
+
+if __name__ == "__main__":
+    asyncio.run(main)
+```
+
+#### Is Java really required?
+
+Only for now. Once the generator has been published, the Smithy CLI will be able
+to run the it without a separate Java installation. Similarly, once the python
+helper libraries have been published you won't need to install them manually.
 
 ### Core Modules and Interfaces
 
