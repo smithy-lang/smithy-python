@@ -9,7 +9,8 @@ asynchronous service client implementations based on services defined using
 [Smithy](https://smithy.io/).
 
 This code generator, and the clients it generates, are unstable and should not
-be used in production systems yet.
+be used in production systems yet. Several features, such as detailed logging,
+have not been implemented yet.
 
 ### What is this repository?
 
