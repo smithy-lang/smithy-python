@@ -10,6 +10,7 @@
 # distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF
 # ANY KIND, either express or implied. See the License for the specific
 # language governing permissions and limitations under the License.
+from copy import copy, deepcopy
 from itertools import chain
 from urllib.parse import parse_qs, urlunparse
 
@@ -28,13 +29,18 @@ class AIOHTTPClientConfig(interfaces.http.HTTPClientConfiguration):
 class AIOHTTPClient(interfaces.http.HTTPClient):
     """Implementation of :py:class:`...interfaces.http.HTTPClient` using aiohttp."""
 
-    def __init__(self, *, client_config: AIOHTTPClientConfig | None = None) -> None:
+    def __init__(
+        self,
+        *,
+        client_config: AIOHTTPClientConfig | None = None,
+        _session: aiohttp.ClientSession | None = None,
+    ) -> None:
         """
         :param client_config: Configuration that applies to all requests made with this
         client.
         """
-        self._config = AIOHTTPClientConfig() if client_config is None else client_config
-        self._session = aiohttp.ClientSession()
+        self._config = client_config or AIOHTTPClientConfig()
+        self._session = _session or aiohttp.ClientSession()
 
     async def send(
         self,
@@ -97,4 +103,10 @@ class AIOHTTPClient(interfaces.http.HTTPClient):
             fields=headers,
             body=async_list([await aiohttp_resp.read()]),
             reason=aiohttp_resp.reason,
+        )
+
+    def __deepcopy__(self) -> "AIOHTTPClient":
+        return AIOHTTPClient(
+            client_config=deepcopy(self._config),
+            _session=copy(self._session),
         )
