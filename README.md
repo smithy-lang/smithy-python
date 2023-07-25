@@ -126,17 +126,17 @@ import asyncio
 
 from echo.client import EchoService
 from echo.config import Config
-from echo.models import EchoInput
+from echo.models import EchoMessageInput
 
 
-async def main():
+async def main() -> None:
     client = EchoService(Config(endpoint_uri="https://example.com/"))
-    response = await client.echo(EchoInput(message="spam"))
+    response = await client.echo(EchoMessageInput(message="spam"))
     print(response.message)
 
 
 if __name__ == "__main__":
-    asyncio.run(main)
+    asyncio.run(main())
 ```
 
 #### Is Java really required?
