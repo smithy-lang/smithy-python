@@ -131,7 +131,7 @@ from echo.models import EchoMessageInput
 
 async def main() -> None:
     client = EchoService(Config(endpoint_uri="https://example.com/"))
-    response = await client.echo(EchoMessageInput(message="spam"))
+    response = await client.echo_message(EchoMessageInput(message="spam"))
     print(response.message)
 
 
@@ -201,9 +201,9 @@ in one place. If you've used Gradle before, then there's nothing in this repo
 that will surprise you.
 
 If you haven't used Gradle before, don't worry - it's pretty easy to use. You
-will need to have JDK 17 or newer installed, but that's the only thing you
-need to install yourself. We recommend the [Coretto]
-(https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/downloads-list.html)
+will need to have JDK 17 or newer installed, but that's the only thing you need
+to install yourself. We recommend the
+[Coretto](https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/downloads-list.html)
 distribution, but any JDK that's at least version 17 will work.
 
 To build and run all the Java packages, simply run `./gradlew clean build` from
@@ -218,9 +218,9 @@ For more details on working on the code generator, see the readme in the
 
 Building multiple python packages in a single repo is a little less common than
 it is for Java or some other languages, so even if you're a python expert you
-may be unfamiliar with the tooling. The tool we're using is called [pants]
-(https://www.pantsbuild.org), and you use it pretty similarly to how you use
-Gradle.
+may be unfamiliar with the tooling. The tool we're using is called
+[pants](https://www.pantsbuild.org), and you use it pretty similarly to how you
+use Gradle.
 
 Like Gradle, pants provides a wrapper script that downloads its dependencies as
 needed. Currently, pants requires python 3.7, 3.8, or 3.9 to run, so one of
@@ -230,8 +230,8 @@ however, fully capable of building and working with code that uses newer python
 versions like we do. This repository uses a minimum python version of 3.11
 for all its packages, so you will need that too to work on it.
 
-Pants provides a number of python commands it calls goals, documente [here]
-(https://www.pantsbuild.org/docs/python-goals). In short:
+Pants provides a number of python commands it calls goals, documented
+[here](https://www.pantsbuild.org/docs/python-goals). In short:
 
 * `./pants fmt ::` - This will run our formatters on all of the python library
   code. Use this before you make a commit.
@@ -244,21 +244,21 @@ Pants provides a number of python commands it calls goals, documente [here]
   library code. Use this as often as you'd run pytest or any other testing
   tool. Under the hood, we are using pytest.
 
-There are other commands as well that you can find in the [docs]
-(https://www.pantsbuild.org/docs/python-goals), but these are the one you'll
-use the most.
+There are other commands as well that you can find in the
+[docs](https://www.pantsbuild.org/docs/python-goals), but these are the one
+you'll use the most.
 
-Important to note is those pairs of colons. These are pants [targets]
-(https://www.pantsbuild.org/docs/targets#target-addresses). The double colon is
-a special target that means "everything". So running exactly what's listed
-above will run those goals on every python file or other relevant file. You can
-also target just `smithy_python`, for example, with
+Important to note is those pairs of colons. These are pants
+[targets](https://www.pantsbuild.org/docs/targets#target-addresses). The double
+colon is a special target that means "everything". So running exactly what's
+listed above will run those goals on every python file or other relevant file.
+You can also target just `smithy_python`, for example, with
 `./pants check python-packages/smithy-python/smithy_python:source`, or even
 individual files with something like
 `./pants check python-packages/smithy-python/smithy_python/interfaces/http.py:../source`.
 To list what targets are available in a directory, run
-`./pants list path/to/dir:`. For more detailed information, see the [docs]
-(https://www.pantsbuild.org/docs/targets#target-addresses).
+`./pants list path/to/dir:`. For more detailed information, see the
+[docs](https://www.pantsbuild.org/docs/targets#target-addresses).
 
 #### Common commands - make
 
