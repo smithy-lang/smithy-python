@@ -12,6 +12,7 @@
 # language governing permissions and limitations under the License.
 from copy import copy, deepcopy
 from itertools import chain
+from typing import Any
 from urllib.parse import parse_qs, urlunparse
 
 import aiohttp
@@ -105,7 +106,7 @@ class AIOHTTPClient(interfaces.http.HTTPClient):
             reason=aiohttp_resp.reason,
         )
 
-    def __deepcopy__(self) -> "AIOHTTPClient":
+    def __deepcopy__(self, memo: Any) -> "AIOHTTPClient":
         return AIOHTTPClient(
             client_config=deepcopy(self._config),
             _session=copy(self._session),
