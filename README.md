@@ -245,7 +245,7 @@ Pants provides a number of python commands it calls goals, documented
   tool. Under the hood, we are using pytest.
 
 There are other commands as well that you can find in the
-[docs](https://www.pantsbuild.org/docs/python-goals), but these are the one
+[docs](https://www.pantsbuild.org/docs/python-goals), but these are the ones
 you'll use the most.
 
 Important to note is those pairs of colons. These are pants
