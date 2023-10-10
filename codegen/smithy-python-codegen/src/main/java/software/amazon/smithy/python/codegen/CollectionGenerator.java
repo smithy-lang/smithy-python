@@ -89,9 +89,9 @@ final class CollectionGenerator implements Runnable {
         writer.addStdlibImport("typing", "List");
         writer.addStdlibImport("typing", "Any");
         writer.openBlock("def $L(given: List[Any]) -> $T:", "", fromDictSymbol.getName(), symbol, () -> {
-            if (target.isUnionShape() || target.isStructureShape()) {
+            if (target.isStructureShape()) {
                 writer.write("return [$T.from_dict(v)$L for v in given]", targetSymbol, sparseGuard);
-            } else if (target.isMapShape() || target instanceof CollectionShape) {
+            } else if (target.isUnionShape() || target.isMapShape() || target instanceof CollectionShape) {
                 var targetFromDictSymbol = targetSymbol.expectProperty("fromDict", Symbol.class);
                 writer.write("return [$T(v)$L for v in given]", targetFromDictSymbol, sparseGuard);
             } else {
