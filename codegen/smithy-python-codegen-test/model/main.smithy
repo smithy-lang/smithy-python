@@ -15,7 +15,7 @@ use aws.protocols#restJson1
 service Weather {
     version: "2006-03-01"
     resources: [City]
-    operations: [GetCurrentTime]
+    operations: [GetCurrentTime, TestUnionListOperation]
 }
 
 resource City {
@@ -24,6 +24,25 @@ resource City {
     list: ListCities
     resources: [Forecast, CityImage]
     operations: [GetCityAnnouncements]
+}
+
+@http(code: 200, method: "POST", uri: "/test-union-list")
+operation TestUnionListOperation {
+    input := {
+        inputList: UnionList
+    }
+    output := {
+        response: String
+    }
+}
+
+list UnionList {
+    member: UnionListMember
+}
+
+union UnionListMember {
+    field1: String
+    field2: Integer
 }
 
 resource Forecast {
