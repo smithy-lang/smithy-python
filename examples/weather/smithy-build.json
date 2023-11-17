@@ -1,0 +1,22 @@
+{
+  "version": "1.0",
+  "sources": ["model"],
+  "maven": {
+    "dependencies": [
+      "software.amazon.smithy:smithy-model:[1.41.0,2.0)",
+      "software.amazon.smithy:smithy-aws-traits:[1.41.0,2.0)",
+      "software.amazon.smithy.python:smithy-python-codegen:0.1.0"
+    ]
+  },
+  "projections": {
+    "client": {
+      "plugins": {
+        "python-client-codegen": {
+          "service": "example.weather#Weather",
+          "module": "weather",
+          "moduleVersion": "0.0.1"
+        }
+      }
+    }
+  }
+}

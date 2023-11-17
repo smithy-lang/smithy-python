@@ -8,15 +8,9 @@ repos:
       - id: trailing-whitespace
   - repo: local
     hooks:
-      - id: pants-fmt
-        name: pants fmt
-        description: runs ./pants fmt
-        entry: './pants --no-dynamic-ui fmt ::'
-        language: system
-        pass_filenames: false
-      - id: pants-lint
-        name: pants lint
-        description: runs ./pants lint
-        entry: './pants --no-dynamic-ui lint ::'
+      - id: linting
+        name: lint
+        description: runs make lint-py
+        entry: 'make lint-py'
         language: system
         pass_filenames: false

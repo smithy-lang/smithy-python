@@ -17,18 +17,26 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v1
-      - name: Set up Python for Pants - 3.9
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
+        uses: actions/checkout@v3
+
       - name: Set up Python for CI - ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+
+      - name: Initialize Pants
+        uses: pantsbuild/actions/init-pants@main
+        with:
+          # cache0 makes it easy to bust the cache if needed
+          # just increase the integer to start with a fresh cache
+          gha-cache-key: cache0-py${{ matrix.python_version }}
+          named-caches-hash: ${{ hashFiles('python-default.lock') }}
+          pants-ci-config: pants.ci.toml
+
       - name: Run tests
         run: |
-          ./pants --no-dynamic-ui test --use-coverage ::
+          make test-py
+
       - name: Upload coverage
         if: matrix.python-version == 3.11
         uses: codecov/codecov-action@v3
@@ -38,6 +46,7 @@ jobs:
           flags: unittests
           name: codecov-umbrella
           fail_ci_if_error: true
+
 
   test-codegen:
     runs-on: ubuntu-latest
@@ -50,14 +59,15 @@ jobs:
     name: Codegen Java 17 / Python ${{ matrix.python-version }}
 
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout Repository
+        uses: actions/checkout@v3
 
-      - name: Download Coretto 17 JDK
+      - name: Download Corretto 17 JDK
         run: |
           download_url="https://corretto.aws/downloads/latest/amazon-corretto-17-x64-linux-jdk.tar.gz"
           wget -O $RUNNER_TEMP/java_package.tar.gz $download_url
 
-      - name: Set up Coretto 17 JDK
+      - name: Set up Corretto 17 JDK
         uses: actions/setup-java@v3
         with:
           distribution: 'jdkfile'
@@ -68,20 +78,22 @@ jobs:
       - name: clean and build without python
         run: cd codegen && ./gradlew clean build -Plog-tests
 
-      - name: Set up Python for Pants - 3.9
-        uses: actions/setup-python@v4
-        with:
-          python-version: 3.9
-
       - name: Set Up Python for CI - ${{ matrix.python-version }}
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
 
+      - name: Initialize Pants
+        uses: pantsbuild/actions/init-pants@main
+        with:
+          # cache0 makes it easy to bust the cache if needed
+          gha-cache-key: cache0-py${{ matrix.python_version }}
+          named-caches-hash: ${{ hashFiles('python-default.lock') }}
+          pants-ci-config: pants.ci.toml
+
       - name: Install smithy-python
         run: |
-          ./pants --no-dynamic-ui package ::
-          python${{ matrix.python-version }} -m pip install dist/*.whl
+          make install-python-components
 
       - name: clean and build without formatting/linting installed
         run: cd codegen && ./gradlew clean build -Plog-tests

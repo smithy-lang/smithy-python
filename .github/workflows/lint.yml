@@ -8,17 +8,25 @@ on:
 
 jobs:
   lint:
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-    - name: Set up Python for Pants - 3.9
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.9
-    - name: Set up Python for linting - 3.11
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
-    - name: Run pre-commit
-      uses: pre-commit/action@v3.0.0
+      - name: Checkout Repository
+        uses: actions/checkout@v1
+
+      - name: Set up Python for linting - 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.11
+
+      - name: Initialize Pants
+        uses: pantsbuild/actions/init-pants@main
+        with:
+          # v0 makes it easy to bust the cache if needed
+          # just increase the integer to start with a fresh cache
+          gha-cache-key: v0
+          named-caches-hash: ${{ hashFiles('python-default.lock') }}
+          pants-ci-config: pants.ci.toml
+
+      - name: Run pre-commit
+        uses: pre-commit/action@v3.0.0

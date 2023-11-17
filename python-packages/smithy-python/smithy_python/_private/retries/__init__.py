@@ -12,9 +12,9 @@
 # language governing permissions and limitations under the License.
 
 import random
+from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
-from typing import Callable
 
 from ...exceptions import SmithyRetryException
 from ...interfaces import retries as retries_interface
