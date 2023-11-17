@@ -1,16 +1,7 @@
 from asyncio import iscoroutinefunction
+from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable
 from io import BytesIO
-from typing import (
-    AsyncIterable,
-    AsyncIterator,
-    Awaitable,
-    Callable,
-    Protocol,
-    Self,
-    Union,
-    cast,
-    runtime_checkable,
-)
+from typing import Protocol, Self, Union, cast, runtime_checkable
 
 # The default chunk size for iterating streams.
 _DEFAULT_CHUNK_SIZE = 1024

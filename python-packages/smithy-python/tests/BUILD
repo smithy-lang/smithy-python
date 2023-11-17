@@ -15,7 +15,6 @@ python_test_utils(
     name="test_utils",
     sources=[
         "**/conftest.py",  # pytest's conftest.py file
-        "**/*_utils.py",  # all other utils files must be named to match this pattern
     ]
 )
 
@@ -25,11 +24,7 @@ python_tests(
     name="tests",
     dependencies=[":test_utils", ":pytyped"],
     sources=[
-        "unit/**/test_*.py",
-        "unit/**/tests.py",
-        "functional/**/test_*.py",
-        "functional/**/tests.py",
-        "integration/**/test_*.py",
-        "integration/**/tests.py",
+        "**/test_*.py",
+        "**/tests.py",
     ]
 )

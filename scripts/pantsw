@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# This is a wrapper script that verifies that pants is installed on the path, and calls it. This script is used as
+# part of the Makefile to wrap non-local installations of pants in a way that's ergonomic to `make`.
+
+if ! command -v "pants" > /dev/null; then
+  echo "'pants' is not on the PATH, something may have gone wrong."
+else
+  pants "$@"
+fi

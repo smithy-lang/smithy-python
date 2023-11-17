@@ -21,7 +21,7 @@ This repository contains two major components:
 
 These components facilitate generating clients for any [Smithy](https://smithy.io/)
 service. The `codegen` directory contains the source code for generating clients.
-The `python-packages` directory contains the source code for the hand-written python
+The `python-packages` directory contains the source code for the handwritten python
 components.
 
 This repository does *not* contain any generated clients, such as for S3 or other
@@ -35,11 +35,11 @@ with Smithy, follow [this quickstart guide](https://smithy.io/2.0/quickstart.htm
 to learn the basics and create a simple Smithy model.
 
 Once you have a service defined in Smithy, you will need to define what protocol
-it uses. Currently the only supported protocol is
+it uses. Currently, the only supported protocol is
 [restJson1](https://smithy.io/2.0/aws/protocols/aws-restjson1-protocol.html).
 This is a protocol based on AWS services, but is broadly applicable to any
 service that uses rest bindings with a JSON body type. Simply add the protocol
-trait to your service shape and you'll be ready.
+trait to your service shape, and you'll be ready.
 
 The following is a basic example service model that echoes messages sent to it.
 To use this model to generate a client, save it to a file called `main.smithy`
@@ -142,7 +142,7 @@ if __name__ == "__main__":
 #### Is Java really required?
 
 Only for now. Once the generator has been published, the Smithy CLI will be able
-to run the it without a separate Java installation. Similarly, once the python
+to run it without a separate Java installation. Similarly, once the python
 helper libraries have been published you won't need to install them manually.
 
 ### Core Modules and Interfaces
@@ -152,7 +152,7 @@ to build a service client. These basic modules include things like:
 an HTTP/1.1 and HTTP/2 client implementation, retry strategies, etc.
 
 The `aws-smithy-python` package provides implementations of those interfaces
-for AWS, such as sigv4 signers.
+for AWS, such as SigV4 signers.
 
 ### What are the design goals of this project?
 
@@ -160,22 +160,22 @@ for AWS, such as sigv4 signers.
 need to be composable and reusable across a wide variety of use cases,
 including use cases beyond an AWS SDK. Interfaces such as credential resolvers,
 request signing, data models, serialization, etc. should all be reusable across
-many different contexts.
+many contexts.
 
 * **Components should be well documented and publicly exported** - Both AWS and
 customers should have a high level of confidence that the building blocks we're
-creating are well supported, understood, and maintained. Customers should not
+creating are well-supported, understood, and maintained. Customers should not
 have to hack on internal or undocumented interfaces to achieve their goals.
 
-* **Components must be typed** - All of the buildings blocks we create must be
-typed and usable via `mypy`. Given the nature of gradual typing it's paramount
+* **Components must be typed** - All the buildings blocks we create must be
+typed and usable via `mypy`. Given the nature of gradual typing, it is paramount
 that foundational components and interfaces be typed to preserve the integrity
 of the typing system.
 
 * **Components should be consistent with other AWS SDKs** - When building
 interfaces or libraries that overlap with the required functionality of other
-AWS SDKs we should strive to be consistent with other SDKs as our deafult
-stance. This project will heavily draw insipiration from the precedents set
+AWS SDKs we should strive to be consistent with other SDKs as our default
+stance. This project will heavily draw inspiration from the precedents set
 by the [smithy-typescript](https://github.com/awslabs/smithy-typescript/) and
 [smithy-go](https://github.com/aws/smithy-go) packages.
 
@@ -190,7 +190,7 @@ ergonomic interfaces that meet customer expectations.
 ### Using repository tooling
 
 This repository is intended to contain the source for multiple Python and Java
-packages, so the process of development may be a bit different than what you're
+packages, so the process of development may be a bit different from what you're
 familiar with.
 
 #### Java - gradle
@@ -203,7 +203,7 @@ that will surprise you.
 If you haven't used Gradle before, don't worry - it's pretty easy to use. You
 will need to have JDK 17 or newer installed, but that's the only thing you need
 to install yourself. We recommend the
-[Coretto](https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/downloads-list.html)
+[Corretto](https://docs.aws.amazon.com/corretto/latest/corretto-17-ug/downloads-list.html)
 distribution, but any JDK that's at least version 17 will work.
 
 To build and run all the Java packages, simply run `./gradlew clean build` from
@@ -233,14 +233,16 @@ for all its packages, so you will need that too to work on it.
 Pants provides a number of python commands it calls goals, documented
 [here](https://www.pantsbuild.org/docs/python-goals). In short:
 
-* `./pants fmt ::` - This will run our formatters on all of the python library
-  code. Use this before you make a commit.
-* `./pants lint ::` - This will run our linters on all of the python library
-  code. You should also use this before you make a commit, and particularly
-  before you make a pull request.
-* `./pants check ::` - This will run mypy on all of the python library code.
+* `./pants fmt ::` - This will run our formatters on all the python library
+  code. Use `fix` instead of this, since it runs all the formatters AND fixers.
+*  `./pants fix ::` - This will run the formatters/fixers on python library
+   code, and apply the changes. Use this before making commits.
+* `./pants lint ::` - This will run our formatters/fixers/linters on all the
+  python library code. You should also use this before you make commits, and particularly
+  before you make a pull request. It will not apply formatting or fixes for you.
+* `./pants check ::` - This will run mypy on all the python library code.
   This should be used regularly, and must pass for any pull request.
-* `./pants test ::` - This will run all of the tests written for the python
+* `./pants test ::` - This will run all the tests written for the python
   library code. Use this as often as you'd run pytest or any other testing
   tool. Under the hood, we are using pytest.
 
@@ -280,7 +282,7 @@ To see what else available, run `make help` or examine the file directly.
 If you discover a potential security issue in this project we ask that you
 notify AWS/Amazon Security via our
 [vulnerability reporting page](http://aws.amazon.com/security/vulnerability-reporting/).
-Please do **not** create a public github issue.
+Please do **not** create a public GitHub issue.
 
 ## License
 

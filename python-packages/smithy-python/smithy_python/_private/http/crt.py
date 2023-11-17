@@ -13,11 +13,11 @@
 
 
 import asyncio
-from collections.abc import AsyncIterable
+from collections.abc import AsyncGenerator, AsyncIterable, Awaitable
 from concurrent.futures import Future
 from io import BytesIO
 from threading import Lock
-from typing import Any, AsyncGenerator, Awaitable
+from typing import Any
 
 from awscrt import http as crt_http
 from awscrt import io as crt_io
