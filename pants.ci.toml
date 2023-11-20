@@ -8,8 +8,7 @@ log = true
 use_coverage = true
 
 [coverage-py]
-report = ["xml"]
-global_report = true
+report = ["xml", "html"]
 
 [pytest]
 args = ["-vv", "--no-header"]
