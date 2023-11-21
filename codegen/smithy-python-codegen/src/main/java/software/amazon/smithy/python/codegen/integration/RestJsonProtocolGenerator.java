@@ -69,7 +69,10 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         // TODO: support the request compression trait
         // https://smithy.io/2.0/spec/behavior-traits.html#smithy-api-requestcompression-trait
         "SDKAppliedContentEncoding_restJson1",
-        "SDKAppendedGzipAfterProvidedEncoding_restJson1"
+        "SDKAppendedGzipAfterProvidedEncoding_restJson1",
+
+        // TODO: update union deserialization to ignore `__type` for JSON protocols
+        "RestJsonDeserializeIgnoreType"
     );
 
     @Override
