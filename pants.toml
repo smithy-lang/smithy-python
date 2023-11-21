@@ -21,19 +21,24 @@ root_patterns = [
 interpreter_constraints = [">=3.11"]
 enable_resolves = true
 resolves = { python-default = "python-default.lock" }
-
-[black]
-args = ["-t py311"]
-interpreter_constraints = [">=3.11"]
+default_resolve = "python-default"
 
 [pytest]
+install_from_resolve = "python-default"
 requirements = [
-    "pytest-asyncio<0.21.0",
-    "pytest-cov<3.1",
+    "pytest-asyncio",
+    "pytest-cov",
 ]
+args = ['-v']
 
 [test]
+output = "all"
 use_coverage = true
+
+[black]
+install_from_resolve = "python-default"
+args = ["-t py311"]
+interpreter_constraints = [">=3.11"]
 
 [coverage-py]
 interpreter_constraints = [">=3.11"]
@@ -43,9 +48,11 @@ report = [
 ]
 
 [mypy]
+install_from_resolve = "python-default"
 interpreter_constraints = [">=3.11"]
 
 [flake8]
+install_from_resolve = "python-default"
 args = "--extend-ignore=W503"
 
 [pyupgrade]

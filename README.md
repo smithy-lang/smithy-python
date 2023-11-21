@@ -245,6 +245,8 @@ Pants provides a number of python commands it calls goals, documented
 * `./pants test ::` - This will run all the tests written for the python
   library code. Use this as often as you'd run pytest or any other testing
   tool. Under the hood, we are using pytest.
+* `./pants update-build-files ::` - This will auto-format all the `BUILD` files. Use this if
+  you are making changes to or adding new `BUILD` files.
 
 There are other commands as well that you can find in the
 [docs](https://www.pantsbuild.org/docs/python-goals), but these are the ones
