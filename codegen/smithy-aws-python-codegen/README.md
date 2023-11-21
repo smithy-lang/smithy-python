@@ -3,7 +3,7 @@
 This package implements AWS-specific code generation plugins to the python generator.
 Anything that is specific to AWS MUST be implemented here. Examples include most [AWS
 protocols](https://smithy.io/2.0/aws/protocols/index.html)(*),
-[sigv4](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_aws-signing.html),
+[SigV4](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_aws-signing.html),
 and AWS service customizations. Conversely, any features that are
 NOT specific to AWS MUST NOT be implemented here.
 
@@ -12,7 +12,7 @@ included in the generic generator for now to provide a default supported protoco
 
 One very important thing to keep in mind when implementing features and integrations
 here is that they MUST NOT be coupled wherever possible. For example, a user
-MUST be able to use sigv4 even if they aren't using an AWS protocol or even the
+MUST be able to use SigV4 even if they aren't using an AWS protocol or even the
 [service trait](https://smithy.io/2.0/aws/aws-core.html#aws-api-service-trait).
 
 ### Why separate AWS components from the core package and each other?
