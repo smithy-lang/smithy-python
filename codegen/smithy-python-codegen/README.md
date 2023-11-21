@@ -10,7 +10,7 @@ not limited to, the following capabilities:
   generation.
 
 This package MUST NOT include any components that are only applicable to a particular
-organization. For example, [sigv4
+organization. For example, [SigV4
 ](https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_aws-signing.html)
 (an AWS HTTP authorization mechanism) support MUST NOT be implemented in this package
 since it isn't generally applicable outside of AWS.

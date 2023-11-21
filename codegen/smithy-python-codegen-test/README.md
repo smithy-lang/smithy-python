@@ -1,10 +1,10 @@
 ## Smithy Python Codegen Test
 
-This package is a hand-written Smithy package that generates a python client. The
+This package is a handwritten Smithy package that generates a python client. The
 shapes in this package are intended to exercise as many parts of the generator as
 possible to ensure they generate valid code that passes mypy checks. For
 example, there are cases that ensure that we're properly escaping shape names that
-would collide with built in types (e.g. a shape called `Exception` would collide with
+would collide with built-in types (e.g. a shape called `Exception` would collide with
 the builtin of the same name if it weren't escaped).
 
 This package does not contain any actual unit tests. Mypy passing and python not
