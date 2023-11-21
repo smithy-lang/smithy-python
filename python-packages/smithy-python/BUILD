@@ -14,7 +14,7 @@ python_distribution(
     provides=python_artifact(
         name="smithy_python",
         version="0.0.1",
-    )
+    ),
 )
 
 python_requirements(
