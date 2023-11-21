@@ -78,7 +78,7 @@ class AIOHTTPClient(interfaces.http.HTTPClient):
 
     def _serialize_uri_without_query(self, uri: interfaces.URI) -> str:
         """Serialize all parts of the URI up to and including the path."""
-        components = (uri.scheme, uri.netloc(), uri.path or "", "", "", "")
+        components = (uri.scheme, uri.netloc, uri.path or "", "", "", "")
         return urlunparse(components)
 
     async def _marshal_response(
