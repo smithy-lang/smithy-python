@@ -138,8 +138,9 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
     private void generateServiceErrors(PythonSettings settings, WriterDelegator<PythonWriter> writers) {
         var serviceError = CodegenUtils.getServiceError(settings);
         writers.useFileWriter(serviceError.getDefinitionFile(), serviceError.getNamespace(), writer -> {
-            // TODO: subclass a shared error
-            writer.openBlock("class $L(Exception):", "", serviceError.getName(), () -> {
+            writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+            writer.addImport("smithy_python.exceptions", "SmithyException");
+            writer.openBlock("class $L(SmithyException):", "", serviceError.getName(), () -> {
                 writer.writeDocs("Base error for all errors in the service.");
                 writer.write("pass");
             });
@@ -153,6 +154,7 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
             writer.openBlock("class $L($T, Generic[T]):", "", apiError.getName(), serviceError, () -> {
                 writer.writeDocs("Base error for all api errors in the service.");
                 writer.write("code: T");
+                writer.write("fault: Literal[\"client\", \"server\"]");
                 writer.openBlock("def __init__(self, message: str):", "", () -> {
                     writer.write("super().__init__(message)");
                     writer.write("self.message = message");

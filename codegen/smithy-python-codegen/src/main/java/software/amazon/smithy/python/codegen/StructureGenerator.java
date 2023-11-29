@@ -112,14 +112,18 @@ final class StructureGenerator implements Runnable {
     }
 
     private void renderError() {
+        ErrorTrait errorTrait = shape.getTrait(ErrorTrait.class).orElseThrow(IllegalStateException::new);
         writer.addStdlibImport("typing", "Dict");
         writer.addStdlibImport("typing", "Any");
         writer.addStdlibImport("typing", "Literal");
+
         // TODO: Implement protocol-level customization of the error code
+        var fault = errorTrait.getValue();
         var code = shape.getId().getName();
         var symbol = symbolProvider.toSymbol(shape);
         var apiError = CodegenUtils.getApiError(settings);
         writer.openBlock("class $L($T[Literal[$S]]):", "", symbol.getName(), apiError, code, () -> {
+            writer.write("fault: Literal[\"client\", \"server\"] = $1S", fault);
             writer.write("code: Literal[$1S] = $1S", code);
             writer.write("message: str");
             writeProperties(true);
@@ -329,6 +333,7 @@ final class StructureGenerator implements Runnable {
                     if (isError) {
                         writer.write("'message': self.message,");
                         writer.write("'code': self.code,");
+                        writer.write("'fault': self.fault,");
                     }
                     for (MemberShape member : requiredMembers) {
                         var memberName = symbolProvider.toMemberName(member);
