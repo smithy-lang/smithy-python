@@ -8,7 +8,6 @@ python_distribution(
         ":pyproject",
         ":readme",
         ":notice",
-        ":requirements",
         "python-packages/aws-smithy-python/aws_smithy_python:source",
         "python-packages/smithy-python:dist",
     ],
@@ -18,11 +17,9 @@ python_distribution(
     ),
 )
 
+python_requirements(source="pyproject.toml")
+
 python_requirements(
     name="dev-requirements",
     source="requirements-dev.txt",
-)
-
-python_requirements(
-    name="requirements",
 )

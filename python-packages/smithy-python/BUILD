@@ -8,7 +8,6 @@ python_distribution(
         ":pyproject",
         ":readme",
         ":notice",
-        ":requirements",
         "python-packages/smithy-python/smithy_python:source",
     ],
     provides=python_artifact(
@@ -17,11 +16,9 @@ python_distribution(
     ),
 )
 
+python_requirements(source="pyproject.toml")
+
 python_requirements(
     name="dev-requirements",
     source="requirements-dev.txt",
-)
-
-python_requirements(
-    name="requirements",
 )
