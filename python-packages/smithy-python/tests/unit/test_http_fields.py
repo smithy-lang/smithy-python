@@ -15,7 +15,6 @@
 # mypy: allow-incomplete-defs
 
 import pytest
-
 from smithy_python._private import Field, FieldPosition, Fields
 
 

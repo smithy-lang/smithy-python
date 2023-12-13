@@ -12,7 +12,6 @@
 # language governing permissions and limitations under the License.
 
 import pytest
-
 from smithy_python._private.retries import ExponentialBackoffJitterType as EBJT
 from smithy_python._private.retries import (
     ExponentialRetryBackoffStrategy,

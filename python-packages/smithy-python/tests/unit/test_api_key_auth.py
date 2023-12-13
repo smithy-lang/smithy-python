@@ -2,7 +2,6 @@ from collections.abc import AsyncIterable, AsyncIterator
 from dataclasses import dataclass
 
 import pytest
-
 from smithy_python._private import URI, Field, Fields
 from smithy_python._private.api_key_auth import (
     ApiKeyAuthScheme,

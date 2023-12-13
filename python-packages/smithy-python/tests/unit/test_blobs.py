@@ -2,7 +2,6 @@ from io import BytesIO
 from typing import Self
 
 import pytest
-
 from smithy_python.interfaces.blobs import AsyncBytesReader, SeekableAsyncBytesReader
 
 
