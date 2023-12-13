@@ -12,7 +12,6 @@
 # language governing permissions and limitations under the License.
 
 import pytest
-
 from smithy_python._private import URI, Field, Fields, HostType
 from smithy_python._private.http import (
     HTTPRequest,

@@ -13,7 +13,6 @@
 
 
 import pytest
-
 from smithy_python.exceptions import SmithyException
 from smithy_python.httputils import join_query_params, split_header
 

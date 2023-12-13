@@ -15,7 +15,6 @@ import json
 from collections.abc import AsyncIterator
 
 import pytest
-
 from smithy_python._private import tuples_to_fields
 from smithy_python._private.http import HTTPResponse
 from smithy_python.async_utils import async_list
