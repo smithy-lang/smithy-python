@@ -149,8 +149,8 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     public Symbol blobShape(BlobShape shape) {
         // see: https://smithy.io/2.0/spec/streaming.html#smithy-api-streaming-trait
         if (shape.hasTrait(StreamingTrait.class)) {
-            return createSymbolBuilder(shape, "StreamingBlob", "smithy_python.interfaces.blobs")
-                    .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+            return createSymbolBuilder(shape, "StreamingBlob", "smithy_core.aio.interfaces")
+                    .addDependency(SmithyPythonDependency.SMITHY_CORE)
                     .build();
         }
 
@@ -161,8 +161,8 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
                 return createSymbolBuilder(shape, "bytes | bytearray | JsonBlob")
                         .addReference(Symbol.builder()
                                 .name("JsonBlob")
-                                .namespace("smithy_python.mediatypes", ".")
-                                .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                                .namespace("smithy_core.types", ".")
+                                .addDependency(SmithyPythonDependency.SMITHY_CORE)
                                 .build())
                         .build();
             }
@@ -277,8 +277,8 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol documentShape(DocumentShape shape) {
         return createSymbolBuilder(shape, "Document")
-                .namespace("smithy_python.types", ".")
-                .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                .namespace("smithy_core.types", ".")
+                .addDependency(SmithyPythonDependency.SMITHY_CORE)
                 .build();
     }
 
@@ -331,8 +331,8 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
                 return createSymbolBuilder(shape, "str | JsonString")
                         .addReference(Symbol.builder()
                                 .name("JsonString")
-                                .namespace("smithy_python.mediatypes", ".")
-                                .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                                .namespace("smithy_core.types", ".")
+                                .addDependency(SmithyPythonDependency.SMITHY_CORE)
                                 .build())
                         .build();
             }

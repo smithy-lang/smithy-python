@@ -29,10 +29,23 @@ public final class SmithyPythonDependency {
     /**
      * The core smithy-python python package.
      *
-     * While in development this will use the develop branch.
+     * <p>While in development this will use the develop branch.
      */
-    public static final PythonDependency SMITHY_PYTHON = new PythonDependency(
-            "smithy_python",
+    public static final PythonDependency SMITHY_CORE = new PythonDependency(
+            "smithy_core",
+            // You'll need to locally install this before we publish
+            "==0.0.1",
+            Type.DEPENDENCY,
+            false
+    );
+
+    /**
+     * The core smithy-python python package.
+     *
+     * <p>While in development this will use the develop branch.
+     */
+    public static final PythonDependency SMITHY_HTTP = new PythonDependency(
+            "smithy_http",
             // You'll need to locally install this before we publish
             "==0.0.1",
             Type.DEPENDENCY,
@@ -65,6 +78,6 @@ public final class SmithyPythonDependency {
      * @return a list of dependencies that are always needed.
      */
     public static List<SymbolDependency> getUnconditionalDependencies() {
-        return List.of(SMITHY_PYTHON.getDependency());
+        return List.of(SMITHY_CORE.getDependency());
     }
 }

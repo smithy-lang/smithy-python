@@ -189,7 +189,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
             } else {
                 path = "";
             }
-            writer.addImport("smithy_python._private.retries", "SimpleRetryStrategy");
+            writer.addImport("smithy_core.retries", "SimpleRetryStrategy");
             writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
                 writer.write("""
                     config = $T(
@@ -403,8 +403,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
         if (testCase.getBody().isEmpty()) {
             return;
         }
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.interfaces.blobs", "AsyncBytesReader");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
         writer.write("actual_body_content = await AsyncBytesReader(actual.body).read()");
         writer.write("expected_body_content = b$S", testCase.getBody().get());
         compareMediaBlob(testCase, writer);
@@ -548,9 +548,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
         for (MemberShape member : responseShape.members()) {
             var memberName = context.symbolProvider().toMemberName(member);
             if (member.equals(streamingMember)) {
-                writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-                writer.addImport("smithy_python.interfaces.blobs", "AsyncByteStream");
-                writer.addImport("smithy_python.interfaces.blobs", "AsyncBytesReader");
+                writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+                writer.addImport("smithy_core.aio.types", "AsyncByteStream");
+                writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
                 writer.write("""
                     assert isinstance(actual.$1L, AsyncByteStream)
                     actual_body_content = await actual.$1L.read()
@@ -614,13 +614,14 @@ public final class HttpProtocolTestGenerator implements Runnable {
     private void writeUtilStubs(Symbol serviceSymbol) {
         LOGGER.fine(String.format("Writing utility stubs for %s : %s", serviceSymbol.getName(), protocol.getName()));
         writer.addStdlibImport("typing", "Any");
-        writer.addImport("smithy_python.interfaces", "Fields");
-        writer.addImports("smithy_python.interfaces.http", Set.of(
-                "HTTPRequestConfiguration", "HTTPRequest", "HTTPResponse")
-        );
-        writer.addImport("smithy_python._private", "tuples_to_fields");
-        writer.addImport("smithy_python._private.http", "HTTPResponse", "_HTTPResponse");
-        writer.addImport("smithy_python.async_utils", "async_list");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+        writer.addImport("smithy_http", "Fields");
+        writer.addImport("smithy_http.interfaces", "HTTPRequestConfiguration");
+        writer.addImports("smithy_http.aio.interfaces", Set.of("HTTPRequest", "HTTPResponse"));
+        writer.addImport("smithy_http", "tuples_to_fields");
+        writer.addImport("smithy_http.aio", "HTTPResponse", "_HTTPResponse");
+        writer.addImport("smithy_core.aio.utils", "async_list");
 
         writer.write("""
                         class $1L($2T):

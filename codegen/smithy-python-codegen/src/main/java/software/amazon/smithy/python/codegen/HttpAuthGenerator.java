@@ -96,8 +96,9 @@ final class HttpAuthGenerator implements Runnable {
             .toList();
 
         writer.pushState(new GenerateHttpAuthSchemeResolverSection(resolvedAuthSchemes));
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.interfaces.auth", "HTTPAuthOption");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+        writer.addImport("smithy_http.aio.interfaces.auth", "HTTPAuthOption");
         writer.write("""
             class $1L:
                 def resolve_auth_scheme(self, auth_parameters: $2T) -> list[HTTPAuthOption]:

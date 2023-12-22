@@ -125,12 +125,12 @@ final class ClientGenerator implements Runnable {
         writer.addStdlibImport("copy", "deepcopy");
         writer.addStdlibImport("asyncio", "sleep");
 
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.exceptions", "SmithyRetryException");
-        writer.addImport("smithy_python.interfaces.interceptor", "Interceptor");
-        writer.addImport("smithy_python.interfaces.interceptor", "InterceptorContext");
-        writer.addImport("smithy_python.interfaces.retries", "RetryErrorInfo");
-        writer.addImport("smithy_python.interfaces.retries", "RetryErrorType");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.exceptions", "SmithyRetryException");
+        writer.addImport("smithy_core.interceptors", "Interceptor");
+        writer.addImport("smithy_core.interceptors", "InterceptorContext");
+        writer.addImport("smithy_core.interfaces.retries", "RetryErrorInfo");
+        writer.addImport("smithy_core.interfaces.retries", "RetryErrorType");
 
         writer.indent();
         writer.write("""
@@ -309,9 +309,10 @@ final class ClientGenerator implements Runnable {
                 writer.consumer(this::initializeHttpAuthParameters));
             writer.popState();
 
-            writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-            writer.addImport("smithy_python.interfaces.identity", "Identity");
-            writer.addImports("smithy_python.interfaces.auth", Set.of("HTTPSigner", "HTTPAuthOption"));
+            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+            writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+            writer.addImport("smithy_core.interfaces.identity", "Identity");
+            writer.addImports("smithy_http.aio.interfaces.auth", Set.of("HTTPSigner", "HTTPAuthOption"));
             writer.addStdlibImport("typing", "Any");
             writer.write("""
                         auth_options = config.http_auth_scheme_resolver.resolve_auth_scheme(
@@ -345,10 +346,11 @@ final class ClientGenerator implements Runnable {
 
         writer.pushState(new ResolveEndpointSection());
         if (context.applicationProtocol().isHttpProtocol()) {
-            writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+            writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
             // TODO: implement the endpoints 2.0 spec and remove the hard-coded handling of static params.
-            writer.addImport("smithy_python._private.http", "StaticEndpointParams");
-            writer.addImport("smithy_python._private", "URI");
+            writer.addImport("smithy_http.endpoints", "StaticEndpointParams");
+            writer.addImport("smithy_core", "URI");
             writer.write("""
                         # Step 7f: Invoke endpoint_resolver.resolve_endpoint
                         if config.endpoint_resolver is None:
@@ -426,8 +428,8 @@ final class ClientGenerator implements Runnable {
 
         writer.pushState(new SendRequestSection());
         if (context.applicationProtocol().isHttpProtocol()) {
-            writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-            writer.addImport("smithy_python.interfaces.http", "HTTPRequestConfiguration");
+            writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+            writer.addImport("smithy_http.interfaces", "HTTPRequestConfiguration");
             writer.write("""
                         # Step 7m: Invoke http_client.send
                         request_config = config.http_request_config or HTTPRequestConfiguration()

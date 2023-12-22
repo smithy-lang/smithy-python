@@ -108,8 +108,8 @@ public class JsonShapeSerVisitor extends ShapeVisitor.Default<Void> {
             sparseTrailer = " if e is not None else None";
         }
 
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.types", "Document");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.types", "Document");
         writer.write("""
             def $1L(input: $2T, config: $3T) -> list[Document]:
                 return [$4L$5L for e in input]
@@ -138,8 +138,8 @@ public class JsonShapeSerVisitor extends ShapeVisitor.Default<Void> {
             sparseTrailer = " if v is not None else None";
         }
 
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.types", "Document");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.types", "Document");
         writer.write("""
             def $1L(input: $2T, config: $3T) -> dict[str, Document]:
                 return {k: $4L$5L for k, v in input.items()}
@@ -152,8 +152,8 @@ public class JsonShapeSerVisitor extends ShapeVisitor.Default<Void> {
         var functionName = context.protocolGenerator().getSerializationFunctionName(context, shape);
         var config = CodegenUtils.getConfigSymbol(context.settings());
         var structureSymbol = context.symbolProvider().toSymbol(shape);
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.types", "Document");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.types", "Document");
 
         writer.write("""
             def $1L(input: $2T, config: $3T) -> dict[str, Document]:
@@ -208,8 +208,8 @@ public class JsonShapeSerVisitor extends ShapeVisitor.Default<Void> {
         var config = CodegenUtils.getConfigSymbol(context.settings());
         var unionSymbol = context.symbolProvider().toSymbol(shape);
         var errorSymbol = CodegenUtils.getServiceError(context.settings());
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.types", "Document");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.types", "Document");
 
         writer.write("""
             def $1L(input: $2T, config: $3T) -> dict[str, Document]:

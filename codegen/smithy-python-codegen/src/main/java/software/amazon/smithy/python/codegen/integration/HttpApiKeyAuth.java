@@ -33,19 +33,19 @@ public final class HttpApiKeyAuth implements PythonIntegration {
                     .type(Symbol.builder()
                         .name("IdentityResolver[ApiKeyIdentity, IdentityProperties]")
                         .addReference(Symbol.builder()
-                            .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                            .addDependency(SmithyPythonDependency.SMITHY_CORE)
                             .name("IdentityResolver")
-                            .namespace("smithy_python.interfaces.identity", ".")
+                            .namespace("smithy_core.aio.interfaces.identity", ".")
                             .build())
                         .addReference(Symbol.builder()
-                            .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                            .addDependency(SmithyPythonDependency.SMITHY_HTTP)
                             .name("ApiKeyIdentity")
-                            .namespace("smithy_python._private.api_key_auth", ".")
+                            .namespace("smithy_http.aio.identity.apikey", ".")
                             .build())
                         .addReference(Symbol.builder()
-                            .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                            .addDependency(SmithyPythonDependency.SMITHY_CORE)
                             .name("IdentityProperties")
-                            .namespace("smithy_python.interfaces.identity", ".")
+                            .namespace("smithy_core.interfaces.identity", ".")
                             .build())
                         .build())
                     .nullable(true)
@@ -68,9 +68,10 @@ public final class HttpApiKeyAuth implements PythonIntegration {
         // This needs to be generated because there's modeled parameters that
         // must be accounted for.
         context.writerDelegator().useFileWriter(resolver.getDefinitionFile(), resolver.getNamespace(), writer -> {
-            writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-            writer.addImport("smithy_python.interfaces.auth", "HTTPAuthOption");
-            writer.addImport("smithy_python._private.api_key_auth", "ApiKeyLocation");
+            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+            writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+            writer.addImport("smithy_http.aio.interfaces.auth", "HTTPAuthOption");
+            writer.addImport("smithy_http.aio.auth.apikey", "ApiKeyLocation");
             writer.pushState();
 
             // Push the scheme into the context to allow for conditionally adding
@@ -129,8 +130,8 @@ public final class HttpApiKeyAuth implements PythonIntegration {
         public Symbol getAuthSchemeSymbol(GenerationContext context) {
             return Symbol.builder()
                 .name("ApiKeyAuthScheme")
-                .namespace("smithy_python._private.api_key_auth", ".")
-                .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                .namespace("smithy_http.aio.auth.apikey", ".")
+                .addDependency(SmithyPythonDependency.SMITHY_HTTP)
                 .build();
         }
     }
