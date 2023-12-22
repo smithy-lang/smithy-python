@@ -16,6 +16,8 @@
 package software.amazon.smithy.python.codegen;
 
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import software.amazon.smithy.codegen.core.SymbolDependency;
@@ -124,17 +126,37 @@ final class SetupGenerator {
 
     private static void writeDependencyList(PythonWriter writer, Collection<SymbolDependency> dependencies) {
         for (var iter = dependencies.iterator(); iter.hasNext();) {
+            writer.pushState();
             var dependency = iter.next();
-            if (dependency.getProperty("isLink", Boolean.class).orElse(false)) {
-                writer.writeInline("\"$L @ $L\"", dependency.getPackageName(), dependency.getVersion());
-            } else {
-                writer.writeInline("\"$L$L\"", dependency.getPackageName(), dependency.getVersion());
-            }
-            if (iter.hasNext()) {
-                writer.write(",");
-            } else {
-                writer.write("");
-            }
+            writer.putContext("deps", getOptionalDependencies(dependency));
+            writer.putContext("isLink", dependency.getProperty("isLink", Boolean.class).orElse(false));
+            writer.putContext("last", !iter.hasNext());
+            writer.write("""
+                    "$L\
+                    ${?deps}[${#deps}${value:L}${^key.last}, ${/key.last}${/deps}]${/deps}\
+                    ${?isLink} @ ${/isLink}$L"\
+                    ${^last},${/last}""",
+                    dependency.getPackageName(), dependency.getVersion());
+            writer.popState();
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    private static List<String> getOptionalDependencies(SymbolDependency dependency) {
+        var optionals = dependency.getProperty("optionalDependencies", List.class)
+                .filter(list -> {
+                    for (var d : list) {
+                        if (!(d instanceof String)) {
+                            return false;
+                        }
+                    }
+                    return true;
+                })
+                .orElse(Collections.emptyList());
+        try {
+            return (List<String>) optionals;
+        } catch (Exception e) {
+            return Collections.emptyList();
         }
     }
 

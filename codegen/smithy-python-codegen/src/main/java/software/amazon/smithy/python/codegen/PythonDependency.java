@@ -26,8 +26,17 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
  */
 @SmithyUnstableApi
 public record PythonDependency(
-        String packageName, String version, Type type, boolean isLink
+        String packageName, String version, Type type, boolean isLink, List<String> optionalDependencies
 ) implements SymbolDependencyContainer {
+
+    public PythonDependency(
+            String packageName,
+            String version,
+            Type type,
+            boolean isLink
+    ) {
+        this(packageName, version, type, isLink, Collections.emptyList());
+    }
 
     @Override
     public List<SymbolDependency> getDependencies() {
@@ -43,6 +52,7 @@ public record PythonDependency(
                 .packageName(packageName)
                 .version(version)
                 .putProperty("isLink", isLink)
+                .putProperty("optionalDependencies", optionalDependencies)
                 .build();
     }
 
