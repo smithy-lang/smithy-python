@@ -17,8 +17,6 @@ python_distribution(
     ),
 )
 
-python_requirements(source="pyproject.toml")
-
 python_requirements(
     name="dev-requirements",
     source="requirements-dev.txt",
