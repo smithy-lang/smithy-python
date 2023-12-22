@@ -53,9 +53,9 @@ public record ApplicationProtocol(String name, SymbolReference requestType, Symb
     }
 
     private static Symbol createHttpSymbol(String symbolName) {
-        PythonDependency dependency = SmithyPythonDependency.SMITHY_PYTHON;
+        PythonDependency dependency = SmithyPythonDependency.SMITHY_HTTP;
         return Symbol.builder()
-                .namespace(dependency.packageName() + ".interfaces.http", ".")
+                .namespace(dependency.packageName() + ".aio.interfaces", ".")
                 .name(symbolName)
                 .addDependency(dependency)
                 .build();

@@ -40,7 +40,7 @@ class AIOHTTPClientConfig(HTTPClientConfiguration):
 
 
 class AIOHTTPClient(HTTPClient):
-    """Implementation of :py:class:`...interfaces.http.HTTPClient` using aiohttp."""
+    """Implementation of :py:class:`.interfaces.HTTPClient` using aiohttp."""
 
     def __init__(
         self,
@@ -93,8 +93,7 @@ class AIOHTTPClient(HTTPClient):
     async def _marshal_response(
         self, aiohttp_resp: aiohttp.ClientResponse
     ) -> HTTPResponseInterface:
-        """Convert a ``aiohttp.ClientResponse`` to a
-        ``smithy_python.http.HTTPResponse``"""
+        """Convert a ``aiohttp.ClientResponse`` to a ``smithy_http.aio.HTTPResponse``"""
         headers = Fields()
         for header_name, header_val in aiohttp_resp.headers.items():
             try:

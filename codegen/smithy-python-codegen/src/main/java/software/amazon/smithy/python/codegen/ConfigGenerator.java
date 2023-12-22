@@ -51,14 +51,14 @@ final class ConfigGenerator implements Runnable {
             .name("retry_strategy")
             .type(Symbol.builder()
                 .name("RetryStrategy")
-                .namespace("smithy_python.interfaces.retries", ".")
-                .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                .namespace("smithy_core.interfaces.retries", ".")
+                .addDependency(SmithyPythonDependency.SMITHY_CORE)
                 .build())
             .documentation("The retry strategy for issuing retry tokens and computing retry delays.")
             .nullable(false)
             .initialize(writer -> {
-                writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-                writer.addImport("smithy_python._private.retries", "SimpleRetryStrategy");
+                writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+                writer.addImport("smithy_core.retries", "SimpleRetryStrategy");
                 writer.write("self.retry_strategy = retry_strategy or SimpleRetryStrategy()");
             })
             .build()
@@ -71,14 +71,14 @@ final class ConfigGenerator implements Runnable {
             .name("http_client")
             .type(Symbol.builder()
                 .name("HTTPClient")
-                .namespace("smithy_python.interfaces.http", ".")
-                .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                .namespace("smithy_http.aio.interfaces", ".")
+                .addDependency(SmithyPythonDependency.SMITHY_HTTP)
                 .build())
             .documentation("The HTTP client used to make requests.")
             .nullable(false)
             .initialize(writer -> {
-                writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-                writer.addImport("smithy_python._private.http.aiohttp_client", "AIOHTTPClient");
+                writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+                writer.addImport("smithy_http.aio.aiohttp", "AIOHTTPClient");
                 writer.write("self.http_client = http_client or AIOHTTPClient()");
             })
             .build(),
@@ -86,8 +86,8 @@ final class ConfigGenerator implements Runnable {
             .name("http_request_config")
             .type(Symbol.builder()
                 .name("HTTPRequestConfiguration")
-                .namespace("smithy_python.interfaces.http", ".")
-                .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                .namespace("smithy_http.interfaces", ".")
+                .addDependency(SmithyPythonDependency.SMITHY_HTTP)
                 .build())
             .documentation("Configuration for individual HTTP requests.")
             .build(),
@@ -102,8 +102,8 @@ final class ConfigGenerator implements Runnable {
                     .build())
                 .addReference(Symbol.builder()
                     .name("EndpointResolver")
-                    .namespace("smithy_python.interfaces.http", ".")
-                    .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                    .namespace("smithy_http.aio.interfaces", ".")
+                    .addDependency(SmithyPythonDependency.SMITHY_HTTP)
                     .build())
                 .build())
             .documentation("""
@@ -111,7 +111,7 @@ final class ConfigGenerator implements Runnable {
                     configuration.""")
             .nullable(false)
             .initialize(writer -> {
-                writer.addImport("smithy_python._private.http", "StaticEndpointResolver");
+                writer.addImport("smithy_http.aio.endpoints", "StaticEndpointResolver");
                 writer.write("self.endpoint_resolver = endpoint_resolver or StaticEndpointResolver()");
             })
             .build(),
@@ -121,8 +121,8 @@ final class ConfigGenerator implements Runnable {
                 .name("str | URI")
                 .addReference(Symbol.builder()
                     .name("URI")
-                    .namespace("smithy_python.interfaces", ".")
-                    .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                    .namespace("smithy_core.interfaces", ".")
+                    .addDependency(SmithyPythonDependency.SMITHY_CORE)
                     .build())
                 .build())
             .documentation("A static URI to route requests to.")
@@ -145,8 +145,8 @@ final class ConfigGenerator implements Runnable {
                     .name("dict[str, HTTPAuthScheme[Any, Any, Any, Any]]")
                     .addReference(Symbol.builder()
                         .name("HTTPAuthScheme")
-                        .namespace("smithy_python.interfaces.auth", ".")
-                        .addDependency(SmithyPythonDependency.SMITHY_PYTHON)
+                        .namespace("smithy_http.aio.interfaces.auth", ".")
+                        .addDependency(SmithyPythonDependency.SMITHY_HTTP)
                         .build())
                     .addReference(Symbol.builder()
                         .name("Any")
@@ -220,8 +220,8 @@ final class ConfigGenerator implements Runnable {
                 .getContainedOperations(settings.getService());
 
         writer.addStdlibImport("typing", "Union");
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.getImportContainer().addImport("smithy_python.interfaces.interceptor", "Interceptor", "Interceptor");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.getImportContainer().addImport("smithy_core.interceptors", "Interceptor", "Interceptor");
 
         writer.writeInline("_ServiceInterceptor = Union[");
         var iter = operationShapes.iterator();

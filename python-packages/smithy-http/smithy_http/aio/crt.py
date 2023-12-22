@@ -283,7 +283,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
     ) -> crt_http.HttpRequest:
         """
         Create :py:class:`awscrt.http.HttpRequest` from
-        :py:class:`smithy_python.interfaces.http.HTTPRequest`
+        :py:class:`smithy_http.aio.HTTPRequest`
         """
         headers_list = []
         for fld in request.fields.entries.values():

@@ -167,13 +167,13 @@ public class DocumentMemberDeserVisitor implements ShapeVisitor<String> {
     @Override
     public String blobShape(BlobShape shape) {
         writer.addStdlibImport("base64", "b64decode");
-        writer.addImport("smithy_python.utils", "expect_type");
+        writer.addImport("smithy_core.utils", "expect_type");
         return "b64decode(expect_type(str, " + dataSource + "))";
     }
 
     @Override
     public String booleanShape(BooleanShape shape) {
-        writer.addImport("smithy_python.utils", "expect_type");
+        writer.addImport("smithy_core.utils", "expect_type");
         return "expect_type(bool, " + dataSource + ")";
     }
 
@@ -202,45 +202,45 @@ public class DocumentMemberDeserVisitor implements ShapeVisitor<String> {
     }
 
     private String intShape() {
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.utils", "expect_type");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.utils", "expect_type");
         return "expect_type(int, " + dataSource + ")";
     }
 
     @Override
     public String floatShape(FloatShape shape) {
         // TODO: perform a bounds check
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.utils", "limited_parse_float");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.utils", "limited_parse_float");
         return "limited_parse_float(" + dataSource + ")";
     }
 
     @Override
     public String doubleShape(DoubleShape shape) {
         // TODO: perform a bounds check
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.utils", "limited_parse_float");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.utils", "limited_parse_float");
         return "limited_parse_float(" + dataSource + ")";
     }
 
     @Override
     public String stringShape(StringShape shape) {
         // TODO: handle strings with media types
-        writer.addImport("smithy_python.utils", "expect_type");
+        writer.addImport("smithy_core.utils", "expect_type");
         return "expect_type(str, " + dataSource + ")";
     }
 
     @Override
     public String bigIntegerShape(BigIntegerShape shape) {
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.utils", "expect_type");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.utils", "expect_type");
         return "expect_type(int, " + dataSource + ")";
     }
 
     @Override
     public String bigDecimalShape(BigDecimalShape shape) {
         writer.addStdlibImport("decimal", "Decimal", "_Decimal");
-        writer.addImport("smithy_python.utils", "expect_type");
+        writer.addImport("smithy_core.utils", "expect_type");
         return "_Decimal(expect_type(str" + dataSource + "))";
     }
 

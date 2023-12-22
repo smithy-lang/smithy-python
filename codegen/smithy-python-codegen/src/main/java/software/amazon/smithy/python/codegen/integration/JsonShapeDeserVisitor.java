@@ -97,8 +97,8 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
         var config = CodegenUtils.getConfigSymbol(context.settings());
         var symbol = context.symbolProvider().toSymbol(shape);
         var errorSymbol = CodegenUtils.getServiceError(context.settings());
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.types", "Document", "Document");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.types", "Document", "Document");
 
         var target = context.model().expectShape(shape.getMember().getTarget());
         var memberVisitor = getMemberVisitor(shape.getMember(), "e");
@@ -125,8 +125,8 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
         var config = CodegenUtils.getConfigSymbol(context.settings());
         var symbol = context.symbolProvider().toSymbol(shape);
         var errorSymbol = CodegenUtils.getServiceError(context.settings());
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.types", "Document", "Document");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.types", "Document", "Document");
 
         var valueShape = context.model().expectShape(shape.getValue().getTarget());
         var valueVisitor = getMemberVisitor(shape.getValue(), "v");
@@ -155,8 +155,8 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
         var config = CodegenUtils.getConfigSymbol(context.settings());
         var symbol = context.symbolProvider().toSymbol(shape);
         var errorSymbol = CodegenUtils.getServiceError(context.settings());
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.types", "Document", "Document");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.types", "Document", "Document");
         writer.write("""
             def $1L(output: Document, config: $2T) -> $3T:
                 if not isinstance(output, dict):
@@ -231,8 +231,8 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
         var errorSymbol = CodegenUtils.getServiceError(context.settings());
         var unknownSymbol = symbol.expectProperty("unknown", Symbol.class);
 
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.types", "Document", "Document");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.types", "Document", "Document");
         writer.write("""
             def $1L(output: Document, config: $2T) -> $3T:
                 if not isinstance(output, dict):

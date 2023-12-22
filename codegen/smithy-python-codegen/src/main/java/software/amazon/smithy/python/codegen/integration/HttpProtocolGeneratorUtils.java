@@ -69,17 +69,17 @@ public final class HttpProtocolGeneratorUtils {
         Shape shape,
         Format format
     ) {
-        writer.addImport("smithy_python.utils", "ensure_utc");
+        writer.addImport("smithy_core.utils", "ensure_utc");
         var result = "ensure_utc(" + dataSource + ")";
         // see: https://smithy.io/2.0/spec/protocol-traits.html#smithy-api-timestampformat-trait
         switch (format) {
             case DATE_TIME:
-                writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-                writer.addImport("smithy_python.utils", "serialize_rfc3339");
+                writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+                writer.addImport("smithy_core.utils", "serialize_rfc3339");
                 return String.format("serialize_rfc3339(%s)", result);
             case EPOCH_SECONDS:
-                writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-                writer.addImport("smithy_python.utils", "serialize_epoch_seconds");
+                writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+                writer.addImport("smithy_core.utils", "serialize_epoch_seconds");
                 return String.format("serialize_epoch_seconds(%s)", result);
             case HTTP_DATE:
                 writer.addStdlibImport("email.utils", "format_datetime");
@@ -106,21 +106,21 @@ public final class HttpProtocolGeneratorUtils {
         Shape shape,
         Format format
     ) {
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.utils", "expect_type");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.utils", "expect_type");
         // see: https://smithy.io/2.0/spec/protocol-traits.html#smithy-api-timestampformat-trait
         switch (format) {
             case DATE_TIME -> {
-                writer.addImport("smithy_python.utils", "ensure_utc");
+                writer.addImport("smithy_core.utils", "ensure_utc");
                 writer.addStdlibImport("datetime", "datetime");
                 return format("ensure_utc(datetime.fromisoformat(expect_type(str, %s)))", dataSource);
             }
             case EPOCH_SECONDS -> {
-                writer.addImport("smithy_python.utils", "epoch_seconds_to_datetime");
+                writer.addImport("smithy_core.utils", "epoch_seconds_to_datetime");
                 return format("epoch_seconds_to_datetime(expect_type(int | float, %s))", dataSource);
             }
             case HTTP_DATE -> {
-                writer.addImport("smithy_python.utils", "ensure_utc");
+                writer.addImport("smithy_core.utils", "ensure_utc");
                 writer.addStdlibImport("email.utils", "parsedate_to_datetime");
                 return format("ensure_utc(parsedate_to_datetime(expect_type(str, %s)))", dataSource);
             }

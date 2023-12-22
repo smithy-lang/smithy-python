@@ -168,9 +168,10 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         serializeBody(context, writer, operation, bindingIndex);
         serializeHeaders(context, writer, operation);
 
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python._private.http", "HTTPRequest", "_HTTPRequest");
-        writer.addImport("smithy_python._private", "URI", "_URI");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+        writer.addImport("smithy_http.aio", "HTTPRequest", "_HTTPRequest");
+        writer.addImport("smithy_core", "URI", "_URI");
 
         writer.write("""
             return _HTTPRequest(
@@ -204,7 +205,8 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         OperationShape operation
     ) {
         writer.pushState(new SerializeFieldsSection(operation));
-        writer.addImports("smithy_python._private", Set.of("Field", "Fields"));
+        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+        writer.addImports("smithy_http", Set.of("Field", "Fields"));
         writer.write("""
             headers = Fields(
                 [
@@ -324,7 +326,8 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                         getDocumentTimestampFormat()));
 
                     var trailer = listTarget.isStringShape() ? " if e" : "";
-                    writer.addImport("smithy_python._private", "tuples_to_fields");
+                    writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+                    writer.addImport("smithy_http", "tuples_to_fields");
                     writer.write("""
                         headers.extend(tuples_to_fields(($S, $L) for e in input.$L$L))
                         """, binding.getLocationName(), inputValue, pythonName, trailer);
@@ -359,7 +362,8 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 var inputValue = valueTarget.accept(new HttpMemberSerVisitor(
                     context, writer, binding.getLocation(), "v", target.getValue(),
                     getDocumentTimestampFormat()));
-                writer.addImport("smithy_python._private", "tuples_to_fields");
+                writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+                writer.addImport("smithy_http", "tuples_to_fields");
                 writer.write("""
                     headers.extend(
                         tuples_to_fields((f'$L{k}', $L) for k, v in input.$L.items() if v)
@@ -484,8 +488,8 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         writeStaticQuerySegment(writer, httpTrait.getUri());
 
         if (hasQueryBindings(context, operation)) {
-            writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-            writer.addImport("smithy_python.httputils", "join_query_params");
+            writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+            writer.addImport("smithy_http.utils", "join_query_params");
             writer.write("""
                 query_params: list[tuple[str, str | None]] = []
                 ${C|}
@@ -631,8 +635,8 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         HttpBindingIndex bindingIndex
     ) {
         writer.pushState(new SerializeBodySection(operation));
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.interfaces.blobs", "AsyncBytesReader");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
         writer.addStdlibImport("typing", "AsyncIterable");
         writer.write("body: AsyncIterable[bytes] = AsyncBytesReader(b'')");
 
@@ -1274,8 +1278,8 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         }
 
         private String floatShapes() {
-            writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-            writer.addImport("smithy_python.utils", "serialize_float");
+            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+            writer.addImport("smithy_core.utils", "serialize_float");
             return String.format("serialize_float(%s)", dataSource);
         }
 
@@ -1359,8 +1363,8 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         public String booleanShape(BooleanShape shape) {
             switch (bindingType) {
                 case QUERY, LABEL, HEADER -> {
-                    writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-                    writer.addImport("smithy_python.utils", "strict_parse_bool");
+                    writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+                    writer.addImport("smithy_core.utils", "strict_parse_bool");
                     return "strict_parse_bool(" + dataSource + ")";
                 }
                 default -> throw new CodegenException("Unexpected boolean binding location `" + bindingType + "`");
@@ -1418,8 +1422,8 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         private String floatShapes() {
             switch (bindingType) {
                 case QUERY, LABEL, HEADER -> {
-                    writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-                    writer.addImport("smithy_python.utils", "strict_parse_float");
+                    writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+                    writer.addImport("smithy_core.utils", "strict_parse_float");
                     return "strict_parse_float(" + dataSource + ")";
                 }
                 default -> throw new CodegenException("Unexpected float binding location `" + bindingType + "`");
@@ -1453,8 +1457,8 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
             Format format = httpIndex.determineTimestampFormat(member, bindingType, defaultTimestampFormat);
             var source = dataSource;
             if (format == Format.EPOCH_SECONDS) {
-                writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-                writer.addImport("smithy_python.utils", "strict_parse_float");
+                writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+                writer.addImport("smithy_core.utils", "strict_parse_float");
                 source = "strict_parse_float(" + dataSource + ")";
             }
             return HttpProtocolGeneratorUtils.getTimestampOutputParam(writer, source, member, format);
@@ -1466,8 +1470,9 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 throw new CodegenException("Unexpected list binding location `" + bindingType + "`");
             }
             var collectionTarget = context.model().expectShape(shape.getMember().getTarget());
-            writer.addImport("smithy_python.httputils", "split_header");
-            writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+            writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+            writer.addImport("smithy_http.utils", "split_header");
+            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
             String split = String.format("split_header(%s or '')", dataSource);;
 
             // Headers that have HTTP_DATE formatted timestamps may not be quoted, so we need

@@ -26,15 +26,15 @@ class HTTPRequest(http_aio_interfaces.HTTPRequest):
         return body
 
 
-# HTTPResponse implements http_interfaces.http.HTTPResponse but cannot be explicitly
+# HTTPResponse implements http_interfaces.HTTPResponse but cannot be explicitly
 # annotated to reflect this because doing so causes Python to raise an AttributeError.
 # See https://github.com/python/typing/discussions/903#discussioncomment-4866851 for
 # details.
 @dataclass(kw_only=True)
 class HTTPResponse:
-    """Basic implementation of :py:class:`...interfaces.http.HTTPResponse`.
+    """Basic implementation of :py:class:`.interfaces.HTTPResponse`.
 
-    Implementations of :py:class:`...interfaces.http.HTTPClient` may return instances of
+    Implementations of :py:class:`.interfaces.HTTPClient` may return instances of
     this class or of custom response implementations.
     """
 

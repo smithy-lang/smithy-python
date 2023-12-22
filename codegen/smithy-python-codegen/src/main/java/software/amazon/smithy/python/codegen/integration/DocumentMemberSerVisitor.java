@@ -189,8 +189,8 @@ public class DocumentMemberSerVisitor implements ShapeVisitor<String> {
     }
 
     private String floatShapes() {
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.utils", "limited_serialize_float");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.utils", "limited_serialize_float");
         return String.format("limited_serialize_float(%s)", dataSource);
     }
 

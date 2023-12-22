@@ -112,8 +112,8 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         OperationShape operation,
         List<HttpBinding> documentBindings
     ) {
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.types", "Document");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.types", "Document");
         writer.write("result: dict[str, Document] = {}\n");
 
         var bodyMembers = documentBindings.stream()
@@ -123,7 +123,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         var serVisitor = new JsonShapeSerVisitor(context, writer);
         serVisitor.structureMembers(bodyMembers);
 
-        writer.addImport("smithy_python.interfaces.blobs", "AsyncBytesReader");
+        writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
         writer.addStdlibImport("json");
 
         var defaultTrailer = shouldWriteDefaultBody(context, operation) ? "" : " if result else b''";
@@ -143,7 +143,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
     ) {
         var target = context.model().expectShape(payloadBinding.getMember().getTarget());
         var dataSource = "input." + context.symbolProvider().toMemberName(payloadBinding.getMember());
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
 
         // The streaming trait can either be bound to a union, meaning it's an event stream,
         // or a blob, meaning it's some potentially big collection of bytes.
@@ -166,7 +166,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                 if (requiresLength(context, payloadBinding.getMember())) {
                     // Since we need to calculate the length, we need to use a seekable stream because
                     // we can't assume that the source is seekable or safe to read more than once.
-                    writer.addImport("smithy_python.interfaces.blobs", "SeekableAsyncBytesReader");
+                    writer.addImport("smithy_core.aio.types", "SeekableAsyncBytesReader");
                     writer.write("""
                         body = SeekableAsyncBytesReader($L)
                         await body.seek(0, 2)
@@ -175,7 +175,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                         """, dataSource);
                 } else {
                     writer.addStdlibImport("typing", "AsyncIterator");
-                    writer.addImport("smithy_python.interfaces.blobs", "AsyncBytesReader");
+                    writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
                     writer.write("""
                         if isinstance($1L, AsyncIterator):
                             body = $1L
@@ -190,7 +190,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         var memberVisitor = new JsonMemberSerVisitor(
             context, writer, payloadBinding.getMember(), dataSource, Format.EPOCH_SECONDS);
         var memberSerializer = target.accept(memberVisitor);
-        writer.addImport("smithy_python.interfaces.blobs", "AsyncBytesReader");
+        writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
         writer.write("content_length: int = 0");
 
         CodegenUtils.accessStructureMember(context, writer, "input", payloadBinding.getMember(), () -> {
@@ -240,8 +240,8 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         Shape operationOrError,
         List<HttpBinding> documentBindings
     ) {
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.types", "Document");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.types", "Document");
         writer.addStdlibImport("json");
 
         if (operationOrError.isOperationShape()) {
@@ -294,7 +294,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                                           Shape operationOrError,
                                           HttpBinding payloadBinding
     ) {
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         var visitor = new JsonPayloadDeserVisitor(context, writer, payloadBinding);
         var target = context.model().expectShape(payloadBinding.getMember().getTarget());
         target.accept(visitor);
@@ -312,8 +312,8 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                                               PythonWriter writer,
                                               Boolean canReadResponseBody
     ) {
-        writer.addDependency(SmithyPythonDependency.SMITHY_PYTHON);
-        writer.addImport("smithy_python.protocolutils", "parse_rest_json_error_info");
+        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+        writer.addImport("smithy_http.aio.restjson", "parse_rest_json_error_info");
         writer.writeInline("code, message, parsed_body = await parse_rest_json_error_info(http_response");
         if (!canReadResponseBody) {
             writer.writeInline(", False");
