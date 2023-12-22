@@ -549,7 +549,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
             var memberName = context.symbolProvider().toMemberName(member);
             if (member.equals(streamingMember)) {
                 writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-                writer.addImport("smithy_core.aio.types", "AsyncByteStream");
+                writer.addImport("smithy_core.aio.interfaces", "AsyncByteStream");
                 writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
                 writer.write("""
                     assert isinstance(actual.$1L, AsyncByteStream)
