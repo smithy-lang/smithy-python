@@ -147,12 +147,15 @@ helper libraries have been published you won't need to install them manually.
 
 ### Core Modules and Interfaces
 
-The `smithy-python` package provides the core modules and interfaces required
-to build a service client. These basic modules include things like:
-an HTTP/1.1 and HTTP/2 client implementation, retry strategies, etc.
-
-The `aws-smithy-python` package provides implementations of those interfaces
-for AWS, such as SigV4 signers.
+* `smithy-core` provides transport-agnostic core modules and interfaces
+  required to build a service client. This includes things like retry
+  strategies, URI interfaces, shared types, etc.
+* `smithy-http` provides HTTP core modules and interfaces required to build
+  HTTP service clients, including optional HTTP client implementations.
+  Currently it provides two async HTTP clients that are useable with the
+  `aiohttp` or `awscrt` optional dependency sets respectively.
+* `smithy-aws-core` provides implementations of those interfaces for AWS, such
+  as SigV4 signers.
 
 ### What are the design goals of this project?
 
@@ -256,10 +259,10 @@ Important to note is those pairs of colons. These are pants
 [targets](https://www.pantsbuild.org/docs/targets#target-addresses). The double
 colon is a special target that means "everything". So running exactly what's
 listed above will run those goals on every python file or other relevant file.
-You can also target just `smithy_python`, for example, with
-`./pants check python-packages/smithy-python/smithy_python:source`, or even
+You can also target just `smithy_core`, for example, with
+`./pants check python-packages/smithy-python/smithy_core:source`, or even
 individual files with something like
-`./pants check python-packages/smithy-python/smithy_python/interfaces/http.py:../source`.
+`./pants check python-packages/smithy-python/smithy_core/interfaces/identity.py:../source`.
 To list what targets are available in a directory, run
 `./pants list path/to/dir:`. For more detailed information, see the
 [docs](https://www.pantsbuild.org/docs/targets#target-addresses).

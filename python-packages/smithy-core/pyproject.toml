@@ -29,7 +29,7 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-source = "https://github.com/awslabs/smithy-python/tree/develop/python-packages/aws-smithy-python"
+source = "https://github.com/awslabs/smithy-python/tree/develop/python-packages/smithy-core"
 changelog = "https://github.com/awslabs/smithy-python/blob/develop/CHANGES.md"
 
 [tool.setuptools]

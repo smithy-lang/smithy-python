@@ -9,7 +9,7 @@ python_distribution(
         ":readme",
         ":notice",
         "python-packages/smithy-aws-core/smithy_aws_core:source",
-        "python-packages/smithy-python:dist",
+        "python-packages/smithy-core:dist",
     ],
     provides=python_artifact(
         name="smithy_aws_core",

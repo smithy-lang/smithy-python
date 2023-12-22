@@ -19,9 +19,10 @@ clients.
 * If `black` is installed in the version of python found on the path, it will
   be used to format the generated code.
 * If `mypy` is installed in the version of python found on the path, it will
-  be used to check the generated code. For mypy to pass, the `smithy_python`
-  package will need to be installed. To install those into your active environment,
-  run `make install-python-components` from the repository root.
+  be used to check the generated code. For mypy to pass, the `smithy_core` and
+  `smithy_http` packages will need to be installed. To install those into your 
+  active environment, run `make install-python-components` from the repository
+  root.
 
 ### Building the generator
 
