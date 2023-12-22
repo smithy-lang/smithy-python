@@ -8,11 +8,11 @@ python_distribution(
         ":pyproject",
         ":readme",
         ":notice",
-        "python-packages/aws-smithy-python/aws_smithy_python:source",
+        "python-packages/smithy-aws-core/smithy_aws_core:source",
         "python-packages/smithy-python:dist",
     ],
     provides=python_artifact(
-        name="aws_smithy_python",
+        name="smithy_aws_core",
         version="0.0.1",
     ),
 )

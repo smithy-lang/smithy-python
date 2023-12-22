@@ -3,7 +3,7 @@ requires = ["setuptools", "setuptools-scm", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "aws_smithy_python"
+name = "smithy_aws_core"
 version = "0.0.1"
 description = "Core libraries for Smithy defined AWS services in Python."
 readme = "README.md"
@@ -26,11 +26,11 @@ classifiers = [
     "Topic :: Software Development :: Libraries"
 ]
 dependencies = [
-    "smithy-python==0.0.1"
+    "smithy-core==0.0.1"
 ]
 
 [project.urls]
-source = "https://github.com/awslabs/smithy-python/tree/develop/python-packages/aws-smithy-python"
+source = "https://github.com/awslabs/smithy-python/tree/develop/python-packages/smithy-aws-core"
 changelog = "https://github.com/awslabs/smithy-python/blob/develop/CHANGES.md"
 
 [tool.setuptools]
@@ -43,4 +43,4 @@ exclude=["tests*", "codegen", "designs"]
 [tool.isort]
 profile = "black"
 honor_noqa = true
-src_paths = ["aws_smithy_python", "tests"]
+src_paths = ["smithy_aws_core", "tests"]

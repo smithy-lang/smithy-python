@@ -12,7 +12,7 @@
 # language governing permissions and limitations under the License.
 from datetime import datetime
 
-from smithy_python._private.identity import Identity
+from smithy_core.identity import Identity
 
 
 class AWSCredentialIdentity(Identity):
