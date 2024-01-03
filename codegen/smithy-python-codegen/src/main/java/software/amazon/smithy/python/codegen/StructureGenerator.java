@@ -122,18 +122,31 @@ final class StructureGenerator implements Runnable {
         var code = shape.getId().getName();
         var symbol = symbolProvider.toSymbol(shape);
         var apiError = CodegenUtils.getApiError(settings);
-        writer.openBlock("class $L($T[Literal[$S]]):", "", symbol.getName(), apiError, code, () -> {
-            writer.write("fault: Literal[\"client\", \"server\"] = $1S", fault);
-            writer.write("code: Literal[$1S] = $1S", code);
-            writer.write("message: str");
-            writeProperties(true);
-            writeInit(true);
-            writeAsDict(true);
-            writeFromDict(true);
-            writeRepr(true);
-            writeEq(true);
-        });
-        writer.write("");
+
+        writer.write("""
+                class $1L($2T[Literal[$3S]]):
+                    code: Literal[$3S] = $3S
+                    fault: Literal[$4S] = $4S
+                    message: str
+                    ${5C|}
+
+                    ${6C|}
+
+                    ${7C|}
+
+                    ${8C|}
+
+                    ${9C|}
+
+                    ${10C|}
+
+                """, symbol.getName(), apiError, code, fault,
+                writer.consumer(w -> writeProperties(true)),
+                writer.consumer(w -> writeInit(true)),
+                writer.consumer(w -> writeAsDict(true)),
+                writer.consumer(w -> writeFromDict(true)),
+                writer.consumer(w -> writeRepr(true)),
+                writer.consumer(w -> writeEq(true)));
     }
 
     private void writeProperties(boolean isError) {
