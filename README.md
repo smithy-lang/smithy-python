@@ -154,8 +154,8 @@ helper libraries have been published you won't need to install them manually.
   HTTP service clients, including optional HTTP client implementations.
   Currently it provides two async HTTP clients that are useable with the
   `aiohttp` or `awscrt` optional dependency sets respectively.
-* `smithy-aws-core` provides implementations of those interfaces for AWS, such
-  as SigV4 signers.
+* `smithy-aws-core` provides implementations of `smithy-core` interfaces for
+  AWS, such as SigV4 signers.
 
 ### What are the design goals of this project?
 
