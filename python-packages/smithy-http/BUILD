@@ -17,15 +17,10 @@ python_distribution(
     ),
 )
 
-# We shouldn't need this, but pants will assume that smithy-core is an external
+# We shouldn't need this, but pants will assume that smithy_core is an external
 # dependency since it's in pyproject.toml and there's no way to exclude it, so
 # for now we need to duplicate things.
 python_requirements(
     name="requirements",
     source="requirements.txt",
 )
-
-# python_requirements(
-#     name="pyproject-requirements",
-#     source="pyproject.toml",
-# )

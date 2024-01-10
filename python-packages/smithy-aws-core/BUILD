@@ -16,8 +16,3 @@ python_distribution(
         version="0.0.1",
     ),
 )
-
-python_requirements(
-    name="dev-requirements",
-    source="requirements-dev.txt",
-)
