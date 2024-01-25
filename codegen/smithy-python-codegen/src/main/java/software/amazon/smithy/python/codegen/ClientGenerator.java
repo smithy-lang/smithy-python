@@ -377,6 +377,7 @@ final class ClientGenerator implements Runnable {
                             scheme=endpoint.uri.scheme,
                             host=context.transport_request.destination.host + endpoint.uri.host,
                             path=path,
+                            port=endpoint.uri.port,
                             query=context.transport_request.destination.query,
                         )
                         context._transport_request.fields.extend(endpoint.headers)
