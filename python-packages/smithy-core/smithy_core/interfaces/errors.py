@@ -4,8 +4,8 @@ from typing import Literal, Protocol
 
 
 class HasFault(Protocol):
-
     """A protocol for a modeled error.
+
     All modeled errors will have a fault that is either "client" or "server".
     """
 
