@@ -138,33 +138,40 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
     private void generateServiceErrors(PythonSettings settings, WriterDelegator<PythonWriter> writers) {
         var serviceError = CodegenUtils.getServiceError(settings);
         writers.useFileWriter(serviceError.getDefinitionFile(), serviceError.getNamespace(), writer -> {
-            // TODO: subclass a shared error
-            writer.openBlock("class $L(Exception):", "", serviceError.getName(), () -> {
-                writer.writeDocs("Base error for all errors in the service.");
-                writer.write("pass");
-            });
+            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+            writer.addImport("smithy_core.exceptions", "SmithyException");
+            writer.write("""
+                    class $L(SmithyException):
+                        ""\"Base error for all errors in the service.""\"
+                        pass
+                    """, serviceError.getName());
         });
 
         var apiError = CodegenUtils.getApiError(settings);
         writers.useFileWriter(apiError.getDefinitionFile(), apiError.getNamespace(), writer -> {
             writer.addStdlibImport("typing", "Generic");
             writer.addStdlibImport("typing", "TypeVar");
-            writer.write("T = TypeVar('T')");
-            writer.openBlock("class $L($T, Generic[T]):", "", apiError.getName(), serviceError, () -> {
-                writer.writeDocs("Base error for all api errors in the service.");
-                writer.write("code: T");
-                writer.openBlock("def __init__(self, message: str):", "", () -> {
-                    writer.write("super().__init__(message)");
-                    writer.write("self.message = message");
-                });
-            });
-
             var unknownApiError = CodegenUtils.getUnknownApiError(settings);
             writer.addStdlibImport("typing", "Literal");
-            writer.openBlock("class $L($T[Literal['Unknown']]):", "", unknownApiError.getName(), apiError, () -> {
-                writer.writeDocs("Error representing any unknown api errors");
-                writer.write("code: Literal['Unknown'] = 'Unknown'");
-            });
+
+            writer.write("""
+                    T = TypeVar('T')
+
+                    class $1L($2T, Generic[T]):
+                        ""\"Base error for all API errors in the service.""\"
+                        code: T
+                        fault: Literal["client", "server"]
+
+                        def __init__(self, message: str):
+                            super().__init__(message)
+                            self.message = message
+
+
+                    class $3L($1L[Literal['Unknown']]):
+                        ""\"Error representing any unknown api errors""\"
+                        code: Literal['Unknown'] = 'Unknown'
+                        fault: Literal["client"] = "client"
+                    """, apiError.getName(), serviceError, unknownApiError.getName());
         });
     }
 
