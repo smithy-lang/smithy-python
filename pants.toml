@@ -18,7 +18,7 @@ root_patterns = [
 ]
 
 [python]
-interpreter_constraints = [">=3.11"]
+interpreter_constraints = [">=3.12"]
 pip_version = "latest"
 enable_resolves = true
 resolves = { python-default = "python-default.lock" }
@@ -38,11 +38,12 @@ use_coverage = true
 
 [black]
 install_from_resolve = "python-default"
-args = ["-t py311"]
-interpreter_constraints = [">=3.11"]
+args = ["-t py312"]
+interpreter_constraints = [">=3.12"]
 
 [coverage-py]
-interpreter_constraints = [">=3.11"]
+install_from_resolve = "python-default"
+interpreter_constraints = [">=3.12"]
 report = [
     "xml",
     "html"
@@ -50,22 +51,29 @@ report = [
 
 [mypy]
 install_from_resolve = "python-default"
-interpreter_constraints = [">=3.11"]
+interpreter_constraints = [">=3.12"]
 
 [flake8]
 install_from_resolve = "python-default"
 args = "--extend-ignore=W503"
 
 [pyupgrade]
-args = ["--py311-plus"]
-interpreter_constraints = [">=3.11"]
+install_from_resolve = "python-default"
+args = ["--py312-plus"]
+interpreter_constraints = [">=3.12"]
 
 [docformatter]
+install_from_resolve = "python-default"
 args = ["--wrap-summaries 88", "--wrap-descriptions 88"]
-interpreter_constraints = [">=3.11"]
+interpreter_constraints = [">=3.12"]
 
 [bandit]
+install_from_resolve = "python-default"
 args = ["-x tests"]
+
+[isort]
+install_from_resolve = "python-default"
+interpreter_constraints = [">=3.12"]
 
 [anonymous-telemetry]
 enabled = false

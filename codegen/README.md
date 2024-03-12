@@ -11,7 +11,7 @@ clients.
 
 #### Optional Prerequisites - Python
 
-* Python 3.11 is required to run the generated code, but not run the generator.
+* Python 3.12 is required to run the generated code, but not run the generator.
   If it is present on the path, the generator will use it for linting and
   formatting.
 * Use of a

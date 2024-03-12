@@ -105,7 +105,7 @@ The code generator, `smithy-python-codegen`, hasn't been published yet, so
 you'll need to build it yourself. To build and run the generator you will need
 the following prerequisites:
 
-* Python 3.11 or newer
+* Python 3.12 or newer
   * (optional) Install [black](https://black.readthedocs.io/en/stable/) in your
     environment to have the generated output be auto-formatted.
 * The [Smithy CLI](https://smithy.io/2.0/guides/smithy-cli/cli_installation.html)
@@ -230,7 +230,7 @@ needed. Currently, pants requires python 3.7, 3.8, or 3.9 to run, so one of
 those must be available on your path. (It doesn't have to be the version that
 is linked to `python` or `python3`, it just needs `python3.9` etc.) It is,
 however, fully capable of building and working with code that uses newer python
-versions like we do. This repository uses a minimum python version of 3.11
+versions like we do. This repository uses a minimum python version of 3.12
 for all its packages, so you will need that too to work on it.
 
 Pants provides a number of python commands it calls goals, documented
