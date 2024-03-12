@@ -1,5 +1,5 @@
 [GLOBAL]
-pants_version = "2.18.0"
+pants_version = "2.19.0"
 
 backend_packages = [
     "pants.backend.python",
@@ -19,6 +19,7 @@ root_patterns = [
 
 [python]
 interpreter_constraints = [">=3.11"]
+pip_version = "latest"
 enable_resolves = true
 resolves = { python-default = "python-default.lock" }
 default_resolve = "python-default"
