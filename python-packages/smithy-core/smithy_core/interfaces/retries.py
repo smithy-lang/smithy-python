@@ -81,11 +81,9 @@ class RetryStrategy(Protocol):
         """Called before any retries (for the first attempt at the operation).
 
         :param token_scope: An arbitrary string accepted by the retry strategy to
-        separate tokens into scopes.
-
+            separate tokens into scopes.
         :returns: A retry token, to be used for determining the retry delay, refreshing
-        the token after a failure, and recording success after success.
-
+            the token after a failure, and recording success after success.
         :raises SmithyRetryException: If the retry strategy has no available tokens.
         """
         ...
@@ -113,8 +111,8 @@ class RetryStrategy(Protocol):
     def record_success(self, *, token: RetryToken) -> None:
         """Return token after successful completion of an operation.
 
-        Upon successful completion of the operation, a user calls this function
-        to record that the operation was successful.
+        Upon successful completion of the operation, a user calls this function to
+        record that the operation was successful.
 
         :param token: The token used for the previous successful attempt.
         """

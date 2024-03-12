@@ -38,8 +38,8 @@ class AsyncBytesReader:
     async def read(self, size: int = -1) -> bytes:
         """Read a number of bytes from the stream.
 
-        :param size: The maximum number of bytes to read. If less than 0, all bytes
-        will be read.
+        :param size: The maximum number of bytes to read. If less than 0, all bytes will
+            be read.
         """
         if self._closed or not self._data:
             raise ValueError("I/O operation on closed file.")
@@ -87,7 +87,7 @@ class AsyncBytesReader:
         """Iterate over the reader in chunks of a given size.
 
         :param chunk_size: The maximum size of each chunk. If less than 0, the entire
-        reader will be read into one chunk.
+            reader will be read into one chunk.
         """
         return _AsyncByteStreamIterator(self.read, chunk_size)
 
@@ -143,8 +143,8 @@ class SeekableAsyncBytesReader:
     async def read(self, size: int = -1) -> bytes:
         """Read a number of bytes from the stream.
 
-        :param size: The maximum number of bytes to read. If less than 0, all bytes
-        will be read.
+        :param size: The maximum number of bytes to read. If less than 0, all bytes will
+            be read.
         """
         if self._data_source is None or size == 0:
             return self._buffer.read(size)
@@ -221,7 +221,7 @@ class SeekableAsyncBytesReader:
         """Iterate over the reader in chunks of a given size.
 
         :param chunk_size: The maximum size of each chunk. If less than 0, the entire
-        reader will be read into one chunk.
+            reader will be read into one chunk.
         """
         return _AsyncByteStreamIterator(self.read, chunk_size)
 
@@ -257,8 +257,7 @@ class _AsyncByteStreamIterator:
         """Initializes self.
 
         :param read: An async callable that reads a given number of bytes from some
-        source.
-
+            source.
         :param chunk_size: The number of bytes to read in each iteration.
         """
         self._read = read
