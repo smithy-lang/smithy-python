@@ -16,10 +16,10 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up Python for type checking - 3.11
+      - name: Set up Python for type checking - 3.12
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11
+          python-version: 3.12
 
       - name: Initialize Pants
         uses: pantsbuild/actions/init-pants@main

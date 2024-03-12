@@ -22,10 +22,10 @@ jobs:
           distribution: corretto
           java-version: 17
 
-      - name: Set up Python for protocol tests - 3.11
+      - name: Set up Python for protocol tests - 3.12
         uses: actions/setup-python@v4
         with:
-          python-version: 3.11
+          python-version: 3.12
 
       - name: Initialize Pants
         uses: pantsbuild/actions/init-pants@main
