@@ -16,7 +16,7 @@ class IdentityResolver(Protocol[IdentityType_cov, IdentityPropertiesType_contra]
     ) -> IdentityType_cov:
         """Load the user's identity from this resolver.
 
-        :param identity_properties: Properties used to help determine the
-        identity to return.
+        :param identity_properties: Properties used to help determine the identity to
+            return.
         """
         ...

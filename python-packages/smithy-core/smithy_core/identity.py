@@ -17,7 +17,7 @@ class Identity(identity_interface.Identity):
         """Initialize an identity.
 
         :param expiration: The expiration time of the identity. If time zone is
-        provided, it is updated to UTC. The value must always be in UTC.
+            provided, it is updated to UTC. The value must always be in UTC.
         """
         if expiration is not None:
             expiration = ensure_utc(expiration)

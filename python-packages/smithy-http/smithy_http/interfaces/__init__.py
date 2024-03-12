@@ -129,8 +129,8 @@ class HTTPClientConfiguration:
 class HTTPRequestConfiguration:
     """Request-level HTTP configuration.
 
-    :param read_timeout: How long, in seconds, the client will attempt to read the
-    first byte over an established, open connection before timing out.
+    :param read_timeout: How long, in seconds, the client will attempt to read the first
+        byte over an established, open connection before timing out.
     """
 
     read_timeout: float | None = None

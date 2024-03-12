@@ -17,8 +17,8 @@ RFC3339_MICRO = "%Y-%m-%dT%H:%M:%S.%fZ"
 def ensure_utc(value: datetime) -> datetime:
     """Ensures that the given datetime is a UTC timezone-aware datetime.
 
-    If the datetime isn't timezone-aware, its timezone is set to UTC. If it is
-    aware, it's replaced with the equivalent datetime under UTC.
+    If the datetime isn't timezone-aware, its timezone is set to UTC. If it is aware,
+    it's replaced with the equivalent datetime under UTC.
 
     :param value: A datetime object that may or may not be timezone-aware.
     :returns: A UTC timezone-aware equivalent datetime.
@@ -158,8 +158,8 @@ _FLOAT_REGEX = re.compile(
 def strict_parse_float(given: str) -> float:
     """Strictly parses a float from a string.
 
-    Unlike float(), this forbids the use of "inf" and case-sensitively matches
-    Infinity and NaN.
+    Unlike float(), this forbids the use of "inf" and case-sensitively matches Infinity
+    and NaN.
 
     :param given: A string that is expected to contain a float.
     :returns: The given string parsed to a float.

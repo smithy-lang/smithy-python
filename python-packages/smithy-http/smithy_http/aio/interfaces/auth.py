@@ -50,11 +50,9 @@ class HTTPSigner(Protocol[IdentityType_contra, SigningPropertiesType_contra]):
         """Generate a new signed HTTPRequest based on the one provided.
 
         :param http_request: The HTTP request to sign.
-
         :param identity: The signing identity.
-
-        :param signing_properties: Additional properties loaded to modify the
-        signing process.
+        :param signing_properties: Additional properties loaded to modify the signing
+            process.
         """
         ...
 
@@ -118,6 +116,6 @@ class AuthSchemeResolver(Protocol):
         """Resolve an ordered list of applicable auth schemes.
 
         :param auth_parameters: The parameters required for determining which
-        authentication schemes to potentially use.
+            authentication schemes to potentially use.
         """
         ...

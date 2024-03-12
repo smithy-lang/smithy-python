@@ -31,8 +31,8 @@ class ApiKeyIdentityResolver(IdentityResolver[ApiKeyIdentity, IdentityProperties
     ) -> ApiKeyIdentity:
         """Load the user's api key identity from this resolver.
 
-        :param identity_properties: Properties used to help determine the
-        identity to return.
+        :param identity_properties: Properties used to help determine the identity to
+            return.
         :returns: The api key identity.
         """
         return self._identity

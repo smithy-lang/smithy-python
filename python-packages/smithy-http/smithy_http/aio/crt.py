@@ -281,10 +281,8 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
     async def _marshal_request(
         self, request: http_aio_interfaces.HTTPRequest
     ) -> crt_http.HttpRequest:
-        """
-        Create :py:class:`awscrt.http.HttpRequest` from
-        :py:class:`smithy_http.aio.HTTPRequest`
-        """
+        """Create :py:class:`awscrt.http.HttpRequest` from
+        :py:class:`smithy_http.aio.HTTPRequest`"""
         headers_list = []
         for fld in request.fields.entries.values():
             if fld.kind != FieldPosition.HEADER:
