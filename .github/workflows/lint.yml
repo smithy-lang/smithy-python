@@ -31,4 +31,4 @@ jobs:
           pants-ci-config: pants.ci.toml
 
       - name: Run pre-commit
-        uses: pre-commit/action@v3.0.0
+        uses: pre-commit/action@v3.0.1
