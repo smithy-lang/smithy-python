@@ -2,10 +2,10 @@ $version: "2.0"
 
 namespace example.weather
 
+use aws.protocols#restJson1
 use smithy.test#httpRequestTests
 use smithy.test#httpResponseTests
 use smithy.waiters#waitable
-use aws.protocols#restJson1
 
 /// Provides weather forecasts.
 @restJson1
@@ -14,16 +14,26 @@ use aws.protocols#restJson1
 @httpApiKeyAuth(name: "weather-auth", in: "header")
 service Weather {
     version: "2006-03-01"
-    resources: [City]
-    operations: [GetCurrentTime, TestUnionListOperation]
+    resources: [
+        City
+    ]
+    operations: [
+        GetCurrentTime
+        TestUnionListOperation
+    ]
 }
 
 resource City {
     identifiers: { cityId: CityId }
     read: GetCity
     list: ListCities
-    resources: [Forecast, CityImage]
-    operations: [GetCityAnnouncements]
+    resources: [
+        Forecast
+        CityImage
+    ]
+    operations: [
+        GetCityAnnouncements
+    ]
 }
 
 @http(code: 200, method: "POST", uri: "/test-union-list")
@@ -66,45 +76,35 @@ string CityId
         acceptors: [
             // Fail-fast if the thing transitions to a "failed" state.
             {
-                state: "failure",
-                matcher: {
-                    errorType: "NoSuchResource"
-                }
-            },
+                state: "failure"
+                matcher: { errorType: "NoSuchResource" }
+            }
             // Fail-fast if the thing transitions to a "failed" state.
             {
-                state: "failure",
-                matcher: {
-                    errorType: "UnModeledError"
-                }
-            },
+                state: "failure"
+                matcher: { errorType: "UnModeledError" }
+            }
             // Succeed when the city image value is not empty i.e. enters into a "success" state.
             {
-                state: "success",
-                matcher: {
-                    success: true
-                }
-            },
+                state: "success"
+                matcher: { success: true }
+            }
             // Retry if city id input is of same length as city name in output
             {
-                state: "retry",
+                state: "retry"
                 matcher: {
                     inputOutput: {
-                        path: "length(input.cityId) == length(output.name)",
-                        comparator: "booleanEquals",
-                        expected: "true",
+                        path: "length(input.cityId) == length(output.name)"
+                        comparator: "booleanEquals"
+                        expected: "true"
                     }
                 }
-            },
+            }
             // Success if city name in output is seattle
             {
-                state: "success",
+                state: "success"
                 matcher: {
-                    output: {
-                        path: "name",
-                        comparator: "stringEquals",
-                        expected: "seattle",
-                    }
+                    output: { path: "name", comparator: "stringEquals", expected: "seattle" }
                 }
             }
         ]
@@ -119,6 +119,7 @@ operation GetCity {
         @httpLabel
         cityId: CityId
     }
+
     output := {
         // "required" is used on output to indicate if the service
         // will always provide a value for the member.
@@ -131,59 +132,54 @@ operation GetCity {
         city: CitySummary
 
         cityData: JsonString
+
         binaryCityData: JsonBlob
     }
-    errors: [NoSuchResource, EmptyError]
+
+    errors: [
+        NoSuchResource
+        EmptyError
+    ]
 }
 
 // Tests that HTTP protocol tests are generated.
 apply GetCity @httpRequestTests([
     {
-        id: "WriteGetCityAssertions",
-        documentation: "Does something",
-        protocol: "example.weather#fakeProtocol",
-        method: "GET",
-        uri: "/cities/123",
-        body: "",
-        params: {
-            cityId: "123"
-        }
+        id: "WriteGetCityAssertions"
+        documentation: "Does something"
+        protocol: "example.weather#fakeProtocol"
+        method: "GET"
+        uri: "/cities/123"
+        body: ""
+        params: { cityId: "123" }
     }
 ])
 
 apply GetCity @httpResponseTests([
     {
-        id: "WriteGetCityResponseAssertions",
-        documentation: "Does something",
-        protocol: "example.weather#fakeProtocol",
-        code: 200,
+        id: "WriteGetCityResponseAssertions"
+        documentation: "Does something"
+        protocol: "example.weather#fakeProtocol"
+        code: 200
         body: """
             {
-                "name": "Seattle",
-                "coordinates": {
-                    "latitude": 12.34,
-                    "longitude": -56.78
-                },
-                "city": {
-                    "cityId": "123",
-                    "name": "Seattle",
-                    "number": "One",
-                    "case": "Upper"
-                }
-            }""",
-        bodyMediaType: "application/json",
-        params: {
-            name: "Seattle",
-            coordinates: {
-                latitude: 12.34,
-                longitude: -56.78
+            "name": "Seattle",
+            "coordinates": {
+            "latitude": 12.34,
+            "longitude": -56.78
             },
-            city: {
-                cityId: "123",
-                name: "Seattle",
-                number: "One",
-                case: "Upper"
+            "city": {
+            "cityId": "123",
+            "name": "Seattle",
+            "number": "One",
+            "case": "Upper"
             }
+            }"""
+        bodyMediaType: "application/json"
+        params: {
+            name: "Seattle"
+            coordinates: { latitude: 12.34, longitude: -56.78 }
+            city: { cityId: "123", name: "Seattle", number: "One", case: "Upper" }
         }
     }
 ])
@@ -216,20 +212,17 @@ structure NoSuchResource {
 
 apply NoSuchResource @httpResponseTests([
     {
-        id: "WriteNoSuchResourceAssertions",
-        documentation: "Does something",
-        protocol: "example.weather#fakeProtocol",
-        code: 404,
+        id: "WriteNoSuchResourceAssertions"
+        documentation: "Does something"
+        protocol: "example.weather#fakeProtocol"
+        code: 404
         body: """
             {
-                "resourceType": "City",
-                "message": "Your custom message"
-            }""",
-        bodyMediaType: "application/json",
-        params: {
-            resourceType: "City",
-            message: "Your custom message"
-        }
+            "resourceType": "City",
+            "message": "Your custom message"
+            }"""
+        bodyMediaType: "application/json"
+        params: { resourceType: "City", message: "Your custom message" }
     }
 ])
 
@@ -244,28 +237,20 @@ structure EmptyError {}
 @readonly
 @paginated(items: "items")
 @waitable(
-    "ListContainsCity": {
+    ListContainsCity: {
         acceptors: [
             // failure in case all items returned match to seattle
             {
-                state: "failure",
+                state: "failure"
                 matcher: {
-                    output: {
-                        path: "items[].name",
-                        comparator: "allStringEquals",
-                        expected: "seattle",
-                    }
+                    output: { path: "items[].name", comparator: "allStringEquals", expected: "seattle" }
                 }
-            },
+            }
             // success in case any items returned match to NewYork
             {
-                state: "success",
+                state: "success"
                 matcher: {
-                    output: {
-                        path: "items[].name",
-                        comparator: "anyStringEquals",
-                        expected: "NewYork",
-                    }
+                    output: { path: "items[].name", comparator: "anyStringEquals", expected: "NewYork" }
                 }
             }
         ]
@@ -285,20 +270,28 @@ operation ListCities {
 
         @httpQuery("pageSize")
         pageSize: Integer
-    },
+    }
+
     output := {
         nextToken: String
 
         someEnum: StringYesNo
+
         aString: String
+
         defaults: Defaults
+
         escaping: MemberEscaping
+
         escapeTrue: True
+
         escapeFalse: False
+
         escapeNone: None
 
         @required
         items: CitySummaries
+
         sparseItems: SparseCitySummaries
 
         mutual: MutuallyRecursiveA
@@ -315,84 +308,119 @@ apply ListCities @httpRequestTests([
         body: ""
         queryParams: ["pageSize=50"]
         forbidQueryParams: ["nextToken"]
-        params: {
-            pageSize: 50
-        }
+        params: { pageSize: 50 }
     }
 ])
 
 structure Defaults {
     @required
     requiredBool: Boolean
+
     optionalBool: Boolean
+
     defaultTrue: Boolean = true
+
     defaultFalse: Boolean = false
+
     @required
     requiredDefaultBool: Boolean = true
 
     @required
     requiredStr: String
+
     optionalStr: String
+
     defaultString: String = "spam"
+
     @required
     requiredDefaultStr: String = "eggs"
 
     @required
     requiredInt: Integer
+
     optionalInt: Integer
+
     defaultInt: Integer = 42
+
     @required
     requiredDefaultInt: Integer = 42
 
     @required
     requiredFloat: Float
+
     optionalFloat: Float
+
     defaultFloat: Float = 4.2
+
     @required
     requiredDefaultFloat: Float = 4.2
 
     @required
     requiredBlob: Blob
+
     optionalBlob: Blob
+
     defaultBlob: Blob = "c3BhbQ=="
+
     @required
     requiredDefaultBlob: Blob = "c3BhbQ=="
 
     // timestamp
     @required
     requiredTimestamp: Timestamp
+
     optionalTimestamp: Timestamp
+
     defaultImplicitDateTime: Timestamp = "2011-12-03T10:15:30Z"
+
     defaultImplicitEpochTime: Timestamp = 4.2
+
     defaultExplicitDateTime: DateTime = "2011-12-03T10:15:30Z"
+
     defaultExplicitEpochTime: EpochSeconds = 4.2
+
     defaultExplicitHttpTime: HttpDate = "Tue, 3 Jun 2008 11:05:30 GMT"
+
     @required
     requiredDefaultTimestamp: Timestamp = 4.2
 
     @required
     requiredList: StringList
+
     optionalList: StringList
+
     defaultList: StringList = []
+
     @required
     requiredDefaultList: StringList = []
 
     @required
     requiredMap: StringMap
+
     optionalMap: StringMap
+
     defaultMap: StringMap = {}
+
     @required
     requiredDefaultMap: StringMap = {}
 
     @required
     requiredDocument: Document
+
     optionalDocument: Document
+
     defaultNullDocument: Document = null
+
     defaultNumberDocument: Document = 42
+
     defaultStringDocument: Document = "spam"
+
     defaultBooleanDocument: Document = true
+
     defaultListDocument: Document = []
+
     defaultMapDocument: Document = {}
+
     @required
     requiredDefaultDocument: Document = "eggs"
 }
@@ -403,36 +431,67 @@ structure MemberEscaping {
     // error to use as identifiers. A full list of these can be found here:
     // https://docs.python.org/3/reference/lexical_analysis.html#keywords
     and: String
+
     as: String
+
     assert: String
+
     async: String
+
     await: String
+
     break: String
+
     class: String
+
     continue: String
+
     def: String
+
     del: String
+
     elif: String
+
     else: String
+
     except: String
+
     finally: String
+
     for: String
+
     from: String
+
     global: String
+
     if: String
+
     import: String
+
     in: String
+
     is: String
+
     lambda: String
+
     nonlocal: String
+
     not: String
+
     or: String
+
     pass: String
+
     raise: String
+
     return: String
+
     try: String
+
     while: String
+
     with: String
+
     yield: String
 
     // These are built-in types, but not reserved words. They can be shadowed,
@@ -440,27 +499,41 @@ structure MemberEscaping {
     // scope. A listing of these can be found here:
     // https://docs.python.org/3/library/stdtypes.html
     bool: Boolean
+
     dict: StringMap
+
     float: Float
+
     int: Integer
+
     list: StringList
+
     str: String
+
     bytes: Blob
+
     bytearray: Blob
 
     // We don't actually use these, but they're here for completeness.
     complex: Float
+
     tuple: StringList
+
     range: StringList
+
     memoryview: Blob
+
     set: StringList
+
     frozenset: StringList
 }
 
 // These would result in class names that produce syntax errors since they're
 // reserved words.
 structure True {}
+
 structure False {}
+
 structure None {}
 
 @timestampFormat("date-time")
@@ -496,7 +569,11 @@ list SparseCitySummaries {
 }
 
 // CitySummary contains a reference to a City.
-@references([{resource: City}])
+@references([
+    {
+        resource: City
+    }
+])
 structure CitySummary {
     @required
     cityId: CityId
@@ -505,6 +582,7 @@ structure CitySummary {
     name: String
 
     number: String
+
     case: String
 }
 
@@ -524,7 +602,8 @@ operation GetForecast {
         @required
         @httpLabel
         cityId: CityId
-    },
+    }
+
     output := {
         chanceOfRain: Float
         precipitation: Precipitation
@@ -565,18 +644,23 @@ map StringMap {
 @http(method: "POST", uri: "/cities/{cityId}/image")
 operation GetCityImage {
     input := {
-        @required @httpLabel
+        @required
+        @httpLabel
         cityId: CityId
 
         @required
         imageType: ImageType
     }
+
     output := {
         @httpPayload
         @required
         image: CityImageData
     }
-    errors: [NoSuchResource]
+
+    errors: [
+        NoSuchResource
+    ]
 }
 
 union ImageType {
@@ -603,6 +687,7 @@ operation GetCityAnnouncements {
         @httpLabel
         cityId: CityId
     }
+
     output := {
         @httpHeader("x-last-updated")
         lastUpdated: Timestamp
@@ -610,7 +695,10 @@ operation GetCityAnnouncements {
         @httpPayload
         announcements: Announcements
     }
-    errors: [NoSuchResource]
+
+    errors: [
+        NoSuchResource
+    ]
 }
 
 @streaming
