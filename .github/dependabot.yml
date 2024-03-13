@@ -1,0 +1,33 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/
+    "
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+    groups:
+      python:
+        update-types:
+          - "minor"
+          - "patch"
+  - package-ecosystem: "gradle"
+    directory: "/codegen"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+    groups:
+      gradle:
+        update-types:
+          - "minor"
+          - "patch"
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "wednesday"
+    groups:
+      github:
+        update-types:
+          - "minor"
+          - "patch"
