@@ -13,13 +13,15 @@
  * permissions and limitations under the License.
  */
 
+import com.github.spotbugs.snom.Effort
+
 plugins {
     `java-library`
     `maven-publish`
     signing
     checkstyle
     jacoco
-    id("com.github.spotbugs") version "5.0.14"
+    id("com.github.spotbugs") version "6.0.8"
     id("io.codearte.nexus-staging") version "0.30.0"
 }
 
@@ -247,7 +249,7 @@ subprojects {
 
         // Configure the bug filter for spotbugs.
         spotbugs {
-            setEffort("max")
+            effort = Effort.MAX
             val excludeFile = File("${project.rootDir}/config/spotbugs/filter.xml")
             if (excludeFile.exists()) {
                 excludeFilter.set(excludeFile)
