@@ -16,30 +16,17 @@
 extra["displayName"] = "Smithy :: Python :: Protocol :: Test"
 extra["moduleName"] = "software.amazon.smithy.python.protocol.test"
 
-tasks["jar"].enabled = false
-
-val smithyVersion: String by project
-
-buildscript {
-    val smithyVersion: String by project
-
-    repositories {
-        mavenCentral()
-    }
-    dependencies {
-        "classpath"("software.amazon.smithy:smithy-cli:$smithyVersion")
-    }
-}
-
 plugins {
-    val smithyGradleVersion: String by project
-    id("software.amazon.smithy").version(smithyGradleVersion)
+    java
+    id("software.amazon.smithy.gradle.smithy-base")
 }
 
 repositories {
     mavenLocal()
     mavenCentral()
 }
+
+val smithyVersion: String by project
 
 dependencies {
     implementation(project(":smithy-python-codegen"))

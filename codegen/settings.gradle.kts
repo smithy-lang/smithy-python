@@ -24,4 +24,8 @@ pluginManagement {
         mavenLocal()
         gradlePluginPortal()
     }
+    val smithyGradleVersion: String by settings
+    plugins {
+        id("software.amazon.smithy.gradle.smithy-base").version(smithyGradleVersion)
+    }
 }
