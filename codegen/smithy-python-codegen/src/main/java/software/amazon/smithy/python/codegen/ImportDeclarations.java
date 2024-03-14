@@ -56,7 +56,7 @@ final class ImportDeclarations implements ImportContainer {
 
     ImportDeclarations addImport(String namespace, String name, String alias) {
         var isTestModule = this.localNamespace.startsWith("tests");
-        if (namespace.startsWith(settings.getModuleName())) {
+        if (namespace.startsWith(settings.moduleName())) {
             // if the module is for tests, we shouldn't relativize the imports
             //  as python will complain that the imports are beyond the top-level package
             var ns = isTestModule ? namespace : relativize(namespace);

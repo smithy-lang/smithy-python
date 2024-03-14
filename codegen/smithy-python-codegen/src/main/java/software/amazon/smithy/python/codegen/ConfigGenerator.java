@@ -171,7 +171,7 @@ final class ConfigGenerator implements Runnable {
 
     private static void writeDefaultHttpAuthSchemes(GenerationContext context, PythonWriter writer) {
         var supportedAuthSchemes = new LinkedHashMap<String, Symbol>();
-        var service = context.settings().getService(context.model());
+        var service = context.settings().service(context.model());
         for (PythonIntegration integration : context.integrations()) {
             for (RuntimeClientPlugin plugin : integration.getClientPlugins()) {
                 if (plugin.matchesService(context.model(), service)
@@ -217,7 +217,7 @@ final class ConfigGenerator implements Runnable {
     private void writeInterceptorsType(PythonWriter writer) {
         var symbolProvider = context.symbolProvider();
         var operationShapes = TopDownIndex.of(context.model())
-                .getContainedOperations(settings.getService());
+                .getContainedOperations(settings.service());
 
         writer.addStdlibImport("typing", "Union");
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
@@ -255,14 +255,14 @@ final class ConfigGenerator implements Runnable {
         var serviceIndex = ServiceIndex.of(context.model());
         if (context.applicationProtocol().isHttpProtocol()) {
             properties.addAll(HTTP_PROPERTIES);
-            if (!serviceIndex.getAuthSchemes(settings.getService()).isEmpty()) {
+            if (!serviceIndex.getAuthSchemes(settings.service()).isEmpty()) {
                 properties.addAll(getHttpAuthProperties(context));
                 writer.onSection(new AddAuthHelper());
             }
         }
 
         var model = context.model();
-        var service = context.settings().getService(model);
+        var service = context.settings().service(model);
 
         // Add any relevant config properties from plugins.
         for (PythonIntegration integration : context.integrations()) {
@@ -293,7 +293,7 @@ final class ConfigGenerator implements Runnable {
                     ${C|}
                     \"""
                     ${C|}
-            """, symbol.getName(), context.settings().getService().getName(),
+            """, symbol.getName(), context.settings().service().getName(),
             writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
             writer.consumer(w -> writeInitParams(w, finalProperties)),
             writer.consumer(w -> documentProperties(w, finalProperties)),

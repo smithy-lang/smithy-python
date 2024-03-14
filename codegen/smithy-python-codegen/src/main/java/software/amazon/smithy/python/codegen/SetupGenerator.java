@@ -89,7 +89,7 @@ final class SetupGenerator {
                         "Programming Language :: Python :: 3 :: Only",
                         "Programming Language :: Python :: 3.12"
                     ]
-                    """, settings.getModuleName(), settings.getModuleVersion(), settings.getModuleDescription());
+                    """, settings.moduleName(), settings.moduleVersion(), settings.moduleDescription());
 
             Optional.ofNullable(dependencies.get(Type.DEPENDENCY.getType())).ifPresent(deps -> {
                 writer.openBlock("dependencies = [", "]", () -> writeDependencyList(writer, deps.values()));
@@ -164,16 +164,16 @@ final class SetupGenerator {
             PythonSettings settings,
             GenerationContext context
     ) {
-        var service = context.model().expectShape(settings.getService());
+        var service = context.model().expectShape(settings.service());
 
         // see: https://smithy.io/2.0/spec/documentation-traits.html#smithy-api-title-trait
         var title = service.getTrait(TitleTrait.class)
                 .map(StringTrait::getValue)
-                .orElse(StringUtils.capitalize(settings.getModuleName()));
+                .orElse(StringUtils.capitalize(settings.moduleName()));
 
-        var description = StringUtils.isBlank(settings.getModuleDescription())
+        var description = StringUtils.isBlank(settings.moduleDescription())
                 ? "Generated service client for " + title
-                : StringUtils.wrap(settings.getModuleDescription(), 80);
+                : StringUtils.wrap(settings.moduleDescription(), 80);
 
         context.writerDelegator().useFileWriter("README.md", writer -> {
             writer.pushState(new ReadmeSection());
