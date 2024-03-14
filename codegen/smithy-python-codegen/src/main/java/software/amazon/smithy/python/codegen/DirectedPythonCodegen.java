@@ -23,6 +23,8 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -76,17 +78,16 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
                         directive.fileManifest(), directive.symbolProvider(), directive.settings()))
                 .integrations(directive.integrations())
                 .protocolGenerator(resolveProtocolGenerator(
-                        directive.integrations(), directive.model(), directive.service(), directive.settings()))
+                        directive.integrations(), directive.model(), directive.service()))
                 .build();
     }
 
     private ProtocolGenerator resolveProtocolGenerator(
             Collection<PythonIntegration> integrations,
             Model model,
-            ServiceShape service,
-            PythonSettings settings
+            ServiceShape service
     ) {
-        // Collect all of the supported protocol generators.
+        // Collect all the supported protocol generators.
         Map<ShapeId, ProtocolGenerator> generators = new HashMap<>();
         for (PythonIntegration integration : integrations) {
             for (ProtocolGenerator generator : integration.getProtocolGenerators()) {
@@ -94,15 +95,18 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
             }
         }
 
-        ShapeId protocolName;
-        try {
-            protocolName = settings.resolveServiceProtocol(model, service, generators.keySet());
-        } catch (CodegenException e) {
-            LOGGER.warning("Unable to find a protocol generator for " + service.getId() + ": " + e.getMessage());
-            protocolName = null;
+        ServiceIndex serviceIndex = ServiceIndex.of(model);
+        Set<ShapeId> resolvedProtocols = serviceIndex.getProtocols(service).keySet();
+        Optional<ShapeId> protocol = resolvedProtocols.stream()
+                .filter(generators::containsKey)
+                .findFirst();
+
+        if (protocol.isPresent()) {
+            return generators.get(protocol.get());
         }
 
-        return protocolName != null ? generators.get(protocolName) : null;
+        LOGGER.warning("Unable to find a protocol generator for " + service.getId());
+        return null;
     }
 
     @Override

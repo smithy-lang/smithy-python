@@ -41,7 +41,7 @@ final class HttpAuthGenerator implements Runnable {
     public void run() {
         var supportedAuthSchemes = new HashMap<ShapeId, AuthScheme>();
         var properties = new ArrayList<DerivedProperty>();
-        var service = context.settings().getService(context.model());
+        var service = context.settings().service(context.model());
         for (PythonIntegration integration : context.integrations()) {
             for (RuntimeClientPlugin plugin : integration.getClientPlugins()) {
                 if (plugin.matchesService(context.model(), service)
@@ -90,7 +90,7 @@ final class HttpAuthGenerator implements Runnable {
         Map<ShapeId, AuthScheme> supportedAuthSchemes
     ) {
         var resolvedAuthSchemes = ServiceIndex.of(context.model())
-            .getEffectiveAuthSchemes(settings.getService()).keySet().stream()
+            .getEffectiveAuthSchemes(settings.service()).keySet().stream()
             .filter(supportedAuthSchemes::containsKey)
             .map(supportedAuthSchemes::get)
             .toList();
@@ -114,7 +114,7 @@ final class HttpAuthGenerator implements Runnable {
     }
 
     private void writeOperationAuthOptions(PythonWriter writer, Map<ShapeId, AuthScheme> supportedAuthSchemes) {
-        var operations = TopDownIndex.of(context.model()).getContainedOperations(settings.getService());
+        var operations = TopDownIndex.of(context.model()).getContainedOperations(settings.service());
         var serviceIndex = ServiceIndex.of(context.model());
         for (OperationShape operation : operations) {
             if (!operation.hasTrait(AuthTrait.class)) {
@@ -122,7 +122,7 @@ final class HttpAuthGenerator implements Runnable {
             }
 
             var operationAuthSchemes = serviceIndex
-                .getEffectiveAuthSchemes(settings.getService(), operation).keySet().stream()
+                .getEffectiveAuthSchemes(settings.service(), operation).keySet().stream()
                 .filter(supportedAuthSchemes::containsKey)
                 .map(supportedAuthSchemes::get)
                 .toList();

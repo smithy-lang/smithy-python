@@ -115,7 +115,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
         this.settings = context.settings();
         this.model = context.model();
         this.protocol = protocol;
-        this.service = settings.getService(model);
+        this.service = settings.service(model);
         this.writer = writer;
         this.context = context;
         this.testFilter = testFilter;

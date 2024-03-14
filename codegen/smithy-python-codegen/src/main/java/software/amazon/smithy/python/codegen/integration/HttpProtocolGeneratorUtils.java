@@ -192,7 +192,7 @@ public final class HttpProtocolGeneratorUtils {
         OperationShape operation,
         Function<StructureShape, String> errorShapeToCode
     ) {
-        var errorIds = operation.getErrors(context.settings().getService(context.model()));
+        var errorIds = operation.getErrors(context.settings().service(context.model()));
         for (ShapeId errorId : errorIds) {
             var error = context.model().expectShape(errorId, StructureShape.class);
             var code = errorShapeToCode.apply(error).toLowerCase(Locale.US);

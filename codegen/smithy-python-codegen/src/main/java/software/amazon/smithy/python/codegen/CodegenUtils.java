@@ -75,8 +75,8 @@ public final class CodegenUtils {
     public static Symbol getConfigSymbol(PythonSettings settings) {
         return Symbol.builder()
                 .name("Config")
-                .namespace(format("%s.config", settings.getModuleName()), ".")
-                .definitionFile(format("./%s/config.py", settings.getModuleName()))
+                .namespace(format("%s.config", settings.moduleName()), ".")
+                .definitionFile(format("./%s/config.py", settings.moduleName()))
                 .build();
     }
 
@@ -87,8 +87,8 @@ public final class CodegenUtils {
     public static Symbol getPluginSymbol(PythonSettings settings) {
         return Symbol.builder()
                 .name("Plugin")
-                .namespace(format("%s.config", settings.getModuleName()), ".")
-                .definitionFile(format("./%s/config.py", settings.getModuleName()))
+                .namespace(format("%s.config", settings.moduleName()), ".")
+                .definitionFile(format("./%s/config.py", settings.moduleName()))
                 .build();
     }
 
@@ -106,8 +106,8 @@ public final class CodegenUtils {
     public static Symbol getServiceError(PythonSettings settings) {
         return Symbol.builder()
                 .name("ServiceError")
-                .namespace(format("%s.errors", settings.getModuleName()), ".")
-                .definitionFile(format("./%s/errors.py", settings.getModuleName()))
+                .namespace(format("%s.errors", settings.moduleName()), ".")
+                .definitionFile(format("./%s/errors.py", settings.moduleName()))
                 .build();
     }
 
@@ -123,8 +123,8 @@ public final class CodegenUtils {
     public static Symbol getApiError(PythonSettings settings) {
         return Symbol.builder()
                 .name("ApiError")
-                .namespace(format("%s.errors", settings.getModuleName()), ".")
-                .definitionFile(format("./%s/errors.py", settings.getModuleName()))
+                .namespace(format("%s.errors", settings.moduleName()), ".")
+                .definitionFile(format("./%s/errors.py", settings.moduleName()))
                 .build();
     }
 
@@ -140,8 +140,8 @@ public final class CodegenUtils {
     public static Symbol getUnknownApiError(PythonSettings settings) {
         return Symbol.builder()
                 .name("UnknownApiError")
-                .namespace(format("%s.errors", settings.getModuleName()), ".")
-                .definitionFile(format("./%s/errors.py", settings.getModuleName()))
+                .namespace(format("%s.errors", settings.moduleName()), ".")
+                .definitionFile(format("./%s/errors.py", settings.moduleName()))
                 .build();
     }
 
@@ -154,8 +154,8 @@ public final class CodegenUtils {
     public static Symbol getHttpAuthParamsSymbol(PythonSettings settings) {
         return Symbol.builder()
             .name("HTTPAuthParams")
-            .namespace(format("%s.auth", settings.getModuleName()), ".")
-            .definitionFile(format("./%s/auth.py", settings.getModuleName()))
+            .namespace(format("%s.auth", settings.moduleName()), ".")
+            .definitionFile(format("./%s/auth.py", settings.moduleName()))
             .build();
     }
 
@@ -168,8 +168,8 @@ public final class CodegenUtils {
     public static Symbol getHttpAuthSchemeResolverSymbol(PythonSettings settings) {
         return Symbol.builder()
             .name("HTTPAuthSchemeResolver")
-            .namespace(format("%s.auth", settings.getModuleName()), ".")
-            .definitionFile(format("./%s/auth.py", settings.getModuleName()))
+            .namespace(format("%s.auth", settings.moduleName()), ".")
+            .definitionFile(format("./%s/auth.py", settings.moduleName()))
             .build();
     }
 

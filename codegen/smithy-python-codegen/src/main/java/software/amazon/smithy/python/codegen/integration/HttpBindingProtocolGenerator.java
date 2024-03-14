@@ -123,7 +123,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
         var transportRequest = context.applicationProtocol().requestType();
 
-        for (OperationShape operation : topDownIndex.getContainedOperations(context.settings().getService())) {
+        for (OperationShape operation : topDownIndex.getContainedOperations(context.settings().service())) {
             var serFunction = getSerializationFunction(context, operation);
             var input = context.model().expectShape(operation.getInputShape());
             var inputSymbol = context.symbolProvider().toSymbol(input);
@@ -758,9 +758,9 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
     @Override
     public void generateResponseDeserializers(GenerationContext context) {
         var topDownIndex = TopDownIndex.of(context.model());
-        var service = context.settings().getService(context.model());
+        var service = context.settings().service(context.model());
         var deserializingErrorShapes = new TreeSet<ShapeId>();
-        for (OperationShape operation : topDownIndex.getContainedOperations(context.settings().getService())) {
+        for (OperationShape operation : topDownIndex.getContainedOperations(context.settings().service())) {
             generateOperationResponseDeserializer(context, operation);
             deserializingErrorShapes.addAll(operation.getErrors(service));
         }

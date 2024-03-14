@@ -60,7 +60,7 @@ public final class HttpApiKeyAuth implements PythonIntegration {
         if (!hasApiKeyAuth(context)) {
             return;
         }
-        var trait = context.settings().getService(context.model()).expectTrait(HttpApiKeyAuthTrait.class);
+        var trait = context.settings().service(context.model()).expectTrait(HttpApiKeyAuthTrait.class);
         var params = CodegenUtils.getHttpAuthParamsSymbol(context.settings());
         var resolver = CodegenUtils.getHttpAuthSchemeResolverSymbol(context.settings());
 
@@ -97,7 +97,7 @@ public final class HttpApiKeyAuth implements PythonIntegration {
     }
 
     private boolean hasApiKeyAuth(GenerationContext context) {
-        var service = context.settings().getService(context.model());
+        var service = context.settings().service(context.model());
         return service.hasTrait(HttpApiKeyAuthTrait.class);
     }
 
