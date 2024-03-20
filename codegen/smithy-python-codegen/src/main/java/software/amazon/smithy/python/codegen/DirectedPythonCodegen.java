@@ -61,6 +61,7 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
 final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, PythonSettings, PythonIntegration> {
 
     private static final Logger LOGGER = Logger.getLogger(DirectedPythonCodegen.class.getName());
+    private static final int PYTHON_MINOR_VERSION = 12; // 3.12
 
     @Override
     public SymbolProvider createSymbolProvider(CreateSymbolProviderDirective<PythonSettings> directive) {
@@ -329,7 +330,7 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
             LOGGER.warning("Unable to parse python version string. Skipping formatting and type checking.");
         }
         int minorVersion = Integer.parseInt(matcher.group("minor"));
-        if (minorVersion < 11) {
+        if (minorVersion < PYTHON_MINOR_VERSION) {
             LOGGER.warning(format("""
                     Found incompatible python version 3.%s.%s, expected 3.12.0 or greater. \
                     Skipping formatting and type checking.""",
