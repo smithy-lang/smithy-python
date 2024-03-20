@@ -1,8 +1,9 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from typing import Literal, Protocol
+from typing import Literal, Protocol, runtime_checkable
 
 
+@runtime_checkable
 class HasFault(Protocol):
     """A protocol for a modeled error.
 
