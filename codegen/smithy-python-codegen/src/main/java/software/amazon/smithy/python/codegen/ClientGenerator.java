@@ -15,6 +15,7 @@
 
 package software.amazon.smithy.python.codegen;
 
+
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -55,6 +56,7 @@ final class ClientGenerator implements Runnable {
         var serviceSymbol = context.symbolProvider().toSymbol(service);
         var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
+        writer.addLogger();
 
         writer.addStdlibImport("typing", "TypeVar");
         writer.write("""
@@ -163,6 +165,7 @@ final class ClientGenerator implements Runnable {
                     config: $5T,
                     operation_name: str,
                 ) -> Output:
+                    logger.debug(f"Making request for operation {operation_name} with parameters: {input}")
                     context: InterceptorContext[Input, None, None, None] = InterceptorContext(
                         request=input,
                         response=None,
@@ -266,7 +269,7 @@ final class ClientGenerator implements Runnable {
                                 break
                     except Exception as e:
                         if context.response is not None:
-                            # config.logger.exception(f"Exception occurred while handling: {context.response}")
+                            logger.exception(f"Exception occurred while handling: {context.response}")
                             pass
                         context._response = e
 
@@ -474,7 +477,7 @@ final class ClientGenerator implements Runnable {
                             interceptor.read_after_deserialization(context_with_output)
                     except Exception as e:
                         if context.response is not None:
-                            # config.logger.exception(f"Exception occurred while handling: {context.response}")
+                            logger.exception(f"Exception occurred while handling: {context.response}")
                             pass
                         context._response = e
 
@@ -500,7 +503,7 @@ final class ClientGenerator implements Runnable {
                             )
                     except Exception as e:
                         if context.response is not None:
-                            # config.logger.exception(f"Exception occurred while handling: {context.response}")
+                            logger.exception(f"Exception occurred while handling: {context.response}")
                             pass
                         context._response = e
 
@@ -510,7 +513,7 @@ final class ClientGenerator implements Runnable {
                             interceptor.read_after_attempt(context)
                         except Exception as e:
                             if context.response is not None:
-                                # config.logger.exception(f"Exception occurred while handling: {context.response}")
+                                logger.exception(f"Exception occurred while handling: {context.response}")
                                 pass
                             context._response = e
 
@@ -531,11 +534,11 @@ final class ClientGenerator implements Runnable {
                             pass
                         except Exception as e:
                             # log and ignore exceptions
-                            # config.logger.exception(f"Exception occurred while dispatching trace events: {e}")
+                            logger.exception(f"Exception occurred while dispatching trace events: {e}")
                             pass
                     except Exception as e:
                         if context.response is not None:
-                            # config.logger.exception(f"Exception occurred while handling: {context.response}")
+                            logger.exception(f"Exception occurred while handling: {context.response}")
                             pass
                         context._response = e
 
@@ -545,7 +548,7 @@ final class ClientGenerator implements Runnable {
                             interceptor.read_after_execution(context)
                         except Exception as e:
                             if context.response is not None:
-                                # config.logger.exception(f"Exception occurred while handling: {context.response}")
+                                logger.exception(f"Exception occurred while handling: {context.response}")
                                 pass
                             context._response = e
 
