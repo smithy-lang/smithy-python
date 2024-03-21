@@ -137,6 +137,7 @@ final class ClientGenerator implements Runnable {
         writer.write("""
                 def _classify_error(
                     self,
+                    *,
                     error: Exception,
                     context: InterceptorContext[Input, Output, $1T, $2T | None]
                 ) -> RetryErrorInfo:
@@ -294,7 +295,9 @@ final class ClientGenerator implements Runnable {
                                     retry_token = retry_strategy.refresh_retry_token_for_retry(
                                         token_to_renew=retry_token,
                                         error_info=self._classify_error(
-                                            context_with_response.response, context_with_response)
+                                            error=context_with_response.response,
+                                            context=context_with_response,
+                                        )
                                     )
                                 except SmithyRetryException:
                                     raise context_with_response.response
