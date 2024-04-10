@@ -148,28 +148,27 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
 
         var apiError = CodegenUtils.getApiError(settings);
         writers.useFileWriter(apiError.getDefinitionFile(), apiError.getNamespace(), writer -> {
-            writer.addStdlibImport("typing", "Generic");
-            writer.addStdlibImport("typing", "TypeVar");
+            writer.addStdlibImports("typing", Set.of("Literal", "ClassVar"));
             var unknownApiError = CodegenUtils.getUnknownApiError(settings);
-            writer.addStdlibImport("typing", "Literal");
 
             writer.write("""
-                    T = TypeVar('T')
-
-                    class $1L($2T, Generic[T]):
+                    @dataclass
+                    class $1L($2T):
                         ""\"Base error for all API errors in the service.""\"
-                        code: T
-                        fault: Literal["client", "server"]
+                        code: ClassVar[str]
+                        fault: ClassVar[Literal["client", "server"]]
 
-                        def __init__(self, message: str):
-                            super().__init__(message)
-                            self.message = message
+                        message: str
+
+                        def __post_init__(self) -> None:
+                            super().__init__(self.message)
 
 
-                    class $3L($1L[Literal['Unknown']]):
+                    @dataclass
+                    class $3L($1L):
                         ""\"Error representing any unknown api errors""\"
-                        code: Literal['Unknown'] = 'Unknown'
-                        fault: Literal["client"] = "client"
+                        code: ClassVar[Literal['Unknown']] = 'Unknown'
+                        fault: ClassVar[Literal["client"]] = "client"
                     """, apiError.getName(), serviceError, unknownApiError.getName());
         });
     }

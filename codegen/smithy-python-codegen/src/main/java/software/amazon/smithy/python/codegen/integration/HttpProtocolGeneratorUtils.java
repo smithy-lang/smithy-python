@@ -154,9 +154,8 @@ public final class HttpProtocolGeneratorUtils {
         var canReadResponseBody = canReadResponseBody(operation, context.model());
         delegator.useFileWriter(errorDispatcher.getDefinitionFile(), errorDispatcher.getNamespace(), writer -> {
             writer.pushState(new ErrorDispatcherSection(operation, errorShapeToCode, errorMessageCodeGenerator));
-            writer.addStdlibImport("typing", "Any");
             writer.write("""
-                    async def $1L(http_response: $2T, config: $3T) -> $4T[Any]:
+                    async def $1L(http_response: $2T, config: $3T) -> $4T:
                         ${6C|}
 
                         match code.lower():

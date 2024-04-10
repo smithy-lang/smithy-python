@@ -194,6 +194,18 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
      * Imports a type using an alias from the standard library only if necessary.
      *
      * @param namespace Module to import the type from.
+     * @param names Set of types to import.
+     * @return Returns the writer.
+     */
+    public PythonWriter addStdlibImports(String namespace, Set<String> names) {
+        names.forEach(name -> addStdlibImport(namespace, name));
+        return this;
+    }
+
+    /**
+     * Imports a type using an alias from the standard library only if necessary.
+     *
+     * @param namespace Module to import the type from.
      * @param name Type to import.
      * @param alias The name to import the type as.
      * @return Returns the writer.

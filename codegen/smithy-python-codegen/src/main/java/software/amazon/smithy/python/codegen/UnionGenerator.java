@@ -24,6 +24,7 @@ import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.DocumentationTrait;
+import software.amazon.smithy.model.traits.StringTrait;
 
 /**
  * Renders unions.
@@ -53,8 +54,7 @@ final class UnionGenerator implements Runnable {
     @Override
     public void run() {
         var parentName = symbolProvider.toSymbol(shape).getName();
-        writer.addStdlibImport("typing", "Dict");
-        writer.addStdlibImport("typing", "Any");
+        writer.addStdlibImport("dataclasses", "dataclass");
 
         var memberNames = new ArrayList<String>();
         for (MemberShape member : shape.members()) {
@@ -64,27 +64,18 @@ final class UnionGenerator implements Runnable {
             var target = model.expectShape(member.getTarget());
             var targetSymbol = symbolProvider.toSymbol(target);
 
-            writer.openBlock("class $L():", "", memberSymbol.getName(), () -> {
-                member.getMemberTrait(model, DocumentationTrait.class).ifPresent(trait -> {
-                    writer.writeDocs(trait.getValue());
-                });
-                writer.openBlock("def __init__(self, value: $T):", "", targetSymbol, () -> {
-                    writer.write("self.value = value");
-                });
+            writer.write("""
+                    @dataclass
+                    class $L:
+                        ${C|}
 
-                writer.write("""
-                    def __repr__(self) -> str:
-                        return f"$L(value=repr(self.value))"
-                    """, memberSymbol.getName());
+                        value: $T
 
-                writer.write("""
-                    def __eq__(self, other: Any) -> bool:
-                        if not isinstance(other, $1L):
-                            return False
-                        return self.value == other.value
-                    """, memberSymbol.getName());
-            });
-            writer.write("");
+                    """,
+                    memberSymbol.getName(),
+                    writer.consumer(w -> member.getMemberTrait(model, DocumentationTrait.class)
+                            .map(StringTrait::getValue).ifPresent(w::writeDocs)),
+                    targetSymbol);
         }
 
         // Note that the unknown variant doesn't implement __eq__. This is because
@@ -93,7 +84,8 @@ final class UnionGenerator implements Runnable {
         // realistic implementation.
         var unknownSymbol = symbolProvider.toSymbol(shape).expectProperty("unknown", Symbol.class);
         writer.write("""
-                class $1L():
+                @dataclass
+                class $1L:
                     \"""Represents an unknown variant.
 
                     If you receive this value, you will need to update your library to receive the
@@ -102,11 +94,8 @@ final class UnionGenerator implements Runnable {
                     This value may not be deliberately sent.
                     \"""
 
-                    def __init__(self, tag: str):
-                        self.tag = tag
+                    tag: str
 
-                    def __repr__(self) -> str:
-                        return f"$1L(tag={self.tag})"
                 """, unknownSymbol.getName());
         memberNames.add(unknownSymbol.getName());
 
