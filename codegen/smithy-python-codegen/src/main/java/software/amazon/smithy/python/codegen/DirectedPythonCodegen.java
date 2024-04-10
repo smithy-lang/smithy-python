@@ -21,7 +21,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -30,7 +29,6 @@ import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import software.amazon.smithy.build.FileManifest;
 import software.amazon.smithy.codegen.core.CodegenException;
-import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.TopologicalIndex;
 import software.amazon.smithy.codegen.core.WriterDelegator;
@@ -47,11 +45,7 @@ import software.amazon.smithy.codegen.core.directed.GenerateStructureDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateUnionDirective;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
-import software.amazon.smithy.model.neighbor.Walker;
-import software.amazon.smithy.model.shapes.CollectionShape;
-import software.amazon.smithy.model.shapes.MapShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
-import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.integration.ProtocolGenerator;
 import software.amazon.smithy.python.codegen.integration.PythonIntegration;
@@ -252,43 +246,6 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
     @Override
     public void customizeBeforeIntegrations(CustomizeDirective<GenerationContext, PythonSettings> directive) {
         generateInits(directive);
-        generateDictHelpers(directive);
-    }
-
-    private void generateDictHelpers(CustomizeDirective<GenerationContext, PythonSettings> directive) {
-        Iterator<Shape> shapes = new Walker(directive.model()).iterateShapes(directive.service());
-        while (shapes.hasNext()) {
-            Shape shape = shapes.next();
-            if (shape.isListShape()) {
-                generateCollectionDictHelpers(directive.context(), shape.asListShape().get());
-            } else if (shape.isMapShape()) {
-                generateMapDictHelpers(directive.context(), shape.asMapShape().get());
-            }
-        }
-    }
-
-    private Void generateCollectionDictHelpers(GenerationContext context, CollectionShape shape) {
-        SymbolProvider symbolProvider = context.symbolProvider();
-        WriterDelegator<PythonWriter> writers = context.writerDelegator();
-        var optionalAsDictSymbol = symbolProvider.toSymbol(shape).getProperty("asDict", Symbol.class);
-        optionalAsDictSymbol.ifPresent(asDictSymbol -> {
-            writers.useFileWriter(asDictSymbol.getDefinitionFile(), asDictSymbol.getNamespace(), writer -> {
-                new CollectionGenerator(context.model(), symbolProvider, writer, shape).run();
-            });
-        });
-        return null;
-    }
-
-    public Void generateMapDictHelpers(GenerationContext context, MapShape shape) {
-        SymbolProvider symbolProvider = context.symbolProvider();
-        WriterDelegator<PythonWriter> writers = context.writerDelegator();
-        var optionalAsDictSymbol = symbolProvider.toSymbol(shape).getProperty("asDict", Symbol.class);
-        optionalAsDictSymbol.ifPresent(asDictSymbol -> {
-            writers.useFileWriter(asDictSymbol.getDefinitionFile(), asDictSymbol.getNamespace(), writer -> {
-                new MapGenerator(context.model(), symbolProvider, writer, shape).run();
-            });
-        });
-        return null;
     }
 
     /**

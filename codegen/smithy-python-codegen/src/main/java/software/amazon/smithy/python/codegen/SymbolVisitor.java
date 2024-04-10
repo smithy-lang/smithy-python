@@ -32,7 +32,6 @@ import software.amazon.smithy.model.shapes.BigIntegerShape;
 import software.amazon.smithy.model.shapes.BlobShape;
 import software.amazon.smithy.model.shapes.BooleanShape;
 import software.amazon.smithy.model.shapes.ByteShape;
-import software.amazon.smithy.model.shapes.CollectionShape;
 import software.amazon.smithy.model.shapes.DocumentShape;
 import software.amazon.smithy.model.shapes.DoubleShape;
 import software.amazon.smithy.model.shapes.EnumShape;
@@ -49,7 +48,6 @@ import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeVisitor;
 import software.amazon.smithy.model.shapes.ShortShape;
-import software.amazon.smithy.model.shapes.SimpleShape;
 import software.amazon.smithy.model.shapes.StringShape;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.TimestampShape;
@@ -183,10 +181,6 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         var builder = createSymbolBuilder(shape, "list[" + type + "]")
                 .addReference(reference);
 
-        if (needsDictHelpers(shape)) {
-            builder.putProperty("asDict", createAsDictFunctionSymbol(shape))
-                    .putProperty("fromDict", createFromDictFunctionSymbol(shape));
-        }
         return builder.build();
     }
 
@@ -198,55 +192,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         var builder = createSymbolBuilder(shape, "dict[str, " + type + "]")
                 .addReference(reference);
 
-        if (needsDictHelpers(shape)) {
-            builder.putProperty("asDict", createAsDictFunctionSymbol(shape))
-                    .putProperty("fromDict", createFromDictFunctionSymbol(shape));
-        }
         return builder.build();
-    }
-
-    private boolean needsDictHelpers(MapShape shape) {
-        Shape target = model.expectShape(shape.getValue().getTarget());
-        return targetRequiresDictHelpers(target);
-    }
-
-    private boolean needsDictHelpers(CollectionShape shape) {
-        Shape target = model.expectShape(shape.getMember().getTarget());
-        return targetRequiresDictHelpers(target);
-    }
-
-    /**
-     * Maps and collections are already dict compatible, so if a given map or
-     * collection only ever transitively reference dict compatible shapes,
-     * they don't need these dict helpers.
-     */
-    private boolean targetRequiresDictHelpers(Shape target) {
-        if (target instanceof SimpleShape) {
-            return false;
-        }
-        if (target instanceof CollectionShape) {
-            return needsDictHelpers((CollectionShape) target);
-        }
-        if (target.isMapShape()) {
-            return needsDictHelpers((MapShape) target);
-        }
-        return true;
-    }
-
-    private Symbol createAsDictFunctionSymbol(Shape shape) {
-        return Symbol.builder()
-                .name(String.format("_%s_as_dict", CaseUtils.toSnakeCase(shape.getId().getName())))
-                .namespace(format("%s.models", settings.moduleName()), ".")
-                .definitionFile(format("./%s/models.py", settings.moduleName()))
-                .build();
-    }
-
-    private Symbol createFromDictFunctionSymbol(Shape shape) {
-        return Symbol.builder()
-                .name(String.format("_%s_from_dict", CaseUtils.toSnakeCase(shape.getId().getName())))
-                .namespace(format("%s.models", settings.moduleName()), ".")
-                .definitionFile(format("./%s/models.py", settings.moduleName()))
-                .build();
     }
 
     @Override
@@ -394,7 +340,6 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
         return createSymbolBuilder(shape, name, format("%s.models", settings.moduleName()))
                 .definitionFile(format("./%s/models.py", settings.moduleName()))
-                .putProperty("fromDict", createFromDictFunctionSymbol(shape))
                 .putProperty("unknown", unknownSymbol)
                 .build();
     }
