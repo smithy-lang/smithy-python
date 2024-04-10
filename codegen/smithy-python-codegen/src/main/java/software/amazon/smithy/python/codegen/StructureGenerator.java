@@ -25,7 +25,6 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.NullableIndex;
@@ -103,8 +102,6 @@ final class StructureGenerator implements Runnable {
         writer.openBlock("class $L:", "", symbol.getName(), () -> {
             writeProperties(false);
             writeInit(false);
-            writeAsDict(false);
-            writeFromDict(false);
             writeRepr(false);
             writeEq(false);
         });
@@ -136,15 +133,9 @@ final class StructureGenerator implements Runnable {
 
                     ${8C|}
 
-                    ${9C|}
-
-                    ${10C|}
-
                 """, symbol.getName(), apiError, code, fault,
                 writer.consumer(w -> writeProperties(true)),
                 writer.consumer(w -> writeInit(true)),
-                writer.consumer(w -> writeAsDict(true)),
-                writer.consumer(w -> writeFromDict(true)),
                 writer.consumer(w -> writeRepr(true)),
                 writer.consumer(w -> writeEq(true)));
     }
@@ -326,129 +317,6 @@ final class StructureGenerator implements Runnable {
             String docs = writer.formatDocs(String.format(":param %s: %s", memberName, trait.getValue()));
             writer.write(docs);
         });
-    }
-
-    private void writeAsDict(boolean isError) {
-        writer.openBlock("def as_dict(self) -> Dict[str, Any]:", "", () -> {
-            writer.writeDocs(() -> {
-                writer.write("Converts the $L to a dictionary.\n", symbolProvider.toSymbol(shape).getName());
-                writer.write(writer.formatDocs("""
-                        The dictionary uses the modeled shape names rather than the parameter names \
-                        as keys to be mostly compatible with boto3."""));
-            });
-
-            // If there aren't any optional members, it's best to return immediately.
-            String dictPrefix = optionalMembers.isEmpty() ? "return" : "d: Dict[str, Any] =";
-            if (requiredMembers.isEmpty() && !isError) {
-                writer.write("$L {}", dictPrefix);
-            } else {
-                writer.openBlock("$L {", "}", dictPrefix, () -> {
-                    if (isError) {
-                        writer.write("'message': self.message,");
-                        writer.write("'code': self.code,");
-                        writer.write("'fault': self.fault,");
-                    }
-                    for (MemberShape member : requiredMembers) {
-                        var memberName = symbolProvider.toMemberName(member);
-                        var target = model.expectShape(member.getTarget());
-                        var targetSymbol = symbolProvider.toSymbol(target);
-                        if (target.isStructureShape() || target.isUnionShape()) {
-                            writer.write("$S: self.$L.as_dict(),", member.getMemberName(), memberName);
-                        } else if (targetSymbol.getProperty("asDict").isPresent()) {
-                            var targetAsDictSymbol = targetSymbol.expectProperty("asDict", Symbol.class);
-                            writer.write("$S: $T(self.$L),", member.getMemberName(), targetAsDictSymbol, memberName);
-                        } else {
-                            writer.write("$S: self.$L,", member.getMemberName(), memberName);
-                        }
-                    }
-                });
-            }
-
-            if (!optionalMembers.isEmpty()) {
-                writer.write("");
-                for (MemberShape member : optionalMembers) {
-                    var memberName = symbolProvider.toMemberName(member);
-                    var target = model.expectShape(member.getTarget());
-                    var targetSymbol = symbolProvider.toSymbol(target);
-                    writer.openBlock("if self.$1L is not None:", "", memberName, () -> {
-                        if (target.isStructureShape() || target.isUnionShape()) {
-                            writer.write("d[$S] = self.$L.as_dict()", member.getMemberName(), memberName);
-                        } else if (targetSymbol.getProperty("asDict").isPresent()) {
-                            var targetAsDictSymbol = targetSymbol.expectProperty("asDict", Symbol.class);
-                            writer.write("d[$S] = $T(self.$L),", member.getMemberName(), targetAsDictSymbol,
-                                    memberName);
-                        } else {
-                            writer.write("d[$S] = self.$L", member.getMemberName(), memberName);
-                        }
-                    });
-                }
-                writer.write("return d");
-            }
-        });
-        writer.write("");
-    }
-
-    private void writeFromDict(boolean isError) {
-        writer.write("@staticmethod");
-        var shapeName = symbolProvider.toSymbol(shape).getName();
-        writer.openBlock("def from_dict(d: Dict[str, Any]) -> $S:", "", shapeName, () -> {
-            writer.writeDocs(() -> {
-                writer.write("Creates a $L from a dictionary.\n", shapeName);
-                writer.write(writer.formatDocs("""
-                        The dictionary is expected to use the modeled shape names rather \
-                        than the parameter names as keys to be mostly compatible with boto3."""));
-            });
-
-            if (shape.members().isEmpty() && !isError) {
-                writer.write("return $L()", shapeName);
-                return;
-            }
-
-            if (requiredMembers.isEmpty() && !isError) {
-                writer.write("kwargs: Dict[str, Any] = {}");
-            } else {
-                writer.openBlock("kwargs: Dict[str, Any] = {", "}", () -> {
-                    if (isError) {
-                        writer.write("'message': d['message'],");
-                    }
-                    for (MemberShape member : requiredMembers) {
-                        var memberName = symbolProvider.toMemberName(member);
-                        var target = model.expectShape(member.getTarget());
-                        Symbol targetSymbol = symbolProvider.toSymbol(target);
-                        if (target.isStructureShape()) {
-                            writer.write("$S: $T.from_dict(d[$S]),", memberName, targetSymbol, member.getMemberName());
-                        } else if (targetSymbol.getProperty("fromDict").isPresent()) {
-                            var targetFromDictSymbol = targetSymbol.expectProperty("fromDict", Symbol.class);
-                            writer.write("$S: $T(d[$S]),", memberName, targetFromDictSymbol, member.getMemberName());
-                        } else {
-                            writer.write("$S: d[$S],", memberName, member.getMemberName());
-                        }
-                    }
-                });
-            }
-            writer.write("");
-
-            for (MemberShape member : optionalMembers) {
-                var memberName = symbolProvider.toMemberName(member);
-                var target = model.expectShape(member.getTarget());
-                writer.openBlock("if $S in d:", "", member.getMemberName(), () -> {
-                    var targetSymbol = symbolProvider.toSymbol(target);
-                    if (target.isStructureShape()) {
-                        writer.write("kwargs[$S] = $T.from_dict(d[$S])", memberName, targetSymbol,
-                                member.getMemberName());
-                    } else if (targetSymbol.getProperty("fromDict").isPresent()) {
-                        var targetFromDictSymbol = targetSymbol.expectProperty("fromDict", Symbol.class);
-                        writer.write("kwargs[$S] = $T(d[$S]),", memberName, targetFromDictSymbol,
-                                member.getMemberName());
-                    } else {
-                        writer.write("kwargs[$S] = d[$S]", memberName, member.getMemberName());
-                    }
-                });
-            }
-
-            writer.write("return $L(**kwargs)", shapeName);
-        });
-        writer.write("");
     }
 
     private void writeRepr(boolean isError) {
