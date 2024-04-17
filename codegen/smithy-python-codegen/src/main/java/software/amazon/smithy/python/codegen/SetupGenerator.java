@@ -104,13 +104,9 @@ final class SetupGenerator {
                     [tool.setuptools.packages.find]
                     exclude=["tests*"]
 
-                    [tool.mypy]
+                    [tool.pyright]
+                    typeCheckingMode = "strict"
                     strict = true
-                    warn_unused_configs = true
-
-                    [[tool.mypy.overrides]]
-                    module = ["awscrt", "pytest"]
-                    ignore_missing_imports = true
 
                     [tool.black]
                     target-version = ["py311"]

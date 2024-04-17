@@ -6,7 +6,7 @@ backend_packages = [
     "pants.backend.python.lint.black",
     "pants.backend.python.lint.isort",
     "pants.backend.python.lint.flake8",
-    "pants.backend.python.typecheck.mypy",
+    "pants.backend.experimental.python.typecheck.pyright",
     "pants.backend.python.lint.pyupgrade",
     "pants.backend.python.lint.docformatter",
     "pants.backend.python.lint.bandit",
@@ -49,8 +49,7 @@ report = [
     "html"
 ]
 
-[mypy]
-install_from_resolve = "python-default"
+[pyright]
 interpreter_constraints = [">=3.12"]
 
 [flake8]
