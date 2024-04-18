@@ -78,7 +78,7 @@ public final class HttpApiKeyAuth implements PythonIntegration {
             // it to the properties dict.
             writer.putContext("scheme", trait.getScheme().orElse(null));
             writer.write("""
-                def $1L(auth_params: $2T) -> HTTPAuthOption:
+                def $1L(auth_params: $2T) -> HTTPAuthOption | None:
                     return HTTPAuthOption(
                         scheme_id=$3S,
                         identity_properties={},

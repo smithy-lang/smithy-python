@@ -40,9 +40,9 @@ class ApiKeySigningProperties(TypedDict):
 
 
 class ApiKeyConfig(Protocol):
-    api_key_identity_resolver: IdentityResolver[
-        ApiKeyIdentity, IdentityProperties
-    ] | None
+    api_key_identity_resolver: (
+        IdentityResolver[ApiKeyIdentity, IdentityProperties] | None
+    )
 
 
 @dataclass(init=False)

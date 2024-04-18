@@ -2,15 +2,21 @@
 #  SPDX-License-Identifier: Apache-2.0
 from copy import copy, deepcopy
 from itertools import chain
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from urllib.parse import parse_qs, urlunparse
 
-try:
+if TYPE_CHECKING:
+    # pyright doesn't like optional imports. This is reasonable because if we use these
+    # in type hints then they'd result in runtime errors.
+    # TODO: add integ tests that import these without the dependendency installed
     import aiohttp
+
+try:
+    import aiohttp  # noqa: F811
 
     HAS_AIOHTTP = True
 except ImportError:
-    HAS_AIOHTTP = False
+    HAS_AIOHTTP = False  # type: ignore
 
 from smithy_core.aio.utils import async_list
 from smithy_core.exceptions import MissingDependencyException
@@ -46,7 +52,7 @@ class AIOHTTPClient(HTTPClient):
         self,
         *,
         client_config: AIOHTTPClientConfig | None = None,
-        _session: aiohttp.ClientSession | None = None,
+        _session: "aiohttp.ClientSession | None" = None,
     ) -> None:
         """
         :param client_config: Configuration that applies to all requests made with this
@@ -91,7 +97,7 @@ class AIOHTTPClient(HTTPClient):
         return urlunparse(components)
 
     async def _marshal_response(
-        self, aiohttp_resp: aiohttp.ClientResponse
+        self, aiohttp_resp: "aiohttp.ClientResponse"
     ) -> HTTPResponseInterface:
         """Convert a ``aiohttp.ClientResponse`` to a ``smithy_http.aio.HTTPResponse``"""
         headers = Fields()

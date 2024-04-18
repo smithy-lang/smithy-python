@@ -15,12 +15,7 @@ from dataclasses import dataclass
 from typing import Any, Protocol, TypedDict, TypeVar
 
 from smithy_core.aio.interfaces.identity import IdentityResolver
-from smithy_core.interfaces.identity import (
-    IdentityConfig_contra,
-    IdentityPropertiesType_contra,
-    IdentityType,
-    IdentityType_contra,
-)
+from smithy_core.interfaces.identity import Identity, IdentityProperties
 
 from . import HTTPRequest
 
@@ -37,15 +32,15 @@ SigningPropertiesType_contra = TypeVar(
 )
 
 
-class HTTPSigner(Protocol[IdentityType_contra, SigningPropertiesType_contra]):
+class HTTPSigner[I: Identity, SP: SigningProperties](Protocol):
     """An interface for generating a signed HTTP request."""
 
     async def sign(
         self,
         *,
         http_request: HTTPRequest,
-        identity: IdentityType_contra,
-        signing_properties: SigningPropertiesType_contra,
+        identity: I,
+        signing_properties: SP,
     ) -> HTTPRequest:
         """Generate a new signed HTTPRequest based on the one provided.
 
@@ -57,13 +52,8 @@ class HTTPSigner(Protocol[IdentityType_contra, SigningPropertiesType_contra]):
         ...
 
 
-class HTTPAuthScheme(
-    Protocol[
-        IdentityType,
-        IdentityConfig_contra,
-        IdentityPropertiesType_contra,
-        SigningPropertiesType,
-    ]
+class HTTPAuthScheme[I: Identity, C, IP: IdentityProperties, SP: SigningProperties](
+    Protocol
 ):
     """Represents a way a service will authenticate the user's identity."""
 
@@ -71,11 +61,9 @@ class HTTPAuthScheme(
     scheme_id: str
 
     # An API that can be used to sign HTTP requests.
-    signer: HTTPSigner[IdentityType, SigningPropertiesType]
+    signer: HTTPSigner[I, SP]
 
-    def identity_resolver(
-        self, *, config: IdentityConfig_contra
-    ) -> IdentityResolver[IdentityType, IdentityPropertiesType_contra]:
+    def identity_resolver(self, *, config: C) -> IdentityResolver[I, IP]:
         """An API that can be queried to resolve identity."""
         ...
 

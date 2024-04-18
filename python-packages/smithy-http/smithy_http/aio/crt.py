@@ -1,19 +1,28 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+#  pyright: reportMissingTypeStubs=false,reportUnknownMemberType=false
+#  flake8: noqa: F811
 import asyncio
 from collections.abc import AsyncGenerator, AsyncIterable, Awaitable
 from concurrent.futures import Future
 from io import BytesIO
 from threading import Lock
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-try:
+if TYPE_CHECKING:
+    # pyright doesn't like optional imports. This is reasonable because if we use these
+    # in type hints then they'd result in runtime errors.
+    # TODO: add integ tests that import these without the dependendency installed
     from awscrt import http as crt_http
     from awscrt import io as crt_io
 
+try:
+    from awscrt import http as crt_http  # noqa: F811
+    from awscrt import io as crt_io  # noqa: F811
+
     HAS_CRT = True
 except ImportError:
-    HAS_CRT = False
+    HAS_CRT = False  # type: ignore
 
 from smithy_core import interfaces as core_interfaces
 from smithy_core.exceptions import MissingDependencyException
@@ -37,7 +46,7 @@ class _AWSCRTEventLoop:
         _assert_crt()
         self.bootstrap = self._initialize_default_loop()
 
-    def _initialize_default_loop(self) -> crt_io.ClientBootstrap:
+    def _initialize_default_loop(self) -> "crt_io.ClientBootstrap":
         event_loop_group = crt_io.EventLoopGroup(1)
         host_resolver = crt_io.DefaultHostResolver(event_loop_group)
         return crt_io.ClientBootstrap(event_loop_group, host_resolver)
@@ -46,14 +55,14 @@ class _AWSCRTEventLoop:
 class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
     def __init__(self) -> None:
         _assert_crt()
-        self._stream: crt_http.HttpClientStream | None = None
+        self._stream: "crt_http.HttpClientStream | None" = None
         self._status_code_future: Future[int] = Future()
         self._headers_future: Future[Fields] = Future()
         self._chunk_futures: list[Future[bytes]] = []
         self._received_chunks: list[bytes] = []
         self._chunk_lock: Lock = Lock()
 
-    def _set_stream(self, stream: crt_http.HttpClientStream) -> None:
+    def _set_stream(self, stream: "crt_http.HttpClientStream") -> None:
         if self._stream is not None:
             raise SmithyHTTPException("Stream already set on AWSCRTHTTPResponse object")
         self._stream = stream
@@ -155,7 +164,7 @@ class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
 
 
 ConnectionPoolKey = tuple[str, str, int | None]
-ConnectionPoolDict = dict[ConnectionPoolKey, crt_http.HttpClientConnection]
+ConnectionPoolDict = dict[ConnectionPoolKey, "crt_http.HttpClientConnection"]
 
 
 class AWSCRTHTTPClientConfig(http_interfaces.HTTPClientConfiguration):
@@ -190,8 +199,9 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
     async def send(
         self,
+        *,
         request: http_aio_interfaces.HTTPRequest,
-        request_config: http_interfaces.HTTPRequestConfiguration | None = None,
+        request_config: http_aio_interfaces.HTTPRequestConfiguration | None = None,
     ) -> AWSCRTHTTPResponse:
         """Send HTTP request using awscrt client.
 
@@ -203,15 +213,15 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         crt_response = AWSCRTHTTPResponse()
         crt_stream = connection.request(
             crt_request,
-            crt_response._on_headers,
-            crt_response._on_body,
+            crt_response._on_headers,  # pyright: ignore[reportPrivateUsage]
+            crt_response._on_body,  # pyright: ignore[reportPrivateUsage]
         )
-        crt_response._set_stream(crt_stream)
+        crt_response._set_stream(crt_stream)  # pyright: ignore[reportPrivateUsage]
         return crt_response
 
     async def _create_connection(
         self, url: core_interfaces.URI
-    ) -> crt_http.HttpClientConnection:
+    ) -> "crt_http.HttpClientConnection":
         """Builds and validates connection to ``url``, returns it as
         ``asyncio.Future``"""
         connect_future = self._build_new_connection(url)
@@ -221,7 +231,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
     async def _get_connection(
         self, url: core_interfaces.URI
-    ) -> crt_http.HttpClientConnection:
+    ) -> "crt_http.HttpClientConnection":
         # TODO: Use CRT connection pooling instead of this basic kind
         connection_key = (url.scheme, url.host, url.port)
         if connection_key in self._connections:
@@ -233,7 +243,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
     def _build_new_connection(
         self, url: core_interfaces.URI
-    ) -> Future[crt_http.HttpClientConnection]:
+    ) -> Future["crt_http.HttpClientConnection"]:
         if url.scheme == "http":
             port = self._HTTP_PORT
             tls_connection_options = None
@@ -250,18 +260,18 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         if url.port is not None:
             port = url.port
 
-        connect_future: Future[
-            crt_http.HttpClientConnection
-        ] = crt_http.HttpClientConnection.new(
-            bootstrap=self._client_bootstrap,
-            host_name=url.host,
-            port=port,
-            socket_options=self._socket_options,
-            tls_connection_options=tls_connection_options,
+        connect_future: Future[crt_http.HttpClientConnection] = (
+            crt_http.HttpClientConnection.new(
+                bootstrap=self._client_bootstrap,
+                host_name=url.host,
+                port=port,
+                socket_options=self._socket_options,
+                tls_connection_options=tls_connection_options,
+            )
         )
         return connect_future
 
-    def _validate_connection(self, connection: crt_http.HttpClientConnection) -> None:
+    def _validate_connection(self, connection: "crt_http.HttpClientConnection") -> None:
         """Validates an existing connection against the client config.
 
         Checks performed:
@@ -280,7 +290,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
     async def _marshal_request(
         self, request: http_aio_interfaces.HTTPRequest
-    ) -> crt_http.HttpRequest:
+    ) -> "crt_http.HttpRequest":
         """Create :py:class:`awscrt.http.HttpRequest` from
         :py:class:`smithy_http.aio.HTTPRequest`"""
         headers_list = []

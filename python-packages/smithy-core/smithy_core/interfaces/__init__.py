@@ -48,8 +48,7 @@ class URI(Protocol):
 class ByteStream(Protocol):
     """A file-like object with a read method that returns bytes."""
 
-    def read(self, size: int = -1) -> bytes:
-        pass
+    def read(self, size: int = -1) -> bytes: ...
 
 
 # A union of all acceptable streaming blob types. Deserialized payloads will

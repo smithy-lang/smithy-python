@@ -128,9 +128,9 @@ async def test_sign_header_with_scheme(signer: ApiKeySigner) -> None:
 
 @dataclass
 class ApiKeyConfig:
-    api_key_identity_resolver: IdentityResolver[
-        ApiKeyIdentity, IdentityProperties
-    ] | None = None
+    api_key_identity_resolver: (
+        IdentityResolver[ApiKeyIdentity, IdentityProperties] | None
+    ) = None
 
 
 async def test_auth_scheme_gets_resolver() -> None:

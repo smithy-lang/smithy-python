@@ -60,7 +60,7 @@ class URI(interfaces.URI):
         ):
             raise SmithyException(f"Invalid host: {self.host}")
 
-    @cached_property
+    @property
     def netloc(self) -> str:
         """Construct netloc string in format ``{username}:{password}@{host}:{port}``
 
@@ -68,6 +68,12 @@ class URI(interfaces.URI):
         is ignored, unless ``username`` is also set. Add square brackets around the host
         if it is a valid IPv6 endpoint URI per :rfc:`3986#section-3.2.2`.
         """
+        return self._netloc
+
+    # cached_property does NOT behave like property, it actually allows for setting.
+    # Therefore we need a layer of indirection.
+    @cached_property
+    def _netloc(self) -> str:
         if self.username is not None:
             password = "" if self.password is None else f":{self.password}"
             userinfo = f"{self.username}{password}@"
@@ -86,9 +92,13 @@ class URI(interfaces.URI):
 
         return f"{userinfo}{host}{port}"
 
-    @cached_property
+    @property
     def host_type(self) -> HostType:
         """Return the type of host."""
+        return self._host_type
+
+    @cached_property
+    def _host_type(self) -> HostType:
         if rfc3986.IPv6_MATCHER.match(f"[{self.host}]"):
             return HostType.IPv6
         if rfc3986.IPv4_MATCHER.match(self.host):

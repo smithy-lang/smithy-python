@@ -986,6 +986,11 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                     """, locationName, memberName, targetHandler);
                 }
             }
+            writer.write("""
+                    case _:
+                        pass
+
+                    """);
         });
 
     }
