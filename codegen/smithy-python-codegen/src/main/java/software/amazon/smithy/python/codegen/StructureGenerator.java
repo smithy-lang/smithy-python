@@ -93,7 +93,6 @@ final class StructureGenerator implements Runnable {
      * Renders a normal, non-error structure.
      */
     private void renderStructure() {
-        writer.addStdlibImport("typing", "Dict");
         writer.addStdlibImport("dataclasses", "dataclass");
         var symbol = symbolProvider.toSymbol(shape);
 
@@ -138,8 +137,8 @@ final class StructureGenerator implements Runnable {
                 class $1L($2T):
                     ${5C|}
 
-                    code: ClassVar[Literal[$3S]] = $3S
-                    fault: ClassVar[Literal[$4S]] = $4S
+                    code: ClassVar[str] = $3S
+                    fault: ClassVar[Literal["client", "server"]] = $4S
 
                     message: str
                     ${6C|}

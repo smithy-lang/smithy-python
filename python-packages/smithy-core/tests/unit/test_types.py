@@ -1,5 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+# pyright: reportPrivateUsage=false
 from smithy_core.types import JsonBlob, JsonString
 
 

@@ -613,11 +613,10 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
     private void writeUtilStubs(Symbol serviceSymbol) {
         LOGGER.fine(String.format("Writing utility stubs for %s : %s", serviceSymbol.getName(), protocol.getName()));
-        writer.addStdlibImport("typing", "Any");
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-        writer.addImport("smithy_http", "Fields");
-        writer.addImport("smithy_http.interfaces", "HTTPRequestConfiguration");
+        writer.addImports("smithy_http.interfaces", Set.of(
+                "HTTPRequestConfiguration", "HTTPClientConfiguration"));
         writer.addImports("smithy_http.aio.interfaces", Set.of("HTTPRequest", "HTTPResponse"));
         writer.addImport("smithy_http", "tuples_to_fields");
         writer.addImport("smithy_http.aio", "HTTPResponse", "_HTTPResponse");
@@ -634,8 +633,11 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         class $3L:
                             ""\"An asynchronous HTTP client solely for testing purposes.""\"
 
+                            def __init__(self, *, client_config: HTTPClientConfiguration | None = None):
+                                self._client_config = client_config
+
                             async def send(
-                                self, *, request: HTTPRequest, request_config: HTTPRequestConfiguration | None
+                                self, *, request: HTTPRequest, request_config: HTTPRequestConfiguration | None = None
                             ) -> HTTPResponse:
                                 # Raise the exception with the request object to bypass actual request handling
                                 raise $1T(request)
@@ -644,13 +646,21 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         class $4L:
                             ""\"An asynchronous HTTP client solely for testing purposes.""\"
 
-                            def __init__(self, status: int, headers: list[tuple[str, str]], body: bytes):
+                            def __init__(
+                                self,
+                                *,
+                                client_config: HTTPClientConfiguration | None = None,
+                                status: int = 200,
+                                headers: list[tuple[str, str]] | None = None,
+                                body: bytes = b"",
+                            ):
+                                self._client_config = client_config
                                 self.status = status
-                                self.fields = tuples_to_fields(headers)
+                                self.fields = tuples_to_fields(headers or [])
                                 self.body = body
 
                             async def send(
-                                self, *, request: HTTPRequest, request_config: HTTPRequestConfiguration | None
+                                self, *, request: HTTPRequest, request_config: HTTPRequestConfiguration | None = None
                             ) -> _HTTPResponse:
                                 # Pre-construct the response from the request and return it
                                 return _HTTPResponse(

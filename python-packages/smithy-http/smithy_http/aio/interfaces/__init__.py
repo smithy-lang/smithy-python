@@ -69,7 +69,10 @@ class HTTPClient(Protocol):
         ...
 
     async def send(
-        self, *, request: HTTPRequest, request_config: HTTPRequestConfiguration | None
+        self,
+        *,
+        request: HTTPRequest,
+        request_config: HTTPRequestConfiguration | None = None,
     ) -> HTTPResponse:
         """Send HTTP request over the wire and return the response.
 

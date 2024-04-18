@@ -10,8 +10,7 @@ from ...interfaces import StreamingBlob as SyncStreamingBlob
 class AsyncByteStream(Protocol):
     """A file-like object with an async read method."""
 
-    async def read(self, size: int = -1) -> bytes:
-        pass
+    async def read(self, size: int = -1) -> bytes: ...
 
 
 # A union of all acceptable streaming blob types. Deserialized payloads will

@@ -265,13 +265,13 @@ def test_epoch_seconds_to_datetime(given: int | float, expected: datetime) -> No
     assert epoch_seconds_to_datetime(given) == expected
 
 
-def test_epoch_seconds_to_datetime_with_overflow_error(monkeypatch):
+def test_epoch_seconds_to_datetime_with_overflow_error(monkeypatch):  # type: ignore
     # Emulate the Year 2038 problem by always raising an OverflowError.
     datetime_mock = Mock(wraps=datetime)
     datetime_mock.fromtimestamp = Mock(side_effect=OverflowError())
-    monkeypatch.setattr("smithy_core.utils.datetime", datetime_mock)
+    monkeypatch.setattr("smithy_core.utils.datetime", datetime_mock)  # type: ignore
     dt_object = datetime(2038, 1, 19, 3, 14, 8, tzinfo=timezone.utc)
-    epoch_seconds_to_datetime(2147483648) == dt_object
+    assert epoch_seconds_to_datetime(2147483648) == dt_object
 
 
 @pytest.mark.parametrize(

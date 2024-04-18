@@ -71,8 +71,7 @@ _T = TypeVar("_T")
 
 
 @overload
-def expect_type(typ: type[_T], value: Any) -> _T:
-    ...
+def expect_type(typ: type[_T], value: Any) -> _T: ...
 
 
 # For some reason, mypy and other type checkers don't treat Union like a full type
@@ -80,8 +79,7 @@ def expect_type(typ: type[_T], value: Any) -> _T:
 # we can't pass back the given type when we're given a union. So instead we have to
 # return Any.
 @overload
-def expect_type(typ: UnionType, value: Any) -> Any:
-    ...
+def expect_type(typ: UnionType, value: Any) -> Any: ...
 
 
 def expect_type(typ: UnionType | type, value: Any) -> Any:
@@ -246,7 +244,7 @@ def remove_dot_segments(path: str, remove_consecutive_slashes: bool = False) -> 
     :param remove_consecutive_slashes: Whether to remove consecutive slashes.
     :returns: The path with dot segments removed.
     """
-    output = []
+    output: list[str] = []
     for segment in path.split("/"):
         if segment == ".":
             continue

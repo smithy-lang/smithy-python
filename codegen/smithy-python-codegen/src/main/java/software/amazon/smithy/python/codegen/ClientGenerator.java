@@ -395,10 +395,6 @@ final class ClientGenerator implements Runnable {
             writer.addImport("smithy_core", "URI");
             writer.write("""
                         # Step 7f: Invoke endpoint_resolver.resolve_endpoint
-                        if config.endpoint_resolver is None:
-                            raise $1T(
-                                "No endpoint_resolver found on the operation config."
-                            )
                         if config.endpoint_uri is None:
                             raise $1T(
                                 "No endpoint_uri found on the operation config."
@@ -673,7 +669,7 @@ final class ClientGenerator implements Runnable {
                 }
             }
             writer.write("""
-                operation_plugins = [
+                operation_plugins: list[Plugin] = [
                     $C
                 ]
                 if plugins:

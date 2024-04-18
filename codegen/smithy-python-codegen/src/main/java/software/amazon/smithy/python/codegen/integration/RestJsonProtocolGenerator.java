@@ -176,9 +176,12 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                 } else {
                     writer.addStdlibImport("typing", "AsyncIterator");
                     writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
+                    // Note that this type ignore is because we can't explicitly narrow the iterator to
+                    // a bytes iterator and pyright isn't quite as clever about narrowing the union as
+                    // mypy is in this case.
                     writer.write("""
                         if isinstance($1L, AsyncIterator):
-                            body = $1L
+                            body = $1L  # type: ignore
                         else:
                             body = AsyncBytesReader($1L)
                         """, dataSource);
@@ -256,7 +259,6 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
             // on that operation with an http payload. If the operation has at least 1 error with an
             // http payload then the body cannot be safely pre-parsed and must be parsed here
             // within the deserializer
-            writer.addStdlibImport("typing", "cast");
             writer.write("""
                 if (parsed_body is None) and (body := await http_response.consume_body()):
                     parsed_body = json.loads(body)

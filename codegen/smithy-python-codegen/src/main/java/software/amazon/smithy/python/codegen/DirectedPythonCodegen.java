@@ -167,8 +167,8 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
                     @dataclass
                     class $3L($1L):
                         ""\"Error representing any unknown api errors""\"
-                        code: ClassVar[Literal['Unknown']] = 'Unknown'
-                        fault: ClassVar[Literal["client"]] = "client"
+                        code: ClassVar[str] = 'Unknown'
+                        fault: ClassVar[Literal["client", "server"]] = "client"
                     """, apiError.getName(), serviceError, unknownApiError.getName());
         });
     }
@@ -287,7 +287,7 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
         }
         int minorVersion = Integer.parseInt(matcher.group("minor"));
         if (minorVersion < PYTHON_MINOR_VERSION) {
-            LOGGER.warning(format("""
+            LOGGER.warning(String.format("""
                     Found incompatible python version 3.%s.%s, expected 3.12.0 or greater. \
                     Skipping formatting and type checking.""",
                     matcher.group("minor"), matcher.group("patch")));
@@ -301,11 +301,11 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
             }
             CodegenUtils.runCommand("python3 " + file, fileManifest.getBaseDir());
         }
-        formatCode(fileManifest);
-        runMypy(fileManifest);
+        format(fileManifest);
+        check(fileManifest);
     }
 
-    private void formatCode(FileManifest fileManifest) {
+    private void format(FileManifest fileManifest) {
         try {
             CodegenUtils.runCommand("python3 -m black -h", fileManifest.getBaseDir());
         } catch (CodegenException e) {
@@ -316,14 +316,14 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
         CodegenUtils.runCommand("python3 -m black . --exclude \"\"", fileManifest.getBaseDir());
     }
 
-    private void runMypy(FileManifest fileManifest) {
+    private void check(FileManifest fileManifest) {
         try {
-            CodegenUtils.runCommand("python3 -m mypy -h", fileManifest.getBaseDir());
+            CodegenUtils.runCommand("python3 -m pyright -h", fileManifest.getBaseDir());
         } catch (CodegenException e) {
-            LOGGER.warning("Unable to find the python package mypy. Skipping type checking.");
+            LOGGER.warning("Unable to find the pyright package. Skipping type checking.");
             return;
         }
         LOGGER.info("Running mypy on generated code");
-        CodegenUtils.runCommand("python3 -m mypy .", fileManifest.getBaseDir());
+        CodegenUtils.runCommand("python3 -m pyright .", fileManifest.getBaseDir());
     }
 }

@@ -100,13 +100,17 @@ final class SetupGenerator {
                 writer.openBlock("tests = [", "]", () -> writeDependencyList(writer, deps.values()));
             });
 
+            // TODO: remove the pyright global suppressions after the serde redo is done
             writer.write("""
                     [tool.setuptools.packages.find]
                     exclude=["tests*"]
 
                     [tool.pyright]
                     typeCheckingMode = "strict"
-                    strict = true
+                    reportPrivateUsage = false
+                    reportUnusedFunction = false
+                    reportUnusedVariable = false
+                    reportUnnecessaryComparison = false
 
                     [tool.black]
                     target-version = ["py311"]

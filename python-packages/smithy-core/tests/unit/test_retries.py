@@ -55,7 +55,7 @@ def test_exponential_backoff_strategy(
         delay_actual = bos.compute_next_backoff_delay(retry_attempt=delay_index)
         delay_expected2 = delay_expected
         print(f"{delay_index=} {delay_actual=} {delay_expected2=}")
-        assert delay_actual == pytest.approx(delay_expected)
+        assert delay_actual == pytest.approx(delay_expected)  # type: ignore
 
 
 @pytest.mark.parametrize("max_attempts", [2, 3, 10])

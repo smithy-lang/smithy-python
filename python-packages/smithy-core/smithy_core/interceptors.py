@@ -1,7 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from copy import copy, deepcopy
-from typing import Any, Generic, TypeVar
+from typing import Any, TypeVar
 
 Request = TypeVar("Request")
 Response = TypeVar("Response")
@@ -9,9 +9,7 @@ TransportRequest = TypeVar("TransportRequest")
 TransportResponse = TypeVar("TransportResponse")
 
 
-class InterceptorContext(
-    Generic[Request, Response, TransportRequest, TransportResponse]
-):
+class InterceptorContext[Request, Response, TransportRequest, TransportResponse]:
     def __init__(
         self,
         *,
@@ -101,7 +99,9 @@ class InterceptorContext(
         if transport_response is None:
             transport_response = copy(self._transport_response)
 
-        context = InterceptorContext(
+        context: InterceptorContext[
+            Request, Response, TransportRequest, TransportResponse
+        ] = InterceptorContext(
             request=request if request is not None else self._request,
             response=response if response is not None else self._response,
             transport_request=transport_request,
@@ -111,7 +111,7 @@ class InterceptorContext(
         return context
 
 
-class Interceptor(Generic[Request, Response, TransportRequest, TransportResponse]):
+class Interceptor[Request, Response, TransportRequest, TransportResponse]:
     """Allows injecting code into the SDK's request execution pipeline.
 
     Terminology:
