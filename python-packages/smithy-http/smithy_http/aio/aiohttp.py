@@ -18,6 +18,8 @@ try:
 except ImportError:
     HAS_AIOHTTP = False  # type: ignore
 
+from smithy_core.aio.interfaces import StreamingBlob
+from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.aio.utils import async_list
 from smithy_core.exceptions import MissingDependencyException
 from smithy_core.interfaces import URI
@@ -82,12 +84,16 @@ class AIOHTTPClient(HTTPClient):
             )
         )
 
+        body: StreamingBlob = request.body
+        if not isinstance(body, AsyncBytesReader):
+            body = AsyncBytesReader(body)
+
         async with self._session.request(
             method=request.method,
             url=self._serialize_uri_without_query(request.destination),
             params=parse_qs(request.destination.query),
             headers=headers_list,
-            data=request.body,
+            data=body,
         ) as resp:
             return await self._marshal_response(resp)
 

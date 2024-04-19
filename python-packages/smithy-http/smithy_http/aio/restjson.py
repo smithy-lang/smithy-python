@@ -30,7 +30,7 @@ async def parse_rest_json_error_info(
             code = field.values[0]
 
     if check_body:
-        if body := await http_response.consume_body():
+        if body := await http_response.consume_body_async():
             json_body = json.loads(body)
 
         if json_body:

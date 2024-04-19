@@ -19,3 +19,8 @@ class SmithyIdentityException(SmithyException):
 class MissingDependencyException(SmithyException):
     """Exception type raised when a feature that requires a missing optional dependency
     is called."""
+
+
+class AsyncBodyException(SmithyException):
+    """Exception indicating that a request with an async body type was created in a sync
+    context."""
