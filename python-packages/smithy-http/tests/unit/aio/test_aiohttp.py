@@ -9,5 +9,5 @@ async def test_basic_request_local(sample_request: HTTPRequest) -> None:
     session = AIOHTTPClient(client_config=config)
     response = await session.send(request=sample_request)
     assert response.status == 200
-    body = await response.consume_body()
+    body = await response.consume_body_async()
     assert b"aws" in body

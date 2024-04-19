@@ -155,13 +155,6 @@ class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
             else:
                 break
 
-    async def consume_body(self) -> bytes:
-        """Iterate over request body and return as bytes."""
-        body = b""
-        async for chunk in self.body:
-            body += chunk
-        return body
-
 
 ConnectionPoolKey = tuple[str, str, int | None]
 ConnectionPoolDict = dict[ConnectionPoolKey, "crt_http.HttpClientConnection"]
@@ -302,7 +295,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
         path = self._render_path(request.destination)
         headers = crt_http.HttpHeaders(headers_list)
-        body = BytesIO(await request.consume_body())
+        body = BytesIO(await request.consume_body_async())
 
         crt_request = crt_http.HttpRequest(
             method=request.method,

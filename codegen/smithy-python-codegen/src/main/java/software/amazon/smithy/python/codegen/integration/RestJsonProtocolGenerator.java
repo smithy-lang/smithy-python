@@ -250,7 +250,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         if (operationOrError.isOperationShape()) {
             writer.write("""
                 output: dict[str, Document] = {}
-                if (body := await http_response.consume_body()):
+                if (body := await http_response.consume_body_async()):
                     output = json.loads(body)
 
                 """);
@@ -260,7 +260,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
             // http payload then the body cannot be safely pre-parsed and must be parsed here
             // within the deserializer
             writer.write("""
-                if (parsed_body is None) and (body := await http_response.consume_body()):
+                if (parsed_body is None) and (body := await http_response.consume_body_async()):
                     parsed_body = json.loads(body)
 
                 output: dict[str, Document] = parsed_body if parsed_body is not None else {}

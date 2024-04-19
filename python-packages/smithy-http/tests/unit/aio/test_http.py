@@ -20,8 +20,7 @@ async def test_request() -> None:
     assert request.method == "GET"
     assert request.destination == uri
     assert request.fields == headers
-    request_body = b"".join([chunk async for chunk in request.body])
-    assert request_body == b"test body"
+    assert await request.consume_body_async() == b"test body"
 
 
 async def test_response() -> None:
@@ -34,5 +33,4 @@ async def test_response() -> None:
 
     assert response.status == 200
     assert response.fields == headers
-    response_body = await response.consume_body()
-    assert response_body == b"test body"
+    assert await response.consume_body_async() == b"test body"

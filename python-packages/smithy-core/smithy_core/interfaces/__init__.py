@@ -1,6 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-from typing import Protocol, Union, runtime_checkable
+from typing import Protocol, runtime_checkable
 
 
 class URI(Protocol):
@@ -53,8 +53,4 @@ class ByteStream(Protocol):
 
 # A union of all acceptable streaming blob types. Deserialized payloads will
 # always return a ByteStream, or AsyncByteStream if async is enabled.
-StreamingBlob = Union[
-    ByteStream,
-    bytes,
-    bytearray,
-]
+type StreamingBlob = ByteStream | bytes | bytearray

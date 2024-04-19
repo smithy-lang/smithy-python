@@ -68,7 +68,7 @@ public final class JsonPayloadDeserVisitor extends ShapeVisitor.Default<Void> {
                 context.symbolProvider().toMemberName(member));
         } else {
             writer.write("""
-                    if (body := await http_response.consume_body()):
+                    if (body := await http_response.consume_body_async()):
                         kwargs[$1S] = body
 
                     """,
@@ -82,7 +82,7 @@ public final class JsonPayloadDeserVisitor extends ShapeVisitor.Default<Void> {
     @Override
     public Void stringShape(StringShape shape) {
         writer.write("""
-                if (body := await http_response.consume_body()):
+                if (body := await http_response.consume_body_async()):
                     kwargs[$S] = body.decode('utf-8')
 
                 """,
@@ -118,7 +118,7 @@ public final class JsonPayloadDeserVisitor extends ShapeVisitor.Default<Void> {
         var memberDeserializer = target.accept(memberVisitor);
 
         writer.write("""
-                if (body := await http_response.consume_body()):
+                if (body := await http_response.consume_body_async()):
                     kwargs[$S] = $L
 
                 """,

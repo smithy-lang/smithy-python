@@ -2,7 +2,8 @@
 #  SPDX-License-Identifier: Apache-2.0
 from typing import Protocol, TypeVar
 
-from smithy_core.aio import Request, Response
+from smithy_core.aio.interfaces import Request, Response
+from smithy_core.aio.utils import read_streaming_blob, read_streaming_blob_async
 
 from ...interfaces import (
     Endpoint,
@@ -37,6 +38,14 @@ class HTTPRequest(Request, Protocol):
     method: str
     fields: Fields
 
+    async def consume_body_async(self) -> bytes:
+        """Iterate over request body and return as bytes."""
+        return await read_streaming_blob_async(self.body)
+
+    def consume_body(self) -> bytes:
+        """Iterate over request body and return as bytes."""
+        return read_streaming_blob(self.body)
+
 
 class HTTPResponse(Response, Protocol):
     """HTTP primitives returned from an Exchange, used to construct a client
@@ -56,6 +65,14 @@ class HTTPResponse(Response, Protocol):
     def reason(self) -> str | None:
         """Optional string provided by the server explaining the status."""
         ...
+
+    async def consume_body_async(self) -> bytes:
+        """Iterate over request body and return as bytes."""
+        return await read_streaming_blob_async(self.body)
+
+    def consume_body(self) -> bytes:
+        """Iterate over request body and return as bytes."""
+        return read_streaming_blob(self.body)
 
 
 class HTTPClient(Protocol):
