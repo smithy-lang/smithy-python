@@ -986,6 +986,8 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                     """, locationName, memberName, targetHandler);
                 }
             }
+
+            // Unknown headers are skipped, just like unknown structure members.
             writer.write("""
                     case _:
                         pass
