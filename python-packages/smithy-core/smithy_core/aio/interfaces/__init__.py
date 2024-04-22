@@ -22,7 +22,7 @@ type StreamingBlob = SyncStreamingBlob | AsyncByteStream | AsyncIterable[bytes]
 class Request(Protocol):
     """Protocol-agnostic representation of a request.
 
-    :praram destination: The URI where the request should be sent to.
+    :param destination: The URI where the request should be sent to.
     :param body: The request payload as iterable of chunks of bytes.
     """
 
