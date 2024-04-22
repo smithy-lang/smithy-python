@@ -168,7 +168,6 @@ class Schema:
             traits=traits,
             members=struct_members,
         )
-        print(repr(result))
         return result
 
 
