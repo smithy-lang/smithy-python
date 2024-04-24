@@ -171,3 +171,17 @@ def test_fields_inequality(fs1: Fields, fs2: Fields) -> None:
 def test_repeated_initial_field_names(initial_fields: list[Field]) -> None:
     with pytest.raises(ValueError):
         Fields(initial_fields)
+
+
+@pytest.mark.parametrize(
+    "fields,expected_length",
+    [
+        (Fields(), 0),
+        (Fields([Field(name="fname1")]), 1),
+        (Fields(encoding="utf-1"), 0),
+        (Fields([Field(name="fname", values=["val2", "val1"])]), 1),
+        (Fields([Field(name="f1"), Field(name="f2")]), 2),
+    ],
+)
+def test_fields_length_value(fields: Fields, expected_length: int) -> None:
+    assert len(fields) == expected_length
