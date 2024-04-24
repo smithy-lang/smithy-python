@@ -172,6 +172,12 @@ class Fields(interfaces.Fields):
     def __iter__(self) -> Iterator[interfaces.Field]:
         yield from self.entries.values()
 
+    def __len__(self) -> int:
+        return len(self.entries)
+
+    def __repr__(self) -> str:
+        return f"Fields({self.entries})"
+
 
 def quote_and_escape_field_value(value: str) -> str:
     """Escapes and quotes a single :class:`Field` value if necessary.
