@@ -63,6 +63,27 @@ def test_field_serialization(values: list[str], expected: str):
 
 
 @pytest.mark.parametrize(
+    "field,expected_repr",
+    [
+        (
+            Field(name="fname", values=["fval1", "fval2"], kind=FieldPosition.HEADER),
+            "Field(name='fname', value=['fval1', 'fval2'], kind=<FieldPosition.HEADER: 0>)",
+        ),
+        (
+            Field(name="fname", kind=FieldPosition.TRAILER),
+            "Field(name='fname', value=[], kind=<FieldPosition.TRAILER: 1>)",
+        ),
+        (
+            Field(name="fname"),
+            "Field(name='fname', value=[], kind=<FieldPosition.HEADER: 0>)",
+        ),
+    ],
+)
+def test_field_repr(field: Field, expected_repr: str) -> None:
+    assert repr(field) == expected_repr
+
+
+@pytest.mark.parametrize(
     "f1,f2",
     [
         (
@@ -185,3 +206,19 @@ def test_repeated_initial_field_names(initial_fields: list[Field]) -> None:
 )
 def test_fields_length_value(fields: Fields, expected_length: int) -> None:
     assert len(fields) == expected_length
+
+
+@pytest.mark.parametrize(
+    "fields,expected_repr",
+    [
+        (
+            Fields([Field(name="fname1")]),
+            (
+                "Fields(OrderedDict({'fname1': Field(name='fname1', value=[], "
+                "kind=<FieldPosition.HEADER: 0>)}))"
+            ),
+        ),
+    ],
+)
+def test_fields_repr(fields: Field, expected_repr: str) -> None:
+    assert repr(fields) == expected_repr
