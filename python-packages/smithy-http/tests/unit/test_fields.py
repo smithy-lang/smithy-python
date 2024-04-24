@@ -222,3 +222,17 @@ def test_fields_length_value(fields: Fields, expected_length: int) -> None:
 )
 def test_fields_repr(fields: Field, expected_repr: str) -> None:
     assert repr(fields) == expected_repr
+
+
+@pytest.mark.parametrize(
+    "fields,key,contained",
+    [
+        (Fields(), "bad_key", False),
+        (Fields([Field(name="fname1")]), "fname1", True),
+        (Fields([Field(name="fname2")]), "fname1", False),
+        (Fields([Field(name="f1"), Field(name="f2")]), "f1", True),
+        (Fields([Field(name="f1"), Field(name="f2")]), "f3", False),
+    ],
+)
+def test_fields_contains(fields: Fields, key: str, contained: bool) -> None:
+    assert (key in fields) is contained
