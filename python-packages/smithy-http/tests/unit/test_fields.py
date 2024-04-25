@@ -228,6 +228,7 @@ def test_fields_repr(fields: Field, expected_repr: str) -> None:
     "fields,key,contained",
     [
         (Fields(), "bad_key", False),
+        (Fields([Field(name="fname1")]), "FNAME1", True),
         (Fields([Field(name="fname1")]), "fname1", True),
         (Fields([Field(name="fname2")]), "fname1", False),
         (Fields([Field(name="f1"), Field(name="f2")]), "f1", True),

@@ -179,7 +179,7 @@ class Fields(interfaces.Fields):
         return f"Fields({self.entries})"
 
     def __contains__(self, key: str) -> bool:
-        return key in self.entries
+        return self._normalize_field_name(key) in self.entries
 
 
 def quote_and_escape_field_value(value: str) -> str:
