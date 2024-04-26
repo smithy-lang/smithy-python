@@ -109,14 +109,12 @@ class AIOHTTPClient(HTTPClient):
         headers = Fields()
         for header_name, header_val in aiohttp_resp.headers.items():
             try:
-                headers.get_field(header_name).add(header_val)
+                headers[header_name].add(header_val)
             except KeyError:
-                headers.set_field(
-                    Field(
-                        name=header_name,
-                        values=[header_val],
-                        kind=FieldPosition.HEADER,
-                    )
+                headers[header_name] = Field(
+                    name=header_name,
+                    values=[header_val],
+                    kind=FieldPosition.HEADER,
                 )
 
         return HTTPResponse(

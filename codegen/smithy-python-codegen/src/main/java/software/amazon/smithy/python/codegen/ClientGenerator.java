@@ -153,7 +153,7 @@ final class ClientGenerator implements Runnable {
                 if context.transport_response:
                     if context.transport_response.status in [429, 503]:
                         retry_after = None
-                        retry_header = context.transport_response.fields.get_field("retry-after")
+                        retry_header = context.transport_response.fields["retry-after"]
                         if retry_header and retry_header.values:
                             retry_after = float(retry_header.values[0])
                         return RetryErrorInfo(error_type=RetryErrorType.THROTTLING, retry_after_hint=retry_after)

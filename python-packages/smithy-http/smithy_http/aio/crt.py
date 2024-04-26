@@ -75,14 +75,12 @@ class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
         fields = Fields()
         for header_name, header_val in headers:
             try:
-                fields.get_field(header_name).add(header_val)
+                fields[header_name].add(header_val)
             except KeyError:
-                fields.set_field(
-                    Field(
-                        name=header_name,
-                        values=[header_val],
-                        kind=FieldPosition.HEADER,
-                    )
+                fields[header_name] = Field(
+                    name=header_name,
+                    values=[header_val],
+                    kind=FieldPosition.HEADER,
                 )
         self._status_code_future.set_result(status_code)
         self._headers_future.set_result(fields)

@@ -250,17 +250,17 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         ${9C|}
                     ]
                     for expected_key, expected_val in expected_headers:
-                        assert expected_val in actual.fields.get_field(expected_key).values
+                        assert expected_val in actual.fields[expected_key].values
 
                     forbidden_headers: set[str] = set($10J)
                     for forbidden_key in forbidden_headers:
                         with raises(KeyError):
-                            actual.fields.get_field(forbidden_key)
+                            actual.fields[forbidden_key]
 
                     required_headers: list[str] = $11J
                     for required_key in required_headers:
-                        # Fields.remove_field() raises KeyError if key does not exist
-                        actual.fields.remove_field(required_key)
+                        # del Fields[required_key] raises KeyError if key does not exist
+                        del actual.fields[required_key]
 
                     ${12C|}
 
