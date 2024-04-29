@@ -17,7 +17,6 @@ package software.amazon.smithy.python.codegen;
 
 import java.util.ArrayList;
 import java.util.Set;
-import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.MemberShape;
@@ -82,7 +81,7 @@ final class UnionGenerator implements Runnable {
         // the default implementation does exactly what we want: an instance check.
         // Since the underlying value is unknown and un-comparable, that is the only
         // realistic implementation.
-        var unknownSymbol = symbolProvider.toSymbol(shape).expectProperty("unknown", Symbol.class);
+        var unknownSymbol = symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.UNION_UNKNOWN);
         writer.write("""
                 @dataclass
                 class $1L:

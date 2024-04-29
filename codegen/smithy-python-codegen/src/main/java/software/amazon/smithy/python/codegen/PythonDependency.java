@@ -51,8 +51,8 @@ public record PythonDependency(
                 .dependencyType(type.getType())
                 .packageName(packageName)
                 .version(version)
-                .putProperty("isLink", isLink)
-                .putProperty("optionalDependencies", optionalDependencies)
+                .putProperty(SymbolProperties.IS_LINK, isLink)
+                .putProperty(SymbolProperties.OPTIONAL_DEPENDENCIES, optionalDependencies)
                 .build();
     }
 

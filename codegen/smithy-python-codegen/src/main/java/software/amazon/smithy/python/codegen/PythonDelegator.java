@@ -51,7 +51,7 @@ final class PythonDelegator extends WriterDelegator<PythonWriter> {
         public Symbol toSymbol(Shape shape) {
             Symbol symbol = wrapped.toSymbol(shape);
             if (shape.isEnumShape() || shape.isIntEnumShape()) {
-                symbol = symbol.expectProperty("enumSymbol", Symbol.class);
+                symbol = symbol.expectProperty(SymbolProperties.ENUM_SYMBOL);
             }
             return symbol;
         }

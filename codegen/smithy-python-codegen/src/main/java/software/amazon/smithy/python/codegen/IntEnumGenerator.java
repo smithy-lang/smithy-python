@@ -15,7 +15,6 @@
 
 package software.amazon.smithy.python.codegen;
 
-import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.directed.GenerateIntEnumDirective;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.traits.DocumentationTrait;
@@ -31,7 +30,7 @@ final class IntEnumGenerator implements Runnable {
 
     @Override
     public void run() {
-        var enumSymbol = directive.symbol().expectProperty("enumSymbol", Symbol.class);
+        var enumSymbol = directive.symbol().expectProperty(SymbolProperties.ENUM_SYMBOL);
         directive.context().writerDelegator().useShapeWriter(directive.shape(), writer -> {
             writer.addStdlibImport("enum", "IntEnum");
             writer.openBlock("class $L(IntEnum):", "", enumSymbol.getName(), () -> {

@@ -17,7 +17,6 @@ package software.amazon.smithy.python.codegen;
 
 import java.util.Iterator;
 import java.util.Locale;
-import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.EnumShape;
@@ -43,7 +42,7 @@ final class EnumGenerator implements Runnable {
 
     @Override
     public void run() {
-        var enumSymbol = symbolProvider.toSymbol(shape).expectProperty("enumSymbol", Symbol.class);
+        var enumSymbol = symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.ENUM_SYMBOL);
         writer.openBlock("class $L:", "", enumSymbol.getName(), () -> {
             shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
                 writer.writeDocs(writer.formatDocs(trait.getValue()));

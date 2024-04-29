@@ -129,7 +129,7 @@ final class SetupGenerator {
             writer.pushState();
             var dependency = iter.next();
             writer.putContext("deps", getOptionalDependencies(dependency));
-            writer.putContext("isLink", dependency.getProperty("isLink", Boolean.class).orElse(false));
+            writer.putContext("isLink", dependency.getProperty(SymbolProperties.IS_LINK).orElse(false));
             writer.putContext("last", !iter.hasNext());
             writer.write("""
                     "$L\
@@ -143,7 +143,7 @@ final class SetupGenerator {
 
     @SuppressWarnings("unchecked")
     private static List<String> getOptionalDependencies(SymbolDependency dependency) {
-        var optionals = dependency.getProperty("optionalDependencies", List.class)
+        var optionals = dependency.getProperty(SymbolProperties.OPTIONAL_DEPENDENCIES)
                 .filter(list -> {
                     for (var d : list) {
                         if (!(d instanceof String)) {

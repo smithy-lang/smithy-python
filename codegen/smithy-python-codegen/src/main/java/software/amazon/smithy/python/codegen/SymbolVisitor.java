@@ -65,6 +65,9 @@ import software.amazon.smithy.utils.StringUtils;
  *
  * <p>Reserved words for Python are automatically escaped so that they are
  * suffixed with "_". See "reserved-words.txt" for the list of words.
+ *
+ * <p>{@see {@link SymbolProperties}} for various additional properties that
+ * may be attached to symbols.
  */
 final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
@@ -299,7 +302,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         // generate the enum constants for convenience. We actually want
         // to pass around plain strings rather than what is effectively
         // a namespace class.
-        builder.putProperty("enumSymbol", escaper.escapeSymbol(shape, enumSymbol));
+        builder.putProperty(SymbolProperties.ENUM_SYMBOL, escaper.escapeSymbol(shape, enumSymbol));
         return builder.build();
     }
 
@@ -312,7 +315,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
                 .build();
 
         // Like string enums, int enums are plain ints when used as members.
-        builder.putProperty("enumSymbol", escaper.escapeSymbol(shape, enumSymbol));
+        builder.putProperty(SymbolProperties.ENUM_SYMBOL, escaper.escapeSymbol(shape, enumSymbol));
         return builder.build();
     }
 
@@ -340,7 +343,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
         return createSymbolBuilder(shape, name, format("%s.models", settings.moduleName()))
                 .definitionFile(format("./%s/models.py", settings.moduleName()))
-                .putProperty("unknown", unknownSymbol)
+                .putProperty(SymbolProperties.UNION_UNKNOWN, unknownSymbol)
                 .build();
     }
 
@@ -366,7 +369,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     }
 
     private Symbol.Builder createSymbolBuilder(Shape shape, String typeName) {
-        return Symbol.builder().putProperty("shape", shape).name(typeName);
+        return Symbol.builder().putProperty(SymbolProperties.SHAPE, shape).name(typeName);
     }
 
     private Symbol.Builder createSymbolBuilder(Shape shape, String typeName, String namespace) {
@@ -375,14 +378,14 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     private Symbol createStdlibSymbol(Shape shape, String typeName, String namespace) {
         return createSymbolBuilder(shape, typeName, namespace)
-                .putProperty("stdlib", true)
+                .putProperty(SymbolProperties.STDLIB, true)
                 .build();
     }
 
     private SymbolReference createStdlibReference(String typeName, String namespace) {
         return SymbolReference.builder()
                 .symbol(createStdlibSymbol(null, typeName, namespace))
-                .putProperty("stdlib", true)
+                .putProperty(SymbolProperties.STDLIB, true)
                 .options(SymbolReference.ContextOption.USE)
                 .build();
     }

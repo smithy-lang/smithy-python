@@ -317,6 +317,6 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
     }
 
     private Boolean isOperationSymbol(Symbol typeSymbol) {
-        return typeSymbol.getProperty("shape", Shape.class).map(Shape::isOperationShape).orElse(false);
+        return typeSymbol.getProperty(SymbolProperties.SHAPE).map(Shape::isOperationShape).orElse(false);
     }
 }
