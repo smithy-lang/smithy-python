@@ -46,7 +46,7 @@ final class ImportDeclarations implements ImportContainer {
     @Override
     public void importSymbol(Symbol symbol, String alias) {
         if (!symbol.getNamespace().isEmpty() && !symbol.getNamespace().equals(localNamespace)) {
-            if (symbol.getProperty("stdlib", Boolean.class).orElse(false)) {
+            if (symbol.getProperty(SymbolProperties.STDLIB).orElse(false)) {
                 addStdlibImport(symbol.getNamespace(), symbol.getName(), alias);
             } else {
                 addImport(symbol.getNamespace(), symbol.getName(), alias);

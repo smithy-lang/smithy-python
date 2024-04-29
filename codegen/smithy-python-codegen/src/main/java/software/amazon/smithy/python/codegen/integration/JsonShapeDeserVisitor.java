@@ -17,7 +17,6 @@ package software.amazon.smithy.python.codegen.integration;
 
 import java.util.Collection;
 import software.amazon.smithy.codegen.core.CodegenException;
-import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.knowledge.NullableIndex;
 import software.amazon.smithy.model.shapes.ListShape;
 import software.amazon.smithy.model.shapes.MapShape;
@@ -37,6 +36,7 @@ import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonWriter;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
+import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
@@ -229,7 +229,7 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
         var config = CodegenUtils.getConfigSymbol(context.settings());
         var symbol = context.symbolProvider().toSymbol(shape);
         var errorSymbol = CodegenUtils.getServiceError(context.settings());
-        var unknownSymbol = symbol.expectProperty("unknown", Symbol.class);
+        var unknownSymbol = symbol.expectProperty(SymbolProperties.UNION_UNKNOWN);
 
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addImport("smithy_core.types", "Document", "Document");
