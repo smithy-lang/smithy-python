@@ -1,3 +1,4 @@
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import (
     TYPE_CHECKING,
@@ -139,7 +140,7 @@ class Schema:
         id: ShapeID,
         type: ShapeType = ShapeType.STRUCTURE,
         traits: list["Trait"] | None = None,
-        members: dict[str, "MemberSchema"] | None = None,
+        members: Mapping[str, "MemberSchema"] | None = None,
     ) -> Self:
         """Create a schema for a collection shape.
 
