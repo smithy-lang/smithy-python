@@ -94,8 +94,8 @@ class Fields(interfaces.Fields):
     ):
         """Collection of header and trailer entries mapped by name.
 
-        :param initial: Initial list of ``Field`` objects. ``Field``s can alse be added
-        with :func:`set_field` and later removed with :func:`remove_field`.
+        :param initial: Initial list of ``Field`` objects. ``Field``s can also be added
+        and later removed.
         :param encoding: The string encoding to be used when converting the ``Field``
         name and value from ``str`` to ``bytes`` for transmission.
         """
@@ -117,16 +117,31 @@ class Fields(interfaces.Fields):
         self.encoding: str = encoding
 
     def set_field(self, field: interfaces.Field) -> None:
-        """Set entry for a Field name."""
-        normalized_name = self._normalize_field_name(field.name)
+        """Alias for __setitem__ to utilize the field.name for the entry key."""
+        self.__setitem__(field.name, field)
+
+    def __setitem__(self, name: str, field: interfaces.Field) -> None:
+        """Set or override entry for a Field name."""
+        normalized_name = self._normalize_field_name(name)
+        normalized_field_name = self._normalize_field_name(field.name)
+        if normalized_name != normalized_field_name:
+            raise ValueError(
+                f"Supplied key {name} does not match Field.name "
+                f"provided: {normalized_field_name}"
+            )
         self.entries[normalized_name] = field
 
-    def get_field(self, name: str) -> interfaces.Field:
+    def get(
+        self, key: str, default: interfaces.Field | None = None
+    ) -> interfaces.Field | None:
+        return self[key] if key in self else default
+
+    def __getitem__(self, name: str) -> interfaces.Field:
         """Retrieve Field entry."""
         normalized_name = self._normalize_field_name(name)
         return self.entries[normalized_name]
 
-    def remove_field(self, name: str) -> None:
+    def __delitem__(self, name: str) -> None:
         """Delete entry from collection."""
         normalized_name = self._normalize_field_name(name)
         del self.entries[normalized_name]
@@ -147,11 +162,11 @@ class Fields(interfaces.Fields):
         """
         for other_field in other:
             try:
-                cur_field = self.get_field(name=other_field.name)
+                cur_field = self.__getitem__(other_field.name)
                 for other_value in other_field.values:
                     cur_field.add(other_value)
             except KeyError:
-                self.set_field(other_field)
+                self.__setitem__(other_field.name, other_field)
 
     def _normalize_field_name(self, name: str) -> str:
         """Normalize field names.
@@ -206,10 +221,10 @@ def tuples_to_fields(
     fields = Fields()
     for name, value in tuples:
         try:
-            fields.get_field(name).add(value)
+            fields[name].add(value)
         except KeyError:
-            fields.set_field(
-                Field(name=name, values=[value], kind=kind or FieldPosition.HEADER)
+            fields[name] = Field(
+                name=name, values=[value], kind=kind or FieldPosition.HEADER
             )
 
     return fields

@@ -75,15 +75,27 @@ class Fields(Protocol):
     encoding: str | None = "utf-8"
 
     def set_field(self, field: Field) -> None:
+        """Alias for __setitem__ to utilize the field.name for the entry key."""
+        ...
+
+    def __setitem__(self, name: str, field: Field) -> None:
         """Set entry for a Field name."""
         ...
 
-    def get_field(self, name: str) -> Field:
+    def __getitem__(self, name: str) -> Field:
         """Retrieve Field entry."""
         ...
 
-    def remove_field(self, name: str) -> None:
+    def __delitem__(self, name: str) -> None:
         """Delete entry from collection."""
+        ...
+
+    def __iter__(self) -> Iterator[Field]:
+        """Allow iteration over entries."""
+        ...
+
+    def __len__(self) -> int:
+        """Get total number of Field entries."""
         ...
 
     def get_by_type(self, kind: FieldPosition) -> list[Field]:
@@ -100,10 +112,6 @@ class Fields(Protocol):
         already exists in the current ``entries``, the values from ``other`` are
         appended. Otherwise, the ``Field`` is added to the list of ``entries``.
         """
-        ...
-
-    def __iter__(self) -> Iterator[Field]:
-        """Allow iteration over entries."""
         ...
 
 

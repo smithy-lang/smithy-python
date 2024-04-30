@@ -237,3 +237,84 @@ def test_fields_repr(fields: Field, expected_repr: str) -> None:
 )
 def test_fields_contains(fields: Fields, key: str, contained: bool) -> None:
     assert (key in fields) is contained
+
+
+@pytest.mark.parametrize(
+    "fields,key,expected",
+    [
+        (Fields(), "bad_key", None),
+        (Fields([Field(name="fname1")]), "FNAME1", Field(name="fname1")),
+        (Fields([Field(name="fname1")]), "fname1", Field(name="fname1")),
+        (Fields([Field(name="fname2")]), "fname1", None),
+        (Fields([Field(name="f1"), Field(name="f2")]), "f1", Field(name="f1")),
+        (Fields([Field(name="f1"), Field(name="f2")]), "f2", Field(name="f2")),
+        (Fields([Field(name="f1"), Field(name="f2")]), "f3", None),
+    ],
+)
+def test_fields_getitem(fields: Fields, key: str, expected: Field | None) -> None:
+    assert fields.get(key) == expected
+
+
+def test_fields_get_index() -> None:
+    fields = Fields([Field(name="f1"), Field(name="f2")])
+    assert fields["f1"] == Field(name="f1")
+
+
+def test_fields_get_missing_index() -> None:
+    fields = Fields([Field(name="fname1")])
+    with pytest.raises(KeyError):
+        fields["fname2"]
+
+
+@pytest.mark.parametrize(
+    "fields,field",
+    [
+        (Fields(), Field(name="fname1")),
+        (Fields([Field(name="fname1", values=["1", "2"])]), Field(name="fname1")),
+        (Fields([Field(name="f1"), Field(name="f2")]), Field(name="f3")),
+    ],
+)
+def test_fields_setitem(fields: Fields, field: Field) -> None:
+    fields[field.name] = field
+    assert field.name in fields
+    assert fields[field.name] == field
+
+
+@pytest.mark.parametrize(
+    "fields,field",
+    [
+        (Fields(), Field(name="fname1")),
+        (Fields([Field(name="fname1", values=["1", "2"])]), Field(name="fname1")),
+        (Fields([Field(name="f1"), Field(name="f2")]), Field(name="f3")),
+    ],
+)
+def test_fields_set_field(fields: Fields, field: Field) -> None:
+    fields.set_field(field)
+    assert field.name in fields
+    assert fields[field.name] == field
+
+
+@pytest.mark.parametrize(
+    "fields,field_name,expected_keys",
+    [
+        (Fields([Field(name="fname1", values=["1", "2"])]), "fname1", []),
+        (Fields([Field(name="f1"), Field(name="f2")]), "f2", ["f1"]),
+    ],
+)
+def test_fields_delitem(
+    fields: Fields, field_name: str, expected_keys: list[str]
+) -> None:
+    assert field_name in fields
+    del fields[field_name]
+    assert field_name not in fields
+
+    # Ensure we don't delete anything unexpected
+    assert len(fields) == len(expected_keys)
+    for key in expected_keys:
+        assert key in fields
+
+
+def test_fields_delitem_missing() -> None:
+    fields = Fields([Field(name="fname1")])
+    with pytest.raises(KeyError):
+        del fields["fname2"]
