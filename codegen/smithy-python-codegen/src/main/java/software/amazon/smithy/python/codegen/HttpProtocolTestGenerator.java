@@ -689,7 +689,19 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
         @Override
         public Void arrayNode(ArrayNode node) {
-            writer.openBlock("[", "]", () -> {
+            var openList = "[";
+            var closeList = "]";
+
+            if (inputShape.isListShape()) {
+                var target = model.expectShape(inputShape.asListShape().get().getMember().getTarget());
+                if (target.isDocumentShape()) {
+                    writer.addImport("smithy_core.documents", "Document");
+                    openList = "Document([";
+                    closeList = "])";
+                }
+            }
+
+            writer.openBlock(openList, closeList, () -> {
                 // The target visitor won't change if the input shape is a union
                 ValueNodeVisitor targetVisitor;
                 if (inputShape instanceof CollectionShape) {
@@ -777,7 +789,14 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         new CodegenException("unknown memberShape: " + keyNode.getValue())
                 );
                 var targetShape = model.expectShape(memberShape.getTarget());
-                writer.write("$L = $C,",
+
+                var formatString = "$L = $C,";
+                if (targetShape.isDocumentShape()) {
+                    writer.addImport("smithy_core.documents", "Document");
+                    formatString = "$L = Document($C),";
+                }
+
+                writer.write(formatString,
                         context.symbolProvider().toMemberName(memberShape),
                         (Runnable) () -> valueNode.accept(new ValueNodeVisitor(targetShape))
                 );
@@ -789,7 +808,14 @@ public final class HttpProtocolTestGenerator implements Runnable {
             writer.openBlock("{", "}",
                     () -> node.getMembers().forEach((keyNode, valueNode) -> {
                         var targetShape = model.expectShape(shape.getValue().getTarget());
-                        writer.write("$S: $C,",
+
+                        var formatString = "$S: $C,";
+                        if (targetShape.isDocumentShape()) {
+                            writer.addImport("smithy_core.documents", "Document");
+                            formatString = "$S: Document($C),";
+                        }
+
+                        writer.write(formatString,
                                 keyNode.getValue(),
                                 (Runnable) () -> valueNode.accept(new ValueNodeVisitor(targetShape))
                         );

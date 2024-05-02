@@ -841,11 +841,12 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         delegator.useFileWriter(deserFunction.getDefinitionFile(), deserFunction.getNamespace(), writer -> {
             writer.pushState(new ErrorDeserializerSection(error));
             writer.addStdlibImport("typing", "Any");
+            writer.addImport("smithy_core.documents", "DocumentValue");
             writer.write("""
                 async def $L(
                     http_response: $T,
                     config: $T,
-                    parsed_body: dict[str, Document] | None,
+                    parsed_body: dict[str, DocumentValue] | None,
                     default_message: str,
                 ) -> $T:
                     kwargs: dict[str, Any] = {"message": default_message}

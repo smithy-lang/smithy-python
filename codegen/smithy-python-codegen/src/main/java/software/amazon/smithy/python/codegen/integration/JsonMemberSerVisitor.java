@@ -37,7 +37,7 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
 public class JsonMemberSerVisitor extends DocumentMemberSerVisitor {
 
     private static final Set<ShapeType> NOOP_TARGETS = SetUtils.of(
-        ShapeType.STRING, ShapeType.ENUM, ShapeType.BOOLEAN, ShapeType.DOCUMENT, ShapeType.BYTE, ShapeType.SHORT,
+        ShapeType.STRING, ShapeType.ENUM, ShapeType.BOOLEAN, ShapeType.BYTE, ShapeType.SHORT,
         ShapeType.INTEGER, ShapeType.INT_ENUM, ShapeType.LONG, ShapeType.FLOAT, ShapeType.DOUBLE
     );
 

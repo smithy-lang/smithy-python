@@ -226,7 +226,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol documentShape(DocumentShape shape) {
         return createSymbolBuilder(shape, "Document")
-                .namespace("smithy_core.types", ".")
+                .namespace("smithy_core.documents", ".")
                 .addDependency(SmithyPythonDependency.SMITHY_CORE)
                 .build();
     }

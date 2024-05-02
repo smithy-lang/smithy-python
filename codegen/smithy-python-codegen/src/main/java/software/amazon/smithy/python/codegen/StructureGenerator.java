@@ -183,8 +183,9 @@ final class StructureGenerator implements Runnable {
             var defaultValue = "None";
             var defaultKey = "default";
             if (member.hasTrait(DefaultTrait.class)) {
+                var target = model.expectShape(member.getTarget());
                 defaultValue = getDefaultValue(writer, member);
-                if (Set.of("list", "dict").contains(defaultValue)) {
+                if (target.isDocumentShape() || Set.of("list", "dict").contains(defaultValue)) {
                     writer.addStdlibImport("dataclasses", "field");
                     defaultKey = "default_factory";
                     requiresField = true;
@@ -256,6 +257,17 @@ final class StructureGenerator implements Runnable {
         } else if (target.isBlobShape()) {
             return String.format("b'%s'", defaultNode.expectStringNode().getValue());
         }
+
+        if (target.isDocumentShape()) {
+            return String.format("lambda: Document(%s)", switch (defaultNode.getType()) {
+                case NULL -> "None";
+                case BOOLEAN -> defaultNode.expectBooleanNode().getValue() ? "True" : "False";
+                case ARRAY -> "list()";
+                case OBJECT -> "dict()";
+                default -> Node.printJson(defaultNode);
+            });
+        }
+
         return switch (defaultNode.getType()) {
             case NULL -> "None";
             case BOOLEAN -> defaultNode.expectBooleanNode().getValue() ? "True" : "False";

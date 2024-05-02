@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 import json
 
-from smithy_core.types import Document
+from smithy_core.documents import DocumentValue
 from smithy_core.utils import expect_type
 
 from ..restjson import _REST_JSON_CODE_HEADER  # pyright: ignore[reportPrivateUsage]
@@ -23,7 +23,7 @@ async def parse_rest_json_error_info(
     """
     code: str | None = None
     message: str | None = None
-    json_body: dict[str, Document] | None = None
+    json_body: dict[str, DocumentValue] | None = None
 
     for field in http_response.fields:
         if field.name.lower() == _REST_JSON_CODE_HEADER:

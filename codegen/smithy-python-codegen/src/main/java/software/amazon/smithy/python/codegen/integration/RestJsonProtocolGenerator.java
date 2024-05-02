@@ -113,8 +113,8 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         List<HttpBinding> documentBindings
     ) {
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-        writer.addImport("smithy_core.types", "Document");
-        writer.write("result: dict[str, Document] = {}\n");
+        writer.addImport("smithy_core.documents", "DocumentValue");
+        writer.write("result: dict[str, DocumentValue] = {}\n");
 
         var bodyMembers = documentBindings.stream()
             .map(HttpBinding::getMember)
@@ -244,12 +244,12 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         List<HttpBinding> documentBindings
     ) {
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-        writer.addImport("smithy_core.types", "Document");
+        writer.addImport("smithy_core.documents", "DocumentValue");
         writer.addStdlibImport("json");
 
         if (operationOrError.isOperationShape()) {
             writer.write("""
-                output: dict[str, Document] = {}
+                output: dict[str, DocumentValue] = {}
                 if (body := await http_response.consume_body_async()):
                     output = json.loads(body)
 
@@ -263,7 +263,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                 if (parsed_body is None) and (body := await http_response.consume_body_async()):
                     parsed_body = json.loads(body)
 
-                output: dict[str, Document] = parsed_body if parsed_body is not None else {}
+                output: dict[str, DocumentValue] = parsed_body if parsed_body is not None else {}
                 """);
         }
 
