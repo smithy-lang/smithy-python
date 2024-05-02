@@ -6,7 +6,7 @@ from collections.abc import AsyncIterator
 
 import pytest
 from smithy_core.aio.utils import async_list
-from smithy_core.types import Document
+from smithy_core.documents import DocumentValue
 
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPResponse
@@ -74,7 +74,7 @@ from smithy_http.restjson import RestJsonErrorInfo
     ],
 )
 async def test_parse_rest_json_error_info(
-    headers: list[tuple[str, str]], body: Document, expected: RestJsonErrorInfo
+    headers: list[tuple[str, str]], body: DocumentValue, expected: RestJsonErrorInfo
 ) -> None:
     response = HTTPResponse(
         status=400,

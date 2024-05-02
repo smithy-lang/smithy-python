@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 from typing import NamedTuple
 
-from smithy_core.types import Document
+from smithy_core.documents import DocumentValue
 
 _REST_JSON_CODE_HEADER = "x-amzn-errortype"
 
@@ -25,5 +25,5 @@ class RestJsonErrorInfo(NamedTuple):
     either didn't model the message or which are unknown.
     """
 
-    json_body: dict[str, Document] | None = None
+    json_body: dict[str, DocumentValue] | None = None
     """The HTTP response body parsed as JSON."""

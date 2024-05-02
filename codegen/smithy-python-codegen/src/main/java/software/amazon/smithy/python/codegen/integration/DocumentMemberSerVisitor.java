@@ -180,7 +180,7 @@ public class DocumentMemberSerVisitor implements ShapeVisitor<String> {
 
     @Override
     public String documentShape(DocumentShape documentShape) {
-        return dataSource();
+        return String.format("%s.as_value()", dataSource());
     }
 
     @Override

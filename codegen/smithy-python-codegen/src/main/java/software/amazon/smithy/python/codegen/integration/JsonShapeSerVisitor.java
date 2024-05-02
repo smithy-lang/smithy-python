@@ -109,9 +109,9 @@ public class JsonShapeSerVisitor extends ShapeVisitor.Default<Void> {
         }
 
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-        writer.addImport("smithy_core.types", "Document");
+        writer.addImport("smithy_core.documents", "DocumentValue");
         writer.write("""
-            def $1L(input: $2T, config: $3T) -> list[Document]:
+            def $1L(input: $2T, config: $3T) -> list[DocumentValue]:
                 return [$4L$5L for e in input]
             """, functionName, listSymbol, config, memberSerializer, sparseTrailer);
         return null;
@@ -139,9 +139,9 @@ public class JsonShapeSerVisitor extends ShapeVisitor.Default<Void> {
         }
 
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-        writer.addImport("smithy_core.types", "Document");
+        writer.addImport("smithy_core.documents", "DocumentValue");
         writer.write("""
-            def $1L(input: $2T, config: $3T) -> dict[str, Document]:
+            def $1L(input: $2T, config: $3T) -> dict[str, DocumentValue]:
                 return {k: $4L$5L for k, v in input.items()}
             """, functionName, mapSymbol, config, valueSerializer, sparseTrailer);
         return null;
@@ -153,11 +153,11 @@ public class JsonShapeSerVisitor extends ShapeVisitor.Default<Void> {
         var config = CodegenUtils.getConfigSymbol(context.settings());
         var structureSymbol = context.symbolProvider().toSymbol(shape);
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-        writer.addImport("smithy_core.types", "Document");
+        writer.addImport("smithy_core.documents", "DocumentValue");
 
         writer.write("""
-            def $1L(input: $2T, config: $3T) -> dict[str, Document]:
-                result: dict[str, Document] = {}
+            def $1L(input: $2T, config: $3T) -> dict[str, DocumentValue]:
+                result: dict[str, DocumentValue] = {}
 
                 ${4C|}
                 return result
@@ -209,10 +209,10 @@ public class JsonShapeSerVisitor extends ShapeVisitor.Default<Void> {
         var unionSymbol = context.symbolProvider().toSymbol(shape);
         var errorSymbol = CodegenUtils.getServiceError(context.settings());
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-        writer.addImport("smithy_core.types", "Document");
+        writer.addImport("smithy_core.documents", "DocumentValue");
 
         writer.write("""
-            def $1L(input: $2T, config: $3T) -> dict[str, Document]:
+            def $1L(input: $2T, config: $3T) -> dict[str, DocumentValue]:
                 match input:
                     ${5C|}
                     case _:

@@ -285,7 +285,8 @@ public class DocumentMemberDeserVisitor implements ShapeVisitor<String> {
 
     @Override
     public final String documentShape(DocumentShape shape) {
-        return dataSource();
+        writer.addImport("smithy_core.documents", "Document");
+        return String.format("Document(%s)", dataSource());
     }
 
     @Override
