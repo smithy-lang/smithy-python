@@ -55,14 +55,14 @@ class Document:
 
     _value: _InnerDocumentValue = None
     _raw_value: Mapping[str, DocumentValue] | Sequence[DocumentValue] | None = None
-    _type: ShapeType | None = None
+    _type: ShapeType
     _schema: Schema
 
     def __init__(
         self,
         value: DocumentValue | dict[str, "Document"] | list["Document"] = None,
         *,
-        schema: Schema | None = None,
+        schema: Schema = _DOCUMENT,
     ) -> None:
         """Initializes a document.
 
@@ -70,7 +70,7 @@ class Document:
         :param schema: A schema defining the document's structure. The default value is
             a plain document schema with no traits.
         """
-        self._schema = schema or _DOCUMENT
+        self._schema = schema
 
         # Mappings and Sequences are lazily converted to/from the inner value type.
         if isinstance(value, Mapping):
@@ -85,6 +85,31 @@ class Document:
                 self._value = value  # type: ignore
         else:
             self._value = value
+
+        if self._schema is not _DOCUMENT:
+            self._type = self._schema.type
+        elif isinstance(self._raw_value, Sequence):
+            self._type = ShapeType.LIST
+        else:
+            match self._value:
+                case bool():
+                    self._type = ShapeType.BOOLEAN
+                case str():
+                    self._type = ShapeType.STRING
+                case int():
+                    self._type = ShapeType.LONG
+                case float():
+                    self._type = ShapeType.DOUBLE
+                case Decimal():
+                    self._type = ShapeType.BIG_DECIMAL
+                case bytes():
+                    self._type = ShapeType.BLOB
+                case datetime.datetime():
+                    self._type = ShapeType.TIMESTAMP
+                case list():
+                    self._type = ShapeType.LIST
+                case _:
+                    self._type = ShapeType.DOCUMENT
 
     def _is_raw_map(
         self, value: Mapping[str, "Document"] | Mapping[str, DocumentValue]
@@ -103,31 +128,6 @@ class Document:
     @property
     def type(self) -> ShapeType:
         """The Smithy data model type for the underlying contents of the document."""
-        if self._type is None:
-            if self._schema is not _DOCUMENT:
-                self._type = self._schema.type
-            elif isinstance(self._raw_value, Sequence):
-                self._type = ShapeType.LIST
-            else:
-                match self._value:
-                    case bool():
-                        self._type = ShapeType.BOOLEAN
-                    case str():
-                        self._type = ShapeType.STRING
-                    case int():
-                        self._type = ShapeType.LONG
-                    case float():
-                        self._type = ShapeType.DOUBLE
-                    case Decimal():
-                        self._type = ShapeType.BIG_DECIMAL
-                    case bytes():
-                        self._type = ShapeType.BLOB
-                    case datetime.datetime():
-                        self._type = ShapeType.TIMESTAMP
-                    case list():
-                        self._type = ShapeType.LIST
-                    case _:
-                        self._type = ShapeType.DOCUMENT
         return self._type
 
     def as_blob(self) -> bytes:
