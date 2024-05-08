@@ -226,15 +226,7 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
         if (!directive.shape().isEnumShape()) {
             return;
         }
-        directive.context().writerDelegator().useShapeWriter(directive.shape(), writer -> {
-            EnumGenerator generator = new EnumGenerator(
-                    directive.model(),
-                    directive.symbolProvider(),
-                    writer,
-                    directive.shape().asEnumShape().get()
-            );
-            generator.run();
-        });
+        new EnumGenerator(directive.context(), directive.shape().asEnumShape().get()).run();
     }
 
     @Override
