@@ -19,7 +19,6 @@ import static java.lang.String.format;
 
 import java.util.Locale;
 import java.util.logging.Logger;
-import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.ReservedWordSymbolProvider;
 import software.amazon.smithy.codegen.core.ReservedWords;
 import software.amazon.smithy.codegen.core.ReservedWordsBuilder;
@@ -27,6 +26,7 @@ import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.loader.Prelude;
 import software.amazon.smithy.model.shapes.BigDecimalShape;
 import software.amazon.smithy.model.shapes.BigIntegerShape;
 import software.amazon.smithy.model.shapes.BlobShape;
@@ -72,6 +72,8 @@ import software.amazon.smithy.utils.StringUtils;
 final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     private static final Logger LOGGER = Logger.getLogger(SymbolVisitor.class.getName());
+    private static final String SHAPES_FILE = "models";
+    private static final String SCHEMAS_FILE = "_private/schemas";
 
     private final Model model;
     private final ReservedWordSymbolProvider.Escaper escaper;
@@ -150,7 +152,8 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     public Symbol blobShape(BlobShape shape) {
         // see: https://smithy.io/2.0/spec/streaming.html#smithy-api-streaming-trait
         if (shape.hasTrait(StreamingTrait.class)) {
-            return createSymbolBuilder(shape, "StreamingBlob", "smithy_core.aio.interfaces")
+            return createSymbolBuilder(shape, "StreamingBlob")
+                    .namespace("smithy_core.aio.interfaces", ".")
                     .addDependency(SmithyPythonDependency.SMITHY_CORE)
                     .build();
         }
@@ -251,9 +254,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         // Operation names are escaped like members because ultimately they're
         // properties on an object too.
         var name = escaper.escapeMemberName(CaseUtils.toSnakeCase(shape.getId().getName(service)));
-        return createSymbolBuilder(shape, name, format("%s.client", settings.moduleName()))
-                .definitionFile(format("./%s/client.py", settings.moduleName()))
-                .build();
+        return createGeneratedSymbolBuilder(shape, name, "client").build();
     }
 
     @Override
@@ -265,9 +266,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol serviceShape(ServiceShape shape) {
         var name = getDefaultShapeName(shape);
-        return createSymbolBuilder(shape, name, format("%s.client", settings.moduleName()))
-                .definitionFile(format("./%s/client.py", settings.moduleName()))
-                .build();
+        return createGeneratedSymbolBuilder(shape, name, "client").build();
     }
 
     @Override
@@ -291,45 +290,32 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
     @Override
     public Symbol enumShape(EnumShape shape) {
-        var builder = createSymbolBuilder(shape, "str");
-        String name = getDefaultShapeName(shape);
-        Symbol enumSymbol = createSymbolBuilder(shape, name, format("%s.models", settings.moduleName()))
-                .definitionFile(format("./%s/models.py", settings.moduleName()))
-                .build();
-
-        // We add this enum symbol as a property on a generic string symbol
-        // rather than returning the enum symbol directly because we only
-        // generate the enum constants for convenience. We actually want
-        // to pass around plain strings rather than what is effectively
-        // a namespace class.
-        builder.putProperty(SymbolProperties.ENUM_SYMBOL, escaper.escapeSymbol(shape, enumSymbol));
-        return builder.build();
+        return genericEnum(shape);
     }
 
     @Override
     public Symbol intEnumShape(IntEnumShape shape) {
-        var builder = createSymbolBuilder(shape, "int");
-        String name = getDefaultShapeName(shape);
-        Symbol enumSymbol = createSymbolBuilder(shape, name, format("%s.models", settings.moduleName()))
-                .definitionFile(format("./%s/models.py", settings.moduleName()))
-                .build();
+        return genericEnum(shape);
+    }
 
-        // Like string enums, int enums are plain ints when used as members.
-        builder.putProperty(SymbolProperties.ENUM_SYMBOL, escaper.escapeSymbol(shape, enumSymbol));
-        return builder.build();
+    private Symbol genericEnum(Shape shape) {
+        var enumSymbol = createGeneratedSymbolBuilder(shape, getDefaultShapeName(shape), SHAPES_FILE).build();
+
+        // We add this enum symbol as a property on a generic string/int symbol
+        // rather than returning the enum symbol directly because we only
+        // generate the enum constants for convenience. We actually want
+        // to pass around plain types rather than what is effectively
+        // a namespace class.
+        return createSymbolBuilder(shape, shape.isEnumShape() ? "str" : "int")
+                .putProperty(SymbolProperties.ENUM_SYMBOL, escaper.escapeSymbol(shape, enumSymbol))
+                .build();
     }
 
     @Override
     public Symbol structureShape(StructureShape shape) {
         String name = getDefaultShapeName(shape);
-        if (shape.hasTrait(ErrorTrait.class)) {
-            return createSymbolBuilder(shape, name, format("%s.errors", settings.moduleName()))
-                    .definitionFile(format("./%s/errors.py", settings.moduleName()))
-                    .build();
-        }
-        return createSymbolBuilder(shape, name, format("%s.models", settings.moduleName()))
-                .definitionFile(format("./%s/models.py", settings.moduleName()))
-                .build();
+        var file = shape.hasTrait(ErrorTrait.class) ? "errors" : SHAPES_FILE;
+        return createGeneratedSymbolBuilder(shape, name, file).build();
     }
 
     @Override
@@ -337,12 +323,8 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         String name = getDefaultShapeName(shape);
 
         var unknownName = name + "Unknown";
-        var unknownSymbol = createSymbolBuilder(shape, unknownName, format("%s.models", settings.moduleName()))
-            .definitionFile(format("./%s/models.py", settings.moduleName()))
-            .build();
-
-        return createSymbolBuilder(shape, name, format("%s.models", settings.moduleName()))
-                .definitionFile(format("./%s/models.py", settings.moduleName()))
+        var unknownSymbol = createGeneratedSymbolBuilder(shape, unknownName, SHAPES_FILE).build();
+        return createGeneratedSymbolBuilder(shape, name, SHAPES_FILE)
                 .putProperty(SymbolProperties.UNION_UNKNOWN, unknownSymbol)
                 .build();
     }
@@ -354,13 +336,11 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
             // Union members, unlike other shape members, have types generated for them.
             var containerSymbol = container.accept(this);
             var name = containerSymbol.getName() + StringUtils.capitalize(shape.getMemberName());
-            return createSymbolBuilder(shape, name, format("%s.models", settings.moduleName()))
-                .definitionFile(format("./%s/models.py", settings.moduleName()))
-                .build();
+            return createGeneratedSymbolBuilder(shape, name, SHAPES_FILE, false)
+                    .putProperty(SymbolProperties.SCHEMA, containerSymbol.expectProperty(SymbolProperties.SCHEMA))
+                    .build();
         }
-        Shape targetShape = model.getShape(shape.getTarget())
-                .orElseThrow(() -> new CodegenException("Shape not found: " + shape.getTarget()));
-        return toSymbol(targetShape);
+        return toSymbol(model.expectShape(shape.getTarget()));
     }
 
     @Override
@@ -368,25 +348,60 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         return createStdlibSymbol(shape, "datetime", "datetime");
     }
 
-    private Symbol.Builder createSymbolBuilder(Shape shape, String typeName) {
-        return Symbol.builder().putProperty(SymbolProperties.SHAPE, shape).name(typeName);
+    private Symbol.Builder createSymbolBuilder(Shape shape, String typeName, boolean includeSchema) {
+        var builder = Symbol.builder()
+                .putProperty(SymbolProperties.SHAPE, shape)
+                .name(typeName);
+        if (includeSchema) {
+            builder.putProperty(SymbolProperties.SCHEMA, createSchemaSymbol(shape));
+        }
+        return builder;
     }
 
-    private Symbol.Builder createSymbolBuilder(Shape shape, String typeName, String namespace) {
-        return createSymbolBuilder(shape, typeName).namespace(namespace, ".");
-    }
-
-    private Symbol createStdlibSymbol(Shape shape, String typeName, String namespace) {
-        return createSymbolBuilder(shape, typeName, namespace)
-                .putProperty(SymbolProperties.STDLIB, true)
+    private SymbolReference createSchemaSymbol(Shape shape) {
+        var schemaSymbolBuilder = Symbol.builder()
+                .name(CaseUtils.toSnakeCase(shape.getId().getName(service)).toUpperCase(Locale.ENGLISH));
+        if (Prelude.isPreludeShape(shape)) {
+            schemaSymbolBuilder
+                    .namespace("smithy_core.prelude", ".")
+                    .addDependency(SmithyPythonDependency.SMITHY_CORE);
+        } else {
+            schemaSymbolBuilder
+                    .namespace(format("%s.%s", settings.moduleName(), SCHEMAS_FILE.replace('/', '.')), ".")
+                    .definitionFile(format("./%s/%s.py", settings.moduleName(), SCHEMAS_FILE));
+        }
+        var schemaSymbol = schemaSymbolBuilder.build();
+        return SymbolReference.builder()
+                .alias("_SCHEMA_" + schemaSymbol.getName())
+                .symbol(schemaSymbol)
                 .build();
     }
 
-    private SymbolReference createStdlibReference(String typeName, String namespace) {
-        return SymbolReference.builder()
-                .symbol(createStdlibSymbol(null, typeName, namespace))
+    private Symbol.Builder createSymbolBuilder(Shape shape, String typeName) {
+        return createSymbolBuilder(shape, typeName, true);
+    }
+
+    private Symbol.Builder createGeneratedSymbolBuilder(
+            Shape shape,
+            String typeName,
+            String file,
+            boolean includeSchema
+    ) {
+        var namespace = format("%s.%s", settings.moduleName(), file.replace('/', '.'));
+        var filename = format("./%s/%s.py", settings.moduleName(), file);
+        return createSymbolBuilder(shape, typeName, includeSchema)
+                .namespace(namespace, ".")
+                .definitionFile(filename);
+    }
+
+    private Symbol.Builder createGeneratedSymbolBuilder(Shape shape, String typeName, String file) {
+        return createGeneratedSymbolBuilder(shape, typeName, file, true);
+    }
+
+    private Symbol createStdlibSymbol(Shape shape, String typeName, String namespace) {
+        return createSymbolBuilder(shape, typeName)
                 .putProperty(SymbolProperties.STDLIB, true)
-                .options(SymbolReference.ContextOption.USE)
+                .namespace(namespace, ".")
                 .build();
     }
 }
