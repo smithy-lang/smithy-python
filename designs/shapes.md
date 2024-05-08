@@ -29,86 +29,59 @@ are generated into python types and type hints from a Smithy model.
 ### enum
 
 ```python
-class EnumWithNames:
-    SPAM = "spam"
-    EGGS = "eggs"
-    SPAM_EGGS = "spam:eggs"
-
-    values = frozenset(SPAM, EGGS, SPAM_EGGS)
-```
-
-Enums are classes with a `values` property that contains an immutable set of
-all the possible values of the enum in addition to static properties for each
-entry.
-
-This provides customers with a way to access the simplified names for easier
-development, as well as giving them a programmatic ability to check known
-values.
-
-Members targeting enums will continue to use plain strings to enable forwards
-compatibility. Documentation for those members will reference the enum classes
-for discoverability.
-
-#### Alternative: native enums
-
-Python 3.4 introduced native enums, and they're about what you'd expect:
-
-```python
-class MyEnum(Enum):
+class StringEnum(StrEnum):
     SPAM = "spam"
     EGGS = "eggs"
     SPAM_EGGS = "spam:eggs"
 ```
 
-Defining an enum in this way gives you iterators, comparators, and a more
-helpful string representation (`<MyEnum.SPAM: 'spam'>`) for free.
+Members targeting string enums will use the base `str` type for forwards
+compatibility.
 
-Unfortuantely, native enums aren't forwards compatible. To support forwards
-compatibility, we need to also support passing plain strings. If a client were
-handling an enum value not represented in their version, then they would break
-upon updating because `MyEnum.SPAM != "spam"`.
+To enable dot-completion support and programmatic understanding of known
+values, a `StrEnum` will also be provided. Since `StrEnum` inherits from `str`,
+customers will be able to directly pass values from the enum class without
+issue. Documentation will reference the generated class for discoverability.
 
-While we could generate them anyway for helpers, it would be very confusing
-to use as you would have to pass `MyEnum.SPAM.value` instead of `MyEnum.SPAM`.
+The generated class cannot be part of the type signature as a `Union` because
+that would harm forwards compatibility. While each value inherits from the base
+string class, there are notable differences that could cause code to break,
+such as return values for `repr` and `type` changing.
+
+#### Alternative: target the generated enums
+
+In this alternative, members targeting StrEnums would reference the generated
+classes. This wasn't chosen for both forwards and backwards compatibility reasons.
+While one can mostly use StrEnums and strings interchangeably, the types *are*
+different. Type checking would fail if you provided a base str, known or
+unknown.
 
 #### Alternative: native enums with generated accessors and unknown variant
 
 ```python
-class MyEnum(Enum):
+class MyEnum(StrEnum):
     SPAM = "spam"
     EGGS = "eggs"
     SPAM_EGGS = "spam:eggs"
     UNKNOWN_TO_SDK_VERSION = ""
 
     @staticmethod
-    def from_string(value: str) -> 'MyEnum':
+    def from_string(value: str) -> Self:
         try:
             return MyEnum(value)
         except ValueError:
             return MyEnum.UNKNOWN_TO_SDK_VERSION
 
 
+@dataclass(kw_only=True)
 class Struct:
-    def __init__(self, *, my_enum: Union[MyEnum, str]):
-        if isinstance(my_enum, MyEnum):
-            self._my_enum = my_enum
-            self._my_enum_as_string = my_enum.value
-        else:
-            self._my_enum = MyEnum.from_string(my_enum)
-            self._my_enum_as_string = my_enum
-
-    @property
-    def my_enum(self) -> MyEnum:
-        return self._my_enum
+    my_enum: MyEnum
+    my_enum_as_string: str = field(init=False)
 
     @my_enum.setter
     def my_enum(self, value: MyEnum):
         self._my_enum = value
         self._my_enum_as_string = value
-
-    @property
-    def my_enum_as_string(self) -> str:
-        return self._my_enum_as_string
 
     @my_enum_as_string.setter
     def my_enum_as_string(self, value: str):
@@ -131,21 +104,18 @@ class MyIntEnum(IntEnum):
     EGGS = 2
 ```
 
-IntEnums will use the native `IntEnum` type. This will allow customers to
-easily specify the enum value without having to reference the actual number. It
-also gives them a programmatic way to list known values.
+Members targeting int enums will use the base `int` type for forwards
+compatibility.
 
-Like string enums, members targeting IntEnums will use plain integers to enable
-forwards compatibility and type checking. Documentation for those members will
-reference the generated classes for discoverability.
+To enable dot-completion support and programmatic understanding of known
+values, an `IntEnum` will also be provided. Since `IntEnum` inherits from
+`int`, customers will be able to directly pass values from the enum class
+without issue. Documentation will reference the generated class for
+discoverability.
 
-#### Alternative: target the generated enums
-
-In this alternative, members targeting IntEnums would reference the generated
-classes. This wasn't chosen for both forwards and backwards compatibility reasons.
-While one can mostly use IntEnums and integers interchangeably, the types *are*
-different. Type checking would fail if you provided a base integer, known or
-unknown.
+This is essentially identical to the solution for string enums. The generated
+accessor alternative, however, is not possible for int enums since there is no
+suitable placeholder value for the unknown variant.
 
 ### streaming blobs
 

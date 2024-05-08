@@ -15,10 +15,6 @@
 
 package software.amazon.smithy.python.codegen;
 
-import java.util.Iterator;
-import java.util.Locale;
-import software.amazon.smithy.codegen.core.SymbolProvider;
-import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.EnumShape;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.traits.DocumentationTrait;
@@ -28,50 +24,31 @@ import software.amazon.smithy.model.traits.EnumValueTrait;
  * Renders enums.
  */
 final class EnumGenerator implements Runnable {
-    private final Model model;
-    private final SymbolProvider symbolProvider;
-    private final PythonWriter writer;
     private final EnumShape shape;
+    private final GenerationContext context;
 
-    EnumGenerator(Model model, SymbolProvider symbolProvider, PythonWriter writer, EnumShape enumShape) {
-        this.model = model;
-        this.symbolProvider = symbolProvider;
-        this.writer = writer;
+    EnumGenerator(GenerationContext context, EnumShape enumShape) {
+        this.context = context;
         this.shape = enumShape;
     }
 
     @Override
     public void run() {
-        var enumSymbol = symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.ENUM_SYMBOL);
-        writer.openBlock("class $L:", "", enumSymbol.getName(), () -> {
-            shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
-                writer.writeDocs(writer.formatDocs(trait.getValue()));
-            });
+        var enumSymbol = context.symbolProvider().toSymbol(shape).expectProperty(SymbolProperties.ENUM_SYMBOL);
+        context.writerDelegator().useShapeWriter(shape, writer -> {
+            writer.addStdlibImport("enum", "StrEnum");
+            writer.openBlock("class $L(StrEnum):", "", enumSymbol.getName(), () -> {
+                shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
+                    writer.writeDocs(writer.formatDocs(trait.getValue()));
+                });
 
-            for (MemberShape member: shape.members()) {
-                member.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeComment(trait.getValue()));
-                var name = symbolProvider.toMemberName(member);
-                writer.write("$L = $S\n", name, getEnumValue(member));
-            }
-
-            writer.writeComment("""
-                This set contains every possible value known at the time this was \
-                generated. New values may be added in the future.""");
-            writer.writeInline("values = frozenset({");
-            for (Iterator<MemberShape> iter = shape.members().iterator(); iter.hasNext();) {
-                writer.writeInline("$S", getEnumValue(iter.next()));
-                if (iter.hasNext()) {
-                    writer.writeInline(", ");
+                for (MemberShape member : shape.members()) {
+                    var name = context.symbolProvider().toMemberName(member);
+                    var value = member.expectTrait(EnumValueTrait.class).expectStringValue();
+                    writer.write("$L = $S", name, value);
+                    member.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeDocs(trait.getValue()));
                 }
-            }
-            writer.writeInline("})\n");
+            });
         });
-    }
-
-    public String getEnumValue(MemberShape member) {
-        // see: https://smithy.io/2.0/spec/type-refinement-traits.html#smithy-api-enumvalue-trait
-        return member.getTrait(EnumValueTrait.class)
-                .flatMap(EnumValueTrait::getStringValue)
-                .orElseGet(() -> member.getMemberName().toUpperCase(Locale.ENGLISH));
     }
 }
