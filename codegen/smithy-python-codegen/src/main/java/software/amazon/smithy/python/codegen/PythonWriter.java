@@ -16,6 +16,7 @@
 package software.amazon.smithy.python.codegen;
 
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.logging.Logger;
@@ -40,7 +41,7 @@ import software.amazon.smithy.utils.StringUtils;
  *
  * <p>Use the {@code $T} formatter to refer to {@link Symbol}s.
  *
- * <p>Use the {@code $D} formatter to render {@link Node}s as Documents.
+ * <p>Use the {@code $N} formatter to render {@link Node}s.
  */
 @SmithyUnstableApi
 public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclarations> {
@@ -74,7 +75,7 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         trimBlankLines();
         trimTrailingSpaces();
         putFormatter('T', new PythonSymbolFormatter());
-        putFormatter('D', new PythonDocumentFormatter());
+        putFormatter('N', new PythonNodeFormatter());
         this.addCodegenWarningHeader = addCodegenWarningHeader;
     }
 
@@ -332,23 +333,25 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         return typeSymbol.getProperty(SymbolProperties.SHAPE).map(Shape::isOperationShape).orElse(false);
     }
 
-    private final class PythonDocumentFormatter implements BiFunction<Object, String, String> {
+    private final class PythonNodeFormatter implements BiFunction<Object, String, String> {
         @Override
         public String apply(Object node, String indent) {
+            if (node instanceof Optional<?>) {
+                node = ((Optional<?>) node).get();
+            }
             if (!(node instanceof Node)) {
                 throw new CodegenException(
                         "Invalid type provided to $D. Expected a Node, but found `" + node + "`");
             }
-            addImport("smithy_core.documents", "Document");
-            return "Document(" + ((Node) node).accept(new NodeDocumentFormatter(indent)) + ")";
+            return ((Node) node).accept(new PythonNodeFormatVisitor(indent));
         }
     }
 
-    private final class NodeDocumentFormatter implements NodeVisitor<String> {
+    private final class PythonNodeFormatVisitor implements NodeVisitor<String> {
 
         private String indent;
 
-        NodeDocumentFormatter(String indent) {
+        PythonNodeFormatVisitor(String indent) {
             this.indent = indent;
         }
 
@@ -379,11 +382,15 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
 
         @Override
         public String stringNode(StringNode node) {
-            return '"' + StringUtils.escapeJavaString(node.getValue(), indent) + '"';
+            return StringUtils.escapeJavaString(node.getValue(), indent);
         }
 
         @Override
         public String arrayNode(ArrayNode node) {
+            if (node.getElements().isEmpty()) {
+                return "[]";
+            }
+
             StringBuilder builder = new StringBuilder("[\n");
             var oldIndent = indent;
             indent += getIndentText();
@@ -400,6 +407,10 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
 
         @Override
         public String objectNode(ObjectNode node) {
+            if (node.getMembers().isEmpty()) {
+                return "{}";
+            }
+
             StringBuilder builder = new StringBuilder("{\n");
             var oldIndent = indent;
             indent += getIndentText();
