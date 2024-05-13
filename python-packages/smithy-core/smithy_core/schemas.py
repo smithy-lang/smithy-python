@@ -1,14 +1,6 @@
 from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import (
-    TYPE_CHECKING,
-    NotRequired,
-    Protocol,
-    Required,
-    Self,
-    TypedDict,
-    runtime_checkable,
-)
+from typing import TYPE_CHECKING, NotRequired, Required, Self, TypedDict
 
 from .exceptions import ExpectationNotMetException, SmithyException
 from .shapes import ShapeID, ShapeType
@@ -25,7 +17,7 @@ class Schema:
     type: ShapeType
     traits: dict[ShapeID, "Trait"] = field(default_factory=dict)
     members: dict[str, "Schema"] = field(default_factory=dict)
-    member_target: "Schema | HasSchema | None" = None
+    member_target: "Schema | None" = None
     member_index: int | None = None
 
     def __init__(
@@ -35,7 +27,7 @@ class Schema:
         type: ShapeType,
         traits: list["Trait"] | dict[ShapeID, "Trait"] | None = None,
         members: list["Schema"] | dict[str, "Schema"] | None = None,
-        member_target: "Schema | HasSchema | None" = None,
+        member_target: "Schema | None" = None,
         member_index: int | None = None,
     ) -> None:
         """Initialize a schema.
@@ -111,15 +103,11 @@ class Schema:
         :raises ExpectationNotMetException: If member_target wasn't set.
         :returns: Returns the target schema.
         """
-        match self.member_target:
-            case None:
-                raise ExpectationNotMetException(
-                    "Expected member_target to be set, but was None."
-                )
-            case HasSchema():
-                return self.member_target.SCHEMA
-            case _:
-                return self.member_target
+        if self.member_target is None:
+            raise ExpectationNotMetException(
+                "Expected member_target to be set, but was None."
+            )
+        return self.member_target
 
     def expect_member_index(self) -> int:
         """Assert the schema is a member schema and return its member index.
@@ -181,15 +169,5 @@ class MemberSchema(TypedDict):
     :param traits: An optional list of traits for the member.
     """
 
-    target: Required["Schema | HasSchema"]
+    target: Required[Schema]
     traits: NotRequired[list["Trait"]]
-
-
-@runtime_checkable
-class HasSchema(Protocol):
-    """Protocol for classes that contain schemas.
-
-    Generated classes will contain these schemas.
-    """
-
-    SCHEMA: Schema

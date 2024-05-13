@@ -1,8 +1,7 @@
-from typing import Final
-
 import pytest
+from smithy_core.documents import Document
 from smithy_core.exceptions import ExpectationNotMetException
-from smithy_core.schemas import HasSchema, Schema
+from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import Trait
 
@@ -12,7 +11,7 @@ STRING = Schema(id=ShapeID("smithy.api#String"), type=ShapeType.STRING)
 
 def test_traits_list():
     trait_id = ShapeID("smithy.api#internal")
-    trait = Trait(id=trait_id, value=True)
+    trait = Trait(id=trait_id, value=Document(True))
     schema = Schema(id=ID, type=ShapeType.STRUCTURE, traits=[trait])
     assert schema.traits == {trait_id: trait}
 
@@ -67,11 +66,3 @@ def test_collection_constructor():
     )
     schema = Schema.collection(id=ID, members={member_name: {"target": STRING}})
     assert schema.members == {member_name: member}
-
-
-class TestSchemaBearer:
-    SCHEMA: Final[Schema] = Schema.collection(id=ID)
-
-
-def test_has_schema():
-    assert isinstance(TestSchemaBearer, HasSchema)
