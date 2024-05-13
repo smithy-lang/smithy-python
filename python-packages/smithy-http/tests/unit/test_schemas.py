@@ -1,5 +1,4 @@
 import pytest
-from smithy_core.documents import Document
 from smithy_core.exceptions import ExpectationNotMetException
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID, ShapeType
@@ -11,7 +10,7 @@ STRING = Schema(id=ShapeID("smithy.api#String"), type=ShapeType.STRING)
 
 def test_traits_list():
     trait_id = ShapeID("smithy.api#internal")
-    trait = Trait(id=trait_id, value=Document(True))
+    trait = Trait(id=trait_id, value=True)
     schema = Schema(id=ID, type=ShapeType.STRUCTURE, traits=[trait])
     assert schema.traits == {trait_id: trait}
 

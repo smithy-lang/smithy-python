@@ -99,7 +99,6 @@ final class SchemaGenerator implements Consumer<Shape> {
 
     private void writeTraits(PythonWriter writer, Map<ShapeId, Node> traits) {
         writer.addImport("smithy_core.traits", "Trait");
-        writer.addImport("smithy_core.documents", "Document");
         writer.pushState();
         writer.putContext("traits", traits);
         writer.write("""
