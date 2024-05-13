@@ -7,6 +7,7 @@ package software.amazon.smithy.python.codegen;
 
 import java.util.HashSet;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.logging.Logger;
@@ -91,19 +92,25 @@ final class SchemaGenerator implements Consumer<Shape> {
         writer.popState();
     }
 
-    private Map<ShapeId, Node> filterTraits(Shape shape) {
+    private Map<ShapeId, Optional<Node>> filterTraits(Shape shape) {
         return shape.getAllTraits().entrySet().stream()
                 .filter(t -> !DEFAULT_TRAIT_FILTER.contains(t.getKey()))
-                .collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toNode()));
+                .collect(Collectors.toMap(Map.Entry::getKey, e -> {
+                    var value = e.getValue().toNode();
+                    if (value.isObjectNode() && value.asObjectNode().get().getMembers().isEmpty()) {
+                        return Optional.empty();
+                    }
+                    return Optional.of(value);
+                }));
     }
 
-    private void writeTraits(PythonWriter writer, Map<ShapeId, Node> traits) {
+    private void writeTraits(PythonWriter writer, Map<ShapeId, Optional<Node>> traits) {
         writer.addImport("smithy_core.traits", "Trait");
         writer.pushState();
         writer.putContext("traits", traits);
         writer.write("""
                 ${#traits}
-                Trait(id=ShapeID(${key:S}), value=${value:N}),
+                Trait(id=ShapeID(${key:S})${?value}, value=${value:N}${/value}),
                 ${/traits}""");
         writer.popState();
     }
