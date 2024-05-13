@@ -15,8 +15,6 @@
 
 package software.amazon.smithy.python.codegen;
 
-import static java.lang.String.format;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collection;
@@ -27,6 +25,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import software.amazon.smithy.build.FileManifest;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.SymbolProvider;
@@ -45,7 +44,9 @@ import software.amazon.smithy.codegen.core.directed.GenerateStructureDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateUnionDirective;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
+import software.amazon.smithy.model.loader.Prelude;
 import software.amazon.smithy.model.shapes.ServiceShape;
+import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.integration.ProtocolGenerator;
 import software.amazon.smithy.python.codegen.integration.PythonIntegration;
@@ -109,11 +110,24 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
         generateServiceErrors(directive.settings(), directive.context().writerDelegator());
         new ConfigGenerator(directive.settings(), directive.context()).run();
 
+        generateSchemas(directive.context(), directive.connectedShapes().values());
+
         var serviceIndex = ServiceIndex.of(directive.model());
         if (directive.context().applicationProtocol().isHttpProtocol()
                 && !serviceIndex.getAuthSchemes(directive.service()).isEmpty()) {
             new HttpAuthGenerator(directive.context(), directive.settings()).run();
         }
+    }
+
+    private void generateSchemas(GenerationContext context, Collection<Shape> shapes) {
+        var schemaGenerator = new SchemaGenerator(context);
+        var index = TopologicalIndex.of(context.model());
+        Stream.concat(index.getOrderedShapes().stream(), index.getRecursiveShapes().stream())
+                .filter(shapes::contains)
+                .filter(shape -> !shape.isOperationShape() && !shape.isResourceShape()
+                        && !shape.isServiceShape() && !shape.isMemberShape() && !Prelude.isPreludeShape(shape))
+                .forEach(schemaGenerator);
+        schemaGenerator.finalizeRecursiveShapes();
     }
 
     @Override
