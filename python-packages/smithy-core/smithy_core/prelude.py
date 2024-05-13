@@ -2,7 +2,6 @@
 #  SPDX-License-Identifier: Apache-2.0
 """Shared schemas for shapes built into Smithy's prelude."""
 
-from .documents import Document, DocumentValue
 from .schemas import Schema
 from .shapes import ShapeID, ShapeType
 from .traits import Trait
@@ -76,54 +75,50 @@ DOCUMENT = Schema(
 _DEFAULT = ShapeID("smithy.api#default")
 
 
-def _default(value: DocumentValue) -> Trait:
-    return Trait(id=_DEFAULT, value=Document(value))
-
-
 PRIMITIVE_BOOLEAN = Schema(
     id=ShapeID("smithy.api#PrimitiveBoolean"),
     type=ShapeType.BOOLEAN,
-    traits=[_default(False)],
+    traits=[Trait(id=_DEFAULT, value=False)],
 )
 
 PRIMITIVE_BYTE = Schema(
     id=ShapeID("smithy.api#PrimitiveByte"),
     type=ShapeType.BYTE,
-    traits=[_default(0)],
+    traits=[Trait(id=_DEFAULT, value=0)],
 )
 
 PRIMITIVE_SHORT = Schema(
     id=ShapeID("smithy.api#PrimitiveShort"),
     type=ShapeType.SHORT,
-    traits=[_default(0)],
+    traits=[Trait(id=_DEFAULT, value=0)],
 )
 
 PRIMITIVE_INTEGER = Schema(
     id=ShapeID("smithy.api#PrimitiveInteger"),
     type=ShapeType.INTEGER,
-    traits=[_default(0)],
+    traits=[Trait(id=_DEFAULT, value=0)],
 )
 
 PRIMITIVE_LONG = Schema(
     id=ShapeID("smithy.api#PrimitiveLong"),
     type=ShapeType.LONG,
-    traits=[_default(0)],
+    traits=[Trait(id=_DEFAULT, value=0)],
 )
 
 PRIMITIVE_FLOAT = Schema(
     id=ShapeID("smithy.api#PrimitiveFloat"),
     type=ShapeType.FLOAT,
-    traits=[_default(0.0)],
+    traits=[Trait(id=_DEFAULT, value=0.0)],
 )
 
 PRIMITIVE_DOUBLE = Schema(
     id=ShapeID("smithy.api#PrimitiveDouble"),
     type=ShapeType.DOUBLE,
-    traits=[_default(0.0)],
+    traits=[Trait(id=_DEFAULT, value=0.0)],
 )
 
 UNIT = Schema(
     id=ShapeID("smithy.api#Unit"),
     type=ShapeType.DOUBLE,
-    traits=[Trait(id=ShapeID("smithy.api#UnitTypeTrait"), value=Document({}))],
+    traits=[Trait(id=ShapeID("smithy.api#UnitTypeTrait"))],
 )

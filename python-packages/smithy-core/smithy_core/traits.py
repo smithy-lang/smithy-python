@@ -1,9 +1,9 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from .documents import DocumentValue
     from .shapes import ShapeID
-    from .types import Document
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -16,4 +16,4 @@ class Trait:
     """
 
     id: "ShapeID"
-    value: "Document"
+    value: "DocumentValue" = field(default_factory=dict)
