@@ -1,10 +1,17 @@
 import datetime
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from contextlib import contextmanager
 from decimal import Decimal
-from typing import TypeGuard
+from typing import TypeGuard, override
 
 from .exceptions import ExpectationNotMetException
 from .schemas import Schema
+from .serializers import (
+    InterceptingSerializer,
+    MapSerializer,
+    SerializeableShape,
+    ShapeSerializer,
+)
 from .shapes import ShapeID, ShapeType
 from .utils import expect_type
 
@@ -230,6 +237,18 @@ class Document:
                     return self._value
         return self._raw_value
 
+    @classmethod
+    def from_shape(cls, shape: SerializeableShape) -> "Document":
+        """Constructs a Document from a given shape.
+
+        :param shape: The shape to convert to a document.
+        :returns: A Document representation of the given shape.
+        """
+        serializer = DocumentSerializer()
+        shape.serialize(serializer=serializer)
+        serializer.flush()
+        return serializer.expect_result()
+
     def get(self, name: str, default: "Document | None" = None) -> "Document | None":
         """Gets a named member of the document or a default value."""
         return self.as_map().get(name, default)
@@ -291,3 +310,136 @@ class Document:
         # JsonDocument, cares about the schema then it's responsible for transforming
         # the output of `as_value` to the canonical form.
         return self.as_value() == other.as_value()
+
+
+class DocumentSerializer(ShapeSerializer):
+    """Serializes shapes into document representations."""
+
+    result: Document | None = None
+
+    def expect_result(self) -> Document:
+        """Expect a document to have been serialized and return it."""
+        if self.result is None:
+            raise ExpectationNotMetException(
+                "Expected document serializer to have a result, but was None"
+            )
+        return self.result
+
+    @override
+    @contextmanager
+    def begin_struct(self, schema: "Schema") -> Iterator[ShapeSerializer]:
+        delegate = _DocumentStructSerializer(schema)
+        try:
+            yield delegate
+        finally:
+            self.result = delegate.result
+
+    @override
+    @contextmanager
+    def begin_list(self, schema: "Schema") -> Iterator[ShapeSerializer]:
+        delegate = _DocumentListSerializer(schema)
+        try:
+            yield delegate
+        finally:
+            self.result = delegate.result
+
+    @override
+    @contextmanager
+    def begin_map(self, schema: "Schema") -> Iterator[MapSerializer]:
+        delegate = _DocumentMapSerializer(schema)
+        try:
+            yield delegate
+        finally:
+            self.result = delegate.result
+
+    @override
+    def write_null(self, schema: "Schema") -> None:
+        self.result = Document(None, schema=schema)
+
+    @override
+    def write_boolean(self, schema: "Schema", value: bool) -> None:
+        self.result = Document(value, schema=schema)
+
+    @override
+    def write_integer(self, schema: "Schema", value: int) -> None:
+        self.result = Document(value, schema=schema)
+
+    @override
+    def write_float(self, schema: "Schema", value: float) -> None:
+        self.result = Document(value, schema=schema)
+
+    @override
+    def write_big_decimal(self, schema: "Schema", value: Decimal) -> None:
+        self.result = Document(value, schema=schema)
+
+    @override
+    def write_string(self, schema: "Schema", value: str) -> None:
+        self.result = Document(value, schema=schema)
+
+    @override
+    def write_blob(self, schema: "Schema", value: bytes) -> None:
+        self.result = Document(value, schema=schema)
+
+    @override
+    def write_timestamp(self, schema: "Schema", value: datetime.datetime) -> None:
+        self.result = Document(value, schema=schema)
+
+    @override
+    def write_document(self, schema: "Schema", value: Document) -> None:
+        self.result = value
+
+
+class _DocumentStructSerializer(InterceptingSerializer):
+    _delegate = DocumentSerializer()
+    _result: Document
+
+    def __init__(self, schema: "Schema") -> None:
+        self._result = Document({}, schema=schema)
+
+    @property
+    def result(self) -> Document:
+        return self._result
+
+    def before(self, schema: "Schema") -> ShapeSerializer:
+        return self._delegate
+
+    def after(self, schema: "Schema") -> None:
+        self._result[schema.expect_member_name()] = self._delegate.expect_result()
+        self._delegate.result = None
+
+
+class _DocumentListSerializer(InterceptingSerializer):
+    _delegate = DocumentSerializer()
+    _result: list[Document]
+    _schema: "Schema"
+
+    def __init__(self, schema: "Schema") -> None:
+        self._result = []
+        self._schema = schema
+
+    @property
+    def result(self) -> Document:
+        return Document(self._result, schema=self._schema)
+
+    def before(self, schema: "Schema") -> ShapeSerializer:
+        return self._delegate
+
+    def after(self, schema: "Schema") -> None:
+        self._result.append(self._delegate.expect_result())
+        self._delegate.result = None
+
+
+class _DocumentMapSerializer(MapSerializer):
+    _delegate = DocumentSerializer()
+    _result: Document
+
+    def __init__(self, schema: "Schema") -> None:
+        self._result = Document({}, schema=schema)
+
+    @property
+    def result(self) -> Document:
+        return self._result
+
+    def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]):
+        self._result[key] = value_writer(self._delegate)
+        self._delegate.result = None
