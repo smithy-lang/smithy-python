@@ -5,6 +5,7 @@ import pytest
 
 from smithy_core.documents import Document, DocumentValue
 from smithy_core.exceptions import ExpectationNotMetException
+from smithy_core.prelude import STRING
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID, ShapeType
 
@@ -370,13 +371,6 @@ def test_del_from_list() -> None:
 def test_wrap_list_passes_schema_to_member_documents() -> None:
     id = ShapeID("smithy.example#List")
     target_schema = Schema(id=ShapeID("smithy.api#String"), type=ShapeType.STRING)
-    expected = Schema(
-        id=id.with_member("member"),
-        type=ShapeType.MEMBER,
-        member_target=target_schema,
-        member_index=0,
-    )
-
     list_schema = Schema.collection(
         id=id,
         type=ShapeType.LIST,
@@ -384,19 +378,12 @@ def test_wrap_list_passes_schema_to_member_documents() -> None:
     )
     document = Document(["foo"], schema=list_schema)
     actual = document[0]._schema  # pyright: ignore[reportPrivateUsage]
-    assert actual == expected
+    assert actual == target_schema
 
 
 def test_setitem_on_list_passes_schema_to_member_documents() -> None:
     id = ShapeID("smithy.example#List")
     target_schema = Schema(id=ShapeID("smithy.api#String"), type=ShapeType.STRING)
-    expected = Schema(
-        id=id.with_member("member"),
-        type=ShapeType.MEMBER,
-        member_target=target_schema,
-        member_index=0,
-    )
-
     list_schema = Schema.collection(
         id=id,
         type=ShapeType.LIST,
@@ -405,38 +392,24 @@ def test_setitem_on_list_passes_schema_to_member_documents() -> None:
     document = Document(["foo"], schema=list_schema)
     document[0] = "bar"
     actual = document[0]._schema  # pyright: ignore[reportPrivateUsage]
-    assert actual == expected
+    assert actual == target_schema
 
 
-def test_wrap_map_passes_schema_to_member_documents() -> None:
+def test_wrap_structure_passes_schema_to_member_documents() -> None:
     id = ShapeID("smithy.example#Structure")
     target_schema = Schema(id=ShapeID("smithy.api#String"), type=ShapeType.STRING)
-    expected = Schema(
-        id=id.with_member("stringMember"),
-        type=ShapeType.MEMBER,
-        member_target=target_schema,
-        member_index=0,
-    )
-
     struct_schema = Schema.collection(
         id=id,
         members={"stringMember": {"target": target_schema}},
     )
     document = Document({"stringMember": "foo"}, schema=struct_schema)
     actual = document["stringMember"]._schema  # pyright: ignore[reportPrivateUsage]
-    assert actual == expected
+    assert actual == target_schema
 
 
-def test_setitem_on_map_passes_schema_to_member_documents() -> None:
+def test_setitem_on_structure_passes_schema_to_member_documents() -> None:
     id = ShapeID("smithy.example#Structure")
     target_schema = Schema(id=ShapeID("smithy.api#String"), type=ShapeType.STRING)
-    expected = Schema(
-        id=id.with_member("stringMember"),
-        type=ShapeType.MEMBER,
-        member_target=target_schema,
-        member_index=0,
-    )
-
     struct_schema = Schema.collection(
         id=id,
         members={"stringMember": {"target": target_schema}},
@@ -444,4 +417,35 @@ def test_setitem_on_map_passes_schema_to_member_documents() -> None:
     document = Document({"stringMember": "foo"}, schema=struct_schema)
     document["stringMember"] = "spam"
     actual = document["stringMember"]._schema  # pyright: ignore[reportPrivateUsage]
-    assert actual == expected
+    assert actual == target_schema
+
+
+def test_wrap_map_passes_schema_to_member_documents() -> None:
+    id = ShapeID("smithy.example#Map")
+    map_schema = Schema.collection(
+        id=id,
+        type=ShapeType.MAP,
+        members={
+            "key": {"target": STRING},
+            "value": {"target": STRING},
+        },
+    )
+    document = Document({"spam": "eggs"}, schema=map_schema)
+    actual = document["spam"]._schema  # pyright: ignore[reportPrivateUsage]
+    assert actual == STRING
+
+
+def test_setitem_on_map_passes_schema_to_member_documents() -> None:
+    id = ShapeID("smithy.example#Map")
+    map_schema = Schema.collection(
+        id=id,
+        type=ShapeType.MAP,
+        members={
+            "key": {"target": STRING},
+            "value": {"target": STRING},
+        },
+    )
+    document = Document({"spam": "eggs"}, schema=map_schema)
+    document["spam"] = "eggsandspam"
+    actual = document["spam"]._schema  # pyright: ignore[reportPrivateUsage]
+    assert actual == STRING
