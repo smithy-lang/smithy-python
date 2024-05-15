@@ -441,5 +441,6 @@ class _DocumentMapSerializer(MapSerializer):
         return self._result
 
     def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]):
-        self._result[key] = value_writer(self._delegate)
+        value_writer(self._delegate)
+        self._result[key] = self._delegate.expect_result()
         self._delegate.result = None

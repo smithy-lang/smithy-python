@@ -1,12 +1,24 @@
+from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
+from typing import Any, cast
 
 import pytest
 
-from smithy_core.documents import Document, DocumentValue
+from smithy_core.documents import Document, DocumentSerializer, DocumentValue
 from smithy_core.exceptions import ExpectationNotMetException
-from smithy_core.prelude import STRING
+from smithy_core.prelude import (
+    BIG_DECIMAL,
+    BLOB,
+    BOOLEAN,
+    DOCUMENT,
+    FLOAT,
+    INTEGER,
+    STRING,
+    TIMESTAMP,
+)
 from smithy_core.schemas import Schema
+from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
 
 
@@ -449,3 +461,248 @@ def test_setitem_on_map_passes_schema_to_member_documents() -> None:
     document["spam"] = "eggsandspam"
     actual = document["spam"]._schema  # pyright: ignore[reportPrivateUsage]
     assert actual == STRING
+
+
+STRING_LIST_SCHEMA = Schema.collection(
+    id=ShapeID("smithy.example#StringList"),
+    type=ShapeType.LIST,
+    members={"member": {"target": STRING}},
+)
+STRING_MAP_SCHEMA = Schema.collection(
+    id=ShapeID("smithy.example#StringMap"),
+    type=ShapeType.MAP,
+    members={"key": {"target": STRING}, "value": {"target": STRING}},
+)
+SCHEMA: Schema = Schema.collection(
+    id=ShapeID("smithy.example#DocumentSerdeShape"),
+    members={
+        "booleanMember": {"target": BOOLEAN},
+        "integerMember": {"target": INTEGER},
+        "floatMember": {"target": FLOAT},
+        "bigDecimalMember": {"target": BIG_DECIMAL},
+        "stringMember": {"target": STRING},
+        "blobMember": {"target": BLOB},
+        "timestampMember": {"target": TIMESTAMP},
+        "documentMember": {"target": DOCUMENT},
+        "listMember": {"target": STRING_LIST_SCHEMA},
+        "mapMember": {"target": STRING_MAP_SCHEMA},
+    },
+)
+SCHEMA.members["structMember"] = Schema(
+    id=SCHEMA.id.with_member("structMember"),
+    type=ShapeType.MEMBER,
+    member_target=SCHEMA,
+    member_index=len(SCHEMA.members),
+)
+
+
+@dataclass
+class DocumentSerdeShape:
+    boolean_member: bool | None = None
+    integer_member: int | None = None
+    float_member: float | None = None
+    big_decimal_member: Decimal | None = None
+    string_member: str | None = None
+    blob_member: bytes | None = None
+    timestamp_member: datetime | None = None
+    document_member: Document | None = None
+    list_member: list[str] | None = None
+    map_member: dict[str, str] | None = None
+    struct_member: "DocumentSerdeShape | None" = None
+
+    def serialize(self, serializer: ShapeSerializer):
+        with serializer.begin_struct(SCHEMA) as s:
+            self.serialize_members(s)
+
+    def serialize_members(self, serializer: ShapeSerializer) -> None:
+        """Serialize structure members using the given serializer.
+
+        :param serializer: The serializer to write member data to.
+        """
+        if self.boolean_member is not None:
+            serializer.write_boolean(
+                SCHEMA.members["booleanMember"], self.boolean_member
+            )
+        if self.integer_member is not None:
+            serializer.write_integer(
+                SCHEMA.members["integerMember"], self.integer_member
+            )
+        if self.float_member is not None:
+            serializer.write_float(SCHEMA.members["floatMember"], self.float_member)
+        if self.big_decimal_member is not None:
+            serializer.write_big_decimal(
+                SCHEMA.members["bigDecimalMember"], self.big_decimal_member
+            )
+        if self.string_member is not None:
+            serializer.write_string(SCHEMA.members["stringMember"], self.string_member)
+        if self.blob_member is not None:
+            serializer.write_blob(SCHEMA.members["blobMember"], self.blob_member)
+        if self.timestamp_member is not None:
+            serializer.write_timestamp(
+                SCHEMA.members["timestampMember"], self.timestamp_member
+            )
+        if self.document_member is not None:
+            serializer.write_document(
+                SCHEMA.members["documentMember"], self.document_member
+            )
+        if self.list_member is not None:
+            schema = SCHEMA.members["listMember"]
+            target_schema = schema.expect_member_target().members["member"]
+            with serializer.begin_list(schema) as ls:
+                for element in self.list_member:
+                    ls.write_string(target_schema, element)
+        if self.map_member is not None:
+            schema = SCHEMA.members["mapMember"]
+            target_schema = schema.expect_member_target().members["value"]
+            with serializer.begin_map(schema) as ms:
+                for key, value in self.map_member.items():
+                    ms.entry(key, lambda vs: vs.write_string(target_schema, value))
+        if self.struct_member is not None:
+            serializer.write_struct(SCHEMA.members["structMember"], self.struct_member)
+
+
+DOCUMENT_SERDE_CASES = [
+    (True, Document(True, schema=BOOLEAN)),
+    (1, Document(1, schema=INTEGER)),
+    (1.1, Document(1.1, schema=FLOAT)),
+    (Decimal("1.1"), Document(Decimal("1.1"), schema=BIG_DECIMAL)),
+    (b"foo", Document(b"foo", schema=BLOB)),
+    ("foo", Document("foo", schema=STRING)),
+    (datetime(2024, 5, 15), Document(datetime(2024, 5, 15))),
+    (Document(None), Document(None)),
+    (
+        ["foo"],
+        Document([Document("foo", schema=STRING)], schema=SCHEMA.members["listMember"]),
+    ),
+    (
+        {"foo": "bar"},
+        Document(
+            {"foo": Document("bar", schema=STRING)},
+            schema=SCHEMA.members["mapMember"],
+        ),
+    ),
+    (
+        DocumentSerdeShape(boolean_member=True),
+        Document({"booleanMember": Document(True, schema=BOOLEAN)}, schema=SCHEMA),
+    ),
+    (
+        DocumentSerdeShape(integer_member=1),
+        Document({"integerMember": Document(1, schema=INTEGER)}, schema=SCHEMA),
+    ),
+    (
+        DocumentSerdeShape(float_member=1.1),
+        Document({"floatMember": Document(1.1, schema=FLOAT)}, schema=SCHEMA),
+    ),
+    (
+        DocumentSerdeShape(big_decimal_member=Decimal("1.1")),
+        Document(
+            {"bigDecimalMember": Document(Decimal("1.1"), schema=BIG_DECIMAL)},
+            schema=SCHEMA,
+        ),
+    ),
+    (
+        DocumentSerdeShape(blob_member=b"foo"),
+        Document({"blobMember": Document(b"foo", schema=BLOB)}, schema=SCHEMA),
+    ),
+    (
+        DocumentSerdeShape(string_member="foo"),
+        Document({"stringMember": Document("foo", schema=STRING)}, schema=SCHEMA),
+    ),
+    (
+        DocumentSerdeShape(timestamp_member=datetime(2024, 5, 15)),
+        Document(
+            {"timestampMember": Document(datetime(2024, 5, 15), schema=TIMESTAMP)},
+            schema=SCHEMA,
+        ),
+    ),
+    (
+        DocumentSerdeShape(document_member=Document(None)),
+        Document({"documentMember": Document(None)}, schema=SCHEMA),
+    ),
+    (
+        DocumentSerdeShape(list_member=["foo"]),
+        Document(
+            {
+                "listMember": Document(
+                    [Document("foo", schema=STRING)],
+                    schema=SCHEMA.members["listMember"],
+                )
+            },
+            schema=SCHEMA,
+        ),
+    ),
+    (
+        DocumentSerdeShape(map_member={"foo": "bar"}),
+        Document(
+            {
+                "mapMember": Document(
+                    {"foo": Document("bar", schema=STRING)},
+                    schema=SCHEMA.members["mapMember"],
+                )
+            },
+            schema=SCHEMA,
+        ),
+    ),
+    (
+        DocumentSerdeShape(struct_member=DocumentSerdeShape(string_member="foo")),
+        Document(
+            {
+                "structMember": Document(
+                    {"stringMember": Document("foo", schema=STRING)}, schema=SCHEMA
+                )
+            },
+            schema=SCHEMA,
+        ),
+    ),
+]
+
+
+@pytest.mark.parametrize("given, expected", DOCUMENT_SERDE_CASES)
+def test_document_serializer(given: Any, expected: Document):
+    serializer = DocumentSerializer()
+    match given:
+        case bool():
+            serializer.write_boolean(BOOLEAN, given)
+        case int():
+            serializer.write_integer(INTEGER, given)
+        case float():
+            serializer.write_float(FLOAT, given)
+        case Decimal():
+            serializer.write_big_decimal(BIG_DECIMAL, given)
+        case bytes():
+            serializer.write_blob(BLOB, given)
+        case str():
+            serializer.write_string(STRING, given)
+        case datetime():
+            serializer.write_timestamp(TIMESTAMP, given)
+        case Document():
+            serializer.write_document(DOCUMENT, given)
+        case list():
+            given = cast(list[str], given)
+            with serializer.begin_list(STRING_LIST_SCHEMA) as list_serializer:
+                member_schema = STRING_LIST_SCHEMA.members["member"]
+                for e in given:
+                    list_serializer.write_string(member_schema, e)
+        case dict():
+            given = cast(dict[str, str], given)
+            with serializer.begin_map(STRING_MAP_SCHEMA) as map_serializer:
+                member_schema = STRING_MAP_SCHEMA.members["value"]
+                for k, v in given.items():
+                    map_serializer.entry(
+                        k, lambda vs: vs.write_string(member_schema, v)
+                    )
+        case DocumentSerdeShape():
+            given.serialize(serializer)
+        case _:
+            raise Exception(f"Unexpected type: {type(given)}")
+
+    actual = serializer.expect_result()
+    assert actual.as_value() == expected.as_value()
+    assert actual == expected
+
+
+def test_from_shape() -> None:
+    result = Document.from_shape(DocumentSerdeShape(string_member="foo"))
+    assert result == Document(
+        {"stringMember": Document("foo", schema=STRING)}, schema=SCHEMA
+    )
