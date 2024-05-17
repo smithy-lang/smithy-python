@@ -5,7 +5,13 @@ from typing import Any, cast
 
 import pytest
 
-from smithy_core.documents import Document, DocumentSerializer, DocumentValue
+from smithy_core.deserializers import ShapeDeserializer
+from smithy_core.documents import (
+    Document,
+    DocumentDeserializer,
+    DocumentSerializer,
+    DocumentValue,
+)
 from smithy_core.exceptions import ExpectationNotMetException
 from smithy_core.prelude import (
     BIG_DECIMAL,
@@ -560,6 +566,66 @@ class DocumentSerdeShape:
         if self.struct_member is not None:
             serializer.write_struct(SCHEMA.members["structMember"], self.struct_member)
 
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> "DocumentSerdeShape":
+        kwargs: dict[str, Any] = {}
+
+        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
+            match schema.expect_member_index():
+                case 0:
+                    kwargs["boolean_member"] = de.read_boolean(
+                        SCHEMA.members["booleanMember"]
+                    )
+                case 1:
+                    kwargs["integer_member"] = de.read_integer(
+                        SCHEMA.members["integerMember"]
+                    )
+                case 2:
+                    kwargs["float_member"] = de.read_float(
+                        SCHEMA.members["floatMember"]
+                    )
+                case 3:
+                    kwargs["big_decimal_member"] = de.read_big_decimal(
+                        SCHEMA.members["bigDecimalMember"]
+                    )
+                case 4:
+                    kwargs["string_member"] = de.read_string(
+                        SCHEMA.members["stringMember"]
+                    )
+                case 5:
+                    kwargs["blob_member"] = de.read_blob(SCHEMA.members["blobMember"])
+                case 6:
+                    kwargs["timestamp_member"] = de.read_timestamp(
+                        SCHEMA.members["timestampMember"]
+                    )
+                case 7:
+                    kwargs["document_member"] = de.read_document(
+                        SCHEMA.members["documentMember"]
+                    )
+                case 8:
+                    list_value: list[str] = []
+                    de.read_list(
+                        SCHEMA.members["listMember"],
+                        lambda d: list_value.append(d.read_string(STRING)),
+                    )
+                    kwargs["list_member"] = list_value
+                case 9:
+                    map_value: dict[str, str] = {}
+                    de.read_map(
+                        SCHEMA.members["mapMember"],
+                        lambda k, d: map_value.__setitem__(k, d.read_string(STRING)),
+                    )
+                    kwargs["map_member"] = map_value
+                case 10:
+                    kwargs["struct_member"] = DocumentSerdeShape.deserialize(de)
+                case _:
+                    # In actual generated code, this will just log in order to ignore
+                    # unknown members.
+                    raise Exception(f"Unexpected schema: {schema}")
+
+        deserializer.read_struct(schema=SCHEMA, consumer=_consumer)
+        return cls(**kwargs)
+
 
 DOCUMENT_SERDE_CASES = [
     (True, Document(True, schema=BOOLEAN)),
@@ -706,3 +772,42 @@ def test_from_shape() -> None:
     assert result == Document(
         {"stringMember": Document("foo", schema=STRING)}, schema=SCHEMA
     )
+
+
+@pytest.mark.parametrize("expected, given", DOCUMENT_SERDE_CASES)
+def test_document_deserializer(given: Document, expected: Any):
+    actual: Any
+    match expected:
+        case bool():
+            actual = DocumentDeserializer(given).read_boolean(BOOLEAN)
+        case int():
+            actual = DocumentDeserializer(given).read_integer(INTEGER)
+        case float():
+            actual = DocumentDeserializer(given).read_float(FLOAT)
+        case Decimal():
+            actual = DocumentDeserializer(given).read_big_decimal(BIG_DECIMAL)
+        case bytes():
+            actual = DocumentDeserializer(given).read_blob(BLOB)
+        case str():
+            actual = DocumentDeserializer(given).read_string(STRING)
+        case datetime():
+            actual = DocumentDeserializer(given).read_timestamp(TIMESTAMP)
+        case Document():
+            actual = DocumentDeserializer(given).read_document(DOCUMENT)
+        case list():
+            actual = []
+            deserializer = DocumentDeserializer(given)
+            deserializer.read_list(
+                STRING_LIST_SCHEMA, lambda d: actual.append(d.read_string(STRING))
+            )
+        case dict():
+            actual = {}
+            deserializer = DocumentDeserializer(given)
+            deserializer.read_map(
+                STRING_MAP_SCHEMA,
+                lambda k, d: actual.__setitem__(k, d.read_string(STRING)),
+            )
+        case DocumentSerdeShape():
+            actual = given.as_shape(DocumentSerdeShape)
+        case _:
+            raise Exception(f"Unexpected type: {type(given)}")
