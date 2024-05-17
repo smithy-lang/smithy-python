@@ -53,6 +53,7 @@ lint-py: pants
 	./pants fix lint python-packages/smithy-core::
 	./pants fix lint python-packages/smithy-http::
 	./pants fix lint python-packages/smithy-aws-core::
+	./pants fix lint python-packages/smithy-json::
 
 
 ## Runs checkers for the python packages.
@@ -60,6 +61,7 @@ check-py: pants
 	./pants check python-packages/smithy-core::
 	./pants check python-packages/smithy-http::
 	./pants check python-packages/smithy-aws-core::
+	./pants check python-packages/smithy-json::
 
 
 ## Runs tests for the python packages.
@@ -67,6 +69,7 @@ test-py: pants
 	./pants test python-packages/smithy-core::
 	./pants test python-packages/smithy-http::
 	./pants test python-packages/smithy-aws-core::
+	./pants test python-packages/smithy-json::
 
 
 ## Runs formatters/fixers/linters/checkers/tests for the python packages.
