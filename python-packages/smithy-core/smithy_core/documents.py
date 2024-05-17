@@ -4,6 +4,7 @@ from contextlib import contextmanager
 from decimal import Decimal
 from typing import TypeGuard, override
 
+from .deserializers import DeserializeableShape, ShapeDeserializer
 from .exceptions import ExpectationNotMetException
 from .schemas import Schema
 from .serializers import (
@@ -237,6 +238,13 @@ class Document:
                     return self._value
         return self._raw_value
 
+    def as_shape[S: DeserializeableShape](self, shape_class: type[S]) -> S:
+        """Converts the document to an instance of the given shape type.
+
+        :param shape_class: A class that implements the DeserializeableShape protocol.
+        """
+        return shape_class.deserialize(DocumentDeserializer(self))
+
     @classmethod
     def from_shape(cls, shape: SerializeableShape) -> "Document":
         """Constructs a Document from a given shape.
@@ -450,3 +458,79 @@ class _DocumentMapSerializer(MapSerializer):
         value_writer(self._delegate)
         self._result[key] = self._delegate.expect_result()
         self._delegate.result = None
+
+
+class DocumentDeserializer(ShapeDeserializer):
+    """Deserializes documents into shapes."""
+
+    def __init__(self, value: Document) -> None:
+        """Initialize a DocumentDeserializer.
+
+        :param value: The document to deserialize.
+        """
+        self._value = value
+
+    @override
+    def read_struct(
+        self,
+        schema: "Schema",
+        consumer: Callable[["Schema", ShapeDeserializer], None],
+    ):
+        for member_name, member_schema in schema.members.items():
+            if (value := self._value.get(member_name)) is not None:
+                consumer(member_schema, DocumentDeserializer(value))
+
+    @override
+    def read_list(
+        self, schema: "Schema", consumer: Callable[[ShapeDeserializer], None]
+    ):
+        for element in self._value.as_list():
+            consumer(DocumentDeserializer(element))
+
+    @override
+    def read_map(
+        self,
+        schema: "Schema",
+        consumer: Callable[[str, ShapeDeserializer], None],
+    ):
+        for k, v in self._value.as_map().items():
+            consumer(k, DocumentDeserializer(v))
+
+    @override
+    def read_null(self, schema: "Schema") -> None:
+        if (value := self._value.as_value()) is not None:
+            raise ExpectationNotMetException(
+                f"Expected document value to be None, but was: {value}"
+            )
+
+    @override
+    def read_boolean(self, schema: "Schema") -> bool:
+        return self._value.as_boolean()
+
+    @override
+    def read_blob(self, schema: "Schema") -> bytes:
+        return self._value.as_blob()
+
+    @override
+    def read_integer(self, schema: "Schema") -> int:
+        return self._value.as_integer()
+
+    @override
+    def read_float(self, schema: "Schema") -> float:
+        return self._value.as_float()
+
+    @override
+    def read_big_decimal(self, schema: "Schema") -> Decimal:
+        return self._value.as_decimal()
+
+    @override
+    def read_string(self, schema: "Schema") -> str:
+        return self._value.as_string()
+
+    @override
+    def read_document(self, schema: "Schema") -> Document:
+        return self._value
+
+    @override
+    def read_timestamp(self, schema: "Schema") -> datetime.datetime:
+        return self._value.as_timestamp()
