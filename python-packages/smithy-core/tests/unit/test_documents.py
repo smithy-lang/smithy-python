@@ -29,12 +29,12 @@ def test_type_inference(
     value: DocumentValue | list[Document] | dict[str, Document],
     expected: ShapeType,
 ) -> None:
-    assert Document(value).type == expected
+    assert Document(value).shape_type == expected
 
 
 def test_type_inherited_from_schema():
     schema = Schema(id=ShapeID("smithy.api#Short"), type=ShapeType.SHORT)
-    assert Document(1, schema=schema).type == ShapeType.SHORT
+    assert Document(1, schema=schema).shape_type == ShapeType.SHORT
 
 
 def test_as_blob() -> None:

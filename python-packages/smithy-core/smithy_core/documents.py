@@ -126,7 +126,7 @@ class Document:
         )
 
     @property
-    def type(self) -> ShapeType:
+    def shape_type(self) -> ShapeType:
         """The Smithy data model type for the underlying contents of the document."""
         return self._type
 
