@@ -195,7 +195,7 @@ class Document:
 
     def _wrap_list(self, value: Sequence[DocumentValue]) -> list["Document"]:
         schema = self._schema
-        if schema.type == ShapeType.LIST:
+        if schema.type is ShapeType.LIST:
             schema = self._schema.members["member"].expect_member_target()
         return [Document(e, schema=schema) for e in value]
 
@@ -279,7 +279,7 @@ class Document:
         else:
             if not isinstance(value, Document):
                 schema = self._schema
-                if schema.type == ShapeType.LIST:
+                if schema.type is ShapeType.LIST:
                     schema = schema.members["member"].expect_member_target()
                 value = Document(value, schema=schema)
             self.as_list()[key] = value
