@@ -1,0 +1,69 @@
+from datetime import datetime
+from decimal import Decimal
+from io import BytesIO
+from typing import Any, cast
+
+import pytest
+from smithy_core.documents import Document
+from smithy_core.prelude import (
+    BIG_DECIMAL,
+    BLOB,
+    BOOLEAN,
+    DOCUMENT,
+    FLOAT,
+    INTEGER,
+    STRING,
+    TIMESTAMP,
+)
+
+from smithy_json import JSONCodec
+
+from . import JSON_SERDE_CASES, STRING_LIST_SCHEMA, STRING_MAP_SCHEMA, SerdeShape
+
+
+@pytest.mark.parametrize("given, expected", JSON_SERDE_CASES)
+def test_json_serializer(given: Any, expected: bytes) -> None:
+    sink = BytesIO()
+    serializer = JSONCodec().create_serializer(sink)
+    match given:
+        case None:
+            serializer.write_null(STRING)
+        case bool():
+            serializer.write_boolean(BOOLEAN, given)
+        case int():
+            serializer.write_integer(INTEGER, given)
+        case float():
+            serializer.write_float(FLOAT, given)
+        case Decimal():
+            serializer.write_big_decimal(BIG_DECIMAL, given)
+        case bytes():
+            serializer.write_blob(BLOB, given)
+        case str():
+            serializer.write_string(STRING, given)
+        case datetime():
+            serializer.write_timestamp(TIMESTAMP, given)
+        case Document():
+            serializer.write_document(DOCUMENT, given)
+        case list():
+            given = cast(list[str], given)
+            with serializer.begin_list(STRING_LIST_SCHEMA) as list_serializer:
+                member_schema = STRING_LIST_SCHEMA.members["member"]
+                for e in given:
+                    list_serializer.write_string(member_schema, e)
+        case dict():
+            given = cast(dict[str, str], given)
+            with serializer.begin_map(STRING_MAP_SCHEMA) as map_serializer:
+                member_schema = STRING_MAP_SCHEMA.members["value"]
+                for k, v in given.items():
+                    map_serializer.entry(
+                        k, lambda vs: vs.write_string(member_schema, v)
+                    )
+        case SerdeShape():
+            given.serialize(serializer)
+        case _:
+            raise Exception(f"Unexpected type: {type(given)}")
+
+    serializer.flush()
+    sink.seek(0)
+    actual = sink.read()
+    assert actual == expected
