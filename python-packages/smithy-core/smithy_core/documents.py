@@ -244,7 +244,7 @@ class Document:
         :param shape: The shape to convert to a document.
         :returns: A Document representation of the given shape.
         """
-        serializer = DocumentSerializer()
+        serializer = _DocumentSerializer()
         shape.serialize(serializer=serializer)
         serializer.flush()
         return serializer.expect_result()
@@ -312,7 +312,7 @@ class Document:
         return self.as_value() == other.as_value()
 
 
-class DocumentSerializer(ShapeSerializer):
+class _DocumentSerializer(ShapeSerializer):
     """Serializes shapes into document representations."""
 
     result: Document | None = None
@@ -396,7 +396,7 @@ class DocumentSerializer(ShapeSerializer):
 
 
 class _DocumentStructSerializer(InterceptingSerializer):
-    _delegate = DocumentSerializer()
+    _delegate = _DocumentSerializer()
     _result: Document
 
     def __init__(self, schema: "Schema") -> None:
@@ -415,7 +415,7 @@ class _DocumentStructSerializer(InterceptingSerializer):
 
 
 class _DocumentListSerializer(InterceptingSerializer):
-    _delegate = DocumentSerializer()
+    _delegate = _DocumentSerializer()
     _result: list[Document]
     _schema: "Schema"
 
@@ -436,7 +436,7 @@ class _DocumentListSerializer(InterceptingSerializer):
 
 
 class _DocumentMapSerializer(MapSerializer):
-    _delegate = DocumentSerializer()
+    _delegate = _DocumentSerializer()
     _result: Document
 
     def __init__(self, schema: "Schema") -> None:
