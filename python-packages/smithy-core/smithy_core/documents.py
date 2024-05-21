@@ -331,7 +331,9 @@ class DocumentSerializer(ShapeSerializer):
         delegate = _DocumentStructSerializer(schema)
         try:
             yield delegate
-        finally:
+        except Exception:
+            raise
+        else:
             self.result = delegate.result
 
     @override
@@ -340,7 +342,9 @@ class DocumentSerializer(ShapeSerializer):
         delegate = _DocumentListSerializer(schema)
         try:
             yield delegate
-        finally:
+        except Exception:
+            raise
+        else:
             self.result = delegate.result
 
     @override
@@ -349,7 +353,9 @@ class DocumentSerializer(ShapeSerializer):
         delegate = _DocumentMapSerializer(schema)
         try:
             yield delegate
-        finally:
+        except Exception:
+            raise
+        else:
             self.result = delegate.result
 
     @override
