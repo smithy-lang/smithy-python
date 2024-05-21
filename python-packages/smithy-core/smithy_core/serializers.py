@@ -231,7 +231,9 @@ class InterceptingSerializer(ShapeSerializer, metaclass=ABCMeta):
         try:
             with delegate.begin_struct(schema) as s:
                 yield s
-        finally:
+        except Exception:
+            raise
+        else:
             self.after(schema)
 
     @contextmanager
@@ -241,7 +243,9 @@ class InterceptingSerializer(ShapeSerializer, metaclass=ABCMeta):
         try:
             with delegate.begin_list(schema) as s:
                 yield s
-        finally:
+        except Exception:
+            raise
+        else:
             self.after(schema)
 
     @contextmanager
@@ -251,7 +255,9 @@ class InterceptingSerializer(ShapeSerializer, metaclass=ABCMeta):
         try:
             with delegate.begin_map(schema) as s:
                 yield s
-        finally:
+        except Exception:
+            raise
+        else:
             self.after(schema)
 
     def write_null(self, schema: "Schema") -> None:
