@@ -9,9 +9,9 @@ import pytest
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import (
     Document,
-    DocumentDeserializer,
-    _DocumentSerializer,
     DocumentValue,
+    _DocumentDeserializer,
+    _DocumentSerializer,
 )
 from smithy_core.exceptions import ExpectationNotMetException
 from smithy_core.prelude import (
@@ -780,30 +780,30 @@ def test_document_deserializer(given: Document, expected: Any):
     actual: Any
     match expected:
         case bool():
-            actual = DocumentDeserializer(given).read_boolean(BOOLEAN)
+            actual = _DocumentDeserializer(given).read_boolean(BOOLEAN)
         case int():
-            actual = DocumentDeserializer(given).read_integer(INTEGER)
+            actual = _DocumentDeserializer(given).read_integer(INTEGER)
         case float():
-            actual = DocumentDeserializer(given).read_float(FLOAT)
+            actual = _DocumentDeserializer(given).read_float(FLOAT)
         case Decimal():
-            actual = DocumentDeserializer(given).read_big_decimal(BIG_DECIMAL)
+            actual = _DocumentDeserializer(given).read_big_decimal(BIG_DECIMAL)
         case bytes():
-            actual = DocumentDeserializer(given).read_blob(BLOB)
+            actual = _DocumentDeserializer(given).read_blob(BLOB)
         case str():
-            actual = DocumentDeserializer(given).read_string(STRING)
+            actual = _DocumentDeserializer(given).read_string(STRING)
         case datetime():
-            actual = DocumentDeserializer(given).read_timestamp(TIMESTAMP)
+            actual = _DocumentDeserializer(given).read_timestamp(TIMESTAMP)
         case Document():
-            actual = DocumentDeserializer(given).read_document(DOCUMENT)
+            actual = _DocumentDeserializer(given).read_document(DOCUMENT)
         case list():
             actual = []
-            deserializer = DocumentDeserializer(given)
+            deserializer = _DocumentDeserializer(given)
             deserializer.read_list(
                 STRING_LIST_SCHEMA, lambda d: actual.append(d.read_string(STRING))
             )
         case dict():
             actual = {}
-            deserializer = DocumentDeserializer(given)
+            deserializer = _DocumentDeserializer(given)
             deserializer.read_map(
                 STRING_MAP_SCHEMA,
                 lambda k, d: actual.__setitem__(k, d.read_string(STRING)),
