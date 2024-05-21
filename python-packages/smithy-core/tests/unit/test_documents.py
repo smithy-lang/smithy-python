@@ -1,3 +1,4 @@
+# pyright: reportPrivateUsage=false
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
@@ -5,7 +6,7 @@ from typing import Any, cast
 
 import pytest
 
-from smithy_core.documents import Document, DocumentSerializer, DocumentValue
+from smithy_core.documents import Document, DocumentValue, _DocumentSerializer
 from smithy_core.exceptions import ExpectationNotMetException
 from smithy_core.prelude import (
     BIG_DECIMAL,
@@ -659,7 +660,7 @@ DOCUMENT_SERDE_CASES = [
 
 @pytest.mark.parametrize("given, expected", DOCUMENT_SERDE_CASES)
 def test_document_serializer(given: Any, expected: Document):
-    serializer = DocumentSerializer()
+    serializer = _DocumentSerializer()
     match given:
         case bool():
             serializer.write_boolean(BOOLEAN, given)
