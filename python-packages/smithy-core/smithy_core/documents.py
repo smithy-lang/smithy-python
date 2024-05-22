@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import TypeGuard, override
 
 from .deserializers import DeserializeableShape, ShapeDeserializer
-from .exceptions import ExpectationNotMetException
+from .exceptions import ExpectationNotMetException, SmithyException
 from .schemas import Schema
 from .serializers import (
     InterceptingSerializer,
@@ -86,7 +86,7 @@ class Document:
                 self._raw_value = value
             else:
                 self._value = value  # type: ignore
-        elif isinstance(value, Sequence):
+        elif isinstance(value, Sequence) and not isinstance(value, str | bytes):
             if self._is_raw_list(value):
                 self._raw_value = value
             else:
@@ -94,12 +94,11 @@ class Document:
         else:
             self._value = value
 
-        if self._schema is not _DOCUMENT:
+        if self._schema.shape_type is not ShapeType.DOCUMENT:
             self._type = self._schema.shape_type
-        elif isinstance(self._raw_value, Sequence):
-            self._type = ShapeType.LIST
         else:
-            match self._value:
+            # TODO: set an appropriate schema if one was not provided
+            match value:
                 case bool():
                     self._type = ShapeType.BOOLEAN
                 case str():
@@ -114,8 +113,10 @@ class Document:
                     self._type = ShapeType.BLOB
                 case datetime.datetime():
                     self._type = ShapeType.TIMESTAMP
-                case list():
+                case Sequence():
                     self._type = ShapeType.LIST
+                case Mapping():
+                    self._type = ShapeType.MAP
                 case _:
                     self._type = ShapeType.DOCUMENT
 
@@ -137,6 +138,10 @@ class Document:
     def shape_type(self) -> ShapeType:
         """The Smithy data model type for the underlying contents of the document."""
         return self._type
+
+    def is_none(self) -> bool:
+        """Indicates whether the document contains a null value."""
+        return self._value is None and self._raw_value is None
 
     def as_blob(self) -> bytes:
         """Asserts the document is a blob and returns it as bytes."""
@@ -197,7 +202,7 @@ class Document:
     def _wrap_list(self, value: Sequence[DocumentValue]) -> list["Document"]:
         schema = self._schema
         if schema.shape_type is ShapeType.LIST:
-            schema = self._schema.members["member"].expect_member_target()
+            schema = self._schema.members["member"]
         return [Document(e, schema=schema) for e in value]
 
     def as_map(self) -> dict[str, "Document"]:
@@ -212,17 +217,15 @@ class Document:
         )
 
     def _wrap_map(self, value: Mapping[str, DocumentValue]) -> dict[str, "Document"]:
-        if self._schema.shape_type is not ShapeType.STRUCTURE:
+        if self._schema.shape_type not in [ShapeType.STRUCTURE, ShapeType.UNION]:
             member_schema = self._schema
             if self._schema.shape_type is ShapeType.MAP:
-                member_schema = self._schema.members["value"].expect_member_target()
+                member_schema = self._schema.members["value"]
             return {k: Document(v, schema=member_schema) for k, v in value.items()}
 
         result: dict[str, "Document"] = {}
         for k, v in value.items():
-            result[k] = Document(
-                v, schema=self._schema.members[k].expect_member_target()
-            )
+            result[k] = Document(v, schema=self._schema.members[k])
         return result
 
     def as_value(self) -> DocumentValue:
@@ -244,6 +247,61 @@ class Document:
         :param shape_class: A class that implements the DeserializeableShape protocol.
         """
         return shape_class.deserialize(_DocumentDeserializer(self))
+
+    def serialize(self, serializer: ShapeSerializer) -> None:
+        serializer.write_document(self._schema, self)
+
+    def serialize_contents(self, serializer: ShapeSerializer) -> None:
+        if self.is_none():
+            serializer.write_null(self._schema)
+            return
+
+        match self._type:
+            case ShapeType.STRUCTURE | ShapeType.UNION:
+                with serializer.begin_struct(self._schema) as struct_serializer:
+                    self.serialize_members(struct_serializer)
+            case ShapeType.LIST:
+                with serializer.begin_list(self._schema) as list_serializer:
+                    for element in self.as_list():
+                        element.serialize(list_serializer)
+            case ShapeType.MAP:
+                with serializer.begin_map(self._schema) as map_serializer:
+                    for key, value in self.as_map().items():
+                        map_serializer.entry(key, lambda s: value.serialize(s))
+            case ShapeType.STRING | ShapeType.ENUM:
+                serializer.write_string(self._schema, self.as_string())
+            case ShapeType.BOOLEAN:
+                serializer.write_boolean(self._schema, self.as_boolean())
+            case ShapeType.BYTE:
+                serializer.write_byte(self._schema, self.as_integer())
+            case ShapeType.SHORT:
+                serializer.write_short(self._schema, self.as_integer())
+            case ShapeType.INTEGER | ShapeType.INT_ENUM:
+                serializer.write_integer(self._schema, self.as_integer())
+            case ShapeType.LONG:
+                serializer.write_long(self._schema, self.as_integer())
+            case ShapeType.BIG_INTEGER:
+                serializer.write_big_integer(self._schema, self.as_integer())
+            case ShapeType.FLOAT:
+                serializer.write_float(self._schema, self.as_float())
+            case ShapeType.DOUBLE:
+                serializer.write_double(self._schema, self.as_float())
+            case ShapeType.BIG_DECIMAL:
+                serializer.write_big_decimal(self._schema, self.as_decimal())
+            case ShapeType.BLOB:
+                serializer.write_blob(self._schema, self.as_blob())
+            case ShapeType.TIMESTAMP:
+                serializer.write_timestamp(self._schema, self.as_timestamp())
+            case ShapeType.DOCUMENT:
+                # The shape type is only ever document when the value is null,
+                # which is a case we've already handled.
+                raise SmithyException(
+                    f"Unexpexcted DOCUMENT shape type for document value: {self.as_value()}"
+                )
+
+    def serialize_members(self, serializer: ShapeSerializer) -> None:
+        for value in self.as_map().values():
+            value.serialize(serializer)
 
     @classmethod
     def from_shape(cls, shape: SerializeableShape) -> "Document":
@@ -276,22 +334,38 @@ class Document:
         value: "Document | list[Document] | dict[str, Document] | DocumentValue",
     ) -> None:
         if isinstance(key, str):
+            schema = self._schema
+            if schema.shape_type is ShapeType.STRUCTURE:
+                schema = schema.members[key]
+            elif schema.shape_type is ShapeType.MAP:
+                schema = schema.members["value"]
+
             if not isinstance(value, Document):
-                schema = self._schema
-                if schema.shape_type is ShapeType.STRUCTURE:
-                    schema = schema.members[key].expect_member_target()
-                elif schema.shape_type is ShapeType.MAP:
-                    schema = schema.members["value"].expect_member_target()
                 value = Document(value, schema=schema)
+            else:
+                value = value._with_schema(schema)
+
             self.as_map()[key] = value
         else:
+            schema = self._schema
+            if schema.shape_type is ShapeType.LIST:
+                schema = schema.members["member"]
+
             if not isinstance(value, Document):
-                schema = self._schema
-                if schema.shape_type is ShapeType.LIST:
-                    schema = schema.members["member"].expect_member_target()
                 value = Document(value, schema=schema)
+            else:
+                value = value._with_schema(schema)
+
             self.as_list()[key] = value
         self._raw_value = None
+
+    def _with_schema(self, schema: Schema) -> "Document":
+        if self.shape_type in [ShapeType.STRUCTURE, ShapeType.MAP, ShapeType.UNION]:
+            return Document(self.as_map(), schema=schema)
+        elif self.shape_type is ShapeType.LIST:
+            return Document(self.as_list(), schema=schema)
+        else:
+            return Document(self._value, schema=schema)
 
     def __delitem__(self, key: str | int) -> None:
         if isinstance(key, str):

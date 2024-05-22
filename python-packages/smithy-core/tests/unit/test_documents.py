@@ -1,5 +1,5 @@
 # pyright: reportPrivateUsage=false
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from datetime import datetime
 from decimal import Decimal
 from typing import Any, cast
@@ -40,9 +40,10 @@ from smithy_core.shapes import ShapeID, ShapeType
         (b"foo", ShapeType.BLOB),
         (datetime(2024, 5, 2), ShapeType.TIMESTAMP),
         (["foo"], ShapeType.LIST),
-        ({"foo": "bar"}, ShapeType.DOCUMENT),
+        ({"foo": "bar"}, ShapeType.MAP),
         ([Document("foo")], ShapeType.LIST),
-        ({"foo": Document("bar")}, ShapeType.DOCUMENT),
+        ({"foo": Document("bar")}, ShapeType.MAP),
+        (None, ShapeType.DOCUMENT),
     ],
 )
 def test_type_inference(
@@ -340,7 +341,15 @@ def test_insert_into_map() -> None:
     document["spam"] = "eggs"
     assert document["spam"] == Document("eggs")
 
-    document["eggs"] = Document("spam")
+    document["eggs"] = Document(
+        "spam",
+        schema=replace(
+            STRING,
+            id=ShapeID("smithy.example#Foo$value"),
+            member_target=STRING,
+            member_index=1,
+        ),
+    )
     assert document["eggs"] == Document("spam")
 
     assert document.as_value() == {
@@ -397,7 +406,13 @@ def test_wrap_list_passes_schema_to_member_documents() -> None:
     )
     document = Document(["foo"], schema=list_schema)
     actual = document[0]._schema  # pyright: ignore[reportPrivateUsage]
-    assert actual == target_schema
+    expected = replace(
+        target_schema,
+        id=id.with_member("member"),
+        member_target=target_schema,
+        member_index=0,
+    )
+    assert actual == expected
 
 
 def test_setitem_on_list_passes_schema_to_member_documents() -> None:
@@ -411,7 +426,13 @@ def test_setitem_on_list_passes_schema_to_member_documents() -> None:
     document = Document(["foo"], schema=list_schema)
     document[0] = "bar"
     actual = document[0]._schema  # pyright: ignore[reportPrivateUsage]
-    assert actual == target_schema
+    expected = replace(
+        target_schema,
+        id=id.with_member("member"),
+        member_target=target_schema,
+        member_index=0,
+    )
+    assert actual == expected
 
 
 def test_wrap_structure_passes_schema_to_member_documents() -> None:
@@ -423,7 +444,13 @@ def test_wrap_structure_passes_schema_to_member_documents() -> None:
     )
     document = Document({"stringMember": "foo"}, schema=struct_schema)
     actual = document["stringMember"]._schema  # pyright: ignore[reportPrivateUsage]
-    assert actual == target_schema
+    expected = replace(
+        target_schema,
+        id=id.with_member("stringMember"),
+        member_target=target_schema,
+        member_index=0,
+    )
+    assert actual == expected
 
 
 def test_setitem_on_structure_passes_schema_to_member_documents() -> None:
@@ -436,7 +463,13 @@ def test_setitem_on_structure_passes_schema_to_member_documents() -> None:
     document = Document({"stringMember": "foo"}, schema=struct_schema)
     document["stringMember"] = "spam"
     actual = document["stringMember"]._schema  # pyright: ignore[reportPrivateUsage]
-    assert actual == target_schema
+    expected = replace(
+        target_schema,
+        id=id.with_member("stringMember"),
+        member_target=target_schema,
+        member_index=0,
+    )
+    assert actual == expected
 
 
 def test_wrap_map_passes_schema_to_member_documents() -> None:
@@ -451,7 +484,10 @@ def test_wrap_map_passes_schema_to_member_documents() -> None:
     )
     document = Document({"spam": "eggs"}, schema=map_schema)
     actual = document["spam"]._schema  # pyright: ignore[reportPrivateUsage]
-    assert actual == STRING
+    expected = replace(
+        STRING, id=id.with_member("value"), member_target=STRING, member_index=1
+    )
+    assert actual == expected
 
 
 def test_setitem_on_map_passes_schema_to_member_documents() -> None:
@@ -467,7 +503,15 @@ def test_setitem_on_map_passes_schema_to_member_documents() -> None:
     document = Document({"spam": "eggs"}, schema=map_schema)
     document["spam"] = "eggsandspam"
     actual = document["spam"]._schema  # pyright: ignore[reportPrivateUsage]
-    assert actual == STRING
+    expected = replace(
+        STRING, id=id.with_member("value"), member_target=STRING, member_index=1
+    )
+    assert actual == expected
+
+
+def test_is_none():
+    assert Document(None).is_none()
+    assert not Document("foo").is_none()
 
 
 STRING_LIST_SCHEMA = Schema.collection(
@@ -636,89 +680,54 @@ DOCUMENT_SERDE_CASES = [
     ("foo", Document("foo", schema=STRING)),
     (datetime(2024, 5, 15), Document(datetime(2024, 5, 15))),
     (Document(None), Document(None)),
-    (
-        ["foo"],
-        Document([Document("foo", schema=STRING)], schema=SCHEMA.members["listMember"]),
-    ),
+    (["foo"], Document(["foo"], schema=SCHEMA.members["listMember"])),
     (
         {"foo": "bar"},
-        Document(
-            {"foo": Document("bar", schema=STRING)},
-            schema=SCHEMA.members["mapMember"],
-        ),
+        Document({"foo": "bar"}, schema=SCHEMA.members["mapMember"]),
     ),
     (
         DocumentSerdeShape(boolean_member=True),
-        Document({"booleanMember": Document(True, schema=BOOLEAN)}, schema=SCHEMA),
+        Document({"booleanMember": True}, schema=SCHEMA),
     ),
     (
         DocumentSerdeShape(integer_member=1),
-        Document({"integerMember": Document(1, schema=INTEGER)}, schema=SCHEMA),
+        Document({"integerMember": 1}, schema=SCHEMA),
     ),
     (
         DocumentSerdeShape(float_member=1.1),
-        Document({"floatMember": Document(1.1, schema=FLOAT)}, schema=SCHEMA),
+        Document({"floatMember": 1.1}, schema=SCHEMA),
     ),
     (
         DocumentSerdeShape(big_decimal_member=Decimal("1.1")),
-        Document(
-            {"bigDecimalMember": Document(Decimal("1.1"), schema=BIG_DECIMAL)},
-            schema=SCHEMA,
-        ),
+        Document({"bigDecimalMember": Decimal("1.1")}, schema=SCHEMA),
     ),
     (
         DocumentSerdeShape(blob_member=b"foo"),
-        Document({"blobMember": Document(b"foo", schema=BLOB)}, schema=SCHEMA),
+        Document({"blobMember": b"foo"}, schema=SCHEMA),
     ),
     (
         DocumentSerdeShape(string_member="foo"),
-        Document({"stringMember": Document("foo", schema=STRING)}, schema=SCHEMA),
+        Document({"stringMember": "foo"}, schema=SCHEMA),
     ),
     (
         DocumentSerdeShape(timestamp_member=datetime(2024, 5, 15)),
-        Document(
-            {"timestampMember": Document(datetime(2024, 5, 15), schema=TIMESTAMP)},
-            schema=SCHEMA,
-        ),
+        Document({"timestampMember": datetime(2024, 5, 15)}, schema=SCHEMA),
     ),
     (
         DocumentSerdeShape(document_member=Document(None)),
-        Document({"documentMember": Document(None)}, schema=SCHEMA),
+        Document({"documentMember": None}, schema=SCHEMA),
     ),
     (
         DocumentSerdeShape(list_member=["foo"]),
-        Document(
-            {
-                "listMember": Document(
-                    [Document("foo", schema=STRING)],
-                    schema=SCHEMA.members["listMember"],
-                )
-            },
-            schema=SCHEMA,
-        ),
+        Document({"listMember": ["foo"]}, schema=SCHEMA),
     ),
     (
         DocumentSerdeShape(map_member={"foo": "bar"}),
-        Document(
-            {
-                "mapMember": Document(
-                    {"foo": Document("bar", schema=STRING)},
-                    schema=SCHEMA.members["mapMember"],
-                )
-            },
-            schema=SCHEMA,
-        ),
+        Document({"mapMember": {"foo": "bar"}}, schema=SCHEMA),
     ),
     (
         DocumentSerdeShape(struct_member=DocumentSerdeShape(string_member="foo")),
-        Document(
-            {
-                "structMember": Document(
-                    {"stringMember": Document("foo", schema=STRING)}, schema=SCHEMA
-                )
-            },
-            schema=SCHEMA,
-        ),
+        Document({"structMember": {"stringMember": "foo"}}, schema=SCHEMA),
     ),
 ]
 
@@ -765,6 +774,13 @@ def test_document_serializer(given: Any, expected: Document):
     actual = serializer.expect_result()
     assert actual.as_value() == expected.as_value()
     assert actual == expected
+
+
+@pytest.mark.parametrize("value", [t[1] for t in DOCUMENT_SERDE_CASES])
+def test_serialize_method(value: Document):
+    serializer = _DocumentSerializer()
+    value.serialize_contents(serializer)
+    assert serializer.result == value
 
 
 def test_from_shape() -> None:
