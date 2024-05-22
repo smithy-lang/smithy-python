@@ -16,7 +16,7 @@ from .serializers import (
 from .shapes import ShapeID, ShapeType
 from .utils import expect_type
 
-_DOCUMENT = Schema(id=ShapeID("smithy.api#Document"), type=ShapeType.DOCUMENT)
+_DOCUMENT = Schema(id=ShapeID("smithy.api#Document"), shape_type=ShapeType.DOCUMENT)
 
 
 type DocumentValue = (
@@ -95,7 +95,7 @@ class Document:
             self._value = value
 
         if self._schema is not _DOCUMENT:
-            self._type = self._schema.type
+            self._type = self._schema.shape_type
         elif isinstance(self._raw_value, Sequence):
             self._type = ShapeType.LIST
         else:
@@ -196,7 +196,7 @@ class Document:
 
     def _wrap_list(self, value: Sequence[DocumentValue]) -> list["Document"]:
         schema = self._schema
-        if schema.type is ShapeType.LIST:
+        if schema.shape_type is ShapeType.LIST:
             schema = self._schema.members["member"].expect_member_target()
         return [Document(e, schema=schema) for e in value]
 
@@ -212,9 +212,9 @@ class Document:
         )
 
     def _wrap_map(self, value: Mapping[str, DocumentValue]) -> dict[str, "Document"]:
-        if self._schema.type is not ShapeType.STRUCTURE:
+        if self._schema.shape_type is not ShapeType.STRUCTURE:
             member_schema = self._schema
-            if self._schema.type is ShapeType.MAP:
+            if self._schema.shape_type is ShapeType.MAP:
                 member_schema = self._schema.members["value"].expect_member_target()
             return {k: Document(v, schema=member_schema) for k, v in value.items()}
 
@@ -278,16 +278,16 @@ class Document:
         if isinstance(key, str):
             if not isinstance(value, Document):
                 schema = self._schema
-                if schema.type is ShapeType.STRUCTURE:
+                if schema.shape_type is ShapeType.STRUCTURE:
                     schema = schema.members[key].expect_member_target()
-                elif schema.type is ShapeType.MAP:
+                elif schema.shape_type is ShapeType.MAP:
                     schema = schema.members["value"].expect_member_target()
                 value = Document(value, schema=schema)
             self.as_map()[key] = value
         else:
             if not isinstance(value, Document):
                 schema = self._schema
-                if schema.type is ShapeType.LIST:
+                if schema.shape_type is ShapeType.LIST:
                     schema = schema.members["member"].expect_member_target()
                 value = Document(value, schema=schema)
             self.as_list()[key] = value
