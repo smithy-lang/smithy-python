@@ -5,13 +5,13 @@ from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import Trait
 
 ID: ShapeID = ShapeID("ns.foo#bar")
-STRING = Schema(id=ShapeID("smithy.api#String"), type=ShapeType.STRING)
+STRING = Schema(id=ShapeID("smithy.api#String"), shape_type=ShapeType.STRING)
 
 
 def test_traits_list():
     trait_id = ShapeID("smithy.api#internal")
     trait = Trait(id=trait_id, value=True)
-    schema = Schema(id=ID, type=ShapeType.STRUCTURE, traits=[trait])
+    schema = Schema(id=ID, shape_type=ShapeType.STRUCTURE, traits=[trait])
     assert schema.traits == {trait_id: trait}
 
 
@@ -19,18 +19,18 @@ def test_members_list():
     member_name = "baz"
     member = Schema(
         id=ID.with_member(member_name),
-        type=ShapeType.MEMBER,
+        shape_type=ShapeType.MEMBER,
         member_target=STRING,
         member_index=0,
     )
-    schema = Schema(id=ID, type=ShapeType.STRUCTURE, members=[member])
+    schema = Schema(id=ID, shape_type=ShapeType.STRUCTURE, members=[member])
     assert schema.members == {"baz": member}
 
 
 def test_expect_member_schema():
     member_schema = Schema(
         id=ID.with_member("baz"),
-        type=ShapeType.MEMBER,
+        shape_type=ShapeType.MEMBER,
         member_target=STRING,
         member_index=0,
     )
@@ -59,7 +59,7 @@ def test_collection_constructor():
     member_name = "baz"
     member = Schema(
         id=ID.with_member(member_name),
-        type=ShapeType.MEMBER,
+        shape_type=ShapeType.MEMBER,
         member_target=STRING,
         member_index=0,
     )

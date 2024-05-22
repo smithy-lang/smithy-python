@@ -14,7 +14,7 @@ class Schema:
     """Describes a shape, its traits, and its members."""
 
     id: ShapeID
-    type: ShapeType
+    shape_type: ShapeType
     traits: dict[ShapeID, "Trait"] = field(default_factory=dict)
     members: dict[str, "Schema"] = field(default_factory=dict)
     member_target: "Schema | None" = None
@@ -24,7 +24,7 @@ class Schema:
         self,
         *,
         id: ShapeID,
-        type: ShapeType,
+        shape_type: ShapeType,
         traits: list["Trait"] | dict[ShapeID, "Trait"] | None = None,
         members: list["Schema"] | dict[str, "Schema"] | None = None,
         member_target: "Schema | None" = None,
@@ -33,7 +33,7 @@ class Schema:
         """Initialize a schema.
 
         :param id: The ID of the shape.
-        :param type: The type of the shape.
+        :param shape_type: The type of the shape.
         :param traits: Traits applied to the shape, which describe additional metadata.
         :param members: Members of the shape. These correspond to list contents,
             dataclass properties, map keys/values, and union variants.
@@ -56,7 +56,7 @@ class Schema:
 
         # setattr is required because the class is frozen
         object.__setattr__(self, "id", id)
-        object.__setattr__(self, "type", type)
+        object.__setattr__(self, "shape_type", shape_type)
 
         if traits:
             if isinstance(traits, list):
@@ -126,14 +126,14 @@ class Schema:
         cls,
         *,
         id: ShapeID,
-        type: ShapeType = ShapeType.STRUCTURE,
+        shape_type: ShapeType = ShapeType.STRUCTURE,
         traits: list["Trait"] | None = None,
         members: Mapping[str, "MemberSchema"] | None = None,
     ) -> Self:
         """Create a schema for a collection shape.
 
         :param id: The ID of the shape.
-        :param type: The type of the shape. Defaults to STRUCTURE.
+        :param shape_type: The type of the shape. Defaults to STRUCTURE.
         :param traits: Traits applied to the shape, which describe additional metadata.
         :param members: Members of the shape. These correspond to list contents, dataclass
             properties, map keys/values, and union variants. In contrast to the main
@@ -146,14 +146,14 @@ class Schema:
                 member_traits = members[k].get("traits")
                 struct_members[k] = cls(
                     id=id.with_member(k),
-                    type=ShapeType.MEMBER,
+                    shape_type=ShapeType.MEMBER,
                     traits=member_traits,
                     member_target=members[k]["target"],
                     member_index=i,
                 )
         result = cls(
             id=id,
-            type=type,
+            shape_type=shape_type,
             traits=traits,
             members=struct_members,
         )

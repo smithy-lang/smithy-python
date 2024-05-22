@@ -53,7 +53,7 @@ def test_type_inference(
 
 
 def test_type_inherited_from_schema():
-    schema = Schema(id=ShapeID("smithy.api#Short"), type=ShapeType.SHORT)
+    schema = Schema(id=ShapeID("smithy.api#Short"), shape_type=ShapeType.SHORT)
     assert Document(1, schema=schema).shape_type == ShapeType.SHORT
 
 
@@ -389,10 +389,10 @@ def test_del_from_list() -> None:
 
 def test_wrap_list_passes_schema_to_member_documents() -> None:
     id = ShapeID("smithy.example#List")
-    target_schema = Schema(id=ShapeID("smithy.api#String"), type=ShapeType.STRING)
+    target_schema = Schema(id=ShapeID("smithy.api#String"), shape_type=ShapeType.STRING)
     list_schema = Schema.collection(
         id=id,
-        type=ShapeType.LIST,
+        shape_type=ShapeType.LIST,
         members={"member": {"target": target_schema}},
     )
     document = Document(["foo"], schema=list_schema)
@@ -402,10 +402,10 @@ def test_wrap_list_passes_schema_to_member_documents() -> None:
 
 def test_setitem_on_list_passes_schema_to_member_documents() -> None:
     id = ShapeID("smithy.example#List")
-    target_schema = Schema(id=ShapeID("smithy.api#String"), type=ShapeType.STRING)
+    target_schema = Schema(id=ShapeID("smithy.api#String"), shape_type=ShapeType.STRING)
     list_schema = Schema.collection(
         id=id,
-        type=ShapeType.LIST,
+        shape_type=ShapeType.LIST,
         members={"member": {"target": target_schema}},
     )
     document = Document(["foo"], schema=list_schema)
@@ -416,7 +416,7 @@ def test_setitem_on_list_passes_schema_to_member_documents() -> None:
 
 def test_wrap_structure_passes_schema_to_member_documents() -> None:
     id = ShapeID("smithy.example#Structure")
-    target_schema = Schema(id=ShapeID("smithy.api#String"), type=ShapeType.STRING)
+    target_schema = Schema(id=ShapeID("smithy.api#String"), shape_type=ShapeType.STRING)
     struct_schema = Schema.collection(
         id=id,
         members={"stringMember": {"target": target_schema}},
@@ -428,7 +428,7 @@ def test_wrap_structure_passes_schema_to_member_documents() -> None:
 
 def test_setitem_on_structure_passes_schema_to_member_documents() -> None:
     id = ShapeID("smithy.example#Structure")
-    target_schema = Schema(id=ShapeID("smithy.api#String"), type=ShapeType.STRING)
+    target_schema = Schema(id=ShapeID("smithy.api#String"), shape_type=ShapeType.STRING)
     struct_schema = Schema.collection(
         id=id,
         members={"stringMember": {"target": target_schema}},
@@ -443,7 +443,7 @@ def test_wrap_map_passes_schema_to_member_documents() -> None:
     id = ShapeID("smithy.example#Map")
     map_schema = Schema.collection(
         id=id,
-        type=ShapeType.MAP,
+        shape_type=ShapeType.MAP,
         members={
             "key": {"target": STRING},
             "value": {"target": STRING},
@@ -458,7 +458,7 @@ def test_setitem_on_map_passes_schema_to_member_documents() -> None:
     id = ShapeID("smithy.example#Map")
     map_schema = Schema.collection(
         id=id,
-        type=ShapeType.MAP,
+        shape_type=ShapeType.MAP,
         members={
             "key": {"target": STRING},
             "value": {"target": STRING},
@@ -472,12 +472,12 @@ def test_setitem_on_map_passes_schema_to_member_documents() -> None:
 
 STRING_LIST_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringList"),
-    type=ShapeType.LIST,
+    shape_type=ShapeType.LIST,
     members={"member": {"target": STRING}},
 )
 STRING_MAP_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringMap"),
-    type=ShapeType.MAP,
+    shape_type=ShapeType.MAP,
     members={"key": {"target": STRING}, "value": {"target": STRING}},
 )
 SCHEMA: Schema = Schema.collection(
@@ -497,7 +497,7 @@ SCHEMA: Schema = Schema.collection(
 )
 SCHEMA.members["structMember"] = Schema(
     id=SCHEMA.id.with_member("structMember"),
-    type=ShapeType.MEMBER,
+    shape_type=ShapeType.MEMBER,
     member_target=SCHEMA,
     member_index=len(SCHEMA.members),
 )
