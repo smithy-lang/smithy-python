@@ -67,8 +67,8 @@ class TimestampFormat(Enum):
     offset."""
 
     HTTP_DATE = "http-date"
-    """An HTTP date as defined by the IMF-fixdate production in RFC 7231 section
-    7.1.1.1."""
+    """An HTTP date as defined by the IMF-fixdate production in RFC 9110 section
+    5.6.7."""
 
     EPOCH_SECONDS = "epoch-seconds"
     """Also known as Unix time, the number of seconds that have elapsed since 00:00:00
