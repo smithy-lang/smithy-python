@@ -495,11 +495,10 @@ SCHEMA: Schema = Schema.collection(
         "mapMember": {"target": STRING_MAP_SCHEMA},
     },
 )
-SCHEMA.members["structMember"] = Schema(
+SCHEMA.members["structMember"] = Schema.member(
     id=SCHEMA.id.with_member("structMember"),
-    shape_type=ShapeType.MEMBER,
-    member_target=SCHEMA,
-    member_index=len(SCHEMA.members),
+    target=SCHEMA,
+    index=len(SCHEMA.members),
 )
 
 
