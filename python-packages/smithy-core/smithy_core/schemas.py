@@ -177,6 +177,9 @@ class Schema:
         :param target: The schema the member is targeting.
         :param index: The member's index.
         """
+        id.expect_member()
+        if target.member_target is not None:
+            raise ExpectationNotMetException("Member targets must not be members.")
         resolved_traits = target.traits.copy()
         if member_traits:
             resolved_traits.update({t.id: t for t in member_traits})
