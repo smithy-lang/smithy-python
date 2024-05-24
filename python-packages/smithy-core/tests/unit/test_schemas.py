@@ -104,3 +104,16 @@ def test_member_constructor():
     )
 
     assert actual == expected
+
+
+def test_member_constructor_asserts_id():
+    with pytest.raises(ExpectationNotMetException):
+        Schema.member(id=ShapeID("smithy.example#foo"), target=STRING, index=0)
+
+
+def test_member_constructor_asserts_target_is_not_member():
+    target = Schema.member(
+        id=ShapeID("smithy.example#Spam$eggs"), target=STRING, index=0
+    )
+    with pytest.raises(ExpectationNotMetException):
+        Schema.member(id=ShapeID("smithy.example#Foo$bar"), target=target, index=0)
