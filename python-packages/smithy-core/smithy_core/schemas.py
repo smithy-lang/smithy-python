@@ -1,5 +1,5 @@
 from collections.abc import Mapping
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, NotRequired, Required, Self, TypedDict
 
 from .exceptions import ExpectationNotMetException, SmithyException
@@ -143,14 +143,13 @@ class Schema:
         struct_members: dict[str, "Schema"] = {}
         if members:
             for i, k in enumerate(members.keys()):
-                member_traits = members[k].get("traits")
-                struct_members[k] = cls(
+                struct_members[k] = cls.member(
                     id=id.with_member(k),
-                    shape_type=ShapeType.MEMBER,
-                    traits=member_traits,
-                    member_target=members[k]["target"],
-                    member_index=i,
+                    target=members[k]["target"],
+                    index=i,
+                    member_traits=members[k].get("traits"),
                 )
+
         result = cls(
             id=id,
             shape_type=shape_type,
@@ -158,6 +157,36 @@ class Schema:
             members=struct_members,
         )
         return result
+
+    @classmethod
+    def member(
+        cls,
+        id: ShapeID,
+        target: Self,
+        index: int,
+        member_traits: list["Trait"] | None = None,
+    ) -> Self:
+        """Create a schema for a member shape.
+
+        Member schemas are largely copies of the schemas they target to make it easier
+        to use them. They contain all the members of the target and all of the traits of
+        the target. Any traits provided to this method, will override traits of the same
+        type on the member schema.
+
+        :param id: The member's id.
+        :param target: The schema the member is targeting.
+        :param index: The member's index.
+        """
+        resolved_traits = target.traits.copy()
+        if member_traits:
+            resolved_traits.update({t.id: t for t in member_traits})
+        return replace(
+            target,
+            id=id,
+            traits=resolved_traits,
+            member_target=target,
+            member_index=index,
+        )
 
 
 class MemberSchema(TypedDict):

@@ -120,9 +120,8 @@ class ShapeType(Enum):
     STRUCTURE = 18
     UNION = 19
 
-    MEMBER = 20
-
     # We won't acutally be using these, probably
+    # MEMBER = 20
     # SERVICE = 21
     # RESOURCE = 22
     # OPERATION = 23
