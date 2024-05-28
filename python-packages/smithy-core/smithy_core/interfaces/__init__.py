@@ -45,12 +45,19 @@ class URI(Protocol):
 
 
 @runtime_checkable
-class ByteStream(Protocol):
-    """A file-like object with a read method that returns bytes."""
+class BytesWriter(Protocol):
+    """A protocol for objects that support writing bytes to them."""
 
-    def read(self, size: int = -1) -> bytes: ...
+    def write(self, b: bytes, /) -> int: ...
+
+
+@runtime_checkable
+class BytesReader(Protocol):
+    """A protocol for objects that support reading bytes from them."""
+
+    def read(self, size: int = -1, /) -> bytes: ...
 
 
 # A union of all acceptable streaming blob types. Deserialized payloads will
 # always return a ByteStream, or AsyncByteStream if async is enabled.
-type StreamingBlob = ByteStream | bytes | bytearray
+type StreamingBlob = BytesReader | bytes | bytearray

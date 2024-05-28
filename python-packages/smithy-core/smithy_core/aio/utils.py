@@ -5,7 +5,7 @@ from collections.abc import AsyncIterable, Iterable
 from typing import TypeVar
 
 from ..exceptions import AsyncBodyException
-from ..interfaces import ByteStream
+from ..interfaces import BytesReader
 from ..interfaces import StreamingBlob as SyncStreamingBlob
 from .interfaces import AsyncByteStream, StreamingBlob
 
@@ -47,7 +47,7 @@ def read_streaming_blob(body: StreamingBlob) -> bytes:
             return body
         case bytearray():
             return bytes(body)
-        case ByteStream():
+        case BytesReader():
             return body.read()
         case _:
             raise AsyncBodyException(

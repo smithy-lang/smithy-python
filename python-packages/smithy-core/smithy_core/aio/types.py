@@ -5,7 +5,7 @@ from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable
 from io import BytesIO
 from typing import Self, cast
 
-from ..interfaces import ByteStream
+from ..interfaces import BytesReader
 from .interfaces import AsyncByteStream, StreamingBlob
 
 # The default chunk size for iterating streams.
@@ -18,7 +18,7 @@ class AsyncBytesReader:
     """A file-like object with an async read method."""
 
     # BytesIO *is* a ByteStream, but mypy will nevertheless complain if it isn't here.
-    _data: ByteStream | AsyncByteStream | AsyncIterable[bytes] | BytesIO | None
+    _data: BytesReader | AsyncByteStream | AsyncIterable[bytes] | BytesIO | None
     _closed = False
 
     def __init__(self, data: StreamingBlob):
@@ -44,7 +44,7 @@ class AsyncBytesReader:
         if self._closed or not self._data:
             raise ValueError("I/O operation on closed file.")
 
-        if isinstance(self._data, ByteStream) and not iscoroutinefunction(
+        if isinstance(self._data, BytesReader) and not iscoroutinefunction(
             self._data.read
         ):
             # Python's runtime_checkable can't actually tell the difference between
