@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 __version__ = "0.0.1"
 
+from io import BytesIO
 
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import ShapeDeserializer
@@ -9,6 +10,7 @@ from smithy_core.interfaces import BytesReader, BytesWriter
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.types import TimestampFormat
 
+from ._private.deserializers import JSONShapeDeserializer as _JSONShapeDeserializer
 from ._private.serializers import JSONShapeSerializer as _JSONShapeSerializer
 
 
@@ -50,5 +52,12 @@ class JSONCodec(Codec):
             default_timestamp_format=self._default_timestamp_format,
         )
 
-    def create_deserializer(self, source: BytesReader) -> "ShapeDeserializer":
-        raise NotImplementedError()
+    def create_deserializer(self, source: bytes | BytesReader) -> "ShapeDeserializer":
+        if isinstance(source, bytes):
+            source = BytesIO(source)
+        return _JSONShapeDeserializer(
+            source,
+            use_json_name=self._use_json_name,
+            use_timestamp_format=self._use_timestamp_format,
+            default_timestamp_format=self._default_timestamp_format,
+        )

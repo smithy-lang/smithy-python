@@ -203,7 +203,14 @@ class Document:
         schema = self._schema
         if schema.shape_type is ShapeType.LIST:
             schema = self._schema.members["member"]
-        return [Document(e, schema=schema) for e in value]
+        return [self._new_document(e, schema) for e in value]
+
+    def _new_document(
+        self,
+        value: DocumentValue | dict[str, "Document"] | list["Document"],
+        schema: Schema,
+    ) -> "Document":
+        return Document(value, schema=schema)
 
     def as_map(self) -> dict[str, "Document"]:
         """Asserts the document is a map and returns it."""
@@ -221,11 +228,11 @@ class Document:
             member_schema = self._schema
             if self._schema.shape_type is ShapeType.MAP:
                 member_schema = self._schema.members["value"]
-            return {k: Document(v, schema=member_schema) for k, v in value.items()}
+            return {k: self._new_document(v, member_schema) for k, v in value.items()}
 
         result: dict[str, "Document"] = {}
         for k, v in value.items():
-            result[k] = Document(v, schema=self._schema.members[k])
+            result[k] = self._new_document(v, self._schema.members[k])
         return result
 
     def as_value(self) -> DocumentValue:

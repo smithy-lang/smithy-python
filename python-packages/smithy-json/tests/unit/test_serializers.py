@@ -9,7 +9,6 @@ from smithy_core.prelude import (
     BIG_DECIMAL,
     BLOB,
     BOOLEAN,
-    DOCUMENT,
     FLOAT,
     INTEGER,
     STRING,
@@ -18,10 +17,15 @@ from smithy_core.prelude import (
 
 from smithy_json import JSONCodec
 
-from . import JSON_SERDE_CASES, STRING_LIST_SCHEMA, STRING_MAP_SCHEMA, SerdeShape
+from . import (
+    JSON_SERIALIZATION_CASES,
+    STRING_LIST_SCHEMA,
+    STRING_MAP_SCHEMA,
+    SerdeShape,
+)
 
 
-@pytest.mark.parametrize("given, expected", JSON_SERDE_CASES)
+@pytest.mark.parametrize("given, expected", JSON_SERIALIZATION_CASES)
 def test_json_serializer(given: Any, expected: bytes) -> None:
     sink = BytesIO()
     serializer = JSONCodec().create_serializer(sink)
@@ -43,7 +47,7 @@ def test_json_serializer(given: Any, expected: bytes) -> None:
         case datetime():
             serializer.write_timestamp(TIMESTAMP, given)
         case Document():
-            serializer.write_document(DOCUMENT, given)
+            serializer.write_document(given._schema, given)  # type: ignore
         case list():
             given = cast(list[str], given)
             with serializer.begin_list(STRING_LIST_SCHEMA) as list_serializer:

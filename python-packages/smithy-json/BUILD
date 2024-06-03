@@ -16,3 +16,11 @@ python_distribution(
         version="0.0.1",
     ),
 )
+
+# We shouldn't need this, but pants will assume that smithy_core is an external
+# dependency since it's in pyproject.toml and there's no way to exclude it, so
+# for now we need to duplicate things.
+python_requirements(
+    name="requirements",
+    source="requirements.txt",
+)
