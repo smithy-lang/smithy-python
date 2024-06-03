@@ -26,7 +26,8 @@ classifiers = [
     "Topic :: Software Development :: Libraries"
 ]
 dependencies = [
-    "smithy_core==0.0.1"
+    "smithy_core==0.0.1",
+    "ijson==3.2.3",
 ]
 
 [project.urls]

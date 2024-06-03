@@ -1,7 +1,9 @@
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
+from typing import Any, Self
 
+from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
 from smithy_core.prelude import (
     BIG_DECIMAL,
@@ -152,6 +154,82 @@ class SerdeShape:
         if self.struct_member is not None:
             serializer.write_struct(SCHEMA.members["structMember"], self.struct_member)
 
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+        kwargs: dict[str, Any] = {}
+
+        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
+            match schema.expect_member_index():
+                case 0:
+                    kwargs["boolean_member"] = de.read_boolean(
+                        SCHEMA.members["booleanMember"]
+                    )
+                case 1:
+                    kwargs["integer_member"] = de.read_integer(
+                        SCHEMA.members["integerMember"]
+                    )
+                case 2:
+                    kwargs["float_member"] = de.read_float(
+                        SCHEMA.members["floatMember"]
+                    )
+                case 3:
+                    kwargs["big_decimal_member"] = de.read_big_decimal(
+                        SCHEMA.members["bigDecimalMember"]
+                    )
+                case 4:
+                    kwargs["string_member"] = de.read_string(
+                        SCHEMA.members["stringMember"]
+                    )
+                case 5:
+                    kwargs["json_name_member"] = de.read_string(
+                        SCHEMA.members["jsonNameMember"]
+                    )
+                case 6:
+                    kwargs["blob_member"] = de.read_blob(SCHEMA.members["blobMember"])
+                case 7:
+                    kwargs["timestamp_member"] = de.read_timestamp(
+                        SCHEMA.members["timestampMember"]
+                    )
+                case 8:
+                    kwargs["date_time_member"] = de.read_timestamp(
+                        SCHEMA.members["dateTimeMember"]
+                    )
+                case 9:
+                    kwargs["http_date_member"] = de.read_timestamp(
+                        SCHEMA.members["httpDateMember"]
+                    )
+                case 10:
+                    kwargs["epoch_seconds_member"] = de.read_timestamp(
+                        SCHEMA.members["epochSecondsMember"]
+                    )
+                case 11:
+                    kwargs["document_member"] = de.read_document(
+                        SCHEMA.members["documentMember"]
+                    )
+                case 12:
+                    list_value: list[str] = []
+                    de.read_list(
+                        SCHEMA.members["listMember"],
+                        lambda d: list_value.append(d.read_string(STRING)),
+                    )
+                    kwargs["list_member"] = list_value
+                case 13:
+                    map_value: dict[str, str] = {}
+                    de.read_map(
+                        SCHEMA.members["mapMember"],
+                        lambda k, d: map_value.__setitem__(k, d.read_string(STRING)),
+                    )
+                    kwargs["map_member"] = map_value
+                case 14:
+                    kwargs["struct_member"] = SerdeShape.deserialize(de)
+                case _:
+                    # In actual generated code, this will just log in order to ignore
+                    # unknown members.
+                    raise Exception(f"Unexpected schema: {schema}")
+
+        deserializer.read_struct(schema=SCHEMA, consumer=_consumer)
+        return cls(**kwargs)
+
 
 JSON_SERDE_CASES = [
     (True, b"true"),
@@ -160,7 +238,7 @@ JSON_SERDE_CASES = [
     (Decimal("1.1"), b"1.1"),
     (b"foo", b'"Zm9v"'),
     ("foo", b'"foo"'),
-    (datetime(2024, 5, 15), b'"2024-05-15T00:00:00Z"'),
+    (datetime(2024, 5, 15, tzinfo=timezone.utc), b'"2024-05-15T00:00:00Z"'),
     (None, b"null"),
     (["foo"], b'["foo"]'),
     ({"foo": "bar"}, b'{"foo":"bar"}'),
@@ -172,19 +250,19 @@ JSON_SERDE_CASES = [
     (SerdeShape(string_member="foo"), b'{"stringMember":"foo"}'),
     (SerdeShape(json_name_member="foo"), b'{"jsonName":"foo"}'),
     (
-        SerdeShape(timestamp_member=datetime(2024, 5, 15)),
+        SerdeShape(timestamp_member=datetime(2024, 5, 15, tzinfo=timezone.utc)),
         b'{"timestampMember":"2024-05-15T00:00:00Z"}',
     ),
     (
-        SerdeShape(date_time_member=datetime(2024, 5, 15)),
+        SerdeShape(date_time_member=datetime(2024, 5, 15, tzinfo=timezone.utc)),
         b'{"dateTimeMember":"2024-05-15T00:00:00Z"}',
     ),
     (
-        SerdeShape(http_date_member=datetime(2024, 5, 15)),
+        SerdeShape(http_date_member=datetime(2024, 5, 15, tzinfo=timezone.utc)),
         b'{"httpDateMember":"Wed, 15 May 2024 00:00:00 GMT"}',
     ),
     (
-        SerdeShape(epoch_seconds_member=datetime(2024, 5, 15)),
+        SerdeShape(epoch_seconds_member=datetime(2024, 5, 15, tzinfo=timezone.utc)),
         b'{"epochSecondsMember":1715731200}',
     ),
     (SerdeShape(document_member=Document(None)), b'{"documentMember":null}'),
@@ -199,15 +277,36 @@ JSON_SERDE_CASES = [
     (Document(1, schema=INTEGER), b"1"),
     (Document(1, schema=DOCUMENT), b"1"),
     (Document(1.1, schema=FLOAT), b"1.1"),
-    (Document(1.1, schema=DOCUMENT), b"1.1"),
     (Document(Decimal("1.1"), schema=BIG_DECIMAL), b"1.1"),
     (Document(Decimal("1.1"), schema=DOCUMENT), b"1.1"),
     (Document(b"foo", schema=BLOB), b'"Zm9v"'),
-    (Document(b"foo", schema=DOCUMENT), b'"Zm9v"'),
     (Document("foo", schema=STRING), b'"foo"'),
     (Document("foo", schema=DOCUMENT), b'"foo"'),
-    (Document(datetime(2024, 5, 15), schema=TIMESTAMP), b'"2024-05-15T00:00:00Z"'),
-    (Document(datetime(2024, 5, 15), schema=DOCUMENT), b'"2024-05-15T00:00:00Z"'),
+    (
+        Document(datetime(2024, 5, 15, tzinfo=timezone.utc), schema=TIMESTAMP),
+        b'"2024-05-15T00:00:00Z"',
+    ),
+    (
+        Document(
+            datetime(2024, 5, 15, tzinfo=timezone.utc),
+            schema=SCHEMA.members["dateTimeMember"],
+        ),
+        b'"2024-05-15T00:00:00Z"',
+    ),
+    (
+        Document(
+            datetime(2024, 5, 15, tzinfo=timezone.utc),
+            schema=SCHEMA.members["httpDateMember"],
+        ),
+        b'"Wed, 15 May 2024 00:00:00 GMT"',
+    ),
+    (
+        Document(
+            datetime(2024, 5, 15, tzinfo=timezone.utc),
+            schema=SCHEMA.members["epochSecondsMember"],
+        ),
+        b"1715731200",
+    ),
     (Document(None, schema=STRING), b"null"),
     (Document(None, schema=DOCUMENT), b"null"),
     (Document(["foo"], schema=SCHEMA.members["listMember"]), b'["foo"]'),
@@ -217,3 +316,15 @@ JSON_SERDE_CASES = [
     (Document({"jsonNameMember": "foo"}, schema=SCHEMA), b'{"jsonName":"foo"}'),
     (Document({"jsonNameMember": "foo"}, schema=DOCUMENT), b'{"jsonNameMember":"foo"}'),
 ]
+
+JSON_SERIALIZATION_CASES = JSON_SERDE_CASES.copy()
+JSON_SERIALIZATION_CASES.extend(
+    [
+        (Document(1.1, schema=DOCUMENT), b"1.1"),
+        (Document(b"foo", schema=DOCUMENT), b'"Zm9v"'),
+        (
+            Document(datetime(2024, 5, 15, tzinfo=timezone.utc), schema=DOCUMENT),
+            b'"2024-05-15T00:00:00Z"',
+        ),
+    ]
+)

@@ -29,7 +29,7 @@ class Codec(Protocol):
         """
         ...
 
-    def create_deserializer(self, source: BytesReader) -> "ShapeDeserializer":
+    def create_deserializer(self, source: bytes | BytesReader) -> "ShapeDeserializer":
         """Create a deserializer that reads from the given bytes reader.
 
         :param source: The source to read bytes from.
@@ -59,7 +59,5 @@ class Codec(Protocol):
         :param shape: The shape class to deserialize into.
         :returns: An instance of the given shape class with the data from the source.
         """
-        if isinstance(source, bytes):
-            source = BytesIO(source)
         deserializer = self.create_deserializer(source=source)
         return shape.deserialize(deserializer=deserializer)
