@@ -217,7 +217,7 @@ class Document:
         )
 
     def _wrap_map(self, value: Mapping[str, DocumentValue]) -> dict[str, "Document"]:
-        if self._schema.shape_type not in [ShapeType.STRUCTURE, ShapeType.UNION]:
+        if self._schema.shape_type not in (ShapeType.STRUCTURE, ShapeType.UNION):
             member_schema = self._schema
             if self._schema.shape_type is ShapeType.MAP:
                 member_schema = self._schema.members["value"]
