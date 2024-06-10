@@ -38,6 +38,8 @@ import software.amazon.smithy.codegen.core.directed.DirectedCodegen;
 import software.amazon.smithy.codegen.core.directed.GenerateEnumDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateErrorDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateIntEnumDirective;
+import software.amazon.smithy.codegen.core.directed.GenerateListDirective;
+import software.amazon.smithy.codegen.core.directed.GenerateMapDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateResourceDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateServiceDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateStructureDirective;
@@ -48,6 +50,8 @@ import software.amazon.smithy.model.loader.Prelude;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
+import software.amazon.smithy.python.codegen.generators.ListGenerator;
+import software.amazon.smithy.python.codegen.generators.MapGenerator;
 import software.amazon.smithy.python.codegen.integration.ProtocolGenerator;
 import software.amazon.smithy.python.codegen.integration.PythonIntegration;
 import software.amazon.smithy.utils.SmithyUnstableApi;
@@ -195,9 +199,7 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
     public void generateStructure(GenerateStructureDirective<GenerationContext, PythonSettings> directive) {
         directive.context().writerDelegator().useShapeWriter(directive.shape(), writer -> {
             StructureGenerator generator = new StructureGenerator(
-                    directive.model(),
-                    directive.settings(),
-                    directive.symbolProvider(),
+                    directive.context(),
                     writer,
                     directive.shape(),
                     TopologicalIndex.of(directive.model()).getRecursiveShapes()
@@ -210,9 +212,7 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
     public void generateError(GenerateErrorDirective<GenerationContext, PythonSettings> directive) {
         directive.context().writerDelegator().useShapeWriter(directive.shape(), writer -> {
             StructureGenerator generator = new StructureGenerator(
-                    directive.model(),
-                    directive.settings(),
-                    directive.symbolProvider(),
+                    directive.context(),
                     writer,
                     directive.shape(),
                     TopologicalIndex.of(directive.model()).getRecursiveShapes()
@@ -225,13 +225,32 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
     public void generateUnion(GenerateUnionDirective<GenerationContext, PythonSettings> directive) {
         directive.context().writerDelegator().useShapeWriter(directive.shape(), writer -> {
             UnionGenerator generator = new UnionGenerator(
-                    directive.model(),
-                    directive.symbolProvider(),
+                    directive.context(),
                     writer,
                     directive.shape(),
                     TopologicalIndex.of(directive.model()).getRecursiveShapes()
             );
             generator.run();
+        });
+    }
+
+    @Override
+    public void generateList(GenerateListDirective<GenerationContext, PythonSettings> directive) {
+        var serSymbol = directive.context().symbolProvider().toSymbol(directive.shape())
+                .expectProperty(SymbolProperties.SERIALIZER);
+        var delegator = directive.context().writerDelegator();
+        delegator.useFileWriter(serSymbol.getDefinitionFile(), serSymbol.getNamespace(), writer -> {
+            new ListGenerator(directive.context(), writer, directive.shape()).run();
+        });
+    }
+
+    @Override
+    public void generateMap(GenerateMapDirective<GenerationContext, PythonSettings> directive) {
+        var serSymbol = directive.context().symbolProvider().toSymbol(directive.shape())
+                .expectProperty(SymbolProperties.SERIALIZER);
+        var delegator = directive.context().writerDelegator();
+        delegator.useFileWriter(serSymbol.getDefinitionFile(), serSymbol.getNamespace(), writer -> {
+            new MapGenerator(directive.context(), writer, directive.shape()).run();
         });
     }
 

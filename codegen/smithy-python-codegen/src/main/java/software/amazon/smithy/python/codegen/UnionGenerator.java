@@ -24,12 +24,14 @@ import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
+import software.amazon.smithy.python.codegen.generators.MemberSerializerGenerator;
 
 /**
  * Renders unions.
  */
 final class UnionGenerator implements Runnable {
 
+    private final GenerationContext context;
     private final Model model;
     private final SymbolProvider symbolProvider;
     private final PythonWriter writer;
@@ -37,14 +39,14 @@ final class UnionGenerator implements Runnable {
     private final Set<Shape> recursiveShapes;
 
     UnionGenerator(
-            Model model,
-            SymbolProvider symbolProvider,
+            GenerationContext context,
             PythonWriter writer,
             UnionShape shape,
             Set<Shape>  recursiveShapes
     ) {
-        this.model = model;
-        this.symbolProvider = symbolProvider;
+        this.context = context;
+        this.model = context.model();
+        this.symbolProvider = context.symbolProvider();
         this.writer = writer;
         this.shape = shape;
         this.recursiveShapes = recursiveShapes;
@@ -54,6 +56,9 @@ final class UnionGenerator implements Runnable {
     public void run() {
         var parentName = symbolProvider.toSymbol(shape).getName();
         writer.addStdlibImport("dataclasses", "dataclass");
+        writer.addImport("smithy_core.serializers", "ShapeSerializer");
+        var schemaSymbol = symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.SCHEMA);
+        writer.putContext("schema", schemaSymbol);
 
         var memberNames = new ArrayList<String>();
         for (MemberShape member : shape.members()) {
@@ -70,11 +75,20 @@ final class UnionGenerator implements Runnable {
 
                         value: $T
 
+                        def serialize(self, serializer: ShapeSerializer):
+                            serializer.write_struct($T, self)
+
+                        def serialize_members(self, serializer: ShapeSerializer):
+                            ${C|}
+
                     """,
                     memberSymbol.getName(),
                     writer.consumer(w -> member.getMemberTrait(model, DocumentationTrait.class)
                             .map(StringTrait::getValue).ifPresent(w::writeDocs)),
-                    targetSymbol);
+                    targetSymbol,
+                    schemaSymbol,
+                    writer.consumer(w -> target.accept(
+                            new MemberSerializerGenerator(context, w, member, "serializer"))));
         }
 
         // Note that the unknown variant doesn't implement __eq__. This is because
@@ -82,6 +96,7 @@ final class UnionGenerator implements Runnable {
         // Since the underlying value is unknown and un-comparable, that is the only
         // realistic implementation.
         var unknownSymbol = symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.UNION_UNKNOWN);
+        writer.addImport("smithy_core.exceptions", "SmithyException");
         writer.write("""
                 @dataclass
                 class $1L:
@@ -94,6 +109,12 @@ final class UnionGenerator implements Runnable {
                     \"""
 
                     tag: str
+
+                    def serialize(self, serializer: ShapeSerializer):
+                        raise SmithyException("Unknown union variants may not be serialized.")
+
+                    def serialize_members(self, serializer: ShapeSerializer):
+                        raise SmithyException("Unknown union variants may not be serialized.")
 
                 """, unknownSymbol.getName());
         memberNames.add(unknownSymbol.getName());

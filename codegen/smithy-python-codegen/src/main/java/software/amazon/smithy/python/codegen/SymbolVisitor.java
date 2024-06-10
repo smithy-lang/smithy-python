@@ -162,7 +162,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         if (shape.hasTrait(MediaTypeTrait.class)) {
             var mediaType = shape.expectTrait(MediaTypeTrait.class).getValue();
             if (MediaType.isJson(mediaType)) {
-                return createSymbolBuilder(shape, "bytes | bytearray | JsonBlob")
+                return createSymbolBuilder(shape, "bytes | JsonBlob")
                         .addReference(Symbol.builder()
                                 .name("JsonBlob")
                                 .namespace("smithy_core.types", ".")
@@ -171,7 +171,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
                         .build();
             }
         }
-        return createSymbolBuilder(shape, "bytes | bytearray").build();
+        return createSymbolBuilder(shape, "bytes").build();
     }
 
     @Override
@@ -187,6 +187,10 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         var builder = createSymbolBuilder(shape, "list[" + type + "]")
                 .addReference(reference);
 
+        builder.putProperty(SymbolProperties.SERIALIZER, createGeneratedSymbolBuilder(
+                shape, "_serialize_" + CaseUtils.toSnakeCase(shape.getId().getName()), SHAPES_FILE, false)
+                .build());
+
         return builder.build();
     }
 
@@ -197,6 +201,10 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
         String type = String.format(shape.hasTrait(SparseTrait.class) ? "%s | None" : "%s", reference.getName());
         var builder = createSymbolBuilder(shape, "dict[str, " + type + "]")
                 .addReference(reference);
+
+        builder.putProperty(SymbolProperties.SERIALIZER, createGeneratedSymbolBuilder(
+                shape, "_serialize_" + CaseUtils.toSnakeCase(shape.getId().getName()), SHAPES_FILE, false)
+                .build());
 
         return builder.build();
     }
