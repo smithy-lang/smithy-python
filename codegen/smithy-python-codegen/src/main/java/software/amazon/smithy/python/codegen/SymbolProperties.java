@@ -52,7 +52,7 @@ public final class SymbolProperties {
      * Contains a boolean indicating whether the symbol dependency is a link dependency.
      *
      * <p>A link dependency is a dependency that would be specified in a {@code pyproject.toml}
-     * or {@code requirements.txt} with a a link to the package source rather than a name and
+     * or {@code requirements.txt} with a link to the package source rather than a name and
      * version number.
      */
     public static final Property<Boolean> IS_LINK = Property.named("isLink");
@@ -61,6 +61,12 @@ public final class SymbolProperties {
      * Contains a list of optional dependencies that the symbol dependency has.
      */
     public static final Property<List<String>> OPTIONAL_DEPENDENCIES = Property.named("optionalDependencies");
+
+    /**
+     * Contains a symbol pointing to the shape's serializer method. This is only used for
+     * lists and maps.
+     */
+    public static final Property<Symbol> SERIALIZER = Property.named("serializer");
 
     private SymbolProperties() {}
 }

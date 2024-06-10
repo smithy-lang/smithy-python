@@ -25,6 +25,7 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.knowledge.HttpBindingIndex;
 import software.amazon.smithy.model.knowledge.NullableIndex;
 import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
@@ -33,7 +34,10 @@ import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
+import software.amazon.smithy.model.traits.InputTrait;
+import software.amazon.smithy.model.traits.OutputTrait;
 import software.amazon.smithy.model.traits.SensitiveTrait;
+import software.amazon.smithy.python.codegen.generators.MemberSerializerGenerator;
 
 
 /**
@@ -51,23 +55,23 @@ final class StructureGenerator implements Runnable {
     private final List<MemberShape> optionalMembers;
     private final Set<Shape> recursiveShapes;
     private final PythonSettings settings;
+    private final GenerationContext context;
 
     StructureGenerator(
-            Model model,
-            PythonSettings settings,
-            SymbolProvider symbolProvider,
+            GenerationContext context,
             PythonWriter writer,
             StructureShape shape,
             Set<Shape>  recursiveShapes
     ) {
-        this.model = model;
-        this.settings = settings;
-        this.symbolProvider = symbolProvider;
+        this.context = context;
+        this.model = context.model();
+        this.settings = context.settings();
+        this.symbolProvider = context.symbolProvider();
         this.writer = writer;
         this.shape = shape;
         var required = new ArrayList<MemberShape>();
         var optional = new ArrayList<MemberShape>();
-        var index = NullableIndex.of(model);
+        var index = NullableIndex.of(context.model());
         for (MemberShape member: shape.members()) {
             if (index.isMemberNullable(member) || member.hasTrait(DefaultTrait.class)) {
                 optional.add(member);
@@ -96,19 +100,6 @@ final class StructureGenerator implements Runnable {
         writer.addStdlibImport("dataclasses", "dataclass");
         var symbol = symbolProvider.toSymbol(shape);
 
-
-        if (shape.members().isEmpty() && !shape.hasTrait(DocumentationTrait.class)) {
-            writer.write("""
-                    @dataclass
-                    class $L:
-                        pass
-
-                    """, symbol.getName());
-            return;
-        }
-
-
-
         writer.write("""
                 @dataclass(kw_only=True)
                 class $L:
@@ -116,9 +107,12 @@ final class StructureGenerator implements Runnable {
 
                     ${C|}
 
+                    ${C|}
+
                 """, symbol.getName(),
                 writer.consumer(w -> writeClassDocs(false)),
-                writer.consumer(w -> writeProperties()));
+                writer.consumer(w -> writeProperties()),
+                writer.consumer(w -> generateSerializeMethod()));
     }
 
     private void renderError() {
@@ -298,4 +292,68 @@ final class StructureGenerator implements Runnable {
             writer.write(docs);
         });
     }
+
+    private void generateSerializeMethod() {
+        writer.pushState();
+        writer.addImport("smithy_core.serializers", "ShapeSerializer");
+
+        writer.putContext("schema", symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.SCHEMA));
+        writer.write("""
+                def serialize(self, serializer: ShapeSerializer):
+                    serializer.write_struct(${schema:T}, self)
+
+                """);
+
+        // This removes any http-bound members from the serialization method since it's
+        // not yet supported.
+        // TODO: remove this once serialization of http binding members is added.
+        var serializeableMembers = filterMembers();
+        writer.write("def serialize_members(self, serializer: ShapeSerializer):").indent();
+        if (serializeableMembers.isEmpty()) {
+            writer.write("pass");
+        } else {
+            for (MemberShape member : serializeableMembers) {
+                writer.pushState();
+                var target = model.expectShape(member.getTarget());
+                writer.putContext("propertyName", symbolProvider.toMemberName(member));
+                if (isNullable(member)) {
+                    var gen = new MemberSerializerGenerator(context, writer, member, "serializer");
+                    writer.write("""
+                                    if self.${propertyName:L} is not None:
+                                        ${C|}
+                                    """,
+                            writer.consumer(w -> target.accept(gen)));
+                } else {
+                    target.accept(new MemberSerializerGenerator(context, writer, member, "serializer"));
+                }
+                writer.popState();
+            }
+        }
+        writer.dedent().popState();
+    }
+
+    private List<MemberShape> filterMembers() {
+        var httpIndex = HttpBindingIndex.of(model);
+        if (shape.hasTrait(InputTrait.class)) {
+            var bindings = httpIndex.getRequestBindings(shape).keySet();
+            return shape.members().stream()
+                    .filter(member -> bindings.contains(member.getMemberName()))
+                    .toList();
+        } else if (shape.hasTrait(OutputTrait.class)) {
+            var bindings = httpIndex.getResponseBindings(shape).keySet();
+            return shape.members().stream()
+                    .filter(member -> bindings.contains(member.getMemberName()))
+                    .toList();
+        }
+        return shape.members().stream().toList();
+    }
+
+    private boolean isNullable(MemberShape member) {
+        if (!NullableIndex.of(model).isMemberNullable(member)) {
+            return false;
+        }
+        var target = model.expectShape(member.getTarget());
+        return !target.isDocumentShape() || member.getMemberTrait(model, DefaultTrait.class).isEmpty();
+    }
+
 }
