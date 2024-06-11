@@ -99,6 +99,7 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
         var errorSymbol = CodegenUtils.getServiceError(context.settings());
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addImport("smithy_core.documents", "DocumentValue");
+        writer.addStdlibImport("typing", "cast");
 
         var target = context.model().expectShape(shape.getMember().getTarget());
         var memberVisitor = getMemberVisitor(shape.getMember(), "e");
@@ -114,6 +115,7 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
             def $1L(output: DocumentValue, config: $2T) -> $3T:
                 if not isinstance(output, list):
                     raise $5T(f"Expected list, found {type(output)}")
+                output = cast(list[DocumentValue], output)
                 return [$4L$6L for e in output]
             """, functionName, config, symbol, memberDeserializer, errorSymbol, sparseTrailer);
         return null;
@@ -127,6 +129,7 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
         var errorSymbol = CodegenUtils.getServiceError(context.settings());
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addImport("smithy_core.documents", "DocumentValue");
+        writer.addStdlibImport("typing", "cast");
 
         var valueShape = context.model().expectShape(shape.getValue().getTarget());
         var valueVisitor = getMemberVisitor(shape.getValue(), "v");
@@ -136,6 +139,7 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
             def $1L(output: DocumentValue, config: $2T) -> $3T:
                 if not isinstance(output, dict):
                     raise $4T(f"Expected dict, found { type(output) }")
+                output = cast(dict[str, DocumentValue], output)
             """, functionName, config, symbol, errorSymbol);
 
         writer.indent();
@@ -157,10 +161,12 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
         var errorSymbol = CodegenUtils.getServiceError(context.settings());
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addImport("smithy_core.documents", "DocumentValue");
+        writer.addStdlibImport("typing", "cast");
         writer.write("""
             def $1L(output: DocumentValue, config: $2T) -> $3T:
                 if not isinstance(output, dict):
                     raise $4T(f"Expected dict, found {type(output)}")
+                output = cast(dict[str, DocumentValue], output)
 
                 kwargs: dict[str, Any] = {}
 
@@ -233,10 +239,12 @@ public class JsonShapeDeserVisitor extends ShapeVisitor.Default<Void> {
 
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addImport("smithy_core.documents", "DocumentValue");
+        writer.addStdlibImport("typing", "cast");
         writer.write("""
             def $1L(output: DocumentValue, config: $2T) -> $3T:
                 if not isinstance(output, dict):
                     raise $5T(f"Expected dict, found {type(output)}")
+                output = cast(dict[str, DocumentValue], output)
 
                 if (count := len(output)) != 1:
                     raise $5T(f"Unions must have exactly one member set, found {count}.")
