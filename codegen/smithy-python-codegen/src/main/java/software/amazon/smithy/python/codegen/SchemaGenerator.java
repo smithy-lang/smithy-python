@@ -5,6 +5,7 @@
 
 package software.amazon.smithy.python.codegen;
 
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
@@ -48,7 +49,7 @@ final class SchemaGenerator implements Consumer<Shape> {
 
     private final GenerationContext context;
     private final Set<ShapeId> generatedShapes = new HashSet<>();
-    private final Set<MemberShape> deferredMembers = new HashSet<>();
+    private final Map<MemberShape, Integer> deferredMembers = new HashMap<>();
 
     SchemaGenerator(GenerationContext context) {
         this.context = context;
@@ -121,9 +122,10 @@ final class SchemaGenerator implements Consumer<Shape> {
         }
 
         writer.openBlock("members={", "}", () -> {
+            int index = 0;
             for (MemberShape member : shape.members()) {
                 if (!generatedShapes.contains(member.getTarget()) && !Prelude.isPreludeShape(member.getTarget())) {
-                    deferredMembers.add(member);
+                    deferredMembers.put(member, index++);
                     continue;
                 }
 
@@ -145,15 +147,17 @@ final class SchemaGenerator implements Consumer<Shape> {
                 writer.write("""
                         $S: {
                             "target": $T,
+                            "index": $L,
                             ${?hasTraits}
                             "traits": [
                                 ${C|}
                             ],
                             ${/hasTraits}
                         },
-                        """, member.getMemberName(), targetSchemaSymbol,
+                        """, member.getMemberName(), targetSchemaSymbol, index,
                         writer.consumer(w -> writeTraits(w, traits)));
 
+                index++;
                 writer.popState();
             }
         });
@@ -173,7 +177,8 @@ final class SchemaGenerator implements Consumer<Shape> {
         writer.addImport("smithy_core.schemas", "Schema");
         writer.addImport("smithy_core.shapes", "ShapeType");
 
-        for (MemberShape member : deferredMembers) {
+        for (Map.Entry<MemberShape, Integer> entry : deferredMembers.entrySet()) {
+            var member = entry.getKey();
             LOGGER.warning("Generating member: " + member.getId());
             var container = context.symbolProvider()
                     .toSymbol(context.model().expectShape(member.getContainer()))
@@ -192,7 +197,7 @@ final class SchemaGenerator implements Consumer<Shape> {
                     $1T.members[$2S] = Schema.member(
                         id=$1T.id.with_member($2S),
                         target=$3T,
-                        index=len($1T.members) + 1,
+                        index=$5L,
                         ${?hasTraits}
                         member_traits=[
                             ${4C|}
@@ -201,7 +206,7 @@ final class SchemaGenerator implements Consumer<Shape> {
                     )
 
                     """, container, member.getMemberName(), target,
-                    writer.consumer(w -> writeTraits(w, traits)));
+                    writer.consumer(w -> writeTraits(w, traits)), entry.getValue());
 
             writer.popState();
         }

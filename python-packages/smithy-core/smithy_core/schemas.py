@@ -142,11 +142,11 @@ class Schema:
         """
         struct_members: dict[str, "Schema"] = {}
         if members:
-            for i, k in enumerate(members.keys()):
+            for k in members.keys():
                 struct_members[k] = cls.member(
                     id=id.with_member(k),
                     target=members[k]["target"],
-                    index=i,
+                    index=members[k]["index"],
                     member_traits=members[k].get("traits"),
                 )
 
@@ -202,4 +202,5 @@ class MemberSchema(TypedDict):
     """
 
     target: Required[Schema]
+    index: Required[int]
     traits: NotRequired[list["Trait"]]

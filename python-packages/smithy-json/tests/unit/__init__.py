@@ -25,42 +25,49 @@ from smithy_json._private.traits import JSON_NAME, TIMESTAMP_FORMAT
 STRING_LIST_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringList"),
     shape_type=ShapeType.LIST,
-    members={"member": {"target": STRING}},
+    members={"member": {"target": STRING, "index": 0}},
 )
 STRING_MAP_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringMap"),
     shape_type=ShapeType.MAP,
-    members={"key": {"target": STRING}, "value": {"target": STRING}},
+    members={
+        "key": {"target": STRING, "index": 0},
+        "value": {"target": STRING, "index": 1},
+    },
 )
 SCHEMA: Schema = Schema.collection(
     id=ShapeID("smithy.example#SerdeShape"),
     members={
-        "booleanMember": {"target": BOOLEAN},
-        "integerMember": {"target": INTEGER},
-        "floatMember": {"target": FLOAT},
-        "bigDecimalMember": {"target": BIG_DECIMAL},
-        "stringMember": {"target": STRING},
+        "booleanMember": {"target": BOOLEAN, "index": 0},
+        "integerMember": {"target": INTEGER, "index": 1},
+        "floatMember": {"target": FLOAT, "index": 2},
+        "bigDecimalMember": {"target": BIG_DECIMAL, "index": 3},
+        "stringMember": {"target": STRING, "index": 4},
         "jsonNameMember": {
             "target": STRING,
             "traits": [Trait(id=JSON_NAME, value="jsonName")],
+            "index": 5,
         },
-        "blobMember": {"target": BLOB},
-        "timestampMember": {"target": TIMESTAMP},
+        "blobMember": {"target": BLOB, "index": 6},
+        "timestampMember": {"target": TIMESTAMP, "index": 7},
         "dateTimeMember": {
             "target": TIMESTAMP,
             "traits": [Trait(id=TIMESTAMP_FORMAT, value="date-time")],
+            "index": 8,
         },
         "httpDateMember": {
             "target": TIMESTAMP,
             "traits": [Trait(id=TIMESTAMP_FORMAT, value="http-date")],
+            "index": 9,
         },
         "epochSecondsMember": {
             "target": TIMESTAMP,
             "traits": [Trait(id=TIMESTAMP_FORMAT, value="epoch-seconds")],
+            "index": 10,
         },
-        "documentMember": {"target": DOCUMENT},
-        "listMember": {"target": STRING_LIST_SCHEMA},
-        "mapMember": {"target": STRING_MAP_SCHEMA},
+        "documentMember": {"target": DOCUMENT, "index": 11},
+        "listMember": {"target": STRING_LIST_SCHEMA, "index": 12},
+        "mapMember": {"target": STRING_MAP_SCHEMA, "index": 13},
     },
 )
 SCHEMA.members["structMember"] = Schema.member(
