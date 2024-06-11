@@ -69,7 +69,8 @@ def test_collection_constructor():
         member_index=0,
     )
     schema = Schema.collection(
-        id=ID, members={member_name: {"target": STRING, "traits": [trait_value]}}
+        id=ID,
+        members={member_name: {"target": STRING, "index": 0, "traits": [trait_value]}},
     )
     assert schema.members == {member_name: member}
 
@@ -81,7 +82,7 @@ def test_member_constructor():
             Trait(id=ShapeID("smithy.api#sensitive")),
             Trait(id=ShapeID("smithy.example#foo"), value="bar"),
         ],
-        members={"spam": {"target": STRING}},
+        members={"spam": {"target": STRING, "index": 0}},
     )
 
     member_id = ShapeID("smithy.example#Spam$eggs")
