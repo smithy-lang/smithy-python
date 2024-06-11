@@ -18,10 +18,10 @@
 //     "freezegun<1.6.0",
 //     "ijson==3.2.3",
 //     "isort<5.14.0",
-//     "pyright==1.1.364",
+//     "pyright==1.1.365",
 //     "pytest-asyncio<0.24.0",
 //     "pytest-cov<=5.0.0",
-//     "pytest<=8.2.1",
+//     "pytest<=8.2.2",
 //     "pyupgrade<3.16.0"
 //   ],
 //   "manylinux": "manylinux2014",
@@ -193,39 +193,39 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "ac716839f820b5a83aea6dc51da7c05b7200a70eff2205f473ebd87f97b294ef",
-              "url": "https://files.pythonhosted.org/packages/cc/24/ccfb0e65f2b90e7b84652c043de83b25842c2b35afb556f871254de37319/awscrt-0.20.10-cp311-abi3-musllinux_1_1_x86_64.whl"
+              "hash": "f10af50b747c2b237836ab1ed57dc1be0c2553e0fb485374f0d3be470a861e4a",
+              "url": "https://files.pythonhosted.org/packages/9f/7f/4c06974f6ec9f4f37e85911ead03ac0c17b220ebeeb5b06f47e85908ac97/awscrt-0.20.11-cp311-abi3-musllinux_1_1_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "57fe5609bf6f54d09184e64d41bf2353f38452c75097358505e90e8cc154f2fc",
-              "url": "https://files.pythonhosted.org/packages/50/e8/d6fdcb0ef8901234379dfd35b312a3147e49e9c6f5ccf1e13890809d8b38/awscrt-0.20.10-cp311-abi3-macosx_10_9_universal2.whl"
+              "hash": "1c94917cce1df62fc40f53e19f5dcfbd036acfbdb1a88cba217ad6caaeab0d57",
+              "url": "https://files.pythonhosted.org/packages/7c/b2/b3dc7adaa0885565ad2bb433d41c066719260ddc7d857e96f1b02b20d150/awscrt-0.20.11-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "bc698de8c53ad4a2eab1646b92196a584ead170a65c65b59c883855adea5972f",
-              "url": "https://files.pythonhosted.org/packages/56/f9/c6aec2056285f70db6a47c105742ffd3b44b143fe43aa535fce2c959b3e1/awscrt-0.20.10.tar.gz"
+              "hash": "86554f8042dea649b7d63a2e4de593864753aad736a7ca592e72b2f8a94535bb",
+              "url": "https://files.pythonhosted.org/packages/7e/9c/d6e0769171aa3ae6bd6af2aad6f89004d2b4539cc841ba67a8953b292522/awscrt-0.20.11-cp311-abi3-macosx_10_9_universal2.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "512edfd2f9d7d351468632a47425f7964b46966489e1b0b5f88bb72c464427b3",
-              "url": "https://files.pythonhosted.org/packages/71/f8/58eb773376a771209902571c332960ea13260d874c58ecac2da46f5a0c42/awscrt-0.20.10-cp311-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl"
+              "hash": "624322e103e62bffecf97731691e05ef0d7a50970d8e3b1872433dcf00c5595a",
+              "url": "https://files.pythonhosted.org/packages/9e/3c/a70e1de1cf6d42fbbd30905775b7d9602faab08fb3e22c5b817837ce4cab/awscrt-0.20.11-cp311-abi3-musllinux_1_1_aarch64.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "317a2ff932c6737fe3a9a85f1868285d40659ee8f689f164c38e4cdc20b8ec60",
-              "url": "https://files.pythonhosted.org/packages/7d/d4/fd4f8a13a8675307285a0fa8792a8080569f406eabec57a95a0e1a3af5fd/awscrt-0.20.10-cp311-abi3-musllinux_1_1_aarch64.whl"
+              "hash": "c3dbfb7f1909457952e645373e72b69f90c50c465ee6a46d9bbdc12acb79803c",
+              "url": "https://files.pythonhosted.org/packages/c9/95/9faca9e404fd3cd72fa8f75d4f33f16032f3598a841e83dc81c687b4b80a/awscrt-0.20.11.tar.gz"
             },
             {
               "algorithm": "sha256",
-              "hash": "bf9ebdc60518f0fc8c770608fb5196ddeb574ff8a2413a31b174ba1d3cb14ada",
-              "url": "https://files.pythonhosted.org/packages/fb/2a/1d80aca64877f24446b856d81530571984feb4f9a29c7da515032bb7cab6/awscrt-0.20.10-cp311-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl"
+              "hash": "45db07c2f0f7c83d8a4cb91a51869b22f1f44c1053db7266486733aca2d2ac41",
+              "url": "https://files.pythonhosted.org/packages/fa/05/6a76d4a5a0795955303d4bc0cc8a333db9d39a39f71142bab4a47634d0d9/awscrt-0.20.11-cp311-abi3-manylinux_2_17_aarch64.manylinux2014_aarch64.whl"
             }
           ],
           "project_name": "awscrt",
           "requires_dists": [],
           "requires_python": ">=3.7",
-          "version": "0.20.10"
+          "version": "0.20.11"
         },
         {
           "artifacts": [
@@ -915,37 +915,37 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "508ecec98f9f3330b636d4448c0f1a56fc68017c68f1e7857ebc52acf0eb879a",
-              "url": "https://files.pythonhosted.org/packages/01/5b/fdfa5cfada69cb7dcad13d48dda8bd1bc7fca53358789445e2379ba75c88/nodeenv-1.9.0-py2.py3-none-any.whl"
+              "hash": "ba11c9782d29c27c70ffbdda2d7415098754709be8a7056d79a737cd901155c9",
+              "url": "https://files.pythonhosted.org/packages/d2/1d/1b658dbd2b9fa9c4c9f32accbfc0205d532c8c6194dc0f2a4c0428e7128a/nodeenv-1.9.1-py2.py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "07f144e90dae547bf0d4ee8da0ee42664a42a04e02ed68e06324348dafe4bdb1",
-              "url": "https://files.pythonhosted.org/packages/4a/27/3e8c0421bc847e21346b859a0ae87c5058fe76022684d0c01cd4f14f91fa/nodeenv-1.9.0.tar.gz"
+              "hash": "6ec12890a2dab7946721edbfbcd91f3319c6ccc9aec47be7c7e6b7011ee6645f",
+              "url": "https://files.pythonhosted.org/packages/43/16/fc88b08840de0e0a72a2f9d8c6bae36be573e475a6326ae854bcc549fc45/nodeenv-1.9.1.tar.gz"
             }
           ],
           "project_name": "nodeenv",
           "requires_dists": [],
           "requires_python": "!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*,!=3.5.*,!=3.6.*,>=2.7",
-          "version": "1.9.0"
+          "version": "1.9.1"
         },
         {
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "2ddfb553fdf02fb784c234c7ba6ccc288296ceabec964ad2eae3777778130bc5",
-              "url": "https://files.pythonhosted.org/packages/49/df/1fceb2f8900f8639e278b056416d49134fb8d84c5942ffaa01ad34782422/packaging-24.0-py3-none-any.whl"
+              "hash": "5b8f2217dbdbd2f7f384c41c628544e6d52f2d0f53c6d0c3ea61aa5d1d7ff124",
+              "url": "https://files.pythonhosted.org/packages/08/aa/cc0199a5f0ad350994d660967a8efb233fe0416e4639146c089643407ce6/packaging-24.1-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "eb82c5e3e56209074766e6885bb04b8c38a0c015d0a30036ebe7ece34c9989e9",
-              "url": "https://files.pythonhosted.org/packages/ee/b5/b43a27ac7472e1818c4bafd44430e69605baefe1f34440593e0332ec8b4d/packaging-24.0.tar.gz"
+              "hash": "026ed72c8ed3fcce5bf8950572258698927fd1dbda10a5e981cdf0ac37f4f002",
+              "url": "https://files.pythonhosted.org/packages/51/65/50db4dda066951078f0a96cf12f4b9ada6e4b811516bf0262c0f4f7064d4/packaging-24.1.tar.gz"
             }
           ],
           "project_name": "packaging",
           "requires_dists": [],
-          "requires_python": ">=3.7",
-          "version": "24.0"
+          "requires_python": ">=3.8",
+          "version": "24.1"
         },
         {
           "artifacts": [
@@ -1095,13 +1095,13 @@
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "865f1e02873c5dc7427c95acf53659a118574010e6fb364e27e47ec5c46a9f26",
-              "url": "https://files.pythonhosted.org/packages/7b/26/18cabfe5fa1ac6719929ef9ef0f26c787d61619df01f70badfac96cf8f48/pyright-1.1.364-py3-none-any.whl"
+              "hash": "194d767a039f9034376b7ec8423841880ac6efdd061f3e283b4ad9fcd484a659",
+              "url": "https://files.pythonhosted.org/packages/08/b5/0067e10282a3c9ffdf04bce5d2402fb486c423346a975a839ad21d4badfd/pyright-1.1.365-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "612a2106a4078ec57efc22b5620729e9bdf4a3c17caba013b534bd33f7d08e5a",
-              "url": "https://files.pythonhosted.org/packages/d3/d5/8d64b8999497bc5a2f2b84746e4f2c4f475ab4287fe548b37c16c19a2225/pyright-1.1.364.tar.gz"
+              "hash": "d7e69000939aed4bf823707086c30c84c005bdd39fac2dfb370f0e5be16c2ef2",
+              "url": "https://files.pythonhosted.org/packages/19/45/ae23d8bb54924eb99364c33b396f4ab1b03116defb85ce470f5b792db157/pyright-1.1.365.tar.gz"
             }
           ],
           "project_name": "pyright",
@@ -1112,19 +1112,19 @@
             "typing-extensions>=3.7; python_version < \"3.8\""
           ],
           "requires_python": ">=3.7",
-          "version": "1.1.364"
+          "version": "1.1.365"
         },
         {
           "artifacts": [
             {
               "algorithm": "sha256",
-              "hash": "faccc5d332b8c3719f40283d0d44aa5cf101cec36f88cde9ed8f2bc0538612b1",
-              "url": "https://files.pythonhosted.org/packages/b4/c1/27a1274b73712232328cb5115030057b7dec377f36a518c83f2e01d4f305/pytest-8.2.1-py3-none-any.whl"
+              "hash": "c434598117762e2bd304e526244f67bf66bbd7b5d6cf22138be51ff661980343",
+              "url": "https://files.pythonhosted.org/packages/4e/e7/81ebdd666d3bff6670d27349b5053605d83d55548e6bd5711f3b0ae7dd23/pytest-8.2.2-py3-none-any.whl"
             },
             {
               "algorithm": "sha256",
-              "hash": "5046e5b46d8e4cac199c373041f26be56fdb81eb4e67dc11d4e10811fc3408fd",
-              "url": "https://files.pythonhosted.org/packages/cf/4e/0ceea141f0e5d09de4053c5338c62615ae2bd9bd3f013813f5ec62e3cf97/pytest-8.2.1.tar.gz"
+              "hash": "de4bb8104e201939ccdc688b27a89a7be2079b22e2bd2b07f806b6ba71117977",
+              "url": "https://files.pythonhosted.org/packages/a6/58/e993ca5357553c966b9e73cb3475d9c935fe9488746e13ebdf9b80fae508/pytest-8.2.2.tar.gz"
             }
           ],
           "project_name": "pytest",
@@ -1145,7 +1145,7 @@
             "xmlschema; extra == \"dev\""
           ],
           "requires_python": ">=3.8",
-          "version": "8.2.1"
+          "version": "8.2.2"
         },
         {
           "artifacts": [
@@ -1472,10 +1472,10 @@
     "freezegun<1.6.0",
     "ijson==3.2.3",
     "isort<5.14.0",
-    "pyright==1.1.364",
+    "pyright==1.1.365",
     "pytest-asyncio<0.24.0",
     "pytest-cov<=5.0.0",
-    "pytest<=8.2.1",
+    "pytest<=8.2.2",
     "pyupgrade<3.16.0"
   ],
   "requires_python": [
