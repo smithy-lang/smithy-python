@@ -78,7 +78,7 @@ final class SchemaGenerator implements Consumer<Shape> {
         writer.write("""
                 $L = Schema${?isCollection}.collection${/isCollection}(
                     id=ShapeID($S),
-                    ${^isStructure}type=ShapeType.${shapeType:L},${/isStructure}
+                    ${^isStructure}shape_type=ShapeType.${shapeType:L},${/isStructure}
                     ${?hasTraits}
                     traits=[
                         ${C|}
@@ -189,13 +189,12 @@ final class SchemaGenerator implements Consumer<Shape> {
             writer.putContext("hasTraits", !traits.isEmpty());
 
             writer.write("""
-                    $1T.members[$2S] = Schema(
+                    $1T.members[$2S] = Schema.member(
                         id=$1T.id.with_member($2S),
-                        type=ShapeType.MEMBER,
-                        member_target=$3T,
-                        member_index=len($1T.members) + 1,
+                        target=$3T,
+                        index=len($1T.members) + 1,
                         ${?hasTraits}
-                        traits=[
+                        member_traits=[
                             ${4C|}
                         ],
                         ${/hasTraits}
