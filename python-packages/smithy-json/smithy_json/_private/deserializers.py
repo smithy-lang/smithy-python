@@ -23,6 +23,7 @@ from .traits import JSON_NAME, TIMESTAMP_FORMAT
 # TODO: put these type hints in a pyi somewhere. There here because ijson isn't
 # typed.
 type JSONParseEventType = Literal[
+    "null",
     "string",
     "number",
     "boolean",
@@ -81,7 +82,8 @@ class BufferedParser:
         return JSONParseEvent(*next(self._stream))
 
     def peek(self) -> JSONParseEvent:
-        self._pending = self._next()
+        if self._pending is None:
+            self._pending = self._next()
         return self._pending
 
 
@@ -109,6 +111,14 @@ class JSONShapeDeserializer(ShapeDeserializer):
         if event.value is not None:
             raise JSONTokenError("null", event)
         return None
+
+    def read_optional[
+        T
+    ](self, schema: "Schema", optional: Callable[["Schema"], T]) -> T | None:
+        if self._stream.peek().value is None:
+            next(self._stream)
+            return None
+        return optional(schema)
 
     def read_boolean(self, schema: Schema) -> bool:
         event = next(self._stream)

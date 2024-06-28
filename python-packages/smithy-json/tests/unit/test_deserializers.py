@@ -16,7 +16,12 @@ from smithy_core.prelude import (
 
 from smithy_json import JSONCodec
 
-from . import JSON_SERDE_CASES, STRING_LIST_SCHEMA, STRING_MAP_SCHEMA, SerdeShape
+from . import (
+    JSON_SERDE_CASES,
+    SPARSE_STRING_LIST_SCHEMA,
+    SPARSE_STRING_MAP_SCHEMA,
+    SerdeShape,
+)
 
 
 @pytest.mark.parametrize("expected, given", JSON_SERDE_CASES)
@@ -43,16 +48,19 @@ def test_json_deserializer(expected: Any, given: bytes) -> None:
         case Document():
             actual = deserializer.read_document(expected._schema)  # type: ignore
         case list():
-            actual_list: list[str] = []
+            actual_list: list[str | None] = []
             deserializer.read_list(
-                STRING_LIST_SCHEMA, lambda d: actual_list.append(d.read_string(STRING))
+                SPARSE_STRING_LIST_SCHEMA,
+                lambda d: actual_list.append(d.read_optional(STRING, d.read_string)),
             )
             actual = actual_list
         case dict():
-            actual_map: dict[str, str] = {}
+            actual_map: dict[str, str | None] = {}
             deserializer.read_map(
-                STRING_MAP_SCHEMA,
-                lambda k, d: actual_map.__setitem__(k, d.read_string(STRING)),
+                SPARSE_STRING_MAP_SCHEMA,
+                lambda k, d: actual_map.__setitem__(
+                    k, d.read_optional(STRING, d.read_string)
+                ),
             )
             actual = actual_map
         case SerdeShape():

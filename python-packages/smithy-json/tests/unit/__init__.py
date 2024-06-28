@@ -22,6 +22,7 @@ from smithy_core.traits import Trait
 
 from smithy_json._private.traits import JSON_NAME, TIMESTAMP_FORMAT
 
+SPARSE_TRAIT = Trait(id=ShapeID("smithy.api#sparse"))
 STRING_LIST_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringList"),
     shape_type=ShapeType.LIST,
@@ -34,6 +35,21 @@ STRING_MAP_SCHEMA = Schema.collection(
         "key": {"target": STRING, "index": 0},
         "value": {"target": STRING, "index": 1},
     },
+)
+SPARSE_STRING_LIST_SCHEMA = Schema.collection(
+    id=ShapeID("smithy.example#StringList"),
+    shape_type=ShapeType.LIST,
+    members={"member": {"target": STRING, "index": 0}},
+    traits=[SPARSE_TRAIT],
+)
+SPARSE_STRING_MAP_SCHEMA = Schema.collection(
+    id=ShapeID("smithy.example#StringMap"),
+    shape_type=ShapeType.MAP,
+    members={
+        "key": {"target": STRING, "index": 0},
+        "value": {"target": STRING, "index": 1},
+    },
+    traits=[SPARSE_TRAIT],
 )
 SCHEMA: Schema = Schema.collection(
     id=ShapeID("smithy.example#SerdeShape"),
@@ -68,12 +84,15 @@ SCHEMA: Schema = Schema.collection(
         "documentMember": {"target": DOCUMENT, "index": 11},
         "listMember": {"target": STRING_LIST_SCHEMA, "index": 12},
         "mapMember": {"target": STRING_MAP_SCHEMA, "index": 13},
+        # Index 14 is set below because it's a self-referential member.
+        "sparseListMember": {"target": SPARSE_STRING_LIST_SCHEMA, "index": 15},
+        "sparseMapMember": {"target": SPARSE_STRING_MAP_SCHEMA, "index": 16},
     },
 )
 SCHEMA.members["structMember"] = Schema.member(
     id=SCHEMA.id.with_member("structMember"),
     target=SCHEMA,
-    index=len(SCHEMA.members),
+    index=14,
 )
 
 
@@ -94,6 +113,8 @@ class SerdeShape:
     list_member: list[str] | None = None
     map_member: dict[str, str] | None = None
     struct_member: "SerdeShape | None" = None
+    sparse_list_member: list[str | None] | None = None
+    sparse_map_member: dict[str, str | None] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
         with serializer.begin_struct(SCHEMA) as s:
@@ -157,9 +178,27 @@ class SerdeShape:
             target_schema = schema.expect_member_target().members["value"]
             with serializer.begin_map(schema) as ms:
                 for key, value in self.map_member.items():
-                    ms.entry(key, lambda vs: vs.write_string(target_schema, value))
+                    ms.entry(key, lambda vs: vs.write_string(target_schema, value))  # type: ignore
         if self.struct_member is not None:
             serializer.write_struct(SCHEMA.members["structMember"], self.struct_member)
+        if self.sparse_list_member is not None:
+            schema = SCHEMA.members["sparseListMember"]
+            target_schema = schema.expect_member_target().members["member"]
+            with serializer.begin_list(schema) as ls:
+                for element in self.sparse_list_member:
+                    if element is None:
+                        ls.write_null(target_schema)
+                    else:
+                        ls.write_string(target_schema, element)
+        if self.sparse_map_member is not None:
+            schema = SCHEMA.members["sparseMapMember"]
+            target_schema = schema.expect_member_target().members["value"]
+            with serializer.begin_map(schema) as ms:
+                for key, value in self.sparse_map_member.items():
+                    if value is None:
+                        ms.entry(key, lambda vs: vs.write_null(target_schema))
+                    else:
+                        ms.entry(key, lambda vs: vs.write_string(target_schema, value))  # type: ignore
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -229,6 +268,24 @@ class SerdeShape:
                     kwargs["map_member"] = map_value
                 case 14:
                     kwargs["struct_member"] = SerdeShape.deserialize(de)
+                case 15:
+                    sparse_list_value: list[str | None] = []
+                    de.read_list(
+                        SCHEMA.members["sparseListMember"],
+                        lambda d: sparse_list_value.append(
+                            d.read_optional(STRING, d.read_string)
+                        ),
+                    )
+                    kwargs["sparse_list_member"] = sparse_list_value
+                case 16:
+                    sparse_map_value: dict[str, str | None] = {}
+                    de.read_map(
+                        SCHEMA.members["sparseMapMember"],
+                        lambda k, d: sparse_map_value.__setitem__(
+                            k, d.read_optional(STRING, d.read_string)
+                        ),
+                    )
+                    kwargs["sparse_map_member"] = sparse_map_value
                 case _:
                     # In actual generated code, this will just log in order to ignore
                     # unknown members.
@@ -249,6 +306,8 @@ JSON_SERDE_CASES = [
     (None, b"null"),
     (["foo"], b'["foo"]'),
     ({"foo": "bar"}, b'{"foo":"bar"}'),
+    (["foo", None], b'["foo",null]'),
+    ({"foo": "bar", "baz": None}, b'{"foo":"bar","baz":null}'),
     (SerdeShape(boolean_member=True), b'{"booleanMember":true}'),
     (SerdeShape(integer_member=1), b'{"integerMember":1}'),
     (SerdeShape(float_member=1.1), b'{"floatMember":1.1}'),
@@ -275,6 +334,14 @@ JSON_SERDE_CASES = [
     (SerdeShape(document_member=Document(None)), b'{"documentMember":null}'),
     (SerdeShape(list_member=["foo"]), b'{"listMember":["foo"]}'),
     (SerdeShape(map_member={"foo": "bar"}), b'{"mapMember":{"foo":"bar"}}'),
+    (
+        SerdeShape(sparse_list_member=["foo", None]),
+        b'{"sparseListMember":["foo",null]}',
+    ),
+    (
+        SerdeShape(sparse_map_member={"foo": "bar", "baz": None}),
+        b'{"sparseMapMember":{"foo":"bar","baz":null}}',
+    ),
     (
         SerdeShape(struct_member=SerdeShape(string_member="foo")),
         b'{"structMember":{"stringMember":"foo"}}',
