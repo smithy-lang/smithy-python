@@ -585,6 +585,14 @@ class _DocumentDeserializer(ShapeDeserializer):
             )
 
     @override
+    def read_optional[
+        T
+    ](self, schema: "Schema", optional: Callable[["Schema"], T]) -> T | None:
+        if self._value.is_none():
+            return None
+        return optional(schema)
+
+    @override
     def read_boolean(self, schema: "Schema") -> bool:
         return self._value.as_boolean()
 

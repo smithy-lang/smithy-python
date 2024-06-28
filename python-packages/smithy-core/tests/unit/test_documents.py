@@ -27,6 +27,7 @@ from smithy_core.prelude import (
 from smithy_core.schemas import Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
+from smithy_core.traits import Trait
 
 
 @pytest.mark.parametrize(
@@ -514,6 +515,7 @@ def test_is_none():
     assert not Document("foo").is_none()
 
 
+SPARSE_TRAIT = Trait(id=ShapeID("smithy.api#sparse"))
 STRING_LIST_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringList"),
     shape_type=ShapeType.LIST,
@@ -526,6 +528,21 @@ STRING_MAP_SCHEMA = Schema.collection(
         "key": {"target": STRING, "index": 0},
         "value": {"target": STRING, "index": 1},
     },
+)
+SPARSE_STRING_LIST_SCHEMA = Schema.collection(
+    id=ShapeID("smithy.example#StringList"),
+    shape_type=ShapeType.LIST,
+    members={"member": {"target": STRING, "index": 0}},
+    traits=[SPARSE_TRAIT],
+)
+SPARSE_STRING_MAP_SCHEMA = Schema.collection(
+    id=ShapeID("smithy.example#StringMap"),
+    shape_type=ShapeType.MAP,
+    members={
+        "key": {"target": STRING, "index": 0},
+        "value": {"target": STRING, "index": 1},
+    },
+    traits=[SPARSE_TRAIT],
 )
 SCHEMA: Schema = Schema.collection(
     id=ShapeID("smithy.example#DocumentSerdeShape"),
@@ -540,12 +557,15 @@ SCHEMA: Schema = Schema.collection(
         "documentMember": {"target": DOCUMENT, "index": 7},
         "listMember": {"target": STRING_LIST_SCHEMA, "index": 8},
         "mapMember": {"target": STRING_MAP_SCHEMA, "index": 9},
+        # Index 10 is set below because it's a self-referential member.
+        "sparseListMember": {"target": SPARSE_STRING_LIST_SCHEMA, "index": 11},
+        "sparseMapMember": {"target": SPARSE_STRING_MAP_SCHEMA, "index": 12},
     },
 )
 SCHEMA.members["structMember"] = Schema.member(
     id=SCHEMA.id.with_member("structMember"),
     target=SCHEMA,
-    index=len(SCHEMA.members),
+    index=10,
 )
 
 
@@ -562,6 +582,8 @@ class DocumentSerdeShape:
     list_member: list[str] | None = None
     map_member: dict[str, str] | None = None
     struct_member: "DocumentSerdeShape | None" = None
+    sparse_list_member: list[str | None] | None = None
+    sparse_map_member: dict[str, str | None] | None = None
 
     def serialize(self, serializer: ShapeSerializer):
         with serializer.begin_struct(SCHEMA) as s:
@@ -609,9 +631,27 @@ class DocumentSerdeShape:
             target_schema = schema.expect_member_target().members["value"]
             with serializer.begin_map(schema) as ms:
                 for key, value in self.map_member.items():
-                    ms.entry(key, lambda vs: vs.write_string(target_schema, value))
+                    ms.entry(key, lambda vs: vs.write_string(target_schema, value))  # type: ignore
         if self.struct_member is not None:
             serializer.write_struct(SCHEMA.members["structMember"], self.struct_member)
+        if self.sparse_list_member is not None:
+            schema = SCHEMA.members["sparseListMember"]
+            target_schema = schema.expect_member_target().members["member"]
+            with serializer.begin_list(schema) as ls:
+                for element in self.sparse_list_member:
+                    if element is None:
+                        ls.write_null(target_schema)
+                    else:
+                        ls.write_string(target_schema, element)
+        if self.sparse_map_member is not None:
+            schema = SCHEMA.members["sparseMapMember"]
+            target_schema = schema.expect_member_target().members["value"]
+            with serializer.begin_map(schema) as ms:
+                for key, value in self.sparse_map_member.items():
+                    if value is None:
+                        ms.entry(key, lambda vs: vs.write_null(target_schema))
+                    else:
+                        ms.entry(key, lambda vs: vs.write_string(target_schema, value))  # type: ignore
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> "DocumentSerdeShape":
@@ -665,6 +705,24 @@ class DocumentSerdeShape:
                     kwargs["map_member"] = map_value
                 case 10:
                     kwargs["struct_member"] = DocumentSerdeShape.deserialize(de)
+                case 11:
+                    sparse_list_value: list[str | None] = []
+                    de.read_list(
+                        SCHEMA.members["sparseListMember"],
+                        lambda d: sparse_list_value.append(
+                            d.read_optional(STRING, d.read_string)
+                        ),
+                    )
+                    kwargs["list_member"] = sparse_list_value
+                case 12:
+                    sparse_map_value: dict[str, str | None] = {}
+                    de.read_map(
+                        SCHEMA.members["sparseMapMember"],
+                        lambda k, d: sparse_map_value.__setitem__(
+                            k, d.read_optional(STRING, d.read_string)
+                        ),
+                    )
+                    kwargs["map_member"] = sparse_map_value
                 case _:
                     # In actual generated code, this will just log in order to ignore
                     # unknown members.
@@ -687,6 +745,11 @@ DOCUMENT_SERDE_CASES = [
     (
         {"foo": "bar"},
         Document({"foo": "bar"}, schema=SCHEMA.members["mapMember"]),
+    ),
+    (["foo", None], Document(["foo", None], schema=SCHEMA.members["sparseListMember"])),
+    (
+        {"foo": "bar", "baz": None},
+        Document({"foo": "bar", "baz": None}, schema=SCHEMA.members["sparseMapMember"]),
     ),
     (
         DocumentSerdeShape(boolean_member=True),
@@ -729,6 +792,14 @@ DOCUMENT_SERDE_CASES = [
         Document({"mapMember": {"foo": "bar"}}, schema=SCHEMA),
     ),
     (
+        DocumentSerdeShape(sparse_list_member=["foo", None]),
+        Document({"sparseListMember": ["foo", None]}, schema=SCHEMA),
+    ),
+    (
+        DocumentSerdeShape(sparse_map_member={"foo": "bar", "baz": None}),
+        Document({"sparseMapMember": {"foo": "bar", "baz": None}}, schema=SCHEMA),
+    ),
+    (
         DocumentSerdeShape(struct_member=DocumentSerdeShape(string_member="foo")),
         Document({"structMember": {"stringMember": "foo"}}, schema=SCHEMA),
     ),
@@ -757,18 +828,22 @@ def test_document_serializer(given: Any, expected: Document):
             serializer.write_document(DOCUMENT, given)
         case list():
             given = cast(list[str], given)
-            with serializer.begin_list(STRING_LIST_SCHEMA) as list_serializer:
-                member_schema = STRING_LIST_SCHEMA.members["member"]
+            with serializer.begin_list(SPARSE_STRING_LIST_SCHEMA) as list_serializer:
+                member_schema = SPARSE_STRING_LIST_SCHEMA.members["member"]
                 for e in given:
-                    list_serializer.write_string(member_schema, e)
+                    if e is None:
+                        list_serializer.write_null(member_schema)
+                    else:
+                        list_serializer.write_string(member_schema, e)
         case dict():
             given = cast(dict[str, str], given)
-            with serializer.begin_map(STRING_MAP_SCHEMA) as map_serializer:
-                member_schema = STRING_MAP_SCHEMA.members["value"]
+            with serializer.begin_map(SPARSE_STRING_MAP_SCHEMA) as map_serializer:
+                member_schema = SPARSE_STRING_MAP_SCHEMA.members["value"]
                 for k, v in given.items():
-                    map_serializer.entry(
-                        k, lambda vs: vs.write_string(member_schema, v)
-                    )
+                    if v is None:
+                        map_serializer.entry(k, lambda vs: vs.write_null(member_schema))
+                    else:
+                        map_serializer.entry(k, lambda vs: vs.write_string(member_schema, v))  # type: ignore
         case DocumentSerdeShape():
             given.serialize(serializer)
         case _:
@@ -817,14 +892,17 @@ def test_document_deserializer(given: Document, expected: Any):
             actual = []
             deserializer = _DocumentDeserializer(given)
             deserializer.read_list(
-                STRING_LIST_SCHEMA, lambda d: actual.append(d.read_string(STRING))
+                SCHEMA.members["sparseListMember"],
+                lambda d: actual.append(d.read_optional(STRING, d.read_string)),
             )
         case dict():
             actual = {}
             deserializer = _DocumentDeserializer(given)
             deserializer.read_map(
-                STRING_MAP_SCHEMA,
-                lambda k, d: actual.__setitem__(k, d.read_string(STRING)),
+                SCHEMA.members["sparseMapMember"],
+                lambda k, d: actual.__setitem__(
+                    k, d.read_optional(STRING, d.read_string)
+                ),
             )
         case DocumentSerdeShape():
             actual = given.as_shape(DocumentSerdeShape)

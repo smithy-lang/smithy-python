@@ -19,8 +19,8 @@ from smithy_json import JSONCodec
 
 from . import (
     JSON_SERIALIZATION_CASES,
-    STRING_LIST_SCHEMA,
-    STRING_MAP_SCHEMA,
+    SPARSE_STRING_LIST_SCHEMA,
+    SPARSE_STRING_MAP_SCHEMA,
     SerdeShape,
 )
 
@@ -50,18 +50,22 @@ def test_json_serializer(given: Any, expected: bytes) -> None:
             serializer.write_document(given._schema, given)  # type: ignore
         case list():
             given = cast(list[str], given)
-            with serializer.begin_list(STRING_LIST_SCHEMA) as list_serializer:
-                member_schema = STRING_LIST_SCHEMA.members["member"]
+            with serializer.begin_list(SPARSE_STRING_LIST_SCHEMA) as list_serializer:
+                member_schema = SPARSE_STRING_LIST_SCHEMA.members["member"]
                 for e in given:
-                    list_serializer.write_string(member_schema, e)
+                    if e is None:
+                        list_serializer.write_null(member_schema)
+                    else:
+                        list_serializer.write_string(member_schema, e)
         case dict():
             given = cast(dict[str, str], given)
-            with serializer.begin_map(STRING_MAP_SCHEMA) as map_serializer:
-                member_schema = STRING_MAP_SCHEMA.members["value"]
+            with serializer.begin_map(SPARSE_STRING_MAP_SCHEMA) as map_serializer:
+                member_schema = SPARSE_STRING_MAP_SCHEMA.members["value"]
                 for k, v in given.items():
-                    map_serializer.entry(
-                        k, lambda vs: vs.write_string(member_schema, v)
-                    )
+                    if v is None:
+                        map_serializer.entry(k, lambda vs: vs.write_null(member_schema))
+                    else:
+                        map_serializer.entry(k, lambda vs: vs.write_string(member_schema, v))  # type: ignore
         case SerdeShape():
             given.serialize(serializer)
         case _:
