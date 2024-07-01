@@ -68,5 +68,11 @@ public final class SymbolProperties {
      */
     public static final Property<Symbol> SERIALIZER = Property.named("serializer");
 
+    /**
+     * Contains a symbol pointing to the shape's deserializer method. This is only used for
+     * lists, maps, and unions.
+     */
+    public static final Property<Symbol> DESERIALIZER = Property.named("deserializer");
+
     private SymbolProperties() {}
 }

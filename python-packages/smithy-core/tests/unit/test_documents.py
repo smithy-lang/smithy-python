@@ -2,7 +2,7 @@
 from dataclasses import dataclass, replace
 from datetime import datetime
 from decimal import Decimal
-from typing import Any, cast
+from typing import Any, Self, cast
 
 import pytest
 
@@ -654,7 +654,7 @@ class DocumentSerdeShape:
                         ms.entry(key, lambda vs: vs.write_string(target_schema, value))  # type: ignore
 
     @classmethod
-    def deserialize(cls, deserializer: ShapeDeserializer) -> "DocumentSerdeShape":
+    def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
         kwargs: dict[str, Any] = {}
 
         def _consumer(schema: Schema, de: ShapeDeserializer) -> None:

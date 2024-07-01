@@ -20,13 +20,16 @@ import static software.amazon.smithy.python.codegen.CodegenUtils.isErrorMessage;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.knowledge.HttpBinding;
 import software.amazon.smithy.model.knowledge.HttpBindingIndex;
 import software.amazon.smithy.model.knowledge.NullableIndex;
+import software.amazon.smithy.model.knowledge.OperationIndex;
 import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
@@ -37,6 +40,7 @@ import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.InputTrait;
 import software.amazon.smithy.model.traits.OutputTrait;
 import software.amazon.smithy.model.traits.SensitiveTrait;
+import software.amazon.smithy.python.codegen.generators.MemberDeserializerGenerator;
 import software.amazon.smithy.python.codegen.generators.MemberSerializerGenerator;
 
 
@@ -109,10 +113,13 @@ final class StructureGenerator implements Runnable {
 
                     ${C|}
 
+                    ${C|}
+
                 """, symbol.getName(),
                 writer.consumer(w -> writeClassDocs(false)),
                 writer.consumer(w -> writeProperties()),
-                writer.consumer(w -> generateSerializeMethod()));
+                writer.consumer(w -> generateSerializeMethod()),
+                writer.consumer(w -> generateDeserializeMethod()));
     }
 
     private void renderError() {
@@ -334,18 +341,29 @@ final class StructureGenerator implements Runnable {
 
     private List<MemberShape> filterMembers() {
         var httpIndex = HttpBindingIndex.of(model);
+        var operationIndex = OperationIndex.of(model);
         if (shape.hasTrait(InputTrait.class)) {
-            var bindings = httpIndex.getRequestBindings(shape).keySet();
+            var operation = operationIndex.getInputBindings(shape).iterator().next();
+            var bindings = httpIndex.getRequestBindings(operation);
             return shape.members().stream()
-                    .filter(member -> bindings.contains(member.getMemberName()))
+                    .filter(member -> filterMember(member, bindings))
                     .toList();
         } else if (shape.hasTrait(OutputTrait.class)) {
-            var bindings = httpIndex.getResponseBindings(shape).keySet();
+            var operation = operationIndex.getOutputBindings(shape).iterator().next();
+            var bindings = httpIndex.getResponseBindings(operation);
             return shape.members().stream()
-                    .filter(member -> bindings.contains(member.getMemberName()))
+                    .filter(member -> filterMember(member, bindings))
                     .toList();
         }
         return shape.members().stream().toList();
+    }
+
+    private boolean filterMember(MemberShape member, Map<String, HttpBinding> bindings) {
+        if (bindings.containsKey(member.getMemberName())) {
+            var binding = bindings.get(member.getMemberName());
+            return binding.getLocation() == HttpBinding.Location.DOCUMENT;
+        }
+        return true;
     }
 
     private boolean isNullable(MemberShape member) {
@@ -356,4 +374,45 @@ final class StructureGenerator implements Runnable {
         return !target.isDocumentShape() || member.getMemberTrait(model, DefaultTrait.class).isEmpty();
     }
 
+    private void generateDeserializeMethod() {
+        writer.pushState();
+        writer.addLogger();
+        writer.addStdlibImports("typing", Set.of("Self", "Any"));
+        writer.addImport("smithy_core.deserializers", "ShapeDeserializer");
+
+        var deserializeableMembers = filterMembers();
+        var schemaSymbol = symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.SCHEMA);
+        writer.putContext("schema", schemaSymbol);
+        writer.write("""
+                @classmethod
+                def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+                    kwargs: dict[str, Any] = {}
+
+                    def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
+                        match schema.expect_member_index():
+                            ${C|}
+                            case _:
+                                logger.debug(f"Unexpected member schema: {schema}")
+
+                    deserializer.read_struct($T, consumer=_consumer)
+                    return cls(**kwargs)
+
+                """,
+                writer.consumer(w -> deserializeMembers(deserializeableMembers)),
+                schemaSymbol);
+        writer.popState();
+    }
+
+    private void deserializeMembers(List<MemberShape> members) {
+        int index = 0;
+        for (MemberShape member : members) {
+            var target = model.expectShape(member.getTarget());
+            writer.write("""
+                    case $L:
+                        kwargs[$S] = ${C|}
+                    """, index++, symbolProvider.toMemberName(member), writer.consumer(w ->
+                    target.accept(new MemberDeserializerGenerator(context, writer, member, "de"))
+            ));
+        }
+    }
 }

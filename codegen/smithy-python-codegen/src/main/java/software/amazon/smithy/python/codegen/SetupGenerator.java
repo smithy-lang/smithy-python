@@ -111,6 +111,7 @@ final class SetupGenerator {
                     reportUnusedFunction = false
                     reportUnusedVariable = false
                     reportUnnecessaryComparison = false
+                    reportUnusedClass = false
 
                     [tool.black]
                     target-version = ["py311"]

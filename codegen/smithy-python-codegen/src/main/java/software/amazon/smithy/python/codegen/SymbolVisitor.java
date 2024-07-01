@@ -191,6 +191,10 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
                 shape, "_serialize_" + CaseUtils.toSnakeCase(shape.getId().getName()), SHAPES_FILE, false)
                 .build());
 
+        builder.putProperty(SymbolProperties.DESERIALIZER, createGeneratedSymbolBuilder(
+                shape, "_deserialize_" + CaseUtils.toSnakeCase(shape.getId().getName()), SHAPES_FILE, false)
+                .build());
+
         return builder.build();
     }
 
@@ -204,6 +208,10 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
         builder.putProperty(SymbolProperties.SERIALIZER, createGeneratedSymbolBuilder(
                 shape, "_serialize_" + CaseUtils.toSnakeCase(shape.getId().getName()), SHAPES_FILE, false)
+                .build());
+
+        builder.putProperty(SymbolProperties.DESERIALIZER, createGeneratedSymbolBuilder(
+                shape, "_deserialize_" + CaseUtils.toSnakeCase(shape.getId().getName()), SHAPES_FILE, false)
                 .build());
 
         return builder.build();
@@ -332,9 +340,14 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
 
         var unknownName = name + "Unknown";
         var unknownSymbol = createGeneratedSymbolBuilder(shape, unknownName, SHAPES_FILE).build();
-        return createGeneratedSymbolBuilder(shape, name, SHAPES_FILE)
-                .putProperty(SymbolProperties.UNION_UNKNOWN, unknownSymbol)
-                .build();
+        var builder = createGeneratedSymbolBuilder(shape, name, SHAPES_FILE)
+                .putProperty(SymbolProperties.UNION_UNKNOWN, unknownSymbol);
+
+        builder.putProperty(SymbolProperties.DESERIALIZER, createGeneratedSymbolBuilder(
+                shape, "_" + name + "Deserializer", SHAPES_FILE, false)
+                .build());
+
+        return builder.build();
     }
 
     @Override
