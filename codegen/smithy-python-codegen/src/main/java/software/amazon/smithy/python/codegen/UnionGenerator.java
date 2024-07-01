@@ -24,6 +24,7 @@ import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
+import software.amazon.smithy.python.codegen.generators.MemberDeserializerGenerator;
 import software.amazon.smithy.python.codegen.generators.MemberSerializerGenerator;
 
 /**
@@ -54,6 +55,7 @@ final class UnionGenerator implements Runnable {
 
     @Override
     public void run() {
+        writer.pushState();
         var parentName = symbolProvider.toSymbol(shape).getName();
         writer.addStdlibImport("dataclasses", "dataclass");
         writer.addImport("smithy_core.serializers", "ShapeSerializer");
@@ -120,8 +122,64 @@ final class UnionGenerator implements Runnable {
         memberNames.add(unknownSymbol.getName());
 
         shape.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeComment(trait.getValue()));
-        writer.addStdlibImport("typing", "Union");
-        writer.write("$L = Union[$L]", parentName, String.join(", ", memberNames));
+        writer.write("type $L = $L\n", parentName, String.join(" | ", memberNames));
 
+        generateDeserializer();
+        writer.popState();
+    }
+
+    private void generateDeserializer() {
+        writer.addLogger();
+        writer.addStdlibImports("typing", Set.of("Self", "Any"));
+        writer.addImport("smithy_core.deserializers", "ShapeDeserializer");
+        writer.addImport("smithy_core.exceptions", "SmithyException");
+
+        // TODO: add in unknown handling
+
+        var symbol = symbolProvider.toSymbol(shape);
+        var deserializerSymbol = symbol.expectProperty(SymbolProperties.DESERIALIZER);
+        var schemaSymbol = symbol.expectProperty(SymbolProperties.SCHEMA);
+        writer.putContext("schema", schemaSymbol);
+        writer.write("""
+                class $1L:
+                    _result: $2T | None = None
+
+                    def deserialize(self, deserializer: ShapeDeserializer) -> $2T:
+                        self._result = None
+                        deserializer.read_struct($3T, self._consumer)
+
+                        if self._result is None:
+                            raise SmithyException("Unions must have exactly one value, but found none.")
+
+                        return self._result
+
+                    def _consumer(self, schema: Schema, de: ShapeDeserializer) -> None:
+                        match schema.expect_member_index():
+                            ${4C|}
+                            case _:
+                                logger.debug(f"Unexpected member schema: {schema}")
+
+                    def _set_result(self, value: $2T) -> None:
+                        if self._result is not None:
+                            raise SmithyException("Unions must have exactly one value, but found more than one.")
+                        self._result = value
+                """,
+                deserializerSymbol.getName(),
+                symbol,
+                schemaSymbol,
+                writer.consumer(w -> deserializeMembers()));
+    }
+
+    private void deserializeMembers() {
+        int index = 0;
+        for (MemberShape member : shape.members()) {
+            var target = model.expectShape(member.getTarget());
+            writer.write("""
+                    case $L:
+                        self._set_result($T(${C|}))
+                    """, index++, symbolProvider.toSymbol(member), writer.consumer(w ->
+                    target.accept(new MemberDeserializerGenerator(context, writer, member, "de"))
+            ));
+        }
     }
 }

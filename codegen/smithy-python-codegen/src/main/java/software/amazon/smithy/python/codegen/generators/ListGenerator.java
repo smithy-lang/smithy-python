@@ -30,6 +30,7 @@ public final class ListGenerator implements Runnable {
     @Override
     public void run() {
         generateSerializer();
+        generateDeserializer();
     }
 
     private void generateSerializer() {
@@ -59,6 +60,41 @@ public final class ListGenerator implements Runnable {
                 """, serializerSymbol.getName(), listSymbol,
                 writer.consumer(w -> memberTarget.accept(
                         new MemberSerializerGenerator(context, w, shape.getMember(), "ls"))));
+        writer.popState();
+    }
+
+    private void generateDeserializer() {
+        var listSymbol = context.symbolProvider().toSymbol(shape);
+        var deserializerSymbol = listSymbol.expectProperty(SymbolProperties.DESERIALIZER);
+        var memberTarget = context.model().expectShape(shape.getMember().getTarget());
+
+        writer.pushState();
+        writer.addImport("smithy_core.serializers", "ShapeSerializer");
+        writer.addImport("smithy_core.schemas", "Schema");
+        var sparse = shape.hasTrait(SparseTrait.class);
+        writer.putContext("sparse", sparse);
+        writer.putContext("includeSchema", sparse || (
+                !memberTarget.isUnionShape() && !memberTarget.isStructureShape()));
+        writer.write("""
+                def $1L(deserializer: ShapeDeserializer, schema: Schema) -> $2T:
+                    result: $2T = []
+                    ${?includeSchema}
+                    member_schema = schema.members["member"]
+                    ${/includeSchema}
+                    deserializer.read_list(
+                        schema,
+                        ${?sparse}
+                        lambda d: result.append(d.read_optional(member_schema, lambda s: ${3C|}))
+                        ${/sparse}
+                        ${^sparse}
+                        lambda d: result.append(${3C|})
+                        ${/sparse}
+                    )
+                    return result
+                """, deserializerSymbol.getName(), listSymbol,
+                writer.consumer(w -> memberTarget.accept(
+                        new MemberDeserializerGenerator(context, w, shape.getMember(), "d")
+                )));
         writer.popState();
     }
 }

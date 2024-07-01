@@ -30,6 +30,7 @@ public final class MapGenerator implements Runnable {
     @Override
     public void run() {
         generateSerializer();
+        generateDeserializer();
     }
 
     private void generateSerializer() {
@@ -62,6 +63,39 @@ public final class MapGenerator implements Runnable {
                 """, serializerSymbol.getName(), mapSymbol,
                 writer.consumer(w -> valueTarget.accept(
                         new MemberSerializerGenerator(context, w, shape.getValue(), "vs"))));
+        writer.popState();
+    }
+
+    private void generateDeserializer() {
+        var listSymbol = context.symbolProvider().toSymbol(shape);
+        var deserializerSymbol = listSymbol.expectProperty(SymbolProperties.DESERIALIZER);
+        var valueTarget = context.model().expectShape(shape.getValue().getTarget());
+
+        writer.pushState();
+        writer.addImport("smithy_core.serializers", "ShapeSerializer");
+        writer.addImport("smithy_core.schemas", "Schema");
+        var sparse = shape.hasTrait(SparseTrait.class);
+        writer.putContext("sparse", sparse);
+        writer.putContext("includeSchema", sparse || (
+                !valueTarget.isUnionShape() && !valueTarget.isStructureShape()));
+        writer.write("""
+                def $1L(deserializer: ShapeDeserializer, schema: Schema) -> $2T:
+                    result: $2T = {}
+                    value_schema = schema.members["value"]
+                    deserializer.read_map(
+                        schema,
+                        ${?sparse}
+                        lambda k, d: result.__setitem__(k, d.read_optional(value_schema, lambda s: ${3C|}))
+                        ${/sparse}
+                        ${^sparse}
+                        lambda k, d: result.__setitem__(k, ${3C|})
+                        ${/sparse}
+                    )
+                    return result
+                """, deserializerSymbol.getName(), listSymbol,
+                writer.consumer(w -> valueTarget.accept(
+                        new MemberDeserializerGenerator(context, w, shape.getValue(), "d")
+                )));
         writer.popState();
     }
 }
