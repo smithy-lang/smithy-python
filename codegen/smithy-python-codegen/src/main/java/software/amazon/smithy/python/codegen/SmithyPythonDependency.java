@@ -55,6 +55,16 @@ public final class SmithyPythonDependency {
     );
 
     /**
+     * The core smithy-json python package.
+     */
+    public static final PythonDependency SMITHY_JSON = new PythonDependency(
+            "smithy_json",
+            "==0.0.1",
+            Type.DEPENDENCY,
+            false
+    );
+
+    /**
      * testing framework used in generated functional tests.
      */
     public static final PythonDependency PYTEST = new PythonDependency(
