@@ -122,26 +122,34 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         OperationShape operation,
         List<HttpBinding> documentBindings
     ) {
-        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-        writer.addImport("smithy_core.documents", "DocumentValue");
-        writer.write("result: dict[str, DocumentValue] = {}\n");
-
-        var bodyMembers = documentBindings.stream()
-            .map(HttpBinding::getMember)
-            .collect(Collectors.toSet());
-
-        var serVisitor = new JsonShapeSerVisitor(context, writer);
-        serVisitor.structureMembers(bodyMembers);
-
+        writer.addDependency(SmithyPythonDependency.SMITHY_JSON);
+        writer.addImport("smithy_json", "JSONCodec");
         writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
-        writer.addStdlibImport("json");
 
-        var defaultTrailer = shouldWriteDefaultBody(context, operation) ? "" : " if result else b''";
-        writer.write("""
-            content = json.dumps(result).encode('utf-8')$L
-            content_length = len(content)
-            body = AsyncBytesReader(content)
-            """, defaultTrailer);
+        writer.pushState();
+
+        if (documentBindings.isEmpty()) {
+            var body = shouldWriteDefaultBody(context, operation) ? "b'{}'" : "b''";
+            writer.write("""
+                    content_length = 0
+                    body = AsyncBytesReader($L)
+                    """, body);
+        } else {
+            writer.addImport("smithy_core.types", "TimestampFormat");
+            writer.putContext("writeDefaultBody", shouldWriteDefaultBody(context, operation));
+            writer.write("""
+                    codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
+                    content = codec.serialize(input)
+                    ${?writeDefaultBody}
+                    if not content:
+                        content = b'{}'
+                    ${/writeDefaultBody}
+                    content_length = len(content)
+                    body = AsyncBytesReader(content)
+                    """);
+        }
+
+        writer.popState();
     }
 
     @Override
@@ -200,9 +208,6 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
             return;
         }
 
-        var memberVisitor = new JsonMemberSerVisitor(
-            context, writer, payloadBinding.getMember(), dataSource, Format.EPOCH_SECONDS);
-        var memberSerializer = target.accept(memberVisitor);
         writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
         writer.write("content_length: int = 0");
 
@@ -214,9 +219,14 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
             }
 
             if (target.isStringShape()) {
-                writer.write("content = $L.encode('utf-8')", memberSerializer);
+                writer.write("content = $L.encode('utf-8')", dataSource);
             } else {
-                writer.write("content = json.dumps($L).encode('utf-8')", memberSerializer);
+                writer.addImport("smithy_json", "JSONCodec");
+                writer.addImport("smithy_core.types", "TimestampFormat");
+                writer.write("""
+                        codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
+                        content = codec.serialize($L)
+                        """, dataSource);
             }
             writer.write("content_length = len(content)");
             writer.write("body = AsyncBytesReader(content)");
@@ -237,13 +247,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
 
     @Override
     protected void generateDocumentBodyShapeSerializers(GenerationContext context, Set<Shape> shapes) {
-        for (Shape shape : getConnectedShapes(context, shapes)) {
-            var serFunction = context.protocolGenerator().getSerializationFunction(context, shape);
-            context.writerDelegator().useFileWriter(serFunction.getDefinitionFile(),
-                serFunction.getNamespace(), writer -> {
-                    shape.accept(new JsonShapeSerVisitor(context, writer));
-                });
-        }
+        // No longer needed now that JSONCodec is handling it
     }
 
     @Override

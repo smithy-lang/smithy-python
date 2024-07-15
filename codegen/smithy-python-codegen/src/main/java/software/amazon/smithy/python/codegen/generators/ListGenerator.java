@@ -49,7 +49,7 @@ public final class ListGenerator implements Runnable {
                         for e in value:
                             ${?sparse}
                             if e is None:
-                                serializer.write_null(member_schema)
+                                ls.write_null(member_schema)
                             else:
                                 ${3C|}
                             ${/sparse}
