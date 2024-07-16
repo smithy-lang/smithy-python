@@ -18,7 +18,6 @@ package software.amazon.smithy.python.codegen.integration;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 import software.amazon.smithy.aws.traits.protocols.RestJson1Trait;
 import software.amazon.smithy.model.knowledge.HttpBinding;
 import software.amazon.smithy.model.knowledge.NeighborProviderIndex;
@@ -36,6 +35,7 @@ import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.HttpProtocolTestGenerator;
 import software.amazon.smithy.python.codegen.PythonWriter;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
+import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
@@ -257,36 +257,38 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         Shape operationOrError,
         List<HttpBinding> documentBindings
     ) {
+        writer.addDependency(SmithyPythonDependency.SMITHY_JSON);
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-        writer.addImport("smithy_core.documents", "DocumentValue");
-        writer.addStdlibImport("json");
+        writer.addImport("smithy_json", "JSONCodec");
+        writer.addImport("smithy_core.types", "TimestampFormat");
 
+        var symbolProvider = context.symbolProvider();
+        var symbol = symbolProvider.toSymbol(operationOrError);
         if (operationOrError.isOperationShape()) {
-            writer.write("""
-                output: dict[str, DocumentValue] = {}
-                if (body := await http_response.consume_body_async()):
-                    output = json.loads(body)
-
-                """);
-        } else {
-            // The method that parses the error code will also pre-parse the body if there are no errors
-            // on that operation with an http payload. If the operation has at least 1 error with an
-            // http payload then the body cannot be safely pre-parsed and must be parsed here
-            // within the deserializer
-            writer.write("""
-                if (parsed_body is None) and (body := await http_response.consume_body_async()):
-                    parsed_body = json.loads(body)
-
-                output: dict[str, DocumentValue] = parsed_body if parsed_body is not None else {}
-                """);
+            var output = context.model().expectShape(operationOrError.asOperationShape().get().getOutputShape());
+            symbol = symbolProvider.toSymbol(output);
         }
 
-        var bodyMembers = documentBindings.stream()
-            .map(HttpBinding::getMember)
-            .collect(Collectors.toSet());
+        if (operationOrError.isOperationShape()) {
+            writer.write("body = await http_response.consume_body_async()");
+        } else {
+            // TODO extract error codes in another way
+            writer.addStdlibImport("json");
+            writer.write("""
+                    if parsed_body is None:
+                        body = await http_response.consume_body_async()
+                    else:
+                        body = json.dumps(parsed_body).encode('utf-8')
+                    """);
+        }
 
-        var deserVisitor = new JsonShapeDeserVisitor(context, writer);
-        deserVisitor.structureMembers(bodyMembers);
+        writer.write("""
+                if body:
+                    codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
+                    deserializer = codec.create_deserializer(body)
+                    body_kwargs = $T.deserialize_kwargs(deserializer)
+                    kwargs.update(body_kwargs)
+                """, symbol);
     }
 
     @Override
@@ -294,33 +296,74 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         GenerationContext context,
         Set<Shape> shapes
     ) {
-        for (Shape shape : getConnectedShapes(context, shapes)) {
-            var deserFunction = context.protocolGenerator().getDeserializationFunction(context, shape);
-
-            context.writerDelegator().useFileWriter(deserFunction.getDefinitionFile(),
-                    deserFunction.getNamespace(), writer -> {
-                shape.accept(new JsonShapeDeserVisitor(context, writer));
-            });
-        }
+        // No longer needed now that JSONCodec is handling it
     }
 
     @Override
-    protected void deserializePayloadBody(GenerationContext context,
-                                          PythonWriter writer,
-                                          Shape operationOrError,
-                                          HttpBinding payloadBinding
+    protected void deserializePayloadBody(
+            GenerationContext context,
+            PythonWriter writer,
+            Shape operationOrError,
+            HttpBinding payloadBinding
     ) {
-        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-        var visitor = new JsonPayloadDeserVisitor(context, writer, payloadBinding);
-        var target = context.model().expectShape(payloadBinding.getMember().getTarget());
-        target.accept(visitor);
-    }
 
-    private Set<Shape> getConnectedShapes(GenerationContext context, Set<Shape> initialShapes) {
-        var shapeWalker = new Walker(NeighborProviderIndex.of(context.model()).getProvider());
-        var connectedShapes = new TreeSet<>(initialShapes);
-        initialShapes.forEach(shape -> connectedShapes.addAll(shapeWalker.walkShapes(shape)));
-        return connectedShapes;
+        writer.addDependency(SmithyPythonDependency.SMITHY_JSON);
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_json", "JSONCodec");
+        writer.addImport("smithy_core.types", "TimestampFormat");
+
+        var symbolProvider = context.symbolProvider();
+        var memberName = symbolProvider.toMemberName(payloadBinding.getMember());
+
+        if (payloadBinding.getMember().getMemberTrait(context.model(), StreamingTrait.class).isPresent()) {
+            writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
+            writer.write("kwargs[$S] = AsyncBytesReader(http_response.body)", memberName);
+            return;
+        }
+
+        if (operationOrError.isOperationShape()) {
+            writer.write("body = await http_response.consume_body_async()");
+        } else {
+            // TODO extract error codes in another way
+            writer.addStdlibImport("json");
+            writer.write("""
+                    if parsed_body is None:
+                        body = await http_response.consume_body_async()
+                    else:
+                        body = json.dumps(parsed_body).encode('utf-8')
+                    """);
+        }
+
+        var target = context.model().expectShape(payloadBinding.getMember().getTarget());
+        var deserializerSymbol = symbolProvider.toSymbol(target);
+
+        writer.write("if body:").indent();
+
+        if (target.isUnionShape()) {
+            deserializerSymbol = deserializerSymbol.expectProperty(SymbolProperties.DESERIALIZER);
+            writer.write("""
+                    codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
+                    deserializer = codec.create_deserializer(body)
+                    kwargs[$S] = $T().deserialize(deserializer)
+                    """, memberName, deserializerSymbol);
+        } else if (target.isStringShape()) {
+            writer.write("kwargs[$S] = body.decode('utf-8')", memberName);
+        } else if (target.isBlobShape()) {
+            writer.write("kwargs[$S] = body", memberName);
+        } else if (target.isDocumentShape()) {
+            var schemaSymbol = deserializerSymbol.expectProperty(SymbolProperties.SCHEMA);
+            writer.write("""
+                    codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
+                    deserializer = codec.create_deserializer(body)
+                    kwargs[$S] = deserializer.read_document($T)
+                    """, memberName, schemaSymbol);
+        } else {
+            writer.write("""
+                    codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
+                    kwargs[$S] = codec.deserialize(body, $T)
+                    """, memberName, deserializerSymbol);
+        }
+        writer.dedent();
     }
 
     @Override

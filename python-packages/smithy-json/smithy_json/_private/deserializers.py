@@ -14,7 +14,7 @@ from smithy_core.documents import Document
 from smithy_core.exceptions import SmithyException
 from smithy_core.interfaces import BytesReader
 from smithy_core.schemas import Schema
-from smithy_core.shapes import ShapeID
+from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.types import TimestampFormat
 
 from .documents import JSONDocument
@@ -140,6 +140,8 @@ class JSONShapeDeserializer(ShapeDeserializer):
                 return float(event.value)
             case int() | float():
                 return event.value
+            case "Infinity" | "-Infinity" | "NaN":
+                return float(event.value)
             case _:
                 raise JSONTokenError("number", event)
 
@@ -210,6 +212,9 @@ class JSONShapeDeserializer(ShapeDeserializer):
             member = self._resolve_member(schema=schema, key=key)
             if not member:
                 self._skip()
+                continue
+            if self.is_null() and member.shape_type is not ShapeType.DOCUMENT:
+                self.read_null()
                 continue
             consumer(member, self)
 

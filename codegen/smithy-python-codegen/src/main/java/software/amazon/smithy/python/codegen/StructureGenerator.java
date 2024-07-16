@@ -19,6 +19,7 @@ import static software.amazon.smithy.python.codegen.CodegenUtils.isErrorMessage;
 
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -144,9 +145,12 @@ final class StructureGenerator implements Runnable {
                     message: str
                     ${6C|}
 
+                    ${7C|}
+
                 """, symbol.getName(), apiError, code, fault,
                 writer.consumer(w -> writeClassDocs(true)),
-                writer.consumer(w -> writeProperties()));
+                writer.consumer(w -> writeProperties()),
+                writer.consumer(w -> generateDeserializeMethod()));
     }
 
     private void writeProperties() {
@@ -379,13 +383,19 @@ final class StructureGenerator implements Runnable {
         writer.addLogger();
         writer.addStdlibImports("typing", Set.of("Self", "Any"));
         writer.addImport("smithy_core.deserializers", "ShapeDeserializer");
+        writer.addImport("smithy_core.schemas", "Schema");
 
-        var deserializeableMembers = filterMembers();
         var schemaSymbol = symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.SCHEMA);
         writer.putContext("schema", schemaSymbol);
+
+        // TODO: either formalize deserialize_kwargs or remove it when http serde is converted
         writer.write("""
                 @classmethod
                 def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+                    return cls(**cls.deserialize_kwargs(deserializer))
+
+                @classmethod
+                def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
                     kwargs: dict[str, Any] = {}
 
                     def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
@@ -395,15 +405,15 @@ final class StructureGenerator implements Runnable {
                                 logger.debug(f"Unexpected member schema: {schema}")
 
                     deserializer.read_struct($T, consumer=_consumer)
-                    return cls(**kwargs)
+                    return kwargs
 
                 """,
-                writer.consumer(w -> deserializeMembers(deserializeableMembers)),
+                writer.consumer(w -> deserializeMembers(shape.members())),
                 schemaSymbol);
         writer.popState();
     }
 
-    private void deserializeMembers(List<MemberShape> members) {
+    private void deserializeMembers(Collection<MemberShape> members) {
         int index = 0;
         for (MemberShape member : members) {
             var target = model.expectShape(member.getTarget());
