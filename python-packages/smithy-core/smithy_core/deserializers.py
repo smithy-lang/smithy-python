@@ -126,7 +126,7 @@ class ShapeDeserializer(Protocol):
         :param schema: The shape's schema.
         :returns: A double from the underlying data.
         """
-        return self.read_double(schema)
+        return self.read_float(schema)
 
     def read_big_integer(self, schema: "Schema") -> int:
         """Read a big integer (arbitrarily large integer) value from the underlying
