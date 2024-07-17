@@ -82,15 +82,13 @@ public final class MapGenerator implements Runnable {
                 def $1L(deserializer: ShapeDeserializer, schema: Schema) -> $2T:
                     result: $2T = {}
                     value_schema = schema.members["value"]
-                    deserializer.read_map(
-                        schema,
-                        ${?sparse}
-                        lambda k, d: result.__setitem__(k, d.read_optional(value_schema, lambda s: ${3C|}))
-                        ${/sparse}
-                        ${^sparse}
-                        lambda k, d: result.__setitem__(k, ${3C|})
-                        ${/sparse}
-                    )
+                    def _read_value(k: str, d: ShapeDeserializer):
+                        if d.is_null():
+                            d.read_null()
+                            ${?sparse}result[k] = None${/sparse}
+                        else:
+                            result[k] = ${3C|}
+                    deserializer.read_map(schema, _read_value)
                     return result
                 """, deserializerSymbol.getName(), listSymbol,
                 writer.consumer(w -> valueTarget.accept(

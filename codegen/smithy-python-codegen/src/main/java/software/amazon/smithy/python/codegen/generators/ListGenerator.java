@@ -81,15 +81,13 @@ public final class ListGenerator implements Runnable {
                     ${?includeSchema}
                     member_schema = schema.members["member"]
                     ${/includeSchema}
-                    deserializer.read_list(
-                        schema,
-                        ${?sparse}
-                        lambda d: result.append(d.read_optional(member_schema, lambda s: ${3C|}))
-                        ${/sparse}
-                        ${^sparse}
-                        lambda d: result.append(${3C|})
-                        ${/sparse}
-                    )
+                    def _read_value(d: ShapeDeserializer):
+                        if d.is_null():
+                            d.read_null()
+                            ${?sparse}result.append(None)${/sparse}
+                        else:
+                            result.append(${3C|})
+                    deserializer.read_list(schema, _read_value)
                     return result
                 """, deserializerSymbol.getName(), listSymbol,
                 writer.consumer(w -> memberTarget.accept(

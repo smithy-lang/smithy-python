@@ -106,19 +106,14 @@ class JSONShapeDeserializer(ShapeDeserializer):
         # populated on an as-needed basis.
         self._json_names: dict[ShapeID, dict[str, str]] = {}
 
-    def read_null(self, schema: Schema) -> None:
+    def is_null(self) -> bool:
+        return self._stream.peek().type == "null"
+
+    def read_null(self) -> None:
         event = next(self._stream)
         if event.value is not None:
             raise JSONTokenError("null", event)
         return None
-
-    def read_optional[
-        T
-    ](self, schema: "Schema", optional: Callable[["Schema"], T]) -> T | None:
-        if self._stream.peek().value is None:
-            next(self._stream)
-            return None
-        return optional(schema)
 
     def read_boolean(self, schema: Schema) -> bool:
         event = next(self._stream)

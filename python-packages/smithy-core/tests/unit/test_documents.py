@@ -707,20 +707,32 @@ class DocumentSerdeShape:
                     kwargs["struct_member"] = DocumentSerdeShape.deserialize(de)
                 case 11:
                     sparse_list_value: list[str | None] = []
+
+                    def _read_optional_list(d: ShapeDeserializer):
+                        if d.is_null():
+                            d.read_null()
+                            sparse_list_value.append(None)
+                        else:
+                            sparse_list_value.append(d.read_string(STRING))
+
                     de.read_list(
                         SCHEMA.members["sparseListMember"],
-                        lambda d: sparse_list_value.append(
-                            d.read_optional(STRING, d.read_string)
-                        ),
+                        _read_optional_list,
                     )
                     kwargs["list_member"] = sparse_list_value
                 case 12:
                     sparse_map_value: dict[str, str | None] = {}
+
+                    def _read_optional_map(k: str, d: ShapeDeserializer):
+                        if d.is_null():
+                            d.read_null()
+                            sparse_map_value[k] = None
+                        else:
+                            sparse_map_value[k] = d.read_string(STRING)
+
                     de.read_map(
                         SCHEMA.members["sparseMapMember"],
-                        lambda k, d: sparse_map_value.__setitem__(
-                            k, d.read_optional(STRING, d.read_string)
-                        ),
+                        _read_optional_map,
                     )
                     kwargs["map_member"] = sparse_map_value
                 case _:
@@ -891,18 +903,32 @@ def test_document_deserializer(given: Document, expected: Any):
         case list():
             actual = []
             deserializer = _DocumentDeserializer(given)
+
+            def _read_optional_list(d: ShapeDeserializer):
+                if d.is_null():
+                    d.read_null()
+                    actual.append(None)
+                else:
+                    actual.append(d.read_string(STRING))
+
             deserializer.read_list(
                 SCHEMA.members["sparseListMember"],
-                lambda d: actual.append(d.read_optional(STRING, d.read_string)),
+                _read_optional_list,
             )
         case dict():
             actual = {}
             deserializer = _DocumentDeserializer(given)
+
+            def _read_optional_map(k: str, d: ShapeDeserializer):
+                if d.is_null():
+                    d.read_null()
+                    actual[k] = None
+                else:
+                    actual[k] = d.read_string(STRING)
+
             deserializer.read_map(
                 SCHEMA.members["sparseMapMember"],
-                lambda k, d: actual.__setitem__(
-                    k, d.read_optional(STRING, d.read_string)
-                ),
+                _read_optional_map,
             )
         case DocumentSerdeShape():
             actual = given.as_shape(DocumentSerdeShape)
