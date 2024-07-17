@@ -270,20 +270,32 @@ class SerdeShape:
                     kwargs["struct_member"] = SerdeShape.deserialize(de)
                 case 15:
                     sparse_list_value: list[str | None] = []
+
+                    def _read_optional_list(d: ShapeDeserializer):
+                        if d.is_null():
+                            d.read_null()
+                            sparse_list_value.append(None)
+                        else:
+                            sparse_list_value.append(d.read_string(STRING))
+
                     de.read_list(
                         SCHEMA.members["sparseListMember"],
-                        lambda d: sparse_list_value.append(
-                            d.read_optional(STRING, d.read_string)
-                        ),
+                        _read_optional_list,
                     )
                     kwargs["sparse_list_member"] = sparse_list_value
                 case 16:
                     sparse_map_value: dict[str, str | None] = {}
+
+                    def _read_optional_map(k: str, d: ShapeDeserializer):
+                        if d.is_null():
+                            d.read_null()
+                            sparse_map_value[k] = None
+                        else:
+                            sparse_map_value[k] = d.read_string(STRING)
+
                     de.read_map(
                         SCHEMA.members["sparseMapMember"],
-                        lambda k, d: sparse_map_value.__setitem__(
-                            k, d.read_optional(STRING, d.read_string)
-                        ),
+                        _read_optional_map,
                     )
                     kwargs["sparse_map_member"] = sparse_map_value
                 case _:

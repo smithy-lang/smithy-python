@@ -578,19 +578,15 @@ class _DocumentDeserializer(ShapeDeserializer):
             consumer(k, _DocumentDeserializer(v))
 
     @override
-    def read_null(self, schema: "Schema") -> None:
+    def is_null(self) -> bool:
+        return self._value.is_none()
+
+    @override
+    def read_null(self) -> None:
         if (value := self._value.as_value()) is not None:
             raise ExpectationNotMetException(
                 f"Expected document value to be None, but was: {value}"
             )
-
-    @override
-    def read_optional[
-        T
-    ](self, schema: "Schema", optional: Callable[["Schema"], T]) -> T | None:
-        if self._value.is_none():
-            return None
-        return optional(schema)
 
     @override
     def read_boolean(self, schema: "Schema") -> bool:

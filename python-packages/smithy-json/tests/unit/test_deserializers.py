@@ -3,6 +3,7 @@ from decimal import Decimal
 from typing import Any
 
 import pytest
+from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
 from smithy_core.prelude import (
     BIG_DECIMAL,
@@ -30,7 +31,7 @@ def test_json_deserializer(expected: Any, given: bytes) -> None:
     deserializer = codec.create_deserializer(given)
     match expected:
         case None:
-            actual = deserializer.read_null(STRING)
+            actual = deserializer.read_null()
         case bool():
             actual = deserializer.read_boolean(BOOLEAN)
         case int():
@@ -49,18 +50,32 @@ def test_json_deserializer(expected: Any, given: bytes) -> None:
             actual = deserializer.read_document(expected._schema)  # type: ignore
         case list():
             actual_list: list[str | None] = []
+
+            def _read_optional_list(d: ShapeDeserializer):
+                if d.is_null():
+                    d.read_null()
+                    actual_list.append(None)
+                else:
+                    actual_list.append(d.read_string(STRING))
+
             deserializer.read_list(
                 SPARSE_STRING_LIST_SCHEMA,
-                lambda d: actual_list.append(d.read_optional(STRING, d.read_string)),
+                _read_optional_list,
             )
             actual = actual_list
         case dict():
             actual_map: dict[str, str | None] = {}
+
+            def _read_optional_map(k: str, d: ShapeDeserializer):
+                if d.is_null():
+                    d.read_null()
+                    actual_map[k] = None
+                else:
+                    actual_map[k] = d.read_string(STRING)
+
             deserializer.read_map(
                 SPARSE_STRING_MAP_SCHEMA,
-                lambda k, d: actual_map.__setitem__(
-                    k, d.read_optional(STRING, d.read_string)
-                ),
+                _read_optional_map,
             )
             actual = actual_map
         case SerdeShape():

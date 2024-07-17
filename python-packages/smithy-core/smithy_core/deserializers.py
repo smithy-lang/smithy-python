@@ -53,24 +53,15 @@ class ShapeDeserializer(Protocol):
         """
         ...
 
-    def read_null(self, schema: "Schema") -> None:
-        """Read a null value from the underlying data.
+    def is_null(self) -> bool:
+        """Returns whether the next value in the underlying data represents null.
 
         :param schema: The shape's schema.
         """
         ...
 
-    def read_optional[
-        T
-    ](self, schema: "Schema", optional: Callable[["Schema"], T]) -> T | None:
-        """Read an optional value from the underlying data.
-
-        This is intended to be used with sparse lists or maps.
-
-        :param schema: The shape's schema.
-        :param optional: A callable that takes a schema and reads a non-nullable value
-            from the underlying data.
-        """
+    def read_null(self) -> None:
+        """Read a null value from the underlying data."""
         ...
 
     def read_boolean(self, schema: "Schema") -> bool:
