@@ -17,11 +17,8 @@ package software.amazon.smithy.python.codegen.integration;
 
 import java.util.List;
 import java.util.Set;
-import java.util.TreeSet;
 import software.amazon.smithy.aws.traits.protocols.RestJson1Trait;
 import software.amazon.smithy.model.knowledge.HttpBinding;
-import software.amazon.smithy.model.knowledge.NeighborProviderIndex;
-import software.amazon.smithy.model.neighbor.Walker;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.Shape;
