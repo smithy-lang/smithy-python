@@ -5,7 +5,7 @@ pytest<=8.3.1
 pytest-asyncio<0.24.0
 pytest-cov<=5.0.0
 freezegun<1.6.0
-pyupgrade<3.17.0
+pyupgrade<3.18.0
 isort<5.14.0
 docformatter<1.7.6
 bandit<1.8.0
