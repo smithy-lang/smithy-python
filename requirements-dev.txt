@@ -1,5 +1,5 @@
 black<=24.4.2
-flake8<=7.1.0
+flake8<=7.1.1
 pyright==1.1.375
 pytest<=8.3.2
 pytest-asyncio<0.24.0
