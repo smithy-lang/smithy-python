@@ -4,6 +4,10 @@ class SmithyException(Exception):
     """Base exception type for all exceptions raised by smithy-python."""
 
 
+class SerializationException(Exception):
+    """Base exception type for exceptions raised during serialization."""
+
+
 class SmithyRetryException(SmithyException):
     """Base exception type for all exceptions raised in retry strategies."""
 
