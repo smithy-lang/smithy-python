@@ -3,7 +3,9 @@ from abc import ABCMeta, abstractmethod
 from collections.abc import Callable, Iterator
 from contextlib import AbstractContextManager, contextmanager
 from decimal import Decimal
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Never, Protocol, runtime_checkable
+
+from .exceptions import SmithyException
 
 if TYPE_CHECKING:
     from .documents import Document
@@ -315,6 +317,71 @@ class InterceptingSerializer(ShapeSerializer, metaclass=ABCMeta):
     def write_document(self, schema: "Schema", value: "Document") -> None:
         self.before(schema).write_document(schema, value)
         self.after(schema)
+
+
+class SpecificShapeSerializer(ShapeSerializer):
+    """Expects to serialize a specific kind of shape, failing if other shapes are
+    serialized."""
+
+    def _invalid_state(
+        self, schema: "Schema | None" = None, message: str | None = None
+    ) -> Never:
+        if message is None:
+            message = f"Unexpected schema type: {schema}"
+        raise SmithyException(message)
+
+    def begin_struct(
+        self, schema: "Schema"
+    ) -> AbstractContextManager["ShapeSerializer"]:
+        self._invalid_state(schema)
+
+    def begin_list(self, schema: "Schema") -> AbstractContextManager["ShapeSerializer"]:
+        self._invalid_state(schema)
+
+    def begin_map(self, schema: "Schema") -> AbstractContextManager["MapSerializer"]:
+        self._invalid_state(schema)
+
+    def write_null(self, schema: "Schema") -> None:
+        self._invalid_state(schema)
+
+    def write_boolean(self, schema: "Schema", value: bool) -> None:
+        self._invalid_state(schema)
+
+    def write_byte(self, schema: "Schema", value: int) -> None:
+        self._invalid_state(schema)
+
+    def write_short(self, schema: "Schema", value: int) -> None:
+        self._invalid_state(schema)
+
+    def write_integer(self, schema: "Schema", value: int) -> None:
+        self._invalid_state(schema)
+
+    def write_long(self, schema: "Schema", value: int) -> None:
+        self._invalid_state(schema)
+
+    def write_float(self, schema: "Schema", value: float) -> None:
+        self._invalid_state(schema)
+
+    def write_double(self, schema: "Schema", value: float) -> None:
+        self._invalid_state(schema)
+
+    def write_big_integer(self, schema: "Schema", value: int) -> None:
+        self._invalid_state(schema)
+
+    def write_big_decimal(self, schema: "Schema", value: Decimal) -> None:
+        self._invalid_state(schema)
+
+    def write_string(self, schema: "Schema", value: str) -> None:
+        self._invalid_state(schema)
+
+    def write_blob(self, schema: "Schema", value: bytes) -> None:
+        self._invalid_state(schema)
+
+    def write_timestamp(self, schema: "Schema", value: datetime.datetime) -> None:
+        self._invalid_state(schema)
+
+    def write_document(self, schema: "Schema", value: "Document") -> None:
+        self._invalid_state(schema)
 
 
 @runtime_checkable

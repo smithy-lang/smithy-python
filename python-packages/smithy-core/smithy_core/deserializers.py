@@ -1,7 +1,9 @@
 import datetime
 from collections.abc import Callable
 from decimal import Decimal
-from typing import TYPE_CHECKING, Protocol, Self, runtime_checkable
+from typing import TYPE_CHECKING, Never, Protocol, Self, runtime_checkable
+
+from .exceptions import SmithyException
 
 if TYPE_CHECKING:
     from .documents import Document
@@ -168,6 +170,82 @@ class ShapeDeserializer(Protocol):
         :returns: A timestamp from the underlying data.
         """
         ...
+
+
+class SpecificShapeDeserializer(ShapeDeserializer):
+    """Expects to deserialize a specific kind of shape, failing if other shapes are
+    deserialized."""
+
+    def _invalid_state(
+        self, schema: "Schema | None" = None, message: str | None = None
+    ) -> Never:
+        if message is None:
+            message = f"Unexpected schema type: {schema}"
+        raise SmithyException(message)
+
+    def read_struct(
+        self,
+        schema: "Schema",
+        consumer: Callable[["Schema", "ShapeDeserializer"], None],
+    ) -> None:
+        self._invalid_state(schema)
+
+    def read_list(
+        self, schema: "Schema", consumer: Callable[["ShapeDeserializer"], None]
+    ) -> None:
+        self._invalid_state(schema)
+
+    def read_map(
+        self,
+        schema: "Schema",
+        consumer: Callable[[str, "ShapeDeserializer"], None],
+    ) -> None:
+        self._invalid_state(schema)
+
+    def is_null(self) -> bool:
+        self._invalid_state(message="Unexpected attempt to read null.")
+
+    def read_null(self) -> None:
+        self._invalid_state(message="Unexpected attempt to read null.")
+
+    def read_boolean(self, schema: "Schema") -> bool:
+        self._invalid_state(schema)
+
+    def read_blob(self, schema: "Schema") -> bytes:
+        self._invalid_state(schema)
+
+    def read_byte(self, schema: "Schema") -> int:
+        self._invalid_state(schema)
+
+    def read_short(self, schema: "Schema") -> int:
+        self._invalid_state(schema)
+
+    def read_integer(self, schema: "Schema") -> int:
+        self._invalid_state(schema)
+
+    def read_long(self, schema: "Schema") -> int:
+        self._invalid_state(schema)
+
+    def read_float(self, schema: "Schema") -> float:
+        self._invalid_state(schema)
+
+    def read_double(self, schema: "Schema") -> float:
+        self._invalid_state(schema)
+
+    def read_big_integer(self, schema: "Schema") -> int:
+        self._invalid_state(schema)
+
+    def read_big_decimal(self, schema: "Schema") -> Decimal:
+        self._invalid_state(schema)
+
+    def read_string(self, schema: "Schema") -> str:
+        self._invalid_state(schema)
+
+    def read_document(self, schema: "Schema") -> "Document":
+        self._invalid_state(schema)
+
+    def read_timestamp(self, schema: "Schema") -> datetime.datetime:
+        self._invalid_state(schema)
 
 
 @runtime_checkable
