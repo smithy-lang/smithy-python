@@ -55,6 +55,7 @@ lint-py: pants
 	./pants fix lint python-packages/smithy-aws-core::
 	./pants fix lint python-packages/smithy-json::
 	./pants fix lint python-packages/smithy-event-stream::
+	./pants fix lint python-packages/aws-event-stream::
 
 
 ## Runs checkers for the python packages.
@@ -64,6 +65,7 @@ check-py: pants
 	./pants check python-packages/smithy-aws-core::
 	./pants check python-packages/smithy-json::
 	./pants check python-packages/smithy-event-stream::
+	./pants check python-packages/aws-event-stream::
 
 
 ## Runs tests for the python packages.
@@ -73,6 +75,7 @@ test-py: pants
 	./pants test python-packages/smithy-aws-core::
 	./pants test python-packages/smithy-json::
 	./pants test python-packages/smithy-event-stream::
+	./pants test python-packages/aws-event-stream::
 
 
 ## Runs formatters/fixers/linters/checkers/tests for the python packages.

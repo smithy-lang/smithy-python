@@ -1,0 +1,1 @@
+include aws_event_stream/py.typed
