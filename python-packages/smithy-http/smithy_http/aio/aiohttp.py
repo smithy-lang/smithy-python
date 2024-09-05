@@ -88,10 +88,13 @@ class AIOHTTPClient(HTTPClient):
         if not isinstance(body, AsyncBytesReader):
             body = AsyncBytesReader(body)
 
+        # The typing on `params` is incorrect, it'll happily accept a mapping whose
+        # values are lists (or tuples) and produce expected values.
+        # See: https://github.com/aio-libs/aiohttp/issues/8563
         async with self._session.request(
             method=request.method,
             url=self._serialize_uri_without_query(request.destination),
-            params=parse_qs(request.destination.query),
+            params=parse_qs(request.destination.query),  # type: ignore
             headers=headers_list,
             data=body,
         ) as resp:
