@@ -13,13 +13,21 @@ from smithy_core.serializers import (
     ShapeSerializer,
     SpecificShapeSerializer,
 )
+from smithy_core.shapes import ShapeType
+from smithy_core.utils import expect_type
 
 from ..events import EventHeaderEncoder, EventMessage
 from ..exceptions import InvalidHeaderValue
-from .traits import ERROR_TRAIT, EVENT_HEADER_TRAIT, EVENT_PAYLOAD_TRAIT
+from . import INITIAL_REQUEST_EVENT_TYPE, INITIAL_RESPONSE_EVENT_TYPE
+from .traits import (
+    ERROR_TRAIT,
+    EVENT_HEADER_TRAIT,
+    EVENT_PAYLOAD_TRAIT,
+    MEDIA_TYPE_TRAIT,
+)
 
-_INITIAL_REQUEST_EVENT_TYPE = "initial-request"
-_INITIAL_RESPONSE_EVENT_TYPE = "initial-response"
+_DEFAULT_STRING_CONTENT_TYPE = "text/plain"
+_DEFAULT_BLOB_CONTENT_TYPE = "application/octet-stream"
 
 
 class EventSerializer(SpecificShapeSerializer):
@@ -31,15 +39,29 @@ class EventSerializer(SpecificShapeSerializer):
         self._payload_codec = payload_codec
         self._result: EventMessage | None = None
         if is_client_mode:
-            self._initial_message_event_type = _INITIAL_REQUEST_EVENT_TYPE
+            self._initial_message_event_type = INITIAL_REQUEST_EVENT_TYPE
         else:
-            self._initial_message_event_type = _INITIAL_RESPONSE_EVENT_TYPE
+            self._initial_message_event_type = INITIAL_RESPONSE_EVENT_TYPE
 
     def get_result(self) -> EventMessage | None:
         return self._result
 
     @contextmanager
     def begin_struct(self, schema: "Schema") -> Iterator[ShapeSerializer]:
+        # Event stream definitions are unions. Nothing about the union shape actually
+        # matters for the purposes of event stream serialization though, we just care
+        # about the specific member we're serializing. So here we yield immediately,
+        # and the next time this method is called it'll be by the member that we
+        # actually care about.
+        #
+        # Note that if we're serializing an operation input or output, it won't be a
+        # union at all, so this won't get triggered. Thankfully, that's what we want.
+        if schema.shape_type is ShapeType.UNION:
+            try:
+                yield self
+            finally:
+                return
+
         headers_encoder = EventHeaderEncoder()
 
         if ERROR_TRAIT in schema.traits:
@@ -65,21 +87,40 @@ class EventSerializer(SpecificShapeSerializer):
         )
         header_serializer = EventHeaderSerializer(headers_encoder)
 
-        if not self._has_payload_member(schema):
+        media_type = self._payload_codec.media_type
+
+        if (payload_member := self._get_payload_member(schema)) is not None:
+            media_type = self._get_payload_media_type(payload_member, media_type)
+            yield EventStreamBindingSerializer(header_serializer, payload_serializer)
+        else:
             with payload_serializer.begin_struct(schema) as body_serializer:
                 yield EventStreamBindingSerializer(header_serializer, body_serializer)
-        else:
-            yield EventStreamBindingSerializer(header_serializer, payload_serializer)
+
+        payload_bytes = payload.getvalue()
+        if payload_bytes:
+            headers_encoder.encode_string(":content-type", media_type)
 
         self._result = EventMessage(
-            headers_bytes=headers_encoder.get_result(), payload=payload.getvalue()
+            headers_bytes=headers_encoder.get_result(), payload=payload_bytes
         )
 
-    def _has_payload_member(self, schema: "Schema") -> bool:
+    def _get_payload_member(self, schema: Schema) -> Schema | None:
         for member in schema.members.values():
             if EVENT_PAYLOAD_TRAIT in member.traits:
-                return True
-        return False
+                return schema
+        return None
+
+    def _get_payload_media_type(self, schema: Schema, default: str) -> str:
+        if (media_type := schema.traits.get(MEDIA_TYPE_TRAIT)) is not None:
+            return expect_type(str, media_type.value)
+
+        match schema.shape_type:
+            case ShapeType.STRING:
+                return _DEFAULT_STRING_CONTENT_TYPE
+            case ShapeType.BLOB:
+                return _DEFAULT_BLOB_CONTENT_TYPE
+            case _:
+                return default
 
 
 class EventHeaderSerializer(SpecificShapeSerializer):
@@ -129,6 +170,7 @@ class EventStreamBindingSerializer(InterceptingSerializer):
         self._payload_serializer = payload_serializer
 
     def before(self, schema: "Schema") -> ShapeSerializer:
+        print(f"FOUND TRAITS: {schema.traits}")
         if EVENT_HEADER_TRAIT in schema.traits:
             return self._header_serializer
         return self._payload_serializer
