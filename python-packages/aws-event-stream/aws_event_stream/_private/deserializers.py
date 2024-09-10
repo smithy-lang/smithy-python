@@ -10,8 +10,11 @@ from smithy_core.schemas import Schema
 from smithy_core.utils import expect_type
 
 from ..events import HEADERS_DICT, Event
-from ..exceptions import EventError, UnexpectedEventError
+from ..exceptions import EventError, UnmodeledEventError
+from . import INITIAL_REQUEST_EVENT_TYPE, INITIAL_RESPONSE_EVENT_TYPE
 from .traits import EVENT_HEADER_TRAIT, EVENT_PAYLOAD_TRAIT
+
+INITIAL_MESSAGE_TYPES = (INITIAL_REQUEST_EVENT_TYPE, INITIAL_RESPONSE_EVENT_TYPE)
 
 
 class EventDeserializer(SpecificShapeDeserializer):
@@ -29,14 +32,23 @@ class EventDeserializer(SpecificShapeDeserializer):
     ) -> None:
         event = Event.decode(self._source)
         headers = event.message.headers
-        message_deserializer = EventMessageDeserializer(
-            headers, self._payload_codec.create_deserializer(event.message.payload)
-        )
+
+        payload_deserializer = None
+        if event.message.payload:
+            payload_deserializer = self._payload_codec.create_deserializer(
+                event.message.payload
+            )
+
+        message_deserializer = EventMessageDeserializer(headers, payload_deserializer)
 
         match headers.get(":message-type"):
             case "event":
                 member_name = expect_type(str, headers[":event-type"])
-                consumer(schema.members[member_name], message_deserializer)
+                if member_name in INITIAL_MESSAGE_TYPES:
+                    # If it's an initial message, skip straight to deserialization.
+                    message_deserializer.read_struct(schema, consumer)
+                else:
+                    consumer(schema.members[member_name], message_deserializer)
             case "exception":
                 member_name = expect_type(str, headers[":exception-type"])
                 consumer(schema.members[member_name], message_deserializer)
@@ -44,7 +56,7 @@ class EventDeserializer(SpecificShapeDeserializer):
                 # The `application/vnd.amazon.eventstream` format allows for explicitly
                 # unmodeled exceptions. These exceptions MUST have the `:error-code`
                 # and `:error-message` headers set, and they MUST be strings.
-                raise UnexpectedEventError(
+                raise UnmodeledEventError(
                     expect_type(str, headers[":error-code"]),
                     expect_type(str, headers[":error-message"]),
                 )
@@ -54,7 +66,7 @@ class EventDeserializer(SpecificShapeDeserializer):
 
 class EventMessageDeserializer(SpecificShapeDeserializer):
     def __init__(
-        self, headers: HEADERS_DICT, payload_deserializer: ShapeDeserializer
+        self, headers: HEADERS_DICT, payload_deserializer: ShapeDeserializer | None
     ) -> None:
         self._headers = headers
         self._payload_deserializer = payload_deserializer
@@ -70,10 +82,11 @@ class EventMessageDeserializer(SpecificShapeDeserializer):
             if member_schema is not None and EVENT_HEADER_TRAIT in member_schema.traits:
                 consumer(member_schema, headers_deserializer)
 
-        if (payload_member := self._get_payload_member(schema)) is not None:
-            consumer(payload_member, self._payload_deserializer)
-        else:
-            self._payload_deserializer.read_struct(schema, consumer)
+        if self._payload_deserializer:
+            if (payload_member := self._get_payload_member(schema)) is not None:
+                consumer(payload_member, self._payload_deserializer)
+            else:
+                self._payload_deserializer.read_struct(schema, consumer)
 
     def _get_payload_member(self, schema: "Schema") -> "Schema | None":
         for member in schema.members.values():

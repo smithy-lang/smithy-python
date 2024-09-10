@@ -1,5 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+# pyright: reportPrivateUsage=false
 import datetime
 import uuid
 from io import BytesIO
@@ -8,19 +9,24 @@ import pytest
 
 from aws_event_stream.events import (
     MAX_HEADER_VALUE_BYTE_LENGTH,
+    MAX_HEADERS_LENGTH,
     MAX_PAYLOAD_LENGTH,
     Byte,
     Event,
+    EventHeaderDecoder,
+    EventHeaderEncoder,
     EventMessage,
     EventPrelude,
     Long,
     Short,
 )
+from aws_event_stream.events import _EventEncoder as EventEncoder
 from aws_event_stream.exceptions import (
     ChecksumMismatch,
     DuplicateHeader,
     InvalidHeadersLength,
     InvalidHeaderValueLength,
+    InvalidIntegerValue,
     InvalidPayloadLength,
 )
 
@@ -393,6 +399,7 @@ POSITIVE_CASES = [
     ERROR_EVENT_MESSAGE,
 ]
 
+# TODO: botocore isn't passing this, fix there
 CORRUPTED_HEADERS_LENGTH = (
     (
         b"\x00\x00\x00\x3d"  # total length
@@ -417,6 +424,7 @@ CORRUPTED_HEADERS = (
     ChecksumMismatch,
 )
 
+# TODO: botocore isn't passing this, fix there
 CORRUPTED_LENGTH = (
     (
         b"\x01\x00\x00\x1d"  # total length
@@ -522,3 +530,225 @@ def test_encode(expected: bytes, event: Event):
 def test_negative_cases(encoded: bytes, expected: type[Exception]):
     with pytest.raises(expected):
         Event.decode(BytesIO(encoded))
+
+
+def test_event_prelude_rejects_long_headers():
+    headers_length = MAX_HEADERS_LENGTH + 1
+    total_length = headers_length + 16
+    with pytest.raises(InvalidHeadersLength):
+        EventPrelude(total_length=total_length, headers_length=headers_length, crc=1)
+
+
+def test_event_prelude_rejects_long_payload():
+    total_length = MAX_PAYLOAD_LENGTH + 17
+    with pytest.raises(InvalidPayloadLength):
+        EventPrelude(total_length=total_length, headers_length=0, crc=1)
+
+
+def test_event_message_rejects_long_payload():
+    payload = b"0" * (MAX_PAYLOAD_LENGTH + 1)
+    with pytest.raises(InvalidPayloadLength):
+        EventMessage(payload=payload)
+
+
+def test_event_message_rejects_long_header_value():
+    headers = {"foo": b"0" * (MAX_HEADER_VALUE_BYTE_LENGTH + 1)}
+    with pytest.raises(InvalidHeaderValueLength):
+        EventMessage(headers=headers).encode()
+
+
+def test_event_message_rejects_long_headers():
+    # 5 of these is more than enough to overcome the header size limit.
+    long_value = b"0" * (MAX_HEADER_VALUE_BYTE_LENGTH - 1)
+    headers = {
+        "1": long_value,
+        "2": long_value,
+        "3": long_value,
+        "4": long_value,
+        "5": long_value,
+    }
+    with pytest.raises(InvalidHeadersLength):
+        EventMessage(headers=headers).encode()
+
+    # These are correctly encoded, and individually valid, but collectively too long.
+    long_headers = b""
+    for i in range(5):
+        long_headers += b"\x01" + str(i).encode("utf-8") + b"\x06\x7f\xfe" + long_value
+
+    with pytest.raises(InvalidHeadersLength):
+        EventMessage(headers_bytes=long_headers)
+
+
+def test_event_message_decodes_headers():
+    message = EventMessage(headers_bytes=b"\x04true\x00")
+    assert message.headers == {"true": True}
+
+
+def test_event_encoder_rejects_long_headers():
+    long_value = b"0" * (MAX_HEADER_VALUE_BYTE_LENGTH - 1)
+    long_headers = b""
+    for i in range(5):
+        long_headers += b"\x01" + str(i).encode("utf-8") + b"\x06\x7f\xfe" + long_value
+
+    with pytest.raises(InvalidHeadersLength):
+        EventEncoder().encode_bytes(headers=long_headers)
+
+
+def test_event_encoder_rejects_long_payload():
+    payload = b"0" * (MAX_PAYLOAD_LENGTH + 1)
+    with pytest.raises(InvalidPayloadLength):
+        EventEncoder().encode_bytes(payload=payload)
+
+
+def test_event_encoder_encodes_bytes():
+    expected = (
+        b"\x00\x00\x00\x3d"  # total length
+        b"\x00\x00\x00\x20"  # headers length
+        b"\x07\xfd\x83\x96"  # prelude crc
+        b"\x0ccontent-type\x07\x00\x10application/json"  # headers
+        b"{'foo':'bar'}"  # payload
+        b"\x8d\x9c\x08\xb1"  # message crc
+    )
+    headers = b"\x0ccontent-type\x07\x00\x10application/json"
+    payload = b"{'foo':'bar'}"
+    actual = EventEncoder().encode_bytes(headers=headers, payload=payload)
+    assert actual == expected
+
+
+def test_encode_boolean_header():
+    encoder = EventHeaderEncoder()
+    encoder.encode_boolean("foo", True)
+    assert encoder.get_result() == b"\x03foo\x00"
+
+    encoder.clear()
+    encoder.encode_boolean("foo", False)
+    assert encoder.get_result() == b"\x03foo\x01"
+
+
+def test_encode_byte_header():
+    encoder = EventHeaderEncoder()
+    encoder.encode_byte("foo", 1)
+    assert encoder.get_result() == b"\x03foo\x02\x01"
+
+
+def test_encode_too_long_byte_header():
+    encoder = EventHeaderEncoder()
+    with pytest.raises(InvalidIntegerValue):
+        encoder.encode_byte("foo", 2**7)
+
+
+def test_encode_short_header():
+    encoder = EventHeaderEncoder()
+    encoder.encode_short("foo", 1)
+    assert encoder.get_result() == b"\x03foo\x03\x00\x01"
+
+
+def test_encode_too_long_short_header():
+    encoder = EventHeaderEncoder()
+    with pytest.raises(InvalidIntegerValue):
+        encoder.encode_short("foo", 2**15)
+
+
+def test_encode_int_header():
+    encoder = EventHeaderEncoder()
+    encoder.encode_integer("foo", 1)
+    assert encoder.get_result() == b"\x03foo\x04\x00\x00\x00\x01"
+
+
+def test_encode_too_long_int_header():
+    encoder = EventHeaderEncoder()
+    with pytest.raises(InvalidIntegerValue):
+        encoder.encode_integer("foo", 2**31)
+
+
+def test_encode_long_header():
+    encoder = EventHeaderEncoder()
+    encoder.encode_long("foo", 1)
+    assert encoder.get_result() == b"\x03foo\x05\x00\x00\x00\x00\x00\x00\x00\x01"
+
+
+def test_encode_too_long_long_header():
+    encoder = EventHeaderEncoder()
+    with pytest.raises(InvalidIntegerValue):
+        encoder.encode_long("foo", 2**63)
+
+
+def test_encode_blob_header():
+    encoder = EventHeaderEncoder()
+    encoder.encode_blob("foo", b"bytes")
+    assert encoder.get_result() == b"\x03foo\x06\x00\x05bytes"
+
+
+def test_encode_string_header():
+    encoder = EventHeaderEncoder()
+    encoder.encode_string("foo", "string")
+    assert encoder.get_result() == b"\x03foo\x07\x00\x06string"
+
+
+def test_encode_timestamp_header():
+    encoder = EventHeaderEncoder()
+    encoder.encode_timestamp(
+        "foo", datetime.datetime(1970, 1, 1, 0, 0, 0, 8000, tzinfo=datetime.UTC)
+    )
+    assert encoder.get_result() == b"\x03foo\x08\x00\x00\x00\x00\x00\x00\x00\x08"
+
+
+def test_encode_uuid_header():
+    encoder = EventHeaderEncoder()
+    encoder.encode_uuid("foo", uuid.UUID(bytes=b"0123456789abcdef"))
+    assert encoder.get_result() == b"\x03foo\x090123456789abcdef"
+
+
+def test_decode_bool_header():
+    actual = EventHeaderDecoder(b"\x03foo\x00").decode_header()
+    assert actual == ("foo", True)
+
+    actual = EventHeaderDecoder(b"\x03foo\x01").decode_header()
+    assert actual == ("foo", False)
+
+
+def test_decode_byte_header():
+    actual = EventHeaderDecoder(b"\x03foo\x02\x01").decode_header()
+    assert actual == ("foo", 1)
+
+
+def test_decode_short_header():
+    actual = EventHeaderDecoder(b"\x03foo\x03\x00\x01").decode_header()
+    assert actual == ("foo", 1)
+
+
+def test_decode_integer_header():
+    actual = EventHeaderDecoder(b"\x03foo\x04\x00\x00\x00\x01").decode_header()
+    assert actual == ("foo", 1)
+
+
+def test_decode_long_header():
+    actual = EventHeaderDecoder(
+        b"\x03foo\x05\x00\x00\x00\x00\x00\x00\x00\x01"
+    ).decode_header()
+    assert actual == ("foo", 1)
+
+
+def test_decode_blob_header():
+    actual = EventHeaderDecoder(b"\x03foo\x06\x00\x05bytes").decode_header()
+    assert actual == ("foo", b"bytes")
+
+
+def test_decode_string_header():
+    actual = EventHeaderDecoder(b"\x03foo\x07\x00\x06string").decode_header()
+    assert actual == ("foo", "string")
+
+
+def test_decode_timestamp_header():
+    actual = EventHeaderDecoder(
+        b"\x03foo\x08\x00\x00\x00\x00\x00\x00\x00\x08"
+    ).decode_header()
+    assert actual == (
+        "foo",
+        datetime.datetime(1970, 1, 1, 0, 0, 0, 8000, tzinfo=datetime.UTC),
+    )
+
+
+def test_decode_uuid_header():
+    actual = EventHeaderDecoder(b"\x03foo\x090123456789abcdef").decode_header()
+    assert actual == ("foo", uuid.UUID(bytes=b"0123456789abcdef"))

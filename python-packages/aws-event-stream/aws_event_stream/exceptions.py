@@ -1,6 +1,5 @@
 """Binary Event Stream support for the application/vnd.amazon.eventstream format."""
 
-from dataclasses import dataclass
 from typing import Any
 
 from smithy_core.exceptions import SmithyException
@@ -10,13 +9,26 @@ _MAX_PAYLOAD_LENGTH = 16 * 1024**2  # 16 Mb
 
 
 class EventError(SmithyException):
-    pass
+    """Base error for all errors thrown during event stream handling."""
 
 
-@dataclass
-class UnexpectedEventError(EventError):
+class UnmodeledEventError(EventError):
+    """Unmodeled event error was read from the event stream.
+
+    These classes of errors tend to be internal server errors or other unexpected errors
+    on the service side.
+    """
+
     code: str
+    """A code identifying the class of error."""
+
     message: str
+    """The explanation of the error sent over the event stream."""
+
+    def __init__(self, code: str, message: str) -> None:
+        self.code = code
+        self.message = message
+        super().__init__(f"Received unmodeled event error: {code} - {message}")
 
 
 class DuplicateHeader(EventError):
@@ -68,4 +80,14 @@ class ChecksumMismatch(EventError):
 
     def __init__(self, expected: int, calculated: int):
         message = f"Checksum mismatch: expected 0x{expected:08x}, calculated 0x{calculated:08x}"
+        super().__init__(message)
+
+
+class InvalidIntegerValue(EventError):
+    def __init__(self, size: str, value: int):
+        message = (
+            f"Invalid {size} value: {value}. The Byte, Short, and Long types may be "
+            f"used to specify the size of the int. Unspecified ints are assumed to "
+            f"be 32-bit."
+        )
         super().__init__(message)

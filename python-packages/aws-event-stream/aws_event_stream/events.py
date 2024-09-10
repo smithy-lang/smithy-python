@@ -8,6 +8,7 @@ manner.
 """
 
 import datetime
+import struct
 import uuid
 from binascii import crc32
 from collections.abc import Callable, Iterator, Mapping
@@ -25,12 +26,17 @@ from .exceptions import (
     InvalidHeadersLength,
     InvalidHeaderValue,
     InvalidHeaderValueLength,
+    InvalidIntegerValue,
     InvalidPayloadLength,
 )
 
 MAX_HEADERS_LENGTH = 128 * 1024  # 128 Kb
 MAX_HEADER_VALUE_BYTE_LENGTH = 32 * 1024 - 1  # 32Kb
 MAX_PAYLOAD_LENGTH = 16 * 1024**2  # 16 Mb
+
+# In addition to the header length and payload length, the total length of the
+# message includes 12 bytes for the prelude and 4 bytes for the trailing crc.
+_MESSAGE_METADATA_SIZE = 16
 
 
 class Byte(int):
@@ -186,16 +192,16 @@ class EventMessage:
     ) -> None:
         """Initialize an EventMessage.
 
-        :param headers: The headers present in the event message. This parameter or
-            `headers_bytes` MUST be specified. If this parameter is unspecified, the
-            `headers_bytes` parameter will be decoded.
+        :param headers: The headers present in the event message. If this parameter is
+            unspecified, the default value will be the decoded value of the
+            `headers_bytes` parameter.
 
             Sized integer values may be indicated for the purpose of serialization
             using the `Byte`, `Short`, or `Long` types. int values of unspecified size
             will be assumed to be 32-bit.
 
         :param headers_bytes: The serialized bytes of the headers present in the event
-            message. This parameter or `headers` MUST be specified.
+            message.
 
         :param payload: The serialized bytes of the message payload.
         """
@@ -207,7 +213,7 @@ class EventMessage:
 
         if headers_bytes is None:
             if headers is None:
-                raise ValueError("One of headers or headers_bytes must be set.")
+                headers = {}
         elif headers is None:
             headers = EventHeaderDecoder(headers_bytes).decode_headers()
 
@@ -239,7 +245,7 @@ class EventMessage:
         return self._headers_bytes
 
     def encode(self) -> bytes:
-        return EventEncoder().encode_bytes(
+        return _EventEncoder().encode_bytes(
             headers=self._get_headers_bytes(), payload=self._payload
         )
 
@@ -290,7 +296,7 @@ class Event:
 
         prelude_bytes = source.read(8)
         prelude_crc_bytes = source.read(4)
-        prelude_crc: int = DecodeUtils.unpack_uint32(prelude_crc_bytes)[0]
+        prelude_crc: int = _DecodeUtils.unpack_uint32(prelude_crc_bytes)[0]
 
         total_length, headers_length = unpack("!II", prelude_bytes)
         _validate_checksum(prelude_bytes, prelude_crc)
@@ -298,9 +304,8 @@ class Event:
             total_length=total_length, headers_length=headers_length, crc=prelude_crc
         )
 
-        print(f"TOTAL LENGTH: {total_length}\nMESSAGE LENGTH: {total_length - 16}\nMAX {MAX_PAYLOAD_LENGTH}")
-        message_bytes = source.read(total_length - 16)
-        crc: int = DecodeUtils.unpack_uint32(source.read(4))[0]
+        message_bytes = source.read(total_length - _MESSAGE_METADATA_SIZE)
+        crc: int = _DecodeUtils.unpack_uint32(source.read(4))[0]
         _validate_checksum(prelude_crc_bytes + message_bytes, crc, prelude_crc)
 
         message = EventMessage(
@@ -310,10 +315,10 @@ class Event:
         return cls(prelude, message, crc)
 
 
-class EventEncoder:
+class _EventEncoder:
     """A utility class that encodes message bytes into binary events."""
 
-    def encode_bytes(self, headers: bytes, payload: bytes) -> bytes:
+    def encode_bytes(self, *, headers: bytes = b"", payload: bytes = b"") -> bytes:
         """Encode message bytes into a binary event.
 
         :param headers: The bytes representing the event headers.
@@ -336,10 +341,8 @@ class EventEncoder:
         return prelude_bytes + message_bytes + final_crc_bytes
 
     def _encode_prelude_bytes(self, headers: bytes, payload: bytes) -> bytes:
-        # In addition to the header length and payload length, the total length of the
-        # message includes 12 bytes for the prelude and 4 bytes for the trailing crc.
         header_length = len(headers)
-        total_length = header_length + len(payload) + 16
+        total_length = header_length + len(payload) + _MESSAGE_METADATA_SIZE
         return pack("!II", total_length, header_length)
 
     def _calculate_checksum(self, data: bytes, crc: int = 0) -> int:
@@ -425,7 +428,10 @@ class EventHeaderEncoder:
         """
         self._encode_key(key)
         self._buffer.write(b"\x02")
-        self._buffer.write(pack("!b", value))
+        try:
+            self._buffer.write(pack("!b", value))
+        except struct.error as e:
+            raise InvalidIntegerValue("byte", value) from e
 
     def encode_short(self, key: str, value: int) -> None:
         """Encode a 16-bit int header.
@@ -435,7 +441,10 @@ class EventHeaderEncoder:
         """
         self._encode_key(key)
         self._buffer.write(b"\x03")
-        self._buffer.write(pack("!h", value))
+        try:
+            self._buffer.write(pack("!h", value))
+        except struct.error as e:
+            raise InvalidIntegerValue("short", value) from e
 
     def encode_integer(self, key: str, value: int) -> None:
         """Encode a 32-bit int header.
@@ -445,7 +454,10 @@ class EventHeaderEncoder:
         """
         self._encode_key(key)
         self._buffer.write(b"\x04")
-        self._buffer.write(pack("!i", value))
+        try:
+            self._buffer.write(pack("!i", value))
+        except struct.error as e:
+            raise InvalidIntegerValue("integer", value) from e
 
     def encode_long(self, key: str, value: int) -> None:
         """Encode a 64-bit int header.
@@ -455,7 +467,10 @@ class EventHeaderEncoder:
         """
         self._encode_key(key)
         self._buffer.write(b"\x05")
-        self._buffer.write(pack("!q", value))
+        try:
+            self._buffer.write(pack("!q", value))
+        except struct.error as e:
+            raise InvalidIntegerValue("long", value) from e
 
     def encode_blob(self, key: str, value: bytes) -> None:
         """Encode a binary header.
@@ -519,7 +534,7 @@ BytesLike = bytes | memoryview
 _ArraySize = Literal[1] | Literal[2] | Literal[4]
 
 
-class DecodeUtils:
+class _DecodeUtils:
     """Unpacking utility functions used in the decoder.
 
     All methods on this class take raw bytes and return a tuple containing the value
@@ -548,7 +563,7 @@ class DecodeUtils:
         :param data: The bytes to parse from.
         :returns: A tuple containing the (parsed integer value, bytes consumed)
         """
-        value = unpack(DecodeUtils.UINT8_BYTE_FORMAT, data[:1])[0]
+        value = unpack(_DecodeUtils.UINT8_BYTE_FORMAT, data[:1])[0]
         return value, 1
 
     @staticmethod
@@ -558,7 +573,7 @@ class DecodeUtils:
         :param data: The bytes to parse from.
         :returns: A tuple containing the (parsed integer value, bytes consumed)
         """
-        value = unpack(DecodeUtils.UINT32_BYTE_FORMAT, data[:4])[0]
+        value = unpack(_DecodeUtils.UINT32_BYTE_FORMAT, data[:4])[0]
         return value, 4
 
     @staticmethod
@@ -568,7 +583,7 @@ class DecodeUtils:
         :param data: The bytes to parse from.
         :returns: A tuple containing the (parsed integer value, bytes consumed)
         """
-        value = unpack(DecodeUtils.INT8_BYTE_FORMAT, data[:1])[0]
+        value = unpack(_DecodeUtils.INT8_BYTE_FORMAT, data[:1])[0]
         return value, 1
 
     @staticmethod
@@ -578,7 +593,7 @@ class DecodeUtils:
         :param data: The bytes to parse from.
         :returns: A tuple containing the (parsed integer value, bytes consumed)
         """
-        value = unpack(DecodeUtils.INT16_BYTE_FORMAT, data[:2])[0]
+        value = unpack(_DecodeUtils.INT16_BYTE_FORMAT, data[:2])[0]
         return value, 2
 
     @staticmethod
@@ -588,7 +603,7 @@ class DecodeUtils:
         :param data: The bytes to parse from.
         :returns: A tuple containing the (parsed integer value, bytes consumed)
         """
-        value = unpack(DecodeUtils.INT32_BYTE_FORMAT, data[:4])[0]
+        value = unpack(_DecodeUtils.INT32_BYTE_FORMAT, data[:4])[0]
         return value, 4
 
     @staticmethod
@@ -598,7 +613,7 @@ class DecodeUtils:
         :param data: The bytes to parse from.
         :returns: A tuple containing the (parsed integer value, bytes consumed)
         """
-        value = unpack(DecodeUtils.INT64_BYTE_FORMAT, data[:8])[0]
+        value = unpack(_DecodeUtils.INT64_BYTE_FORMAT, data[:8])[0]
         return value, 8
 
     @staticmethod
@@ -617,9 +632,8 @@ class DecodeUtils:
             represents the length of the array. Supported values are 1, 2, and 4.
         :returns: A tuple containing the (parsed bytes, bytes consumed)
         """
-        uint_byte_format = DecodeUtils.UINT_BYTE_FORMAT[length_byte_size]
+        uint_byte_format = _DecodeUtils.UINT_BYTE_FORMAT[length_byte_size]
         length = unpack(uint_byte_format, data[:length_byte_size])[0]
-        print(f"HEADER LENGTH: {length}")
         if length > MAX_HEADER_VALUE_BYTE_LENGTH:
             raise InvalidHeaderValueLength(length)
         bytes_end = length + length_byte_size
@@ -643,7 +657,7 @@ class DecodeUtils:
             represents the length of the array. Supported values are 1, 2, and 4.
         :returns: A tuple containing the (parsed string, bytes consumed)
         """
-        array_bytes, consumed = DecodeUtils.unpack_byte_array(data, length_byte_size)
+        array_bytes, consumed = _DecodeUtils.unpack_byte_array(data, length_byte_size)
         return array_bytes.decode("utf-8"), consumed
 
     @staticmethod
@@ -656,7 +670,7 @@ class DecodeUtils:
         :param data: The bytes to parse from.
         :returns: A tuple containing the (datetime.datetime, bytes consumed).
         """
-        int_value, consumed = DecodeUtils.unpack_int64(data)
+        int_value, consumed = _DecodeUtils.unpack_int64(data)
         timestamp_value = TimestampFormat.EPOCH_SECONDS.deserialize(int_value / 1000)
         return timestamp_value, consumed
 
@@ -680,14 +694,14 @@ class EventHeaderDecoder(Iterator[tuple[str, HEADER_VALUE]]):
         # can just return static values.
         0: lambda b: (True, 0),  # boolean_true
         1: lambda b: (False, 0),  # boolean_false
-        2: DecodeUtils.unpack_int8,  # byte
-        3: DecodeUtils.unpack_int16,  # short
-        4: DecodeUtils.unpack_int32,  # integer
-        5: DecodeUtils.unpack_int64,  # long
-        6: DecodeUtils.unpack_byte_array,  # byte_array
-        7: DecodeUtils.unpack_utf8_string,  # string
-        8: DecodeUtils.unpack_timestamp,  # timestamp
-        9: DecodeUtils.unpack_uuid,  # uuid
+        2: _DecodeUtils.unpack_int8,  # byte
+        3: _DecodeUtils.unpack_int16,  # short
+        4: _DecodeUtils.unpack_int32,  # integer
+        5: _DecodeUtils.unpack_int64,  # long
+        6: _DecodeUtils.unpack_byte_array,  # byte_array
+        7: _DecodeUtils.unpack_utf8_string,  # string
+        8: _DecodeUtils.unpack_timestamp,  # timestamp
+        9: _DecodeUtils.unpack_uuid,  # uuid
     }
 
     def __init__(self, header_bytes: BytesLike) -> None:
@@ -719,10 +733,10 @@ class EventHeaderDecoder(Iterator[tuple[str, HEADER_VALUE]]):
 
         :returns: A single key-value pair read from the source.
         """
-        key, consumed = DecodeUtils.unpack_utf8_string(self._data, 1)
+        key, consumed = _DecodeUtils.unpack_utf8_string(self._data, 1)
         self._advance_data(consumed)
 
-        type, consumed = DecodeUtils.unpack_uint8(self._data)
+        type, consumed = _DecodeUtils.unpack_uint8(self._data)
         self._advance_data(consumed)
 
         value_unpacker = self._HEADER_TYPE_MAP[type]
