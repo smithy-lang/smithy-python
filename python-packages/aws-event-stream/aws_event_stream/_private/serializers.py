@@ -170,7 +170,6 @@ class EventStreamBindingSerializer(InterceptingSerializer):
         self._payload_serializer = payload_serializer
 
     def before(self, schema: "Schema") -> ShapeSerializer:
-        print(f"FOUND TRAITS: {schema.traits}")
         if EVENT_HEADER_TRAIT in schema.traits:
             return self._header_serializer
         return self._payload_serializer

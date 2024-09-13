@@ -399,7 +399,6 @@ POSITIVE_CASES = [
     ERROR_EVENT_MESSAGE,
 ]
 
-# TODO: botocore isn't passing this, fix there
 CORRUPTED_HEADERS_LENGTH = (
     (
         b"\x00\x00\x00\x3d"  # total length
@@ -424,7 +423,6 @@ CORRUPTED_HEADERS = (
     ChecksumMismatch,
 )
 
-# TODO: botocore isn't passing this, fix there
 CORRUPTED_LENGTH = (
     (
         b"\x01\x00\x00\x1d"  # total length
