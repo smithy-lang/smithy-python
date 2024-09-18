@@ -1,6 +1,6 @@
 black<=24.8.0
 flake8<=7.1.1
-pyright==1.1.380
+pyright==1.1.381
 pytest<=8.3.3
 pytest-asyncio<0.25.0
 pytest-cov<=5.0.0
