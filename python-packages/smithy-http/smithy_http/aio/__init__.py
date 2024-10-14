@@ -51,3 +51,8 @@ class HTTPResponse:
     def consume_body(self) -> bytes:
         """Iterate over request body and return as bytes."""
         return read_streaming_blob(body=self.body)
+
+    def close(self) -> None:
+        """Close the HTTP request body without reading remaining data."""
+        if (closer := getattr(self.body, "close", None)) is not None:
+            closer()

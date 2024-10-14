@@ -1,5 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+from collections.abc import Awaitable
 from typing import Protocol, TypeVar
 
 from smithy_core.aio.interfaces import Request, Response
@@ -47,6 +48,21 @@ class HTTPRequest(Request, Protocol):
         return read_streaming_blob(self.body)
 
 
+class HTTPRequestStream(Protocol):
+    """HTTP primitive for streaming data to a server."""
+
+    async def write(self, data: bytes) -> None:
+        """Write a frame of data to the request stream.
+
+        :param bytes: The bytes to write to the input stream.
+        """
+        ...
+
+    def close(self) -> None:
+        """Explicitly close the input stream."""
+        ...
+
+
 class HTTPResponse(Response, Protocol):
     """HTTP primitives returned from an Exchange, used to construct a client
     response."""
@@ -74,6 +90,9 @@ class HTTPResponse(Response, Protocol):
         """Iterate over request body and return as bytes."""
         return read_streaming_blob(self.body)
 
+    def close(self):
+        """Close the HTTP response, discarding any unread response bytes."""
+
 
 class HTTPClient(Protocol):
     """An asynchronous HTTP client interface."""
@@ -97,3 +116,20 @@ class HTTPClient(Protocol):
         :param request_config: Configuration specific to this request.
         """
         ...
+
+    async def stream(
+        self,
+        *,
+        request: HTTPRequest,
+        request_config: HTTPRequestConfiguration | None = None,
+    ) -> tuple[HTTPRequestStream, Awaitable[HTTPResponse]]:
+        """Send an HTTP request and open a bidriectional stream.
+
+        A response is not awaited before returning, so data may be written to the input
+        stream immediately.
+
+        :param request: The request including destination URI and fields.
+        :returns: A tuple containing an HTTP request stream and an awaitable HTTP
+            responese.
+        """
+        raise NotImplementedError()

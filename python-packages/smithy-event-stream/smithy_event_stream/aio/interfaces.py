@@ -1,14 +1,17 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-from typing import Protocol, Self, Any
+from typing import Any, Protocol, Self
+
+from smithy_core.deserializers import DeserializeableShape
+from smithy_core.serializers import SerializeableShape
 
 
-class InputEventStream[E](Protocol):
+class InputEventStream[E: SerializeableShape](Protocol):
     """Asynchronously sends events to a service."""
 
     async def send(self, event: E) -> None:
         """Sends an event to the service.
-        
+
         :param event: The event to send.
         """
         ...
@@ -24,12 +27,12 @@ class InputEventStream[E](Protocol):
         self.close()
 
 
-class OutputEventStream[E](Protocol):
+class OutputEventStream[E: DeserializeableShape](Protocol):
     """Asynchronously receives events from a service."""
 
     async def receive(self) -> E | None:
         """Receive a single event from the service.
-        
+
         :returns: An event or None. None indicates that no more events will be sent by
             the service.
         """
@@ -56,7 +59,9 @@ class OutputEventStream[E](Protocol):
         self.close()
 
 
-class EventStream[I: InputEventStream[Any] | None, O: OutputEventStream[Any] | None, R](Protocol):
+class EventStream[I: InputEventStream[Any] | None, O: OutputEventStream[Any] | None, R](
+    Protocol
+):
     """A unidirectional or bidirectional event stream."""
 
     input_stream: I
@@ -68,7 +73,6 @@ class EventStream[I: InputEventStream[Any] | None, O: OutputEventStream[Any] | N
             self._response, self._output_stream = await self._await_output()
 
         return self._response, self._output_stream  # type: ignore
-
 
     async def _await_output(self) -> tuple[R, O]: ...
 

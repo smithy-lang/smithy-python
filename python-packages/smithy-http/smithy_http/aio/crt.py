@@ -7,7 +7,7 @@ from collections.abc import AsyncGenerator, AsyncIterable, Awaitable
 from concurrent.futures import Future
 from io import BytesIO
 from threading import Lock
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 if TYPE_CHECKING:
     # pyright doesn't like optional imports. This is reasonable because if we use these
@@ -153,6 +153,15 @@ class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
             else:
                 break
 
+    def close(self) -> None:
+        if self._stream is not None:
+            self._stream.connection.close()
+
+    async def _await_initial_response(self) -> Self:
+        await asyncio.wrap_future(self._status_code_future)
+        await asyncio.wrap_future(self._headers_future)
+        return self
+
 
 ConnectionPoolKey = tuple[str, str, int | None]
 ConnectionPoolDict = dict[ConnectionPoolKey, "crt_http.HttpClientConnection"]
@@ -161,6 +170,17 @@ ConnectionPoolDict = dict[ConnectionPoolKey, "crt_http.HttpClientConnection"]
 class AWSCRTHTTPClientConfig(http_interfaces.HTTPClientConfiguration):
     def __post_init__(self) -> None:
         _assert_crt()
+
+
+class AWSCRTHTTPRequestStream:
+    def __init__(self, stream: BytesIO) -> None:
+        self._stream = stream
+
+    async def write(self, data: bytes) -> None:
+        self._stream.write(data)
+
+    def close(self):
+        self._stream.close()
 
 
 class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
@@ -208,7 +228,32 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             crt_response._on_body,  # pyright: ignore[reportPrivateUsage]
         )
         crt_response._set_stream(crt_stream)  # pyright: ignore[reportPrivateUsage]
-        return crt_response
+        return (
+            await crt_response._await_initial_response()  # pyright: ignore[reportPrivateUsage]
+        )
+
+    async def stream(
+        self,
+        *,
+        request: http_aio_interfaces.HTTPRequest,
+        request_config: http_aio_interfaces.HTTPRequestConfiguration | None = None,
+    ) -> tuple[http_aio_interfaces.HTTPRequestStream, Awaitable[AWSCRTHTTPResponse]]:
+        if request.body:
+            raise SmithyHTTPException("Request body MUST NOT be set when streaming.")
+        input_byte_stream = BytesIO()
+        crt_request = await self._marshal_request(request, body=input_byte_stream)
+        connection = await self._get_connection(request.destination)
+        crt_response = AWSCRTHTTPResponse()
+        crt_stream = connection.request(
+            crt_request,
+            crt_response._on_headers,  # pyright: ignore[reportPrivateUsage]
+            crt_response._on_body,  # pyright: ignore[reportPrivateUsage]
+        )
+        crt_response._set_stream(crt_stream)  # pyright: ignore[reportPrivateUsage]
+        return (
+            AWSCRTHTTPRequestStream(input_byte_stream),
+            crt_response._await_initial_response(),  # pyright: ignore[reportPrivateUsage]
+        )
 
     async def _create_connection(
         self, url: core_interfaces.URI
@@ -280,7 +325,9 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         return f"{path}{query}"
 
     async def _marshal_request(
-        self, request: http_aio_interfaces.HTTPRequest
+        self,
+        request: http_aio_interfaces.HTTPRequest,
+        body: BytesIO | None = None,
     ) -> "crt_http.HttpRequest":
         """Create :py:class:`awscrt.http.HttpRequest` from
         :py:class:`smithy_http.aio.HTTPRequest`"""
@@ -293,7 +340,8 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
         path = self._render_path(request.destination)
         headers = crt_http.HttpHeaders(headers_list)
-        body = BytesIO(await request.consume_body_async())
+        if body is None:
+            body = BytesIO(await request.consume_body_async())
 
         crt_request = crt_http.HttpRequest(
             method=request.method,

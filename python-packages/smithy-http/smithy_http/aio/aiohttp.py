@@ -1,5 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+from collections.abc import Awaitable
 from copy import copy, deepcopy
 from itertools import chain
 from typing import TYPE_CHECKING, Any
@@ -31,7 +32,7 @@ from ..interfaces import (
     HTTPRequestConfiguration,
 )
 from . import HTTPResponse
-from .interfaces import HTTPClient, HTTPRequest
+from .interfaces import HTTPClient, HTTPRequest, HTTPRequestStream
 from .interfaces import HTTPResponse as HTTPResponseInterface
 
 
@@ -132,3 +133,11 @@ class AIOHTTPClient(HTTPClient):
             client_config=deepcopy(self._config),
             _session=copy(self._session),
         )
+
+    async def stream(
+        self,
+        *,
+        request: HTTPRequest,
+        request_config: HTTPRequestConfiguration | None = None,
+    ) -> tuple[HTTPRequestStream, Awaitable[HTTPResponse]]:
+        raise NotImplementedError("aiohttp does not support bidirectional streaming.")
