@@ -20,11 +20,14 @@ service Weather {
     operations: [
         GetCurrentTime
         TestUnionListOperation
+        StreamAtmosphericConditions
     ]
 }
 
 resource City {
-    identifiers: { cityId: CityId }
+    identifiers: {
+        cityId: CityId
+    }
     read: GetCity
     list: ListCities
     resources: [
@@ -56,12 +59,16 @@ union UnionListMember {
 }
 
 resource Forecast {
-    identifiers: { cityId: CityId }
+    identifiers: {
+        cityId: CityId
+    }
     read: GetForecast
 }
 
 resource CityImage {
-    identifiers: { cityId: CityId }
+    identifiers: {
+        cityId: CityId
+    }
     read: GetCityImage
 }
 
@@ -620,6 +627,67 @@ union Precipitation {
     blob: Blob
     foo: example.weather.nested#Foo
     baz: example.weather.nested.more#Baz
+}
+
+@http(method: "POST", uri: "/cities/{cityId}/atmosphere")
+operation StreamAtmosphericConditions {
+    input := {
+        @required
+        @httpLabel
+        cityId: CityId
+
+        @required
+        @httpPayload
+        stream: AtmosphericConditions
+    }
+
+    output := {
+        @required
+        @httpHeader("x-initial-sample-rate")
+        initialSampleRate: Double
+
+        @required
+        @httpPayload
+        stream: CollectionDirectives
+    }
+}
+
+@streaming
+union AtmosphericConditions {
+    humidity: HumiditySample
+    pressure: PressureSample
+    temperature: TemperatureSample
+}
+
+@mixin
+structure Sample {
+    @required
+    collectionTime: Timestamp
+}
+
+structure HumiditySample with [Sample] {
+    @required
+    humidity: Double
+}
+
+structure PressureSample with [Sample] {
+    @required
+    pressure: Double
+}
+
+structure TemperatureSample with [Sample] {
+    @required
+    temperature: Double
+}
+
+@streaming
+union CollectionDirectives {
+    sampleRate: SampleRate
+}
+
+structure SampleRate {
+    @required
+    samplesPerMinute: Double
 }
 
 structure OtherStructure {}
