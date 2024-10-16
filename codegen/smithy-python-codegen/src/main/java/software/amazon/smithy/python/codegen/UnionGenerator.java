@@ -72,16 +72,20 @@ final class UnionGenerator implements Runnable {
 
             writer.write("""
                     @dataclass
-                    class $L:
-                        ${C|}
+                    class $1L:
+                        ${2C|}
 
-                        value: $T
+                        value: $3T
 
                         def serialize(self, serializer: ShapeSerializer):
-                            serializer.write_struct($T, self)
+                            serializer.write_struct($4T, self)
 
                         def serialize_members(self, serializer: ShapeSerializer):
-                            ${C|}
+                            ${5C|}
+
+                        @classmethod
+                        def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+                            return cls(value=${6C|})
 
                     """,
                     memberSymbol.getName(),
@@ -90,7 +94,11 @@ final class UnionGenerator implements Runnable {
                     targetSymbol,
                     schemaSymbol,
                     writer.consumer(w -> target.accept(
-                            new MemberSerializerGenerator(context, w, member, "serializer"))));
+                            new MemberSerializerGenerator(context, w, member, "serializer"))),
+                    writer.consumer(w -> target.accept(
+                            new MemberDeserializerGenerator(context, w, member, "deserializer")))
+
+            );
         }
 
         // Note that the unknown variant doesn't implement __eq__. This is because
@@ -118,11 +126,15 @@ final class UnionGenerator implements Runnable {
                     def serialize_members(self, serializer: ShapeSerializer):
                         raise SmithyException("Unknown union variants may not be serialized.")
 
+                    @classmethod
+                    def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+                        raise NotImplementedError()
+
                 """, unknownSymbol.getName());
         memberNames.add(unknownSymbol.getName());
 
-        shape.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeComment(trait.getValue()));
         writer.write("type $L = $L\n", parentName, String.join(" | ", memberNames));
+        shape.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeDocs(trait.getValue()));
 
         generateDeserializer();
         writer.popState();
@@ -173,13 +185,10 @@ final class UnionGenerator implements Runnable {
     private void deserializeMembers() {
         int index = 0;
         for (MemberShape member : shape.members()) {
-            var target = model.expectShape(member.getTarget());
             writer.write("""
                     case $L:
-                        self._set_result($T(${C|}))
-                    """, index++, symbolProvider.toSymbol(member), writer.consumer(w ->
-                    target.accept(new MemberDeserializerGenerator(context, writer, member, "de"))
-            ));
+                        self._set_result($T.deserialize(de))
+                    """, index++, symbolProvider.toSymbol(member));
         }
     }
 }
