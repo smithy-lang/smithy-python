@@ -64,6 +64,13 @@ public final class SmithyPythonDependency {
             false
     );
 
+    public static final PythonDependency SMITHY_EVENT_STREAM = new PythonDependency(
+            "smithy_event_stream",
+            "==0.0.1",
+            Type.DEPENDENCY,
+            false
+    );
+
     /**
      * testing framework used in generated functional tests.
      */
