@@ -356,7 +356,7 @@ final class ClientGenerator implements Runnable {
                         )
 
                 """, CodegenUtils.getHttpAuthParamsSymbol(context.settings()),
-                    writer.consumer(this::initializeHttpAuthParameters));
+                writer.consumer(this::initializeHttpAuthParameters));
             writer.popState();
 
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
@@ -649,16 +649,16 @@ final class ClientGenerator implements Runnable {
 
         writer.openBlock("async def $L(self, input: $T, plugins: list[$T] | None = None) -> $T:", "",
                 operationSymbol.getName(), inputSymbol, pluginSymbol, outputSymbol, () -> {
-                    writer.writeDocs(() -> {
-                        var docs = operation.getTrait(DocumentationTrait.class)
-                                .map(StringTrait::getValue)
-                                .orElse(String.format("Invokes the %s operation.", operation.getId().getName()));
+            writer.writeDocs(() -> {
+                var docs = operation.getTrait(DocumentationTrait.class)
+                        .map(StringTrait::getValue)
+                        .orElse(String.format("Invokes the %s operation.", operation.getId().getName()));
 
-                        var inputDocs = input.getTrait(DocumentationTrait.class)
-                                .map(StringTrait::getValue)
-                                .orElse("The operation's input.");
+                var inputDocs = input.getTrait(DocumentationTrait.class)
+                        .map(StringTrait::getValue)
+                        .orElse("The operation's input.");
 
-                        writer.write("""
+                writer.write("""
                         $L
 
                         :param input: $L
@@ -666,17 +666,17 @@ final class ClientGenerator implements Runnable {
                         :param plugins: A list of callables that modify the configuration dynamically.
                         Changes made by these plugins only apply for the duration of the operation
                         execution and will not affect any other operation invocations.""", docs, inputDocs);
-                    });
+            });
 
-                    var defaultPlugins = new LinkedHashSet<SymbolReference>();
-                    for (PythonIntegration integration : context.integrations()) {
-                        for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins()) {
-                            if (runtimeClientPlugin.matchesOperation(context.model(), service, operation)) {
-                                runtimeClientPlugin.getPythonPlugin().ifPresent(defaultPlugins::add);
-                            }
-                        }
+            var defaultPlugins = new LinkedHashSet<SymbolReference>();
+            for (PythonIntegration integration : context.integrations()) {
+                for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins()) {
+                    if (runtimeClientPlugin.matchesOperation(context.model(), service, operation)) {
+                        runtimeClientPlugin.getPythonPlugin().ifPresent(defaultPlugins::add);
                     }
-                    writer.write("""
+                }
+            }
+            writer.write("""
                 operation_plugins: list[Plugin] = [
                     $C
                 ]
@@ -684,13 +684,13 @@ final class ClientGenerator implements Runnable {
                     operation_plugins.extend(plugins)
                 """, writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)));
 
-                    if (context.protocolGenerator() == null) {
-                        writer.write("raise NotImplementedError()");
-                    } else {
-                        var protocolGenerator = context.protocolGenerator();
-                        var serSymbol = protocolGenerator.getSerializationFunction(context, operation);
-                        var deserSymbol = protocolGenerator.getDeserializationFunction(context, operation);
-                        writer.write("""
+            if (context.protocolGenerator() == null) {
+                writer.write("raise NotImplementedError()");
+            } else {
+                var protocolGenerator = context.protocolGenerator();
+                var serSymbol = protocolGenerator.getSerializationFunction(context, operation);
+                var deserSymbol = protocolGenerator.getDeserializationFunction(context, operation);
+                writer.write("""
                     return await self._execute_operation(
                         input=input,
                         plugins=operation_plugins,
@@ -700,8 +700,8 @@ final class ClientGenerator implements Runnable {
                         operation_name=$S,
                     )
                     """, serSymbol, deserSymbol, operation.getId().getName());
-                    }
-                });
+            }
+        });
     }
 
     private void generateEventStreamOperation(PythonWriter writer, OperationShape operation) {
