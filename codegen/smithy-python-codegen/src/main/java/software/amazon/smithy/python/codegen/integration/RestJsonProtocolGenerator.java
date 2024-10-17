@@ -79,7 +79,10 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         "RestJsonClientIgnoresNonTopLevelDefaultsOnMembersWithClientOptional",
         "RestJsonClientPopulatesDefaultsValuesWhenMissingInResponse",
         "RestJsonClientIgnoresDefaultValuesIfMemberValuesArePresentInResponse",
-        "RestJsonClientPopulatesNestedDefaultsWhenMissingInResponseBody"
+        "RestJsonClientPopulatesNestedDefaultsWhenMissingInResponseBody",
+        "RestJsonHttpPrefixEmptyHeaders",
+        "RestJsonNullAndEmptyHeaders",
+        "HttpPrefixEmptyHeaders"
     );
 
     @Override

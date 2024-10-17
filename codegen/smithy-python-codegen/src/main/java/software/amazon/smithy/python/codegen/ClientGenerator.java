@@ -20,6 +20,8 @@ import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import software.amazon.smithy.codegen.core.SymbolReference;
+import software.amazon.smithy.model.knowledge.EventStreamIndex;
+import software.amazon.smithy.model.knowledge.EventStreamInfo;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
 import software.amazon.smithy.model.shapes.OperationShape;
@@ -104,8 +106,14 @@ final class ClientGenerator implements Runnable {
                     """, configSymbol, pluginSymbol, writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)));
 
             var topDownIndex = TopDownIndex.of(context.model());
+            var eventStreamIndex = EventStreamIndex.of(context.model());
             for (OperationShape operation : topDownIndex.getContainedOperations(service)) {
-                generateOperation(writer, operation);
+                if (eventStreamIndex.getInputInfo(operation).isPresent()
+                        || eventStreamIndex.getOutputInfo(operation).isPresent()) {
+                    generateEventStreamOperation(writer, operation);
+                } else {
+                    generateOperation(writer, operation);
+                }
             }
         });
 
@@ -694,5 +702,45 @@ final class ClientGenerator implements Runnable {
                     """, serSymbol, deserSymbol, operation.getId().getName());
             }
         });
+    }
+
+    private void generateEventStreamOperation(PythonWriter writer, OperationShape operation) {
+        writer.pushState();
+        writer.addDependency(SmithyPythonDependency.SMITHY_EVENT_STREAM);
+        writer.addImports("smithy_event_stream.aio.interfaces", Set.of(
+                "EventStream", "InputEventStream", "OutputEventStream"));
+        var operationSymbol = context.symbolProvider().toSymbol(operation);
+        var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
+
+        var input = context.model().expectShape(operation.getInputShape());
+        var inputSymbol = context.symbolProvider().toSymbol(input);
+
+        var eventStreamIndex = EventStreamIndex.of(context.model());
+        var inputStreamSymbol = eventStreamIndex.getInputInfo(operation)
+                .map(EventStreamInfo::getEventStreamTarget)
+                .map(target -> context.symbolProvider().toSymbol(target))
+                .orElse(null);
+        writer.putContext("inputStream", inputStreamSymbol);
+
+        var output = context.model().expectShape(operation.getOutputShape());
+        var outputSymbol = context.symbolProvider().toSymbol(output);
+        var outputStreamSymbol = eventStreamIndex.getOutputInfo(operation)
+                .map(EventStreamInfo::getEventStreamTarget)
+                .map(target -> context.symbolProvider().toSymbol(target))
+                .orElse(null);
+        writer.putContext("outputStream", outputStreamSymbol);
+
+        writer.write("""
+                async def $L(self, input: $T, plugins: list[$T] | None = None) -> EventStream[
+                    ${?inputStream}InputEventStream[${inputStream:T}]${/inputStream}\
+                    ${^inputStream}None${/inputStream},
+                    ${?outputStream}OutputEventStream[${outputStream:T}]${/outputStream}\
+                    ${^outputStream}None${/outputStream},
+                    $T
+                ]:
+                    raise NotImplementedError()
+                """, operationSymbol.getName(), inputSymbol, pluginSymbol, outputSymbol);
+
+        writer.popState();
     }
 }
