@@ -25,6 +25,7 @@ except ImportError:
     HAS_CRT = False  # type: ignore
 
 from smithy_core import interfaces as core_interfaces
+from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.exceptions import MissingDependencyException
 
 from .. import Field, Fields
@@ -293,12 +294,35 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
         path = self._render_path(request.destination)
         headers = crt_http.HttpHeaders(headers_list)
-        body = BytesIO(await request.consume_body_async())
+
+        body = request.body
+        if isinstance(body, bytes | bytearray):
+            # If the body is already directly in memory, wrap in in a BytesIO to hand
+            # off to CRT.
+            crt_body = BytesIO(body)
+        else:
+            # If the body is async, or potentially very large, start up a task to read
+            # it into the BytesIO object that CRT needs. By using asyncio.create_task
+            # we'll start the coroutine without having to explicitly await it.
+            crt_body = BytesIO()
+            if not isinstance(body, AsyncIterable):
+                # If the body isn't already an async iterable, wrap it in one. Objects
+                # with read methods will be read in chunks so as not to exhaust memory.
+                body = AsyncBytesReader(body)
+            asyncio.create_task(self._consume_body_async(body, crt_body))
 
         crt_request = crt_http.HttpRequest(
             method=request.method,
             path=path,
             headers=headers,
-            body_stream=body,
+            body_stream=crt_body,
         )
         return crt_request
+
+    async def _consume_body_async(
+        self, source: AsyncIterable[bytes], dest: BytesIO
+    ) -> None:
+        async for chunk in source:
+            dest.write(chunk)
+        # Should we call close here? Or will that make the crt unable to read the last
+        # chunk?
