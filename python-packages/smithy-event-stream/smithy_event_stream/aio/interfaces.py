@@ -33,7 +33,7 @@ class InputEventStream[E: SerializeableShape](Protocol):
 class OutputEventStream[E: DeserializeableShape](Protocol):
     """Asynchronously receives events from a service.
 
-    Events may be recived via the ``receive`` method or by using this class as
+    Events may be received via the ``receive`` method or by using this class as
     an async iterable.
 
     This may also be used as a context manager to ensure the stream is closed before
@@ -131,7 +131,7 @@ class EventStream[I: InputEventStream[Any] | None, O: OutputEventStream[Any] | N
         """Await the operation's output.
 
         The EventStream will be returned as soon as the input stream is ready to
-        receive events, which may be before the intitial response has been received
+        receive events, which may be before the initial response has been received
         and the service is ready to send events.
 
         Awaiting this method will wait until the initial response was received and the
