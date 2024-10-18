@@ -319,7 +319,7 @@ class AsyncBytesProvider:
         async with self._data_condition:
 
             # Wait for the number of chunks in the buffer to be less than the
-            # specified maximum. This also releases the lock until the condition
+            # specified maximum. This also releases the lock until that condition
             # is met.
             await self._data_condition.wait_for(self._can_write)
 
@@ -360,7 +360,8 @@ class AsyncBytesProvider:
             # Block writes
             self._flushing = True
 
-            # Wait for the stream to be closed or for the data buffer to be empty.
+            # Wait for the stream to be closed or for the data buffer to be empty,
+            # releasing the lock until the condition is met.
             await self._data_condition.wait_for(lambda: len(self._data) == 0)
 
             # Unblock writes
@@ -383,6 +384,7 @@ class AsyncBytesProvider:
         async with self._data_condition:
             self._closing = True
             if flush:
+                # Release the lock until the buffer is empty.
                 await self._data_condition.wait_for(lambda: len(self._data) == 0)
             else:
                 # Clear out any pending data, freeing up memory.
@@ -403,7 +405,7 @@ class AsyncBytesProvider:
         async with self._data_condition:
 
             # Wait for the stream to be closed or for the data buffer to be non-empty.
-            # This also releases the lock until the condition is met.
+            # This also releases the lock until that condition is met.
             await self._data_condition.wait_for(
                 lambda: self._closed or len(self._data) > 0
             )
