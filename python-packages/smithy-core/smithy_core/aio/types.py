@@ -1,10 +1,12 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import asyncio
 from asyncio import iscoroutinefunction
 from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable
 from io import BytesIO
-from typing import Self, cast
+from typing import Any, Self, cast
 
+from ..exceptions import SmithyException
 from ..interfaces import BytesReader
 from .interfaces import AsyncByteStream, StreamingBlob
 
@@ -271,3 +273,153 @@ class _AsyncByteStreamIterator:
         if data:
             return data
         raise StopAsyncIteration
+
+
+class AsyncBytesProvider:
+    """A buffer that allows chunks of bytes to be exchanged asynchronously.
+
+    Bytes are written in chunks to an internal buffer, that is then drained via an async
+    iterator.
+    """
+
+    def __init__(
+        self, intial_data: bytes | None = None, max_buffered_chunks: int = 16
+    ) -> None:
+        """Initialize the AsyncBytesProvider.
+
+        :param initial_data: An initial chunk of bytes to make available.
+        :param max_buffered_chunks: The maximum number of chunks of data to buffer.
+            Calls to ``write`` will block until the number of chunks is less than this
+            number. Default is 16.
+        """
+        if intial_data is not None:
+            self._data = [intial_data]
+        else:
+            self._data = []
+
+        if max_buffered_chunks < 1:
+            raise ValueError(
+                "The maximum number of buffered chunks must be greater than 0."
+            )
+
+        self._closed = False
+        self._closing = False
+        self._flushing = False
+        self._max_buffered_chunks = max_buffered_chunks
+
+        # Create a Condition to synchronize access to the data chunk pool.
+        self._data_condition = asyncio.Condition()
+
+    async def write(self, data: bytes) -> None:
+        if self._closed:
+            raise SmithyException("Attempted to write to a closed provider.")
+
+        # Acquire a lock on the data buffer, releasing it automatically when the
+        # block exits.
+        async with self._data_condition:
+
+            # Wait for the number of chunks in the buffer to be less than the
+            # specified maximum. This also releases the lock until the condition
+            # is met.
+            await self._data_condition.wait_for(self._can_write)
+
+            # The provider could have been closed while waiting to write, so an
+            # additional check is done here for safety.
+            if self._closed or self._closing:
+                # Notify to allow other coroutines to check their conditions.
+                self._data_condition.notify()
+                raise SmithyException(
+                    "Attempted to write to a closed or closing provider."
+                )
+
+            # Add a new chunk of data to the buffer and notify the next waiting
+            # coroutine.
+            self._data.append(data)
+            self._data_condition.notify()
+
+    def _can_write(self) -> bool:
+        return (
+            self._closed
+            or self._closing
+            or (len(self._data) < self._max_buffered_chunks and not self._flushing)
+        )
+
+    @property
+    def closed(self) -> bool:
+        """Returns whether the provider is closed."""
+        return self._closed
+
+    async def flush(self) -> None:
+        """Waits for all buffered data to be consumed."""
+        if self._closed:
+            return
+
+        # Acquire a lock on the data buffer, releasing it automatically when the
+        # block exits.
+        async with self._data_condition:
+            # Block writes
+            self._flushing = True
+
+            # Wait for the stream to be closed or for the data buffer to be empty.
+            await self._data_condition.wait_for(lambda: len(self._data) == 0)
+
+            # Unblock writes
+            self._flushing = False
+
+    async def close(self, flush: bool = False) -> None:
+        """Closes the provider.
+
+        Pending writing tasks queued after this will fail, so such tasks should be
+        awaited before this. Write tasks queued before this may succeed, however.
+
+        :param flush: Whether to flush buffered data before closing. If false, all
+            buffered data will be lost. Default is False.
+        """
+        if self._closed:
+            return
+
+        # Acquire a lock on the data buffer, releasing it automatically when the
+        # block exits. Notably this will not wait on a condition to move forward.
+        async with self._data_condition:
+            self._closing = True
+            if flush:
+                await self._data_condition.wait_for(lambda: len(self._data) == 0)
+            else:
+                # Clear out any pending data, freeing up memory.
+                self._data.clear()
+
+            self._closed = True
+            self._closing = False
+
+            # Notify all waiting coroutines that the provider has closed.
+            self._data_condition.notify_all()
+
+    def __aiter__(self) -> Self:
+        return self
+
+    async def __anext__(self) -> bytes:
+        # Acquire a lock on the data buffer, releasing it automatically when the
+        # block exits.
+        async with self._data_condition:
+
+            # Wait for the stream to be closed or for the data buffer to be non-empty.
+            # This also releases the lock until the condition is met.
+            await self._data_condition.wait_for(
+                lambda: self._closed or len(self._data) > 0
+            )
+
+            # If the provider is closed, end the iteration.
+            if self._closed:
+                raise StopAsyncIteration
+
+            # Pop the next chunk of data from the buffer, then notify any waiting
+            # coroutines, returning immediately after.
+            result = self._data.pop()
+            self._data_condition.notify()
+            return result
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        await self.close()
