@@ -19,15 +19,15 @@ class InputEventStream[E: SerializeableShape](Protocol):
         """
         ...
 
-    def close(self) -> None:
+    async def close(self) -> None:
         """Closes the event stream."""
         ...
 
-    def __enter__(self) -> Self:
+    async def __aenter__(self) -> Self:
         return self
 
-    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any):
-        self.close()
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
+        await self.close()
 
 
 class OutputEventStream[E: DeserializeableShape](Protocol):
@@ -48,25 +48,25 @@ class OutputEventStream[E: DeserializeableShape](Protocol):
         """
         ...
 
-    def close(self) -> None:
+    async def close(self) -> None:
         """Closes the event stream."""
         ...
 
     async def __anext__(self) -> E:
         result = await self.receive()
         if result is None:
-            self.close()
+            await self.close()
             raise StopAsyncIteration
         return result
 
     def __aiter__(self) -> Self:
         return self
 
-    def __enter__(self) -> Self:
+    async def __enter__(self) -> Self:
         return self
 
-    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any):
-        self.close()
+    async def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any):
+        await self.close()
 
 
 class EventStream[I: InputEventStream[Any] | None, O: OutputEventStream[Any] | None, R](
@@ -85,7 +85,7 @@ class EventStream[I: InputEventStream[Any] | None, O: OutputEventStream[Any] | N
 
             async with client.stream_messages(input=input) as stream:
                 stream.input_stream.send(MessageStreamMessage("Chat logger starting up."))
-                response_handler = handle_output(stream)
+                response_task = asyncio.create_task(handle_output(stream))
                 stream.input_stream.send(MessageStreamMessage("Chat logger active."))
                 await response_handler
 
@@ -168,7 +168,7 @@ class EventStream[I: InputEventStream[Any] | None, O: OutputEventStream[Any] | N
             _, self.output_stream = await self.await_output()
 
         if self.output_stream is not None:
-            self.output_stream.close()
+            await self.output_stream.close()
 
     async def __aenter__(self) -> Self:
         return self
