@@ -298,7 +298,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
         body = request.body
         if isinstance(body, bytes | bytearray):
-            # If the body is already directly in memory, wrap in in a BytesIO to hand
+            # If the body is already directly in memory, wrap in a BytesIO to hand
             # off to CRT.
             crt_body = BytesIO(body)
         else:
@@ -311,7 +311,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
                 # with read methods will be read in chunks so as not to exhaust memory.
                 body = AsyncBytesReader(body)
 
-            # Start the read task int the background.
+            # Start the read task in the background.
             read_task = asyncio.create_task(self._consume_body_async(body, crt_body))
 
             # Keep track of the read task so that it doesn't get garbage colllected,
