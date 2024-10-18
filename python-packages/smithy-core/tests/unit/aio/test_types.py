@@ -296,7 +296,7 @@ async def test_provider_reads_initial_data() -> None:
     read_task = asyncio.create_task(drain_provider(provider, result))
 
     # Wait for the buffer to drain. At that point all the data should
-    # be read, but the read dask won't actually be complete yet
+    # be read, but the read task won't actually be complete yet
     # because it's still waiting on future data.
     await provider.flush()
     assert result == [b"foo"]
@@ -320,7 +320,7 @@ async def test_provider_reads_written_data() -> None:
     await provider.write(b"foo")
 
     # Wait for the buffer to drain. At that point all the data should
-    # be read, but the read dask won't actually be complete yet
+    # be read, but the read task won't actually be complete yet
     # because it's still waiting on future data.
     await provider.flush()
     assert result == [b"foo"]
