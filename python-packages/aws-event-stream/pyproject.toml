@@ -25,6 +25,10 @@ classifiers = [
     "Programming Language :: Python :: Implementation :: CPython",
     "Topic :: Software Development :: Libraries"
 ]
+dependencies=[
+    "smithy_core==0.0.1",
+    "smithy_event_stream==0.0.1",
+]
 
 [project.urls]
 source = "https://github.com/awslabs/smithy-python/tree/develop/python-packages/aws-event-stream"

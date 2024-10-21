@@ -6,7 +6,7 @@ from smithy_core.deserializers import DeserializeableShape
 from smithy_core.serializers import SerializeableShape
 
 
-class InputEventStream[E: SerializeableShape](Protocol):
+class AsyncEventPublisher[E: SerializeableShape](Protocol):
     """Asynchronously sends events to a service.
 
     This may be used as a context manager to ensure the stream is closed before exiting.
@@ -30,7 +30,7 @@ class InputEventStream[E: SerializeableShape](Protocol):
         await self.close()
 
 
-class OutputEventStream[E: DeserializeableShape](Protocol):
+class AsyncEventReceiver[E: DeserializeableShape](Protocol):
     """Asynchronously receives events from a service.
 
     Events may be received via the ``receive`` method or by using this class as
@@ -69,10 +69,8 @@ class OutputEventStream[E: DeserializeableShape](Protocol):
         await self.close()
 
 
-class EventStream[I: InputEventStream[Any] | None, O: OutputEventStream[Any] | None, R](
-    Protocol
-):
-    """A unidirectional or bidirectional event stream.
+class DuplexEventStream[I: SerializeableShape, O: DeserializeableShape, R](Protocol):
+    """An event stream that both sends and receives messages.
 
     To ensure that streams are closed upon exiting, this class may be used as an async
     context manager.
@@ -104,30 +102,46 @@ class EventStream[I: InputEventStream[Any] | None, O: OutputEventStream[Any] | N
                             return
     """
 
-    input_stream: I
-    """An event stream that sends events to the service.
+    input_stream: AsyncEventPublisher[I]
+    """An event stream that sends events to the service."""
 
-    This value will be None if the operation has no input stream.
-    """
+    # Exposing response and output_stream via @property allows implementations that
+    # don't have it immediately available to do things like put a future in
+    # await_output or otherwise reasonably implement that method while still allowing
+    # them to inherit directly from the protocol class.
+    _output_stream: AsyncEventReceiver[O] | None = None
+    _response: R | None = None
 
-    output_stream: O | None = None
-    """An event stream that receives events from the service.
+    @property
+    def output_stream(self) -> AsyncEventReceiver[O] | None:
+        """An event stream that receives events from the service.
 
-    This value may be None until ``await_output`` has been called.
+        This value may be None until ``await_output`` has been called.
 
-    This value will also be None if the operation has no output stream.
-    """
+        This value will also be None if the operation has no output stream.
+        """
+        return self._output_stream
 
-    response: R | None = None
-    """The initial response from the service.
+    @output_stream.setter
+    def output_stream(self, value: AsyncEventReceiver[O]) -> None:
+        self._output_stream = value
 
-    This value may be None until ``await_output`` has been called.
+    @property
+    def response(self) -> R | None:
+        """The initial response from the service.
 
-    This may include context necessary to interpret output events or prepare
-    input events. It will always be available before any events.
-    """
+        This value may be None until ``await_output`` has been called.
 
-    async def await_output(self) -> tuple[R, O]:
+        This may include context necessary to interpret output events or prepare
+        input events. It will always be available before any events.
+        """
+        return self._response
+
+    @response.setter
+    def response(self, value: R) -> None:
+        self._response = value
+
+    async def await_output(self) -> tuple[R, AsyncEventReceiver[O]]:
         """Await the operation's output.
 
         The EventStream will be returned as soon as the input stream is ready to
@@ -146,17 +160,6 @@ class EventStream[I: InputEventStream[Any] | None, O: OutputEventStream[Any] | N
         :returns: A tuple containing the initial response and output stream. If the
             operation has no output stream, the second value will be None.
         """
-        if self.response is not None:
-            self.response, self.output_stream = await self._await_output()
-
-        return self._response, self._output_stream  # type: ignore
-
-    async def _await_output(self) -> tuple[R, O]:
-        """Await the operation's output without caching.
-
-        This method is meant to be used with the default implementation of await_output.
-        It should return the output directly without caching.
-        """
         ...
 
     async def close(self) -> None:
@@ -167,8 +170,123 @@ class EventStream[I: InputEventStream[Any] | None, O: OutputEventStream[Any] | N
         if self.output_stream is None:
             _, self.output_stream = await self.await_output()
 
-        if self.output_stream is not None:
-            await self.output_stream.close()
+        await self.input_stream.close()
+        await self.output_stream.close()
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
+        await self.close()
+
+
+class InputEventStream[I: SerializeableShape, R](Protocol):
+    """An event stream that streams messages to the service.
+
+    To ensure that streams are closed upon exiting, this class may be used as an async
+    context manager.
+
+    .. code-block:: python
+
+        async def main():
+            client = ChatClient()
+            input = PublishMessagesInput(chat_room="aws-python-sdk", username="hunter7")
+
+            async with client.publish_messages(input=input) as stream:
+                stream.input_stream.send(MessageStreamMessage("High severity ticket alert!"))
+                await stream.await_output()
+    """
+
+    input_stream: AsyncEventPublisher[I]
+    """An event stream that sends events to the service."""
+
+    # Exposing response via @property allows implementations that don't have it
+    # immediately available to do things like put a future in await_output or
+    # otherwise reasonably implement that method while still allowing them to
+    # inherit directly from the protocol class.
+    _response: R | None = None
+
+    @property
+    def response(self) -> R | None:
+        """The initial response from the service.
+
+        This value may be None until ``await_output`` has been called.
+
+        This may include context necessary to interpret output events or prepare
+        input events. It will always be available before any events.
+        """
+        return self._response
+
+    @response.setter
+    def response(self, value: R) -> None:
+        self._response = value
+
+    async def await_output(self) -> R:
+        """Await the operation's output.
+
+        The InputEventStream will be returned as soon as the input stream is ready to
+        receive events, which may be before the initial response has been received.
+
+        Awaiting this method will wait until the initial response was received. The
+        operation response will be returned by this operation and also cached in
+        ``response``.
+
+        The default implementation of this method performs the caching behavior,
+        delegating to the abstract ``_await_output`` method to actually retrieve the
+        operation response.
+
+        :returns: The operation's response.
+        """
+        ...
+
+    async def close(self) -> None:
+        """Closes the event stream."""
+        await self.input_stream.close()
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any):
+        await self.close()
+
+
+class OutputEventStream[O: DeserializeableShape, R](Protocol):
+    """An event stream that streams messages from the service.
+
+    To ensure that streams are closed upon exiting, this class may be used as an async
+    context manager.
+
+    .. code-block:: python
+
+        async def main():
+            client = ChatClient()
+            input = ReceiveMessagesInput(chat_room="aws-python-sdk")
+
+            async with client.receive_messages(input=input) as stream:
+                async for event in stream.output_stream:
+                    match event:
+                        case MessageStreamMessage():
+                            print(event.value)
+                        case _:
+                            return
+    """
+
+    output_stream: AsyncEventReceiver[O]
+    """An event stream that receives events from the service.
+
+    This value will also be None if the operation has no output stream.
+    """
+
+    response: R
+    """The initial response from the service.
+
+    This may include context necessary to interpret output events or prepare input
+    events. It will always be available before any events.
+    """
+
+    async def close(self) -> None:
+        """Closes the event stream."""
+        await self.output_stream.close()
 
     async def __aenter__(self) -> Self:
         return self

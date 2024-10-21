@@ -6,6 +6,7 @@ import uuid
 from io import BytesIO
 
 import pytest
+from smithy_core.aio.types import AsyncBytesReader
 
 from aws_event_stream.events import (
     MAX_HEADER_VALUE_BYTE_LENGTH,
@@ -506,6 +507,11 @@ def test_decode(encoded: bytes, expected: Event):
     assert Event.decode(BytesIO(encoded)) == expected
 
 
+@pytest.mark.parametrize("encoded,expected", POSITIVE_CASES)
+async def test_decode_async(encoded: bytes, expected: Event):
+    assert await Event.decode_async(AsyncBytesReader(encoded)) == expected
+
+
 @pytest.mark.parametrize("expected,event", POSITIVE_CASES)
 def test_encode(expected: bytes, event: Event):
     assert event.message.encode() == expected
@@ -528,6 +534,25 @@ def test_encode(expected: bytes, event: Event):
 def test_negative_cases(encoded: bytes, expected: type[Exception]):
     with pytest.raises(expected):
         Event.decode(BytesIO(encoded))
+
+
+@pytest.mark.parametrize(
+    "encoded,expected",
+    NEGATIVE_CASES,
+    ids=[
+        "corrupted-length",
+        "corrupted-payload",
+        "corrupted-headers",
+        "corrupted-headers-length",
+        "duplicate-header",
+        "invalid-headers-length",
+        "invalid-header-value-length",
+        "invalid-payload-length",
+    ],
+)
+async def test_negative_cases_async(encoded: bytes, expected: type[Exception]):
+    with pytest.raises(expected):
+        await Event.decode_async(AsyncBytesReader(encoded))
 
 
 def test_event_prelude_rejects_long_headers():

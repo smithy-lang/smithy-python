@@ -17,6 +17,7 @@ from io import BytesIO
 from struct import pack, unpack
 from typing import Literal, Self
 
+from smithy_core.aio.interfaces import AsyncByteStream
 from smithy_core.interfaces import BytesReader
 from smithy_core.types import TimestampFormat
 
@@ -306,6 +307,36 @@ class Event:
 
         message_bytes = source.read(total_length - _MESSAGE_METADATA_SIZE)
         crc: int = _DecodeUtils.unpack_uint32(source.read(4))[0]
+        _validate_checksum(prelude_crc_bytes + message_bytes, crc, prelude_crc)
+
+        message = EventMessage(
+            headers_bytes=message_bytes[: prelude.headers_length],
+            payload=message_bytes[prelude.headers_length :],
+        )
+        return cls(prelude, message, crc)
+
+    @classmethod
+    async def decode_async(cls, source: AsyncByteStream) -> Self:
+        """Decode an event from an async byte stream.
+
+        :param source: An object to read event bytes from. It must have a `read` method
+            that accepts a number of bytes to read.
+
+        :returns: An Event representing the next event on the source.
+        """
+
+        prelude_bytes = await source.read(8)
+        prelude_crc_bytes = await source.read(4)
+        prelude_crc: int = _DecodeUtils.unpack_uint32(prelude_crc_bytes)[0]
+
+        total_length, headers_length = unpack("!II", prelude_bytes)
+        _validate_checksum(prelude_bytes, prelude_crc)
+        prelude = EventPrelude(
+            total_length=total_length, headers_length=headers_length, crc=prelude_crc
+        )
+
+        message_bytes = await source.read(total_length - _MESSAGE_METADATA_SIZE)
+        crc: int = _DecodeUtils.unpack_uint32(await source.read(4))[0]
         _validate_checksum(prelude_crc_bytes + message_bytes, crc, prelude_crc)
 
         message = EventMessage(
