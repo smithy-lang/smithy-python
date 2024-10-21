@@ -64,8 +64,21 @@ public final class SmithyPythonDependency {
             false
     );
 
+    /**
+     * Core interfaces for event streams.
+     */
     public static final PythonDependency SMITHY_EVENT_STREAM = new PythonDependency(
             "smithy_event_stream",
+            "==0.0.1",
+            Type.DEPENDENCY,
+            false
+    );
+
+    /**
+     * EventStream implementations for application/vnd.amazon.eventstream.
+     */
+    public static final PythonDependency AWS_EVENT_STREAM = new PythonDependency(
+            "aws_event_stream",
             "==0.0.1",
             Type.DEPENDENCY,
             false

@@ -22,6 +22,7 @@ import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.shapes.ToShapeId;
 import software.amazon.smithy.python.codegen.ApplicationProtocol;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.PythonWriter;
 import software.amazon.smithy.utils.CaseUtils;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
@@ -166,5 +167,26 @@ public interface ProtocolGenerator {
      * @param context Generation context
      */
     default void generateProtocolTests(GenerationContext context) {
+    }
+
+    /**
+     * Generates the code to wrap an operation output into an event stream.
+     *
+     * <p>Important context variables are:
+     * <ul>
+     *     <li>execution_context - Has the context, including the transport input and output.</li>
+     *     <li>operation_output - The deserialized operation output.</li>
+     *     <li>has_input_stream - Whether or not there is an input stream.</li>
+     *     <li>event_deserializer - The deserialize method for output events, or None for no output stream.</li>
+     *     <li>event_response_deserializer - A DeserializeableShape representing the operation's output shape,
+     *         or None for no output stream. This is used when the operation sends the initial response over the
+     *         event stream.
+     *     </li>
+     * </ul>
+     *
+     * @param context Generation context.
+     * @param writer The writer to write to.
+     */
+    default void wrapEventStream(GenerationContext context, PythonWriter writer) {
     }
 }
