@@ -1,20 +1,24 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 import datetime
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from io import BytesIO
 from typing import Never
 
+from smithy_core.aio.interfaces import AsyncCloseable, AsyncWriter
 from smithy_core.codecs import Codec
+from smithy_core.exceptions import ExpectationNotMetException
 from smithy_core.schemas import Schema
 from smithy_core.serializers import (
     InterceptingSerializer,
+    SerializeableShape,
     ShapeSerializer,
     SpecificShapeSerializer,
 )
 from smithy_core.shapes import ShapeType
 from smithy_core.utils import expect_type
+from smithy_event_stream.aio.interfaces import AsyncEventPublisher
 
 from ..events import EventHeaderEncoder, EventMessage
 from ..exceptions import InvalidHeaderValue
@@ -28,6 +32,40 @@ from .traits import (
 
 _DEFAULT_STRING_CONTENT_TYPE = "text/plain"
 _DEFAULT_BLOB_CONTENT_TYPE = "application/octet-stream"
+
+
+type Signer = Callable[[EventMessage], EventMessage]
+"""A function that takes an event message and signs it, and returns it signed."""
+
+
+class AWSAsyncEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
+    def __init__(
+        self,
+        payload_codec: Codec,
+        async_writer: AsyncWriter,
+        signer: Signer | None = None,
+        is_client_mode: bool = True,
+    ):
+        self._writer = async_writer
+        self._signer = signer
+        self._serializer = EventSerializer(
+            payload_codec=payload_codec, is_client_mode=is_client_mode
+        )
+
+    async def send(self, event: E) -> None:
+        event.serialize(self._serializer)
+        result = self._serializer.get_result()
+        if result is None:
+            raise ExpectationNotMetException(
+                "Expected an event message to be serialized, but was None."
+            )
+        if self._signer is not None:
+            result = self._signer(result)
+        await self._writer.write(result.encode())
+
+    async def close(self) -> None:
+        if isinstance(self._writer, AsyncCloseable):
+            await self._writer.close()
 
 
 class EventSerializer(SpecificShapeSerializer):

@@ -3,11 +3,16 @@
 import datetime
 from collections.abc import Callable
 
+from smithy_core.aio.interfaces import AsyncByteStream, AsyncCloseable
 from smithy_core.codecs import Codec
-from smithy_core.deserializers import ShapeDeserializer, SpecificShapeDeserializer
-from smithy_core.interfaces import BytesReader
+from smithy_core.deserializers import (
+    DeserializeableShape,
+    ShapeDeserializer,
+    SpecificShapeDeserializer,
+)
 from smithy_core.schemas import Schema
 from smithy_core.utils import expect_type
+from smithy_event_stream.aio.interfaces import AsyncEventReceiver
 
 from ..events import HEADERS_DICT, Event
 from ..exceptions import EventError, UnmodeledEventError
@@ -17,11 +22,38 @@ from .traits import EVENT_HEADER_TRAIT, EVENT_PAYLOAD_TRAIT
 INITIAL_MESSAGE_TYPES = (INITIAL_REQUEST_EVENT_TYPE, INITIAL_RESPONSE_EVENT_TYPE)
 
 
+class AWSAsyncEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
+    def __init__(
+        self,
+        payload_codec: Codec,
+        source: AsyncByteStream,
+        deserializer: Callable[[ShapeDeserializer], E],
+        is_client_mode: bool = True,
+    ) -> None:
+        self._payload_codec = payload_codec
+        self._source = source
+        self._is_client_mode = is_client_mode
+        self._deserializer = deserializer
+
+    async def receive(self) -> E | None:
+        event = await Event.decode_async(self._source)
+        deserializer = EventDeserializer(
+            event=event,
+            payload_codec=self._payload_codec,
+            is_client_mode=self._is_client_mode,
+        )
+        return self._deserializer(deserializer)
+
+    async def close(self) -> None:
+        if isinstance(self._source, AsyncCloseable):
+            await self._source.close()
+
+
 class EventDeserializer(SpecificShapeDeserializer):
     def __init__(
-        self, source: BytesReader, payload_codec: Codec, is_client_mode: bool = True
+        self, event: Event, payload_codec: Codec, is_client_mode: bool = True
     ) -> None:
-        self._source = source
+        self._event = event
         self._payload_codec = payload_codec
         self._is_client_mode = is_client_mode
 
@@ -30,13 +62,12 @@ class EventDeserializer(SpecificShapeDeserializer):
         schema: Schema,
         consumer: Callable[[Schema, ShapeDeserializer], None],
     ) -> None:
-        event = Event.decode(self._source)
-        headers = event.message.headers
+        headers = self._event.message.headers
 
         payload_deserializer = None
-        if event.message.payload:
+        if self._event.message.payload:
             payload_deserializer = self._payload_codec.create_deserializer(
-                event.message.payload
+                self._event.message.payload
             )
 
         message_deserializer = EventMessageDeserializer(headers, payload_deserializer)
@@ -61,7 +92,7 @@ class EventDeserializer(SpecificShapeDeserializer):
                     expect_type(str, headers[":error-message"]),
                 )
             case _:
-                raise EventError(f"Unknown event structure: {event}")
+                raise EventError(f"Unknown event structure: {self._event}")
 
 
 class EventMessageDeserializer(SpecificShapeDeserializer):
