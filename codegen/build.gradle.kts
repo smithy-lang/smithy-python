@@ -90,9 +90,9 @@ subprojects {
 
         // Apply junit 5 and hamcrest test dependencies to all java projects.
         dependencies {
-            testCompileOnly("org.junit.jupiter:junit-jupiter-api:5.11.2")
-            testImplementation("org.junit.jupiter:junit-jupiter-engine:5.11.2")
-            testCompileOnly("org.junit.jupiter:junit-jupiter-params:5.11.2")
+            testCompileOnly("org.junit.jupiter:junit-jupiter-api:5.11.3")
+            testImplementation("org.junit.jupiter:junit-jupiter-engine:5.11.3")
+            testCompileOnly("org.junit.jupiter:junit-jupiter-params:5.11.3")
             testCompileOnly("org.hamcrest:hamcrest:3.0")
         }
 
