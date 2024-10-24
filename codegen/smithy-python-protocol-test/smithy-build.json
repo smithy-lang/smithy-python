@@ -2,12 +2,19 @@
     "version": "1.0",
     "projections": {
         "rest-json-1": {
-            "transforms": [{
-                "name": "includeServices",
-                "args": {
-                    "services": ["aws.protocoltests.restjson#RestJson"]
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "aws.protocoltests.restjson#RestJson"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
                 }
-            }],
+            ],
             "plugins": {
                 "python-client-codegen": {
                     "service": "aws.protocoltests.restjson#RestJson",
