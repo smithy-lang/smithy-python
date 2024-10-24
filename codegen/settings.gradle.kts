@@ -26,6 +26,6 @@ pluginManagement {
     }
     val smithyGradleVersion: String by settings
     plugins {
-        id("software.amazon.smithy.gradle.smithy-base").version(smithyGradleVersion)
+        id("software.amazon.smithy.gradle.smithy-base").version("1.1.0")
     }
 }

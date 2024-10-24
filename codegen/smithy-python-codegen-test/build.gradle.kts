@@ -26,10 +26,8 @@ repositories {
     mavenCentral()
 }
 
-val smithyVersion: String by project
-
 dependencies {
     implementation(project(":smithy-python-codegen"))
-    implementation("software.amazon.smithy:smithy-waiters:$smithyVersion")
-    implementation("software.amazon.smithy:smithy-protocol-test-traits:$smithyVersion")
+    implementation("software.amazon.smithy:smithy-waiters:1.52.0")
+    implementation("software.amazon.smithy:smithy-protocol-test-traits:1.52.0")
 }
