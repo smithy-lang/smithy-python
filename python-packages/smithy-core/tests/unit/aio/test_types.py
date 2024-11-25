@@ -342,9 +342,9 @@ async def test_close_stops_writes() -> None:
         await provider.write(b"foo")
 
 
-async def test_close_deletes_buffered_data() -> None:
+async def test_close_without_flush_deletes_buffered_data() -> None:
     provider = AsyncBytesProvider(b"foo")
-    await provider.close()
+    await provider.close(flush=False)
     result: list[bytes] = []
     await drain_provider(provider, result)
     assert result == []
@@ -400,7 +400,7 @@ async def test_close_stops_queued_writes() -> None:
     write_task = asyncio.create_task(provider.write(b"bar"))
 
     # Now close the provider. The write task will raise an error.
-    await provider.close()
+    await provider.close(flush=False)
 
     with pytest.raises(SmithyException):
         await write_task
@@ -439,3 +439,29 @@ async def test_close_with_flush() -> None:
     assert result == [b"foo"]
     with pytest.raises(SmithyException):
         await write_task
+
+
+async def test_aexit_flushes() -> None:
+    # Initialize a provider, keeping track of it in the top scope just to make
+    # sure it doesn't get GC'd
+    provider = AsyncBytesProvider()
+
+    # Use the provider in a context manager. When this exits, it should flush
+    # and close the provider.
+    async with provider:
+
+        # Write some data to the provider.
+        await provider.write(b"foo")
+
+        # Start the task to read data from the provider and exit. Explictly do
+        # not await it here because the exit function should pass priority while
+        # it waits for the queue to drain.
+        result: list[bytes] = []
+        drain_task = asyncio.create_task(drain_provider(provider, result))
+
+    # The queue should have been read by this point.
+    assert result == [b"foo"]
+
+    # The draining task should be able to complete without errors. When next it
+    # tries to get a chunk, the provider's iterator will exit.
+    await drain_task
