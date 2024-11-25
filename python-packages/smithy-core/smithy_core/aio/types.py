@@ -110,10 +110,12 @@ class AsyncBytesReader:
         """Returns whether the stream is closed."""
         return self._closed
 
-    def close(self) -> None:
+    async def close(self) -> None:
         """Closes the stream, as well as the underlying stream where possible."""
         if (close := getattr(self._data, "close", None)) is not None:
-            close()
+            if asyncio.iscoroutine(result := close()):
+                await result
+
         self._data = None
         self._closed = True
 
@@ -244,10 +246,12 @@ class SeekableAsyncBytesReader:
         """Returns whether the stream is closed."""
         return self._buffer.closed
 
-    def close(self) -> None:
+    async def close(self) -> None:
         """Closes the stream, as well as the underlying stream where possible."""
-        if callable(close_fn := getattr(self._data_source, "close", None)):
-            close_fn()  # pylint: disable=not-callable
+        if (close := getattr(self._data_source, "close", None)) is not None:
+            if asyncio.iscoroutine(result := close()):
+                await result
+
         self._data_source = None
         self._buffer.close()
 

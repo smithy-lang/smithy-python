@@ -138,7 +138,23 @@ async def test_close_closeable_source() -> None:
     assert not reader.closed
     assert not source.closed
 
-    reader.close()
+    await reader.close()
+
+    assert reader.closed
+    assert source.closed
+
+    with pytest.raises(ValueError):
+        await reader.read()
+
+
+async def test_close_async_closeable_source() -> None:
+    source = AsyncBytesReader(BytesIO(b"foo"))
+    reader = AsyncBytesReader(source)
+
+    assert not reader.closed
+    assert not source.closed
+
+    await reader.close()
 
     assert reader.closed
     assert source.closed
@@ -152,7 +168,7 @@ async def test_close_non_closeable_source() -> None:
     reader = AsyncBytesReader(source)
 
     assert not reader.closed
-    reader.close()
+    await reader.close()
     assert reader.closed
 
     with pytest.raises(ValueError):
@@ -167,7 +183,27 @@ async def test_seekable_close_closeable_source() -> None:
     assert not source.closed
     assert reader.tell() == 0
 
-    reader.close()
+    await reader.close()
+
+    assert reader.closed
+    assert source.closed
+
+    with pytest.raises(ValueError):
+        await reader.read()
+
+    with pytest.raises(ValueError):
+        reader.tell()
+
+
+async def test_seekable_close_async_closeable_source() -> None:
+    source = AsyncBytesReader(BytesIO(b"foo"))
+    reader = SeekableAsyncBytesReader(source)
+
+    assert not reader.closed
+    assert not source.closed
+    assert reader.tell() == 0
+
+    await reader.close()
 
     assert reader.closed
     assert source.closed
@@ -185,7 +221,7 @@ async def test_seekable_close_non_closeable_source() -> None:
 
     assert not reader.closed
     assert reader.tell() == 0
-    reader.close()
+    await reader.close()
     assert reader.closed
 
     with pytest.raises(ValueError):
