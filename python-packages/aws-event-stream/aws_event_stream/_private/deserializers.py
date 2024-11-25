@@ -1,9 +1,10 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+import asyncio
 import datetime
 from collections.abc import Callable
 
-from smithy_core.aio.interfaces import AsyncByteStream, AsyncCloseable
+from smithy_core.aio.interfaces import AsyncByteStream
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import (
     DeserializeableShape,
@@ -45,8 +46,9 @@ class AWSAsyncEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
         return self._deserializer(deserializer)
 
     async def close(self) -> None:
-        if isinstance(self._source, AsyncCloseable):
-            await self._source.close()
+        if (close := getattr(self._source, "close", None)) is not None:
+            if asyncio.iscoroutine(result := close()):
+                await result
 
 
 class EventDeserializer(SpecificShapeDeserializer):

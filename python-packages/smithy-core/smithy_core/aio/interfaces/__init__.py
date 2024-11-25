@@ -21,13 +21,6 @@ class AsyncWriter(Protocol):
     async def write(self, data: bytes) -> None: ...
 
 
-@runtime_checkable
-class AsyncCloseable(Protocol):
-    """An object that can asynchronously close."""
-
-    async def close(self): ...
-
-
 # A union of all acceptable streaming blob types. Deserialized payloads will
 # always return a ByteStream, or AsyncByteStream if async is enabled.
 type StreamingBlob = SyncStreamingBlob | AsyncByteStream | AsyncIterable[bytes]

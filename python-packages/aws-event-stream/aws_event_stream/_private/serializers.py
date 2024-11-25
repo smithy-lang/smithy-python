@@ -1,12 +1,13 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+import asyncio
 import datetime
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from io import BytesIO
 from typing import Never
 
-from smithy_core.aio.interfaces import AsyncCloseable, AsyncWriter
+from smithy_core.aio.interfaces import AsyncWriter
 from smithy_core.codecs import Codec
 from smithy_core.exceptions import ExpectationNotMetException
 from smithy_core.schemas import Schema
@@ -64,8 +65,9 @@ class AWSAsyncEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
         await self._writer.write(result.encode())
 
     async def close(self) -> None:
-        if isinstance(self._writer, AsyncCloseable):
-            await self._writer.close()
+        if (close := getattr(self._writer, "close", None)) is not None:
+            if asyncio.iscoroutine(result := close()):
+                await result
 
 
 class EventSerializer(SpecificShapeSerializer):
