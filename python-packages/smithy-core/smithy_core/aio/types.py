@@ -367,7 +367,7 @@ class AsyncBytesProvider:
             # Unblock writes
             self._flushing = False
 
-    async def close(self, flush: bool = False) -> None:
+    async def close(self, flush: bool = True) -> None:
         """Closes the provider.
 
         Pending writing tasks queued after this will fail, so such tasks should be
@@ -424,4 +424,4 @@ class AsyncBytesProvider:
         return self
 
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
-        await self.close()
+        await self.close(flush=True)
