@@ -93,6 +93,12 @@ class InvalidIntegerValue(EventError):
         super().__init__(message)
 
 
+class InvalidEventBytes(EventError):
+    def __init__(self) -> None:
+        message = "Invalid event bytes."
+        super().__init__(message)
+
+
 class MissingInitialResponse(EventError):
     def __init__(self) -> None:
         super().__init__("Expected an initial response, but none was found.")

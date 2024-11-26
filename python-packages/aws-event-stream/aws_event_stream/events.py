@@ -24,6 +24,7 @@ from smithy_core.types import TimestampFormat
 from .exceptions import (
     ChecksumMismatch,
     DuplicateHeader,
+    InvalidEventBytes,
     InvalidHeadersLength,
     InvalidHeaderValue,
     InvalidHeaderValueLength,
@@ -286,27 +287,41 @@ class Event:
     """
 
     @classmethod
-    def decode(cls, source: BytesReader) -> Self:
+    def decode(cls, source: BytesReader) -> Self | None:
         """Decode an event from a byte stream.
 
         :param source: An object to read event bytes from. It must have a `read` method
             that accepts a number of bytes to read.
 
-        :returns: An Event representing the next event on the source.
+        :returns: An Event representing the next event on the source, or None if no
+            data can be read from the source.
         """
 
         prelude_bytes = source.read(8)
-        prelude_crc_bytes = source.read(4)
-        prelude_crc: int = _DecodeUtils.unpack_uint32(prelude_crc_bytes)[0]
+        if not prelude_bytes:
+            # If nothing can be read from the source, return None. If bytes are missing
+            # later, that indicates a problem with the source and therefore will result
+            # in an exception.
+            return None
 
-        total_length, headers_length = unpack("!II", prelude_bytes)
+        prelude_crc_bytes = source.read(4)
+        try:
+            prelude_crc: int = _DecodeUtils.unpack_uint32(prelude_crc_bytes)[0]
+            total_length, headers_length = unpack("!II", prelude_bytes)
+        except struct.error as e:
+            raise InvalidEventBytes() from e
+
         _validate_checksum(prelude_bytes, prelude_crc)
         prelude = EventPrelude(
             total_length=total_length, headers_length=headers_length, crc=prelude_crc
         )
 
         message_bytes = source.read(total_length - _MESSAGE_METADATA_SIZE)
-        crc: int = _DecodeUtils.unpack_uint32(source.read(4))[0]
+        try:
+            crc: int = _DecodeUtils.unpack_uint32(source.read(4))[0]
+        except struct.error as e:
+            raise InvalidEventBytes() from e
+
         _validate_checksum(prelude_crc_bytes + message_bytes, crc, prelude_crc)
 
         message = EventMessage(
@@ -316,27 +331,41 @@ class Event:
         return cls(prelude, message, crc)
 
     @classmethod
-    async def decode_async(cls, source: AsyncByteStream) -> Self:
+    async def decode_async(cls, source: AsyncByteStream) -> Self | None:
         """Decode an event from an async byte stream.
 
         :param source: An object to read event bytes from. It must have a `read` method
             that accepts a number of bytes to read.
 
-        :returns: An Event representing the next event on the source.
+        :returns: An Event representing the next event on the source, or None if no
+            data can be read from the source.
         """
 
         prelude_bytes = await source.read(8)
-        prelude_crc_bytes = await source.read(4)
-        prelude_crc: int = _DecodeUtils.unpack_uint32(prelude_crc_bytes)[0]
+        if not prelude_bytes:
+            # If nothing can be read from the source, return None. If bytes are missing
+            # later, that indicates a problem with the source and therefore will result
+            # in an exception.
+            return None
 
-        total_length, headers_length = unpack("!II", prelude_bytes)
+        prelude_crc_bytes = await source.read(4)
+        try:
+            prelude_crc: int = _DecodeUtils.unpack_uint32(prelude_crc_bytes)[0]
+            total_length, headers_length = unpack("!II", prelude_bytes)
+        except struct.error as e:
+            raise InvalidEventBytes() from e
+
         _validate_checksum(prelude_bytes, prelude_crc)
         prelude = EventPrelude(
             total_length=total_length, headers_length=headers_length, crc=prelude_crc
         )
 
         message_bytes = await source.read(total_length - _MESSAGE_METADATA_SIZE)
-        crc: int = _DecodeUtils.unpack_uint32(await source.read(4))[0]
+        try:
+            crc: int = _DecodeUtils.unpack_uint32(await source.read(4))[0]
+        except struct.error as e:
+            raise InvalidEventBytes() from e
+
         _validate_checksum(prelude_crc_bytes + message_bytes, crc, prelude_crc)
 
         message = EventMessage(
