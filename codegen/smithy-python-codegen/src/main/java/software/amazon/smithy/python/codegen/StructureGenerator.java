@@ -147,9 +147,12 @@ final class StructureGenerator implements Runnable {
 
                     ${7C|}
 
+                    ${8C|}
+
                 """, symbol.getName(), apiError, code, fault,
                 writer.consumer(w -> writeClassDocs(true)),
                 writer.consumer(w -> writeProperties()),
+                writer.consumer(w -> generateSerializeMethod()),
                 writer.consumer(w -> generateDeserializeMethod()));
     }
 
