@@ -25,6 +25,7 @@ from aws_event_stream.events import _EventEncoder as EventEncoder
 from aws_event_stream.exceptions import (
     ChecksumMismatch,
     DuplicateHeader,
+    InvalidEventBytes,
     InvalidHeadersLength,
     InvalidHeaderValueLength,
     InvalidIntegerValue,
@@ -381,6 +382,8 @@ ERROR_EVENT_MESSAGE = (
     ),
 )
 
+EMPTY_SOURCE = (b"", None)
+
 # Tuples of encoded messages and their expected decoded output
 POSITIVE_CASES = [
     EMPTY_MESSAGE,  # standard
@@ -398,6 +401,7 @@ POSITIVE_CASES = [
     PAYLOAD_ONE_STR_HEADER,  # standard
     ALL_HEADERS_TYPES,  # standard
     ERROR_EVENT_MESSAGE,
+    EMPTY_SOURCE,
 ]
 
 CORRUPTED_HEADERS_LENGTH = (
@@ -489,47 +493,54 @@ INVALID_PAYLOAD_LENGTH = (
     InvalidPayloadLength,
 )
 
+TRUNCATED_PRELUDE = (b"\x00", InvalidEventBytes)
+
+MISSING_PRELUDE_CRC_BYTES = (b"\x00\x00\x00\x16", InvalidEventBytes)
+
+MISSING_MESSAGE_CRC_BYTES = (
+    (
+        b"\x00\x00\x00\x10"  # total length
+        b"\x00\x00\x00\x00"  # headers length
+        b"\x05\xc2\x48\xeb"  # prelude crc
+    ),
+    InvalidEventBytes,
+)
+
 # Tuples of encoded messages and their expected exception
-NEGATIVE_CASES = [
-    CORRUPTED_LENGTH,  # standard
-    CORRUPTED_PAYLOAD,  # standard
-    CORRUPTED_HEADERS,  # standard
-    CORRUPTED_HEADERS_LENGTH,  # standard
-    DUPLICATE_HEADER,
-    INVALID_HEADERS_LENGTH,
-    INVALID_HEADER_VALUE_LENGTH,
-    INVALID_PAYLOAD_LENGTH,
-]
+NEGATIVE_CASES = {
+    "corrupted-length": CORRUPTED_LENGTH,  # standard
+    "corrupted-payload": CORRUPTED_PAYLOAD,  # standard
+    "corrupted-headers": CORRUPTED_HEADERS,  # standard
+    "corrupted-headers-length": CORRUPTED_HEADERS_LENGTH,  # standard
+    "duplicate-header": DUPLICATE_HEADER,
+    "invalid-headers-length": INVALID_HEADERS_LENGTH,
+    "invalid-header-value-length": INVALID_HEADER_VALUE_LENGTH,
+    "invalid-payload-length": INVALID_PAYLOAD_LENGTH,
+    "truncated-prelude": TRUNCATED_PRELUDE,
+    "missing-prelude-crc-bytes": MISSING_PRELUDE_CRC_BYTES,
+    "missing-message-crc-bytes": MISSING_MESSAGE_CRC_BYTES,
+}
 
 
 @pytest.mark.parametrize("encoded,expected", POSITIVE_CASES)
-def test_decode(encoded: bytes, expected: Event):
+def test_decode(encoded: bytes, expected: Event | None):
     assert Event.decode(BytesIO(encoded)) == expected
 
 
 @pytest.mark.parametrize("encoded,expected", POSITIVE_CASES)
-async def test_decode_async(encoded: bytes, expected: Event):
+async def test_decode_async(encoded: bytes, expected: Event | None):
     assert await Event.decode_async(AsyncBytesReader(encoded)) == expected
 
 
-@pytest.mark.parametrize("expected,event", POSITIVE_CASES)
+@pytest.mark.parametrize(
+    "expected,event", [c for c in POSITIVE_CASES if c[1] is not None]
+)
 def test_encode(expected: bytes, event: Event):
     assert event.message.encode() == expected
 
 
 @pytest.mark.parametrize(
-    "encoded,expected",
-    NEGATIVE_CASES,
-    ids=[
-        "corrupted-length",
-        "corrupted-payload",
-        "corrupted-headers",
-        "corrupted-headers-length",
-        "duplicate-header",
-        "invalid-headers-length",
-        "invalid-header-value-length",
-        "invalid-payload-length",
-    ],
+    "encoded,expected", NEGATIVE_CASES.values(), ids=NEGATIVE_CASES.keys()
 )
 def test_negative_cases(encoded: bytes, expected: type[Exception]):
     with pytest.raises(expected):
@@ -537,18 +548,7 @@ def test_negative_cases(encoded: bytes, expected: type[Exception]):
 
 
 @pytest.mark.parametrize(
-    "encoded,expected",
-    NEGATIVE_CASES,
-    ids=[
-        "corrupted-length",
-        "corrupted-payload",
-        "corrupted-headers",
-        "corrupted-headers-length",
-        "duplicate-header",
-        "invalid-headers-length",
-        "invalid-header-value-length",
-        "invalid-payload-length",
-    ],
+    "encoded,expected", NEGATIVE_CASES.values(), ids=NEGATIVE_CASES.keys()
 )
 async def test_negative_cases_async(encoded: bytes, expected: type[Exception]):
     with pytest.raises(expected):

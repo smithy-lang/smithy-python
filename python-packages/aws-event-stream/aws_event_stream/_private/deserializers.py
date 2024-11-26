@@ -38,6 +38,9 @@ class AWSAsyncEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
 
     async def receive(self) -> E | None:
         event = await Event.decode_async(self._source)
+        if event is None:
+            return None
+
         deserializer = EventDeserializer(
             event=event,
             payload_codec=self._payload_codec,

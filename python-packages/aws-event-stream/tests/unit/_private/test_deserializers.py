@@ -22,6 +22,7 @@ from . import (
 @pytest.mark.parametrize("expected,given", EVENT_STREAM_SERDE_CASES)
 def test_event_deserializer(expected: DeserializeableShape, given: EventMessage):
     source = Event.decode(BytesIO(given.encode()))
+    assert source is not None
     deserializer = EventDeserializer(event=source, payload_codec=JSONCodec())
     result = EventStreamDeserializer().deserialize(deserializer)
     assert result == expected
@@ -30,6 +31,7 @@ def test_event_deserializer(expected: DeserializeableShape, given: EventMessage)
 def test_deserialize_initial_request():
     expected, given = INITIAL_REQUEST_CASE
     source = Event.decode(BytesIO(given.encode()))
+    assert source is not None
     deserializer = EventDeserializer(event=source, payload_codec=JSONCodec())
     result = EventStreamOperationInputOutput.deserialize(deserializer)
     assert result == expected
@@ -38,6 +40,7 @@ def test_deserialize_initial_request():
 def test_deserialize_initial_response():
     expected, given = INITIAL_RESPONSE_CASE
     source = Event.decode(BytesIO(given.encode()))
+    assert source is not None
     deserializer = EventDeserializer(event=source, payload_codec=JSONCodec())
     result = EventStreamOperationInputOutput.deserialize(deserializer)
     assert result == expected
@@ -52,6 +55,7 @@ def test_deserialize_unmodeled_error():
         }
     )
     source = Event.decode(BytesIO(message.encode()))
+    assert source is not None
     deserializer = EventDeserializer(event=source, payload_codec=JSONCodec())
 
     with pytest.raises(UnmodeledEventError, match="InternalError"):
