@@ -314,10 +314,15 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
 
         var symbolProvider = context.symbolProvider();
         var memberName = symbolProvider.toMemberName(payloadBinding.getMember());
+        var target = context.model().expectShape(payloadBinding.getMember().getTarget());
 
-        if (payloadBinding.getMember().getMemberTrait(context.model(), StreamingTrait.class).isPresent()) {
-            writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
-            writer.write("kwargs[$S] = AsyncBytesReader(http_response.body)", memberName);
+        if (target.hasTrait(StreamingTrait.class)) {
+            // If the target is a union, nothing needs to be done here. The stream deserializer will
+            // take the response body directly and handle it.
+            if (target.isBlobShape()) {
+                writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
+                writer.write("kwargs[$S] = AsyncBytesReader(http_response.body)", memberName);
+            }
             return;
         }
 
@@ -334,7 +339,6 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                     """);
         }
 
-        var target = context.model().expectShape(payloadBinding.getMember().getTarget());
         var deserializerSymbol = symbolProvider.toSymbol(target);
 
         writer.write("if body:").indent();

@@ -41,6 +41,7 @@ import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.InputTrait;
 import software.amazon.smithy.model.traits.OutputTrait;
 import software.amazon.smithy.model.traits.SensitiveTrait;
+import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.python.codegen.generators.MemberDeserializerGenerator;
 import software.amazon.smithy.python.codegen.generators.MemberSerializerGenerator;
 
@@ -417,6 +418,9 @@ final class StructureGenerator implements Runnable {
         int index = 0;
         for (MemberShape member : members) {
             var target = model.expectShape(member.getTarget());
+            if (target.hasTrait(StreamingTrait.class) && target.isUnionShape()) {
+                continue;
+            }
             writer.write("""
                     case $L:
                         kwargs[$S] = ${C|}
