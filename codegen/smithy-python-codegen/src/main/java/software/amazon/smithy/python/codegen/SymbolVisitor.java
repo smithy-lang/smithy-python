@@ -330,8 +330,7 @@ final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
     @Override
     public Symbol structureShape(StructureShape shape) {
         String name = getDefaultShapeName(shape);
-        var file = shape.hasTrait(ErrorTrait.class) ? "errors" : SHAPES_FILE;
-        return createGeneratedSymbolBuilder(shape, name, file).build();
+        return createGeneratedSymbolBuilder(shape, name, SHAPES_FILE).build();
     }
 
     @Override
