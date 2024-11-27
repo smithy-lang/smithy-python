@@ -8,4 +8,4 @@ freezegun<1.6.0
 pyupgrade<3.20.0
 isort<5.14.0
 docformatter<1.7.6
-bandit<1.8.0
+bandit<1.9.0
