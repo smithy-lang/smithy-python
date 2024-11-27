@@ -28,5 +28,5 @@ repositories {
 
 dependencies {
     implementation(project(":smithy-python-codegen"))
-    implementation("software.amazon.smithy:smithy-aws-protocol-tests:1.52.1")
+    implementation("software.amazon.smithy:smithy-aws-protocol-tests:1.53.0")
 }
