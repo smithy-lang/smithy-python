@@ -147,7 +147,7 @@ class EventSerializer(SpecificShapeSerializer):
     def _get_payload_member(self, schema: Schema) -> Schema | None:
         for member in schema.members.values():
             if EVENT_PAYLOAD_TRAIT in member.traits:
-                return schema
+                return member
         return None
 
     def _get_payload_media_type(self, schema: Schema, default: str) -> str:

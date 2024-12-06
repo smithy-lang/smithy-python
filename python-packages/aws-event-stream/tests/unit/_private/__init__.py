@@ -526,7 +526,7 @@ EVENT_STREAM_SERDE_CASES = [
                 ":message-type": "event",
                 ":event-type": "payload",
                 "header": "header",
-                ":content-type": "application/json",
+                ":content-type": "text/plain",
             },
             payload=b'"payload"',
         ),
