@@ -23,13 +23,12 @@ from smithy_event_stream.aio.interfaces import AsyncEventPublisher
 
 from ..events import EventHeaderEncoder, EventMessage
 from ..exceptions import InvalidHeaderValue
-from . import INITIAL_REQUEST_EVENT_TYPE, INITIAL_RESPONSE_EVENT_TYPE
-from .traits import (
-    ERROR_TRAIT,
-    EVENT_HEADER_TRAIT,
-    EVENT_PAYLOAD_TRAIT,
-    MEDIA_TYPE_TRAIT,
+from . import (
+    INITIAL_REQUEST_EVENT_TYPE,
+    INITIAL_RESPONSE_EVENT_TYPE,
+    get_payload_member,
 )
+from .traits import ERROR_TRAIT, EVENT_HEADER_TRAIT, MEDIA_TYPE_TRAIT
 
 _DEFAULT_STRING_CONTENT_TYPE = "text/plain"
 _DEFAULT_BLOB_CONTENT_TYPE = "application/octet-stream"
@@ -129,7 +128,7 @@ class EventSerializer(SpecificShapeSerializer):
 
         media_type = self._payload_codec.media_type
 
-        if (payload_member := self._get_payload_member(schema)) is not None:
+        if (payload_member := get_payload_member(schema)) is not None:
             media_type = self._get_payload_media_type(payload_member, media_type)
             if payload_member.shape_type in (ShapeType.BLOB, ShapeType.STRING):
                 payload_serializer = RawPayloadSerializer(payload)
@@ -145,12 +144,6 @@ class EventSerializer(SpecificShapeSerializer):
         self._result = EventMessage(
             headers_bytes=headers_encoder.get_result(), payload=payload_bytes
         )
-
-    def _get_payload_member(self, schema: Schema) -> Schema | None:
-        for member in schema.members.values():
-            if EVENT_PAYLOAD_TRAIT in member.traits:
-                return member
-        return None
 
     def _get_payload_media_type(self, schema: Schema, default: str) -> str:
         if (media_type := schema.traits.get(MEDIA_TYPE_TRAIT)) is not None:
