@@ -12,13 +12,18 @@ from smithy_core.deserializers import (
     SpecificShapeDeserializer,
 )
 from smithy_core.schemas import Schema
+from smithy_core.shapes import ShapeType
 from smithy_core.utils import expect_type
 from smithy_event_stream.aio.interfaces import AsyncEventReceiver
 
 from ..events import HEADERS_DICT, Event
 from ..exceptions import EventError, UnmodeledEventError
-from . import INITIAL_REQUEST_EVENT_TYPE, INITIAL_RESPONSE_EVENT_TYPE
-from .traits import EVENT_HEADER_TRAIT, EVENT_PAYLOAD_TRAIT
+from . import (
+    INITIAL_REQUEST_EVENT_TYPE,
+    INITIAL_RESPONSE_EVENT_TYPE,
+    get_payload_member,
+)
+from .traits import EVENT_HEADER_TRAIT
 
 INITIAL_MESSAGE_TYPES = (INITIAL_REQUEST_EVENT_TYPE, INITIAL_RESPONSE_EVENT_TYPE)
 
@@ -69,25 +74,24 @@ class EventDeserializer(SpecificShapeDeserializer):
     ) -> None:
         headers = self._event.message.headers
 
-        payload_deserializer = None
-        if self._event.message.payload:
-            payload_deserializer = self._payload_codec.create_deserializer(
-                self._event.message.payload
-            )
-
-        message_deserializer = EventMessageDeserializer(headers, payload_deserializer)
-
         match headers.get(":message-type"):
             case "event":
                 member_name = expect_type(str, headers[":event-type"])
                 if member_name in INITIAL_MESSAGE_TYPES:
                     # If it's an initial message, skip straight to deserialization.
+                    message_deserializer = self._create_deserializer(schema, headers)
                     message_deserializer.read_struct(schema, consumer)
                 else:
-                    consumer(schema.members[member_name], message_deserializer)
+                    member_schema = schema.members[member_name]
+                    message_deserializer = self._create_deserializer(
+                        member_schema, headers
+                    )
+                    consumer(member_schema, message_deserializer)
             case "exception":
                 member_name = expect_type(str, headers[":exception-type"])
-                consumer(schema.members[member_name], message_deserializer)
+                member_schema = schema.members[member_name]
+                message_deserializer = self._create_deserializer(member_schema, headers)
+                consumer(member_schema, message_deserializer)
             case "error":
                 # The `application/vnd.amazon.eventstream` format allows for explicitly
                 # unmodeled exceptions. These exceptions MUST have the `:error-code`
@@ -99,13 +103,49 @@ class EventDeserializer(SpecificShapeDeserializer):
             case _:
                 raise EventError(f"Unknown event structure: {self._event}")
 
+    def _create_deserializer(
+        self, schema: Schema, headers: HEADERS_DICT
+    ) -> ShapeDeserializer:
+        payload_member = get_payload_member(schema)
+        payload_deserializer = self._create_payload_deserializer(payload_member)
+        return EventMessageDeserializer(headers, payload_deserializer, payload_member)
+
+    def _create_payload_deserializer(
+        self, payload_member: Schema | None
+    ) -> ShapeDeserializer | None:
+        if not self._event.message.payload:
+            return
+
+        if payload_member is not None and payload_member.shape_type in (
+            ShapeType.BLOB,
+            ShapeType.STRING,
+        ):
+            return RawPayloadDeserializer(self._event.message.payload)
+
+        return self._payload_codec.create_deserializer(self._event.message.payload)
+
+
+class RawPayloadDeserializer(SpecificShapeDeserializer):
+    def __init__(self, payload: bytes) -> None:
+        self._payload = payload
+
+    def read_string(self, schema: Schema) -> str:
+        return self._payload.decode("utf-8")
+
+    def read_blob(self, schema: Schema) -> bytes:
+        return self._payload
+
 
 class EventMessageDeserializer(SpecificShapeDeserializer):
     def __init__(
-        self, headers: HEADERS_DICT, payload_deserializer: ShapeDeserializer | None
+        self,
+        headers: HEADERS_DICT,
+        payload_deserializer: ShapeDeserializer | None,
+        payload_member: Schema | None,
     ) -> None:
         self._headers = headers
         self._payload_deserializer = payload_deserializer
+        self._payload_member = payload_member
 
     def read_struct(
         self,
@@ -119,16 +159,10 @@ class EventMessageDeserializer(SpecificShapeDeserializer):
                 consumer(member_schema, headers_deserializer)
 
         if self._payload_deserializer:
-            if (payload_member := self._get_payload_member(schema)) is not None:
-                consumer(payload_member, self._payload_deserializer)
+            if self._payload_member is not None:
+                consumer(self._payload_member, self._payload_deserializer)
             else:
                 self._payload_deserializer.read_struct(schema, consumer)
-
-    def _get_payload_member(self, schema: "Schema") -> "Schema | None":
-        for member in schema.members.values():
-            if EVENT_PAYLOAD_TRAIT in member.traits:
-                return member
-        return None
 
 
 class EventHeaderDeserializer(SpecificShapeDeserializer):
