@@ -1,28 +1,27 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-from dataclasses import dataclass
 import datetime
-from typing import Any, Self, ClassVar, Literal
+from dataclasses import dataclass
+from typing import Any, ClassVar, Literal, Self
 
-from aws_event_stream.events import EventMessage, Short, Byte, Long
-
-from smithy_core.serializers import ShapeSerializer
 from smithy_core.deserializers import ShapeDeserializer
-from smithy_core.schemas import Schema
 from smithy_core.exceptions import SmithyException
-from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import Trait
 from smithy_core.prelude import (
+    BLOB,
     BOOLEAN,
     BYTE,
-    SHORT,
     INTEGER,
     LONG,
-    BLOB,
+    SHORT,
     STRING,
     TIMESTAMP,
 )
+from smithy_core.schemas import Schema
+from smithy_core.serializers import ShapeSerializer
+from smithy_core.shapes import ShapeID, ShapeType
+from smithy_core.traits import Trait
 
+from aws_event_stream.events import Byte, EventMessage, Long, Short
 
 EVENT_HEADER_TRAIT = Trait(id=ShapeID("smithy.api#eventHeader"))
 EVENT_PAYLOAD_TRAIT = Trait(id=ShapeID("smithy.api#eventPayload"))
@@ -66,6 +65,22 @@ SCHEMA_PAYLOAD_EVENT = Schema.collection(
     },
 )
 
+SCHEMA_BLOB_PAYLOAD_EVENT = Schema.collection(
+    id=ShapeID("smithy.example#BlobPayloadEvent"),
+    members={
+        "header": {
+            "index": 0,
+            "target": STRING,
+            "traits": [EVENT_HEADER_TRAIT, REQUIRED_TRAIT],
+        },
+        "payload": {
+            "index": 1,
+            "target": BLOB,
+            "traits": [EVENT_PAYLOAD_TRAIT, REQUIRED_TRAIT],
+        },
+    },
+)
+
 SCHEMA_ERROR_EVENT = Schema.collection(
     id=ShapeID("smithy.example#ErrorEvent"),
     members={"message": {"index": 0, "target": STRING, "traits": [REQUIRED_TRAIT]}},
@@ -79,7 +94,8 @@ SCHEMA_EVENT_STREAM = Schema.collection(
     members={
         "message": {"index": 0, "target": SCHEMA_MESSAGE_EVENT},
         "payload": {"index": 1, "target": SCHEMA_PAYLOAD_EVENT},
-        "error": {"index": 2, "target": SCHEMA_ERROR_EVENT},
+        "blobPayload": {"index": 2, "target": SCHEMA_BLOB_PAYLOAD_EVENT},
+        "error": {"index": 3, "target": SCHEMA_ERROR_EVENT},
     },
 )
 
@@ -274,6 +290,57 @@ class EventStreamPayloadEvent:
 
 
 @dataclass
+class BlobPayloadEvent:
+    header: str
+    payload: bytes
+
+    def serialize(self, serializer: ShapeSerializer):
+        with serializer.begin_struct(SCHEMA_BLOB_PAYLOAD_EVENT) as s:
+            self.serialize_members(s)
+
+    def serialize_members(self, serializer: ShapeSerializer) -> None:
+        serializer.write_string(
+            SCHEMA_BLOB_PAYLOAD_EVENT.members["header"], self.header
+        )
+        serializer.write_blob(
+            SCHEMA_BLOB_PAYLOAD_EVENT.members["payload"], self.payload
+        )
+
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+        kwargs: dict[str, Any] = {}
+
+        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
+            match schema.expect_member_index():
+                case 0:
+                    kwargs["header"] = de.read_string(
+                        SCHEMA_BLOB_PAYLOAD_EVENT.members["header"]
+                    )
+                case 1:
+                    kwargs["payload"] = de.read_blob(
+                        SCHEMA_BLOB_PAYLOAD_EVENT.members["payload"]
+                    )
+                case _:
+                    raise SmithyException(f"Unexpected member schema: {schema}")
+
+        deserializer.read_struct(schema=SCHEMA_BLOB_PAYLOAD_EVENT, consumer=_consumer)
+        return cls(**kwargs)
+
+
+@dataclass
+class EventStreamBlobPayloadEvent:
+    value: BlobPayloadEvent
+
+    def serialize(self, serializer: ShapeSerializer):
+        serializer.write_struct(SCHEMA_EVENT_STREAM, self)
+
+    def serialize_members(self, serializer: ShapeSerializer):
+        serializer.write_struct(
+            SCHEMA_EVENT_STREAM.members["blobPayload"], self.value
+        )
+
+
+@dataclass
 class ErrorEvent:
     code: ClassVar[str] = "NoSuchResource"
     fault: ClassVar[Literal["client", "server"]] = "client"
@@ -326,7 +393,7 @@ class EventStreamUnknownEvent:
         raise SmithyException("Unknown union variants may not be serialized.")
 
 
-type EventStream = EventStreamMessageEvent | EventStreamPayloadEvent | EventStreamErrorEvent | EventStreamUnknownEvent
+type EventStream = EventStreamMessageEvent | EventStreamPayloadEvent | EventStreamBlobPayloadEvent | EventStreamErrorEvent | EventStreamUnknownEvent
 
 
 class EventStreamDeserializer:
@@ -350,6 +417,11 @@ class EventStreamDeserializer:
                 self._set_result(EventStreamPayloadEvent(PayloadEvent.deserialize(de)))
 
             case 2:
+                self._set_result(
+                    EventStreamBlobPayloadEvent(BlobPayloadEvent.deserialize(de))
+                )
+
+            case 3:
                 self._set_result(EventStreamErrorEvent(ErrorEvent.deserialize(de)))
 
             case _:
@@ -528,7 +600,21 @@ EVENT_STREAM_SERDE_CASES = [
                 "header": "header",
                 ":content-type": "text/plain",
             },
-            payload=b'"payload"',
+            payload=b"payload",
+        ),
+    ),
+    (
+        EventStreamBlobPayloadEvent(
+            BlobPayloadEvent(header="header", payload=b"\x07beep\x07")
+        ),
+        EventMessage(
+            headers={
+                ":message-type": "event",
+                ":event-type": "blobPayload",
+                "header": "header",
+                ":content-type": "application/octet-stream",
+            },
+            payload=b"\x07beep\x07",
         ),
     ),
     (

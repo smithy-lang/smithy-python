@@ -131,6 +131,8 @@ class EventSerializer(SpecificShapeSerializer):
 
         if (payload_member := self._get_payload_member(schema)) is not None:
             media_type = self._get_payload_media_type(payload_member, media_type)
+            if payload_member.shape_type in (ShapeType.BLOB, ShapeType.STRING):
+                payload_serializer = RawPayloadSerializer(payload)
             yield EventStreamBindingSerializer(header_serializer, payload_serializer)
         else:
             with payload_serializer.begin_struct(schema) as body_serializer:
@@ -200,19 +202,30 @@ class EventHeaderSerializer(SpecificShapeSerializer):
         self._encoder.encode_timestamp(schema.expect_member_name(), value)
 
 
+class RawPayloadSerializer(SpecificShapeSerializer):
+    def __init__(self, payload: BytesIO) -> None:
+        self._payload = payload
+
+    def write_string(self, schema: "Schema", value: str) -> None:
+        self._payload.write(value.encode("utf-8"))
+
+    def write_blob(self, schema: "Schema", value: bytes) -> None:
+        self._payload.write(value)
+
+
 class EventStreamBindingSerializer(InterceptingSerializer):
     def __init__(
         self,
         header_serializer: EventHeaderSerializer,
-        payload_serializer: ShapeSerializer,
+        payload_struct_serializer: ShapeSerializer,
     ) -> None:
         self._header_serializer = header_serializer
-        self._payload_serializer = payload_serializer
+        self._payload_struct_serializer = payload_struct_serializer
 
     def before(self, schema: "Schema") -> ShapeSerializer:
         if EVENT_HEADER_TRAIT in schema.traits:
             return self._header_serializer
-        return self._payload_serializer
+        return self._payload_struct_serializer
 
     def after(self, schema: "Schema") -> None:
         pass
