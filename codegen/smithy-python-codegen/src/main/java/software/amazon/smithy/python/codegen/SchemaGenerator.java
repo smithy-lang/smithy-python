@@ -21,7 +21,6 @@ import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.EnumTrait;
-import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.UnitTypeTrait;
 import software.amazon.smithy.model.traits.synthetic.SyntheticEnumTrait;
 import software.amazon.smithy.utils.CaseUtils;
@@ -36,9 +35,10 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
 final class SchemaGenerator implements Consumer<Shape> {
     private static final Logger LOGGER = Logger.getLogger(SchemaGenerator.class.getName());
 
-    // Filter out traits that already exist as generated parts of the class, such as documentation.
+    // Filter out traits that would overly bloat the definition, which are already part of the
+    // class, such as documentation.
     private static final Set<ShapeId> DEFAULT_TRAIT_FILTER = Set.of(
-            DocumentationTrait.ID, ErrorTrait.ID, EnumTrait.ID, SyntheticEnumTrait.ID
+            DocumentationTrait.ID, EnumTrait.ID, SyntheticEnumTrait.ID
     );
 
     private static final Symbol UNIT_SYMBOL = Symbol.builder()
