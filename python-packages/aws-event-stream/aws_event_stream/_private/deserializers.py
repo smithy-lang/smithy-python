@@ -51,7 +51,10 @@ class AWSAsyncEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
             payload_codec=self._payload_codec,
             is_client_mode=self._is_client_mode,
         )
-        return self._deserializer(deserializer)
+        result = self._deserializer(deserializer)
+        if isinstance(getattr(result, "value"), Exception):
+            raise result.value  # type: ignore
+        return result
 
     async def close(self) -> None:
         if (close := getattr(self._source, "close", None)) is not None:

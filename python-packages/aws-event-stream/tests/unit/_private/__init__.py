@@ -341,7 +341,7 @@ class EventStreamBlobPayloadEvent:
 
 
 @dataclass
-class ErrorEvent:
+class ErrorEvent(Exception):
     code: ClassVar[str] = "NoSuchResource"
     fault: ClassVar[Literal["client", "server"]] = "client"
 
