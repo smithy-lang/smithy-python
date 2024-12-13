@@ -20,9 +20,14 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Locale;
 import software.amazon.smithy.codegen.core.Symbol;
+import software.amazon.smithy.model.knowledge.EventStreamIndex;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
+import software.amazon.smithy.model.node.ArrayNode;
+import software.amazon.smithy.model.node.StringNode;
+import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.python.codegen.integration.PythonIntegration;
 import software.amazon.smithy.python.codegen.integration.RuntimeClientPlugin;
 import software.amazon.smithy.python.codegen.sections.ConfigSection;
@@ -65,23 +70,8 @@ final class ConfigGenerator implements Runnable {
     );
 
     // This list contains any properties that must be added to any http-based
-    // service client.
+    // service client, except for the http client itself.
     private static final List<ConfigProperty> HTTP_PROPERTIES = Arrays.asList(
-        ConfigProperty.builder()
-            .name("http_client")
-            .type(Symbol.builder()
-                .name("HTTPClient")
-                .namespace("smithy_http.aio.interfaces", ".")
-                .addDependency(SmithyPythonDependency.SMITHY_HTTP)
-                .build())
-            .documentation("The HTTP client used to make requests.")
-            .nullable(false)
-            .initialize(writer -> {
-                writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-                writer.addImport("smithy_http.aio.aiohttp", "AIOHTTPClient");
-                writer.write("self.http_client = http_client or AIOHTTPClient()");
-            })
-            .build(),
         ConfigProperty.builder()
             .name("http_request_config")
             .type(Symbol.builder()
@@ -135,6 +125,64 @@ final class ConfigGenerator implements Runnable {
     ConfigGenerator(PythonSettings settings, GenerationContext context) {
         this.context = context;
         this.settings = settings;
+    }
+
+    private static List<ConfigProperty> getHttpProperties(GenerationContext context) {
+        var properties = new ArrayList<ConfigProperty>(HTTP_PROPERTIES.size() + 1);
+        var clientBuilder = ConfigProperty.builder()
+                .name("http_client")
+                .type(Symbol.builder()
+                        .name("HTTPClient")
+                        .namespace("smithy_http.aio.interfaces", ".")
+                        .addDependency(SmithyPythonDependency.SMITHY_HTTP)
+                        .build())
+                .documentation("The HTTP client used to make requests.")
+                .nullable(false);
+
+        if (usesHttp2(context)) {
+            clientBuilder
+                .initialize(writer -> {
+                    writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("awscrt"));
+                    writer.addImport("smithy_http.aio.crt", "AWSCRTHTTPClient");
+                    writer.write("self.http_client = http_client or AWSCRTHTTPClient()");
+                });
+
+        } else {
+            clientBuilder
+                .initialize(writer -> {
+                    writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("aiohttp"));
+                    writer.addImport("smithy_http.aio.aiohttp", "AIOHTTPClient");
+                    writer.write("self.http_client = http_client or AIOHTTPClient()");
+                });
+        }
+        properties.add(clientBuilder.build());
+
+        properties.addAll(HTTP_PROPERTIES);
+        return List.copyOf(properties);
+    }
+
+    private static boolean usesHttp2(GenerationContext context) {
+        var configuration = context.applicationProtocol().configuration();
+        var httpVersions = configuration.getArrayMember("http")
+                .orElse(ArrayNode.arrayNode())
+                .getElementsAs(StringNode.class)
+                .stream().map(node -> node.getValue().toLowerCase(Locale.ENGLISH)).toList();
+
+        // An explicit http2 configuration
+        if (httpVersions.contains("h2")) {
+            return true;
+        }
+
+        // Bidirectional streaming REQUIRES h2 inherently
+        var eventIndex = EventStreamIndex.of(context.model());
+        var topDownIndex = TopDownIndex.of(context.model());
+        for (OperationShape operation : topDownIndex.getContainedOperations(context.settings().service())) {
+            if (eventIndex.getInputInfo(operation).isPresent() && eventIndex.getOutputInfo(operation).isPresent()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     private static List<ConfigProperty> getHttpAuthProperties(GenerationContext context) {
@@ -254,7 +302,7 @@ final class ConfigGenerator implements Runnable {
         // and add them in if the protocol is going to need them.
         var serviceIndex = ServiceIndex.of(context.model());
         if (context.applicationProtocol().isHttpProtocol()) {
-            properties.addAll(HTTP_PROPERTIES);
+            properties.addAll(getHttpProperties(context));
             if (!serviceIndex.getAuthSchemes(settings.service()).isEmpty()) {
                 properties.addAll(getHttpAuthProperties(context));
                 writer.onSection(new AddAuthHelper());
