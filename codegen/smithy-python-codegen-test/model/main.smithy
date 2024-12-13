@@ -8,7 +8,10 @@ use smithy.test#httpResponseTests
 use smithy.waiters#waitable
 
 /// Provides weather forecasts.
-@restJson1
+@restJson1(
+    http: ["h2", "http/1.1"]
+    eventStreamHttp: ["h2"]
+)
 @fakeProtocol
 @paginated(inputToken: "nextToken", outputToken: "nextToken", pageSize: "pageSize")
 @httpApiKeyAuth(name: "weather-auth", in: "header")

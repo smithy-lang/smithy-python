@@ -49,9 +49,7 @@ public final class SmithyPythonDependency {
             // You'll need to locally install this before we publish
             "==0.0.1",
             Type.DEPENDENCY,
-            false,
-            // TODO: make this configurable
-            List.of("aiohttp")
+            false
     );
 
     /**

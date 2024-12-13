@@ -96,7 +96,7 @@ public final class GenerationContext
      */
     public ApplicationProtocol applicationProtocol() {
         return protocolGenerator != null
-                ? protocolGenerator.getApplicationProtocol()
+                ? protocolGenerator.getApplicationProtocol(this)
                 : ApplicationProtocol.createDefaultHttpApplicationProtocol();
     }
 

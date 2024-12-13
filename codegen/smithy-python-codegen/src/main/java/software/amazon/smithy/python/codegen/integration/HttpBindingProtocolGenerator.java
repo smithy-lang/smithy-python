@@ -92,7 +92,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
     private final Set<Shape> deserializingDocumentShapes = new TreeSet<>();
 
     @Override
-    public ApplicationProtocol getApplicationProtocol() {
+    public ApplicationProtocol getApplicationProtocol(GenerationContext context) {
         return ApplicationProtocol.createDefaultHttpApplicationProtocol();
     }
 

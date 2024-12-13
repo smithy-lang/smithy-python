@@ -17,6 +17,7 @@ package software.amazon.smithy.python.codegen;
 
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolReference;
+import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
@@ -24,8 +25,12 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
  * application protocol (e.g., "http", "mqtt", etc).
  */
 @SmithyUnstableApi
-public record ApplicationProtocol(String name, SymbolReference requestType, SymbolReference responseType) {
-
+public record ApplicationProtocol(
+        String name,
+        SymbolReference requestType,
+        SymbolReference responseType,
+        ObjectNode configuration
+) {
     /**
      * Checks if the protocol is an HTTP based protocol.
      *
@@ -40,7 +45,7 @@ public record ApplicationProtocol(String name, SymbolReference requestType, Symb
      *
      * @return Returns the created application protocol.
      */
-    public static ApplicationProtocol createDefaultHttpApplicationProtocol() {
+    public static ApplicationProtocol createDefaultHttpApplicationProtocol(ObjectNode config) {
         return new ApplicationProtocol(
                 "http",
                 SymbolReference.builder()
@@ -48,8 +53,18 @@ public record ApplicationProtocol(String name, SymbolReference requestType, Symb
                         .build(),
                 SymbolReference.builder()
                         .symbol(createHttpSymbol("HTTPResponse"))
-                        .build()
+                        .build(),
+                config
         );
+    }
+
+    /**
+     * Creates a default HTTP application protocol.
+     *
+     * @return Returns the created application protocol.
+     */
+    public static ApplicationProtocol createDefaultHttpApplicationProtocol() {
+        return createDefaultHttpApplicationProtocol(ObjectNode.objectNode());
     }
 
     private static Symbol createHttpSymbol(String symbolName) {

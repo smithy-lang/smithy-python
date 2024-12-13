@@ -19,6 +19,8 @@ import java.util.List;
 import java.util.Set;
 import software.amazon.smithy.aws.traits.protocols.RestJson1Trait;
 import software.amazon.smithy.model.knowledge.HttpBinding;
+import software.amazon.smithy.model.node.ArrayNode;
+import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.Shape;
@@ -27,6 +29,7 @@ import software.amazon.smithy.model.traits.RequiresLengthTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.protocoltests.traits.HttpMessageTestCase;
+import software.amazon.smithy.python.codegen.ApplicationProtocol;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.HttpProtocolTestGenerator;
@@ -88,6 +91,17 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
     @Override
     public ShapeId getProtocol() {
         return RestJson1Trait.ID;
+    }
+
+    @Override
+    public ApplicationProtocol getApplicationProtocol(GenerationContext context) {
+        var service = context.settings().service(context.model());
+        var trait = service.expectTrait(RestJson1Trait.class);
+        var config = ObjectNode.builder()
+                .withMember("http", ArrayNode.fromStrings(trait.getHttp()))
+                .withMember("eventStreamHttp", ArrayNode.fromStrings(trait.getEventStreamHttp()))
+                .build();
+        return ApplicationProtocol.createDefaultHttpApplicationProtocol(config);
     }
 
     @Override

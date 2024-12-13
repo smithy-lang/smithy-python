@@ -56,6 +56,10 @@ public record PythonDependency(
                 .build();
     }
 
+    public PythonDependency withOptionalDependencies(String... optionalDependencies) {
+        return new PythonDependency(packageName, version, type, isLink, List.of(optionalDependencies));
+    }
+
     /**
      * An enum of valid dependency types.
      */

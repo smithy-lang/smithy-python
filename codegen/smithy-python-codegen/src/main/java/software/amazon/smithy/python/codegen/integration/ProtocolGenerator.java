@@ -55,7 +55,7 @@ public interface ProtocolGenerator {
      *
      * @return Returns the created application protocol.
      */
-    ApplicationProtocol getApplicationProtocol();
+    ApplicationProtocol getApplicationProtocol(GenerationContext context);
 
 
     /**
