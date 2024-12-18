@@ -31,7 +31,13 @@ async def parse_rest_json_error_info(
 
     if check_body:
         if body := await http_response.consume_body_async():
-            json_body = json.loads(body)
+            try:
+                json_body = json.loads(body)
+            except json.JSONDecodeError:
+                # In some cases the body might end up being HTML depending on the
+                # configuration of the server. In those cases we can simply ignore
+                # the body because we can't find the information we need there.
+                pass
 
         if json_body:
             for key, value in json_body.items():

@@ -118,3 +118,21 @@ async def test_parse_rest_json_error_info_without_body(
     )
     actual = await parse_rest_json_error_info(response, check_body=False)
     assert actual == expected
+
+
+async def test_parse_error_info_non_json_body() -> None:
+    response = HTTPResponse(
+        status=400,
+        fields=tuples_to_fields([]),
+        body=async_list(
+            [
+                (
+                    b"<html>\r\n<head><title>400 Bad Request</title></head>\r\n"
+                    b"<body>\r\n<center><h1>400 Bad Request</h1></center>\r\n</body>\r\n</html>\r\n"
+                )
+            ]
+        ),
+    )
+    expected = RestJsonErrorInfo("Unknown", "Unknown", None)
+    actual = await parse_rest_json_error_info(response, check_body=True)
+    assert actual == expected
