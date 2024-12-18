@@ -2,7 +2,7 @@ black<=24.10.0
 flake8<=7.1.1
 pyright==1.1.391
 pytest<=8.3.4
-pytest-asyncio<0.25.0
+pytest-asyncio<0.26.0
 pytest-cov<=6.0.0
 freezegun<1.6.0
 pyupgrade<3.20.0
