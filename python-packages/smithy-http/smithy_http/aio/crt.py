@@ -5,6 +5,7 @@
 import asyncio
 from collections.abc import AsyncGenerator, AsyncIterable, Awaitable
 from concurrent.futures import Future
+from copy import deepcopy
 from io import BytesIO
 from threading import Lock
 from typing import TYPE_CHECKING, Any
@@ -178,9 +179,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         client.
         """
         _assert_crt()
-        self._config = (
-            AWSCRTHTTPClientConfig() if client_config is None else client_config
-        )
+        self._config = client_config or AWSCRTHTTPClientConfig()
         if eventloop is None:
             eventloop = _AWSCRTEventLoop()
         self._eventloop = eventloop
@@ -334,3 +333,9 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             dest.write(chunk)
         # Should we call close here? Or will that make the crt unable to read the last
         # chunk?
+
+    def __deepcopy__(self, memo: Any) -> "AWSCRTHTTPClient":
+        return AWSCRTHTTPClient(
+            eventloop=self._eventloop,
+            client_config=deepcopy(self._config),
+        )
