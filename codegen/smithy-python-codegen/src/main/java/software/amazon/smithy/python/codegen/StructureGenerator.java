@@ -85,8 +85,8 @@ final class StructureGenerator implements Runnable {
                 required.add(member);
             }
         }
-        this.requiredMembers = filterMessageMembers(required);
-        this.optionalMembers = filterMessageMembers(optional);
+        this.requiredMembers = filterPropertyMembers(required);
+        this.optionalMembers = filterPropertyMembers(optional);
         this.recursiveShapes = recursiveShapes;
     }
 
@@ -242,16 +242,21 @@ final class StructureGenerator implements Runnable {
         }
     }
 
-    private List<MemberShape> filterMessageMembers(List<MemberShape> members) {
-        // Only apply this to structures that are errors.
+    private List<MemberShape> filterPropertyMembers(List<MemberShape> members) {
         if (!shape.hasTrait(ErrorTrait.class)) {
-            return members;
+            return members.stream().filter(this::filterEventStreamMember).toList();
         }
         // We replace modeled message members with a static `message` member. Serialization
         // and deserialization will handle assigning them properly.
         return members.stream()
                 .filter(member -> !isErrorMessage(model, member))
+                .filter(this::filterEventStreamMember)
                 .collect(Collectors.toList());
+    }
+
+    private boolean filterEventStreamMember(MemberShape member) {
+        var target = model.expectShape(member.getTarget());
+        return !(target.isUnionShape() && target.hasTrait(StreamingTrait.class));
     }
 
     private String getDefaultValue(PythonWriter writer, MemberShape member) {
