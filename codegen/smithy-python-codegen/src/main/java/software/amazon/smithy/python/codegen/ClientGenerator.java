@@ -334,6 +334,8 @@ final class ClientGenerator implements Runnable {
                                 except SmithyRetryException:
                                     raise context_with_response.response
                                 await sleep(retry_token.retry_delay)
+                                if (seek := getattr(context_with_transport_request.transport_request.body, "seek")) is not None:
+                                    await seek(0)
                             else:
                                 # Step 8: Invoke record_success
                                 retry_strategy.record_success(token=retry_token)
