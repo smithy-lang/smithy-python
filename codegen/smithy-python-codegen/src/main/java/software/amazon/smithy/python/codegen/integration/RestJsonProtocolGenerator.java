@@ -138,7 +138,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
     ) {
         writer.addDependency(SmithyPythonDependency.SMITHY_JSON);
         writer.addImport("smithy_json", "JSONCodec");
-        writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
+        writer.addImport("smithy_core.aio.types", "SeekableAsyncBytesReader");
 
         writer.pushState();
 
@@ -146,7 +146,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
             var body = shouldWriteDefaultBody(context, operation) ? "b'{}'" : "b''";
             writer.write("""
                     content_length = 0
-                    body = AsyncBytesReader($L)
+                    body = SeekableAsyncBytesReader($L)
                     """, body);
         } else {
             writer.addImport("smithy_core.types", "TimestampFormat");
@@ -159,7 +159,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                         content = b'{}'
                     ${/writeDefaultBody}
                     content_length = len(content)
-                    body = AsyncBytesReader(content)
+                    body = SeekableAsyncBytesReader(content)
                     """);
         }
 
@@ -223,13 +223,13 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
             return;
         }
 
-        writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
+        writer.addImport("smithy_core.aio.types", "SeekableAsyncBytesReader");
         writer.write("content_length: int = 0");
 
         CodegenUtils.accessStructureMember(context, writer, "input", payloadBinding.getMember(), () -> {
             if (target.isBlobShape()) {
                 writer.write("content_length = len($L)", dataSource);
-                writer.write("body = AsyncBytesReader($L)", dataSource);
+                writer.write("body = SeekableAsyncBytesReader($L)", dataSource);
                 return;
             }
 
@@ -244,13 +244,13 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                         """, dataSource);
             }
             writer.write("content_length = len(content)");
-            writer.write("body = AsyncBytesReader(content)");
+            writer.write("body = SeekableAsyncBytesReader(content)");
         });
         if (target.isStructureShape()) {
             writer.write("""
                 else:
                     content_length = 2
-                    body = AsyncBytesReader(b'{}')
+                    body = SeekableAsyncBytesReader(b'{}')
                 """);
         }
     }
