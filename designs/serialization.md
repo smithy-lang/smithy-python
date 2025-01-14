@@ -340,3 +340,199 @@ class HTTPHeaderSerializer(SpecificShapeSerializer):
 
     [...]
 ```
+
+## Shape Deserializers and Deserializeable Shapes
+
+Deserialization will function very similarly to serialization, through the
+interaction of two interfaces: `ShapeDeserializer` and `DeserializeableShape`.
+
+A `ShapeDeserializer` is a class that is given a data source and provides
+methods to extract typed data from it when given a schema. For example, a
+`JSONShapeDeserializer` could be written that is constructed with JSON bytes and
+allows a caller to convert it to a shape.
+
+A `SerializeableShape` is a class that has a `deserialize` method that takes a
+`ShapeDeserializer` and calls the relevant methods needed to deserialize it. All
+generated shapes will implement the `DeserializeableShape` interface, which will
+then be the method by which all deserialization is performed.
+
+In Python these interfaces will be represented as shown below:
+
+```python
+@runtime_checkable
+class ShapeDeserializer(Protocol):
+
+    def read_struct(
+        self,
+        schema: "Schema",
+        state: dict[str, Any],
+        consumer: Callable[["Schema", "ShapeDeserializer", dict[str, Any]], None],
+    ) -> None:
+        ...
+
+    def read_list(
+        self,
+        schema: "Schema",
+        state: list[Any],
+        consumer: Callable[["ShapeDeserializer", list[Any]], None],
+    ) -> None:
+        ...
+
+    def read_map(
+        self,
+        schema: "Schema",
+        state: dict[str, Any],
+        consumer: Callable[["ShapeDeserializer", dict[str, Any]], None],
+    ) -> None:
+        ...
+
+    def is_null(self) -> bool:
+        ...
+
+    def read_null(self) -> None:
+        ...
+
+    def read_boolean(self, schema: "Schema") -> bool:
+        ...
+
+    def read_blob(self, schema: "Schema") -> bytes:
+        ...
+
+    def read_byte(self, schema: "Schema") -> int:
+        return self.read_integer(schema)
+
+    def read_short(self, schema: "Schema") -> int:
+        return self.read_integer(schema)
+
+    def read_integer(self, schema: "Schema") -> int:
+        ...
+
+    def read_long(self, schema: "Schema") -> int:
+        return self.read_integer(schema)
+
+    def read_float(self, schema: "Schema") -> float:
+        ...
+
+    def read_double(self, schema: "Schema") -> float:
+        return self.read_float(schema)
+
+    def read_big_integer(self, schema: "Schema") -> int:
+        return self.read_integer(schema)
+
+    def read_big_decimal(self, schema: "Schema") -> Decimal:
+        ...
+
+    def read_string(self, schema: "Schema") -> str:
+        ...
+
+    def read_document(self, schema: "Schema") -> "Document":
+        ...
+
+    def read_timestamp(self, schema: "Schema") -> datetime.datetime:
+        ...
+
+
+@runtime_checkable
+class DeserializeableShape(Protocol):
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+        ...
+```
+
+Below is an example Smithy `structure` shape, followed by the
+`DeserializeableShape` it would generate.
+
+```smithy
+namespace com.example
+
+structure ExampleStructure {
+    member: Integer = 0
+}
+```
+
+```python
+@dataclass(kw_only=True)
+class ExampleStructure:
+    member: int = 0
+
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+        kwargs: dict[str, Any] = {}
+        deserializer.read_struct(
+            _SCHEMA_CLIENT_OPTIONAL_DEFAULTS,
+            consumer=cls._deserialize_kwargs,
+        )
+        return cls(**kwargs)
+
+    @classmethod
+    def _deserialize_kwargs(
+        schema: Schema,
+        de: ShapeDeserializer,
+        kwargs: dict[str, Any],
+    ) -> None:
+        match schema.expect_member_index():
+            case 0:
+                kwargs["member"] = de.read_integer(
+                    _SCHEMA_CLIENT_OPTIONAL_DEFAULTS.members["member"]
+                )
+
+            case _:
+                logger.debug(f"Unexpected member schema: {schema}")
+```
+
+For structures, arguments are built up in a `kwargs` dictionary, which is later
+expanded to construct the final type. Other languages might use a builder
+pattern instead, but builders are atypical in Python, so this is a midway
+approach that should be familiar to Python users.
+
+The `kwargs` dictionary is passed through the serializer in order to avoid
+having to allocate an anonymous function or use `functools.partial` (which would
+need to allocate a `Partial` object). Lists and maps pass in pre-constructed
+containers for the same reason.
+
+Member dispatch is currently based on the "member index", which is a
+representation of the member's position on the shape in the Smithy model itself.
+(Note that this is not always the same as the ordering of the members in the
+members dictionary. Recursive members are added at the end, regardless of where
+they appear in the model.)
+
+Doing member dispatch this way is an optimization, which uses relatively simple
+integer comparision instead of the comparatively more expensive string
+comparison needed to compare based on the member name. Further testing needs to
+be done in Python to determine whether the performance impact justifies the
+extra artifact size. In other language, the compiler is also capable of turning
+an integer switch into a jump table, which CPython does not do (though it could
+in theory).
+
+It is important to note that the general approach of dealing with members
+differs from serialization. No callback functions are needed in serialization,
+but they are needed for deserialization. The reason is that deserializers must
+handle members as they are presented in the data source, without any sort of
+intermediate structure to pull members from. The shape class can't simply
+iterate through its members in whatever order it likes to check if said member
+is present, because the only member that is ever known about is the *next* one.
+
+### Performing Deserialization
+
+Deserialization works much like serialization does, all that is needed is a
+deserializer and a class to deserialize into. The following shows how one might
+deserialize a shape from JSON bytes:
+
+```python
+>>> deserializer = JSONShapeDeserializer(b'{"member":9}')
+>>> print(ExampleStructure.deserialize(deserializer))
+ExampleStructure(member=9)
+```
+
+Just like with serialization, the process for performing deserialization never
+changes at the high level. Different implementations will all interact with the
+shape in the same exact way. The same interface will be used for HTTP bindings,
+event stream bindings, and any other sort of model-driven data binding that may
+be needed.
+
+These implementations can be swapped at any time without having to regenerate
+the client, and can be used for purposes other than receiving responses from a
+client call to a service. A service could, for example, model its event
+structures and include them in their client. A customer could then use the
+generated `DeserializeableShape`s to deserialize those events into Python types
+when they're received without having to do so manually.
