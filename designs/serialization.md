@@ -218,7 +218,7 @@ class ExampleStructure:
 ### Performing Serialization
 
 To serialize a shape, all that is needed is an instance of the shape and a
-serializer. The following shows how one might serilize a shape to JSON bytes:
+serializer. The following shows how one might serialize a shape to JSON bytes:
 
 ```python
 >>> shape = ExampleStructure(member=9)
