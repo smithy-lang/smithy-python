@@ -123,10 +123,18 @@ class ShapeSerializer(Protocol):
         with self.begin_struct(schema=schema) as struct_serializer:
             struct.serialize_members(struct_serializer)
 
-    def begin_list(self, schema: "Schema") -> AbstractContextManager["ShapeSerializer"]:
+    def begin_list(
+        self,
+        schema: "Schema",
+        size: int,
+    ) -> AbstractContextManager["ShapeSerializer"]:
         ...
 
-    def begin_map(self, schema: "Schema") -> AbstractContextManager["MapSerializer"]:
+    def begin_map(
+        self,
+        schema: "Schema",
+        size: int,
+    ) -> AbstractContextManager["MapSerializer"]:
         ...
 
     def write_null(self, schema: "Schema") -> None:
