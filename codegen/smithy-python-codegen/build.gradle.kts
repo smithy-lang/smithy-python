@@ -18,9 +18,9 @@ extra["displayName"] = "Smithy :: Python :: Codegen"
 extra["moduleName"] = "software.amazon.smithy.python.codegen"
 
 dependencies {
-    api("software.amazon.smithy:smithy-codegen-core:1.53.0")
-    implementation("software.amazon.smithy:smithy-waiters:1.53.0")
-    implementation("software.amazon.smithy:smithy-protocol-test-traits:1.53.0")
+    api("software.amazon.smithy:smithy-codegen-core:1.54.0")
+    implementation("software.amazon.smithy:smithy-waiters:1.54.0")
+    implementation("software.amazon.smithy:smithy-protocol-test-traits:1.54.0")
     // We have this because we're using RestJson1 as a 'generic' protocol.
-    implementation("software.amazon.smithy:smithy-aws-traits:1.53.0")
+    implementation("software.amazon.smithy:smithy-aws-traits:1.54.0")
 }
