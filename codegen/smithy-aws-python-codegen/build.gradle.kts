@@ -9,5 +9,5 @@ extra["moduleName"] = "software.amazon.smithy.aws.python.codegen"
 
 dependencies {
     implementation(project(":smithy-python-codegen"))
-    implementation("software.amazon.smithy:smithy-aws-traits:1.53.0")
+    implementation("software.amazon.smithy:smithy-aws-traits:1.54.0")
 }
