@@ -536,3 +536,165 @@ client call to a service. A service could, for example, model its event
 structures and include them in their client. A customer could then use the
 generated `DeserializeableShape`s to deserialize those events into Python types
 when they're received without having to do so manually.
+
+## Codecs
+
+Serializers and deserializers are never truly disconnected - where there's one,
+there's always the other. They need to be tied together in a way that makes
+sense, is portable, and which provides extra utility for common use cases.
+
+One such use case is the serialization and deserialization to and from discrete
+bytes of a common format represented by a media type such as `application/json`.
+These will be represented by the `Codec` interface:
+
+```python
+@runtime_checkable
+class Codec(Protocol):
+
+    def create_serializer(self, sink: BytesWriter) -> ShapeSerializer:
+        ...
+
+    def create_deserializer(self, source: bytes | BytesReader) -> ShapeDeserializer:
+        ...
+
+    def serialize(self, shape: SerializeableShape) -> bytes:
+        ... # A default implementation will be provided
+
+    def deserialize[S: DeserializeableShape](
+        self, source: bytes | BytesReader,
+        shape: type[S],
+    ) -> S:
+        ... # A default implementation will be provided
+```
+
+This interface provides a layer on top of serializers and deserializers that lets
+them be interacted with in a bytes-in, bytes-out way. This allows them to be used
+generically in places like HTTP message bodies. The following shows how one could
+use a JSON codec:
+
+```python
+>>> codec = JSONCodec()
+>>> deserialized = codec.deserialize(b'{"member":9}', ExampleStructure)
+>>> print(deserialized)
+ExampleStructure(member=9)
+>>> print(codec.serialize(deserialized))
+b'{"member":9}'
+```
+
+Combining them this way also allows for sharing configuration. In JSON, for
+example, there could be a configuration option to represent number types that
+can't fit in am IEEE 754 double as a string, since many JSON implementations
+(including JavaScript's) treat them as such.
+
+`Codec`s also provides opportunities for minor optimizations, such as caching
+serializers and deserializers where possible.
+
+## Client Protocols
+
+`Codec`s aren't sufficient to fully represent a protocol, however, as there is
+also a transport layer that must be created and support data binding. An HTTP
+request, for example, can have operation members bound to headers, the query
+string, the response code, etc. Such transports generally operate by interacting
+`Request` and `Response` objects rather than raw bytes, so the bytes-based
+interfaces of `Codec` aren't sufficient by themselves.
+
+```python
+class ClientProtocol[Request, Response](Protocol):
+
+    @property
+    def id(self) -> ShapeID:
+        ...
+
+    def serialize_request[I: SerializeableShape, O: DeserializeableShape](
+        self,
+        operation: ApiOperation[I, O],
+        input: I,
+        endpoint: URI,
+        context: dict[str, Any],
+    ) -> Request:
+        ...
+
+    def set_service_endpoint(
+        self,
+        request: Request,
+        endpoint: Endpoint,
+    ) -> Request:
+        ...
+
+    async def deserialize_response[I: SerializeableShape, O: DeserializeableShape](
+        self,
+        operation: ApiOperation[I, O],
+        error_registry: TypeRegistry,
+        request: Request,
+        response: Response,
+        context: dict[str, Any],
+    ) -> O:
+        ...
+```
+
+The `ClientProtocol` incorporates much more context than a `Codec` does.
+Serialization takes the operation's schema via `ApiOperation`, the endpoint to
+send the request to, and a general context bag that is passed through the
+request pipeline. Deserialization takes much of the same as well as a
+`TypeRegistry` that allows it to map errors it encounters to the generated
+exception classes.
+
+In most cases these `ClientProtocol`s will be constructed with a `Codec` used to
+(de)serialize part of the request, such as the HTTP message body. Since that
+aspect is separate, it allows for flexibility through composition. Two Smithy
+protocols that support HTTP bindings but use a different body media type could
+share most of a `ClientProtocol` implementation with the `Codec` being swapped
+out to support the appropriate media type.
+
+A `ClientProtocol` will need to be used alongside a `ClientTransport` that takes
+the same request and response types to handle sending the request.
+
+```python
+class ClientTransport[Request, Response](Protocol):
+    async def send(self, request: Request) -> Response:
+        ...
+```
+
+Below is an example of what a very simplistic use of a `ClientProtocol` could
+look like. (The actual request pipeline in generated clients will be more
+robust, including things like automated retries, endpoint resolution, and so
+on.)
+
+```python
+class ExampleClient:
+    def __init__(
+        self,
+        protocol: ClientProtocol,
+        transport: ClientTransport,
+    ):
+        self.protocol = protocol
+        self.transport = transport
+
+    async def example_operation(
+        self, input: ExampleOperationInput
+    ) -> ExampleOperationOutput:
+        context = {}
+        transport_request = self.protocol.serialize_request(
+            operation=EXAMPLE_OPERATION_SCHEMA,
+            input=input,
+            endpoint=BASE_ENDPOINT,
+            context=context,
+        )
+        transport_response = await self.transport.send(transport_request)
+        return self.protocol.deserialize_response(
+            operation=EXAMPLE_OPERATION_SCHEMA,
+            error_registry=EXAMPLE_OPERATION_REGISTRY,
+            request=transport_request,
+            response=transport_response,
+            context=context,
+        )
+```
+
+As you can see, this makes the protocol and transport configurable at runtime.
+This will make it significantly easier for services to support multiple
+protocols and for customers to use whichever they please. It isn't even
+necessary to update the client version to make use of a new protocol - a
+customer could simply take a dependency on the implementation and use it.
+
+Similarly, since the protocol is decoupled from the transport, customers can
+freely switch between implementations without also having to switch protocols.
