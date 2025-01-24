@@ -101,6 +101,15 @@ this file, see the
 }
 ```
 
+With both files your project directory should look like this:
+```
+.
+├── model
+│   └── main.smithy
+└── smithy-build.json
+```
+
+
 The code generator, `smithy-python-codegen`, hasn't been published yet, so
 you'll need to build it yourself. To build and run the generator you will need
 the following prerequisites:
@@ -117,7 +126,7 @@ install the python dependencies in your environment and make the code generator
 available locally. For more information on the underlying build process, see the
 "Using repository tooling" section.
 
-Now from your model directory run `smithy build` and you'll have a generated
+Now from your project directory run `smithy build` and you'll have a generated
 client! The client can be found in `build/smithy/client/python-client-codegen`.
 The following is a snippet showing how you might use it:
 
