@@ -19,6 +19,44 @@ based on information from a Smithy model.
   feed well-formed data from any source into a protocol and have it transform
   that data with no side-effects.
 
+## Terminology - `Protocol` vs protcol
+
+In Smithy, a "protocol" is a method of communicating with a service over a
+particular transport using a particular format. For example, the
+`aws.protocols#RestJson1` protocol is a protocol that communicates over the an
+HTTP transport that makes use of REST bindings and formats structured HTTP
+payloads in JSON.
+
+In Python, a
+[`Protocol`](https://typing.readthedocs.io/en/latest/spec/protocol.html#protocols)
+is a type that is used to define structural subtyping. For example, the
+following shows a `Protocol` and two valid implementations of it:
+
+```python
+class ExampleProtocol(Protocol):
+    def greet(self, name: str) -> str:
+        return f"Hello {name}!"
+
+class ExplicitImplementation(ExampleProtocol):
+    pass
+
+class ImplicitImplementation:
+    def greet(self, name: str) -> str:
+        return f"Good day to you {name}."
+```
+
+Since this is *structural* subtyping, it isn't required that implmentations
+actual inheret from the `Protocol` or otherwise declare that they're
+implementing it. But they *can* to make it more explicit or to inherit a default
+implementation. The `Protocol` class itself cannot be instantiated, however.
+
+This overlapping of terms clearly can cause confusion. To hopefully avoid that,
+implementations of Python's `Protocol` type will referred to using the literal
+`Protocol` or the general term "interface". (A protocol *isn't* quite the same
+thing as an interface in other programming languages, but for our purposes it's
+close enough.) Smithy protocols will be referred to simply as "protocol"s or by
+their specific protocol names (e.g. restJson1).
+
 ## Schemas
 
 The basic building block of Smithy is the "shape", a representation of data of a
@@ -108,7 +146,7 @@ then be the method by which all serialization is performed.
 Using open interfaces in this way allows for great flexibility in the generated
 Python code, which will be discussed more later.
 
-In Python, these interfaces will be represented as `Protocol`s, as shown below:
+In Python these interfaces will be represented as shown below:
 
 ```python
 @runtime_checkable
