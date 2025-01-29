@@ -60,9 +60,9 @@ import software.amazon.smithy.utils.StringUtils;
  * may be attached to symbols.
  */
 @SmithyInternalApi
-public final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol> {
+public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<Symbol> {
 
-    private static final Logger LOGGER = Logger.getLogger(SymbolVisitor.class.getName());
+    private static final Logger LOGGER = Logger.getLogger(PythonSymbolProvider.class.getName());
     private static final String SHAPES_FILE = "models";
     private static final String SCHEMAS_FILE = "_private/schemas";
 
@@ -72,17 +72,17 @@ public final class SymbolVisitor implements SymbolProvider, ShapeVisitor<Symbol>
     private final PythonSettings settings;
     private final ServiceShape service;
 
-    SymbolVisitor(Model model, PythonSettings settings) {
+    public PythonSymbolProvider(Model model, PythonSettings settings) {
         this.model = model;
         this.settings = settings;
         this.service = model.expectShape(settings.service(), ServiceShape.class);
 
         // Load reserved words from new-line delimited files.
         var reservedClassNames = new ReservedWordsBuilder()
-                .loadWords(SymbolVisitor.class.getResource("reserved-class-names.txt"), this::escapeWord)
+                .loadWords(PythonSymbolProvider.class.getResource("reserved-class-names.txt"), this::escapeWord)
                 .build();
         var reservedMemberNamesBuilder = new ReservedWordsBuilder()
-                .loadWords(SymbolVisitor.class.getResource("reserved-member-names.txt"), this::escapeWord);
+                .loadWords(PythonSymbolProvider.class.getResource("reserved-member-names.txt"), this::escapeWord);
 
         escaper = ReservedWordSymbolProvider.builder()
                 .nameReservedWords(reservedClassNames)

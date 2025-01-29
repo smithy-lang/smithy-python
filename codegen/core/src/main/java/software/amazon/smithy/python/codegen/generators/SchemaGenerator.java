@@ -4,15 +4,19 @@
  */
 package software.amazon.smithy.python.codegen.generators;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import software.amazon.smithy.codegen.core.Symbol;
+import software.amazon.smithy.codegen.core.TopologicalIndex;
 import software.amazon.smithy.model.loader.Prelude;
 import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
@@ -68,6 +72,28 @@ public final class SchemaGenerator implements Consumer<Shape> {
                         symbol.getNamespace(),
                         writer -> writeShapeSchema(writer, shape));
         generatedShapes.add(shape.getId());
+    }
+
+    public static void generateAll(
+            GenerationContext context,
+            Collection<Shape> shapes,
+            Function<Shape, Boolean> filter
+    ) {
+        var schemaGenerator = new SchemaGenerator(context);
+        var index = TopologicalIndex.of(context.model());
+        Stream.concat(index.getOrderedShapes().stream(), index.getRecursiveShapes().stream())
+                .filter(shapes::contains)
+                .filter(shape -> !shape.isOperationShape() && !shape.isResourceShape()
+                        && !shape.isServiceShape()
+                        && !shape.isMemberShape()
+                        && !Prelude.isPreludeShape(shape))
+                .filter(filter::apply)
+                .forEach(schemaGenerator);
+        schemaGenerator.finalizeRecursiveShapes();
+    }
+
+    public static void generateAll(GenerationContext context, Collection<Shape> shapes) {
+        SchemaGenerator.generateAll(context, shapes, s -> true);
     }
 
     private void writeShapeSchema(PythonWriter writer, Shape shape) {

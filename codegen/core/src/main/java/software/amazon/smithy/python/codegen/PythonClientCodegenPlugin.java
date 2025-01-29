@@ -28,7 +28,7 @@ public final class PythonClientCodegenPlugin implements SmithyBuildPlugin {
 
         PythonSettings settings = PythonSettings.fromNode(context.getSettings());
         runner.settings(settings);
-        runner.directedCodegen(new DirectedPythonCodegen());
+        runner.directedCodegen(new DirectedPythonClientCodegen());
         runner.fileManifest(context.getFileManifest());
         runner.service(settings.service());
         runner.model(context.getModel());
