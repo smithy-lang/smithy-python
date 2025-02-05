@@ -30,7 +30,7 @@ clients and non-AWS Smithy clients.
 
 ### How do I use this?
 
-The first step is to create a Smithy pacakge. If this is your first time working
+The first step is to create a Smithy package. If this is your first time working
 with Smithy, follow [this quickstart guide](https://smithy.io/2.0/quickstart.html)
 to learn the basics and create a simple Smithy model.
 
