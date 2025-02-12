@@ -21,7 +21,7 @@ plugins {
     signing
     checkstyle
     jacoco
-    id("com.github.spotbugs") version "6.1.3"
+    id("com.github.spotbugs") version "6.1.4"
     id("io.codearte.nexus-staging") version "0.30.0"
 }
 
