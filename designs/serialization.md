@@ -351,7 +351,7 @@ methods to extract typed data from it when given a schema. For example, a
 `JSONShapeDeserializer` could be written that is constructed with JSON bytes and
 allows a caller to convert it to a shape.
 
-A `SerializeableShape` is a class that has a `deserialize` method that takes a
+A `DeserializeableShape` is a class that has a `deserialize` method that takes a
 `ShapeDeserializer` and calls the relevant methods needed to deserialize it. All
 generated shapes will implement the `DeserializeableShape` interface, which will
 then be the method by which all deserialization is performed.
