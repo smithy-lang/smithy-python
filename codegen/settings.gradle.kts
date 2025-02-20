@@ -14,18 +14,5 @@
  */
 
 rootProject.name = "smithy-python"
-include(":smithy-python-codegen")
-include(":smithy-aws-python-codegen")
-include(":smithy-python-codegen-test")
-include(":smithy-python-protocol-test")
-
-pluginManagement {
-    repositories {
-        mavenLocal()
-        gradlePluginPortal()
-    }
-    val smithyGradleVersion: String by settings
-    plugins {
-        id("software.amazon.smithy.gradle.smithy-base").version("1.1.0")
-    }
-}
+include(":core")
+include(":protocol-test")

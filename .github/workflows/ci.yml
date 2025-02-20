@@ -78,7 +78,7 @@ jobs:
           architecture: x64
 
       - name: clean and build without python
-        run: cd codegen && ./gradlew clean build -Plog-tests
+        run: cd codegen && ./gradlew clean build
 
       - name: Set Up Python for CI - ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -98,18 +98,18 @@ jobs:
           make install-python-components
 
       - name: clean and build without formatting/linting installed
-        run: cd codegen && ./gradlew clean build -Plog-tests
+        run: cd codegen && ./gradlew clean build
 
       - name: Install black
         run: |
           python${{ matrix.python-version }} -m pip install --upgrade black
 
       - name: clean and build without linting installed
-        run: cd codegen && ./gradlew clean build -Plog-tests
+        run: cd codegen && ./gradlew clean build
 
       - name: Install mypy and other libraries necessary for typing
         run: |
           python${{ matrix.python-version }} -m pip install --upgrade mypy pytest pytest-asyncio
 
       - name: clean and build with all optional tools installed
-        run: cd codegen && ./gradlew clean build -Plog-tests
+        run: cd codegen && ./gradlew clean build

@@ -110,8 +110,8 @@ With both files your project directory should look like this:
 ```
 
 
-The code generator, `smithy-python-codegen`, hasn't been published yet, so
-you'll need to build it yourself. To build and run the generator you will need
+The code generator libraries have not been published yet, so
+you'll need to build it yourself. To build and run the generator, you will need
 the following prerequisites:
 
 * Python 3.12 or newer
@@ -121,10 +121,22 @@ the following prerequisites:
 * JDK 17 or newer
 * make
 
-Now run `make install-components` from the root of this repository. This will
+Now, run `make install-components` from the root of this repository. This will
 install the python dependencies in your environment and make the code generator
 available locally. For more information on the underlying build process, see the
 "Using repository tooling" section.
+
+> [!TIP]
+> To make development easier, run the following command from the root:
+>```shell
+> ./pants export --resolve=python-default
+> ```
+> This will generate a [virtualenv](https://docs.python.org/3/library/venv.html) containing all python dependencies
+> and tools needed to build this project. There should be output in your terminal, denoting where pants
+> created the environment. Make sure to activate it by running:
+>```shell
+> source dist/export/python/virtualenvs/python-default/<version>/bin/activate
+> ```
 
 Now from your project directory run `smithy build` and you'll have a generated
 client! The client can be found in `build/smithy/client/python-client-codegen`.
