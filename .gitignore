@@ -19,10 +19,10 @@ target/
 **/dependency-reduced-pom.xml
 
 # Gradle
-/.gradle
+**/.gradle
 build/
 */out/
-*/*/out/
+**/*/out/
 
 # Python
 __pycache__

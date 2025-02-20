@@ -13,7 +13,22 @@
  * permissions and limitations under the License.
  */
 
-allprojects {
-    group = "software.amazon.smithy.python"
-    version = "0.1.0"
+description = "Smithy framework errors for Smithy Java"
+extra["displayName"] = "Smithy :: Python :: Protocol :: Test"
+extra["moduleName"] = "software.amazon.smithy.python.protocol.test"
+
+// TODO: Create a smithy-python protocol convention plugin once we have a better idea of what it looks like
+plugins {
+    java
+    alias(libs.plugins.smithy.gradle.base)
+}
+
+repositories {
+    mavenLocal()
+    mavenCentral()
+}
+
+dependencies {
+    implementation(project(":core"))
+    implementation(libs.smithy.aws.protocol.tests)
 }
