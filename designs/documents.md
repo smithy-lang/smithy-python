@@ -60,19 +60,19 @@ class Document:
     def is_none(self) -> bool:
         ...
 
-    def as_blob(self) -> bytes:
+    def as_bytes(self) -> bytes:
         ...
 
-    def as_boolean(self) -> bool:
+    def as_bool(self) -> bool:
         ...
 
     def as_string(self) -> str:
         ...
 
-    def as_timestamp(self) -> datetime.datetime:
+    def as_datetime(self) -> datetime.datetime:
         ...
 
-    def as_integer(self) -> int:
+    def as_int(self) -> int:
         ...
 
     def as_float(self) -> float:
