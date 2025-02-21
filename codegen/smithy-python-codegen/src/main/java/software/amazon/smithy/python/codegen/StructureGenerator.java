@@ -40,6 +40,7 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.InputTrait;
 import software.amazon.smithy.model.traits.OutputTrait;
+import software.amazon.smithy.model.traits.RequiredTrait;
 import software.amazon.smithy.model.traits.SensitiveTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.python.codegen.generators.MemberDeserializerGenerator;
@@ -78,8 +79,9 @@ final class StructureGenerator implements Runnable {
         var required = new ArrayList<MemberShape>();
         var optional = new ArrayList<MemberShape>();
         var index = NullableIndex.of(context.model());
-        for (MemberShape member: shape.members()) {
-            if (index.isMemberNullable(member) || member.hasTrait(DefaultTrait.class)) {
+        for (MemberShape member : shape.members()) {
+            if (!member.hasTrait(RequiredTrait.class) && (index.isMemberNullable(member)
+                    || member.hasTrait(DefaultTrait.class))) {
                 optional.add(member);
             } else {
                 required.add(member);
