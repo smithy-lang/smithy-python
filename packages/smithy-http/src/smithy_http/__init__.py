@@ -113,7 +113,7 @@ class Fields(interfaces.Fields):
                 f"{', '.join(non_unique_names)}."
             )
         init_tuples = zip(init_field_names, init_fields)
-        self.entries: OrderedDict[str, interfaces.Field] = OrderedDict(init_tuples)
+        self.entries: dict[str, interfaces.Field] = OrderedDict(init_tuples)
         self.encoding: str = encoding
 
     def set_field(self, field: interfaces.Field) -> None:

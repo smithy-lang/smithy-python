@@ -17,9 +17,10 @@ def sample_request() -> HTTPRequest:
             Field(name="user-agent", values=["smithy-python-test"]),
         ]
     )
+    b: list[bytes] = []
     return HTTPRequest(
         method="GET",
         destination=URI(host="aws.amazon.com"),
         fields=headers,
-        body=async_list([]),
+        body=async_list(b),
     )
