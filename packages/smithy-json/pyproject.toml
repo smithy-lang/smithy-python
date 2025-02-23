@@ -1,0 +1,17 @@
+[project]
+name = "smithy-json"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Hayden Baker", email = "haydebak@amazon.com" }
+]
+requires-python = ">=3.12"
+dependencies = [
+    "ijson>=3.3.0",
+    "smithy-core",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
