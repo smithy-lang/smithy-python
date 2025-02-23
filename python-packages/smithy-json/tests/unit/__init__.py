@@ -19,7 +19,6 @@ from smithy_core.schemas import Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import Trait
-
 from smithy_json._private.traits import JSON_NAME, TIMESTAMP_FORMAT
 
 SPARSE_TRAIT = Trait(id=ShapeID("smithy.api#sparse"))
@@ -170,13 +169,13 @@ class SerdeShape:
         if self.list_member is not None:
             schema = SCHEMA.members["listMember"]
             target_schema = schema.expect_member_target().members["member"]
-            with serializer.begin_list(schema) as ls:
+            with serializer.begin_list(schema, len(self.list_member)) as ls:
                 for element in self.list_member:
                     ls.write_string(target_schema, element)
         if self.map_member is not None:
             schema = SCHEMA.members["mapMember"]
             target_schema = schema.expect_member_target().members["value"]
-            with serializer.begin_map(schema) as ms:
+            with serializer.begin_map(schema, len(self.map_member)) as ms:
                 for key, value in self.map_member.items():
                     ms.entry(key, lambda vs: vs.write_string(target_schema, value))  # type: ignore
         if self.struct_member is not None:
@@ -184,7 +183,7 @@ class SerdeShape:
         if self.sparse_list_member is not None:
             schema = SCHEMA.members["sparseListMember"]
             target_schema = schema.expect_member_target().members["member"]
-            with serializer.begin_list(schema) as ls:
+            with serializer.begin_list(schema, len(self.sparse_list_member)) as ls:
                 for element in self.sparse_list_member:
                     if element is None:
                         ls.write_null(target_schema)
@@ -193,7 +192,7 @@ class SerdeShape:
         if self.sparse_map_member is not None:
             schema = SCHEMA.members["sparseMapMember"]
             target_schema = schema.expect_member_target().members["value"]
-            with serializer.begin_map(schema) as ms:
+            with serializer.begin_map(schema, len(self.sparse_map_member)) as ms:
                 for key, value in self.sparse_map_member.items():
                     if value is None:
                         ms.entry(key, lambda vs: vs.write_null(target_schema))

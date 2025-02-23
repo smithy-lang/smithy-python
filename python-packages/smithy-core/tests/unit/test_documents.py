@@ -5,7 +5,6 @@ from decimal import Decimal
 from typing import Any, Self, cast
 
 import pytest
-
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import (
     Document,
@@ -623,13 +622,13 @@ class DocumentSerdeShape:
         if self.list_member is not None:
             schema = SCHEMA.members["listMember"]
             target_schema = schema.expect_member_target().members["member"]
-            with serializer.begin_list(schema) as ls:
+            with serializer.begin_list(schema, len(self.list_member)) as ls:
                 for element in self.list_member:
                     ls.write_string(target_schema, element)
         if self.map_member is not None:
             schema = SCHEMA.members["mapMember"]
             target_schema = schema.expect_member_target().members["value"]
-            with serializer.begin_map(schema) as ms:
+            with serializer.begin_map(schema, len(self.map_member)) as ms:
                 for key, value in self.map_member.items():
                     ms.entry(key, lambda vs: vs.write_string(target_schema, value))  # type: ignore
         if self.struct_member is not None:
@@ -637,7 +636,7 @@ class DocumentSerdeShape:
         if self.sparse_list_member is not None:
             schema = SCHEMA.members["sparseListMember"]
             target_schema = schema.expect_member_target().members["member"]
-            with serializer.begin_list(schema) as ls:
+            with serializer.begin_list(schema, len(self.sparse_list_member)) as ls:
                 for element in self.sparse_list_member:
                     if element is None:
                         ls.write_null(target_schema)
@@ -646,7 +645,7 @@ class DocumentSerdeShape:
         if self.sparse_map_member is not None:
             schema = SCHEMA.members["sparseMapMember"]
             target_schema = schema.expect_member_target().members["value"]
-            with serializer.begin_map(schema) as ms:
+            with serializer.begin_map(schema, len(self.sparse_map_member)) as ms:
                 for key, value in self.sparse_map_member.items():
                     if value is None:
                         ms.entry(key, lambda vs: vs.write_null(target_schema))
@@ -840,7 +839,9 @@ def test_document_serializer(given: Any, expected: Document):
             serializer.write_document(DOCUMENT, given)
         case list():
             given = cast(list[str], given)
-            with serializer.begin_list(SPARSE_STRING_LIST_SCHEMA) as list_serializer:
+            with serializer.begin_list(
+                SPARSE_STRING_LIST_SCHEMA, len(given)
+            ) as list_serializer:
                 member_schema = SPARSE_STRING_LIST_SCHEMA.members["member"]
                 for e in given:
                     if e is None:
@@ -849,7 +850,9 @@ def test_document_serializer(given: Any, expected: Document):
                         list_serializer.write_string(member_schema, e)
         case dict():
             given = cast(dict[str, str], given)
-            with serializer.begin_map(SPARSE_STRING_MAP_SCHEMA) as map_serializer:
+            with serializer.begin_map(
+                SPARSE_STRING_MAP_SCHEMA, len(given)
+            ) as map_serializer:
                 member_schema = SPARSE_STRING_MAP_SCHEMA.members["value"]
                 for k, v in given.items():
                     if v is None:

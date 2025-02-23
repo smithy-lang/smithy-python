@@ -52,7 +52,9 @@ class ShapeSerializer(Protocol):
         with self.begin_struct(schema=schema) as struct_serializer:
             struct.serialize_members(struct_serializer)
 
-    def begin_list(self, schema: "Schema") -> AbstractContextManager["ShapeSerializer"]:
+    def begin_list(
+        self, schema: "Schema", size: int
+    ) -> AbstractContextManager["ShapeSerializer"]:
         """Open a list for writing.
 
         The returned context manager is responsible for closing the list when the caller
@@ -62,11 +64,14 @@ class ShapeSerializer(Protocol):
         inserting any data needed between elements.
 
         :param schema: The schema of the list.
+        :param size: The size of the list.
         :returns: A context manager containing an element serializer.
         """
         ...
 
-    def begin_map(self, schema: "Schema") -> AbstractContextManager["MapSerializer"]:
+    def begin_map(
+        self, schema: "Schema", size: int
+    ) -> AbstractContextManager["MapSerializer"]:
         """Open a map for writing.
 
         The returned context manager is responsible for closing the map when the caller
@@ -77,6 +82,7 @@ class ShapeSerializer(Protocol):
         data needed between entries.
 
         :param schema: The schema of the map.
+        :param size: The size of the map.
         :returns: A context manager containing a map serializer.
         """
         ...
@@ -239,11 +245,11 @@ class InterceptingSerializer(ShapeSerializer, metaclass=ABCMeta):
             self.after(schema)
 
     @contextmanager
-    def begin_list(self, schema: "Schema") -> Iterator[ShapeSerializer]:
+    def begin_list(self, schema: "Schema", size: int) -> Iterator[ShapeSerializer]:
         delegate = self.before(schema)
 
         try:
-            with delegate.begin_list(schema) as s:
+            with delegate.begin_list(schema, size) as s:
                 yield s
         except Exception:
             raise
@@ -251,11 +257,11 @@ class InterceptingSerializer(ShapeSerializer, metaclass=ABCMeta):
             self.after(schema)
 
     @contextmanager
-    def begin_map(self, schema: "Schema") -> Iterator[MapSerializer]:
+    def begin_map(self, schema: "Schema", size: int) -> Iterator[MapSerializer]:
         delegate = self.before(schema)
 
         try:
-            with delegate.begin_map(schema) as s:
+            with delegate.begin_map(schema, size) as s:
                 yield s
         except Exception:
             raise
@@ -335,10 +341,14 @@ class SpecificShapeSerializer(ShapeSerializer):
     ) -> AbstractContextManager["ShapeSerializer"]:
         self._invalid_state(schema)
 
-    def begin_list(self, schema: "Schema") -> AbstractContextManager["ShapeSerializer"]:
+    def begin_list(
+        self, schema: "Schema", size: int
+    ) -> AbstractContextManager["ShapeSerializer"]:
         self._invalid_state(schema)
 
-    def begin_map(self, schema: "Schema") -> AbstractContextManager["MapSerializer"]:
+    def begin_map(
+        self, schema: "Schema", size: int
+    ) -> AbstractContextManager["MapSerializer"]:
         self._invalid_state(schema)
 
     def write_null(self, schema: "Schema") -> None:
