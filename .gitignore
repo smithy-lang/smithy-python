@@ -33,10 +33,4 @@ coverage.xml
 htmlcov
 *.egg-info
 dist
-
-# Pants workspace files
-/.pants.d/
-/dist/
-/.pids
-/.pants.workdir.file_lock*
-pants
+.venv
