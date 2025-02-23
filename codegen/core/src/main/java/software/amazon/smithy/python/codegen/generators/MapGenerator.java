@@ -46,7 +46,7 @@ public final class MapGenerator implements Runnable {
         // narrowing out the None even though there's an explicit is None check.
         writer.write("""
                 def $1L(serializer: ShapeSerializer, schema: Schema, value: $2T) -> None:
-                    with serializer.begin_map(schema) as m:
+                    with serializer.begin_map(schema, len(value)) as m:
                         value_schema = schema.members["value"]
                         for k, v in value.items():
                             ${?sparse}
