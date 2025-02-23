@@ -5,6 +5,7 @@ from decimal import Decimal
 from typing import Any, Self, cast
 
 import pytest
+
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import (
     Document,

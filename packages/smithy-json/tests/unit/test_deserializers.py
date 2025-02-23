@@ -14,6 +14,7 @@ from smithy_core.prelude import (
     STRING,
     TIMESTAMP,
 )
+
 from smithy_json import JSONCodec
 
 from . import (
