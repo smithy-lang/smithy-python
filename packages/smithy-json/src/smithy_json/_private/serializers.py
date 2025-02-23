@@ -50,10 +50,14 @@ class JSONShapeSerializer(ShapeSerializer):
     ) -> AbstractContextManager["ShapeSerializer"]:
         return JSONStructSerializer(self._stream, self, self._use_json_name)
 
-    def begin_list(self, schema: "Schema") -> AbstractContextManager["ShapeSerializer"]:
+    def begin_list(
+        self, schema: "Schema", size: int
+    ) -> AbstractContextManager["ShapeSerializer"]:
         return JSONListSerializer(self._stream, self)
 
-    def begin_map(self, schema: "Schema") -> AbstractContextManager["MapSerializer"]:
+    def begin_map(
+        self, schema: "Schema", size: int
+    ) -> AbstractContextManager["MapSerializer"]:
         return JSONMapSerializer(self._stream, self)
 
     def write_null(self, schema: "Schema") -> None:

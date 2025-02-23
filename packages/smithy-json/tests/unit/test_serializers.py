@@ -14,7 +14,6 @@ from smithy_core.prelude import (
     STRING,
     TIMESTAMP,
 )
-
 from smithy_json import JSONCodec
 
 from . import (
@@ -50,7 +49,9 @@ def test_json_serializer(given: Any, expected: bytes) -> None:
             serializer.write_document(given._schema, given)  # type: ignore
         case list():
             given = cast(list[str], given)
-            with serializer.begin_list(SPARSE_STRING_LIST_SCHEMA) as list_serializer:
+            with serializer.begin_list(
+                SPARSE_STRING_LIST_SCHEMA, len(given)
+            ) as list_serializer:
                 member_schema = SPARSE_STRING_LIST_SCHEMA.members["member"]
                 for e in given:
                     if e is None:
@@ -59,7 +60,9 @@ def test_json_serializer(given: Any, expected: bytes) -> None:
                         list_serializer.write_string(member_schema, e)
         case dict():
             given = cast(dict[str, str], given)
-            with serializer.begin_map(SPARSE_STRING_MAP_SCHEMA) as map_serializer:
+            with serializer.begin_map(
+                SPARSE_STRING_MAP_SCHEMA, len(given)
+            ) as map_serializer:
                 member_schema = SPARSE_STRING_MAP_SCHEMA.members["value"]
                 for k, v in given.items():
                     if v is None:

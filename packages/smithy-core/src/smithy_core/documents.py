@@ -268,12 +268,18 @@ class Document:
                 with serializer.begin_struct(self._schema) as struct_serializer:
                     self.serialize_members(struct_serializer)
             case ShapeType.LIST:
-                with serializer.begin_list(self._schema) as list_serializer:
-                    for element in self.as_list():
+                list_value = self.as_list()
+                with serializer.begin_list(
+                    self._schema, len(list_value)
+                ) as list_serializer:
+                    for element in list_value:
                         element.serialize(list_serializer)
             case ShapeType.MAP:
-                with serializer.begin_map(self._schema) as map_serializer:
-                    for key, value in self.as_map().items():
+                map_value = self.as_map()
+                with serializer.begin_map(
+                    self._schema, len(map_value)
+                ) as map_serializer:
+                    for key, value in map_value.items():
                         map_serializer.entry(key, lambda s: value.serialize(s))
             case ShapeType.STRING | ShapeType.ENUM:
                 serializer.write_string(self._schema, self.as_string())
@@ -427,7 +433,7 @@ class _DocumentSerializer(ShapeSerializer):
 
     @override
     @contextmanager
-    def begin_list(self, schema: "Schema") -> Iterator[ShapeSerializer]:
+    def begin_list(self, schema: "Schema", size: int) -> Iterator[ShapeSerializer]:
         delegate = _DocumentListSerializer(schema)
         try:
             yield delegate
@@ -438,7 +444,7 @@ class _DocumentSerializer(ShapeSerializer):
 
     @override
     @contextmanager
-    def begin_map(self, schema: "Schema") -> Iterator[MapSerializer]:
+    def begin_map(self, schema: "Schema", size: int) -> Iterator[MapSerializer]:
         delegate = _DocumentMapSerializer(schema)
         try:
             yield delegate
