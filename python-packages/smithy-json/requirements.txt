@@ -1,4 +1,0 @@
-# We shouldn't need this, but pants will assume that smithy_core is an external
-# dependency since it's in pyproject.toml and there's no way to exclude it, so
-# for now we need to duplicate things.
-ijson==3.2.3
