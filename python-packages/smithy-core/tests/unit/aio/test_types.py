@@ -5,6 +5,7 @@ from io import BytesIO
 from typing import Self
 
 import pytest
+
 from smithy_core.aio.types import (
     AsyncBytesProvider,
     AsyncBytesReader,
