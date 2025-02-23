@@ -45,7 +45,7 @@ public final class ListGenerator implements Runnable {
         writer.write("""
                 def $1L(serializer: ShapeSerializer, schema: Schema, value: $2T) -> None:
                     member_schema = schema.members["member"]
-                    with serializer.begin_list(schema) as ls:
+                    with serializer.begin_list(schema, len(value)) as ls:
                         for e in value:
                             ${?sparse}
                             if e is None:
