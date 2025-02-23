@@ -162,10 +162,10 @@ class Schema:
     def member(
         cls,
         id: ShapeID,
-        target: Self,
+        target: "Schema",
         index: int,
         member_traits: list["Trait"] | None = None,
-    ) -> Self:
+    ) -> "Schema":
         """Create a schema for a member shape.
 
         Member schemas are largely copies of the schemas they target to make it easier

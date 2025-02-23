@@ -72,7 +72,7 @@ class Fields(Protocol):
 
     # Entries are keyed off the name of a provided Field
     entries: dict[str, Field]
-    encoding: str | None = "utf-8"
+    encoding: str = "utf-8"
 
     def set_field(self, field: Field) -> None:
         """Alias for __setitem__ to utilize the field.name for the entry key."""
