@@ -8,11 +8,12 @@ dependencies = []
 
 [dependency-groups]
 dev = [
-    "bandit>=1.8.3",
+    "black>=25.1.0",
     "docformatter>=1.7.5",
     "pyright>=1.1.394",
     "pytest>=8.3.4",
     "pytest-asyncio>=0.25.3",
+    "pytest-cov>=6.0.0",
     "ruff>=0.9.7",
 ]
 
@@ -35,16 +36,26 @@ typeCheckingMode = "strict"
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto" # makes pytest run async tests without having to be marked with the @pytest.mark.asyncio decorator
-addopts = [ "--import-mode=importlib" ]
+addopts = [ "--import-mode=importlib", "--cov", "--cov-report=term-missing" ]
+
+[tool.docformatter]
+recursive = true
+black = true
 
 [tool.ruff]
 target-version = "py312"
 
 [tool.ruff.lint]
-# select = ["ASYNC", "F", "FURB", "G", "I", "LOG", "N", "Q", "T"]
-# candidates: C4, DTZ, EM, INP, ISC, PERF, PIE, RUF, SIM118, SIM401, SLOT, T20, UP, W
-# perhaps in the future: CPY, N, PYI, TC, TID
+# candidates: C4, DTZ, EM, INP, ISC, PERF, PIE, RUF, SIM118, SIM401, SLOT
+# perhaps in the future: N, PYI, TC, TID
 # probably not, a lot of work: DOC, D, PL, TRY
+
+# TODO: I, T, UP
+select = [ "ASYNC", "E1", "E4", "E7", "E9", "F", "FURB", "G", "LOG", "S" ]
+exclude = [ "packages/smithy-core/src/smithy_core/rfc3986.py" ]
+
+[tool.ruff.lint.per-file-ignores]
+"**/{tests}/*" = ["S"]
 
 [tool.ruff.format]
 docstring-code-format = true
