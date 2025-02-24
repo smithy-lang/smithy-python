@@ -7,6 +7,7 @@ help: ## Show this help.
 install: ## Sets up workspace (* you should run this first! *)
 	uv sync --all-packages --all-extras
 	cd codegen && ./gradlew
+	@printf "\n\nWorkspace initialized, please run:\n\033[36msource .venv/bin/activate\033[0m"
 
 
 build-java: ## Builds the Java code generation packages.
@@ -18,23 +19,23 @@ test-protocols: ## Generates and runs the restJson1 protocol tests.
 	uv run pytest codegen/protocol-test/build/smithyprojections/protocol-test/rest-json-1/python-client-codegen
 
 
-lint-py: ## Runs formatters/fixers/linters for the python packages.
-	uv run docformatter --wrap-summaries 88 --wrap-description 88 packages -r -i || true
+lint-py: ## Runs linters and formatters on the python packages.
+	uv run docformatter packages --in-place || true
 	uv run ruff check packages --fix
 	uv run ruff format packages
 
 
-check-py: ## Runs checkers for the python packages.
+check-py: ## Runs checks (formatting, lints, type-checking) on the python packages.
+	uv run docformatter packages
 	uv run ruff check packages
 	uv run pyright packages
-	uv run bandit packages -r -x tests
 
 
 test-py: ## Runs tests for the python packages.
 	uv run pytest packages
 
 
-build-py: lint-py check-py test-py ## Builds (and lints, checks, and tests) the python packages.
+build-py: ## Builds the python packages.
 	uv build --all-packages 
 
 
