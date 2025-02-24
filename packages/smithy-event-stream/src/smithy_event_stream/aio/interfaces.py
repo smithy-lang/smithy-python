@@ -82,7 +82,9 @@ class DuplexEventStream[I: SerializeableShape, O: DeserializeableShape, R](Proto
             input = StreamMessagesInput(chat_room="aws-python-sdk", username="hunter7")
 
             async with client.stream_messages(input=input) as stream:
-                stream.input_stream.send(MessageStreamMessage("Chat logger starting up."))
+                stream.input_stream.send(
+                    MessageStreamMessage("Chat logger starting up.")
+                )
                 response_task = asyncio.create_task(handle_output(stream))
                 stream.input_stream.send(MessageStreamMessage("Chat logger active."))
                 await response_handler
@@ -97,7 +99,9 @@ class DuplexEventStream[I: SerializeableShape, O: DeserializeableShape, R](Proto
                             return
                         case _:
                             stream.input_stream.send(
-                                MessageStreamMessage("Unknown message type received. Shutting down.")
+                                MessageStreamMessage(
+                                    "Unknown message type received. Shutting down."
+                                )
                             )
                             return
     """
@@ -193,7 +197,9 @@ class InputEventStream[I: SerializeableShape, R](Protocol):
             input = PublishMessagesInput(chat_room="aws-python-sdk", username="hunter7")
 
             async with client.publish_messages(input=input) as stream:
-                stream.input_stream.send(MessageStreamMessage("High severity ticket alert!"))
+                stream.input_stream.send(
+                    MessageStreamMessage("High severity ticket alert!")
+                )
                 await stream.await_output()
     """
 

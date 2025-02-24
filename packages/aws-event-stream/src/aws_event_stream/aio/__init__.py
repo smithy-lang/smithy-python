@@ -22,7 +22,9 @@ from ..exceptions import MissingInitialResponse
 
 
 class AWSDuplexEventStream[
-    I: SerializeableShape, O: DeserializeableShape, R: DeserializeableShape
+    I: SerializeableShape,
+    O: DeserializeableShape,
+    R: DeserializeableShape,
 ](DuplexEventStream[I, O, R]):
     """A duplex event stream using the application/vnd.amazon.eventstream format."""
 

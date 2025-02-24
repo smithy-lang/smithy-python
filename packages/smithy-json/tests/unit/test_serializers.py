@@ -65,7 +65,9 @@ def test_json_serializer(given: Any, expected: bytes) -> None:
                     if v is None:
                         map_serializer.entry(k, lambda vs: vs.write_null(member_schema))
                     else:
-                        map_serializer.entry(k, lambda vs: vs.write_string(member_schema, v))  # type: ignore
+                        map_serializer.entry(
+                            k, lambda vs: vs.write_string(member_schema, v)
+                        )  # type: ignore
         case SerdeShape():
             given.serialize(serializer)
         case _:
