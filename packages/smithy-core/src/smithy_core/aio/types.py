@@ -46,7 +46,7 @@ class AsyncBytesReader:
         if self._closed or not self._data:
             raise ValueError("I/O operation on closed file.")
 
-        if isinstance(self._data, BytesReader) and not iscoroutinefunction( # type: ignore - TODO(pyright)
+        if isinstance(self._data, BytesReader) and not iscoroutinefunction(  # type: ignore - TODO(pyright)
             self._data.read
         ):
             # Python's runtime_checkable can't actually tell the difference between
@@ -135,7 +135,7 @@ class SeekableAsyncBytesReader:
         if isinstance(data, bytes | bytearray):
             self._buffer = BytesIO(data)
             self._data_source = None
-        elif isinstance(data, AsyncByteStream) and iscoroutinefunction(data.read): # type: ignore - TODO(pyright)
+        elif isinstance(data, AsyncByteStream) and iscoroutinefunction(data.read):  # type: ignore - TODO(pyright)
             # Note that we need that iscoroutine check because python won't actually check
             # whether or not the read function is async.
             self._buffer = BytesIO()
@@ -321,7 +321,6 @@ class AsyncBytesProvider:
         # Acquire a lock on the data buffer, releasing it automatically when the
         # block exits.
         async with self._data_condition:
-
             # Wait for the number of chunks in the buffer to be less than the
             # specified maximum. This also releases the lock until that condition
             # is met.
@@ -407,7 +406,6 @@ class AsyncBytesProvider:
         # Acquire a lock on the data buffer, releasing it automatically when the
         # block exits.
         async with self._data_condition:
-
             # Wait for the stream to be closed or for the data buffer to be non-empty.
             # This also releases the lock until that condition is met.
             await self._data_condition.wait_for(

@@ -335,9 +335,7 @@ class EventStreamBlobPayloadEvent:
         serializer.write_struct(SCHEMA_EVENT_STREAM, self)
 
     def serialize_members(self, serializer: ShapeSerializer):
-        serializer.write_struct(
-            SCHEMA_EVENT_STREAM.members["blobPayload"], self.value
-        )
+        serializer.write_struct(SCHEMA_EVENT_STREAM.members["blobPayload"], self.value)
 
 
 @dataclass
@@ -393,7 +391,13 @@ class EventStreamUnknownEvent:
         raise SmithyException("Unknown union variants may not be serialized.")
 
 
-type EventStream = EventStreamMessageEvent | EventStreamPayloadEvent | EventStreamBlobPayloadEvent | EventStreamErrorEvent | EventStreamUnknownEvent
+type EventStream = (
+    EventStreamMessageEvent
+    | EventStreamPayloadEvent
+    | EventStreamBlobPayloadEvent
+    | EventStreamErrorEvent
+    | EventStreamUnknownEvent
+)
 
 
 class EventStreamDeserializer:

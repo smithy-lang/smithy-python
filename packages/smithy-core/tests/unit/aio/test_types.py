@@ -485,7 +485,6 @@ async def test_aexit_flushes() -> None:
     # Use the provider in a context manager. When this exits, it should flush
     # and close the provider.
     async with provider:
-
         # Write some data to the provider.
         await provider.write(b"foo")
 

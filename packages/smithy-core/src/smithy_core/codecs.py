@@ -50,9 +50,9 @@ class Codec(Protocol):
         stream.seek(0)
         return stream.read()
 
-    def deserialize[
-        S: DeserializeableShape
-    ](self, source: bytes | BytesReader, shape: type[S]) -> S:
+    def deserialize[S: DeserializeableShape](
+        self, source: bytes | BytesReader, shape: type[S]
+    ) -> S:
         """Deserialize bytes into a shape.
 
         :param source: The bytes to deserialize.
