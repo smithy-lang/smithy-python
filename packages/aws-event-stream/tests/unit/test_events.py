@@ -37,7 +37,7 @@ EMPTY_MESSAGE = (
         b"\x00\x00\x00\x10"  # total length
         b"\x00\x00\x00\x00"  # headers length
         b"\x05\xc2\x48\xeb"  # prelude crc
-        b"\x7D\x98\xc8\xff"  # message crc
+        b"\x7d\x98\xc8\xff"  # message crc
     ),
     Event(
         prelude=EventPrelude(
@@ -407,7 +407,7 @@ POSITIVE_CASES = [
 CORRUPTED_HEADERS_LENGTH = (
     (
         b"\x00\x00\x00\x3d"  # total length
-        b"\xFF\x00\x01\x02"  # headers length
+        b"\xff\x00\x01\x02"  # headers length
         b"\x07\xfd\x83\x96"  # prelude crc
         b"\x0ccontent-type\x07\x00\x10application/json"  # headers
         b"{'foo':'bar'}"  # payload
@@ -443,7 +443,7 @@ CORRUPTED_PAYLOAD = (
     (
         b"\x00\x00\x00\x1d"  # total length
         b"\x00\x00\x00\x00"  # headers length
-        b"\xfd\x52\x8c\x5A"  # prelude crc
+        b"\xfd\x52\x8c\x5a"  # prelude crc
         b"{'foo':'bar'\x8d"  # payload
         b"\xc3\x65\x39\x36"  # message crc
     ),
@@ -464,11 +464,11 @@ DUPLICATE_HEADER = (
 INVALID_HEADERS_LENGTH = (
     (
         b"\x00\x00\x00\x3d"  # total length
-        b"\xFF\x00\x01\x02"  # headers length
+        b"\xff\x00\x01\x02"  # headers length
         b"\x15\x83\xf5\xc2"  # prelude crc
         b"\x0ccontent-type\x07\x00\x10application/json"  # headers
         b"{'foo':'bar'}"  # payload
-        b"\x2F\x37\x7f\x5d"  # message crc
+        b"\x2f\x37\x7f\x5d"  # message crc
     ),
     InvalidHeadersLength,
 )

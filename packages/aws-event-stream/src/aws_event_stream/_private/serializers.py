@@ -159,7 +159,6 @@ class EventSerializer(SpecificShapeSerializer):
 
 
 class EventHeaderSerializer(SpecificShapeSerializer):
-
     def __init__(self, encoder: EventHeaderEncoder) -> None:
         self._encoder = encoder
 

@@ -16,6 +16,7 @@
 https://github.com/python-hyper/rfc3986/blob/main/src/rfc3986/abnf_regexp.py
 https://github.com/python-hyper/rfc3986/blob/main/src/rfc3986/misc.py
 """
+
 import re
 
 # #########################

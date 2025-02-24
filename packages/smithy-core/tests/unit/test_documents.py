@@ -855,7 +855,9 @@ def test_document_serializer(given: Any, expected: Document):
                     if v is None:
                         map_serializer.entry(k, lambda vs: vs.write_null(member_schema))
                     else:
-                        map_serializer.entry(k, lambda vs: vs.write_string(member_schema, v))  # type: ignore
+                        map_serializer.entry(
+                            k, lambda vs: vs.write_string(member_schema, v)
+                        )  # type: ignore
         case DocumentSerdeShape():
             given.serialize(serializer)
         case _:
