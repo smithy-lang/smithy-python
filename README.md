@@ -114,33 +114,42 @@ The code generator libraries have not been published yet, so
 you'll need to build it yourself. To build and run the generator, you will need
 the following prerequisites:
 
-* Python 3.12 or newer
-  * (optional) Install [black](https://black.readthedocs.io/en/stable/) in your
-    environment to have the generated output be auto-formatted.
+* [uv](https://docs.astral.sh/uv/)
 * The [Smithy CLI](https://smithy.io/2.0/guides/smithy-cli/cli_installation.html)
 * JDK 17 or newer
 * make
 
-Now, run `make install-components` from the root of this repository. This will
-install the python dependencies in your environment and make the code generator
-available locally. For more information on the underlying build process, see the
+This project uses [uv](https://docs.astral.sh/uv/) for managing all things python.
+Once you have it installed, run the following command to check that it's ready to use:
+
+```shell
+uv --help
+```
+
+With `uv` installed, run `make install` from the root of this repository. This will
+set up your workspace with all of the dependencies and tools needed to build the
+project. For more information on the underlying process, see the 
 "Using repository tooling" section.
 
 > [!TIP]
-> To make development easier, run the following command from the root:
+> Make sure to run the following command as directed before proceeding:
 >```shell
-> ./pants export --resolve=python-default
+> source .venv/bin/activate
 > ```
-> This will generate a [virtualenv](https://docs.python.org/3/library/venv.html) containing all python dependencies
-> and tools needed to build this project. There should be output in your terminal, denoting where pants
-> created the environment. Make sure to activate it by running:
->```shell
-> source dist/export/python/virtualenvs/python-default/<version>/bin/activate
-> ```
+> This will activate the [virtual environment](https://docs.python.org/3/library/venv.html)
+> in your current shell.
 
-Now from your project directory run `smithy build` and you'll have a generated
-client! The client can be found in `build/smithy/client/python-client-codegen`.
-The following is a snippet showing how you might use it:
+With your workspace set up and activated, run the following command to install the
+the codegen libraries locally:
+
+```shell
+cd codegen && ./gradlew publishToMavenLocal
+```
+
+Finally, change into your smithy project's directory, run `smithy build`, and you'll
+have a generated client! The client can be found in
+`build/smithy/client/python-client-codegen`. The following is a snippet showing how
+you might use it:
 
 ```python
 import asyncio
@@ -164,7 +173,7 @@ if __name__ == "__main__":
 
 Only for now. Once the generator has been published, the Smithy CLI will be able
 to run it without a separate Java installation. Similarly, once the python
-helper libraries have been published you won't need to install them manually.
+helper libraries have been published you won't need to install them locally.
 
 ### Core Modules and Interfaces
 
@@ -192,7 +201,7 @@ creating are well-supported, understood, and maintained. Customers should not
 have to hack on internal or undocumented interfaces to achieve their goals.
 
 * **Components must be typed** - All the buildings blocks we create must be
-typed and usable via `mypy`. Given the nature of gradual typing, it is paramount
+typed and usable via `pyright`. Given the nature of gradual typing, it is paramount
 that foundational components and interfaces be typed to preserve the integrity
 of the typing system.
 
@@ -207,7 +216,7 @@ by the [smithy-typescript](https://github.com/awslabs/smithy-typescript/) and
 
 We're currently heavily investing in writing proposals and documenting the
 design decisions made. Feedback on the
-[proposed designs and interfaces](https://github.com/awslabs/smithy-python/tree/develop/designs)
+[proposed designs and interfaces](https://github.com/smithy-lang/smithy-python/tree/develop/designs)
 is extremely helpful at this stage to ensure we're providing functional and
 ergonomic interfaces that meet customer expectations.
 
@@ -231,77 +240,29 @@ to install yourself. We recommend the
 distribution, but any JDK that's at least version 17 will work.
 
 To build and run all the Java packages, simply run `./gradlew clean build` from
-the `codegen` directory. If this is the first time you have run this, it will
-download Gradle onto your system to run along with any dependencies of the Java
-packages.
+the `codegen` directory. If this is the first time you have run this
+(or if you didn't already run `make install`), it will download Gradle onto your
+system to run along with any dependencies of the Java packages.
 
 For more details on working on the code generator, see the readme in the
 `codegen` directory.
 
-#### Python - pants
+#### Python - uv
 
 Building multiple python packages in a single repo is a little less common than
-it is for Java or some other languages, so even if you're a python expert you
-may be unfamiliar with the tooling. The tool we're using is called
-[pants](https://www.pantsbuild.org), and you use it pretty similarly to how you
-use Gradle.
+it is for Java or some other languages. If you've kept up with python tooling lately,
+you've likely heard of uv.
 
-Like Gradle, pants provides a wrapper script that downloads its dependencies as
-needed. Currently, pants requires python 3.7, 3.8, or 3.9 to run, so one of
-those must be available on your path. (It doesn't have to be the version that
-is linked to `python` or `python3`, it just needs `python3.9` etc.) It is,
-however, fully capable of building and working with code that uses newer python
-versions like we do. This repository uses a minimum python version of 3.12
-for all its packages, so you will need that too to work on it.
-
-Pants provides a number of python commands it calls goals, documented
-[here](https://www.pantsbuild.org/docs/python-goals). In short:
-
-* `./pants fmt ::` - This will run our formatters on all the python library
-  code. Use `fix` instead of this, since it runs all the formatters AND fixers.
-*  `./pants fix ::` - This will run the formatters/fixers on python library
-   code, and apply the changes. Use this before making commits.
-* `./pants lint ::` - This will run our formatters/fixers/linters on all the
-  python library code. You should also use this before you make commits, and particularly
-  before you make a pull request. It will not apply formatting or fixes for you.
-* `./pants check ::` - This will run mypy on all the python library code.
-  This should be used regularly, and must pass for any pull request.
-* `./pants test ::` - This will run all the tests written for the python
-  library code. Use this as often as you'd run pytest or any other testing
-  tool. Under the hood, we are using pytest.
-* `./pants update-build-files ::` - This will auto-format all the `BUILD` files. Use this if
-  you are making changes to or adding new `BUILD` files.
-
-There are other commands as well that you can find in the
-[docs](https://www.pantsbuild.org/docs/python-goals), but these are the ones
-you'll use the most.
-
-Important to note is those pairs of colons. These are pants
-[targets](https://www.pantsbuild.org/docs/targets#target-addresses). The double
-colon is a special target that means "everything". So running exactly what's
-listed above will run those goals on every python file or other relevant file.
-You can also target just `smithy_core`, for example, with
-`./pants check python-packages/smithy-python/smithy_core:source`, or even
-individual files with something like
-`./pants check python-packages/smithy-python/smithy_core/interfaces/identity.py:../source`.
-To list what targets are available in a directory, run
-`./pants list path/to/dir:`. For more detailed information, see the
-[docs](https://www.pantsbuild.org/docs/targets#target-addresses).
+TODO: uv section
 
 #### Common commands - make
 
 There is also a `Makefile` that bridges the Python and Java build systems together to
-make common workflows simple, single commands. The two most important commands are:
+make common workflows simple, single commands. The most important commands are:
 
-* `make install-components` which builds and installs the Java generator and the python
-  packages. The generator is published to maven local and the python packages are
-  installed into the active python environment. This command is most useful for those
-  who simply want to run the generator and use a generated client.v
-* `make test-protocols` which runs all the protocol tests. It will first (re)install
-  all necessary components to ensure that the latest is being used. This is most useful
-  for developers working on the generator and python packages.
+TODO: make section
 
-To see what else available, run `make help` or examine the file directly.
+To see what targets are available, run `make help` or examine the file directly.
 
 ## Security issue notifications
 
