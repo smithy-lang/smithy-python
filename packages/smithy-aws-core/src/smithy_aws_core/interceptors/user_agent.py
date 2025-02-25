@@ -17,7 +17,7 @@ from smithy_http import Field
 from smithy_http.aio import HTTPRequest
 
 
-class UserAgentInterceptor(Interceptor):
+class UserAgentInterceptor(Interceptor[Request, None, HTTPRequest, None]):
     """Adds UserAgent header to the Request before signing."""
 
     def __init__(
