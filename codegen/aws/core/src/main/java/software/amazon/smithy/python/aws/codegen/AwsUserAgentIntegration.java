@@ -22,13 +22,22 @@ public class AwsUserAgentIntegration implements PythonIntegration {
     public List<RuntimeClientPlugin> getClientPlugins() {
         return List.of(
                 RuntimeClientPlugin.builder()
-                        .addConfigProperty(ConfigProperty.builder()
+                        .addConfigProperty(
+                                ConfigProperty.builder()
                                 // TODO: This is the name used in boto, but potentially could be user_agent_prefix.  Depends on backwards compat strategy.
                                 .name("user_agent_extra")
-                                .documentation("Additional suffix to be added to the user agent")
+                                .documentation("Additional suffix to be added to the User-Agent header.")
                                 .type(Symbol.builder().name("str").build()) // TODO: Should common types like this be defined as constants somewhere?
                                 .nullable(true)
                                 .build())
+                        .addConfigProperty(
+                                ConfigProperty.builder()
+                                        .name("sdk_ua_app_id")
+                                        .documentation("A unique and opaque application ID that is appended to the User-Agent header.")
+                                        .type(Symbol.builder().name("str").build())
+                                        .nullable(true)
+                                        .build()
+                        )
                         .pythonPlugin(
                                 SymbolReference.builder()
                                         .symbol(Symbol.builder()
