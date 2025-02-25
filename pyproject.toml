@@ -33,7 +33,6 @@ aws_event_stream = { workspace = true }
 
 [tool.pyright]
 typeCheckingMode = "strict"
-reportMissingTypeStubs = false # TODO: Remove once awscrt supplies stubs/types
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto" # makes pytest run async tests without having to be marked with the @pytest.mark.asyncio decorator
