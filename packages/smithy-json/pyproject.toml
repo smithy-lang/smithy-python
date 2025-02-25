@@ -1,11 +1,8 @@
 [project]
 name = "smithy-json"
 version = "0.1.0"
-description = "Add your description here"
+description = "JSON serialization and deserialization support for Smithy tooling."
 readme = "README.md"
-authors = [
-    { name = "Hayden Baker", email = "haydebak@amazon.com" }
-]
 requires-python = ">=3.12"
 dependencies = [
     "ijson>=3.3.0",

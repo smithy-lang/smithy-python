@@ -1,11 +1,8 @@
 [project]
 name = "smithy_http"
 version = "0.1.0"
-description = "Add your description here"
+description = "HTTP components for Smithy tooling."
 readme = "README.md"
-authors = [
-    { name = "Hayden Baker", email = "haydebak@amazon.com" }
-]
 requires-python = ">=3.12"
 dependencies = [
     "smithy-core",
