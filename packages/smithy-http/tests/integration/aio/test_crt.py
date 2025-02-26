@@ -11,9 +11,7 @@ async def test_basic_request_local(sample_request: HTTPRequest) -> None:
     session = AWSCRTHTTPClient(client_config=config)
     response = await session.send(request=sample_request)
     assert response.status == 200
-    print(f"{response=}")
     body = await response.consume_body_async()
-    print(f"{body=}")
     assert b"aws" in body
 
 
