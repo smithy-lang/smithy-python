@@ -1,11 +1,11 @@
 [versions]
-junit5 = "5.11.4"
+junit5 = "5.12.0"
 smithy = "1.54.0"
 test-logger-plugin = "4.0.0"
 spotbugs = "6.0.22"
 spotless = "7.0.2"
 smithy-gradle-plugins = "1.2.0"
-dep-analysis = "2.8.2"
+dep-analysis = "2.10.1"
 
 [libraries]
 smithy-model = { module = "software.amazon.smithy:smithy-model", version.ref = "smithy" }
