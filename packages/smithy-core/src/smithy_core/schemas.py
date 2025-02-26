@@ -50,8 +50,8 @@ class Schema:
         if any(_member_props) and not all(_member_props):
             raise SmithyException(
                 "If any member property is set, all member properties must be set. "
-                f"member_name: {repr(id.member)}, member_target: "
-                f"{repr(member_target)}, member_index: {repr(member_index)}"
+                f"member_name: {id.member!r}, member_target: "
+                f"{member_target!r}, member_index: {member_index!r}"
             )
 
         # setattr is required because the class is frozen

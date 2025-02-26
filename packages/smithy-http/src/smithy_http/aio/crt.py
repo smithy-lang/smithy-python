@@ -18,8 +18,8 @@ if TYPE_CHECKING:
     from awscrt import io as crt_io
 
 try:
-    from awscrt import http as crt_http  # noqa: F811
-    from awscrt import io as crt_io  # noqa: F811
+    from awscrt import http as crt_http
+    from awscrt import io as crt_io
 
     HAS_CRT = True
 except ImportError:
