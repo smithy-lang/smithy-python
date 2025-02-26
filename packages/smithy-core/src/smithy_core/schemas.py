@@ -67,7 +67,7 @@ class Schema:
 
         if members:
             if isinstance(members, list):
-                m: dict[str, "Schema"] = {}
+                m: dict[str, Schema] = {}
                 for member in members:
                     m[member.expect_member_name()] = member
                 members = m
@@ -140,7 +140,7 @@ class Schema:
             constructor, this is a dict of member names to a simplified dict containing
             only ``traits`` and a ``target``. Member schemas will be generated from this.
         """
-        struct_members: dict[str, "Schema"] = {}
+        struct_members: dict[str, Schema] = {}
         if members:
             for k in members.keys():
                 struct_members[k] = cls.member(

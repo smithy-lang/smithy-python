@@ -5,7 +5,7 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from email.utils import format_datetime, parsedate_to_datetime
 from enum import Enum
-from typing import Any, TypeAlias
+from typing import Any
 
 from .exceptions import ExpectationNotMetException
 from .utils import (
@@ -16,7 +16,7 @@ from .utils import (
     serialize_rfc3339,
 )
 
-Document: TypeAlias = (
+type Document = (
     Mapping[str, "Document"] | Sequence["Document"] | str | int | float | bool | None
 )
 

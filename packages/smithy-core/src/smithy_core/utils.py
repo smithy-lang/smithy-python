@@ -1,7 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import re
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from math import isinf, isnan
 from types import UnionType
@@ -24,9 +24,9 @@ def ensure_utc(value: datetime) -> datetime:
     :returns: A UTC timezone-aware equivalent datetime.
     """
     if value.tzinfo is None:
-        return value.replace(tzinfo=timezone.utc)
+        return value.replace(tzinfo=UTC)
     else:
-        return value.astimezone(timezone.utc)
+        return value.astimezone(UTC)
 
 
 # Python is way more permissive on value of non-numerical floats than Smithy is, so we
@@ -61,9 +61,9 @@ def epoch_seconds_to_datetime(value: int | float) -> datetime:
     to years from 1970 through 2038." This affects 32-bit systems.
     """
     try:
-        return datetime.fromtimestamp(value, tz=timezone.utc)
+        return datetime.fromtimestamp(value, tz=UTC)
     except OverflowError:
-        epoch_zero = datetime(1970, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
+        epoch_zero = datetime(1970, 1, 1, 0, 0, 0, tzinfo=UTC)
         return epoch_zero + timedelta(seconds=value)
 
 

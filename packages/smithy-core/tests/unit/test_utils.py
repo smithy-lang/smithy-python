@@ -4,7 +4,7 @@
 # mypy: allow-untyped-defs
 # mypy: allow-incomplete-defs
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 from decimal import Decimal
 from math import isnan
 from typing import Any, NamedTuple
@@ -30,14 +30,14 @@ from smithy_core.utils import (
 @pytest.mark.parametrize(
     "given, expected",
     [
-        (datetime(2017, 1, 1), datetime(2017, 1, 1, tzinfo=timezone.utc)),
+        (datetime(2017, 1, 1), datetime(2017, 1, 1, tzinfo=UTC)),
         (
-            datetime(2017, 1, 1, tzinfo=timezone.utc),
-            datetime(2017, 1, 1, tzinfo=timezone.utc),
+            datetime(2017, 1, 1, tzinfo=UTC),
+            datetime(2017, 1, 1, tzinfo=UTC),
         ),
         (
             datetime(2017, 1, 1, tzinfo=timezone(timedelta(hours=1))),
-            datetime(2016, 12, 31, 23, tzinfo=timezone.utc),
+            datetime(2016, 12, 31, 23, tzinfo=UTC),
         ),
     ],
 )
@@ -199,19 +199,19 @@ class DateTimeTestcase(NamedTuple):
 
 DATETIME_TEST_CASES: list[DateTimeTestcase] = [
     DateTimeTestcase(
-        dt_object=datetime(2017, 1, 1, tzinfo=timezone.utc),
+        dt_object=datetime(2017, 1, 1, tzinfo=UTC),
         rfc3339_str="2017-01-01T00:00:00Z",
         epoch_seconds_num=1483228800,
         epoch_seconds_str="1483228800",
     ),
     DateTimeTestcase(
-        dt_object=datetime(2017, 1, 1, microsecond=1, tzinfo=timezone.utc),
+        dt_object=datetime(2017, 1, 1, microsecond=1, tzinfo=UTC),
         rfc3339_str="2017-01-01T00:00:00.000001Z",
         epoch_seconds_num=1483228800.000001,
         epoch_seconds_str="1483228800.000001",
     ),
     DateTimeTestcase(
-        dt_object=datetime(1969, 12, 31, 23, 59, 59, tzinfo=timezone.utc),
+        dt_object=datetime(1969, 12, 31, 23, 59, 59, tzinfo=UTC),
         rfc3339_str="1969-12-31T23:59:59Z",
         epoch_seconds_num=-1,
         epoch_seconds_str="-1",
@@ -219,7 +219,7 @@ DATETIME_TEST_CASES: list[DateTimeTestcase] = [
     # The first second affected by the Year 2038 problem where fromtimestamp raises an
     # OverflowError on 32-bit systems for dates beyond 2038-01-19 03:14:07 UTC.
     DateTimeTestcase(
-        dt_object=datetime(2038, 1, 19, 3, 14, 8, tzinfo=timezone.utc),
+        dt_object=datetime(2038, 1, 19, 3, 14, 8, tzinfo=UTC),
         rfc3339_str="2038-01-19T03:14:08Z",
         epoch_seconds_num=2147483648,
         epoch_seconds_str="2147483648",
@@ -269,7 +269,7 @@ def test_epoch_seconds_to_datetime_with_overflow_error(monkeypatch):  # type: ig
     datetime_mock = Mock(wraps=datetime)
     datetime_mock.fromtimestamp = Mock(side_effect=OverflowError())
     monkeypatch.setattr("smithy_core.utils.datetime", datetime_mock)  # type: ignore
-    dt_object = datetime(2038, 1, 19, 3, 14, 8, tzinfo=timezone.utc)
+    dt_object = datetime(2038, 1, 19, 3, 14, 8, tzinfo=UTC)
     assert epoch_seconds_to_datetime(2147483648) == dt_object
 
 

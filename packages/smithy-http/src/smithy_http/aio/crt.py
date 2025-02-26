@@ -57,7 +57,7 @@ class _AWSCRTEventLoop:
 class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
     def __init__(self) -> None:
         _assert_crt()
-        self._stream: "crt_http.HttpClientStream | None" = None
+        self._stream: crt_http.HttpClientStream | None = None
         self._status_code_future: Future[int] = Future()
         self._headers_future: Future[Fields] = Future()
         self._chunk_futures: list[Future[bytes]] = []

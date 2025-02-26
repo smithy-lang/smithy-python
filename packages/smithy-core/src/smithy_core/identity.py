@@ -1,6 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from .interfaces import identity as identity_interface
 from .utils import ensure_utc
@@ -28,4 +28,4 @@ class Identity(identity_interface.Identity):
         """Whether the identity is expired."""
         if self.expiration is None:
             return False
-        return datetime.now(tz=timezone.utc) >= self.expiration
+        return datetime.now(tz=UTC) >= self.expiration

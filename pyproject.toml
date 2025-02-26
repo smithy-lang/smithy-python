@@ -50,8 +50,7 @@ target-version = "py312"
 # perhaps in the future: N, PYI, TC, TID
 # probably not, a lot of work: DOC, D, PL, TRY
 
-# TODO: UP
-select = [ "ASYNC", "E1", "E4", "E7", "E9", "F", "FURB", "G", "I", "LOG", "S", "T" ]
+select = [ "ASYNC", "E1", "E4", "E7", "E9", "F", "FURB", "G", "I", "LOG", "S", "T", "UP" ]
 exclude = [ "packages/smithy-core/src/smithy_core/rfc3986.py" ]
 
 [tool.ruff.lint.per-file-ignores]

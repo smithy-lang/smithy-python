@@ -1,6 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta, timezone
 
 import pytest
 from freezegun import freeze_time
@@ -13,7 +13,7 @@ from smithy_core.identity import Identity
         None,
         timezone(timedelta(hours=3)),
         timezone(timedelta(hours=-3)),
-        timezone.utc,
+        UTC,
         timezone(timedelta(hours=0)),
         timezone(timedelta(hours=0, minutes=30)),
         timezone(timedelta(hours=0, minutes=-30)),
@@ -23,7 +23,7 @@ def test_expiration_timezone(time_zone: timezone) -> None:
     expiration = datetime.now(tz=time_zone)
     identity = Identity(expiration=expiration)
     assert identity.expiration is not None
-    assert identity.expiration.tzinfo == timezone.utc
+    assert identity.expiration.tzinfo == UTC
 
 
 @pytest.mark.parametrize(
@@ -31,20 +31,20 @@ def test_expiration_timezone(time_zone: timezone) -> None:
     [
         (
             Identity(
-                expiration=datetime(year=2023, month=1, day=1, tzinfo=timezone.utc),
+                expiration=datetime(year=2023, month=1, day=1, tzinfo=UTC),
             ),
             True,
         ),
         (Identity(), False),
         (
             Identity(
-                expiration=datetime(year=2023, month=1, day=2, tzinfo=timezone.utc),
+                expiration=datetime(year=2023, month=1, day=2, tzinfo=UTC),
             ),
             False,
         ),
         (
             Identity(
-                expiration=datetime(year=2022, month=12, day=31, tzinfo=timezone.utc),
+                expiration=datetime(year=2022, month=12, day=31, tzinfo=UTC),
             ),
             True,
         ),
