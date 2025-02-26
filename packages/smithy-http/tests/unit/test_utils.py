@@ -2,7 +2,6 @@
 #  SPDX-License-Identifier: Apache-2.0
 import pytest
 from smithy_core.exceptions import SmithyException
-
 from smithy_http.utils import join_query_params, split_header
 
 

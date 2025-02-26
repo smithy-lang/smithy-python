@@ -1,7 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import pytest
-
 from smithy_http.aio import HTTPRequest
 from smithy_http.aio.crt import AWSCRTHTTPClient, AWSCRTHTTPClientConfig
 

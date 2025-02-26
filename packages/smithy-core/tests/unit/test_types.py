@@ -5,7 +5,6 @@
 from datetime import datetime, timezone
 
 import pytest
-
 from smithy_core.exceptions import ExpectationNotMetException
 from smithy_core.types import JsonBlob, JsonString, TimestampFormat
 
