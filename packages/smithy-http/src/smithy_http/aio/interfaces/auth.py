@@ -24,7 +24,6 @@ class SigningProperties(TypedDict):
     """Additional properties loaded to modify the signing process."""
 
 
-
 SigningPropertiesType = TypeVar("SigningPropertiesType", bound=SigningProperties)
 SigningPropertiesType_contra = TypeVar(
     "SigningPropertiesType_contra", bound=SigningProperties, contravariant=True

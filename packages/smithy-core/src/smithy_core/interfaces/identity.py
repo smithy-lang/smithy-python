@@ -26,7 +26,6 @@ class IdentityProperties(TypedDict):
     """Properties used to help determine the identity to return."""
 
 
-
 IdentityPropertiesType = TypeVar("IdentityPropertiesType", bound=IdentityProperties)
 IdentityPropertiesType_contra = TypeVar(
     "IdentityPropertiesType_contra", bound=IdentityProperties, contravariant=True
