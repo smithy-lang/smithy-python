@@ -25,7 +25,6 @@ IdentityType_cov = TypeVar("IdentityType_cov", bound=Identity, covariant=True)
 class IdentityProperties(TypedDict):
     """Properties used to help determine the identity to return."""
 
-    ...
 
 
 IdentityPropertiesType = TypeVar("IdentityPropertiesType", bound=IdentityProperties)

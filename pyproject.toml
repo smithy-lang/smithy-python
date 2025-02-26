@@ -46,11 +46,11 @@ black = true
 target-version = "py312"
 
 [tool.ruff.lint]
-# candidates: DTZ, EM, INP, ISC, PERF, PIE, RUF, SIM118, SIM401, SLOT
+# candidates: DTZ, EM, INP, ISC, PERF, RUF, SIM118, SIM401, SLOT
 # perhaps in the future: N, PYI, TC, TID
 # probably not, a lot of work: DOC, D, PL, TRY
 
-select = [ "ASYNC", "C4", "E1", "E4", "E7", "E9", "F", "FURB", "G", "I", "LOG", "S", "T", "UP" ]
+select = [ "ASYNC", "C4", "E1", "E4", "E7", "E9", "F", "FURB", "G", "I", "LOG", "PIE", "S", "T", "UP" ]
 exclude = [ "packages/smithy-core/src/smithy_core/rfc3986.py" ]
 
 [tool.ruff.lint.per-file-ignores]
