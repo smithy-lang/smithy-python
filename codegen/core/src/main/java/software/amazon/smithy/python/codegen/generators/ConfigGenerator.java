@@ -289,7 +289,19 @@ public final class ConfigGenerator implements Runnable {
     }
 
     private void generateConfig(GenerationContext context, PythonWriter writer) {
-        var symbol = CodegenUtils.getConfigSymbol(context.settings());
+        var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
+        Symbol configProtocolSymbol = null;
+        if (context.applicationProtocol().isHttpProtocol()) {
+            configProtocolSymbol = Symbol.builder()
+                    .name("HttpConfig")
+                    .namespace("smithy_http.interfaces.config", ".")
+                    .build();
+        } else {
+            configProtocolSymbol = Symbol.builder()
+                    .name("Config")
+                    .namespace("smithy_core.interfaces.config", ".")
+                    .build();
+        }
 
         // Initialize the list of config properties with our base properties. Here a new
         // list is constructed because that base list is immutable.
@@ -324,7 +336,7 @@ public final class ConfigGenerator implements Runnable {
         writer.addStdlibImport("dataclasses", "dataclass");
         writer.write("""
                 @dataclass(init=False)
-                class $L:
+                class $T($T):
                     \"""Configuration for $L.\"""
 
                     ${C|}
@@ -340,7 +352,8 @@ public final class ConfigGenerator implements Runnable {
                         \"""
                         ${C|}
                 """,
-                symbol.getName(),
+                configSymbol,
+                configProtocolSymbol,
                 context.settings().service().getName(),
                 writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
                 writer.consumer(w -> writeInitParams(w, finalProperties)),

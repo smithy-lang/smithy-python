@@ -51,6 +51,7 @@ class UserAgentComponent:
         return f"{clean_prefix}/{clean_name}#{clean_value}"
 
 
+@dataclass(frozen=True, slots=True)
 class RawStringUserAgentComponent:
     """UserAgentComponent interface wrapper around ``str``.
 
@@ -58,11 +59,10 @@ class RawStringUserAgentComponent:
     but instead are provided as strings. No sanitization is performed.
     """
 
-    def __init__(self, value: str):
-        self._value = value
+    value: str
 
     def __str__(self) -> str:
-        return self._value
+        return self.value
 
 
 _UAComponent = UserAgentComponent | RawStringUserAgentComponent
@@ -71,6 +71,7 @@ _UAComponent = UserAgentComponent | RawStringUserAgentComponent
 class UserAgent:
     def __init__(
         self,
+        *,
         platform_name: str | None,
         platform_version: str | None,
         platform_machine: str | None,

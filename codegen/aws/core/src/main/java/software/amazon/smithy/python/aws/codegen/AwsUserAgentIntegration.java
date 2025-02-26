@@ -31,22 +31,22 @@ public class AwsUserAgentIntegration implements PythonIntegration {
                         .addConfigProperty(
                                 ConfigProperty.builder()
                                         .name("sdk_ua_app_id")
-                                        .documentation("A unique and opaque application ID that is appended to the User-Agent header.")
+                                        .documentation(
+                                                "A unique and opaque application ID that is appended to the User-Agent header.")
                                         .type(Symbol.builder().name("str").build())
                                         .nullable(true)
-                                        .build()
-                        )
+                                        .build())
                         .pythonPlugin(
                                 SymbolReference.builder()
                                         .symbol(Symbol.builder()
-                                                .namespace(AwsPythonDependency.SMITHY_AWS_CORE.packageName() + ".plugins", ".")
+                                                .namespace(
+                                                        AwsPythonDependency.SMITHY_AWS_CORE.packageName() + ".plugins",
+                                                        ".")
                                                 .name("user_agent_plugin")
                                                 .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                                                 .build())
-                                        .build()
-                        )
-                        .build()
-        );
+                                        .build())
+                        .build());
     }
 
 }

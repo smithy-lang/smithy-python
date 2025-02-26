@@ -273,7 +273,22 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
 
     @Override
     public void customizeBeforeIntegrations(CustomizeDirective<GenerationContext, PythonSettings> directive) {
+        generateServiceModuleInit(directive);
         generateInits(directive);
+    }
+
+    /**
+     * Creates top level __init__.py file.
+     */
+    private void generateServiceModuleInit(CustomizeDirective<GenerationContext, PythonSettings> directive) {
+        directive.context()
+                .writerDelegator()
+                .useFileWriter(
+                        "%s/__init__.py".formatted(directive.context().settings().moduleName()),
+                        writer -> {
+                            writer
+                                    .write("__version__ = '$L'", directive.context().settings().moduleVersion());
+                        });
     }
 
     /**
