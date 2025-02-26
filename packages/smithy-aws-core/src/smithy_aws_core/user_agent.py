@@ -35,7 +35,7 @@ class UserAgentComponent(NamedTuple):
 
     prefix: str
     name: str
-    value: Optional[str] = None
+    value: str | None = None
 
     def to_string(self):
         """Create string like 'prefix/name#value' from a UserAgentComponent."""
@@ -132,13 +132,13 @@ class UserAgent:
 
         return " ".join([comp.to_string() for comp in components])
 
-    def _build_sdk_metadata(self) -> List[UserAgentComponent]:
+    def _build_sdk_metadata(self) -> list[UserAgentComponent]:
         """Build the SDK name and version component of the User-Agent header.
 
         Includes CRT version if available.
         """
         sdk_version = self._sdk_version if self._sdk_version else "Unknown"
-        sdk_md: List[UserAgentComponent] = [
+        sdk_md: list[UserAgentComponent] = [
             UserAgentComponent(_USERAGENT_SDK_NAME, sdk_version)
         ]
 
@@ -147,7 +147,7 @@ class UserAgent:
 
         return sdk_md
 
-    def _build_os_metadata(self) -> List[UserAgentComponent]:
+    def _build_os_metadata(self) -> list[UserAgentComponent]:
         """Build the OS/platform components of the User-Agent header string.
 
         For recognized platform names that match or map to an entry in the list
@@ -180,7 +180,7 @@ class UserAgent:
                 UserAgentComponent("md", self._platform_name, self._platform_version),
             ]
 
-    def _build_architecture_metadata(self) -> List[UserAgentComponent]:
+    def _build_architecture_metadata(self) -> list[UserAgentComponent]:
         """Build architecture component of the User-Agent header string.
 
         Returns the machine type with prefix "md" and name "arch", if one is available.
@@ -190,7 +190,7 @@ class UserAgent:
             return [UserAgentComponent("md", "arch", self._platform_machine.lower())]
         return []
 
-    def _build_language_metadata(self) -> List[UserAgentComponent]:
+    def _build_language_metadata(self) -> list[UserAgentComponent]:
         """Build the language components of the User-Agent header string.
 
         Returns the Python version in a component with prefix "lang" and name
@@ -209,7 +209,7 @@ class UserAgent:
             )
         return lang_md
 
-    def _build_execution_env_metadata(self) -> List[UserAgentComponent]:
+    def _build_execution_env_metadata(self) -> list[UserAgentComponent]:
         """Build the execution environment component of the User-Agent header.
 
         Returns a single component prefixed with "exec-env", usually sourced from the
@@ -220,21 +220,21 @@ class UserAgent:
         else:
             return []
 
-    def _build_feature_metadata(self) -> List[UserAgentComponent]:
+    def _build_feature_metadata(self) -> list[UserAgentComponent]:
         """Build the features components of the User-Agent header string.
 
         TODO: These should be sourced from property bag set on context.
         """
         return []
 
-    def _build_app_id(self) -> List[UserAgentComponent]:
+    def _build_app_id(self) -> list[UserAgentComponent]:
         """Build app component of the User-Agent header string."""
         if self._user_agent_app_id:
             return [UserAgentComponent("app", self._user_agent_app_id)]
         else:
             return []
 
-    def _build_suffix(self) -> List[_UAComponent]:
+    def _build_suffix(self) -> list[_UAComponent]:
         if self._user_agent_suffix:
             return [RawStringUserAgentComponent(self._user_agent_suffix)]
         else:
