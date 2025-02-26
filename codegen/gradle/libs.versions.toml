@@ -3,7 +3,7 @@ junit5 = "5.11.4"
 smithy = "1.54.0"
 test-logger-plugin = "4.0.0"
 spotbugs = "6.0.22"
-spotless = "6.25.0"
+spotless = "7.0.2"
 smithy-gradle-plugins = "1.2.0"
 dep-analysis = "2.8.2"
 
