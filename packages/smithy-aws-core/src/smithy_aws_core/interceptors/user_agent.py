@@ -12,14 +12,17 @@ class UserAgentInterceptor(Interceptor[Request, None, HTTPRequest, None]):
 
     def __init__(
         self,
+        *,
         ua_suffix: str | None = None,
         ua_app_id: str | None = None,
         sdk_version: str | None = "0.0.1",
     ) -> None:
         """Initialize the UserAgentInterceptor.
 
-        :ua_suffix: Additional suffix to be added to the UserAgent header. :ua_app_id:
-        User defined and opaque application ID to be added to the UserAgent header.
+        :param ua_suffix: Additional suffix to be added to the UserAgent header.
+        :param ua_app_id: User defined and opaque application ID to be added to the
+            UserAgent header.
+        :param sdk_version: SDK version to be added to the UserAgent header.
         """
         super().__init__()
         self._ua_suffix = ua_suffix

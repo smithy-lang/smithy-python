@@ -4,8 +4,9 @@
 
 import os
 import platform
+from dataclasses import dataclass
 from string import ascii_letters, digits
-from typing import NamedTuple, Optional, Self, Union, List
+from typing import Self
 
 from smithy_http.aio.crt import HAS_CRT
 
@@ -24,7 +25,8 @@ _USERAGENT_PLATFORM_NAME_MAPPINGS = {"darwin": "macos"}
 _USERAGENT_SDK_NAME = "aws-sdk-python"
 
 
-class UserAgentComponent(NamedTuple):
+@dataclass(frozen=True, slots=True)
+class UserAgentComponent:
     """Component of a User-Agent header string in the standard format.
 
     Each component consists of a prefix, a name, and a value. In the string
@@ -37,7 +39,7 @@ class UserAgentComponent(NamedTuple):
     name: str
     value: str | None = None
 
-    def to_string(self):
+    def __str__(self):
         """Create string like 'prefix/name#value' from a UserAgentComponent."""
         clean_prefix = sanitize_user_agent_string_component(
             self.prefix, allow_hash=True
@@ -59,11 +61,11 @@ class RawStringUserAgentComponent:
     def __init__(self, value: str):
         self._value = value
 
-    def to_string(self) -> str:
+    def __str__(self) -> str:
         return self._value
 
 
-_UAComponent = Union[UserAgentComponent, RawStringUserAgentComponent]
+_UAComponent = UserAgentComponent | RawStringUserAgentComponent
 
 
 class UserAgent:
@@ -92,9 +94,6 @@ class UserAgent:
 
     @classmethod
     def from_environment(cls) -> Self:
-        crt_version = None
-        if HAS_CRT:
-            crt_version = _get_crt_version() or "Unknown"
         return cls(
             platform_name=platform.system(),
             platform_version=platform.release(),
@@ -102,7 +101,7 @@ class UserAgent:
             python_version=platform.python_version(),
             python_implementation=platform.python_implementation(),
             execution_env=os.environ.get("AWS_EXECUTION_ENV"),
-            crt_version=crt_version,
+            crt_version=_get_crt_version(),
         )
 
     def with_config(
@@ -130,7 +129,7 @@ class UserAgent:
             *self._build_suffix(),
         ]
 
-        return " ".join([comp.to_string() for comp in components])
+        return " ".join([str(comp) for comp in components])
 
     def _build_sdk_metadata(self) -> list[UserAgentComponent]:
         """Build the SDK name and version component of the User-Agent header.
@@ -261,9 +260,9 @@ def sanitize_user_agent_string_component(raw_str: str, allow_hash: bool = False)
 
 def _get_crt_version() -> str | None:
     """This function is considered private and is subject to abrupt breaking changes."""
-    try:
+    if HAS_CRT:
         import awscrt
 
         return awscrt.__version__
-    except AttributeError:
+    else:
         return None

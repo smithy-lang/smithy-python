@@ -4,7 +4,6 @@
  */
 package software.amazon.smithy.python.aws.codegen;
 
-import java.util.Collections;
 import java.util.List;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolReference;
@@ -24,12 +23,11 @@ public class AwsUserAgentIntegration implements PythonIntegration {
                 RuntimeClientPlugin.builder()
                         .addConfigProperty(
                                 ConfigProperty.builder()
-                                // TODO: This is the name used in boto, but potentially could be user_agent_prefix.  Depends on backwards compat strategy.
-                                .name("user_agent_extra")
-                                .documentation("Additional suffix to be added to the User-Agent header.")
-                                .type(Symbol.builder().name("str").build()) // TODO: Should common types like this be defined as constants somewhere?
-                                .nullable(true)
-                                .build())
+                                        .name("user_agent_extra")
+                                        .documentation("Additional suffix to be added to the User-Agent header.")
+                                        .type(Symbol.builder().name("str").build())
+                                        .nullable(true)
+                                        .build())
                         .addConfigProperty(
                                 ConfigProperty.builder()
                                         .name("sdk_ua_app_id")
