@@ -4,7 +4,6 @@ import datetime
 from dataclasses import dataclass
 from typing import Any, ClassVar, Literal, Self
 
-from aws_event_stream.events import Byte, EventMessage, Long, Short
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.exceptions import SmithyException
 from smithy_core.prelude import (
@@ -21,6 +20,8 @@ from smithy_core.schemas import Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import Trait
+
+from aws_event_stream.events import Byte, EventMessage, Long, Short
 
 EVENT_HEADER_TRAIT = Trait(id=ShapeID("smithy.api#eventHeader"))
 EVENT_PAYLOAD_TRAIT = Trait(id=ShapeID("smithy.api#eventPayload"))

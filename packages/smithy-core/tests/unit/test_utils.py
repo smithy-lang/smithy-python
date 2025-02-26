@@ -11,6 +11,7 @@ from typing import Any, NamedTuple
 from unittest.mock import Mock
 
 import pytest
+
 from smithy_core.exceptions import ExpectationNotMetException
 from smithy_core.utils import (
     ensure_utc,

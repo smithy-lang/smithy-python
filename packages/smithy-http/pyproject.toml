@@ -24,3 +24,6 @@ build-backend = "hatchling.build"
 exclude = [
   "tests",
 ]
+
+[tool.ruff]
+src = ["src"]

@@ -1,6 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from smithy_core import URI
+
 from smithy_http import Fields
 from smithy_http.aio.endpoints import StaticEndpointResolver
 from smithy_http.endpoints import StaticEndpointParams

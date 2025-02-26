@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 from smithy_core import URI
 from smithy_core.aio.utils import async_list
+
 from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest, HTTPResponse
 

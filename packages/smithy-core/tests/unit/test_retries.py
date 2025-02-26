@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 import pytest
+
 from smithy_core.exceptions import SmithyRetryException
 from smithy_core.interfaces.retries import RetryErrorInfo, RetryErrorType
 from smithy_core.retries import ExponentialBackoffJitterType as EBJT

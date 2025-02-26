@@ -4,15 +4,16 @@ from io import BytesIO
 from typing import Any
 
 import pytest
+from smithy_core.aio.types import AsyncBytesReader
+from smithy_core.deserializers import DeserializeableShape
+from smithy_json import JSONCodec
+
 from aws_event_stream._private.deserializers import (
     AWSAsyncEventReceiver,
     EventDeserializer,
 )
 from aws_event_stream.events import Event, EventMessage
 from aws_event_stream.exceptions import UnmodeledEventError
-from smithy_core.aio.types import AsyncBytesReader
-from smithy_core.deserializers import DeserializeableShape
-from smithy_json import JSONCodec
 
 from . import (
     EVENT_STREAM_SERDE_CASES,

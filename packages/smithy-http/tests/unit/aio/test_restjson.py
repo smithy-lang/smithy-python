@@ -7,6 +7,7 @@ from collections.abc import AsyncIterator
 import pytest
 from smithy_core.aio.utils import async_list
 from smithy_core.documents import DocumentValue
+
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPResponse
 from smithy_http.aio.restjson import parse_rest_json_error_info

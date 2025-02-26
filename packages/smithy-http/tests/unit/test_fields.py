@@ -5,6 +5,7 @@
 # mypy: allow-incomplete-defs
 
 import pytest
+
 from smithy_http import Field, Fields
 from smithy_http.interfaces import FieldPosition
 

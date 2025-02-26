@@ -19,6 +19,7 @@ from smithy_core.schemas import Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import Trait
+
 from smithy_json._private.traits import JSON_NAME, TIMESTAMP_FORMAT
 
 SPARSE_TRAIT = Trait(id=ShapeID("smithy.api#sparse"))

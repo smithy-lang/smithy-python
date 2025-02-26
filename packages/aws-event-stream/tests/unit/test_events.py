@@ -6,6 +6,8 @@ import uuid
 from io import BytesIO
 
 import pytest
+from smithy_core.aio.types import AsyncBytesReader
+
 from aws_event_stream.events import (
     MAX_HEADER_VALUE_BYTE_LENGTH,
     MAX_HEADERS_LENGTH,
@@ -29,7 +31,6 @@ from aws_event_stream.exceptions import (
     InvalidIntegerValue,
     InvalidPayloadLength,
 )
-from smithy_core.aio.types import AsyncBytesReader
 
 EMPTY_MESSAGE = (
     (
