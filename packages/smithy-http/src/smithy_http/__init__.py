@@ -25,7 +25,7 @@ class Field(interfaces.Field):
         kind: FieldPosition = FieldPosition.HEADER,
     ):
         self.name = name
-        self.values: list[str] = [val for val in values] if values is not None else []
+        self.values: list[str] = list(values) if values is not None else []
         self.kind = kind
 
     def add(self, value: str) -> None:
@@ -99,7 +99,7 @@ class Fields(interfaces.Fields):
         :param encoding: The string encoding to be used when converting the ``Field``
         name and value from ``str`` to ``bytes`` for transmission.
         """
-        init_fields = [fld for fld in initial] if initial is not None else []
+        init_fields = list(initial) if initial is not None else []
         init_field_names = [self._normalize_field_name(fld.name) for fld in init_fields]
         fname_counter = Counter(init_field_names)
         repeated_names_exist = (
