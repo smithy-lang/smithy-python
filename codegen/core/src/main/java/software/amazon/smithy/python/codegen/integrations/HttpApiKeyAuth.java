@@ -24,7 +24,7 @@ public final class HttpApiKeyAuth implements PythonIntegration {
     private static final String OPTION_GENERATOR_NAME = "_generate_api_key_option";
 
     @Override
-    public List<RuntimeClientPlugin> getClientPlugins() {
+    public List<RuntimeClientPlugin> getClientPlugins(GenerationContext context) {
         return List.of(
                 RuntimeClientPlugin.builder()
                         .servicePredicate((model, service) -> service.hasTrait(HttpApiKeyAuthTrait.class))

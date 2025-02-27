@@ -219,7 +219,7 @@ public final class ConfigGenerator implements Runnable {
         var supportedAuthSchemes = new LinkedHashMap<String, Symbol>();
         var service = context.settings().service(context.model());
         for (PythonIntegration integration : context.integrations()) {
-            for (RuntimeClientPlugin plugin : integration.getClientPlugins()) {
+            for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
                 if (plugin.matchesService(context.model(), service)
                         && plugin.getAuthScheme().isPresent()
                         && plugin.getAuthScheme().get().getApplicationProtocol().isHttpProtocol()) {
@@ -324,7 +324,7 @@ public final class ConfigGenerator implements Runnable {
 
         // Add any relevant config properties from plugins.
         for (PythonIntegration integration : context.integrations()) {
-            for (RuntimeClientPlugin plugin : integration.getClientPlugins()) {
+            for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
                 if (plugin.matchesService(model, service)) {
                     properties.addAll(plugin.getConfigProperties());
                 }

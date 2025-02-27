@@ -35,7 +35,7 @@ public interface PythonIntegration extends SmithyIntegration<PythonSettings, Pyt
      *
      * @return Returns the list of RuntimePlugins to apply to the client.
      */
-    default List<RuntimeClientPlugin> getClientPlugins() {
+    default List<RuntimeClientPlugin> getClientPlugins(GenerationContext context) {
         return Collections.emptyList();
     }
 }
