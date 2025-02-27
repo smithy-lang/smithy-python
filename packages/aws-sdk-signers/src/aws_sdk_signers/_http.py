@@ -1,8 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 """
-Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-SPDX-License-Identifier: Apache-2.0
-
-
 NOTE TO THE READER:
 
 This file is _strictly_ temporary and subject to abrupt breaking changes
@@ -61,8 +59,8 @@ class Field(interfaces_http.Field):
             return
 
     def as_string(self, delimiter: str = ",") -> str:
-        """Get delimited string of all values. A comma followed by a space is used
-        by default.
+        """Get delimited string of all values. A comma followed by a space is used by
+        default.
 
         If the ``Field`` has zero values, the empty string is returned. If the ``Field``
         has exactly one value, the value is returned unmodified.
@@ -316,8 +314,9 @@ class URI(interfaces_http.URI):
 
 
 class URIParameters(TypedDict):
-    """TypedDict representing the parameters for the URI class. These need to be
-    kept in sync for the `to_dict` method.
+    """TypedDict representing the parameters for the URI class.
+
+    These need to be kept in sync for the `to_dict` method.
     """
 
     # TODO: Unpack doesn't seem to do what we want, so we need a way to represent

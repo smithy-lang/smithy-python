@@ -1,7 +1,5 @@
-"""
-Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-SPDX-License-Identifier: Apache-2.0
-"""
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 import datetime
 import hmac
@@ -43,9 +41,7 @@ class SigV4SigningProperties(TypedDict, total=False):
 
 
 class SigV4Signer:
-    """
-    Request signer for applying the AWS Signature Version 4 algorithm.
-    """
+    """Request signer for applying the AWS Signature Version 4 algorithm."""
 
     def sign(
         self,
@@ -56,13 +52,11 @@ class SigV4Signer:
     ) -> AWSRequest:
         """Generate and apply a SigV4 Signature to a copy of the supplied request.
 
-        :param signing_properties:
-            SigV4SigningProperties to define signing primitives such as
-            the target service, region, and date.
-        :param request:
-            An AWSRequest to sign prior to sending to the service.
-        :param identity:
-            A set of credentials representing an AWS Identity or role capacity.
+        :param signing_properties: SigV4SigningProperties to define signing primitives
+            such as the target service, region, and date.
+        :param request: An AWSRequest to sign prior to sending to the service.
+        :param identity: A set of credentials representing an AWS Identity or role
+            capacity.
         """
         # Copy and prepopulate any missing values in the
         # supplied request and signing properties.
@@ -107,7 +101,7 @@ class SigV4Signer:
     def generate_authorization_field(
         self, *, credential: str, signed_headers: list[str], signature: str
     ) -> Field:
-        """Generate the `Authorization` field
+        """Generate the `Authorization` field.
 
         :param credential:
             Credential scope string for generating the Authorization header.
@@ -138,13 +132,15 @@ class SigV4Signer:
         In SigV4, a signing key is created that is scoped to a specific region and
         service. The date, region, service and resulting signing key are individually
         hashed, then the composite hash is used to sign the string to sign.
-
-        DateKey              = HMAC-SHA256("AWS4"+"<SecretAccessKey>", "<YYYYMMDD>")
-        DateRegionKey        = HMAC-SHA256(<DateKey>, "<aws-region>")
-        DateRegionServiceKey = HMAC-SHA256(<DateRegionKey>, "<aws-service>")
-        SigningKey           = HMAC-SHA256(<DateRegionServiceKey>, "aws4_request")
         """
         assert signing_properties["date"] is not None
+
+        # Components of Signing Key Calculation
+        #
+        # DateKey              = HMAC-SHA256("AWS4"+"<SecretAccessKey>", "<YYYYMMDD>")
+        # DateRegionKey        = HMAC-SHA256(<DateKey>, "<aws-region>")
+        # DateRegionServiceKey = HMAC-SHA256(<DateRegionKey>, "<aws-service>")
+        # SigningKey = HMAC-SHA256(<DateRegionServiceKey>, "aws4_request")
         k_date = self._hash(
             key=f"AWS4{secret_key}".encode(), value=signing_properties["date"][0:8]
         )
@@ -213,9 +209,9 @@ class SigV4Signer:
     def canonical_request(
         self, *, signing_properties: SigV4SigningProperties, request: AWSRequest
     ) -> str:
-        """The canonical request is a standardized string laying out the
-        components used in the SigV4 signing algorithm. This is useful to quickly
-        compare inputs to find signature mismatches and unintended variances.
+        """The canonical request is a standardized string laying out the components used
+        in the SigV4 signing algorithm. This is useful to quickly compare inputs to find
+        signature mismatches and unintended variances.
 
         The SigV4 specification defines the canonical request to be:
             <HTTPMethod>\n
@@ -257,9 +253,9 @@ class SigV4Signer:
     ) -> str:
         """The string to sign is the second step of our signing algorithm which
         concatenates the formal identifier of our signing algorithm, the signing
-        DateTime, the scope of our credentials, and a hash of our previously
-        generated canonical request. This is another checkpoint that can be used
-        to ensure we're constructing our signature as intended.
+        DateTime, the scope of our credentials, and a hash of our previously generated
+        canonical request. This is another checkpoint that can be used to ensure we're
+        constructing our signature as intended.
 
         The SigV4 specification defines the string to sign as:
             Algorithm \n
@@ -410,9 +406,7 @@ class SigV4Signer:
 
 
 class AsyncSigV4Signer:
-    """
-    Request signer for applying the AWS Signature Version 4 algorithm.
-    """
+    """Request signer for applying the AWS Signature Version 4 algorithm."""
 
     async def sign(
         self,
@@ -423,13 +417,11 @@ class AsyncSigV4Signer:
     ) -> AWSRequest:
         """Generate and apply a SigV4 Signature to a copy of the supplied request.
 
-        :param signing_properties:
-            SigV4SigningProperties to define signing primitives such as
-            the target service, region, and date.
-        :param request:
-            An AWSRequest to sign prior to sending to the service.
-        :param identity:
-            A set of credentials representing an AWS Identity or role capacity.
+        :param signing_properties: SigV4SigningProperties to define signing primitives
+            such as the target service, region, and date.
+        :param request: An AWSRequest to sign prior to sending to the service.
+        :param identity: A set of credentials representing an AWS Identity or role
+            capacity.
         """
         # Copy and prepopulate any missing values in the
         # supplied request and signing properties.
@@ -474,7 +466,7 @@ class AsyncSigV4Signer:
     async def generate_authorization_field(
         self, *, credential: str, signed_headers: list[str], signature: str
     ) -> Field:
-        """Generate the `Authorization` field
+        """Generate the `Authorization` field.
 
         :param credential:
             Credential scope string for generating the Authorization header.
@@ -505,13 +497,15 @@ class AsyncSigV4Signer:
         In SigV4, a signing key is created that is scoped to a specific region and
         service. The date, region, service and resulting signing key are individually
         hashed, then the composite hash is used to sign the string to sign.
-
-        DateKey              = HMAC-SHA256("AWS4"+"<SecretAccessKey>", "<YYYYMMDD>")
-        DateRegionKey        = HMAC-SHA256(<DateKey>, "<aws-region>")
-        DateRegionServiceKey = HMAC-SHA256(<DateRegionKey>, "<aws-service>")
-        SigningKey           = HMAC-SHA256(<DateRegionServiceKey>, "aws4_request")
         """
         assert signing_properties.get("date") is not None
+
+        # Components of Signing Key Calculation
+        #
+        # DateKey              = HMAC-SHA256("AWS4"+"<SecretAccessKey>", "<YYYYMMDD>")
+        # DateRegionKey        = HMAC-SHA256(<DateKey>, "<aws-region>")
+        # DateRegionServiceKey = HMAC-SHA256(<DateRegionKey>, "<aws-service>")
+        # SigningKey = HMAC-SHA256(<DateRegionServiceKey>, "aws4_request")
         k_date = await self._hash(
             key=f"AWS4{secret_key}".encode(), value=signing_properties["date"][0:8]
         )
@@ -581,9 +575,9 @@ class AsyncSigV4Signer:
     async def canonical_request(
         self, *, signing_properties: SigV4SigningProperties, request: AWSRequest
     ) -> str:
-        """The canonical request is a standardized string laying out the
-        components used in the SigV4 signing algorithm. This is useful to quickly
-        compare inputs to find signature mismatches and unintended variances.
+        """The canonical request is a standardized string laying out the components used
+        in the SigV4 signing algorithm. This is useful to quickly compare inputs to find
+        signature mismatches and unintended variances.
 
         The SigV4 specification defines the canonical request to be:
             <HTTPMethod>\n
@@ -629,9 +623,9 @@ class AsyncSigV4Signer:
     ) -> str:
         """The string to sign is the second step of our signing algorithm which
         concatenates the formal identifier of our signing algorithm, the signing
-        DateTime, the scope of our credentials, and a hash of our previously
-        generated canonical request. This is another checkpoint that can be used
-        to ensure we're constructing our signature as intended.
+        DateTime, the scope of our credentials, and a hash of our previously generated
+        canonical request. This is another checkpoint that can be used to ensure we're
+        constructing our signature as intended.
 
         The SigV4 specification defines the string to sign as:
             Algorithm \n
@@ -784,6 +778,7 @@ class AsyncSigV4Signer:
 
 def _remove_dot_segments(path: str, remove_consecutive_slashes: bool = True) -> str:
     """Removes dot segments from a path per :rfc:`3986#section-5.2.4`.
+
     Optionally removes consecutive slashes, true by default.
     :param path: The path to modify.
     :param remove_consecutive_slashes: Whether to remove consecutive slashes.

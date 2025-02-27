@@ -1,7 +1,5 @@
-"""
-Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-SPDX-License-Identifier: Apache-2.0
-"""
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 
 from __future__ import annotations
 
@@ -35,8 +33,8 @@ class FieldPosition(Enum):
 class Field(Protocol):
     """A name-value pair representing a single field in a request or response.
 
-    The kind will dictate metadata placement within a message, for example as
-    a header or trailer field in an HTTP request as defined in RFC 9110 Section 5.
+    The kind will dictate metadata placement within a message, for example as a header
+    or trailer field in an HTTP request as defined in RFC 9110 Section 5.
 
     All field names are case insensitive and case-variance must be treated as
     equivalent. Names may be normalized but should be preserved for accuracy during
