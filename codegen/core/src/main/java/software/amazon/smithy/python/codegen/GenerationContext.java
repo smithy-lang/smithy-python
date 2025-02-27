@@ -11,6 +11,7 @@ import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.WriterDelegator;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.python.codegen.generators.ProtocolGenerator;
+import software.amazon.smithy.python.codegen.integrations.EndpointsGenerator;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.writer.PythonDelegator;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
@@ -32,6 +33,7 @@ public final class GenerationContext
     private final PythonDelegator delegator;
     private final List<PythonIntegration> integrations;
     private final ProtocolGenerator protocolGenerator;
+    private final EndpointsGenerator endpointsGenerator;
 
     private GenerationContext(Builder builder) {
         model = builder.model;
@@ -41,6 +43,7 @@ public final class GenerationContext
         delegator = builder.delegator;
         integrations = builder.integrations;
         protocolGenerator = builder.protocolGenerator;
+        endpointsGenerator = builder.endpointsGenerator;
     }
 
     @Override
@@ -81,6 +84,13 @@ public final class GenerationContext
     }
 
     /**
+     * @return Returns the endpoints generator to use in code generation.
+     */
+    public EndpointsGenerator endpointsGenerator () {
+        return endpointsGenerator;
+    }
+
+    /**
      * Gets the application protocol for the service protocol.
      *
      * @return Returns the application protocol the protocol makes use of.
@@ -105,7 +115,8 @@ public final class GenerationContext
                 .settings(settings)
                 .symbolProvider(symbolProvider)
                 .fileManifest(fileManifest)
-                .writerDelegator(delegator);
+                .writerDelegator(delegator)
+                .endpointsGenerator(endpointsGenerator);
     }
 
     /**
@@ -119,6 +130,7 @@ public final class GenerationContext
         private PythonDelegator delegator;
         private List<PythonIntegration> integrations;
         private ProtocolGenerator protocolGenerator;
+        private EndpointsGenerator endpointsGenerator;
 
         @Override
         public GenerationContext build() {
@@ -185,6 +197,15 @@ public final class GenerationContext
          */
         public Builder protocolGenerator(ProtocolGenerator protocolGenerator) {
             this.protocolGenerator = protocolGenerator;
+            return this;
+        }
+
+        /**
+         * @param endpointsGenerator The resolved endpoints generator to use.
+         * @return Returns the builder.
+         */
+        public Builder endpointsGenerator(EndpointsGenerator endpointsGenerator) {
+            this.endpointsGenerator = endpointsGenerator;
             return this;
         }
     }

@@ -6,7 +6,10 @@ package software.amazon.smithy.python.codegen.integrations;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import software.amazon.smithy.codegen.core.SmithyIntegration;
+import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.python.codegen.generators.ProtocolGenerator;
@@ -37,5 +40,14 @@ public interface PythonIntegration extends SmithyIntegration<PythonSettings, Pyt
      */
     default List<RuntimeClientPlugin> getClientPlugins() {
         return Collections.emptyList();
+    }
+
+    /**
+     * Get an EndpointsGenerator that will be used to generate endpoints related config and resolution logic.
+     *
+     * @return optional EndpointsGenerator.
+     */
+    default Optional<EndpointsGenerator> getEndpointsGenerator(Model model, ServiceShape service) {
+        return Optional.empty();
     }
 }

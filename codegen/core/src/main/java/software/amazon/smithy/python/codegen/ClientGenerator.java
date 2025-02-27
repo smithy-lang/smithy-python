@@ -432,39 +432,7 @@ final class ClientGenerator implements Runnable {
 
         writer.pushState(new ResolveEndpointSection());
         if (context.applicationProtocol().isHttpProtocol()) {
-            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-            writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-            // TODO: implement the endpoints 2.0 spec and remove the hard-coded handling of static params.
-            writer.addImport("smithy_http.endpoints", "StaticEndpointParams");
-            writer.addImport("smithy_core", "URI");
-            writer.write("""
-                            # Step 7f: Invoke endpoint_resolver.resolve_endpoint
-                            if config.endpoint_uri is None:
-                                raise $1T(
-                                    "No endpoint_uri found on the operation config."
-                                )
-
-                            endpoint = await config.endpoint_resolver.resolve_endpoint(
-                                StaticEndpointParams(uri=config.endpoint_uri)
-                            )
-                            if not endpoint.uri.path:
-                                path = ""
-                            elif endpoint.uri.path.endswith("/"):
-                                path = endpoint.uri.path[:-1]
-                            else:
-                                path = endpoint.uri.path
-                            if context.transport_request.destination.path:
-                                path += context.transport_request.destination.path
-                            context._transport_request.destination = URI(
-                                scheme=endpoint.uri.scheme,
-                                host=context.transport_request.destination.host + endpoint.uri.host,
-                                path=path,
-                                port=endpoint.uri.port,
-                                query=context.transport_request.destination.query,
-                            )
-                            context._transport_request.fields.extend(endpoint.headers)
-
-                    """, errorSymbol);
+            context.endpointsGenerator().generateEndpoints(context, writer);
         }
         writer.popState();
 

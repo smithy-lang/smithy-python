@@ -47,8 +47,10 @@ import software.amazon.smithy.python.codegen.generators.MapGenerator;
 import software.amazon.smithy.python.codegen.generators.ProtocolGenerator;
 import software.amazon.smithy.python.codegen.generators.SchemaGenerator;
 import software.amazon.smithy.python.codegen.generators.SetupGenerator;
+import software.amazon.smithy.python.codegen.generators.StaticEndpointsGenerator;
 import software.amazon.smithy.python.codegen.generators.StructureGenerator;
 import software.amazon.smithy.python.codegen.generators.UnionGenerator;
+import software.amazon.smithy.python.codegen.integrations.EndpointsGenerator;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.writer.PythonDelegator;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
@@ -81,7 +83,18 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
                         directive.integrations(),
                         directive.model(),
                         directive.service()))
+                .endpointsGenerator(resolveEndpointsGenerator(directive))
                 .build();
+    }
+
+    private EndpointsGenerator resolveEndpointsGenerator(CreateContextDirective<PythonSettings, PythonIntegration> directive) {
+        for (PythonIntegration integration : directive.integrations()) {
+            Optional<EndpointsGenerator> generator = integration.getEndpointsGenerator(directive.model(), directive.service());
+            if (generator.isPresent()) {
+                return generator.get();
+            }
+        }
+        return new StaticEndpointsGenerator();
     }
 
     private ProtocolGenerator resolveProtocolGenerator(

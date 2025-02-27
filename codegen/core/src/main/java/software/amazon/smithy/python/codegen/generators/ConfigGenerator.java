@@ -68,7 +68,7 @@ public final class ConfigGenerator implements Runnable {
 
     // This list contains any properties that must be added to any http-based
     // service client, except for the http client itself.
-    private static final List<ConfigProperty> HTTP_PROPERTIES = Arrays.asList(
+    private static final List<ConfigProperty> HTTP_PROPERTIES = List.of(
             ConfigProperty.builder()
                     .name("http_request_config")
                     .type(Symbol.builder()
@@ -77,42 +77,6 @@ public final class ConfigGenerator implements Runnable {
                             .addDependency(SmithyPythonDependency.SMITHY_HTTP)
                             .build())
                     .documentation("Configuration for individual HTTP requests.")
-                    .build(),
-            ConfigProperty.builder()
-                    .name("endpoint_resolver")
-                    .type(Symbol.builder()
-                            .name("EndpointResolver[Any]")
-                            .addReference(Symbol.builder()
-                                    .name("Any")
-                                    .namespace("typing", ".")
-                                    .putProperty(SymbolProperties.STDLIB, true)
-                                    .build())
-                            .addReference(Symbol.builder()
-                                    .name("EndpointResolver")
-                                    .namespace("smithy_http.aio.interfaces", ".")
-                                    .addDependency(SmithyPythonDependency.SMITHY_HTTP)
-                                    .build())
-                            .build())
-                    .documentation("""
-                            The endpoint resolver used to resolve the final endpoint per-operation based on the \
-                            configuration.""")
-                    .nullable(false)
-                    .initialize(writer -> {
-                        writer.addImport("smithy_http.aio.endpoints", "StaticEndpointResolver");
-                        writer.write("self.endpoint_resolver = endpoint_resolver or StaticEndpointResolver()");
-                    })
-                    .build(),
-            ConfigProperty.builder()
-                    .name("endpoint_uri")
-                    .type(Symbol.builder()
-                            .name("str | URI")
-                            .addReference(Symbol.builder()
-                                    .name("URI")
-                                    .namespace("smithy_core.interfaces", ".")
-                                    .addDependency(SmithyPythonDependency.SMITHY_CORE)
-                                    .build())
-                            .build())
-                    .documentation("A static URI to route requests to.")
                     .build());
 
     private final PythonSettings settings;
@@ -154,6 +118,7 @@ public final class ConfigGenerator implements Runnable {
         properties.add(clientBuilder.build());
 
         properties.addAll(HTTP_PROPERTIES);
+        properties.addAll(context.endpointsGenerator().endpointsConfig(context));
         return List.copyOf(properties);
     }
 
