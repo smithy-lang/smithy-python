@@ -16,6 +16,7 @@ import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.python.codegen.ConfigProperty;
+import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.utils.SmithyBuilder;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 import software.amazon.smithy.utils.ToSmithyBuilder;
@@ -38,6 +39,7 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
     private final OperationPredicate operationPredicate;
     private final List<ConfigProperty> configProperties;
     private final SymbolReference pythonPlugin;
+    private final WriteAdditionalFiles writeAdditionalFiles;
 
     private final AuthScheme authScheme;
 
@@ -47,6 +49,7 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
         configProperties = Collections.unmodifiableList(builder.configProperties);
         this.pythonPlugin = builder.pythonPlugin;
         this.authScheme = builder.authScheme;
+        this.writeAdditionalFiles = builder.writeAdditionalFiles;
     }
 
     /**
@@ -63,6 +66,20 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
          * @return Returns true if interceptors / plugins should be applied to the operation.
          */
         boolean test(Model model, ServiceShape service, OperationShape operation);
+    }
+
+    @FunctionalInterface
+    /**
+     * Called to write out additional files.
+     */
+    public interface WriteAdditionalFiles {
+        /**
+         * Called to write out additional files needed by a generator.
+         *
+         * @param context GenerationContext - allows access to file manifest and symbol providers
+         * @return List of the relative paths of files written.
+         */
+        List<String> writeAdditionalFiles(GenerationContext context);
     }
 
     /**
@@ -121,6 +138,16 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
     }
 
     /**
+     * Write additional files required by this plugin.
+     *
+     * @param context generation context
+     * @return relative paths of additional files written.
+     */
+    public List<String> writeAdditionalFiles(GenerationContext context) {
+        return writeAdditionalFiles.writeAdditionalFiles(context);
+    }
+
+    /**
      * @return Returns a new builder for a {@link RuntimeClientPlugin}.
      */
     public static Builder builder() {
@@ -132,7 +159,8 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
         var builder = builder()
                 .pythonPlugin(pythonPlugin)
                 .authScheme(authScheme)
-                .configProperties(configProperties);
+                .configProperties(configProperties)
+                .writeAdditionalFiles(writeAdditionalFiles);
 
         if (operationPredicate == OPERATION_ALWAYS_FALSE) {
             builder.servicePredicate(servicePredicate);
@@ -152,6 +180,7 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
         private List<ConfigProperty> configProperties = new ArrayList<>();
         private SymbolReference pythonPlugin = null;
         private AuthScheme authScheme = null;
+        private WriteAdditionalFiles writeAdditionalFiles = (context) -> Collections.emptyList();
 
         Builder() {}
 
@@ -262,6 +291,17 @@ public final class RuntimeClientPlugin implements ToSmithyBuilder<RuntimeClientP
          */
         public Builder authScheme(AuthScheme authScheme) {
             this.authScheme = authScheme;
+            return this;
+        }
+
+        /**
+         * Write additional files required by this plugin.
+         *
+         * @param writeAdditionalFiles additional files to write.
+         * @return Returns the builder.
+         */
+        public Builder writeAdditionalFiles(WriteAdditionalFiles writeAdditionalFiles) {
+            this.writeAdditionalFiles = writeAdditionalFiles;
             return this;
         }
     }

@@ -7,6 +7,7 @@ package software.amazon.smithy.python.aws.codegen;
 import java.util.List;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolReference;
+import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
@@ -21,34 +22,79 @@ public class AwsUserAgentIntegration implements PythonIntegration {
     @Override
     public List<RuntimeClientPlugin> getClientPlugins(GenerationContext context) {
         if (context.applicationProtocol().isHttpProtocol()) {
+            final ConfigProperty userAgentExtra = ConfigProperty.builder()
+                    .name("user_agent_extra")
+                    .documentation("Additional suffix to be added to the User-Agent header.")
+                    .type(Symbol.builder().name("str").build())
+                    .nullable(true)
+                    .build();
+
+            final ConfigProperty uaAppId = ConfigProperty.builder()
+                    .name("sdk_ua_app_id")
+                    .documentation(
+                            "A unique and opaque application ID that is appended to the User-Agent header.")
+                    .type(Symbol.builder().name("str").build())
+                    .nullable(true)
+                    .build();
+
+            final String user_agent_plugin_file = "user_agent";
+
+            final String moduleName = context.settings().moduleName();
+            final SymbolReference userAgentPlugin = SymbolReference.builder()
+                    .symbol(Symbol.builder()
+                            .namespace(String.format("%s.%s",
+                                    moduleName,
+                                    user_agent_plugin_file.replace('/', '.')), ".")
+                            .definitionFile(String
+                                    .format("./%s/%s.py", moduleName, user_agent_plugin_file))
+                            .name("aws_user_agent_plugin")
+                            .build())
+                    .build();
+            final SymbolReference userAgentInterceptor = SymbolReference.builder()
+                    .symbol(Symbol.builder()
+                            .namespace("smithy_aws_core.interceptors.user_agent", ".")
+                            .name("UserAgentInterceptor")
+                            .build())
+                    .build();
+            final SymbolReference versionSymbol = SymbolReference.builder()
+                    .symbol(Symbol.builder()
+                        .namespace(moduleName, ".")
+                        .name("__version__")
+                        .build()
+                    ).build();
+
             return List.of(
                     RuntimeClientPlugin.builder()
-                            .addConfigProperty(
-                                    ConfigProperty.builder()
-                                            .name("user_agent_extra")
-                                            .documentation("Additional suffix to be added to the User-Agent header.")
-                                            .type(Symbol.builder().name("str").build())
-                                            .nullable(true)
-                                            .build())
-                            .addConfigProperty(
-                                    ConfigProperty.builder()
-                                            .name("sdk_ua_app_id")
-                                            .documentation(
-                                                    "A unique and opaque application ID that is appended to the User-Agent header.")
-                                            .type(Symbol.builder().name("str").build())
-                                            .nullable(true)
-                                            .build())
-                            .pythonPlugin(
-                                    SymbolReference.builder()
-                                            .symbol(Symbol.builder()
-                                                    .namespace(
-                                                            AwsPythonDependency.SMITHY_AWS_CORE.packageName()
-                                                                    + ".plugins",
-                                                            ".")
-                                                    .name("aws_user_agent_plugin")
-                                                    .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
-                                                    .build())
-                                            .build())
+                            .addConfigProperty(userAgentExtra)
+                            .addConfigProperty(uaAppId)
+                            .pythonPlugin(userAgentPlugin)
+                            .writeAdditionalFiles((c) -> {
+                                String filename = "%s/%s.py".formatted(moduleName, user_agent_plugin_file);
+                                c.writerDelegator()
+                                        .useFileWriter(
+                                                filename,
+                                                moduleName + ".",
+                                                writer -> {
+                                                    writer.write("""
+                                                            def aws_user_agent_plugin(config: $1T):
+                                                                config.interceptors.append(
+                                                                    $2T(
+                                                                        ua_suffix=config.user_agent_extra,
+                                                                        ua_app_id=config.sdk_ua_app_id,
+                                                                        sdk_version=$3T,
+                                                                        service_id='$4L'
+                                                                    )
+                                                                )
+                                                            """,
+                                                            CodegenUtils.getConfigSymbol(c.settings()),
+                                                            userAgentInterceptor,
+                                                            versionSymbol,
+                                                            c.settings().service().getName()
+                                                    );
+
+                                                });
+                                return List.of(filename);
+                            })
                             .build());
         } else {
             return List.of();

@@ -11,19 +11,20 @@ from smithy_http.user_agent import UserAgent, UserAgentComponent
 
 
 class UserAgentInterceptor(Interceptor[Any, None, HTTPRequest, None]):
-    """Adds interceptors that initialize UserAgent in the context and add the user-agent header"""
+    """Adds interceptors that initialize UserAgent in the context and add the user-agent
+    header."""
 
-    def read_before_execution(self, context: InterceptorContext[Any, None, None, None]) -> None:
-        context.properties['user_agent'] = _UserAgentBuilder.from_environment().build()
+    def read_before_execution(
+        self, context: InterceptorContext[Any, None, None, None]
+    ) -> None:
+        context.properties["user_agent"] = _UserAgentBuilder.from_environment().build()
 
     def modify_before_signing(
-            self, context: InterceptorContext[Any, None, HTTPRequest, None]
-        ) -> HTTPRequest:
-        user_agent = context.properties['user_agent']
+        self, context: InterceptorContext[Any, None, HTTPRequest, None]
+    ) -> HTTPRequest:
+        user_agent = context.properties["user_agent"]
         request = context.transport_request
-        request.fields.set_field(
-            Field(name="User-Agent", values=[str(user_agent)])
-        )
+        request.fields.set_field(Field(name="User-Agent", values=[str(user_agent)]))
         return context.transport_request
 
 
@@ -39,6 +40,7 @@ _USERAGENT_ALLOWED_OS_NAMES = (
 )
 _USERAGENT_PLATFORM_NAME_MAPPINGS = {"darwin": "macos"}
 _USERAGENT_SDK_NAME = "python"
+
 
 class _UserAgentBuilder:
     def __init__(
@@ -72,8 +74,13 @@ class _UserAgentBuilder:
     def build(self) -> UserAgent:
         user_agent = UserAgent()
         user_agent.sdk_metadata.append(
-            UserAgentComponent(prefix=_USERAGENT_SDK_NAME, name=self._sdk_version))
+            UserAgentComponent(prefix=_USERAGENT_SDK_NAME, name=self._sdk_version)
+        )
         user_agent.ua_metadata.append(UserAgentComponent(prefix="ua", name="2.1"))
+        user_agent.os_metadata.extend(self._build_os_metadata())
+        user_agent.os_metadata.extend(self._build_architecture_metadata())
+        user_agent.language_metadata.extend(self._build_language_metadata())
+
         return user_agent
 
     def _build_os_metadata(self) -> list[UserAgentComponent]:

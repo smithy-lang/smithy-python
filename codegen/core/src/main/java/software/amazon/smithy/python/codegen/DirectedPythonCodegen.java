@@ -50,6 +50,7 @@ import software.amazon.smithy.python.codegen.generators.SetupGenerator;
 import software.amazon.smithy.python.codegen.generators.StructureGenerator;
 import software.amazon.smithy.python.codegen.generators.UnionGenerator;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
+import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
 import software.amazon.smithy.python.codegen.writer.PythonDelegator;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyUnstableApi;
@@ -274,7 +275,22 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
     @Override
     public void customizeBeforeIntegrations(CustomizeDirective<GenerationContext, PythonSettings> directive) {
         generateServiceModuleInit(directive);
+        generatePluginFiles(directive);
         generateInits(directive);
+    }
+
+    /**
+     * Writes out all extra files required by runtime plugins.
+     */
+    private void generatePluginFiles(CustomizeDirective<GenerationContext, PythonSettings> directive) {
+        GenerationContext context = directive.context();
+        for (PythonIntegration integration : context.integrations()) {
+            for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins(context)) {
+                if (runtimeClientPlugin.matchesService(context.model(), directive.service())) {
+                    runtimeClientPlugin.writeAdditionalFiles(context);
+                }
+            }
+        }
     }
 
     /**
@@ -287,7 +303,7 @@ final class DirectedPythonCodegen implements DirectedCodegen<GenerationContext, 
                         "%s/__init__.py".formatted(directive.context().settings().moduleName()),
                         writer -> {
                             writer
-                                    .write("__version__ = '$L'", directive.context().settings().moduleVersion());
+                                    .write("__version__: str = '$L'", directive.context().settings().moduleVersion());
                         });
     }
 

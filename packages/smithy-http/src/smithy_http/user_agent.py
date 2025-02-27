@@ -59,7 +59,9 @@ class UserAgent:
     env_metadata: list[UserAgentComponent] = field(default_factory=list)
     config_metadata: list[UserAgentComponent] = field(default_factory=list)
     feat_metadata: list[UserAgentComponent] = field(default_factory=list)
-    additional_metadata: list[RawStringUserAgentComponent] = field(default_factory=list)
+    additional_metadata: list[UserAgentComponent | RawStringUserAgentComponent] = field(
+        default_factory=list
+    )
 
     def __str__(self) -> str:
         components = [

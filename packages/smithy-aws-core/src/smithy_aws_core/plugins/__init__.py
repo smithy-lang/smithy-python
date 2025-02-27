@@ -1,9 +1,0 @@
-#  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
-#  SPDX-License-Identifier: Apache-2.0
-
-from typing import Any
-
-from smithy_aws_core.interceptors.user_agent import UserAgentInterceptor
-
-def aws_user_agent_plugin(config: Any) -> None:
-    config.interceptors.append(UserAgentInterceptor())

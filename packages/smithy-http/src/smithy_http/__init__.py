@@ -6,6 +6,7 @@ from collections.abc import Iterable, Iterator
 from . import interfaces
 from .interfaces import FieldPosition
 
+
 class Field(interfaces.Field):
     """A name-value pair representing a single field in an HTTP Request or Response.
 

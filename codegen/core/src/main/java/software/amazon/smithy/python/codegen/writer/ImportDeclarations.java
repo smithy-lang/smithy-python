@@ -70,7 +70,12 @@ public final class ImportDeclarations implements ImportContainer {
             }
         }
         var prefix = StringUtils.repeat(".", localParts.length - commonSegments);
-        return prefix + namespace.split("\\.", commonSegments + 1)[commonSegments];
+        String[] segments = namespace.split("\\.", commonSegments + 1);
+        if (commonSegments >= segments.length) {
+            return ".";
+        } else {
+            return prefix + segments[commonSegments];
+        }
     }
 
     ImportDeclarations addStdlibImport(String namespace) {
