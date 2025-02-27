@@ -60,7 +60,6 @@ public class StaticEndpointsGenerator implements EndpointsGenerator {
         writer.addImport("smithy_http.endpoints", "StaticEndpointParams");
         writer.addImport("smithy_core", "URI");
         writer.write("""
-                            # Step 7f: Invoke endpoint_resolver.resolve_endpoint
                             if config.endpoint_uri is None:
                                 raise $1T(
                                     "No endpoint_uri found on the operation config."

@@ -432,6 +432,7 @@ final class ClientGenerator implements Runnable {
 
         writer.pushState(new ResolveEndpointSection());
         if (context.applicationProtocol().isHttpProtocol()) {
+            writer.write("# Step 7f: Invoke endpoint_resolver.resolve_endpoint");
             context.endpointsGenerator().generateEndpoints(context, writer);
         }
         writer.popState();
