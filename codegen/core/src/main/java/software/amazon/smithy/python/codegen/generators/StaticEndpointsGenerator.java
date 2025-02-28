@@ -54,6 +54,10 @@ public class StaticEndpointsGenerator implements EndpointsGenerator {
     public void renderEndpointParameterConstruction(GenerationContext context, PythonWriter writer) {
         writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
         writer.addImport("smithy_http.endpoints", "StaticEndpointParams");
-        writer.write("endpoint_parameters = StaticEndpointParams(uri=config.endpoint_uri)");
+        writer.write("""
+                        endpoint_parameters = StaticEndpointParams(
+                            uri=config.endpoint_uri
+                        )
+                """);
     }
 }
