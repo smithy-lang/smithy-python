@@ -1,13 +1,27 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+"""
+NOTE TO THE READER:
+
+This file is _strictly_ temporary and subject to abrupt breaking changes
+including unannounced removal. For typing information, please rely on the
+__all__ attributes provided in the types/__init__.py file.
+"""
+
+from __future__ import annotations
+
 from collections import Counter, OrderedDict
-from collections.abc import Iterable, Iterator
+from collections.abc import AsyncIterable, Iterable, Iterator
+from copy import deepcopy
+from dataclasses import dataclass
+from functools import cached_property
+from typing import TypedDict
+from urllib.parse import urlunparse
 
-from . import interfaces
-from .interfaces import FieldPosition
+import aws_sdk_signers.interfaces.http as interfaces_http
 
 
-class Field(interfaces.Field):
+class Field(interfaces_http.Field):
     """A name-value pair representing a single field in an HTTP Request or Response.
 
     The kind will dictate metadata placement within an HTTP message.
@@ -22,7 +36,7 @@ class Field(interfaces.Field):
         *,
         name: str,
         values: Iterable[str] | None = None,
-        kind: FieldPosition = FieldPosition.HEADER,
+        kind: interfaces_http.FieldPosition = interfaces_http.FieldPosition.HEADER,
     ):
         self.name = name
         self.values: list[str] = [val for val in values] if values is not None else []
@@ -45,7 +59,8 @@ class Field(interfaces.Field):
             return
 
     def as_string(self, delimiter: str = ",") -> str:
-        """Get delimited string of all values. A comma is used by default.
+        """Get delimited string of all values. A comma followed by a space is used by
+        default.
 
         If the ``Field`` has zero values, the empty string is returned. If the ``Field``
         has exactly one value, the value is returned unmodified.
@@ -61,7 +76,7 @@ class Field(interfaces.Field):
             return ""
         if value_count == 1:
             return self.values[0]
-        return ", ".join(quote_and_escape_field_value(val) for val in self.values)
+        return delimiter.join(quote_and_escape_field_value(val) for val in self.values)
 
     def as_tuples(self) -> list[tuple[str, str]]:
         """Get list of ``name``, ``value`` tuples where each tuple represents one
@@ -85,10 +100,10 @@ class Field(interfaces.Field):
         return f"Field(name={self.name!r}, value={self.values!r}, kind={self.kind!r})"
 
 
-class Fields(interfaces.Fields):
+class Fields(interfaces_http.Fields):
     def __init__(
         self,
-        initial: Iterable[interfaces.Field] | None = None,
+        initial: Iterable[interfaces_http.Field] | None = None,
         *,
         encoding: str = "utf-8",
     ):
@@ -113,14 +128,14 @@ class Fields(interfaces.Fields):
                 f"{', '.join(non_unique_names)}."
             )
         init_tuples = zip(init_field_names, init_fields)
-        self.entries: dict[str, interfaces.Field] = OrderedDict(init_tuples)
+        self.entries: OrderedDict[str, interfaces_http.Field] = OrderedDict(init_tuples)
         self.encoding: str = encoding
 
-    def set_field(self, field: interfaces.Field) -> None:
+    def set_field(self, field: interfaces_http.Field) -> None:
         """Alias for __setitem__ to utilize the field.name for the entry key."""
         self.__setitem__(field.name, field)
 
-    def __setitem__(self, name: str, field: interfaces.Field) -> None:
+    def __setitem__(self, name: str, field: interfaces_http.Field) -> None:
         """Set or override entry for a Field name."""
         normalized_name = self._normalize_field_name(name)
         normalized_field_name = self._normalize_field_name(field.name)
@@ -132,11 +147,11 @@ class Fields(interfaces.Fields):
         self.entries[normalized_name] = field
 
     def get(
-        self, key: str, default: interfaces.Field | None = None
-    ) -> interfaces.Field | None:
+        self, key: str, default: interfaces_http.Field | None = None
+    ) -> interfaces_http.Field | None:
         return self[key] if key in self else default
 
-    def __getitem__(self, name: str) -> interfaces.Field:
+    def __getitem__(self, name: str) -> interfaces_http.Field:
         """Retrieve Field entry."""
         normalized_name = self._normalize_field_name(name)
         return self.entries[normalized_name]
@@ -146,14 +161,16 @@ class Fields(interfaces.Fields):
         normalized_name = self._normalize_field_name(name)
         del self.entries[normalized_name]
 
-    def get_by_type(self, kind: FieldPosition) -> list[interfaces.Field]:
+    def get_by_type(
+        self, kind: interfaces_http.FieldPosition
+    ) -> list[interfaces_http.Field]:
         """Helper function for retrieving specific types of fields.
 
         Used to grab all headers or all trailers.
         """
         return [entry for entry in self.entries.values() if entry.kind is kind]
 
-    def extend(self, other: interfaces.Fields) -> None:
+    def extend(self, other: interfaces_http.Fields) -> None:
         """Merges ``entries`` of ``other`` into the current ``entries``.
 
         For every `Field` in the ``entries`` of ``other``: If the normalized name
@@ -184,7 +201,7 @@ class Fields(interfaces.Fields):
             return False
         return self.encoding == other.encoding and self.entries == other.entries
 
-    def __iter__(self) -> Iterator[interfaces.Field]:
+    def __iter__(self) -> Iterator[interfaces_http.Field]:
         yield from self.entries.values()
 
     def __len__(self) -> int:
@@ -195,6 +212,157 @@ class Fields(interfaces.Fields):
 
     def __contains__(self, key: str) -> bool:
         return self._normalize_field_name(key) in self.entries
+
+
+@dataclass(kw_only=True, frozen=True)
+class URI(interfaces_http.URI):
+    """Universal Resource Identifier, target location for a :py:class:`HTTPRequest`."""
+
+    scheme: str = "https"
+    """For example ``http`` or ``https``."""
+
+    username: str | None = None
+    """Username part of the userinfo URI component."""
+
+    password: str | None = None
+    """Password part of the userinfo URI component."""
+
+    host: str
+    """The hostname, for example ``amazonaws.com``."""
+
+    port: int | None = None
+    """An explicit port number."""
+
+    path: str | None = None
+    """Path component of the URI."""
+
+    query: str | None = None
+    """Query component of the URI as string."""
+
+    fragment: str | None = None
+    """Part of the URI specification, but may not be transmitted by a client."""
+
+    @property
+    def netloc(self) -> str:
+        """Construct netloc string in format ``{username}:{password}@{host}:{port}``
+
+        ``username``, ``password``, and ``port`` are only included if set. ``password``
+        is ignored, unless ``username`` is also set.
+        """
+        return self._netloc
+
+    # cached_property does NOT behave like property, it actually allows for setting.
+    # Therefore we need a layer of indirection.
+    @cached_property
+    def _netloc(self) -> str:
+        if self.username is not None:
+            password = "" if self.password is None else f":{self.password}"
+            userinfo = f"{self.username}{password}@"
+        else:
+            userinfo = ""
+
+        if self.port is not None:
+            port = f":{self.port}"
+        else:
+            port = ""
+
+        host = self.host
+
+        return f"{userinfo}{host}{port}"
+
+    def build(self) -> str:
+        """Construct URI string representation.
+
+        Validate host. Returns a string of the form
+        ``{scheme}://{username}:{password}@{host}:{port}{path}?{query}#{fragment}``
+        """
+        components = (
+            self.scheme,
+            self.netloc,
+            self.path or "",
+            "",  # params
+            self.query,
+            self.fragment,
+        )
+        return urlunparse(components)
+
+    def to_dict(self) -> URIParameters:
+        return {
+            "scheme": self.scheme,
+            "host": self.host,
+            "port": self.port,
+            "path": self.path,
+            "query": self.query,
+            "username": self.username,
+            "password": self.password,
+            "fragment": self.fragment,
+        }
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, URI):
+            return False
+        return (
+            self.scheme == other.scheme
+            and self.host == other.host
+            and self.port == other.port
+            and self.path == other.path
+            and self.query == other.query
+            and self.username == other.username
+            and self.password == other.password
+            and self.fragment == other.fragment
+        )
+
+
+class URIParameters(TypedDict):
+    """TypedDict representing the parameters for the URI class.
+
+    These need to be kept in sync for the `to_dict` method.
+    """
+
+    # TODO: Unpack doesn't seem to do what we want, so we need a way to represent
+    # returning a class' parameters as a dict. There must be a better way to do this.
+
+    scheme: str
+    username: str | None
+    password: str | None
+    host: str
+    port: int | None
+    path: str | None
+    query: str | None
+    fragment: str | None
+
+
+class AWSRequest(interfaces_http.Request):
+    def __init__(
+        self,
+        *,
+        destination: URI,
+        method: str,
+        body: AsyncIterable[bytes] | Iterable[bytes] | None,
+        fields: Fields,
+    ):
+        self.destination = destination
+        self.method = method
+        self.body = body
+        self.fields = fields
+
+    def __deepcopy__(self, memo: dict[int, AWSRequest] | None = None) -> AWSRequest:
+        if memo is None:
+            memo = {}
+
+        if id(self) in memo:
+            return memo[id(self)]
+
+        # the destination doesn't need to be copied because it's immutable
+        # the body can't be copied because it's an iterator
+        new_instance = self.__class__(
+            destination=self.destination,  # pyright: ignore [reportArgumentType]
+            body=self.body,
+            method=self.method,
+            fields=deepcopy(self.fields, memo),
+        )
+        memo[id(new_instance)] = new_instance
+        return new_instance
 
 
 def quote_and_escape_field_value(value: str) -> str:
@@ -208,23 +376,3 @@ def quote_and_escape_field_value(value: str) -> str:
         return f'"{escaped}"'
     else:
         return value
-
-
-def tuples_to_fields(
-    tuples: Iterable[tuple[str, str]], *, kind: FieldPosition | None = None
-) -> Fields:
-    """Convert ``name``, ``value`` tuples to ``Fields`` object. Each tuple represents
-    one Field value.
-
-    :param kind: The Field kind to define for all tuples.
-    """
-    fields = Fields()
-    for name, value in tuples:
-        try:
-            fields[name].add(value)
-        except KeyError:
-            fields[name] = Field(
-                name=name, values=[value], kind=kind or FieldPosition.HEADER
-            )
-
-    return fields

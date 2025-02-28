@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "aws_sdk_signers"
+requires-python = ">=3.12"
+authors = [
+  {name = "Amazon Web Services"},
+]
+description = "Standalone HTTP Request Signers for Amazon Web Services"
+readme = "README.md"
+license = {text = "Apache License 2.0"}
+keywords = ["aws", "sdk", "amazon", "signing", "sigv4", "http"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "Natural Language :: English",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Topic :: Software Development :: Libraries"
+]
+dynamic = ["version"]
+
+[tool.setuptools.dynamic]
+version = {attr = "aws_sdk_signers._version.__version__"}
+
+[tool.setuptools]
+include-package-data = false
+
+[project.optional-dependencies]
+test = [
+    "freezegun",
+    "pytest",
+    "pytest-asyncio",
+    "mypy",
+    "ruff",
+]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+addopts = "-W error"
+
+[tool.ruff]
+src = ["src"]
