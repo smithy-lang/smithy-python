@@ -5,12 +5,13 @@ import datetime
 import hmac
 import io
 import warnings
-from collections.abc import AsyncIterable
+from collections.abc import AsyncIterable, Iterable
 from copy import deepcopy
 from hashlib import sha256
 from typing import Required, TypedDict
 from urllib.parse import parse_qsl, quote
 
+from .interfaces.io import Seekable
 from ._http import URI, AWSRequest, Field
 from ._identity import AWSCredentialIdentity
 from ._io import AsyncBytesReader
@@ -64,6 +65,8 @@ class SigV4Signer:
         new_signing_properties = self._normalize_signing_properties(
             signing_properties=signing_properties
         )
+        assert "date" in new_signing_properties
+
         new_request = self._generate_new_request(request=request)
         self._apply_required_fields(
             request=new_request,
@@ -133,7 +136,6 @@ class SigV4Signer:
         service. The date, region, service and resulting signing key are individually
         hashed, then the composite hash is used to sign the string to sign.
         """
-        assert signing_properties["date"] is not None
 
         # Components of Signing Key Calculation
         #
@@ -141,6 +143,7 @@ class SigV4Signer:
         # DateRegionKey        = HMAC-SHA256(<DateKey>, "<aws-region>")
         # DateRegionServiceKey = HMAC-SHA256(<DateRegionKey>, "<aws-service>")
         # SigningKey = HMAC-SHA256(<DateRegionServiceKey>, "aws4_request")
+        assert "date" in signing_properties
         k_date = self._hash(
             key=f"AWS4{secret_key}".encode(), value=signing_properties["date"][0:8]
         )
@@ -155,7 +158,7 @@ class SigV4Signer:
 
     def _validate_identity(self, *, identity: AWSCredentialIdentity) -> None:
         """Perform runtime and expiration checks before attempting signing."""
-        if not isinstance(identity, AWSCredentialIdentity):
+        if not isinstance(identity, AWSCredentialIdentity):  # pyright: ignore
             raise ValueError(
                 "Received unexpected value for identity parameter. Expected "
                 f"AWSCredentialIdentity but received {type(identity)}."
@@ -171,19 +174,13 @@ class SigV4Signer:
     ) -> SigV4SigningProperties:
         # Create copy of signing properties to avoid mutating the original
         new_signing_properties = SigV4SigningProperties(**signing_properties)
-        new_signing_properties["date"] = self._resolve_signing_date(
-            date=new_signing_properties.get("date")
-        )
+        if "date" not in new_signing_properties:
+            date_obj = datetime.datetime.now(datetime.UTC)
+            new_signing_properties["date"] = date_obj.strftime(SIGV4_TIMESTAMP_FORMAT)
         return new_signing_properties
 
     def _generate_new_request(self, *, request: AWSRequest) -> AWSRequest:
         return deepcopy(request)
-
-    def _resolve_signing_date(self, *, date: str | None) -> str:
-        if date is None:
-            date_obj = datetime.datetime.now(datetime.UTC)
-            date = date_obj.strftime(SIGV4_TIMESTAMP_FORMAT)
-        return date
 
     def _apply_required_fields(
         self,
@@ -194,6 +191,7 @@ class SigV4Signer:
     ) -> None:
         # Apply required X-Amz-Date if neither X-Amz-Date nor Date are present.
         if "Date" not in request.fields and "X-Amz-Date" not in request.fields:
+            assert "date" in signing_properties
             request.fields.set_field(
                 Field(name="X-Amz-Date", values=[signing_properties["date"]])
             )
@@ -283,6 +281,7 @@ class SigV4Signer:
         )
 
     def _scope(self, signing_properties: SigV4SigningProperties) -> str:
+        assert "date" in signing_properties
         formatted_date = signing_properties["date"][0:8]
         region = signing_properties["region"]
         service = signing_properties["service"]
@@ -315,13 +314,13 @@ class SigV4Signer:
         }
         if "host" not in normalized_fields:
             normalized_fields["host"] = self._normalize_host_field(
-                uri=request.destination
+                uri=request.destination  # type: ignore - TODO(pyright)
             )
 
         return dict(sorted(normalized_fields.items()))
 
-    def _is_signable_header(self, field):
-        if field in HEADERS_EXCLUDED_FROM_SIGNING:
+    def _is_signable_header(self, field_name: str):
+        if field_name in HEADERS_EXCLUDED_FROM_SIGNING:
             return False
         return True
 
@@ -355,12 +354,6 @@ class SigV4Signer:
         request: AWSRequest,
         signing_properties: SigV4SigningProperties,
     ) -> str:
-        if isinstance(request.body, AsyncIterable):
-            raise TypeError(
-                "An async body was attached to a synchronous signer. Please use "
-                "AsyncSigV4Signer for async AWSRequests or ensure your body is "
-                "of type Iterable[bytes]."
-            )
         payload_hash = self._compute_payload_hash(
             request=request, signing_properties=signing_properties
         )
@@ -383,6 +376,13 @@ class SigV4Signer:
         if body is None:
             return EMPTY_SHA256_HASH
 
+        if not isinstance(body, Iterable):
+            raise TypeError(
+                "An async body was attached to a synchronous signer. Please use "
+                "AsyncSigV4Signer for async AWSRequests or ensure your body is "
+                "of type Iterable[bytes]."
+            )
+
         warnings.warn(
             "Payload signing is enabled. This may result in "
             "decreased performance for large request bodies.",
@@ -390,14 +390,14 @@ class SigV4Signer:
         )
 
         checksum = sha256()
-        if hasattr(body, "seek") and hasattr(body, "tell"):
+        if isinstance(body, Seekable):
             position = body.tell()
-            for chunk in body:  # type: ignore[union-attr]
+            for chunk in body:
                 checksum.update(chunk)
             body.seek(position)
         else:
             buffer = io.BytesIO()
-            for chunk in body:  # type: ignore[union-attr]
+            for chunk in body:
                 buffer.write(chunk)
                 checksum.update(chunk)
             buffer.seek(0)
@@ -498,7 +498,6 @@ class AsyncSigV4Signer:
         service. The date, region, service and resulting signing key are individually
         hashed, then the composite hash is used to sign the string to sign.
         """
-        assert signing_properties.get("date") is not None
 
         # Components of Signing Key Calculation
         #
@@ -506,6 +505,7 @@ class AsyncSigV4Signer:
         # DateRegionKey        = HMAC-SHA256(<DateKey>, "<aws-region>")
         # DateRegionServiceKey = HMAC-SHA256(<DateRegionKey>, "<aws-service>")
         # SigningKey = HMAC-SHA256(<DateRegionServiceKey>, "aws4_request")
+        assert "date" in signing_properties
         k_date = await self._hash(
             key=f"AWS4{secret_key}".encode(), value=signing_properties["date"][0:8]
         )
@@ -521,7 +521,7 @@ class AsyncSigV4Signer:
 
     async def _validate_identity(self, *, identity: AWSCredentialIdentity) -> None:
         """Perform runtime and expiration checks before attempting signing."""
-        if not isinstance(identity, AWSCredentialIdentity):
+        if not isinstance(identity, AWSCredentialIdentity):  # pyright: ignore
             raise ValueError(
                 "Received unexpected value for identity parameter. Expected "
                 f"AWSCredentialIdentity but received {type(identity)}."
@@ -537,19 +537,13 @@ class AsyncSigV4Signer:
     ) -> SigV4SigningProperties:
         # Create copy of signing properties to avoid mutating the original
         new_signing_properties = SigV4SigningProperties(**signing_properties)
-        new_signing_properties["date"] = await self._resolve_signing_date(
-            date=new_signing_properties.get("date")
-        )
+        if "date" not in new_signing_properties:
+            date_obj = datetime.datetime.now(datetime.UTC)
+            new_signing_properties["date"] = date_obj.strftime(SIGV4_TIMESTAMP_FORMAT)
         return new_signing_properties
 
     async def _generate_new_request(self, *, request: AWSRequest) -> AWSRequest:
         return deepcopy(request)
-
-    async def _resolve_signing_date(self, *, date: str | None) -> str:
-        if date is None:
-            date_obj = datetime.datetime.now(datetime.UTC)
-            date = date_obj.strftime(SIGV4_TIMESTAMP_FORMAT)
-        return date
 
     async def _apply_required_fields(
         self,
@@ -560,6 +554,7 @@ class AsyncSigV4Signer:
     ) -> None:
         # Apply required X-Amz-Date if neither X-Amz-Date nor Date are present.
         if "Date" not in request.fields and "X-Amz-Date" not in request.fields:
+            assert "date" in signing_properties
             request.fields.set_field(
                 Field(name="X-Amz-Date", values=[signing_properties["date"]])
             )
@@ -654,6 +649,7 @@ class AsyncSigV4Signer:
         )
 
     async def _scope(self, signing_properties: SigV4SigningProperties) -> str:
+        assert "date" in signing_properties
         formatted_date = signing_properties["date"][0:8]
         region = signing_properties["region"]
         service = signing_properties["service"]
@@ -686,13 +682,13 @@ class AsyncSigV4Signer:
         }
         if "host" not in normalized_fields:
             normalized_fields["host"] = await self._normalize_host_field(
-                uri=request.destination
+                uri=request.destination  # type: ignore - TODO(pyright)
             )
 
         return dict(sorted(normalized_fields.items()))
 
-    def _is_signable_header(self, field):
-        if field in HEADERS_EXCLUDED_FROM_SIGNING:
+    def _is_signable_header(self, field_name: str):
+        if field_name in HEADERS_EXCLUDED_FROM_SIGNING:
             return False
         return True
 
@@ -748,7 +744,7 @@ class AsyncSigV4Signer:
         if body is None:
             return EMPTY_SHA256_HASH
 
-        if not isinstance(request.body, AsyncIterable):
+        if not isinstance(body, AsyncIterable):
             raise TypeError(
                 "A sync body was attached to an asynchronous signer. Please use "
                 "SigV4Signer for sync AWSRequests or ensure your body is "
@@ -761,14 +757,14 @@ class AsyncSigV4Signer:
         )
 
         checksum = sha256()
-        if hasattr(body, "seek") and hasattr(body, "tell"):
+        if isinstance(body, Seekable):
             position = body.tell()
-            async for chunk in body:  # type: ignore[union-attr]
+            async for chunk in body:
                 checksum.update(chunk)
             body.seek(position)
         else:
             buffer = io.BytesIO()
-            async for chunk in body:  # type: ignore[union-attr]
+            async for chunk in body:
                 buffer.write(chunk)
                 checksum.update(chunk)
             buffer.seek(0)
@@ -784,7 +780,7 @@ def _remove_dot_segments(path: str, remove_consecutive_slashes: bool = True) -> 
     :param remove_consecutive_slashes: Whether to remove consecutive slashes.
     :returns: The path with dot segments removed.
     """
-    output = []
+    output: list[str] = []
     for segment in path.split("/"):
         if segment == ".":
             continue

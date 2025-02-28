@@ -6,7 +6,7 @@ from __future__ import annotations
 from collections import OrderedDict
 from collections.abc import AsyncIterable, Iterable, Iterator
 from enum import Enum
-from typing import Protocol
+from typing import Protocol, runtime_checkable
 
 
 class FieldPosition(Enum):
@@ -123,6 +123,7 @@ class Request(Protocol):
     body: AsyncIterable[bytes] | Iterable[bytes] | None
 
 
+@runtime_checkable
 class URI(Protocol):
     """Universal Resource Identifier, target location for a :py:class:`Request`."""
 

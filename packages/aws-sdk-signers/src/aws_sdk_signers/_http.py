@@ -346,9 +346,7 @@ class AWSRequest(interfaces_http.Request):
         self.body = body
         self.fields = fields
 
-    def __deepcopy__(
-        self, memo: dict[int, interfaces_http.Request] | None = None
-    ) -> interfaces_http.Request:
+    def __deepcopy__(self, memo: dict[int, AWSRequest] | None = None) -> AWSRequest:
         if memo is None:
             memo = {}
 
@@ -358,7 +356,7 @@ class AWSRequest(interfaces_http.Request):
         # the destination doesn't need to be copied because it's immutable
         # the body can't be copied because it's an iterator
         new_instance = self.__class__(
-            destination=self.destination,
+            destination=self.destination,  # pyright: ignore [reportArgumentType]
             body=self.body,
             method=self.method,
             fields=deepcopy(self.fields, memo),

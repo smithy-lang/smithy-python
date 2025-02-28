@@ -41,7 +41,7 @@ TESTSUITE_DIR: pathlib.Path = (
 
 class RawRequest(BaseHTTPRequestHandler):
     def __init__(self, raw_request: bytes):
-        self.rfile: BytesIO = BytesIO(initial_bytes=raw_request)
+        self.rfile = BytesIO(initial_bytes=raw_request)
         self.raw_requestline: bytes = self.rfile.readline()
         self.error_code: int | None = None
         self.error_message: str | None = None
@@ -77,7 +77,7 @@ class SignatureTestCase:
 
 
 def generate_test_cases() -> Iterable[str]:
-    for dirpath, dirnames, filenames in os.walk(TESTSUITE_DIR):
+    for dirpath, _, filenames in os.walk(TESTSUITE_DIR):
         # Skip over tests without a request file
         if not any(f.endswith(".req") for f in filenames):
             continue
@@ -186,13 +186,12 @@ def create_request_from_raw_request(
                 values=[test_case.credentials.session_token],
             )
         )
-    body: BytesIO | AsyncBytesReader = raw.rfile
+    body = raw.rfile
     if async_body:
         body = AsyncBytesReader(raw.rfile)
     # BaseHTTPRequestHandler encodes the first line of the request
     # as 'iso-8859-1', so we need to decode this into utf-8.
-    if isinstance(path := raw.path, str):
-        path = path.encode(encoding="iso-8859-1").decode(encoding="utf-8")
+    path = raw.path.encode(encoding="iso-8859-1").decode(encoding="utf-8")
     if "?" in path:
         path, query = path.split(sep="?", maxsplit=1)
     else:

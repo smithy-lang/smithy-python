@@ -39,7 +39,7 @@ class AsyncBytesReader:
         else:
             self._data = data
 
-    async def read(self, size: int = -1) -> bytes:
+    async def read(self, size: int | None = -1) -> bytes:
         """Read a number of bytes from the stream.
 
         :param size: The maximum number of bytes to read. If less than 0, all bytes will
@@ -48,14 +48,17 @@ class AsyncBytesReader:
         if self._closed or not self._data:
             raise ValueError("I/O operation on closed file.")
 
-        if isinstance(self._data, ByteStream) and not iscoroutinefunction(
+        if size is None:
+            size = -1
+
+        if isinstance(self._data, ByteStream) and not iscoroutinefunction(  # type: ignore - TODO(pyright)
             self._data.read
         ):
             # Python's runtime_checkable can't actually tell the difference between
             # sync and async, so we have to check ourselves.
             return self._data.read(size)
 
-        if isinstance(self._data, AsyncByteStream):
+        if isinstance(self._data, AsyncByteStream):  # type: ignore - TODO(pyright)
             return await self._data.read(size)
 
         return await self._read_from_iterable(
@@ -135,7 +138,7 @@ class SeekableAsyncBytesReader:
         if isinstance(data, bytes | bytearray):
             self._buffer = BytesIO(data)
             self._data_source = None
-        elif isinstance(data, AsyncByteStream) and iscoroutinefunction(data.read):
+        elif isinstance(data, AsyncByteStream) and iscoroutinefunction(data.read):  # type: ignore - TODO(pyright)
             # Note that we need that iscoroutine check because python won't actually check
             # whether or not the read function is async.
             self._buffer = BytesIO()
@@ -144,12 +147,15 @@ class SeekableAsyncBytesReader:
             self._buffer = BytesIO()
             self._data_source = AsyncBytesReader(data)
 
-    async def read(self, size: int = -1) -> bytes:
+    async def read(self, size: int | None = -1) -> bytes:
         """Read a number of bytes from the stream.
 
         :param size: The maximum number of bytes to read. If less than 0, all bytes will
             be read.
         """
+        if size is None:
+            size = -1
+
         if self._data_source is None or size == 0:
             return self._buffer.read(size)
 
