@@ -6,7 +6,7 @@ from urllib.parse import urlparse
 import smithy_core
 from smithy_core import URI
 from smithy_http.aio.interfaces import EndpointResolver
-from smithy_http.endpoints import Endpoint
+from smithy_http.endpoints import Endpoint, EndpointResolutionError
 
 
 @dataclass(kw_only=True)
@@ -35,7 +35,7 @@ class StandardRegionalEndpointsResolver(EndpointResolver[RegionalEndpointParamet
 
             # This will end up getting wrapped in the client.
             if parsed.hostname is None:
-                raise ValueError(
+                raise EndpointResolutionError(
                     f"Unable to parse hostname from provided URI: {params.sdk_endpoint}"
                 )
 
@@ -56,6 +56,6 @@ class StandardRegionalEndpointsResolver(EndpointResolver[RegionalEndpointParamet
 
             return Endpoint(uri=URI(host=hostname))
 
-        raise ValueError(
+        raise EndpointResolutionError(
             "Unable to resolve endpoint - either endpoint_url or region are required."
         )
