@@ -67,7 +67,7 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         trimBlankLines();
         trimTrailingSpaces();
         putFormatter('T', new PythonSymbolFormatter());
-        putFormatter('N', new PythonNodeFormatter());
+        putFormatter('N', new PythonNodeFormatter(this));
         this.addCodegenWarningHeader = addCodegenWarningHeader;
     }
 
@@ -325,6 +325,12 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
     }
 
     private final class PythonNodeFormatter implements BiFunction<Object, String, String> {
+        private final PythonWriter writer;
+
+        PythonNodeFormatter(PythonWriter writer) {
+            this.writer = writer;
+        }
+
         @Override
         public String apply(Object node, String indent) {
             if (node instanceof Optional<?>) {
@@ -334,16 +340,18 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
                 throw new CodegenException(
                         "Invalid type provided to $D. Expected a Node, but found `" + node + "`");
             }
-            return ((Node) node).accept(new PythonNodeFormatVisitor(indent));
+            return ((Node) node).accept(new PythonNodeFormatVisitor(indent, writer));
         }
     }
 
     private final class PythonNodeFormatVisitor implements NodeVisitor<String> {
 
         private String indent;
+        private final PythonWriter writer;
 
-        PythonNodeFormatVisitor(String indent) {
+        PythonNodeFormatVisitor(String indent, PythonWriter writer) {
             this.indent = indent;
+            this.writer = writer;
         }
 
         @Override
@@ -379,10 +387,10 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         @Override
         public String arrayNode(ArrayNode node) {
             if (node.getElements().isEmpty()) {
-                return "[]";
+                return "()";
             }
 
-            StringBuilder builder = new StringBuilder("[\n");
+            StringBuilder builder = new StringBuilder("(\n");
             var oldIndent = indent;
             indent += getIndentText();
             for (Node element : node.getElements()) {
@@ -392,17 +400,18 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
             }
             indent = oldIndent;
             builder.append(indent);
-            builder.append(']');
+            builder.append(')');
             return builder.toString();
         }
 
         @Override
         public String objectNode(ObjectNode node) {
+            writer.addStdlibImport("types", "MappingProxyType");
             if (node.getMembers().isEmpty()) {
-                return "{}";
+                return "MappingProxyType({})";
             }
 
-            StringBuilder builder = new StringBuilder("{\n");
+            StringBuilder builder = new StringBuilder("MappingProxyType({\n");
             var oldIndent = indent;
             indent += getIndentText();
             for (Map.Entry<StringNode, Node> member : node.getMembers().entrySet()) {
@@ -414,7 +423,7 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
             }
             indent = oldIndent;
             builder.append(indent);
-            builder.append('}');
+            builder.append("})");
             return builder.toString();
         }
     }
