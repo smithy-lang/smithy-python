@@ -18,7 +18,6 @@ from smithy_core.serializers import (
     SpecificShapeSerializer,
 )
 from smithy_core.shapes import ShapeType
-from smithy_core.utils import expect_type
 from smithy_event_stream.aio.interfaces import AsyncEventPublisher
 
 from ..events import EventHeaderEncoder, EventMessage
@@ -28,7 +27,7 @@ from . import (
     INITIAL_RESPONSE_EVENT_TYPE,
     get_payload_member,
 )
-from .traits import ERROR_TRAIT, EVENT_HEADER_TRAIT, MEDIA_TYPE_TRAIT
+from smithy_core.traits import ErrorTrait, EventHeaderTrait, MediaTypeTrait
 
 _DEFAULT_STRING_CONTENT_TYPE = "text/plain"
 _DEFAULT_BLOB_CONTENT_TYPE = "application/octet-stream"
@@ -103,7 +102,7 @@ class EventSerializer(SpecificShapeSerializer):
 
         headers_encoder = EventHeaderEncoder()
 
-        if ERROR_TRAIT in schema.traits:
+        if ErrorTrait.id in schema.traits:
             headers_encoder.encode_string(":message-type", "exception")
             headers_encoder.encode_string(
                 ":exception-type", schema.expect_member_name()
@@ -146,8 +145,8 @@ class EventSerializer(SpecificShapeSerializer):
         )
 
     def _get_payload_media_type(self, schema: Schema, default: str) -> str:
-        if (media_type := schema.traits.get(MEDIA_TYPE_TRAIT)) is not None:
-            return expect_type(str, media_type.value)
+        if (media_type := schema.get_trait(MediaTypeTrait)) is not None:
+            return media_type.value
 
         match schema.shape_type:
             case ShapeType.STRING:
@@ -215,7 +214,7 @@ class EventStreamBindingSerializer(InterceptingSerializer):
         self._payload_struct_serializer = payload_struct_serializer
 
     def before(self, schema: "Schema") -> ShapeSerializer:
-        if EVENT_HEADER_TRAIT in schema.traits:
+        if EventHeaderTrait.id in schema.traits:
             return self._header_serializer
         return self._payload_struct_serializer
 
