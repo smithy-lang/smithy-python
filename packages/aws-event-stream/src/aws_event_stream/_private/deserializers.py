@@ -23,7 +23,7 @@ from . import (
     INITIAL_RESPONSE_EVENT_TYPE,
     get_payload_member,
 )
-from .traits import EVENT_HEADER_TRAIT
+from smithy_core.traits import EventHeaderTrait
 
 INITIAL_MESSAGE_TYPES = (INITIAL_REQUEST_EVENT_TYPE, INITIAL_RESPONSE_EVENT_TYPE)
 
@@ -158,7 +158,10 @@ class EventMessageDeserializer(SpecificShapeDeserializer):
         headers_deserializer = EventHeaderDeserializer(self._headers)
         for key in self._headers.keys():
             member_schema = schema.members.get(key)
-            if member_schema is not None and EVENT_HEADER_TRAIT in member_schema.traits:
+            if (
+                member_schema is not None
+                and EventHeaderTrait.id in member_schema.traits
+            ):
                 consumer(member_schema, headers_deserializer)
 
         if self._payload_deserializer:

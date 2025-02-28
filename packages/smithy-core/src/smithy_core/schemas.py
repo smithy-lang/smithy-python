@@ -1,12 +1,14 @@
+#  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#  SPDX-License-Identifier: Apache-2.0
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
-from typing import TYPE_CHECKING, NotRequired, Required, Self, TypedDict
+from typing import TYPE_CHECKING, NotRequired, Required, Self, TypedDict, overload
 
 from .exceptions import ExpectationNotMetException, SmithyException
 from .shapes import ShapeID, ShapeType
 
 if TYPE_CHECKING:
-    from .traits import Trait
+    from .traits import Trait, DynamicTrait
 
 
 @dataclass(kw_only=True, frozen=True, init=False)
@@ -15,7 +17,7 @@ class Schema:
 
     id: ShapeID
     shape_type: ShapeType
-    traits: dict[ShapeID, "Trait"] = field(default_factory=dict)
+    traits: dict[ShapeID, "Trait | DynamicTrait"] = field(default_factory=dict)
     members: dict[str, "Schema"] = field(default_factory=dict)
     member_target: "Schema | None" = None
     member_index: int | None = None
@@ -25,7 +27,9 @@ class Schema:
         *,
         id: ShapeID,
         shape_type: ShapeType,
-        traits: list["Trait"] | dict[ShapeID, "Trait"] | None = None,
+        traits: list["Trait | DynamicTrait"]
+        | dict[ShapeID, "Trait | DynamicTrait"]
+        | None = None,
         members: list["Schema"] | dict[str, "Schema"] | None = None,
         member_target: "Schema | None" = None,
         member_index: int | None = None,
@@ -121,13 +125,42 @@ class Schema:
             )
         return self.member_index
 
+    @overload
+    def get_trait[T: "Trait"](self, t: type[T]) -> T | None: ...
+
+    @overload
+    def get_trait(self, t: ShapeID) -> "Trait | DynamicTrait | None": ...
+
+    def get_trait(self, t: "type[Trait] | ShapeID") -> "Trait | DynamicTrait | None":
+        """Get a trait based on it's ShapeID or class.
+
+        :returns: A Trait if the trait class is known, a DynamicTrait if it isn't, or
+            None if the trait is not present on the Schema.
+        """
+        id = t if isinstance(t, ShapeID) else t.id
+        return self.traits.get(id)
+
+    @overload
+    def expect_trait[T: "Trait"](self, t: type[T]) -> T: ...
+
+    @overload
+    def expect_trait(self, t: ShapeID) -> "Trait | DynamicTrait": ...
+
+    def expect_trait(self, t: "type[Trait] | ShapeID") -> "Trait | DynamicTrait":
+        """Get a trait based on it's ShapeID or class.
+
+        :returns: A Trait if the trait class is known, a DynamicTrait if it isn't.
+        """
+        id = t if isinstance(t, ShapeID) else t.id
+        return self.traits[id]
+
     @classmethod
     def collection(
         cls,
         *,
         id: ShapeID,
         shape_type: ShapeType = ShapeType.STRUCTURE,
-        traits: list["Trait"] | None = None,
+        traits: list["Trait | DynamicTrait"] | None = None,
         members: Mapping[str, "MemberSchema"] | None = None,
     ) -> Self:
         """Create a schema for a collection shape.
@@ -164,7 +197,7 @@ class Schema:
         id: ShapeID,
         target: "Schema",
         index: int,
-        member_traits: list["Trait"] | None = None,
+        member_traits: list["Trait | DynamicTrait"] | None = None,
     ) -> "Schema":
         """Create a schema for a member shape.
 
@@ -203,4 +236,4 @@ class MemberSchema(TypedDict):
 
     target: Required[Schema]
     index: Required[int]
-    traits: NotRequired[list["Trait"]]
+    traits: NotRequired[list["Trait | DynamicTrait"]]

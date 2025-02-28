@@ -18,7 +18,7 @@ from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.types import TimestampFormat
 
 from .documents import JSONDocument
-from .traits import JSON_NAME, TIMESTAMP_FORMAT
+from smithy_core.traits import TimestampFormatTrait, JSONNameTrait
 
 # TODO: put these type hints in a pyi somewhere. There here because ijson isn't
 # typed.
@@ -191,8 +191,8 @@ class JSONShapeDeserializer(ShapeDeserializer):
     def read_timestamp(self, schema: Schema) -> datetime.datetime:
         format = self._default_timestamp_format
         if self._use_timestamp_format:
-            if format_trait := schema.traits.get(TIMESTAMP_FORMAT):
-                format = TimestampFormat(format_trait.value)
+            if format_trait := schema.get_trait(TimestampFormatTrait):
+                format = format_trait.format
 
         match format:
             case TimestampFormat.EPOCH_SECONDS:
@@ -234,8 +234,8 @@ class JSONShapeDeserializer(ShapeDeserializer):
         result: dict[str, str] = {}
         for member_name, member_schema in schema.members.items():
             name: str = member_name
-            if json_name := member_schema.traits.get(JSON_NAME):
-                name = cast(str, json_name.value)
+            if json_name := member_schema.get_trait(JSONNameTrait):
+                name = json_name.value
             result[name] = member_name
         self._json_names[schema.id] = result
 
