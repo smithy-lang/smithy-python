@@ -5,6 +5,7 @@
 package software.amazon.smithy.python.aws.codegen;
 
 import java.util.List;
+import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.python.codegen.CodegenUtils;
@@ -19,6 +20,19 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  */
 @SmithyInternalApi
 public class AwsUserAgentIntegration implements PythonIntegration {
+
+    public static final String USER_AGENT_PLUGIN = """
+            def aws_user_agent_plugin(config: $1T):
+                config.interceptors.append(
+                    $2T(
+                        ua_suffix=config.user_agent_extra,
+                        ua_app_id=config.sdk_ua_app_id,
+                        sdk_version=$3T,
+                        service_id='$4L'
+                    )
+                )
+            """;
+
     @Override
     public List<RuntimeClientPlugin> getClientPlugins(GenerationContext context) {
         if (context.applicationProtocol().isHttpProtocol()) {
@@ -58,10 +72,17 @@ public class AwsUserAgentIntegration implements PythonIntegration {
                     .build();
             final SymbolReference versionSymbol = SymbolReference.builder()
                     .symbol(Symbol.builder()
-                        .namespace(moduleName, ".")
-                        .name("__version__")
-                        .build()
-                    ).build();
+                            .namespace(moduleName, ".")
+                            .name("__version__")
+                            .build())
+                    .build();
+
+            final String serviceId = context.settings()
+                    .service(context.model())
+                    .getTrait(ServiceTrait.class)
+                    .map(ServiceTrait::getSdkId)
+                    .orElse(context.settings().service().getName())
+                    .replace(' ', '_');
 
             return List.of(
                     RuntimeClientPlugin.builder()
@@ -75,22 +96,11 @@ public class AwsUserAgentIntegration implements PythonIntegration {
                                                 filename,
                                                 moduleName + ".",
                                                 writer -> {
-                                                    writer.write("""
-                                                            def aws_user_agent_plugin(config: $1T):
-                                                                config.interceptors.append(
-                                                                    $2T(
-                                                                        ua_suffix=config.user_agent_extra,
-                                                                        ua_app_id=config.sdk_ua_app_id,
-                                                                        sdk_version=$3T,
-                                                                        service_id='$4L'
-                                                                    )
-                                                                )
-                                                            """,
+                                                    writer.write(USER_AGENT_PLUGIN,
                                                             CodegenUtils.getConfigSymbol(c.settings()),
                                                             userAgentInterceptor,
                                                             versionSymbol,
-                                                            c.settings().service().getName()
-                                                    );
+                                                            serviceId);
 
                                                 });
                                 return List.of(filename);

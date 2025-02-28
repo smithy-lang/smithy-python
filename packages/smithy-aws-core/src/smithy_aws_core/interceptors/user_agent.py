@@ -8,7 +8,7 @@ import smithy_core
 from smithy_core.interceptors import Interceptor, InterceptorContext
 from smithy_http.user_agent import UserAgentComponent, RawStringUserAgentComponent
 
-_USERAGENT_SDK_NAME = "python"
+_USERAGENT_SDK_NAME = "aws-sdk-python"
 
 
 class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
