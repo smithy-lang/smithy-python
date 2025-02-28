@@ -327,7 +327,7 @@ final class ClientGenerator implements Runnable {
                                 except SmithyRetryException:
                                     raise context_with_response.response
                                 logger.debug(
-                                    "Retry needed. Attempting request #%s in %s seconds.",
+                                    "Retry needed. Attempting request #%s in %.4f seconds.",
                                     retry_token.retry_count + 1,
                                     retry_token.retry_delay
                                 )
