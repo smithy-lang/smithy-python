@@ -242,4 +242,3 @@ class SimpleRetryStrategy(retries_interface.RetryStrategy):
 
     def record_success(self, *, token: retries_interface.RetryToken) -> None:
         """Not used by this retry strategy."""
-        pass

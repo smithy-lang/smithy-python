@@ -15,6 +15,7 @@ from collections.abc import Callable, Iterator, Mapping
 from dataclasses import dataclass
 from io import BytesIO
 from struct import pack, unpack
+from types import MappingProxyType
 from typing import Literal, Self
 
 from smithy_core.aio.interfaces import AsyncByteStream
@@ -610,11 +611,13 @@ class _DecodeUtils:
     INT64_BYTE_FORMAT = "!q"
 
     # uint byte size to unpack format
-    UINT_BYTE_FORMAT: dict[_ArraySize, str] = {
-        1: UINT8_BYTE_FORMAT,
-        2: UINT16_BYTE_FORMAT,
-        4: UINT32_BYTE_FORMAT,
-    }
+    UINT_BYTE_FORMAT: Mapping[_ArraySize, str] = MappingProxyType(
+        {
+            1: UINT8_BYTE_FORMAT,
+            2: UINT16_BYTE_FORMAT,
+            4: UINT32_BYTE_FORMAT,
+        }
+    )
 
     @staticmethod
     def unpack_uint8(data: BytesLike) -> tuple[int, int]:
@@ -749,20 +752,24 @@ class EventHeaderDecoder(Iterator[tuple[str, HEADER_VALUE]]):
 
     # Maps header type to appropriate unpacking function
     # These unpacking functions return the value and the amount unpacked
-    _HEADER_TYPE_MAP: dict[int, Callable[[BytesLike], tuple[HEADER_VALUE, int]]] = {
-        # Boolean headers have no data bytes following the type signifier, so they
-        # can just return static values.
-        0: lambda b: (True, 0),  # boolean_true
-        1: lambda b: (False, 0),  # boolean_false
-        2: _DecodeUtils.unpack_int8,  # byte
-        3: _DecodeUtils.unpack_int16,  # short
-        4: _DecodeUtils.unpack_int32,  # integer
-        5: _DecodeUtils.unpack_int64,  # long
-        6: _DecodeUtils.unpack_byte_array,  # byte_array
-        7: _DecodeUtils.unpack_utf8_string,  # string
-        8: _DecodeUtils.unpack_timestamp,  # timestamp
-        9: _DecodeUtils.unpack_uuid,  # uuid
-    }
+    _HEADER_TYPE_MAP: Mapping[int, Callable[[BytesLike], tuple[HEADER_VALUE, int]]] = (
+        MappingProxyType(
+            {
+                # Boolean headers have no data bytes following the type signifier, so they
+                # can just return static values.
+                0: lambda b: (True, 0),  # boolean_true
+                1: lambda b: (False, 0),  # boolean_false
+                2: _DecodeUtils.unpack_int8,  # byte
+                3: _DecodeUtils.unpack_int16,  # short
+                4: _DecodeUtils.unpack_int32,  # integer
+                5: _DecodeUtils.unpack_int64,  # long
+                6: _DecodeUtils.unpack_byte_array,  # byte_array
+                7: _DecodeUtils.unpack_utf8_string,  # string
+                8: _DecodeUtils.unpack_timestamp,  # timestamp
+                9: _DecodeUtils.unpack_uuid,  # uuid
+            }
+        )
+    )
 
     def __init__(self, header_bytes: BytesLike) -> None:
         """Initialize an event header decoder.

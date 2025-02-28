@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     import aiohttp
 
 try:
-    import aiohttp  # noqa: F811
+    import aiohttp
 
     HAS_AIOHTTP = True
 except ImportError:
@@ -78,10 +78,7 @@ class AIOHTTPClient(HTTPClient):
         request_config = request_config or HTTPRequestConfiguration()
 
         headers_list = list(
-            chain.from_iterable(
-                fld.as_tuples()
-                for fld in request.fields.get_by_type(FieldPosition.HEADER)
-            )
+            chain.from_iterable(fld.as_tuples() for fld in request.fields)
         )
 
         body: StreamingBlob = request.body

@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any, Self
 
@@ -314,7 +314,7 @@ JSON_SERDE_CASES = [
     (Decimal("1.1"), b"1.1"),
     (b"foo", b'"Zm9v"'),
     ("foo", b'"foo"'),
-    (datetime(2024, 5, 15, tzinfo=timezone.utc), b'"2024-05-15T00:00:00Z"'),
+    (datetime(2024, 5, 15, tzinfo=UTC), b'"2024-05-15T00:00:00Z"'),
     (None, b"null"),
     (["foo"], b'["foo"]'),
     ({"foo": "bar"}, b'{"foo":"bar"}'),
@@ -328,19 +328,19 @@ JSON_SERDE_CASES = [
     (SerdeShape(string_member="foo"), b'{"stringMember":"foo"}'),
     (SerdeShape(json_name_member="foo"), b'{"jsonName":"foo"}'),
     (
-        SerdeShape(timestamp_member=datetime(2024, 5, 15, tzinfo=timezone.utc)),
+        SerdeShape(timestamp_member=datetime(2024, 5, 15, tzinfo=UTC)),
         b'{"timestampMember":"2024-05-15T00:00:00Z"}',
     ),
     (
-        SerdeShape(date_time_member=datetime(2024, 5, 15, tzinfo=timezone.utc)),
+        SerdeShape(date_time_member=datetime(2024, 5, 15, tzinfo=UTC)),
         b'{"dateTimeMember":"2024-05-15T00:00:00Z"}',
     ),
     (
-        SerdeShape(http_date_member=datetime(2024, 5, 15, tzinfo=timezone.utc)),
+        SerdeShape(http_date_member=datetime(2024, 5, 15, tzinfo=UTC)),
         b'{"httpDateMember":"Wed, 15 May 2024 00:00:00 GMT"}',
     ),
     (
-        SerdeShape(epoch_seconds_member=datetime(2024, 5, 15, tzinfo=timezone.utc)),
+        SerdeShape(epoch_seconds_member=datetime(2024, 5, 15, tzinfo=UTC)),
         b'{"epochSecondsMember":1715731200}',
     ),
     (SerdeShape(document_member=Document(None)), b'{"documentMember":null}'),
@@ -369,26 +369,26 @@ JSON_SERDE_CASES = [
     (Document("foo", schema=STRING), b'"foo"'),
     (Document("foo", schema=DOCUMENT), b'"foo"'),
     (
-        Document(datetime(2024, 5, 15, tzinfo=timezone.utc), schema=TIMESTAMP),
+        Document(datetime(2024, 5, 15, tzinfo=UTC), schema=TIMESTAMP),
         b'"2024-05-15T00:00:00Z"',
     ),
     (
         Document(
-            datetime(2024, 5, 15, tzinfo=timezone.utc),
+            datetime(2024, 5, 15, tzinfo=UTC),
             schema=SCHEMA.members["dateTimeMember"],
         ),
         b'"2024-05-15T00:00:00Z"',
     ),
     (
         Document(
-            datetime(2024, 5, 15, tzinfo=timezone.utc),
+            datetime(2024, 5, 15, tzinfo=UTC),
             schema=SCHEMA.members["httpDateMember"],
         ),
         b'"Wed, 15 May 2024 00:00:00 GMT"',
     ),
     (
         Document(
-            datetime(2024, 5, 15, tzinfo=timezone.utc),
+            datetime(2024, 5, 15, tzinfo=UTC),
             schema=SCHEMA.members["epochSecondsMember"],
         ),
         b"1715731200",
@@ -409,7 +409,7 @@ JSON_SERIALIZATION_CASES.extend(
         (Document(1.1, schema=DOCUMENT), b"1.1"),
         (Document(b"foo", schema=DOCUMENT), b'"Zm9v"'),
         (
-            Document(datetime(2024, 5, 15, tzinfo=timezone.utc), schema=DOCUMENT),
+            Document(datetime(2024, 5, 15, tzinfo=UTC), schema=DOCUMENT),
             b'"2024-05-15T00:00:00Z"',
         ),
     ]

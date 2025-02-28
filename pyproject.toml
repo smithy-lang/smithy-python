@@ -30,6 +30,7 @@ smithy_http = { workspace = true }
 smithy_json = { workspace = true }
 smithy_aws_core = { workspace = true }
 aws_event_stream = { workspace = true }
+aws_sdk_signers = {workspace = true }
 
 [tool.pyright]
 typeCheckingMode = "strict"
@@ -46,12 +47,11 @@ black = true
 target-version = "py312"
 
 [tool.ruff.lint]
-# candidates: C4, DTZ, EM, INP, ISC, PERF, PIE, RUF, SIM118, SIM401, SLOT
+# candidates: DTZ, EM, INP, ISC, PERF, SIM118, SIM401, SLOT
 # perhaps in the future: N, PYI, TC, TID
 # probably not, a lot of work: DOC, D, PL, TRY
 
-# TODO: I, T, UP
-select = [ "ASYNC", "E1", "E4", "E7", "E9", "F", "FURB", "G", "LOG", "S" ]
+select = [ "ASYNC", "C4", "E1", "E4", "E7", "E9", "F", "FURB", "G", "I", "LOG", "PIE", "RUF", "S", "T", "UP" ]
 exclude = [ "packages/smithy-core/src/smithy_core/rfc3986.py" ]
 
 [tool.ruff.lint.per-file-ignores]

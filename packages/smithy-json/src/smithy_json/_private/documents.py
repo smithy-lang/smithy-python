@@ -121,7 +121,7 @@ class JSONDocument(Document):
         if self._schema.shape_type not in (ShapeType.STRUCTURE, ShapeType.UNION):
             return super()._wrap_map(value)
 
-        result: dict[str, "Document"] = {}
+        result: dict[str, Document] = {}
         for k, v in value.items():
             member_name = self._json_names.get(k, k)
             result[member_name] = self._new_document(
