@@ -5,10 +5,12 @@ import json
 from smithy_core.documents import DocumentValue
 from smithy_core.utils import expect_type
 
-from ..restjson import _REST_JSON_CODE_HEADER  # pyright: ignore[reportPrivateUsage]
-from ..restjson import _REST_JSON_CODE_KEYS  # pyright: ignore[reportPrivateUsage]
-from ..restjson import _REST_JSON_MESSAGE_KEYS  # pyright: ignore[reportPrivateUsage]
-from ..restjson import RestJsonErrorInfo
+from ..restjson import (
+    _REST_JSON_CODE_HEADER,  # pyright: ignore[reportPrivateUsage]
+    _REST_JSON_CODE_KEYS,  # pyright: ignore[reportPrivateUsage]
+    _REST_JSON_MESSAGE_KEYS,  # pyright: ignore[reportPrivateUsage]
+    RestJsonErrorInfo,
+)
 from .interfaces import HTTPResponse
 
 

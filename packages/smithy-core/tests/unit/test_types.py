@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 # pyright: reportPrivateUsage=false
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import pytest
 
@@ -68,57 +68,57 @@ TIMESTAMP_FORMAT_SERIALIZATION_CASES: list[
     (
         TimestampFormat.DATE_TIME,
         "2017-01-01T00:00:00Z",
-        datetime(2017, 1, 1, tzinfo=timezone.utc),
+        datetime(2017, 1, 1, tzinfo=UTC),
     ),
     (
         TimestampFormat.EPOCH_SECONDS,
         1483228800,
-        datetime(2017, 1, 1, tzinfo=timezone.utc),
+        datetime(2017, 1, 1, tzinfo=UTC),
     ),
     (
         TimestampFormat.HTTP_DATE,
         "Sun, 01 Jan 2017 00:00:00 GMT",
-        datetime(2017, 1, 1, tzinfo=timezone.utc),
+        datetime(2017, 1, 1, tzinfo=UTC),
     ),
     (
         TimestampFormat.DATE_TIME,
         "2017-01-01T00:00:00.000001Z",
-        datetime(2017, 1, 1, microsecond=1, tzinfo=timezone.utc),
+        datetime(2017, 1, 1, microsecond=1, tzinfo=UTC),
     ),
     (
         TimestampFormat.EPOCH_SECONDS,
         1483228800.000001,
-        datetime(2017, 1, 1, microsecond=1, tzinfo=timezone.utc),
+        datetime(2017, 1, 1, microsecond=1, tzinfo=UTC),
     ),
     (
         TimestampFormat.DATE_TIME,
         "1969-12-31T23:59:59Z",
-        datetime(1969, 12, 31, 23, 59, 59, tzinfo=timezone.utc),
+        datetime(1969, 12, 31, 23, 59, 59, tzinfo=UTC),
     ),
     (
         TimestampFormat.EPOCH_SECONDS,
         -1,
-        datetime(1969, 12, 31, 23, 59, 59, tzinfo=timezone.utc),
+        datetime(1969, 12, 31, 23, 59, 59, tzinfo=UTC),
     ),
     (
         TimestampFormat.HTTP_DATE,
         "Wed, 31 Dec 1969 23:59:59 GMT",
-        datetime(1969, 12, 31, 23, 59, 59, tzinfo=timezone.utc),
+        datetime(1969, 12, 31, 23, 59, 59, tzinfo=UTC),
     ),
     (
         TimestampFormat.DATE_TIME,
         "2038-01-19T03:14:08Z",
-        datetime(2038, 1, 19, 3, 14, 8, tzinfo=timezone.utc),
+        datetime(2038, 1, 19, 3, 14, 8, tzinfo=UTC),
     ),
     (
         TimestampFormat.EPOCH_SECONDS,
         2147483648,
-        datetime(2038, 1, 19, 3, 14, 8, tzinfo=timezone.utc),
+        datetime(2038, 1, 19, 3, 14, 8, tzinfo=UTC),
     ),
     (
         TimestampFormat.HTTP_DATE,
         "Tue, 19 Jan 2038 03:14:08 GMT",
-        datetime(2038, 1, 19, 3, 14, 8, tzinfo=timezone.utc),
+        datetime(2038, 1, 19, 3, 14, 8, tzinfo=UTC),
     ),
 ]
 
@@ -128,22 +128,22 @@ TIMESTAMP_FORMAT_DESERIALIZATION_CASES: list[
     (
         TimestampFormat.EPOCH_SECONDS,
         "1483228800",
-        datetime(2017, 1, 1, tzinfo=timezone.utc),
+        datetime(2017, 1, 1, tzinfo=UTC),
     ),
     (
         TimestampFormat.EPOCH_SECONDS,
         "1483228800.000001",
-        datetime(2017, 1, 1, microsecond=1, tzinfo=timezone.utc),
+        datetime(2017, 1, 1, microsecond=1, tzinfo=UTC),
     ),
     (
         TimestampFormat.EPOCH_SECONDS,
         "-1",
-        datetime(1969, 12, 31, 23, 59, 59, tzinfo=timezone.utc),
+        datetime(1969, 12, 31, 23, 59, 59, tzinfo=UTC),
     ),
     (
         TimestampFormat.EPOCH_SECONDS,
         "2147483648",
-        datetime(2038, 1, 19, 3, 14, 8, tzinfo=timezone.utc),
+        datetime(2038, 1, 19, 3, 14, 8, tzinfo=UTC),
     ),
 ]
 TIMESTAMP_FORMAT_DESERIALIZATION_CASES.extend(TIMESTAMP_FORMAT_SERIALIZATION_CASES)

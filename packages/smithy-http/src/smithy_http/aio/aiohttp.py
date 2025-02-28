@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     import aiohttp
 
 try:
-    import aiohttp  # noqa: F811
+    import aiohttp
 
     HAS_AIOHTTP = True
 except ImportError:
