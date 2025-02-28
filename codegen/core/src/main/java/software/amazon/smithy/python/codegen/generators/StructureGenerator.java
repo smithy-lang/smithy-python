@@ -412,7 +412,7 @@ public final class StructureGenerator implements Runnable {
                         match schema.expect_member_index():
                             ${C|}
                             case _:
-                                logger.debug(f"Unexpected member schema: {schema}")
+                                logger.debug("Unexpected member schema: %s", schema)
 
                     deserializer.read_struct($T, consumer=_consumer)
                     return kwargs
