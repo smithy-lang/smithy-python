@@ -44,8 +44,8 @@ class Field(interfaces.Field):
         except ValueError:
             return
 
-    def as_string(self) -> str:
-        """Get comma-delimited string of all values.
+    def as_string(self, delimiter: str = ",") -> str:
+        """Get delimited string of all values. A comma is used by default.
 
         If the ``Field`` has zero values, the empty string is returned. If the ``Field``
         has exactly one value, the value is returned unmodified.
