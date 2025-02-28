@@ -68,33 +68,15 @@ public class AwsRegionalEndpointsGenerator implements EndpointsGenerator {
     }
 
     @Override
-    public void generateEndpoints(GenerationContext context, PythonWriter writer) {
-        var errorSymbol = CodegenUtils.getServiceError(context.settings());
+    public void renderEndpointParameterConstruction(GenerationContext context, PythonWriter writer) {
 
         writer.addDependency(AwsPythonDependency.SMITHY_AWS_CORE);
         writer.addImport("smithy_aws_core.endpoints.standard_regional", "RegionalEndpointParameters");
-        writer.addImport("smithy_core", "URI");
         writer.write("""
-                        endpoint = await config.endpoint_resolver.resolve_endpoint(
-                            RegionalEndpointParameters(sdk_endpoint=config.endpoint_uri,region=config.region)
+                        endpoint_parameters = RegionalEndpointParameters(
+                            sdk_endpoint=config.endpoint_uri,
+                            region=config.region
                         )
-                        if not endpoint.uri.path:
-                            path = ""
-                        elif endpoint.uri.path.endswith("/"):
-                            path = endpoint.uri.path[:-1]
-                        else:
-                            path = endpoint.uri.path
-                        if context.transport_request.destination.path:
-                            path += context.transport_request.destination.path
-                        context._transport_request.destination = URI(
-                            scheme=endpoint.uri.scheme,
-                            host=context.transport_request.destination.host + endpoint.uri.host,
-                            path=path,
-                            port=endpoint.uri.port,
-                            query=context.transport_request.destination.query,
-                        )
-                        context._transport_request.fields.extend(endpoint.headers)
-                
                 """);
     }
 }

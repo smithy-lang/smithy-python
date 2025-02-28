@@ -20,4 +20,4 @@ class StaticEndpointParams:
     :param uri: A static URI to route requests to.
     """
 
-    uri: str | URI
+    uri: str | URI | None

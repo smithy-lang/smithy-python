@@ -18,7 +18,7 @@ public interface EndpointsGenerator {
 
     /**
      * Endpoints Generators are responsible for defining the client configuration
-     * required for resolving endpoints, this includes an appropriately typed
+     * required for resolving endpoints, this must include an appropriately typed
      * `endpoint_resolver` and any other configuration properties such as `endpoint_uri`
      *
      * @param context generation context.
@@ -27,11 +27,12 @@ public interface EndpointsGenerator {
     List<ConfigProperty> endpointsConfig(GenerationContext context);
 
     /**
-     * Render the logic in the client's request execution stack that sets the
-     * destination on the transport request using the provided writer.
+     * Render the logic in the client's request execution stack that constructs
+     * `endpoint_parameters`. Implementations must add required dependencies and import statements
+     * and must ensure the `endpoint_parameters` variable is set.
      *
      * @param context generation context
-     * @param writer writer to generate endpoint resolution/setting logic with
+     * @param writer writer to write out logic to construct `endpoint_parameters`.
      */
-    void generateEndpoints(GenerationContext context, PythonWriter writer);
+    void renderEndpointParameterConstruction(GenerationContext context, PythonWriter writer);
 }

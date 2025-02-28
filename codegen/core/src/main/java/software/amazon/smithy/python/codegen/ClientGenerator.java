@@ -432,8 +432,32 @@ final class ClientGenerator implements Runnable {
 
         writer.pushState(new ResolveEndpointSection());
         if (context.applicationProtocol().isHttpProtocol()) {
+            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+            writer.addImport("smithy_core", "URI");
             writer.write("# Step 7f: Invoke endpoint_resolver.resolve_endpoint");
-            context.endpointsGenerator().generateEndpoints(context, writer);
+
+            context.endpointsGenerator().renderEndpointParameterConstruction(context, writer);
+
+            writer.write("""
+                            endpoint = await config.endpoint_resolver.resolve_endpoint(endpoint_parameters)
+                            if not endpoint.uri.path:
+                                path = ""
+                            elif endpoint.uri.path.endswith("/"):
+                                path = endpoint.uri.path[:-1]
+                            else:
+                                path = endpoint.uri.path
+                            if context.transport_request.destination.path:
+                                path += context.transport_request.destination.path
+                            context._transport_request.destination = URI(
+                                scheme=endpoint.uri.scheme,
+                                host=context.transport_request.destination.host + endpoint.uri.host,
+                                path=path,
+                                port=endpoint.uri.port,
+                                query=context.transport_request.destination.query,
+                            )
+                            context._transport_request.fields.extend(endpoint.headers)
+
+                    """);
         }
         writer.popState();
 

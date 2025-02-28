@@ -17,6 +17,9 @@ class StaticEndpointResolver(
     async def resolve_endpoint(
         self, params: StaticEndpointParams
     ) -> http_interfaces.Endpoint:
+        if params.uri is None:
+            raise ValueError("Unable to resolve endpoint: endpoint_uri is required")
+
         # If it's not a string, it's already a parsed URI so just pass it along.
         if not isinstance(params.uri, str):
             return Endpoint(uri=params.uri)
