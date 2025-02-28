@@ -58,8 +58,7 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
 
     def _build_sdk_metadata(self) -> list[UserAgentComponent]:
         return [
-            UserAgentComponent(_USERAGENT_SDK_NAME, self._sdk_version),
-            UserAgentComponent("md", "smithy-aws-core", smithy_aws_core.__version__),
+            UserAgentComponent(_USERAGENT_SDK_NAME, smithy_aws_core.__version__),
             UserAgentComponent("md", "smithy-core", smithy_core.__version__),
             *self._crt_version(),
         ]
