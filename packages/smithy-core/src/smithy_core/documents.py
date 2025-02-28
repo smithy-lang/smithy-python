@@ -230,7 +230,7 @@ class Document:
                 member_schema = self._schema.members["value"]
             return {k: self._new_document(v, member_schema) for k, v in value.items()}
 
-        result: dict[str, "Document"] = {}
+        result: dict[str, Document] = {}
         for k, v in value.items():
             result[k] = self._new_document(v, self._schema.members[k])
         return result

@@ -108,8 +108,8 @@ class ApiKeySigner(HTTPSigner[ApiKeyIdentity, ApiKeySigningProperties]):
                 )
             case ApiKeyLocation.HEADER:
                 value = identity.api_key
-                if "scheme" in signing_properties and signing_properties["scheme"]:
-                    value = f"{signing_properties['scheme']} {value}"
+                if (scheme := signing_properties.get("scheme", None)) is not None:
+                    value = f"{scheme} {value}"
                 http_request.fields.set_field(
                     Field(name=signing_properties["name"], values=[value])
                 )

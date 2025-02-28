@@ -18,8 +18,8 @@ if TYPE_CHECKING:
     from awscrt import io as crt_io
 
 try:
-    from awscrt import http as crt_http  # noqa: F811
-    from awscrt import io as crt_io  # noqa: F811
+    from awscrt import http as crt_http
+    from awscrt import io as crt_io
 
     HAS_CRT = True
 except ImportError:
@@ -57,7 +57,7 @@ class _AWSCRTEventLoop:
 class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
     def __init__(self) -> None:
         _assert_crt()
-        self._stream: "crt_http.HttpClientStream | None" = None
+        self._stream: crt_http.HttpClientStream | None = None
         self._status_code_future: Future[int] = Future()
         self._headers_future: Future[Fields] = Future()
         self._chunk_futures: list[Future[bytes]] = []
