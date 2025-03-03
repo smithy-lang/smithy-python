@@ -5,13 +5,14 @@ import datetime
 import hmac
 import io
 import warnings
+from asyncio import iscoroutinefunction
 from collections.abc import AsyncIterable, Iterable
 from copy import deepcopy
 from hashlib import sha256
 from typing import Required, TypedDict
 from urllib.parse import parse_qsl, quote
 
-from .interfaces.io import Seekable
+from .interfaces.io import AsyncSeekable, Seekable
 from ._http import URI, AWSRequest, Field
 from ._identity import AWSCredentialIdentity
 from ._io import AsyncBytesReader
@@ -757,11 +758,11 @@ class AsyncSigV4Signer:
         )
 
         checksum = sha256()
-        if isinstance(body, Seekable):
+        if isinstance(body, AsyncSeekable) and iscoroutinefunction(body.seek):
             position = body.tell()
             async for chunk in body:
                 checksum.update(chunk)
-            body.seek(position)
+            await body.seek(position)
         else:
             buffer = io.BytesIO()
             async for chunk in body:
