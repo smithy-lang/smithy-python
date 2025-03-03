@@ -17,7 +17,7 @@ class UserAgentInterceptor(Interceptor[Any, None, HTTPRequest, None]):
     def read_before_execution(
         self, context: InterceptorContext[Any, None, None, None]
     ) -> None:
-        context.properties["user_agent"] = _UserAgentBuilder.from_environment().build()
+        context.properties["user_agent"] = UserAgentBuilder.from_environment().build()
 
     def modify_before_signing(
         self, context: InterceptorContext[Any, None, HTTPRequest, None]
@@ -42,15 +42,15 @@ _USERAGENT_PLATFORM_NAME_MAPPINGS = {"darwin": "macos"}
 _USERAGENT_SDK_NAME = "python"
 
 
-class _UserAgentBuilder:
+class UserAgentBuilder:
     def __init__(
         self,
         *,
-        platform_name: str | None,
-        platform_version: str | None,
-        platform_machine: str | None,
-        python_version: str | None,
-        python_implementation: str | None,
+        platform_name: str | None = None,
+        platform_version: str | None = None,
+        platform_machine: str | None = None,
+        python_version: str | None = None,
+        python_implementation: str | None = None,
         sdk_version: str | None = None,
     ) -> None:
         self._platform_name = platform_name
@@ -58,8 +58,7 @@ class _UserAgentBuilder:
         self._platform_machine = platform_machine
         self._python_version = python_version
         self._python_implementation = python_implementation
-        # TODO: Allow configuration through context
-        self._sdk_version = smithy_core.__version__
+        self._sdk_version = sdk_version
 
     @classmethod
     def from_environment(cls) -> Self:
@@ -69,19 +68,25 @@ class _UserAgentBuilder:
             platform_machine=platform.machine(),
             python_version=platform.python_version(),
             python_implementation=platform.python_implementation(),
+            sdk_version=smithy_core.__version__,
         )
 
     def build(self) -> UserAgent:
         user_agent = UserAgent()
-        user_agent.sdk_metadata.append(
-            UserAgentComponent(prefix=_USERAGENT_SDK_NAME, name=self._sdk_version)
-        )
+        user_agent.sdk_metadata.extend(self._build_sdk_metadata())
         user_agent.ua_metadata.append(UserAgentComponent(prefix="ua", name="2.1"))
         user_agent.os_metadata.extend(self._build_os_metadata())
         user_agent.os_metadata.extend(self._build_architecture_metadata())
         user_agent.language_metadata.extend(self._build_language_metadata())
 
         return user_agent
+
+    def _build_sdk_metadata(self) -> list[UserAgentComponent]:
+        if self._sdk_version:
+            return [
+                UserAgentComponent(prefix=_USERAGENT_SDK_NAME, name=self._sdk_version)
+            ]
+        return []
 
     def _build_os_metadata(self) -> list[UserAgentComponent]:
         """Build the OS/platform components of the User-Agent header string.
@@ -97,7 +102,7 @@ class _UserAgentBuilder:
          * ``os/other``
          * ``os/other md/foobar#1.2.3``
         """
-        if self._platform_name is None:
+        if self._platform_name is None or self._platform_name == "":
             return [UserAgentComponent("os", "other")]
 
         plt_name_lower = self._platform_name.lower()
