@@ -158,14 +158,16 @@ public final class StructureGenerator implements Runnable {
     private void writeProperties() {
         for (MemberShape member : requiredMembers) {
             writer.pushState();
-            writer.putContext("sensitive", false);
-            if (member.hasTrait(SensitiveTrait.class)) {
+            var target = model.expectShape(member.getTarget());
+
+            if (target.hasTrait(SensitiveTrait.class)) {
                 writer.addStdlibImport("dataclasses", "field");
                 writer.putContext("sensitive", true);
+            } else {
+                writer.putContext("sensitive", false);
             }
 
             var memberName = symbolProvider.toMemberName(member);
-            var target = model.expectShape(member.getTarget());
             writer.putContext("quote", recursiveShapes.contains(target) ? "'" : "");
             writer.write("""
                     $L: ${quote:L}$T${quote:L}\
@@ -178,9 +180,10 @@ public final class StructureGenerator implements Runnable {
 
         for (MemberShape member : optionalMembers) {
             writer.pushState();
+            var target = model.expectShape(member.getTarget());
 
             var requiresField = false;
-            if (member.hasTrait(SensitiveTrait.class)) {
+            if (target.hasTrait(SensitiveTrait.class)) {
                 writer.putContext("sensitive", true);
                 writer.addStdlibImport("dataclasses", "field");
                 requiresField = true;
@@ -191,7 +194,7 @@ public final class StructureGenerator implements Runnable {
             var defaultValue = "None";
             var defaultKey = "default";
             if (member.hasTrait(DefaultTrait.class)) {
-                var target = model.expectShape(member.getTarget());
+
                 defaultValue = getDefaultValue(writer, member);
                 if (target.isDocumentShape() || Set.of("list", "dict").contains(defaultValue)) {
                     writer.addStdlibImport("dataclasses", "field");
@@ -206,7 +209,6 @@ public final class StructureGenerator implements Runnable {
             writer.putContext("defaultValue", defaultValue);
             writer.putContext("useField", requiresField);
 
-            var target = model.expectShape(member.getTarget());
             writer.putContext("quote", recursiveShapes.contains(target) ? "'" : "");
 
             var memberName = symbolProvider.toMemberName(member);
