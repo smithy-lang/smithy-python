@@ -7,7 +7,7 @@ from datetime import UTC, datetime
 import pytest
 
 from smithy_core.exceptions import ExpectationNotMetException
-from smithy_core.types import JsonBlob, JsonString, TimestampFormat
+from smithy_core.types import JsonBlob, JsonString, TimestampFormat, PathPattern
 
 
 def test_json_string() -> None:
@@ -180,3 +180,42 @@ def test_invalid_timestamp_format_type_raises(
 ):
     with pytest.raises(ExpectationNotMetException):
         format.deserialize(value)
+
+
+def test_path_pattern_without_labels():
+    assert PathPattern("/foo/").format() == "/foo/"
+
+
+def test_path_pattern_with_normal_label():
+    assert PathPattern("/{foo}/").format(foo="foo") == "/foo/"
+
+
+def test_path_pattern_with_greedy_label():
+    assert PathPattern("/{foo+}/").format(foo="foo") == "/foo/"
+
+
+def test_path_pattern_greedy_label_allows_path_sep():
+    assert PathPattern("/{foo+}/").format(foo="foo/bar") == "/foo/bar/"
+
+
+def test_path_pattern_normal_label_disallows_path_sep():
+    with pytest.raises(ValueError):
+        PathPattern("/{foo}").format(foo="foo/bar")
+
+
+@pytest.mark.parametrize(
+    "greedy, value",
+    [
+        (False, ""),
+        (True, ""),
+        (True, "/"),
+        (True, "/foo"),
+        (True, "foo/"),
+        (True, "/foo/"),
+        (True, "foo//bar"),
+    ],
+)
+def test_path_pattern_disallows_empty_segments(greedy: bool, value: str):
+    pattern = PathPattern("/{foo+}/" if greedy else "/{foo}/")
+    with pytest.raises(ValueError):
+        pattern.format(foo=value)
