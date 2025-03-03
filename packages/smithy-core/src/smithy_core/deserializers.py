@@ -3,11 +3,12 @@ from collections.abc import Callable
 from decimal import Decimal
 from typing import TYPE_CHECKING, Never, Protocol, Self, runtime_checkable
 
-from .exceptions import SmithyException
+from .exceptions import SmithyException, UnsupportedStreamException
 
 if TYPE_CHECKING:
     from .documents import Document
     from .schemas import Schema
+    from .aio.interfaces import StreamingBlob as _Stream
 
 
 @runtime_checkable
@@ -171,6 +172,22 @@ class ShapeDeserializer(Protocol):
         """
         ...
 
+    def read_data_stream(self, schema: "Schema") -> "_Stream":
+        """Read a data stream from the underlying data.
+
+        The data itself MUST NOT be read by this method. The value returned is intended
+        to be read later by the consumer. In an HTTP implementation, for example, this
+        would directly return the HTTP body stream. The stream MAY be wrapped to provide
+        a more consistent interface or to avoid exposing implementation details.
+
+        Data streams are only supported at the top-level input and output for
+        operations.
+
+        :param schema: The shape's schema.
+        :returns: A data stream derived from the underlying data.
+        """
+        raise UnsupportedStreamException()
+
 
 class SpecificShapeDeserializer(ShapeDeserializer):
     """Expects to deserialize a specific kind of shape, failing if other shapes are
@@ -245,6 +262,9 @@ class SpecificShapeDeserializer(ShapeDeserializer):
         self._invalid_state(schema)
 
     def read_timestamp(self, schema: "Schema") -> datetime.datetime:
+        self._invalid_state(schema)
+
+    def read_data_stream(self, schema: "Schema") -> "_Stream":
         self._invalid_state(schema)
 
 

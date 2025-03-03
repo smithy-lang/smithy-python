@@ -5,11 +5,12 @@ from contextlib import AbstractContextManager, contextmanager
 from decimal import Decimal
 from typing import TYPE_CHECKING, Never, Protocol, runtime_checkable
 
-from .exceptions import SmithyException
+from .exceptions import SmithyException, UnsupportedStreamException
 
 if TYPE_CHECKING:
     from .documents import Document
     from .schemas import Schema
+    from .aio.interfaces import StreamingBlob as _Stream
 
 
 @runtime_checkable
@@ -198,6 +199,24 @@ class ShapeSerializer(Protocol):
         """
         ...
 
+    def write_data_stream(self, schema: "Schema", value: "_Stream") -> None:
+        """Write a data stream to the output.
+
+        If the value is a stream (i.e. not bytes or bytearray) it MUST NOT be read
+        directly by this method. Such values are intended to only be read as needed when
+        sending a message, and so should be bound directly to the request / response
+        type and then read by the transport.
+
+        Data streams are only supported at the top-level input and output for
+        operations.
+
+        :param schema: The shape's schema.
+        :param value: The streaming value to write.
+        """
+        if isinstance(value, bytes | bytearray):
+            self.write_blob(schema, bytes(value))
+        raise UnsupportedStreamException()
+
     def flush(self) -> None:
         """Flush the underlying data."""
 
@@ -324,6 +343,10 @@ class InterceptingSerializer(ShapeSerializer, metaclass=ABCMeta):
         self.before(schema).write_document(schema, value)
         self.after(schema)
 
+    def write_data_stream(self, schema: "Schema", value: "_Stream") -> None:
+        self.before(schema).write_data_stream(schema, value)
+        self.after(schema)
+
 
 class SpecificShapeSerializer(ShapeSerializer):
     """Expects to serialize a specific kind of shape, failing if other shapes are
@@ -391,6 +414,9 @@ class SpecificShapeSerializer(ShapeSerializer):
         self._invalid_state(schema)
 
     def write_document(self, schema: "Schema", value: "Document") -> None:
+        self._invalid_state(schema)
+
+    def write_data_stream(self, schema: "Schema", value: "_Stream") -> None:
         self._invalid_state(schema)
 
 
