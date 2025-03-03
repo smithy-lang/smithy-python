@@ -153,6 +153,7 @@ final class ClientGenerator implements Runnable {
                     error: Exception,
                     context: InterceptorContext[Input, Output, $1T, $2T | None]
                 ) -> RetryErrorInfo:
+                    logger.debug("Classifying error: %s", error)
                 """, transportRequest, transportResponse);
         writer.indent();
 
@@ -276,9 +277,11 @@ final class ClientGenerator implements Runnable {
                         context_with_transport_request = cast(
                             InterceptorContext[Input, None, $2T, None], context
                         )
+                        logger.debug("Serializing request for: %s", context_with_transport_request.request)
                         context_with_transport_request._transport_request = await serialize(
                             context_with_transport_request.request, config
                         )
+                        logger.debug("Serialization complete. Transport request: %s", context_with_transport_request._transport_request)
 
                         # Step 5: Invoke read_after_serialization
                         for interceptor in interceptors:
@@ -337,10 +340,6 @@ final class ClientGenerator implements Runnable {
                                     await seek(0)
                             else:
                                 # Step 8: Invoke record_success
-                                logger.debug(
-                                    "Attempt %s succeeded. Not retrying request.",
-                                    retry_token.retry_count + 1
-                                )
                                 retry_strategy.record_success(token=retry_token)
                                 break
                     except Exception as e:
@@ -505,6 +504,7 @@ final class ClientGenerator implements Runnable {
                                     identity=identity,
                                     signing_properties=auth_option.signer_properties,
                                 )
+                                logger.debug("Signed HTTP request: %s", context._transport_request)
                     """);
         }
         writer.popState();
@@ -566,9 +566,11 @@ final class ClientGenerator implements Runnable {
                             InterceptorContext[Input, Output, $1T, $2T],
                             context_with_response,
                         )
+                        logger.debug("Deserializing transport response: %s", context_with_output._transport_response)
                         context_with_output._response = await deserialize(
                             context_with_output._transport_response, config
                         )
+                        logger.debug("Deserialization complete. Response: %s", context_with_output._response)
 
                         # Step 7r: Invoke read_after_deserialization
                         for interceptor in interceptors:
