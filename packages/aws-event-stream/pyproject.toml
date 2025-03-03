@@ -1,6 +1,6 @@
 [project]
 name = "aws-event-stream"
-version = "0.1.0"
+version = "0.0.1"
 description = "Core Smithy components for AWS services and protocols."
 readme = "README.md"
 requires-python = ">=3.12"
@@ -17,6 +17,10 @@ build-backend = "hatchling.build"
 exclude = [
   "tests",
 ]
+
+[tool.hatch.build.hooks.version]
+path = "src/aws_event_stream/__init__.py"
+pattern = "__version__: str = \"(?P<version>.+)\""
 
 [tool.ruff]
 src = ["src"]
