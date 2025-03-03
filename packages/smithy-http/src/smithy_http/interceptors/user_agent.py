@@ -46,12 +46,12 @@ class _UserAgentBuilder:
     def __init__(
         self,
         *,
-        platform_name: str | None = None,
-        platform_version: str | None = None,
-        platform_machine: str | None = None,
-        python_version: str | None = None,
-        python_implementation: str | None = None,
-        sdk_version: str | None = None,
+        platform_name: str | None,
+        platform_version: str | None,
+        platform_machine: str | None,
+        python_version: str | None,
+        python_implementation: str | None,
+        sdk_version: str | None,
     ) -> None:
         self._platform_name = platform_name
         self._platform_version = platform_version
