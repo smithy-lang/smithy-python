@@ -8,7 +8,7 @@ def test_from_environment(monkeypatch):  # type: ignore
     monkeypatch.setattr(platform, "system", lambda: "Linux")  # type: ignore
     monkeypatch.setattr(platform, "release", lambda: "5.4.228-131.415.AMZN2.X86_64")  # type: ignore
     monkeypatch.setattr(platform, "python_version", lambda: "4.3.2")  # type: ignore
-    monkeypatch.setattr(platform, "python_implementation", lambda: "Cpython")  # type: ignore
+    monkeypatch.setattr(platform, "python_implementation", lambda: "CPython")  # type: ignore
     monkeypatch.setattr(smithy_core, "__version__", "1.2.3")  # type: ignore
 
     user_agent = str(UserAgentBuilder.from_environment().build())
