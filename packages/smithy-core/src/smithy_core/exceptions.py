@@ -28,3 +28,8 @@ class MissingDependencyException(SmithyException):
 class AsyncBodyException(SmithyException):
     """Exception indicating that a request with an async body type was created in a sync
     context."""
+
+
+class UnsupportedStreamException(SmithyException):
+    """Indicates that a serializer or deserializer's stream method was called, but data
+    streams are not supported."""
