@@ -1,11 +1,13 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import json
+import re
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from email.utils import format_datetime, parsedate_to_datetime
 from enum import Enum
 from typing import Any
+from dataclasses import dataclass
 
 from .exceptions import ExpectationNotMetException
 from .utils import (
@@ -15,6 +17,8 @@ from .utils import (
     serialize_epoch_seconds,
     serialize_rfc3339,
 )
+
+_GREEDY_LABEL_RE = re.compile(r"\{(\w+)\+\}")
 
 type Document = (
     Mapping[str, "Document"] | Sequence["Document"] | str | int | float | bool | None
@@ -111,3 +115,41 @@ class TimestampFormat(Enum):
                 return ensure_utc(parsedate_to_datetime(expect_type(str, value)))
             case TimestampFormat.DATE_TIME:
                 return ensure_utc(datetime.fromisoformat(expect_type(str, value)))
+
+
+@dataclass(init=False, frozen=True)
+class PathPattern:
+    """A formattable URI path pattern.
+
+    The pattern may contain formattlable labels, which may be normal labels or greedy
+    labels. Normal labels forbid path separators, greedy labels allow them.
+    """
+
+    pattern: str
+    """The path component of the URI which is a formattable string."""
+
+    greedy_labels: set[str]
+    """The pattern labels whose values may contain path separators."""
+
+    def __init__(self, pattern: str) -> None:
+        object.__setattr__(self, "pattern", pattern)
+        object.__setattr__(
+            self, "greedy_labels", set(_GREEDY_LABEL_RE.findall(pattern))
+        )
+
+    def format(self, *args: object, **kwargs: str) -> str:
+        if args:
+            raise ValueError("PathPattern formatting requires only keyword arguments.")
+
+        for key, value in kwargs.items():
+            if "/" in value and key not in self.greedy_labels:
+                raise ValueError(
+                    'Non-greedy labels must not contain path separators ("/").'
+                )
+
+        result = self.pattern.replace("+}", "}").format(**kwargs)
+        if "//" in result:
+            raise ValueError(
+                f'Path must not contain empty segments, but was "{result}".'
+            )
+        return result

@@ -7,11 +7,11 @@
 # they're correct regardless, so it's okay if the checks are stripped out.
 # ruff: noqa: S101
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, ClassVar
+from typing import TYPE_CHECKING, ClassVar, Mapping
 
-from .types import TimestampFormat
+from .types import TimestampFormat, PathPattern
 from .shapes import ShapeID
 
 if TYPE_CHECKING:
@@ -193,3 +193,117 @@ class JSONNameTrait(Trait, id=ShapeID("smithy.api#jsonName")):
     @property
     def value(self) -> str:
         return self.document_value  # type: ignore
+
+
+# TODO: Get all this moved over to the http package
+@dataclass(init=False, frozen=True)
+class HTTPTrait(Trait, id=ShapeID("smithy.api#http")):
+    path: PathPattern = field(repr=False, hash=False, compare=False)
+    code: int = field(repr=False, hash=False, compare=False)
+    query: str | None = field(default=None, repr=False, hash=False, compare=False)
+
+    def __init__(self, value: "DocumentValue | DynamicTrait" = None):
+        super().__init__(value)
+        assert isinstance(self.document_value, Mapping)
+        assert isinstance(self.document_value["method"], str)
+
+        code = self.document_value.get("code", 200)
+        assert isinstance(code, int)
+        object.__setattr__(self, "code", code)
+
+        uri = self.document_value["uri"]
+        assert isinstance(uri, str)
+        parts = uri.split("?", 1)
+
+        object.__setattr__(self, "path", PathPattern(parts[0]))
+        object.__setattr__(self, "query", parts[1] if len(parts) == 2 else None)
+
+    @property
+    def method(self) -> str:
+        return self.document_value["method"]  # type: ignore
+
+
+@dataclass(init=False, frozen=True)
+class HTTPErrorTrait(Trait, id=ShapeID("smithy.api#httpError")):
+    def __post_init__(self):
+        assert isinstance(self.document_value, int)
+
+    @property
+    def code(self) -> int:
+        return self.document_value  # type: ignore
+
+
+@dataclass(init=False, frozen=True)
+class HTTPHeaderTrait(Trait, id=ShapeID("smithy.api#httpHeader")):
+    def __post_init__(self):
+        assert isinstance(self.document_value, str)
+
+    @property
+    def key(self) -> str:
+        return self.document_value  # type: ignore
+
+
+@dataclass(init=False, frozen=True)
+class HTTPLabelTrait(Trait, id=ShapeID("smithy.api#httpLabel")):
+    def __post_init__(self):
+        assert self.document_value is None
+
+
+@dataclass(init=False, frozen=True)
+class HTTPPayloadTrait(Trait, id=ShapeID("smithy.api#httpPayload")):
+    def __post_init__(self):
+        assert self.document_value is None
+
+
+@dataclass(init=False, frozen=True)
+class HTTPPrefixHeadersTrait(Trait, id=ShapeID("smithy.api#httpPrefixHeaders")):
+    def __post_init__(self):
+        assert isinstance(self.document_value, str)
+
+    @property
+    def prefix(self) -> str:
+        return self.document_value  # type: ignore
+
+
+@dataclass(init=False, frozen=True)
+class HTTPQueryTrait(Trait, id=ShapeID("smithy.api#httpQuery")):
+    def __post_init__(self):
+        assert isinstance(self.document_value, str)
+
+    @property
+    def name(self) -> str:
+        return self.document_value  # type: ignore
+
+
+@dataclass(init=False, frozen=True)
+class HTTPQueryParamsTrait(Trait, id=ShapeID("smithy.api#httpQueryParams")):
+    def __post_init__(self):
+        assert self.document_value is None
+
+
+@dataclass(init=False, frozen=True)
+class HTTPResponseCodeTrait(Trait, id=ShapeID("smithy.api#httpResponseCode")):
+    def __post_init__(self):
+        assert self.document_value is None
+
+
+@dataclass(init=False, frozen=True)
+class HTTPChecksumRequiredTrait(Trait, id=ShapeID("smithy.api#httpChecksumRequired")):
+    def __post_init__(self):
+        assert self.document_value is None
+
+
+@dataclass(init=False, frozen=True)
+class EndpointTrait(Trait, id=ShapeID("smithy.api#endpoint")):
+    def __post_init__(self):
+        assert isinstance(self.document_value, str)
+
+    @property
+    def host_prefix(self) -> str:
+        return self.document_value["hostPrefix"]  # type: ignore
+
+
+@dataclass(init=False, frozen=True)
+class HostLabelTrait(Trait, id=ShapeID("smithy.api#hostLabel")):
+    def __post_init__(self):
+        assert self.document_value is None
