@@ -17,7 +17,7 @@ class UserAgentInterceptor(Interceptor[Any, None, HTTPRequest, None]):
     def read_before_execution(
         self, context: InterceptorContext[Any, None, None, None]
     ) -> None:
-        context.properties["user_agent"] = UserAgentBuilder.from_environment().build()
+        context.properties["user_agent"] = _UserAgentBuilder.from_environment().build()
 
     def modify_before_signing(
         self, context: InterceptorContext[Any, None, HTTPRequest, None]
@@ -42,7 +42,7 @@ _USERAGENT_PLATFORM_NAME_MAPPINGS = {"darwin": "macos"}
 _USERAGENT_SDK_NAME = "python"
 
 
-class UserAgentBuilder:
+class _UserAgentBuilder:
     def __init__(
         self,
         *,
