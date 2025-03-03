@@ -102,7 +102,7 @@ class UserAgentBuilder:
          * ``os/other``
          * ``os/other md/foobar#1.2.3``
         """
-        if self._platform_name is None or self._platform_name == "":
+        if self._platform_name in (None, ""):
             return [UserAgentComponent("os", "other")]
 
         plt_name_lower = self._platform_name.lower()
