@@ -1,9 +1,6 @@
-[build-system]
-requires = ["setuptools", "setuptools-scm", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
 name = "aws_sdk_signers"
+version = "0.0.2"
 requires-python = ">=3.12"
 authors = [
   {name = "Amazon Web Services"},
@@ -26,13 +23,15 @@ classifiers = [
   "Programming Language :: Python :: Implementation :: CPython",
   "Topic :: Software Development :: Libraries"
 ]
-dynamic = ["version"]
 
-[tool.setuptools.dynamic]
-version = {attr = "aws_sdk_signers._version.__version__"}
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
 
-[tool.setuptools]
-include-package-data = false
+[tool.hatch.build]
+exclude = [
+ "tests",
+]
 
 [project.optional-dependencies]
 test = [
@@ -42,10 +41,6 @@ test = [
     "mypy",
     "ruff",
 ]
-
-[tool.mypy]
-python_version = "3.12"
-strict = true
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
