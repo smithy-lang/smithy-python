@@ -60,3 +60,14 @@ async def test_resolve_endpoint_with_no_sdk_endpoint_or_region():
 
     with pytest.raises(EndpointResolutionError):
         await resolver.resolve_endpoint(params)
+
+
+async def test_resolve_endpoint_with_sdk_endpoint_and_region():
+    resolver = StandardRegionalEndpointsResolver(endpoint_prefix="service")
+    params = RegionalEndpointParameters(
+        sdk_endpoint="https://example.com", region="us-west-2"
+    )
+
+    endpoint = await resolver.resolve_endpoint(params)
+
+    assert endpoint.uri.host == "example.com"
