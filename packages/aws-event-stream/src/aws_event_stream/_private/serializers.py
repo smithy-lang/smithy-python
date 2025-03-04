@@ -102,7 +102,7 @@ class EventSerializer(SpecificShapeSerializer):
 
         headers_encoder = EventHeaderEncoder()
 
-        if ErrorTrait.id in schema.traits:
+        if ErrorTrait in schema:
             headers_encoder.encode_string(":message-type", "exception")
             headers_encoder.encode_string(
                 ":exception-type", schema.expect_member_name()
@@ -214,7 +214,7 @@ class EventStreamBindingSerializer(InterceptingSerializer):
         self._payload_struct_serializer = payload_struct_serializer
 
     def before(self, schema: "Schema") -> ShapeSerializer:
-        if EventHeaderTrait.id in schema.traits:
+        if EventHeaderTrait in schema:
             return self._header_serializer
         return self._payload_struct_serializer
 
