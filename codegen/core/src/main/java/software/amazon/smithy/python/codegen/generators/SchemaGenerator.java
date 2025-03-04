@@ -122,7 +122,7 @@ public final class SchemaGenerator implements Consumer<Shape> {
         writer.putContext("traits", traits);
         writer.write("""
                 ${#traits}
-                Trait(id=ShapeID(${key:S})${?value}, value=${value:N}${/value}),
+                Trait.new(id=ShapeID(${key:S})${?value}, value=${value:N}${/value}),
                 ${/traits}""");
         writer.popState();
     }

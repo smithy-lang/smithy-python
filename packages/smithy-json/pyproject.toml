@@ -1,6 +1,6 @@
 [project]
 name = "smithy-json"
-version = "0.1.0"
+version = "0.0.1"
 description = "JSON serialization and deserialization support for Smithy tooling."
 readme = "README.md"
 requires-python = ">=3.12"

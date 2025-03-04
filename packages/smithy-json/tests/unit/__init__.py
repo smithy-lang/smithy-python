@@ -18,11 +18,10 @@ from smithy_core.prelude import (
 from smithy_core.schemas import Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import Trait
 
-from smithy_json._private.traits import JSON_NAME, TIMESTAMP_FORMAT
+from smithy_core.traits import TimestampFormatTrait, JSONNameTrait, SparseTrait
 
-SPARSE_TRAIT = Trait(id=ShapeID("smithy.api#sparse"))
+
 STRING_LIST_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringList"),
     shape_type=ShapeType.LIST,
@@ -40,7 +39,7 @@ SPARSE_STRING_LIST_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringList"),
     shape_type=ShapeType.LIST,
     members={"member": {"target": STRING, "index": 0}},
-    traits=[SPARSE_TRAIT],
+    traits=[SparseTrait()],
 )
 SPARSE_STRING_MAP_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringMap"),
@@ -49,7 +48,7 @@ SPARSE_STRING_MAP_SCHEMA = Schema.collection(
         "key": {"target": STRING, "index": 0},
         "value": {"target": STRING, "index": 1},
     },
-    traits=[SPARSE_TRAIT],
+    traits=[SparseTrait()],
 )
 SCHEMA: Schema = Schema.collection(
     id=ShapeID("smithy.example#SerdeShape"),
@@ -61,24 +60,24 @@ SCHEMA: Schema = Schema.collection(
         "stringMember": {"target": STRING, "index": 4},
         "jsonNameMember": {
             "target": STRING,
-            "traits": [Trait(id=JSON_NAME, value="jsonName")],
+            "traits": [JSONNameTrait("jsonName")],
             "index": 5,
         },
         "blobMember": {"target": BLOB, "index": 6},
         "timestampMember": {"target": TIMESTAMP, "index": 7},
         "dateTimeMember": {
             "target": TIMESTAMP,
-            "traits": [Trait(id=TIMESTAMP_FORMAT, value="date-time")],
+            "traits": [TimestampFormatTrait("date-time")],
             "index": 8,
         },
         "httpDateMember": {
             "target": TIMESTAMP,
-            "traits": [Trait(id=TIMESTAMP_FORMAT, value="http-date")],
+            "traits": [TimestampFormatTrait("http-date")],
             "index": 9,
         },
         "epochSecondsMember": {
             "target": TIMESTAMP,
-            "traits": [Trait(id=TIMESTAMP_FORMAT, value="epoch-seconds")],
+            "traits": [TimestampFormatTrait("epoch-seconds")],
             "index": 10,
         },
         "documentMember": {"target": DOCUMENT, "index": 11},

@@ -2,20 +2,49 @@ from dataclasses import replace
 
 import pytest
 
+from typing import Any
+
 from smithy_core.exceptions import ExpectationNotMetException
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import Trait
+from smithy_core.traits import (
+    InternalTrait,
+    DynamicTrait,
+    SensitiveTrait,
+)
 
 ID: ShapeID = ShapeID("ns.foo#bar")
 STRING = Schema(id=ShapeID("smithy.api#String"), shape_type=ShapeType.STRING)
 
 
 def test_traits_list():
-    trait_id = ShapeID("smithy.api#internal")
-    trait = Trait(id=trait_id, value=True)
+    trait = InternalTrait()
     schema = Schema(id=ID, shape_type=ShapeType.STRUCTURE, traits=[trait])
-    assert schema.traits == {trait_id: trait}
+    assert schema.traits == {InternalTrait.id: trait}
+
+
+def test_get_trait_by_class():
+    trait = InternalTrait()
+    schema = Schema(id=ID, shape_type=ShapeType.STRUCTURE, traits=[trait])
+    assert schema.get_trait(InternalTrait) is trait
+
+
+def test_get_unknown_trait_by_class():
+    trait = InternalTrait()
+    schema = Schema(id=ID, shape_type=ShapeType.STRUCTURE, traits=[trait])
+    assert schema.get_trait(SensitiveTrait) is None
+
+
+def test_get_trait_by_id():
+    trait = InternalTrait()
+    schema = Schema(id=ID, shape_type=ShapeType.STRUCTURE, traits=[trait])
+    assert schema.get_trait(InternalTrait.id) is trait
+
+
+def test_get_unknown_trait_by_id():
+    trait = InternalTrait()
+    schema = Schema(id=ID, shape_type=ShapeType.STRUCTURE, traits=[trait])
+    assert schema.get_trait(SensitiveTrait.id) is None
 
 
 def test_members_list():
@@ -59,7 +88,7 @@ def test_member_expectations_raise_on_non_members():
 
 
 def test_collection_constructor():
-    trait_value = Trait(id=ShapeID("smithy.example#trait"), value="foo")
+    trait_value = DynamicTrait(id=ShapeID("smithy.example#trait"), document_value="foo")
     member_name = "baz"
     member = Schema(
         id=ID.with_member(member_name),
@@ -79,8 +108,8 @@ def test_member_constructor():
     target = Schema.collection(
         id=ShapeID("smithy.example#target"),
         traits=[
-            Trait(id=ShapeID("smithy.api#sensitive")),
-            Trait(id=ShapeID("smithy.example#foo"), value="bar"),
+            SensitiveTrait(),
+            DynamicTrait(id=ShapeID("smithy.example#foo"), document_value="bar"),
         ],
         members={"spam": {"target": STRING, "index": 0}},
     )
@@ -92,8 +121,8 @@ def test_member_constructor():
         member_target=target,
         member_index=1,
         traits=[
-            Trait(id=ShapeID("smithy.api#sensitive")),
-            Trait(id=ShapeID("smithy.example#foo"), value="baz"),
+            SensitiveTrait(),
+            DynamicTrait(id=ShapeID("smithy.example#foo"), document_value="baz"),
         ],
     )
 
@@ -101,7 +130,9 @@ def test_member_constructor():
         id=member_id,
         target=target,
         index=1,
-        member_traits=[Trait(id=ShapeID("smithy.example#foo"), value="baz")],
+        member_traits=[
+            DynamicTrait(id=ShapeID("smithy.example#foo"), document_value="baz")
+        ],
     )
 
     assert actual == expected
@@ -118,3 +149,25 @@ def test_member_constructor_asserts_target_is_not_member():
     )
     with pytest.raises(ExpectationNotMetException):
         Schema.member(id=ShapeID("smithy.example#Foo$bar"), target=target, index=0)
+
+
+@pytest.mark.parametrize(
+    "item, contains",
+    [
+        (SensitiveTrait, True),
+        (SensitiveTrait.id, True),
+        (InternalTrait, False),
+        (InternalTrait.id, False),
+        ("baz", True),
+        (ID.with_member("baz"), True),
+        (ID, False),
+    ],
+)
+def test_contains(item: Any, contains: bool):
+    schema = Schema.collection(
+        id=ID,
+        members={"baz": {"target": STRING, "index": 0}},
+        traits=[SensitiveTrait()],
+    )
+
+    assert (item in schema) == contains
