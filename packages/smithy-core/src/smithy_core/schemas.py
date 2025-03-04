@@ -2,13 +2,11 @@
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
-from typing import TYPE_CHECKING, NotRequired, Required, Self, TypedDict, overload
+from typing import NotRequired, Required, Self, TypedDict, overload, Any
 
 from .exceptions import ExpectationNotMetException, SmithyException
 from .shapes import ShapeID, ShapeType
-
-if TYPE_CHECKING:
-    from .traits import Trait, DynamicTrait
+from .traits import Trait, DynamicTrait
 
 
 @dataclass(kw_only=True, frozen=True, init=False)
@@ -163,6 +161,24 @@ class Schema:
         """
         id = t if isinstance(t, ShapeID) else t.id
         return self.traits[id]
+
+    def __contains__(self, item: Any):
+        """Returns whether the schema has the given member or trait."""
+        match item:
+            case type():
+                if issubclass(item, Trait):
+                    return item.id in self.traits
+                return False
+            case ShapeID():
+                if (member := item.member) is not None:
+                    if self.id.with_member(member) == item:
+                        return member in self.members
+                    return False
+                return item in self.traits
+            case str():
+                return item in self.members
+            case _:
+                return False
 
     @classmethod
     def collection(

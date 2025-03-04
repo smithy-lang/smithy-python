@@ -10,6 +10,6 @@ INITIAL_RESPONSE_EVENT_TYPE = "initial-response"
 
 def get_payload_member(schema: Schema) -> Schema | None:
     for member in schema.members.values():
-        if EventPayloadTrait.id in member.traits:
+        if EventPayloadTrait in member:
             return member
     return None

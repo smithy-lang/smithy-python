@@ -2,10 +2,16 @@ from dataclasses import replace
 
 import pytest
 
+from typing import Any
+
 from smithy_core.exceptions import ExpectationNotMetException
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import InternalTrait, DynamicTrait, SensitiveTrait
+from smithy_core.traits import (
+    InternalTrait,
+    DynamicTrait,
+    SensitiveTrait,
+)
 
 ID: ShapeID = ShapeID("ns.foo#bar")
 STRING = Schema(id=ShapeID("smithy.api#String"), shape_type=ShapeType.STRING)
@@ -143,3 +149,25 @@ def test_member_constructor_asserts_target_is_not_member():
     )
     with pytest.raises(ExpectationNotMetException):
         Schema.member(id=ShapeID("smithy.example#Foo$bar"), target=target, index=0)
+
+
+@pytest.mark.parametrize(
+    "item, contains",
+    [
+        (SensitiveTrait, True),
+        (SensitiveTrait.id, True),
+        (InternalTrait, False),
+        (InternalTrait.id, False),
+        ("baz", True),
+        (ID.with_member("baz"), True),
+        (ID, False),
+    ],
+)
+def test_contains(item: Any, contains: bool):
+    schema = Schema.collection(
+        id=ID,
+        members={"baz": {"target": STRING, "index": 0}},
+        traits=[SensitiveTrait()],
+    )
+
+    assert (item in schema) == contains
