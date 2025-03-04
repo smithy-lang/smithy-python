@@ -110,6 +110,7 @@ requires-dist = [
 
 [[package]]
 name = "aws-sdk-signers"
+version = "0.0.2"
 source = { editable = "packages/aws-sdk-signers" }
 
 [package.optional-dependencies]
