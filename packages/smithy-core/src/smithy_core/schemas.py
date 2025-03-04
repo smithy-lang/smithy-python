@@ -130,7 +130,7 @@ class Schema:
     def get_trait(self, t: ShapeID) -> "Trait | DynamicTrait | None": ...
 
     def get_trait(self, t: "type[Trait] | ShapeID") -> "Trait | DynamicTrait | None":
-        """Get a trait based on it's ShapeID or class.
+        """Get a trait based on its ShapeID or class.
 
         :returns: A Trait if the trait class is known, a DynamicTrait if it isn't, or
             None if the trait is not present on the Schema.
@@ -155,7 +155,7 @@ class Schema:
     def expect_trait(self, t: ShapeID) -> "Trait | DynamicTrait": ...
 
     def expect_trait(self, t: "type[Trait] | ShapeID") -> "Trait | DynamicTrait":
-        """Get a trait based on it's ShapeID or class.
+        """Get a trait based on its ShapeID or class.
 
         :returns: A Trait if the trait class is known, a DynamicTrait if it isn't.
         """
