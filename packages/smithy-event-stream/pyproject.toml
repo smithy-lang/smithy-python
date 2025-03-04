@@ -17,9 +17,5 @@ exclude = [
   "tests",
 ]
 
-[tool.hatch.build.hooks.version]
-path = "src/smithy_event_stream/__init__.py"
-pattern = "__version__: str = \"(?P<version>.+)\""
-
 [tool.ruff]
 src = ["src"]
