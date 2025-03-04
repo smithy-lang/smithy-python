@@ -11,6 +11,10 @@ from smithy_core.types import TimestampFormat
 from ._private.deserializers import JSONShapeDeserializer as _JSONShapeDeserializer
 from ._private.serializers import JSONShapeSerializer as _JSONShapeSerializer
 
+import importlib.metadata
+
+__version__: str = importlib.metadata.version("smithy-json")
+
 
 class JSONCodec(Codec):
     """A codec for converting shapes to/from JSON."""
