@@ -137,8 +137,18 @@ class Schema:
         :returns: A Trait if the trait class is known, a DynamicTrait if it isn't, or
             None if the trait is not present on the Schema.
         """
-        id = t if isinstance(t, ShapeID) else t.id
-        return self.traits.get(id)
+        if isinstance(t, ShapeID):
+            return self.traits.get(t)
+
+        result = self.traits.get(t.id)
+
+        # If the trait wasn't known when the schema was created, but is known now, go
+        # ahead and convert it.
+        if isinstance(result, DynamicTrait):
+            result = t(result)
+            self.traits[t.id] = result
+
+        return result
 
     @overload
     def expect_trait[T: "Trait"](self, t: type[T]) -> T: ...
