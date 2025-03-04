@@ -271,7 +271,7 @@ class HTTPQueryTrait(Trait, id=ShapeID("smithy.api#httpQuery")):
         assert isinstance(self.document_value, str)
 
     @property
-    def name(self) -> str:
+    def key(self) -> str:
         return self.document_value  # type: ignore
 
 
