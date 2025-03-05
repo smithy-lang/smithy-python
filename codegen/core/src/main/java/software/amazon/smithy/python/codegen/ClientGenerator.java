@@ -76,7 +76,7 @@ final class ClientGenerator implements Runnable {
             var defaultPlugins = new LinkedHashSet<SymbolReference>();
 
             for (PythonIntegration integration : context.integrations()) {
-                for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins()) {
+                for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins(context)) {
                     if (runtimeClientPlugin.matchesService(context.model(), service)) {
                         runtimeClientPlugin.getPythonPlugin().ifPresent(defaultPlugins::add);
                     }
@@ -678,7 +678,7 @@ final class ClientGenerator implements Runnable {
     private void initializeHttpAuthParameters(PythonWriter writer) {
         var derived = new LinkedHashSet<DerivedProperty>();
         for (PythonIntegration integration : context.integrations()) {
-            for (RuntimeClientPlugin plugin : integration.getClientPlugins()) {
+            for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
                 if (plugin.matchesService(context.model(), service)
                         && plugin.getAuthScheme().isPresent()
                         && plugin.getAuthScheme().get().getApplicationProtocol().isHttpProtocol()) {
@@ -767,7 +767,7 @@ final class ClientGenerator implements Runnable {
 
         var defaultPlugins = new LinkedHashSet<SymbolReference>();
         for (PythonIntegration integration : context.integrations()) {
-            for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins()) {
+            for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins(context)) {
                 if (runtimeClientPlugin.matchesOperation(context.model(), service, operation)) {
                     runtimeClientPlugin.getPythonPlugin().ifPresent(defaultPlugins::add);
                 }

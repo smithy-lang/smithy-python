@@ -43,7 +43,7 @@ final class HttpAuthGenerator implements Runnable {
         var properties = new ArrayList<DerivedProperty>();
         var service = context.settings().service(context.model());
         for (PythonIntegration integration : context.integrations()) {
-            for (RuntimeClientPlugin plugin : integration.getClientPlugins()) {
+            for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
                 if (plugin.matchesService(context.model(), service)
                         && plugin.getAuthScheme().isPresent()
                         && plugin.getAuthScheme().get().getApplicationProtocol().isHttpProtocol()) {

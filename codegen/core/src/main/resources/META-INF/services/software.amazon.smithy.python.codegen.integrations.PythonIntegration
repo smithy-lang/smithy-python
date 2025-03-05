@@ -5,3 +5,4 @@
 
 software.amazon.smithy.python.codegen.integrations.RestJsonIntegration
 software.amazon.smithy.python.codegen.integrations.HttpApiKeyAuth
+software.amazon.smithy.python.codegen.integrations.UserAgentIntegration

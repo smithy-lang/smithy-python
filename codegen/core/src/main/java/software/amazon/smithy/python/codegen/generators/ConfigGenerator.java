@@ -219,7 +219,7 @@ public final class ConfigGenerator implements Runnable {
         var supportedAuthSchemes = new LinkedHashMap<String, Symbol>();
         var service = context.settings().service(context.model());
         for (PythonIntegration integration : context.integrations()) {
-            for (RuntimeClientPlugin plugin : integration.getClientPlugins()) {
+            for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
                 if (plugin.matchesService(context.model(), service)
                         && plugin.getAuthScheme().isPresent()
                         && plugin.getAuthScheme().get().getApplicationProtocol().isHttpProtocol()) {
@@ -289,7 +289,7 @@ public final class ConfigGenerator implements Runnable {
     }
 
     private void generateConfig(GenerationContext context, PythonWriter writer) {
-        var symbol = CodegenUtils.getConfigSymbol(context.settings());
+        var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
 
         // Initialize the list of config properties with our base properties. Here a new
         // list is constructed because that base list is immutable.
@@ -312,7 +312,7 @@ public final class ConfigGenerator implements Runnable {
 
         // Add any relevant config properties from plugins.
         for (PythonIntegration integration : context.integrations()) {
-            for (RuntimeClientPlugin plugin : integration.getClientPlugins()) {
+            for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
                 if (plugin.matchesService(model, service)) {
                     properties.addAll(plugin.getConfigProperties());
                 }
@@ -340,7 +340,7 @@ public final class ConfigGenerator implements Runnable {
                         \"""
                         ${C|}
                 """,
-                symbol.getName(),
+                configSymbol.getName(),
                 context.settings().service().getName(),
                 writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
                 writer.consumer(w -> writeInitParams(w, finalProperties)),
