@@ -448,7 +448,7 @@ final class ClientGenerator implements Runnable {
             context.endpointsGenerator().renderEndpointParameterConstruction(context, writer);
 
             writer.write("""
-                            logger.debug("Calling endpoint resolver with parameters: %s", endpoint_resolver_parameters)
+                            logger.debug("Calling endpoint resolver with parameters: %s", endpoint_parameters)
                             endpoint = await config.endpoint_resolver.resolve_endpoint(endpoint_parameters)
                             logger.debug("Endpoint resolver result: %s", endpoint)
                             if not endpoint.uri.path:

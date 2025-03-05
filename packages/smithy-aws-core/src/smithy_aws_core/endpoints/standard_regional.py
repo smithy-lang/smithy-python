@@ -29,8 +29,6 @@ class StandardRegionalEndpointsResolver(EndpointResolver[RegionalEndpointParamet
             if not isinstance(params.sdk_endpoint, str):
                 return Endpoint(uri=params.sdk_endpoint)
 
-            # Does crt have implementations of these parsing methods? Using the standard
-            # library is probably fine.
             parsed = urlparse(params.sdk_endpoint)
 
             # This will end up getting wrapped in the client.
