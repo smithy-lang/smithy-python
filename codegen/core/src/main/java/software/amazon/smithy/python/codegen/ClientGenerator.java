@@ -153,6 +153,7 @@ final class ClientGenerator implements Runnable {
                     error: Exception,
                     context: InterceptorContext[Input, Output, $1T, $2T | None]
                 ) -> RetryErrorInfo:
+                    logger.debug("Classifying error: %s", error)
                 """, transportRequest, transportResponse);
         writer.indent();
 
@@ -229,7 +230,7 @@ final class ClientGenerator implements Runnable {
                     event_response_deserializer: DeserializeableShape | None = None,
                     ${/hasEventStream}
                 ) -> Output:
-                    logger.debug(f"Making request for operation {operation_name} with parameters: {input}")
+                    logger.debug('Making request for operation "%s" with parameters: %s', operation_name, input)
                     context: InterceptorContext[Input, None, None, None] = InterceptorContext(
                         request=input,
                         response=None,
@@ -276,9 +277,11 @@ final class ClientGenerator implements Runnable {
                         context_with_transport_request = cast(
                             InterceptorContext[Input, None, $2T, None], context
                         )
+                        logger.debug("Serializing request for: %s", context_with_transport_request.request)
                         context_with_transport_request._transport_request = await serialize(
                             context_with_transport_request.request, config
                         )
+                        logger.debug("Serialization complete. Transport request: %s", context_with_transport_request._transport_request)
 
                         # Step 5: Invoke read_after_serialization
                         for interceptor in interceptors:
@@ -326,6 +329,11 @@ final class ClientGenerator implements Runnable {
                                     )
                                 except SmithyRetryException:
                                     raise context_with_response.response
+                                logger.debug(
+                                    "Retry needed. Attempting request #%s in %.4f seconds.",
+                                    retry_token.retry_count + 1,
+                                    retry_token.retry_delay
+                                )
                                 await sleep(retry_token.retry_delay)
                                 current_body =  context_with_transport_request.transport_request.body
                                 if (seek := getattr(current_body, "seek", None)) is not None:
@@ -336,7 +344,7 @@ final class ClientGenerator implements Runnable {
                                 break
                     except Exception as e:
                         if context.response is not None:
-                            logger.exception(f"Exception occurred while handling: {context.response}")
+                            logger.exception("Exception occurred while handling: %s", context.response)
                             pass
                         context._response = e
 
@@ -443,10 +451,12 @@ final class ClientGenerator implements Runnable {
                                 raise $1T(
                                     "No endpoint_uri found on the operation config."
                                 )
-
+                            endpoint_resolver_parameters = StaticEndpointParams(uri=config.endpoint_uri)
+                            logger.debug("Calling endpoint resolver with parameters: %s", endpoint_resolver_parameters)
                             endpoint = await config.endpoint_resolver.resolve_endpoint(
-                                StaticEndpointParams(uri=config.endpoint_uri)
+                                endpoint_resolver_parameters
                             )
+                            logger.debug("Endpoint resolver result: %s", endpoint)
                             if not endpoint.uri.path:
                                 path = ""
                             elif endpoint.uri.path.endswith("/"):
@@ -484,11 +494,17 @@ final class ClientGenerator implements Runnable {
             writer.write("""
                             # Step 7i: sign the request
                             if auth_option and signer:
+                                logger.debug("HTTP request to sign: %s", context.transport_request)
+                                logger.debug(
+                                    "Signer properties: %s",
+                                    auth_option.signer_properties
+                                )
                                 context._transport_request = await signer.sign(
                                     http_request=context.transport_request,
                                     identity=identity,
                                     signing_properties=auth_option.signer_properties,
                                 )
+                                logger.debug("Signed HTTP request: %s", context._transport_request)
                     """);
         }
         writer.popState();
@@ -518,10 +534,13 @@ final class ClientGenerator implements Runnable {
                             context_with_response = cast(
                                 InterceptorContext[Input, None, $1T, $2T], context
                             )
+                            logger.debug("HTTP request config: %s", request_config)
+                            logger.debug("Sending HTTP request: %s", context_with_response.transport_request)
                             context_with_response._transport_response = await config.http_client.send(
                                 request=context_with_response.transport_request,
                                 request_config=request_config,
                             )
+                            logger.debug("Received HTTP response: %s", context_with_response.transport_response)
 
                     """, transportRequest, transportResponse);
         }
@@ -547,16 +566,18 @@ final class ClientGenerator implements Runnable {
                             InterceptorContext[Input, Output, $1T, $2T],
                             context_with_response,
                         )
+                        logger.debug("Deserializing transport response: %s", context_with_output._transport_response)
                         context_with_output._response = await deserialize(
                             context_with_output._transport_response, config
                         )
+                        logger.debug("Deserialization complete. Response: %s", context_with_output._response)
 
                         # Step 7r: Invoke read_after_deserialization
                         for interceptor in interceptors:
                             interceptor.read_after_deserialization(context_with_output)
                     except Exception as e:
                         if context.response is not None:
-                            logger.exception(f"Exception occurred while handling: {context.response}")
+                            logger.exception("Exception occurred while handling: %s", context.response)
                             pass
                         context._response = e
 
@@ -582,7 +603,7 @@ final class ClientGenerator implements Runnable {
                             )
                     except Exception as e:
                         if context.response is not None:
-                            logger.exception(f"Exception occurred while handling: {context.response}")
+                            logger.exception("Exception occurred while handling: %s", context.response)
                             pass
                         context._response = e
 
@@ -592,7 +613,7 @@ final class ClientGenerator implements Runnable {
                             interceptor.read_after_attempt(context)
                         except Exception as e:
                             if context.response is not None:
-                                logger.exception(f"Exception occurred while handling: {context.response}")
+                                logger.exception("Exception occurred while handling: %s", context.response)
                                 pass
                             context._response = e
 
@@ -613,11 +634,11 @@ final class ClientGenerator implements Runnable {
                             pass
                         except Exception as e:
                             # log and ignore exceptions
-                            logger.exception(f"Exception occurred while dispatching trace events: {e}")
+                            logger.exception("Exception occurred while dispatching trace events: %s", e)
                             pass
                     except Exception as e:
                         if context.response is not None:
-                            logger.exception(f"Exception occurred while handling: {context.response}")
+                            logger.exception("Exception occurred while handling: %s", context.response)
                             pass
                         context._response = e
 
@@ -627,7 +648,7 @@ final class ClientGenerator implements Runnable {
                             interceptor.read_after_execution(context)
                         except Exception as e:
                             if context.response is not None:
-                                logger.exception(f"Exception occurred while handling: {context.response}")
+                                logger.exception("Exception occurred while handling: %s", context.response)
                                 pass
                             context._response = e
 
