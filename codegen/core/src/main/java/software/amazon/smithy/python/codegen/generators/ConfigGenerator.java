@@ -324,7 +324,7 @@ public final class ConfigGenerator implements Runnable {
         writer.addStdlibImport("dataclasses", "dataclass");
         writer.write("""
                 @dataclass(init=False)
-                class $T:
+                class $L:
                     \"""Configuration for $L.\"""
 
                     ${C|}
@@ -340,7 +340,7 @@ public final class ConfigGenerator implements Runnable {
                         \"""
                         ${C|}
                 """,
-                configSymbol,
+                configSymbol.getName(),
                 context.settings().service().getName(),
                 writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
                 writer.consumer(w -> writeInitParams(w, finalProperties)),

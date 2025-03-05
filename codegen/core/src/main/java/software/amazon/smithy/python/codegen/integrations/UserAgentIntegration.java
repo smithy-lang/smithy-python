@@ -19,20 +19,18 @@ public class UserAgentIntegration implements PythonIntegration {
     @Override
     public List<RuntimeClientPlugin> getClientPlugins(GenerationContext context) {
         if (context.applicationProtocol().isHttpProtocol()) {
-            return List.of(
-                    RuntimeClientPlugin.builder()
-                            .pythonPlugin(
-                                    SymbolReference.builder()
-                                            .symbol(Symbol.builder()
-                                                    .namespace(
-                                                            SmithyPythonDependency.SMITHY_HTTP.packageName()
-                                                                    + ".plugins",
-                                                            ".")
-                                                    .name("user_agent_plugin")
-                                                    .addDependency(SmithyPythonDependency.SMITHY_HTTP)
-                                                    .build())
-                                            .build())
-                            .build());
+            var userAgentPlugin = SymbolReference
+                    .builder()
+                    .symbol(
+                            Symbol.builder()
+                                    .namespace(
+                                            SmithyPythonDependency.SMITHY_HTTP.packageName() + ".plugins",
+                                            ".")
+                                    .name("user_agent_plugin")
+                                    .addDependency(SmithyPythonDependency.SMITHY_HTTP)
+                                    .build())
+                    .build();
+            return List.of(RuntimeClientPlugin.builder().pythonPlugin(userAgentPlugin).build());
         } else {
             return List.of();
         }
