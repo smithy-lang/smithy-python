@@ -3,7 +3,7 @@
 from dataclasses import dataclass
 from typing import Protocol
 
-from smithy_aws_core.identity import AWSCredentialIdentity
+from smithy_aws_core.identity import AWSCredentialsIdentity
 from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyIdentityException
 from smithy_core.interfaces.identity import IdentityProperties
@@ -13,25 +13,26 @@ from aws_sdk_signers import SigV4SigningProperties, SigV4Signer
 
 class SigV4Config(Protocol):
     aws_credentials_identity_resolver: (
-        IdentityResolver[AWSCredentialIdentity, IdentityProperties] | None
+        IdentityResolver[AWSCredentialsIdentity, IdentityProperties] | None
     )
 
 
 @dataclass(init=False)
 class SigV4AuthScheme(
     HTTPAuthScheme[
-        AWSCredentialIdentity, SigV4Config, IdentityProperties, SigV4SigningProperties
+        AWSCredentialsIdentity, SigV4Config, IdentityProperties, SigV4SigningProperties
     ]
 ):
     """SigV4 AuthScheme."""
 
     scheme_id: str
-    signer: HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties]
+    signer: HTTPSigner[AWSCredentialsIdentity, SigV4SigningProperties]
 
     def __init__(
         self,
         *,
-        signer: HTTPSigner[AWSCredentialIdentity, SigV4SigningProperties] | None = None,
+        signer: HTTPSigner[AWSCredentialsIdentity, SigV4SigningProperties]
+        | None = None,
     ) -> None:
         """Constructor.
 
@@ -44,7 +45,7 @@ class SigV4AuthScheme(
 
     def identity_resolver(
         self, *, config: SigV4Config
-    ) -> IdentityResolver[AWSCredentialIdentity, IdentityProperties]:
+    ) -> IdentityResolver[AWSCredentialsIdentity, IdentityProperties]:
         if not config.aws_credentials_identity_resolver:
             raise SmithyIdentityException(
                 "Attempted to use SigV4 auth, but aws_credentials_identity_resolver was not "

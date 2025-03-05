@@ -45,7 +45,7 @@ public class AwsAuthIntegration implements PythonIntegration {
                                 .name("aws_credentials_identity_resolver")
                                 .documentation("Resolves AWS Credentials. Required for operations that use Sigv4 Auth.")
                                 .type(Symbol.builder()
-                                        .name("IdentityResolver[AWSCredentialIdentity, IdentityProperties]")
+                                        .name("IdentityResolver[AWSCredentialsIdentity, IdentityProperties]")
                                         .addReference(Symbol.builder()
                                                 .addDependency(SmithyPythonDependency.SMITHY_CORE)
                                                 .name("IdentityResolver")
@@ -53,7 +53,7 @@ public class AwsAuthIntegration implements PythonIntegration {
                                                 .build())
                                         .addReference(Symbol.builder()
                                                 .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
-                                                .name("AWSCredentialIdentity")
+                                                .name("AWSCredentialsIdentity")
                                                 .namespace("smithy_aws_core.identity", ".")
                                                 .build())
                                         .addReference(Symbol.builder()
@@ -154,7 +154,7 @@ public class AwsAuthIntegration implements PythonIntegration {
         public Symbol getAuthSchemeSymbol(GenerationContext context) {
             return Symbol.builder()
                     .name("SigV4AuthScheme")
-                    .namespace("smithy_aws_core.auth.sigv4", ".")
+                    .namespace("smithy_aws_core.auth", ".")
                     .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                     .build();
         }
