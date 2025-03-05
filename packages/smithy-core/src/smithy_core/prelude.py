@@ -4,7 +4,8 @@
 
 from .schemas import Schema
 from .shapes import ShapeID, ShapeType
-from .traits import Trait
+from .traits import DefaultTrait, UnitTypeTrait
+
 
 BLOB = Schema(
     id=ShapeID("smithy.api#Blob"),
@@ -71,54 +72,50 @@ DOCUMENT = Schema(
     shape_type=ShapeType.DOCUMENT,
 )
 
-
-_DEFAULT = ShapeID("smithy.api#default")
-
-
 PRIMITIVE_BOOLEAN = Schema(
     id=ShapeID("smithy.api#PrimitiveBoolean"),
     shape_type=ShapeType.BOOLEAN,
-    traits=[Trait(id=_DEFAULT, value=False)],
+    traits=[DefaultTrait(False)],
 )
 
 PRIMITIVE_BYTE = Schema(
     id=ShapeID("smithy.api#PrimitiveByte"),
     shape_type=ShapeType.BYTE,
-    traits=[Trait(id=_DEFAULT, value=0)],
+    traits=[DefaultTrait(0)],
 )
 
 PRIMITIVE_SHORT = Schema(
     id=ShapeID("smithy.api#PrimitiveShort"),
     shape_type=ShapeType.SHORT,
-    traits=[Trait(id=_DEFAULT, value=0)],
+    traits=[DefaultTrait(0)],
 )
 
 PRIMITIVE_INTEGER = Schema(
     id=ShapeID("smithy.api#PrimitiveInteger"),
     shape_type=ShapeType.INTEGER,
-    traits=[Trait(id=_DEFAULT, value=0)],
+    traits=[DefaultTrait(0)],
 )
 
 PRIMITIVE_LONG = Schema(
     id=ShapeID("smithy.api#PrimitiveLong"),
     shape_type=ShapeType.LONG,
-    traits=[Trait(id=_DEFAULT, value=0)],
+    traits=[DefaultTrait(0)],
 )
 
 PRIMITIVE_FLOAT = Schema(
     id=ShapeID("smithy.api#PrimitiveFloat"),
     shape_type=ShapeType.FLOAT,
-    traits=[Trait(id=_DEFAULT, value=0.0)],
+    traits=[DefaultTrait(0)],
 )
 
 PRIMITIVE_DOUBLE = Schema(
     id=ShapeID("smithy.api#PrimitiveDouble"),
     shape_type=ShapeType.DOUBLE,
-    traits=[Trait(id=_DEFAULT, value=0.0)],
+    traits=[DefaultTrait(0)],
 )
 
 UNIT = Schema(
     id=ShapeID("smithy.api#Unit"),
-    shape_type=ShapeType.DOUBLE,
-    traits=[Trait(id=ShapeID("smithy.api#UnitTypeTrait"))],
+    shape_type=ShapeType.STRUCTURE,
+    traits=[UnitTypeTrait()],
 )

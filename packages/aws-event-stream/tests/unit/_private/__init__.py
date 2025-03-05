@@ -19,15 +19,21 @@ from smithy_core.prelude import (
 from smithy_core.schemas import Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import Trait
+from smithy_core.traits import (
+    EventHeaderTrait,
+    EventPayloadTrait,
+    ErrorTrait,
+    RequiredTrait,
+    StreamingTrait,
+)
 
 from aws_event_stream.events import Byte, EventMessage, Long, Short
 
-EVENT_HEADER_TRAIT = Trait(id=ShapeID("smithy.api#eventHeader"))
-EVENT_PAYLOAD_TRAIT = Trait(id=ShapeID("smithy.api#eventPayload"))
-ERROR_TRAIT = Trait(id=ShapeID("smithy.api#error"), value="client")
-REQUIRED_TRAIT = Trait(id=ShapeID("smithy.api#required"))
-STREAMING_TRAIT = Trait(id=ShapeID("smith.api#streaming"))
+EVENT_HEADER_TRAIT = EventHeaderTrait()
+EVENT_PAYLOAD_TRAIT = EventPayloadTrait()
+ERROR_TRAIT = ErrorTrait("client")
+REQUIRED_TRAIT = RequiredTrait()
+STREAMING_TRAIT = StreamingTrait()
 
 
 SCHEMA_MESSAGE_EVENT = Schema.collection(

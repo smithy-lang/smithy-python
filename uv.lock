@@ -95,7 +95,7 @@ wheels = [
 
 [[package]]
 name = "aws-event-stream"
-version = "0.1.0"
+version = "0.0.1"
 source = { editable = "packages/aws-event-stream" }
 dependencies = [
     { name = "smithy-core" },
@@ -110,6 +110,7 @@ requires-dist = [
 
 [[package]]
 name = "aws-sdk-signers"
+version = "0.0.2"
 source = { editable = "packages/aws-sdk-signers" }
 
 [package.optional-dependencies]
@@ -649,7 +650,7 @@ wheels = [
 
 [[package]]
 name = "smithy-aws-core"
-version = "0.1.0"
+version = "0.0.1"
 source = { editable = "packages/smithy-aws-core" }
 dependencies = [
     { name = "smithy-core" },
@@ -660,7 +661,7 @@ requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
 
 [[package]]
 name = "smithy-core"
-version = "0.1.0"
+version = "0.0.1"
 source = { editable = "packages/smithy-core" }
 
 [package.dev-dependencies]
@@ -675,7 +676,7 @@ dev = [{ name = "freezegun", specifier = ">=1.5.1" }]
 
 [[package]]
 name = "smithy-event-stream"
-version = "0.1.0"
+version = "0.0.1"
 source = { editable = "packages/smithy-event-stream" }
 dependencies = [
     { name = "smithy-core" },
@@ -686,7 +687,7 @@ requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
 
 [[package]]
 name = "smithy-http"
-version = "0.1.0"
+version = "0.0.1"
 source = { editable = "packages/smithy-http" }
 dependencies = [
     { name = "smithy-core" },
@@ -710,7 +711,7 @@ provides-extras = ["awscrt", "aiohttp"]
 
 [[package]]
 name = "smithy-json"
-version = "0.1.0"
+version = "0.0.1"
 source = { editable = "packages/smithy-json" }
 dependencies = [
     { name = "ijson" },

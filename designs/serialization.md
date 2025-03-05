@@ -80,10 +80,17 @@ implementation and/or additional helper methods.
 class Schema:
     id: ShapeID
     shape_type: ShapeType
-    traits: dict[ShapeID, "Trait"] = field(default_factory=dict)
+    traits: dict[ShapeID, "Trait | DynamicTrait"] = field(default_factory=dict)
     members: dict[str, "Schema"] = field(default_factory=dict)
     member_target: "Schema | None" = None
     member_index: int | None = None
+
+    @overload
+    def get_trait[T: "Trait"](self, t: type[T]) -> T | None: ...
+    @overload
+    def get_trait(self, t: ShapeID) -> "Trait | DynamicTrait | None": ...
+    def get_trait(self, t: "type[Trait] | ShapeID") -> "Trait | DynamicTrait | None":\
+        return self.traits.get(t if isinstance(t, ShapeID) else t.id)
 
     @classmethod
     def collection(
@@ -91,16 +98,10 @@ class Schema:
         *,
         id: ShapeID,
         shape_type: ShapeType = ShapeType.STRUCTURE,
-        traits: list["Trait"] | None = None,
+        traits: list["Trait | DynamicTrait"] | None = None,
         members: Mapping[str, "MemberSchema"] | None = None,
     ) -> Self:
         ...
-
-
-@dataclass(kw_only=True, frozen=True)
-class Trait:
-    id: "ShapeID"
-    value: "DocumentValue" = field(default_factory=dict)
 ```
 
 Below is an example Smithy `structure` shape, followed by the `Schema` it would
@@ -122,12 +123,111 @@ EXAMPLE_STRUCTURE_SCHEMA = Schema.collection(
             "target": INTEGER,
             "index": 0,
             "traits": [
-                Trait(id=ShapeID("smithy.api#default"), value=0),
+                DefaultTrait(0),
             ],
         },
     },
 )
 ```
+
+### Traits
+
+Traits are model components that can be attached to shapes to describe
+additional information about the shape; shapes provide the structure and layout
+of an API, while traits provide refinement and style. Smithy provides a number
+of built-in traits, plus a number of additional traits that may be found in
+first-party dependencies. In addition to those first-party traits, traits may be
+defined externally.
+
+In Python, there are two kinds of traits. The first is the `DynamicTrait`. This
+represents traits that have no known associated Python class. Traits not defined
+by Smithy itself may be unknown, for example, but still need representation.
+
+The other kind of trait inherits from the `Trait` class. This represents known
+traits, such as those defined by Smithy itself or those defined externally but
+made available in Python. Since these are concrete classes, they may be more
+comfortable to use, providing better typed accessors to data or even relevant
+utility functions.
+
+Both kinds of traits implement an inherent `Protocol` - they both have the `id`
+and `document_value` properties with identical type signatures. This allows them
+to be used interchangeably for those that don't care about the concrete types.
+It also allows concrete types to be introduced later without a breaking change.
+
+
+```python
+@dataclass(kw_only=True, frozen=True, slots=True)
+class DynamicTrait:
+    id: ShapeID
+    document_value: DocumentValue = None
+
+
+@dataclass(init=False, frozen=True)
+class Trait:
+
+    _REGISTRY: ClassVar[dict[ShapeID, type["Trait"]]] = {}
+
+    id: ClassVar[ShapeID]
+
+    document_value: DocumentValue = None
+
+    def __init_subclass__(cls, id: ShapeID) -> None:
+        cls.id = id
+        Trait._REGISTRY[id] = cls
+
+    def __init__(self, value: DocumentValue | DynamicTrait = None):
+        if type(self) is Trait:
+            raise TypeError(
+                "Only subclasses of Trait may be directly instantiated. "
+                "Use DynamicTrait for traits without a concrete class."
+            )
+
+        if isinstance(value, DynamicTrait):
+            if value.id != self.id:
+                raise ValueError(
+                    f"Attempted to instantiate an instance of {type(self)} from an "
+                    f"invalid ID. Expected {self.id} but found {value.id}."
+                )
+            # Note that setattr is needed because it's a frozen (read-only) dataclass
+            object.__setattr__(self, "document_value", value.document_value)
+        else:
+            object.__setattr__(self, "document_value", value)
+
+    # Dynamically creates a subclass instance based on the trait id
+    @staticmethod
+    def new(id: ShapeID, value: "DocumentValue" = None) -> "Trait | DynamicTrait":
+        if (cls := Trait._REGISTRY.get(id, None)) is not None:
+            return cls(value)
+        return DynamicTrait(id=id, document_value=value)
+```
+
+The `Trait` class implements a dynamic registry that allows it to know about
+trait implementations automatically. The base class maintains a mapping of trait
+ID to the trait class. Since implementations must all share the same constructor
+signature, it can then use that registry to dynamically construct concrete types
+it knows about in the `new` factory method with a fallback to `DynamicTrait`.
+
+The `new` factory method will be used to construct traits when `Schema`s are
+generated, so any generated schemas will be able to take advantage of the
+registry.
+
+Below is an example of a `Trait` implementation.
+
+```python
+@dataclass(init=False, frozen=True)
+class TimestampFormatTrait(Trait, id=ShapeID("smithy.api#timestampFormat")):
+    format: TimestampFormat
+
+    def __init__(self, value: "DocumentValue | DynamicTrait" = None):
+        super().__init__(value)
+        assert isinstance(self.document_value, str)
+        object.__setattr__(self, "format", TimestampFormat(self.document_value))
+```
+
+Data in traits is intended to be immutable, so both `DynamicTrait` and `Trait`
+are dataclasses with `frozen=True`, and all implementations of `Trait` must also
+use that argument. This can be worked around during `__init__` using
+`object.__setattr__` to set any additional properties the `Trait` defines.
 
 ## Shape Serializers and Serializeable Shapes
 

@@ -27,7 +27,8 @@ from smithy_core.prelude import (
 from smithy_core.schemas import Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import Trait
+
+from smithy_core.traits import SparseTrait
 
 
 @pytest.mark.parametrize(
@@ -515,7 +516,6 @@ def test_is_none():
     assert not Document("foo").is_none()
 
 
-SPARSE_TRAIT = Trait(id=ShapeID("smithy.api#sparse"))
 STRING_LIST_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringList"),
     shape_type=ShapeType.LIST,
@@ -533,7 +533,7 @@ SPARSE_STRING_LIST_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringList"),
     shape_type=ShapeType.LIST,
     members={"member": {"target": STRING, "index": 0}},
-    traits=[SPARSE_TRAIT],
+    traits=[SparseTrait()],
 )
 SPARSE_STRING_MAP_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringMap"),
@@ -542,7 +542,7 @@ SPARSE_STRING_MAP_SCHEMA = Schema.collection(
         "key": {"target": STRING, "index": 0},
         "value": {"target": STRING, "index": 1},
     },
-    traits=[SPARSE_TRAIT],
+    traits=[SparseTrait()],
 )
 SCHEMA: Schema = Schema.collection(
     id=ShapeID("smithy.example#DocumentSerdeShape"),

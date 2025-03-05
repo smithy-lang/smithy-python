@@ -5,7 +5,6 @@ from base64 import b64decode
 from collections.abc import Mapping
 from datetime import datetime
 from decimal import Decimal
-from typing import cast
 
 from smithy_core.documents import Document, DocumentValue
 from smithy_core.prelude import DOCUMENT
@@ -14,7 +13,7 @@ from smithy_core.shapes import ShapeType
 from smithy_core.types import TimestampFormat
 from smithy_core.utils import expect_type
 
-from .traits import JSON_NAME, TIMESTAMP_FORMAT
+from smithy_core.traits import JSONNameTrait, TimestampFormatTrait
 
 
 class JSONDocument(Document):
@@ -41,9 +40,8 @@ class JSONDocument(Document):
             ShapeType.UNION,
         ):
             for member_name, member_schema in schema.members.items():
-                if json_name := member_schema.traits.get(JSON_NAME):
-                    name = cast(str, json_name.value)
-                    self._json_names[name] = member_name
+                if json_name := member_schema.get_trait(JSONNameTrait):
+                    self._json_names[json_name.value] = member_name
 
     def as_blob(self) -> bytes:
         return b64decode(expect_type(str, self._value))
@@ -56,8 +54,8 @@ class JSONDocument(Document):
     def as_timestamp(self) -> datetime:
         format = self._default_timestamp_format
         if self._use_timestamp_format:
-            if format_trait := self._schema.traits.get(TIMESTAMP_FORMAT):
-                format = TimestampFormat(format_trait.value)
+            if format_trait := self._schema.get_trait(TimestampFormatTrait):
+                format = format_trait.format
 
         match self._value:
             case float() | int() | str():

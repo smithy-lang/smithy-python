@@ -8,6 +8,10 @@ from urllib.parse import urlunparse
 from . import interfaces, rfc3986
 from .exceptions import SmithyException
 
+import importlib.metadata
+
+__version__: str = importlib.metadata.version("smithy-core")
+
 
 class HostType(Enum):
     """Enumeration of possible host types."""

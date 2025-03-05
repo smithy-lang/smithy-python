@@ -8,7 +8,7 @@ from datetime import datetime
 from decimal import Decimal
 from io import BufferedWriter, RawIOBase
 from types import TracebackType
-from typing import Self, cast
+from typing import Self
 
 from smithy_core.documents import Document, DocumentValue
 from smithy_core.interfaces import BytesWriter
@@ -19,9 +19,9 @@ from smithy_core.serializers import (
     ShapeSerializer,
 )
 from smithy_core.types import TimestampFormat
+from smithy_core.traits import TimestampFormatTrait, JSONNameTrait
 
 from . import Flushable
-from .traits import JSON_NAME, TIMESTAMP_FORMAT
 
 _INF: float = float("inf")
 _NEG_INF: float = float("-inf")
@@ -84,8 +84,8 @@ class JSONShapeSerializer(ShapeSerializer):
     def write_timestamp(self, schema: "Schema", value: datetime) -> None:
         format = self._default_timestamp_format
         if self._use_timestamp_format:
-            if format_trait := schema.traits.get(TIMESTAMP_FORMAT):
-                format = TimestampFormat(format_trait.value)
+            if format_trait := schema.get_trait(TimestampFormatTrait):
+                format = format_trait.format
 
         self._stream.write_document_value(format.serialize(value))
 
@@ -132,8 +132,8 @@ class JSONStructSerializer(InterceptingSerializer):
             self._stream.write_more()
 
         member_name = schema.expect_member_name()
-        if self._use_json_name and (json_name := schema.traits.get(JSON_NAME)):
-            member_name = cast(str, json_name.value)
+        if self._use_json_name and (json_name := schema.get_trait(JSONNameTrait)):
+            member_name = json_name.value
 
         self._stream.write_key(member_name)
         return self._parent
