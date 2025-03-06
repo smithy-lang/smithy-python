@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import asyncio
 import datetime
+import logging
 from collections.abc import Callable
 
 from smithy_core.aio.interfaces import AsyncByteStream
@@ -24,6 +25,8 @@ from . import (
     get_payload_member,
 )
 from smithy_core.traits import EventHeaderTrait
+
+logger = logging.getLogger(__name__)
 
 INITIAL_MESSAGE_TYPES = (INITIAL_REQUEST_EVENT_TYPE, INITIAL_RESPONSE_EVENT_TYPE)
 
@@ -56,6 +59,7 @@ class AWSAsyncEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
 
         if event is None:
             return None
+        logger.debug("Received raw event message: %s", event)
 
         deserializer = EventDeserializer(
             event=event,
@@ -63,6 +67,7 @@ class AWSAsyncEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
             is_client_mode=self._is_client_mode,
         )
         result = self._deserializer(deserializer)
+        logger.debug("Deserialized event message: %s", result)
         if isinstance(getattr(result, "value"), Exception):
             raise result.value  # type: ignore
         return result
