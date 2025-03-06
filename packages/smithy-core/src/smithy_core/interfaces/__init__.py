@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-from typing import Protocol, runtime_checkable
+from asyncio import iscoroutinefunction
+from typing import Protocol, runtime_checkable, Any, TypeGuard
 
 
 class URI(Protocol):
@@ -58,6 +59,27 @@ class BytesReader(Protocol):
     def read(self, size: int = -1, /) -> bytes: ...
 
 
+def is_bytes_reader(obj: Any) -> TypeGuard[BytesReader]:
+    """Determines whether the given object conforms to the BytesReader protocol.
+
+    This is necessary to distinguish this from an async reader, since runtime_checkable
+    doesn't make that distinction.
+
+    :param obj: The object to inspect.
+    """
+    return isinstance(obj, BytesReader) and not iscoroutinefunction(
+        getattr(obj, "read")
+    )
+
+
 # A union of all acceptable streaming blob types. Deserialized payloads will
 # always return a ByteStream, or AsyncByteStream if async is enabled.
 type StreamingBlob = BytesReader | bytes | bytearray
+
+
+def is_streaming_blob(obj: Any) -> TypeGuard[StreamingBlob]:
+    """Determines wheter the given object is a StreamingBlob.
+
+    :param obj: The object to inspect.
+    """
+    return isinstance(obj, bytes | bytearray) or is_bytes_reader(obj)
