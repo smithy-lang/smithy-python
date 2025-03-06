@@ -1,6 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from typing import Protocol, TypeVar
+from typing import Protocol, TypeVar, Self
 
 from smithy_core.aio.interfaces import Request, Response
 from smithy_core.aio.utils import read_streaming_blob, read_streaming_blob_async
@@ -12,6 +12,15 @@ from ...interfaces import (
     HTTPRequestConfiguration,
 )
 
+Config = TypeVar("Config", contravariant=True)
+
+
+class EndpointParametersProtocol(Protocol[Config]):
+    @classmethod
+    def build(cls, config: Config) -> Self:
+        raise NotImplementedError()
+
+
 # EndpointParams are defined in the generated client, so we use a TypeVar here.
 # More specific EndpointParams implementations are subtypes of less specific ones. But
 # consumers of less specific EndpointParams implementations are subtypes of consumers
@@ -19,7 +28,7 @@ from ...interfaces import (
 EndpointParams = TypeVar("EndpointParams", contravariant=True)
 
 
-class EndpointResolver(Protocol[EndpointParams]):
+class EndpointResolverProtocol(Protocol[EndpointParams]):
     """Resolves an operation's endpoint based given parameters."""
 
     async def resolve_endpoint(self, params: EndpointParams) -> Endpoint:

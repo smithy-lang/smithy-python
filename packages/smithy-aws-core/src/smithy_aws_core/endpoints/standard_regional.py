@@ -1,26 +1,41 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass
+from typing import Protocol, Self
 from urllib.parse import urlparse
 
 import smithy_core
 from smithy_core import URI
-from smithy_http.aio.interfaces import EndpointResolver
+from smithy_http.aio.interfaces import (
+    EndpointResolverProtocol,
+    EndpointParametersProtocol,
+)
 from smithy_http.endpoints import Endpoint, EndpointResolutionError
 
 
+class _RegionUriConfig(Protocol):
+    endpoint_uri: str | smithy_core.interfaces.URI | None
+    region: str | None
+
+
 @dataclass(kw_only=True)
-class RegionalEndpointParameters:
+class RegionalEndpointParameters(EndpointParametersProtocol[_RegionUriConfig]):
     """Endpoint parameters for services with standard regional endpoints."""
 
     sdk_endpoint: str | smithy_core.interfaces.URI | None
     region: str | None
 
+    @classmethod
+    def build(cls, config: _RegionUriConfig) -> Self:
+        return cls(sdk_endpoint=config.endpoint_uri, region=config.region)
 
-class StandardRegionalEndpointsResolver(EndpointResolver[RegionalEndpointParameters]):
+
+class StandardRegionalEndpointsResolver(
+    EndpointResolverProtocol[RegionalEndpointParameters]
+):
     """Resolves endpoints for services with standard regional endpoints."""
 
-    def __init__(self, endpoint_prefix: str):
+    def __init__(self, endpoint_prefix: str = "bedrock-runtime"):
         self._endpoint_prefix = endpoint_prefix
 
     async def resolve_endpoint(self, params: RegionalEndpointParameters) -> Endpoint:
