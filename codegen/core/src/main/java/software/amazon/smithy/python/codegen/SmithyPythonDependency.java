@@ -40,6 +40,24 @@ public final class SmithyPythonDependency {
             false);
 
     /**
+     * The awscrt package.
+     */
+    public static final PythonDependency AWS_CRT = new PythonDependency(
+            "awscrt",
+            ">=0.23.10",
+            Type.DEPENDENCY,
+            false);
+
+    /**
+     * The aiohttp package.
+     */
+    public static final PythonDependency AIO_HTTP = new PythonDependency(
+            "aiohttp",
+            "~=3",
+            Type.DEPENDENCY,
+            false);
+
+    /**
      * The core smithy-json python package.
      */
     public static final PythonDependency SMITHY_JSON = new PythonDependency(

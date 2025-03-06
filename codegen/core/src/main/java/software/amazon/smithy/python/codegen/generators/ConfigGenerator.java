@@ -138,7 +138,8 @@ public final class ConfigGenerator implements Runnable {
         if (usesHttp2(context)) {
             clientBuilder
                     .initialize(writer -> {
-                        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("awscrt"));
+                        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+                        writer.addDependency(SmithyPythonDependency.AWS_CRT);
                         writer.addImport("smithy_http.aio.crt", "AWSCRTHTTPClient");
                         writer.write("self.http_client = http_client or AWSCRTHTTPClient()");
                     });
@@ -146,7 +147,8 @@ public final class ConfigGenerator implements Runnable {
         } else {
             clientBuilder
                     .initialize(writer -> {
-                        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("aiohttp"));
+                        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+                        writer.addDependency(SmithyPythonDependency.AIO_HTTP);
                         writer.addImport("smithy_http.aio.aiohttp", "AIOHTTPClient");
                         writer.write("self.http_client = http_client or AIOHTTPClient()");
                     });
@@ -171,11 +173,12 @@ public final class ConfigGenerator implements Runnable {
             return true;
         }
 
-        // Bidirectional streaming REQUIRES h2 inherently
+        // enable CRT/http2 client if the service supports any event streams (single or bi-directional)
+        // TODO: Long term, only bi-directional evenstreams strictly require h2
         var eventIndex = EventStreamIndex.of(context.model());
         var topDownIndex = TopDownIndex.of(context.model());
         for (OperationShape operation : topDownIndex.getContainedOperations(context.settings().service())) {
-            if (eventIndex.getInputInfo(operation).isPresent() && eventIndex.getOutputInfo(operation).isPresent()) {
+            if (eventIndex.getInputInfo(operation).isPresent() || eventIndex.getOutputInfo(operation).isPresent()) {
                 return true;
             }
         }
