@@ -38,7 +38,7 @@ import software.amazon.smithy.python.codegen.generators.UnionGenerator;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.writer.PythonDelegator;
 
-public class DirectedPythonTypeCodegen
+final class DirectedPythonTypeCodegen
         implements DirectedCodegen<GenerationContext, PythonSettings, PythonIntegration> {
     @Override
     public SymbolProvider createSymbolProvider(CreateSymbolProviderDirective<PythonSettings> directive) {
