@@ -54,7 +54,7 @@ public final class PythonTypeCodegenPlugin implements SmithyBuildPlugin {
 
         var model = context.getModel();
         if (typeSettings.service().isEmpty()) {
-            model = addSyntheticService(model, typeSettings.selector().select(model));
+            model = addSyntheticService(model, typeSettings.selector().select(model), typeSettings);
         }
 
         runner.settings(pythonSettings);
@@ -67,7 +67,7 @@ public final class PythonTypeCodegenPlugin implements SmithyBuildPlugin {
         runner.run();
     }
 
-    private Model addSyntheticService(Model model, Collection<Shape> shapes) {
+    private Model addSyntheticService(Model model, Collection<Shape> shapes, PythonTypeCodegenSettings settings) {
         StructureShape.Builder inputBuilder = StructureShape.builder()
                 .id(SYNTHETIC_INPUT_ID)
                 .addTrait(new InputTrait());
@@ -76,13 +76,19 @@ public final class PythonTypeCodegenPlugin implements SmithyBuildPlugin {
                 .id(SYNTHETIC_OPERATION_ID)
                 .input(SYNTHETIC_INPUT_ID);
 
+        ServiceShape.Builder serviceBuilder = ServiceShape.builder()
+                .id(SYNTHETIC_SERVICE_ID);
+
         var index = 0;
         for (Shape shape : shapes) {
             if (!GENERATED_TYPES.contains(shape.getType())
-                    || shape.hasTrait(InputTrait.class)
-                    || shape.hasTrait(OutputTrait.class)
                     || shape.hasTrait(MixinTrait.class)
                     || Prelude.isPreludeShape(shape)) {
+                continue;
+            }
+
+            if (!settings.generateInputsAndOutputs()
+                    && (shape.hasTrait(InputTrait.class) || shape.hasTrait(OutputTrait.class))) {
                 continue;
             }
 
@@ -94,11 +100,7 @@ public final class PythonTypeCodegenPlugin implements SmithyBuildPlugin {
             }
         }
 
-        ServiceShape service = ServiceShape.builder()
-                .id(SYNTHETIC_SERVICE_ID)
-                .addOperation(SYNTHETIC_OPERATION_ID)
-                .build();
-
+        var service = serviceBuilder.addOperation(SYNTHETIC_OPERATION_ID).build();
         ModelTransformer transformer = ModelTransformer.create();
         return transformer.replaceShapes(model, Set.of(inputBuilder.build(), operationBuilder.build(), service));
     }

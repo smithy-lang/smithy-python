@@ -40,7 +40,6 @@ import software.amazon.smithy.python.codegen.generators.ServiceErrorGenerator;
 import software.amazon.smithy.python.codegen.generators.StructureGenerator;
 import software.amazon.smithy.python.codegen.generators.UnionGenerator;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
-import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
 import software.amazon.smithy.python.codegen.writer.PythonDelegator;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 

@@ -187,199 +187,200 @@ final class ClientGenerator implements Runnable {
                 """);
         writer.dedent();
 
-        writer.write("""
-                async def _execute_operation(
-                    self,
-                    input: Input,
-                    plugins: list[$1T],
-                    serialize: Callable[[Input, $5T], Awaitable[$2T]],
-                    deserialize: Callable[[$3T, $5T], Awaitable[Output]],
-                    config: $5T,
-                    operation_name: str,
-                    ${?hasEventStream}
-                    has_input_stream: bool = False,
-                    event_deserializer: Callable[[ShapeDeserializer], Any] | None = None,
-                    event_response_deserializer: DeserializeableShape | None = None,
-                    ${/hasEventStream}
-                ) -> Output:
-                    try:
-                        return await self._handle_execution(
-                            input, plugins, serialize, deserialize, config, operation_name,
+        writer.write(
+                """
+                        async def _execute_operation(
+                            self,
+                            input: Input,
+                            plugins: list[$1T],
+                            serialize: Callable[[Input, $5T], Awaitable[$2T]],
+                            deserialize: Callable[[$3T, $5T], Awaitable[Output]],
+                            config: $5T,
+                            operation_name: str,
                             ${?hasEventStream}
-                            has_input_stream, event_deserializer, event_response_deserializer,
+                            has_input_stream: bool = False,
+                            event_deserializer: Callable[[ShapeDeserializer], Any] | None = None,
+                            event_response_deserializer: DeserializeableShape | None = None,
                             ${/hasEventStream}
-                        )
-                    except Exception as e:
-                        # Make sure every exception that we throw is an instance of $4T so
-                        # customers can reliably catch everything we throw.
-                        if not isinstance(e, $4T):
-                            raise $4T(e) from e
-                        raise e
-
-                async def _handle_execution(
-                    self,
-                    input: Input,
-                    plugins: list[$1T],
-                    serialize: Callable[[Input, $5T], Awaitable[$2T]],
-                    deserialize: Callable[[$3T, $5T], Awaitable[Output]],
-                    config: $5T,
-                    operation_name: str,
-                    ${?hasEventStream}
-                    has_input_stream: bool = False,
-                    event_deserializer: Callable[[ShapeDeserializer], Any] | None = None,
-                    event_response_deserializer: DeserializeableShape | None = None,
-                    ${/hasEventStream}
-                ) -> Output:
-                    logger.debug('Making request for operation "%s" with parameters: %s', operation_name, input)
-                    context: InterceptorContext[Input, None, None, None] = InterceptorContext(
-                        request=input,
-                        response=None,
-                        transport_request=None,
-                        transport_response=None,
-                    )
-                    _client_interceptors = config.interceptors
-                    client_interceptors = cast(
-                        list[Interceptor[Input, Output, $2T, $3T]], _client_interceptors
-                    )
-                    interceptors = client_interceptors
-
-                    try:
-                        # Step 1a: Invoke read_before_execution on client-level interceptors
-                        for interceptor in client_interceptors:
-                            interceptor.read_before_execution(context)
-
-                        # Step 1b: Run operation-level plugins
-                        config = deepcopy(config)
-                        for plugin in plugins:
-                            plugin(config)
-
-                        _client_interceptors = config.interceptors
-                        interceptors = cast(
-                            list[Interceptor[Input, Output, $2T, $3T]],
-                            _client_interceptors,
-                        )
-
-                        # Step 1c: Invoke the read_before_execution hooks on newly added
-                        # interceptors.
-                        for interceptor in interceptors:
-                            if interceptor not in client_interceptors:
-                                interceptor.read_before_execution(context)
-
-                        # Step 2: Invoke the modify_before_serialization hooks
-                        for interceptor in interceptors:
-                            context._request = interceptor.modify_before_serialization(context)
-
-                        # Step 3: Invoke the read_before_serialization hooks
-                        for interceptor in interceptors:
-                            interceptor.read_before_serialization(context)
-
-                        # Step 4: Serialize the request
-                        context_with_transport_request = cast(
-                            InterceptorContext[Input, None, $2T, None], context
-                        )
-                        logger.debug("Serializing request for: %s", context_with_transport_request.request)
-                        context_with_transport_request._transport_request = await serialize(
-                            context_with_transport_request.request, config
-                        )
-                        logger.debug("Serialization complete. Transport request: %s", context_with_transport_request._transport_request)
-
-                        # Step 5: Invoke read_after_serialization
-                        for interceptor in interceptors:
-                            interceptor.read_after_serialization(context_with_transport_request)
-
-                        # Step 6: Invoke modify_before_retry_loop
-                        for interceptor in interceptors:
-                            context_with_transport_request._transport_request = (
-                                interceptor.modify_before_retry_loop(context_with_transport_request)
-                            )
-
-                        # Step 7: Acquire the retry token.
-                        retry_strategy = config.retry_strategy
-                        retry_token = retry_strategy.acquire_initial_retry_token()
-
-                        while True:
-                            # Make an attempt, creating a copy of the context so we don't pass
-                            # around old data.
-                            context_with_response = await self._handle_attempt(
-                                deserialize,
-                                interceptors,
-                                context_with_transport_request.copy(),
-                                config,
-                                operation_name,
-                            )
-
-                            # We perform this type-ignored re-assignment because `context` needs
-                            # to point at the latest context so it can be generically handled
-                            # later on. This is only an issue here because we've created a copy,
-                            # so we're no longer simply pointing at the same object in memory
-                            # with different names and type hints. It is possible to address this
-                            # without having to fall back to the type ignore, but it would impose
-                            # unnecessary runtime costs.
-                            context = context_with_response  # type: ignore
-
-                            if isinstance(context_with_response.response, Exception):
-                                # Step 7u: Reacquire retry token if the attempt failed
-                                try:
-                                    retry_token = retry_strategy.refresh_retry_token_for_retry(
-                                        token_to_renew=retry_token,
-                                        error_info=self._classify_error(
-                                            error=context_with_response.response,
-                                            context=context_with_response,
-                                        )
-                                    )
-                                except SmithyRetryException:
-                                    raise context_with_response.response
-                                logger.debug(
-                                    "Retry needed. Attempting request #%s in %.4f seconds.",
-                                    retry_token.retry_count + 1,
-                                    retry_token.retry_delay
+                        ) -> Output:
+                            try:
+                                return await self._handle_execution(
+                                    input, plugins, serialize, deserialize, config, operation_name,
+                                    ${?hasEventStream}
+                                    has_input_stream, event_deserializer, event_response_deserializer,
+                                    ${/hasEventStream}
                                 )
-                                await sleep(retry_token.retry_delay)
-                                current_body =  context_with_transport_request.transport_request.body
-                                if (seek := getattr(current_body, "seek", None)) is not None:
-                                    await seek(0)
+                            except Exception as e:
+                                # Make sure every exception that we throw is an instance of $4T so
+                                # customers can reliably catch everything we throw.
+                                if not isinstance(e, $4T):
+                                    raise $4T(e) from e
+                                raise e
+
+                        async def _handle_execution(
+                            self,
+                            input: Input,
+                            plugins: list[$1T],
+                            serialize: Callable[[Input, $5T], Awaitable[$2T]],
+                            deserialize: Callable[[$3T, $5T], Awaitable[Output]],
+                            config: $5T,
+                            operation_name: str,
+                            ${?hasEventStream}
+                            has_input_stream: bool = False,
+                            event_deserializer: Callable[[ShapeDeserializer], Any] | None = None,
+                            event_response_deserializer: DeserializeableShape | None = None,
+                            ${/hasEventStream}
+                        ) -> Output:
+                            logger.debug('Making request for operation "%s" with parameters: %s', operation_name, input)
+                            context: InterceptorContext[Input, None, None, None] = InterceptorContext(
+                                request=input,
+                                response=None,
+                                transport_request=None,
+                                transport_response=None,
+                            )
+                            _client_interceptors = config.interceptors
+                            client_interceptors = cast(
+                                list[Interceptor[Input, Output, $2T, $3T]], _client_interceptors
+                            )
+                            interceptors = client_interceptors
+
+                            try:
+                                # Step 1a: Invoke read_before_execution on client-level interceptors
+                                for interceptor in client_interceptors:
+                                    interceptor.read_before_execution(context)
+
+                                # Step 1b: Run operation-level plugins
+                                config = deepcopy(config)
+                                for plugin in plugins:
+                                    plugin(config)
+
+                                _client_interceptors = config.interceptors
+                                interceptors = cast(
+                                    list[Interceptor[Input, Output, $2T, $3T]],
+                                    _client_interceptors,
+                                )
+
+                                # Step 1c: Invoke the read_before_execution hooks on newly added
+                                # interceptors.
+                                for interceptor in interceptors:
+                                    if interceptor not in client_interceptors:
+                                        interceptor.read_before_execution(context)
+
+                                # Step 2: Invoke the modify_before_serialization hooks
+                                for interceptor in interceptors:
+                                    context._request = interceptor.modify_before_serialization(context)
+
+                                # Step 3: Invoke the read_before_serialization hooks
+                                for interceptor in interceptors:
+                                    interceptor.read_before_serialization(context)
+
+                                # Step 4: Serialize the request
+                                context_with_transport_request = cast(
+                                    InterceptorContext[Input, None, $2T, None], context
+                                )
+                                logger.debug("Serializing request for: %s", context_with_transport_request.request)
+                                context_with_transport_request._transport_request = await serialize(
+                                    context_with_transport_request.request, config
+                                )
+                                logger.debug("Serialization complete. Transport request: %s", context_with_transport_request._transport_request)
+
+                                # Step 5: Invoke read_after_serialization
+                                for interceptor in interceptors:
+                                    interceptor.read_after_serialization(context_with_transport_request)
+
+                                # Step 6: Invoke modify_before_retry_loop
+                                for interceptor in interceptors:
+                                    context_with_transport_request._transport_request = (
+                                        interceptor.modify_before_retry_loop(context_with_transport_request)
+                                    )
+
+                                # Step 7: Acquire the retry token.
+                                retry_strategy = config.retry_strategy
+                                retry_token = retry_strategy.acquire_initial_retry_token()
+
+                                while True:
+                                    # Make an attempt, creating a copy of the context so we don't pass
+                                    # around old data.
+                                    context_with_response = await self._handle_attempt(
+                                        deserialize,
+                                        interceptors,
+                                        context_with_transport_request.copy(),
+                                        config,
+                                        operation_name,
+                                    )
+
+                                    # We perform this type-ignored re-assignment because `context` needs
+                                    # to point at the latest context so it can be generically handled
+                                    # later on. This is only an issue here because we've created a copy,
+                                    # so we're no longer simply pointing at the same object in memory
+                                    # with different names and type hints. It is possible to address this
+                                    # without having to fall back to the type ignore, but it would impose
+                                    # unnecessary runtime costs.
+                                    context = context_with_response  # type: ignore
+
+                                    if isinstance(context_with_response.response, Exception):
+                                        # Step 7u: Reacquire retry token if the attempt failed
+                                        try:
+                                            retry_token = retry_strategy.refresh_retry_token_for_retry(
+                                                token_to_renew=retry_token,
+                                                error_info=self._classify_error(
+                                                    error=context_with_response.response,
+                                                    context=context_with_response,
+                                                )
+                                            )
+                                        except SmithyRetryException:
+                                            raise context_with_response.response
+                                        logger.debug(
+                                            "Retry needed. Attempting request #%s in %.4f seconds.",
+                                            retry_token.retry_count + 1,
+                                            retry_token.retry_delay
+                                        )
+                                        await sleep(retry_token.retry_delay)
+                                        current_body =  context_with_transport_request.transport_request.body
+                                        if (seek := getattr(current_body, "seek", None)) is not None:
+                                            await seek(0)
+                                    else:
+                                        # Step 8: Invoke record_success
+                                        retry_strategy.record_success(token=retry_token)
+                                        break
+                            except Exception as e:
+                                if context.response is not None:
+                                    logger.exception("Exception occurred while handling: %s", context.response)
+                                    pass
+                                context._response = e
+
+                            # At this point, the context's request will have been definitively set, and
+                            # The response will be set either with the modeled output or an exception. The
+                            # transport_request and transport_response may be set or None.
+                            execution_context = cast(
+                                InterceptorContext[Input, Output, $2T | None, $3T | None], context
+                            )
+                            ${^hasEventStream}
+                            return await self._finalize_execution(interceptors, execution_context)
+                            ${/hasEventStream}
+                            ${?hasEventStream}
+                            operation_output = await self._finalize_execution(interceptors, execution_context)
+                            if has_input_stream or event_deserializer is not None:
+                                ${6C|}
                             else:
-                                # Step 8: Invoke record_success
-                                retry_strategy.record_success(token=retry_token)
-                                break
-                    except Exception as e:
-                        if context.response is not None:
-                            logger.exception("Exception occurred while handling: %s", context.response)
-                            pass
-                        context._response = e
+                                return operation_output
+                            ${/hasEventStream}
 
-                    # At this point, the context's request will have been definitively set, and
-                    # The response will be set either with the modeled output or an exception. The
-                    # transport_request and transport_response may be set or None.
-                    execution_context = cast(
-                        InterceptorContext[Input, Output, $2T | None, $3T | None], context
-                    )
-                    ${^hasEventStream}
-                    return await self._finalize_execution(interceptors, execution_context)
-                    ${/hasEventStream}
-                    ${?hasEventStream}
-                    operation_output = await self._finalize_execution(interceptors, execution_context)
-                    if has_input_stream or event_deserializer is not None:
-                        ${6C|}
-                    else:
-                        return operation_output
-                    ${/hasEventStream}
+                        async def _handle_attempt(
+                            self,
+                            deserialize: Callable[[$3T, $5T], Awaitable[Output]],
+                            interceptors: list[Interceptor[Input, Output, $2T, $3T]],
+                            context: InterceptorContext[Input, None, $2T, None],
+                            config: $5T,
+                            operation_name: str,
+                        ) -> InterceptorContext[Input, Output, $2T, $3T | None]:
+                            try:
+                                # assert config.interceptors is not None
+                                # Step 7a: Invoke read_before_attempt
+                                for interceptor in interceptors:
+                                    interceptor.read_before_attempt(context)
 
-                async def _handle_attempt(
-                    self,
-                    deserialize: Callable[[$3T, $5T], Awaitable[Output]],
-                    interceptors: list[Interceptor[Input, Output, $2T, $3T]],
-                    context: InterceptorContext[Input, None, $2T, None],
-                    config: $5T,
-                    operation_name: str,
-                ) -> InterceptorContext[Input, Output, $2T, $3T | None]:
-                    try:
-                        # assert config.interceptors is not None
-                        # Step 7a: Invoke read_before_attempt
-                        for interceptor in interceptors:
-                            interceptor.read_before_attempt(context)
-
-                """,
+                        """,
                 pluginSymbol,
                 transportRequest,
                 transportResponse,
