@@ -4,23 +4,11 @@
  */
 package software.amazon.smithy.python.codegen.types;
 
-import java.util.Collection;
-import java.util.Set;
+import static software.amazon.smithy.python.codegen.types.CreateSyntheticService.SYNTHETIC_SERVICE_ID;
+
 import software.amazon.smithy.build.PluginContext;
 import software.amazon.smithy.build.SmithyBuildPlugin;
 import software.amazon.smithy.codegen.core.directed.CodegenDirector;
-import software.amazon.smithy.model.Model;
-import software.amazon.smithy.model.loader.Prelude;
-import software.amazon.smithy.model.shapes.OperationShape;
-import software.amazon.smithy.model.shapes.ServiceShape;
-import software.amazon.smithy.model.shapes.Shape;
-import software.amazon.smithy.model.shapes.ShapeId;
-import software.amazon.smithy.model.shapes.ShapeType;
-import software.amazon.smithy.model.shapes.StructureShape;
-import software.amazon.smithy.model.traits.ErrorTrait;
-import software.amazon.smithy.model.traits.InputTrait;
-import software.amazon.smithy.model.traits.MixinTrait;
-import software.amazon.smithy.model.traits.OutputTrait;
 import software.amazon.smithy.model.transform.ModelTransformer;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
@@ -28,15 +16,6 @@ import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 
 public final class PythonTypeCodegenPlugin implements SmithyBuildPlugin {
-    private static final String SYNTHETIC_NAMESPACE = "smithy.synthetic";
-    private static final ShapeId SYNTHETIC_SERVICE_ID = ShapeId.fromParts(SYNTHETIC_NAMESPACE, "TypesGenService");
-    private static final ShapeId SYNTHETIC_OPERATION_ID = ShapeId.fromParts(SYNTHETIC_NAMESPACE, "TypesGenOperation");
-    private static final ShapeId SYNTHETIC_INPUT_ID = ShapeId.fromParts(SYNTHETIC_NAMESPACE, "TypesGenOperationInput");
-    private static final Set<ShapeType> GENERATED_TYPES = Set.of(
-            ShapeType.STRUCTURE,
-            ShapeType.UNION,
-            ShapeType.ENUM,
-            ShapeType.INT_ENUM);
 
     @Override
     public String getName() {
@@ -54,7 +33,9 @@ public final class PythonTypeCodegenPlugin implements SmithyBuildPlugin {
 
         var model = context.getModel();
         if (typeSettings.service().isEmpty()) {
-            model = addSyntheticService(model, typeSettings.selector().select(model), typeSettings);
+            var transformer =
+                    new CreateSyntheticService(typeSettings.selector(), typeSettings.generateInputsAndOutputs());
+            model = transformer.transform(ModelTransformer.create(), model);
         }
 
         runner.settings(pythonSettings);
@@ -65,43 +46,5 @@ public final class PythonTypeCodegenPlugin implements SmithyBuildPlugin {
         runner.integrationClass(PythonIntegration.class);
         runner.performDefaultCodegenTransforms();
         runner.run();
-    }
-
-    private Model addSyntheticService(Model model, Collection<Shape> shapes, PythonTypeCodegenSettings settings) {
-        StructureShape.Builder inputBuilder = StructureShape.builder()
-                .id(SYNTHETIC_INPUT_ID)
-                .addTrait(new InputTrait());
-
-        OperationShape.Builder operationBuilder = OperationShape.builder()
-                .id(SYNTHETIC_OPERATION_ID)
-                .input(SYNTHETIC_INPUT_ID);
-
-        ServiceShape.Builder serviceBuilder = ServiceShape.builder()
-                .id(SYNTHETIC_SERVICE_ID);
-
-        var index = 0;
-        for (Shape shape : shapes) {
-            if (!GENERATED_TYPES.contains(shape.getType())
-                    || shape.hasTrait(MixinTrait.class)
-                    || Prelude.isPreludeShape(shape)) {
-                continue;
-            }
-
-            if (!settings.generateInputsAndOutputs()
-                    && (shape.hasTrait(InputTrait.class) || shape.hasTrait(OutputTrait.class))) {
-                continue;
-            }
-
-            if (shape.hasTrait(ErrorTrait.class)) {
-                operationBuilder.addError(shape.getId());
-            } else {
-                inputBuilder.addMember("member" + index, shape.getId());
-                index++;
-            }
-        }
-
-        var service = serviceBuilder.addOperation(SYNTHETIC_OPERATION_ID).build();
-        ModelTransformer transformer = ModelTransformer.create();
-        return transformer.replaceShapes(model, Set.of(inputBuilder.build(), operationBuilder.build(), service));
     }
 }

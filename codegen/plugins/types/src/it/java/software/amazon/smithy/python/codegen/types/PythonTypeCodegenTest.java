@@ -49,11 +49,6 @@ public class PythonTypeCodegenTest {
                 .fileManifest(FileManifest.create(tempDir))
                 .settings(
                         ObjectNode.builder()
-                                .withMember("selector", """
-                                        :test([id|namespace = 'example.weather'],
-                                              [id|namespace = 'example.weather.nested'],
-                                              [id|namespace = 'example.weather.nested.more'])
-                                        """)
                                 .withMember("module", "types_test")
                                 .withMember("moduleVersion", "0.0.1")
                                 .build())
