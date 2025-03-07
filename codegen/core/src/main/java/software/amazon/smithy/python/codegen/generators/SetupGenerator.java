@@ -9,6 +9,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.SymbolDependency;
 import software.amazon.smithy.codegen.core.WriterDelegator;
 import software.amazon.smithy.model.traits.DocumentationTrait;
@@ -30,15 +36,68 @@ import software.amazon.smithy.utils.StringUtils;
 @SmithyInternalApi
 public final class SetupGenerator {
 
-    private SetupGenerator() {}
+    private SetupGenerator() {
+    }
 
     public static void generateSetup(
             PythonSettings settings,
             GenerationContext context
     ) {
-        var dependencies = SymbolDependency.gatherDependencies(context.writerDelegator().getDependencies().stream());
+        var dependencies = gatherDependencies(context.writerDelegator().getDependencies().stream());
         writePyproject(settings, context.writerDelegator(), dependencies);
         writeReadme(settings, context);
+    }
+
+    /**
+     * Merge all the symbol dependencies.  Also merges optional dependencies.
+     * Modification of : SymbolDependency.gatherDependencies that also considers the OPTIONAL_DEPENDENCIES
+     * property.
+     */
+    @SuppressWarnings("unchecked")
+    private static Map<String, Map<String, SymbolDependency>> gatherDependencies(
+            Stream<SymbolDependency> symbolStream
+    ) {
+        BinaryOperator<SymbolDependency> guardedMergeWithProperties = (a, b) -> {
+            if (!a.getVersion().equals(b.getVersion())) {
+                throw new CodegenException(String.format(
+                        "Found a conflicting `%s` dependency for `%s`: `%s` conflicts with `%s`",
+                        a.getDependencyType(),
+                        a.getPackageName(),
+                        a.getVersion(),
+                        b.getVersion()));
+            }
+            // For our purposes, we need only consider OPTIONAL_DEPENDENCIES property.
+            // The only other property currently used is IS_LINK, and it is consistent across all usages of
+            // a given SymbolDependency.
+            if (!b.getTypedProperties().isEmpty()) {
+                var optional_a = a.getProperty(SymbolProperties.OPTIONAL_DEPENDENCIES).orElse(List.of());
+                var optional_b = b.getProperty(SymbolProperties.OPTIONAL_DEPENDENCIES).orElse(List.of());
+
+                if (optional_b.isEmpty()) {
+                    return a;
+                }
+
+                if (optional_a.isEmpty()) {
+                    return b;
+                }
+
+                var merged = Stream.concat(optional_a.stream(), optional_b.stream())
+                        .distinct()
+                        .toList();
+
+                return a.toBuilder()
+                        .putProperty(SymbolProperties.OPTIONAL_DEPENDENCIES, merged)
+                        .build();
+            } else {
+                return a;
+            }
+        };
+        return symbolStream.sorted()
+                .collect(Collectors.groupingBy(SymbolDependency::getDependencyType,
+                        Collectors.toMap(SymbolDependency::getPackageName,
+                                Function.identity(),
+                                guardedMergeWithProperties,
+                                TreeMap::new)));
     }
 
     /**
@@ -64,7 +123,7 @@ public final class SetupGenerator {
                     [build-system]
                     requires = ["setuptools", "setuptools-scm", "wheel"]
                     build-backend = "setuptools.build_meta"
-
+                    
                     [project]
                     name = $1S
                     version = $2S
@@ -100,7 +159,7 @@ public final class SetupGenerator {
             writer.write("""
                     [tool.setuptools.packages.find]
                     exclude=["tests*"]
-
+                    
                     [tool.pyright]
                     typeCheckingMode = "strict"
                     reportPrivateUsage = false
@@ -108,10 +167,10 @@ public final class SetupGenerator {
                     reportUnusedVariable = false
                     reportUnnecessaryComparison = false
                     reportUnusedClass = false
-
+                    
                     [tool.black]
                     target-version = ["py311"]
-
+                    
                     [tool.pytest.ini_options]
                     python_classes = ["!Test"]
                     asyncio_mode = "auto"
@@ -122,17 +181,17 @@ public final class SetupGenerator {
     }
 
     private static void writeDependencyList(PythonWriter writer, Collection<SymbolDependency> dependencies) {
-        for (var iter = dependencies.iterator(); iter.hasNext();) {
+        for (var iter = dependencies.iterator(); iter.hasNext(); ) {
             writer.pushState();
             var dependency = iter.next();
             writer.putContext("deps", getOptionalDependencies(dependency));
             writer.putContext("isLink", dependency.getProperty(SymbolProperties.IS_LINK).orElse(false));
             writer.putContext("last", !iter.hasNext());
             writer.write("""
-                    "$L\
-                    ${?deps}[${#deps}${value:L}${^key.last}, ${/key.last}${/deps}]${/deps}\
-                    ${?isLink} @ ${/isLink}$L"\
-                    ${^last},${/last}""",
+                            "$L\
+                            ${?deps}[${#deps}${value:L}${^key.last}, ${/key.last}${/deps}]${/deps}\
+                            ${?isLink} @ ${/isLink}$L"\
+                            ${^last},${/last}""",
                     dependency.getPackageName(),
                     dependency.getVersion());
             writer.popState();
@@ -152,7 +211,7 @@ public final class SetupGenerator {
                 })
                 .orElse(Collections.emptyList());
         try {
-            return (List<String>) optionals;
+            return optionals;
         } catch (Exception e) {
             return Collections.emptyList();
         }
@@ -177,7 +236,7 @@ public final class SetupGenerator {
             writer.pushState(new ReadmeSection());
             writer.write("""
                     ## $L Client
-
+                    
                     $L
                     """, title, description);
 
@@ -190,7 +249,7 @@ public final class SetupGenerator {
                 // since the python code docs are RST format.
                 writer.write("""
                         ### Documentation
-
+                        
                         $L
                         """, documentation);
             });
