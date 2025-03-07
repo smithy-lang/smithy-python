@@ -17,3 +17,5 @@ rootProject.name = "smithy-python"
 include(":core")
 include(":protocol-test")
 include(":aws:core")
+include(":plugins")
+include(":plugins:types")

@@ -38,4 +38,17 @@ public interface PythonIntegration extends SmithyIntegration<PythonSettings, Pyt
     default List<RuntimeClientPlugin> getClientPlugins(GenerationContext context) {
         return Collections.emptyList();
     }
+
+    /**
+     * Writes out all extra files required by runtime plugins.
+     */
+    static void generatePluginFiles(GenerationContext context) {
+        for (PythonIntegration integration : context.integrations()) {
+            for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins(context)) {
+                if (runtimeClientPlugin.matchesService(context.model(), context.settings().service(context.model()))) {
+                    runtimeClientPlugin.writeAdditionalFiles(context);
+                }
+            }
+        }
+    }
 }

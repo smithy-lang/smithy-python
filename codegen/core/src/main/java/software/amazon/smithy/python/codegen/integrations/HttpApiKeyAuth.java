@@ -12,6 +12,7 @@ import software.amazon.smithy.python.codegen.ApplicationProtocol;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -101,6 +102,9 @@ public final class HttpApiKeyAuth implements PythonIntegration {
     }
 
     private boolean hasApiKeyAuth(GenerationContext context) {
+        if (context.settings().artifactType() == PythonSettings.ArtifactType.TYPES) {
+            return false;
+        }
         var service = context.settings().service(context.model());
         return service.hasTrait(HttpApiKeyAuthTrait.class);
     }
