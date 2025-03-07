@@ -3,4 +3,4 @@
 # SPDX-License-Identifier: Apache-2.0
 #
 
-software.amazon.smithy.python.codegen.PythonTypeCodegenPlugin
+software.amazon.smithy.python.codegen.types.PythonTypeCodegenPlugin
