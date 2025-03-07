@@ -138,8 +138,7 @@ public final class ConfigGenerator implements Runnable {
         if (usesHttp2(context)) {
             clientBuilder
                     .initialize(writer -> {
-                        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-                        writer.addDependency(SmithyPythonDependency.AWS_CRT);
+                        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("awscrt"));
                         writer.addImport("smithy_http.aio.crt", "AWSCRTHTTPClient");
                         writer.write("self.http_client = http_client or AWSCRTHTTPClient()");
                     });
@@ -147,8 +146,7 @@ public final class ConfigGenerator implements Runnable {
         } else {
             clientBuilder
                     .initialize(writer -> {
-                        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-                        writer.addDependency(SmithyPythonDependency.AIO_HTTP);
+                        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("aiohttp"));
                         writer.addImport("smithy_http.aio.aiohttp", "AIOHTTPClient");
                         writer.write("self.http_client = http_client or AIOHTTPClient()");
                     });

@@ -9,6 +9,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.SymbolDependency;
 import software.amazon.smithy.codegen.core.WriterDelegator;
 import software.amazon.smithy.model.traits.DocumentationTrait;
@@ -36,9 +42,61 @@ public final class SetupGenerator {
             PythonSettings settings,
             GenerationContext context
     ) {
-        var dependencies = SymbolDependency.gatherDependencies(context.writerDelegator().getDependencies().stream());
+        var dependencies = gatherDependencies(context.writerDelegator().getDependencies().stream());
         writePyproject(settings, context.writerDelegator(), dependencies);
         writeReadme(settings, context);
+    }
+
+    /**
+     * Merge all the symbol dependencies.  Also merges optional dependencies.
+     * Modification of : SymbolDependency.gatherDependencies that also considers the OPTIONAL_DEPENDENCIES
+     * property.
+     */
+    @SuppressWarnings("unchecked")
+    private static Map<String, Map<String, SymbolDependency>> gatherDependencies(
+            Stream<SymbolDependency> symbolStream
+    ) {
+        BinaryOperator<SymbolDependency> guardedMergeWithProperties = (a, b) -> {
+            if (!a.getVersion().equals(b.getVersion())) {
+                throw new CodegenException(String.format(
+                        "Found a conflicting `%s` dependency for `%s`: `%s` conflicts with `%s`",
+                        a.getDependencyType(),
+                        a.getPackageName(),
+                        a.getVersion(),
+                        b.getVersion()));
+            }
+            // For our purposes, we need only consider OPTIONAL_DEPENDENCIES property.
+            // The only other property currently used is IS_LINK, and it is consistent across all usages of
+            // a given SymbolDependency.
+            if (!b.getTypedProperties().isEmpty()) {
+                var optional_a = a.getProperty(SymbolProperties.OPTIONAL_DEPENDENCIES).orElse(List.of());
+                var optional_b = b.getProperty(SymbolProperties.OPTIONAL_DEPENDENCIES).orElse(List.of());
+
+                if (optional_b.isEmpty()) {
+                    return a;
+                }
+
+                if (optional_a.isEmpty()) {
+                    return b;
+                }
+
+                var merged = Stream.concat(optional_a.stream(), optional_b.stream())
+                        .distinct()
+                        .toList();
+
+                return a.toBuilder()
+                        .putProperty(SymbolProperties.OPTIONAL_DEPENDENCIES, merged)
+                        .build();
+            } else {
+                return a;
+            }
+        };
+        return symbolStream.sorted()
+                .collect(Collectors.groupingBy(SymbolDependency::getDependencyType,
+                        Collectors.toMap(SymbolDependency::getPackageName,
+                                Function.identity(),
+                                guardedMergeWithProperties,
+                                TreeMap::new)));
     }
 
     /**
@@ -152,7 +210,7 @@ public final class SetupGenerator {
                 })
                 .orElse(Collections.emptyList());
         try {
-            return (List<String>) optionals;
+            return optionals;
         } catch (Exception e) {
             return Collections.emptyList();
         }
