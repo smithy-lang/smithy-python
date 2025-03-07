@@ -121,7 +121,7 @@ class TimestampFormat(Enum):
 class PathPattern:
     """A formattable URI path pattern.
 
-    The pattern may contain formattlable labels, which may be normal labels or greedy
+    The pattern may contain formattable labels, which may be normal labels or greedy
     labels. Normal labels forbid path separators, greedy labels allow them.
     """
 

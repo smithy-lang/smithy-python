@@ -78,7 +78,7 @@ type StreamingBlob = BytesReader | bytes | bytearray
 
 
 def is_streaming_blob(obj: Any) -> TypeGuard[StreamingBlob]:
-    """Determines wheter the given object is a StreamingBlob.
+    """Determines whether the given object is a StreamingBlob.
 
     :param obj: The object to inspect.
     """
