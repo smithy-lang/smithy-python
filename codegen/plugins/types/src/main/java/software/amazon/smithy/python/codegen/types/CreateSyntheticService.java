@@ -6,6 +6,7 @@ package software.amazon.smithy.python.codegen.types;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.logging.Logger;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.loader.Prelude;
 import software.amazon.smithy.model.selector.Selector;
@@ -25,6 +26,7 @@ import software.amazon.smithy.model.traits.TraitDefinition;
 import software.amazon.smithy.model.transform.ModelTransformer;
 
 final class CreateSyntheticService {
+    private static final Logger LOGGER = Logger.getLogger(CreateSyntheticService.class.getName());
     private static final String SYNTHETIC_NAMESPACE = "smithy.synthetic";
     private static final String SYNTHETIC_OPERATION_NAME = "TypesGenOperation";
     static final ShapeId SYNTHETIC_SERVICE_ID = ShapeId.fromParts(SYNTHETIC_NAMESPACE, "TypesGenService");
@@ -33,6 +35,8 @@ final class CreateSyntheticService {
             ShapeType.UNION,
             ShapeType.ENUM,
             ShapeType.INT_ENUM);
+    private static final Set<ShapeId> TRAIT_BLOCKLIST =
+            Set.of(MixinTrait.ID, ProtocolDefinitionTrait.ID, TraitDefinition.ID, PrivateTrait.ID);
 
     private final Selector selector;
     private final boolean includeInputsAndOutputs;
@@ -54,24 +58,36 @@ final class CreateSyntheticService {
             }
 
             var operationId = ShapeId.fromParts(SYNTHETIC_NAMESPACE, SYNTHETIC_OPERATION_NAME + index);
-            var inputId = ShapeId.fromParts(SYNTHETIC_NAMESPACE, operationId.getName() + "Input");
-            var inputBuilder = StructureShape.builder()
-                    .id(inputId)
-                    .addTrait(new InputTrait());
-            var operationBuilder = OperationShape.builder().id(operationId).input(inputId);
-            serviceBuilder.addOperation(operationId);
+            var operationBuilder = OperationShape.builder().id(operationId);
 
             if (shape.hasTrait(ErrorTrait.class)) {
                 operationBuilder.addError(shape.getId());
+            } else if (shape.hasTrait(InputTrait.class)) {
+                operationBuilder.input(shape);
+            } else if (shape.hasTrait(OutputTrait.class)) {
+                operationBuilder.output(shape);
             } else {
-                inputBuilder.addMember("member", shape.getId());
+                var input = StructureShape.builder()
+                        .id(ShapeId.fromParts(SYNTHETIC_NAMESPACE, operationId.getName() + "Input"))
+                        .addTrait(new InputTrait())
+                        .addMember("member", shape.getId())
+                        .build();
                 index++;
+                operationBuilder.input(input);
+                addedShapes.add(input);
             }
-            addedShapes.add(inputBuilder.build());
+
+            serviceBuilder.addOperation(operationId);
             addedShapes.add(operationBuilder.build());
         }
 
         addedShapes.add(serviceBuilder.build());
+
+        // First, remove all existing operations and services. We don't need them, and they'll just get in the way
+        // of adding input and output shapes if we're doing that.
+        model = transformer.removeShapesIf(model, shape -> shape.isOperationShape() || shape.isServiceShape());
+
+        // Then add our new service and operation so that we can generate types.
         model = transformer.replaceShapes(model, addedShapes);
 
         // Ensure validation gets run so we aren't generating anything too crazy
@@ -80,16 +96,26 @@ final class CreateSyntheticService {
     }
 
     private boolean shouldGenerate(Shape shape) {
-        if (!GENERATED_TYPES.contains(shape.getType())
-                || shape.hasTrait(MixinTrait.class)
-                || shape.hasTrait(ProtocolDefinitionTrait.class)
-                || shape.hasTrait(TraitDefinition.class)
-                || shape.hasTrait(PrivateTrait.class)
-                || Prelude.isPreludeShape(shape)) {
+        if (!GENERATED_TYPES.contains(shape.getType()) || Prelude.isPreludeShape(shape)) {
             return false;
         }
 
-        return includeInputsAndOutputs
-                || (!shape.hasTrait(InputTrait.class) && !shape.hasTrait(OutputTrait.class));
+        if (!includeInputsAndOutputs && (shape.hasTrait(InputTrait.class) || shape.hasTrait(OutputTrait.class))) {
+            LOGGER.finest("""
+                    Skipping generating Python type for shape `%s` because it is either an input or output shape. \
+                    To generate this shape anyway, set "generateInputsAndOutputs" to true.""".formatted(shape.getId()));
+            return false;
+        }
+
+        for (var blockedTrait : TRAIT_BLOCKLIST) {
+            if (shape.hasTrait(blockedTrait)) {
+                LOGGER.finest("Skipping generating Python type for shape `%s` because it has trait `%s`".formatted(
+                        shape.getId(),
+                        blockedTrait));
+                return false;
+            }
+        }
+
+        return true;
     }
 }
