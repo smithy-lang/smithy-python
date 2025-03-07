@@ -3,10 +3,11 @@
 #  pyright: reportMissingTypeStubs=false,reportUnknownMemberType=false
 #  flake8: noqa: F811
 import asyncio
+from collections import deque
 from collections.abc import AsyncGenerator, AsyncIterable, Awaitable
 from concurrent.futures import Future
 from copy import deepcopy
-from io import BytesIO
+from io import BytesIO, BufferedIOBase
 from threading import Lock
 from typing import TYPE_CHECKING, Any
 
@@ -16,6 +17,11 @@ if TYPE_CHECKING:
     # TODO: add integ tests that import these without the dependendency installed
     from awscrt import http as crt_http
     from awscrt import io as crt_io
+
+    # Both of these are types that essentially are "castable to bytes/memoryview"
+    # Unfortunately they're not exposed anywhere so we have to import them from
+    # _typeshed.
+    from _typeshed import WriteableBuffer, ReadableBuffer
 
 try:
     from awscrt import http as crt_http
@@ -304,7 +310,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             # If the body is async, or potentially very large, start up a task to read
             # it into the BytesIO object that CRT needs. By using asyncio.create_task
             # we'll start the coroutine without having to explicitly await it.
-            crt_body = BytesIO()
+            crt_body = BufferableByteStream()
             if not isinstance(body, AsyncIterable):
                 # If the body isn't already an async iterable, wrap it in one. Objects
                 # with read methods will be read in chunks so as not to exhaust memory.
@@ -327,15 +333,92 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         return crt_request
 
     async def _consume_body_async(
-        self, source: AsyncIterable[bytes], dest: BytesIO
+        self, source: AsyncIterable[bytes], dest: "BufferableByteStream"
     ) -> None:
         async for chunk in source:
             dest.write(chunk)
-        # Should we call close here? Or will that make the crt unable to read the last
-        # chunk?
+        dest.end_stream()
 
     def __deepcopy__(self, memo: Any) -> "AWSCRTHTTPClient":
         return AWSCRTHTTPClient(
             eventloop=self._eventloop,
             client_config=deepcopy(self._config),
         )
+
+
+# This is adapted from the transcribe streaming sdk
+class BufferableByteStream(BufferedIOBase):
+    """A non-blocking bytes buffer."""
+
+    def __init__(self) -> None:
+        # We're always manipulating the front and back of the buffer, so a deque
+        # will be much more efficient than a list.
+        self._chunks: deque[bytes] = deque()
+        self._closed = False
+        self._done = False
+
+    def read(self, size: int | None = -1) -> bytes:
+        if self._closed:
+            return b""
+
+        if len(self._chunks) == 0:
+            # When the CRT recieves this, it'll try again later.
+            raise BlockingIOError("read")
+
+        # We could compile all the chunks here instead of just returning
+        # the one, BUT the CRT will keep calling read until empty bytes
+        # are returned. So it's actually better to just return one chunk
+        # since combining them would have some potentially bad memory
+        # usage issues.
+        result = self._chunks.popleft()
+        if size is not None and size > 0:
+            remainder = result[size:]
+            result = result[:size]
+            if remainder:
+                self._chunks.appendleft(remainder)
+
+        if self._done and len(self._chunks) == 0:
+            self.close()
+
+        return result
+
+    def read1(self, size: int = -1) -> bytes:
+        return self.read(size)
+
+    def readinto(self, buffer: "WriteableBuffer") -> int:
+        if not isinstance(buffer, memoryview):
+            buffer = memoryview(buffer).cast("B")
+
+        data = self.read(len(buffer))  # type: ignore
+        n = len(data)
+        buffer[:n] = data
+        return n
+
+    def write(self, buffer: "ReadableBuffer") -> int:
+        if not isinstance(buffer, bytes):
+            raise ValueError(
+                f"Unexpected value written to BufferableByteStream. "
+                f"Only bytes are support but {type(buffer)} was provided."
+            )
+
+        if self._closed:
+            raise IOError("Stream is completed and doesn't support further writes.")
+
+        if buffer:
+            self._chunks.append(buffer)
+        return len(buffer)
+
+    @property
+    def closed(self) -> bool:
+        return self._closed
+
+    def close(self) -> None:
+        self._closed = True
+        self._done = True
+
+        # Clear out the remaining chunks so that they don't sit around in memory.
+        self._chunks.clear()
+
+    def end_stream(self) -> None:
+        """End the stream, letting any remaining chunks be read before it is closed."""
+        self._done = True
