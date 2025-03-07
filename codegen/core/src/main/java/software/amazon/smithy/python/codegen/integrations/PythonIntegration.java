@@ -39,7 +39,6 @@ public interface PythonIntegration extends SmithyIntegration<PythonSettings, Pyt
         return Collections.emptyList();
     }
 
-
     /**
      * Writes out all extra files required by runtime plugins.
      */

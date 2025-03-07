@@ -6,6 +6,7 @@ package software.amazon.smithy.python.codegen.types;
 
 import java.util.Arrays;
 import java.util.Optional;
+import software.amazon.smithy.model.node.BooleanNode;
 import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.model.node.StringNode;
 import software.amazon.smithy.model.selector.Selector;
@@ -30,13 +31,15 @@ public record PythonTypeCodegenSettings(
         String moduleName,
         String moduleVersion,
         String moduleDescription,
-        Selector selector) implements ToSmithyBuilder<PythonTypeCodegenSettings> {
+        Selector selector,
+        Boolean generateInputsAndOutputs) implements ToSmithyBuilder<PythonTypeCodegenSettings> {
 
     private static final String SERVICE = "service";
     private static final String MODULE_NAME = "module";
     private static final String MODULE_DESCRIPTION = "moduleDescription";
     private static final String MODULE_VERSION = "moduleVersion";
     private static final String SELECTOR = "selector";
+    private static final String GENERATE_INPUTS_AND_OUTPUTS = "generateInputsAndOutputs";
 
     private PythonTypeCodegenSettings(Builder builder) {
         this(
@@ -44,7 +47,8 @@ public record PythonTypeCodegenSettings(
                 builder.moduleName,
                 builder.moduleVersion,
                 builder.moduleDescription,
-                builder.selector);
+                builder.selector,
+                builder.generateInputsAndOutputs);
     }
 
     @Override
@@ -53,7 +57,8 @@ public record PythonTypeCodegenSettings(
                 .moduleName(moduleName)
                 .moduleVersion(moduleVersion)
                 .moduleDescription(moduleDescription)
-                .selector(selector);
+                .selector(selector)
+                .generateInputsAndOutputs(generateInputsAndOutputs);
         service.ifPresent(builder::service);
         return builder;
     }
@@ -88,6 +93,9 @@ public record PythonTypeCodegenSettings(
         config.getStringMember(SERVICE).map(StringNode::expectShapeId).ifPresent(builder::service);
         config.getStringMember(MODULE_DESCRIPTION).map(StringNode::getValue).ifPresent(builder::moduleDescription);
         config.getStringMember(SELECTOR).map(node -> Selector.parse(node.getValue())).ifPresent(builder::selector);
+        config.getBooleanMember(GENERATE_INPUTS_AND_OUTPUTS)
+                .map(BooleanNode::getValue)
+                .ifPresent(builder::generateInputsAndOutputs);
         return builder.build();
     }
 
@@ -102,6 +110,7 @@ public record PythonTypeCodegenSettings(
         private String moduleVersion;
         private String moduleDescription;
         private Selector selector = Selector.IDENTITY;
+        private Boolean generateInputsAndOutputs = false;
 
         @Override
         public PythonTypeCodegenSettings build() {
@@ -132,6 +141,11 @@ public record PythonTypeCodegenSettings(
 
         public Builder selector(Selector selector) {
             this.selector = selector == null ? Selector.IDENTITY : selector;
+            return this;
+        }
+
+        public Builder generateInputsAndOutputs(boolean generateInputsAndOutputs) {
+            this.generateInputsAndOutputs = generateInputsAndOutputs;
             return this;
         }
     }
