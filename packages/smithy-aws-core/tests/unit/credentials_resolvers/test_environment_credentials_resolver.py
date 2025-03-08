@@ -66,3 +66,4 @@ async def test_all_values(monkeypatch):  # type: ignore
     assert credentials.secret_access_key == "secret"
     assert credentials.session_token == "session"
     assert credentials.account_id == "123456789012"
+

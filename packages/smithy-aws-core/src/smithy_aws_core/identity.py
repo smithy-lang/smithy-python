@@ -12,7 +12,9 @@
 # language governing permissions and limitations under the License.
 from datetime import datetime
 
+from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.identity import Identity
+from smithy_core.interfaces.identity import IdentityProperties
 
 
 class AWSCredentialsIdentity(Identity):
@@ -59,3 +61,5 @@ class AWSCredentialsIdentity(Identity):
     @property
     def account_id(self) -> str | None:
         return self._account_id
+
+AWSCredentialsResolver = IdentityResolver[AWSCredentialsIdentity, IdentityProperties]

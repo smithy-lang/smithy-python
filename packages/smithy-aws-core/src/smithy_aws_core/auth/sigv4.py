@@ -8,7 +8,7 @@ from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyIdentityException
 from smithy_core.interfaces.identity import IdentityProperties
 from smithy_http.aio.interfaces.auth import HTTPAuthScheme, HTTPSigner
-from aws_sdk_signers import SigV4SigningProperties, SigV4Signer
+from aws_sdk_signers import SigV4SigningProperties, AsyncSigV4Signer
 
 
 class SigV4Config(Protocol):
@@ -41,7 +41,7 @@ class SigV4AuthScheme(
         """
         self.scheme_id = "aws.auth#sigv4"
         # TODO: There are type mismatches in the signature of the "sign" method.
-        self.signer = signer or SigV4Signer()  # type: ignore
+        self.signer = signer or AsyncSigV4Signer()  # type: ignore
 
     def identity_resolver(
         self, *, config: SigV4Config
