@@ -199,7 +199,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
     ) {
         writer.pushState(new SerializeFieldsSection(operation));
         writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-        writer.addImports("smithy_http", Set.of("Field", "Fields"));
+        writer.addImport("smithy_http", "Fields");
         writer.write("""
                 headers = Fields(
                     [
@@ -234,9 +234,12 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
         if (optionalContentType.isEmpty() && shouldWriteDefaultBody(context, operation)) {
             optionalContentType = Optional.of(getDocumentContentType());
         }
-        optionalContentType.ifPresent(contentType -> writer.write(
-                "Field(name=\"Content-Type\", values=[$S]),",
-                contentType));
+        if (optionalContentType.isPresent()) {
+            writer.addImport("smithy_http", "Field");
+            writer.write(
+                    "Field(name=\"Content-Type\", values=[$S]),",
+                    optionalContentType.get());
+        }
     }
 
     private void writeContentLength(GenerationContext context, PythonWriter writer, OperationShape operation) {
@@ -249,6 +252,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
             // The requiresLength trait, however, can force a length calculation.
             // see: https://smithy.io/2.0/spec/streaming.html#requireslength-trait
             if (requiresLength(context, operation)) {
+                writer.addImport("smithy_http", "Field");
                 writer.write("Field(name=\"Content-Length\", values=[str(content_length)]),");
             }
             return;
@@ -262,6 +266,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                 .anyMatch(binding -> binding.getLocation() == PAYLOAD || binding.getLocation() == DOCUMENT);
 
         if (hasBodyBindings) {
+            writer.addImport("smithy_http", "Field");
             writer.write("Field(name=\"Content-Length\", values=[str(content_length)]),");
         }
     }
@@ -331,6 +336,7 @@ public abstract class HttpBindingProtocolGenerator implements ProtocolGenerator 
                             headers.extend(tuples_to_fields(($S, $L) for e in input.$L$L))
                             """, binding.getLocationName(), inputValue, pythonName, trailer);
                 } else {
+                    writer.addImport("smithy_http", "Field");
                     var dataSource = "input." + pythonName;
                     var inputValue = target.accept(new HttpMemberSerVisitor(
                             context,
