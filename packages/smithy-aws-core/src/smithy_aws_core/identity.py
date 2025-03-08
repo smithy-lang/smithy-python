@@ -62,4 +62,5 @@ class AWSCredentialsIdentity(Identity):
     def account_id(self) -> str | None:
         return self._account_id
 
+
 AWSCredentialsResolver = IdentityResolver[AWSCredentialsIdentity, IdentityProperties]
