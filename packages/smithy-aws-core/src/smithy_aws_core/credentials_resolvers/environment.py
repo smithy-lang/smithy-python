@@ -3,10 +3,8 @@
 import os
 
 from smithy_aws_core.identity import AWSCredentialsIdentity, AWSCredentialsResolver
-from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyIdentityException
 from smithy_core.interfaces.identity import IdentityProperties
-from smithy_http.aio.crt import AWSCRTHTTPClient
 
 
 class EnvironmentCredentialsResolver(AWSCredentialsResolver):
