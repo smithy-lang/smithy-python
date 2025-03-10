@@ -42,7 +42,7 @@ method.
 Publishers also expose a few Python standard methods. `close` can be used to
 clean up any long-running resources, such as an HTTP connection or open file
 handle. The async context manager magic methods are also supported, and by
-default they just serve to autoatically call `close` on exit. It is important
+default they just serve to automatically call `close` on exit. It is important
 however that implementations of `AsyncEventPublisher` MUST NOT require
 `__aenter__` or any other method to be called prior to `send`. These publishers
 are intended to be immediately useful and so any setup SHOULD take place while
