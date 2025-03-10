@@ -6,9 +6,10 @@ from smithy_aws_core.endpoints.standard_regional import (
 )
 
 from smithy_core import URI
-from smithy_http.endpoints import EndpointResolutionError
 
 import pytest
+
+from smithy_http.exceptions import EndpointResolutionError
 
 
 async def test_resolve_endpoint_with_valid_sdk_endpoint_string():

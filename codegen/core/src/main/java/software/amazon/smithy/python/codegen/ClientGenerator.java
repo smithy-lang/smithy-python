@@ -446,7 +446,7 @@ final class ClientGenerator implements Runnable {
             writer.addImport("smithy_core", "URI");
             writer.write("""
                             # Step 7f: Invoke endpoint_resolver.resolve_endpoint
-                            endpoint_resolver_parameters = $T.build(config=config)
+                            endpoint_resolver_parameters = $1T.build(config=config)
                             logger.debug("Calling endpoint resolver with parameters: %s", endpoint_resolver_parameters)
                             endpoint = await config.endpoint_resolver.resolve_endpoint(
                                 endpoint_resolver_parameters
@@ -469,7 +469,8 @@ final class ClientGenerator implements Runnable {
                             )
                             context._transport_request.fields.extend(endpoint.headers)
 
-                    """, CodegenUtils.getEndpointParametersSymbol(context.settings()));
+                    """,
+                    CodegenUtils.getEndpointParametersSymbol(context.settings()));
         }
         writer.popState();
 

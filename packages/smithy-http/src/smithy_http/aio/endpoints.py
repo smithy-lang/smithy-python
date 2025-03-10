@@ -3,13 +3,14 @@
 from urllib.parse import urlparse
 
 from smithy_core import URI
-from .interfaces import EndpointResolverProtocol
+from .interfaces import EndpointResolver
 
 from .. import interfaces as http_interfaces
-from ..endpoints import Endpoint, StaticEndpointParams, EndpointResolutionError
+from ..endpoints import Endpoint, StaticEndpointParams
+from ..exceptions import EndpointResolutionError
 
 
-class StaticEndpointResolver(EndpointResolverProtocol[StaticEndpointParams]):
+class StaticEndpointResolver(EndpointResolver[StaticEndpointParams]):
     """A basic endpoint resolver that forwards a static URI."""
 
     async def resolve_endpoint(

@@ -7,10 +7,11 @@ from urllib.parse import urlparse
 import smithy_core
 from smithy_core import URI
 from smithy_http.aio.interfaces import (
-    EndpointResolverProtocol,
-    EndpointParametersProtocol,
+    EndpointResolver,
+    EndpointParameters,
 )
-from smithy_http.endpoints import Endpoint, EndpointResolutionError
+from smithy_http.endpoints import Endpoint
+from smithy_http.exceptions import EndpointResolutionError
 
 
 class _RegionUriConfig(Protocol):
@@ -19,7 +20,7 @@ class _RegionUriConfig(Protocol):
 
 
 @dataclass(kw_only=True)
-class RegionalEndpointParameters(EndpointParametersProtocol[_RegionUriConfig]):
+class RegionalEndpointParameters(EndpointParameters[_RegionUriConfig]):
     """Endpoint parameters for services with standard regional endpoints."""
 
     sdk_endpoint: str | smithy_core.interfaces.URI | None
@@ -30,9 +31,7 @@ class RegionalEndpointParameters(EndpointParametersProtocol[_RegionUriConfig]):
         return cls(sdk_endpoint=config.endpoint_uri, region=config.region)
 
 
-class StandardRegionalEndpointsResolver(
-    EndpointResolverProtocol[RegionalEndpointParameters]
-):
+class StandardRegionalEndpointsResolver(EndpointResolver[RegionalEndpointParameters]):
     """Resolves endpoints for services with standard regional endpoints."""
 
     def __init__(self, endpoint_prefix: str = "bedrock-runtime"):

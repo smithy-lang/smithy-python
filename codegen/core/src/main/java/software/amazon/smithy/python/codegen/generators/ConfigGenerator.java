@@ -136,19 +136,15 @@ public final class ConfigGenerator implements Runnable {
         properties.add(ConfigProperty.builder()
                 .name("endpoint_resolver")
                 .type(Symbol.builder()
-                        .name("EndpointResolverProtocol[EndpointParameters]")
+                        .name("_EndpointResolver[EndpointParameters]")
                         .addReference(CodegenUtils.getEndpointParametersSymbol(context.settings()))
-                        .addReference(Symbol.builder()
-                                .name("EndpointResolverProtocol")
-                                .namespace("smithy_http.aio.interfaces", ".")
-                                .addDependency(SmithyPythonDependency.SMITHY_HTTP)
-                                .build())
                         .build())
                 .documentation("""
                         The endpoint resolver used to resolve the final endpoint per-operation based on the \
                         configuration.""")
                 .nullable(false)
                 .initialize(writer -> {
+                    writer.addImport("smithy_http.aio.interfaces", "EndpointResolver", "_EndpointResolver");
                     writer.pushState(new InitDefaultEndpointResolverSection());
                     writer.write("self.endpoint_resolver = endpoint_resolver or $T()", endpointResolver);
                     writer.popState();
