@@ -298,7 +298,7 @@ class AsyncBytesProvider:
             Calls to ``write`` will block until the number of chunks is less than this
             number. Default is 16.
         """
-        self._data = deque()
+        self._data = deque[bytes]()
         if intial_data is not None:
             self._data.append(intial_data)
 
