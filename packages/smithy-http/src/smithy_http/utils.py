@@ -1,5 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+from collections.abc import Sequence
 from urllib.parse import quote as urlquote
 
 from smithy_core.exceptions import SmithyException
@@ -105,7 +106,9 @@ def _consume_until(
     return result, end_index + 1
 
 
-def join_query_params(params: list[tuple[str, str | None]], prefix: str = "") -> str:
+def join_query_params(
+    params: Sequence[tuple[str, str | None]], prefix: str = ""
+) -> str:
     """Join a list of query parameter key-value tuples.
 
     :param params: The list of key-value query parameter tuples.

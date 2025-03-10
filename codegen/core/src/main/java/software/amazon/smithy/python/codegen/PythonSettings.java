@@ -5,6 +5,7 @@
 package software.amazon.smithy.python.codegen;
 
 import java.util.Arrays;
+import java.util.Locale;
 import java.util.Objects;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.model.Model;
@@ -24,13 +25,15 @@ import software.amazon.smithy.utils.ToSmithyBuilder;
  * @param moduleName The name of the module to generate.
  * @param moduleVersion The version of the module to generate.
  * @param moduleDescription The optional module description for the module that will be generated.
+ * @param artifactType The type of artifact being generated (e.g. client/shapes/server)
  */
 @SmithyUnstableApi
 public record PythonSettings(
         ShapeId service,
         String moduleName,
         String moduleVersion,
-        String moduleDescription) implements ToSmithyBuilder<PythonSettings> {
+        String moduleDescription,
+        ArtifactType artifactType) implements ToSmithyBuilder<PythonSettings> {
 
     private static final String SERVICE = "service";
     private static final String MODULE_NAME = "module";
@@ -48,14 +51,15 @@ public record PythonSettings(
         }
     }
 
-    public PythonSettings(Builder builder) {
+    private PythonSettings(Builder builder) {
         this(
                 builder.service,
                 builder.moduleName,
                 builder.moduleVersion,
                 StringUtils.isBlank(builder.moduleDescription)
-                        ? builder.moduleName + " client"
-                        : builder.moduleDescription);
+                        ? builder.moduleName + " " + builder.artifactType.name().toLowerCase(Locale.ENGLISH)
+                        : builder.moduleDescription,
+                builder.artifactType);
     }
 
     /**
@@ -92,13 +96,22 @@ public record PythonSettings(
         return builder.build();
     }
 
+    /**
+     * The type of artifact being generated.
+     */
+    public enum ArtifactType {
+        CLIENT,
+        TYPES;
+    }
+
     @Override
-    public SmithyBuilder<PythonSettings> toBuilder() {
+    public Builder toBuilder() {
         return builder()
                 .service(service)
                 .moduleName(moduleName)
                 .moduleVersion(moduleVersion)
-                .moduleDescription(moduleDescription);
+                .moduleDescription(moduleDescription)
+                .artifactType(artifactType);
     }
 
     public static Builder builder() {
@@ -111,6 +124,7 @@ public record PythonSettings(
         private String moduleName;
         private String moduleVersion;
         private String moduleDescription;
+        private ArtifactType artifactType = ArtifactType.CLIENT;
 
         @Override
         public PythonSettings build() {
@@ -137,6 +151,11 @@ public record PythonSettings(
 
         public Builder moduleDescription(String moduleDescription) {
             this.moduleDescription = moduleDescription;
+            return this;
+        }
+
+        public Builder artifactType(ArtifactType artifactType) {
+            this.artifactType = artifactType;
             return this;
         }
     }
