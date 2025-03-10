@@ -394,7 +394,7 @@ async def test_close_without_flush_deletes_buffered_data() -> None:
     # We weren't able to read data, which is what we want. But here we dig into
     # the internals to be sure that the buffer is clear and no data is haning
     # around.
-    assert provider._data == []  # type: ignore
+    assert len(provider._data) == 0  # type: ignore
 
 
 async def test_only_max_chunks_buffered() -> None:
