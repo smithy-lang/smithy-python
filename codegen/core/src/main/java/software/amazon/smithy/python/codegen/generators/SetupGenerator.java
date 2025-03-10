@@ -36,8 +36,7 @@ import software.amazon.smithy.utils.StringUtils;
 @SmithyInternalApi
 public final class SetupGenerator {
 
-    private SetupGenerator() {
-    }
+    private SetupGenerator() {}
 
     public static void generateSetup(
             PythonSettings settings,
@@ -123,7 +122,7 @@ public final class SetupGenerator {
                     [build-system]
                     requires = ["setuptools", "setuptools-scm", "wheel"]
                     build-backend = "setuptools.build_meta"
-                    
+
                     [project]
                     name = $1S
                     version = $2S
@@ -159,7 +158,7 @@ public final class SetupGenerator {
             writer.write("""
                     [tool.setuptools.packages.find]
                     exclude=["tests*"]
-                    
+
                     [tool.pyright]
                     typeCheckingMode = "strict"
                     reportPrivateUsage = false
@@ -167,10 +166,10 @@ public final class SetupGenerator {
                     reportUnusedVariable = false
                     reportUnnecessaryComparison = false
                     reportUnusedClass = false
-                    
-                    [tool.black]
-                    target-version = ["py311"]
-                    
+
+                    [tool.ruff]
+                    target-version = "py312"
+
                     [tool.pytest.ini_options]
                     python_classes = ["!Test"]
                     asyncio_mode = "auto"
@@ -181,17 +180,17 @@ public final class SetupGenerator {
     }
 
     private static void writeDependencyList(PythonWriter writer, Collection<SymbolDependency> dependencies) {
-        for (var iter = dependencies.iterator(); iter.hasNext(); ) {
+        for (var iter = dependencies.iterator(); iter.hasNext();) {
             writer.pushState();
             var dependency = iter.next();
             writer.putContext("deps", getOptionalDependencies(dependency));
             writer.putContext("isLink", dependency.getProperty(SymbolProperties.IS_LINK).orElse(false));
             writer.putContext("last", !iter.hasNext());
             writer.write("""
-                            "$L\
-                            ${?deps}[${#deps}${value:L}${^key.last}, ${/key.last}${/deps}]${/deps}\
-                            ${?isLink} @ ${/isLink}$L"\
-                            ${^last},${/last}""",
+                    "$L\
+                    ${?deps}[${#deps}${value:L}${^key.last}, ${/key.last}${/deps}]${/deps}\
+                    ${?isLink} @ ${/isLink}$L"\
+                    ${^last},${/last}""",
                     dependency.getPackageName(),
                     dependency.getVersion());
             writer.popState();
@@ -236,7 +235,7 @@ public final class SetupGenerator {
             writer.pushState(new ReadmeSection());
             writer.write("""
                     ## $L Client
-                    
+
                     $L
                     """, title, description);
 
@@ -249,7 +248,7 @@ public final class SetupGenerator {
                 // since the python code docs are RST format.
                 writer.write("""
                         ### Documentation
-                        
+
                         $L
                         """, documentation);
             });
