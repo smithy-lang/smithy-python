@@ -66,8 +66,8 @@ class AIOHTTPClient(HTTPClient):
 
     async def send(
         self,
-        *,
         request: HTTPRequest,
+        *,
         request_config: HTTPRequestConfiguration | None = None,
     ) -> HTTPResponseInterface:
         """Send HTTP request using aiohttp client.

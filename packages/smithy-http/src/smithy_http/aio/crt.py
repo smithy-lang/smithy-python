@@ -197,8 +197,8 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
     async def send(
         self,
-        *,
         request: http_aio_interfaces.HTTPRequest,
+        *,
         request_config: http_aio_interfaces.HTTPRequestConfiguration | None = None,
     ) -> AWSCRTHTTPResponse:
         """Send HTTP request using awscrt client.

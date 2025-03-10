@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 from typing import Protocol, TypeVar
 
-from smithy_core.aio.interfaces import Request, Response
+from smithy_core.aio.interfaces import Request, Response, ClientTransport
 from smithy_core.aio.utils import read_streaming_blob, read_streaming_blob_async
 
 from ...interfaces import (
@@ -75,7 +75,7 @@ class HTTPResponse(Response, Protocol):
         return read_streaming_blob(self.body)
 
 
-class HTTPClient(Protocol):
+class HTTPClient(ClientTransport[HTTPRequest, HTTPResponse], Protocol):
     """An asynchronous HTTP client interface."""
 
     def __init__(self, *, client_config: HTTPClientConfiguration | None) -> None:
@@ -87,8 +87,8 @@ class HTTPClient(Protocol):
 
     async def send(
         self,
-        *,
         request: HTTPRequest,
+        *,
         request_config: HTTPRequestConfiguration | None = None,
     ) -> HTTPResponse:
         """Send HTTP request over the wire and return the response.
