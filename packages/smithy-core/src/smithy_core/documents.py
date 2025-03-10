@@ -94,7 +94,11 @@ class Document:
         else:
             self._value = value
 
-        if self._schema.shape_type is not ShapeType.DOCUMENT:
+        if self._schema.shape_type not in (
+            ShapeType.DOCUMENT,
+            ShapeType.OPERATION,
+            ShapeType.SERVICE,
+        ):
             self._type = self._schema.shape_type
         else:
             # TODO: set an appropriate schema if one was not provided
@@ -310,6 +314,10 @@ class Document:
                 # which is a case we've already handled.
                 raise SmithyException(
                     f"Unexpexcted DOCUMENT shape type for document value: {self.as_value()}"
+                )
+            case _:
+                raise SmithyException(
+                    f"Unexpected {self._type} shape type for document value: {self.as_value()}"
                 )
 
     def serialize_members(self, serializer: ShapeSerializer) -> None:

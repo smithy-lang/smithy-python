@@ -122,6 +122,6 @@ class ShapeType(Enum):
 
     # We won't acutally be using these, probably
     # MEMBER = 20
-    # SERVICE = 21
+    SERVICE = 21
     # RESOURCE = 22
-    # OPERATION = 23
+    OPERATION = 23
