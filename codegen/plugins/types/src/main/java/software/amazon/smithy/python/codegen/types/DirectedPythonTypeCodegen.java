@@ -64,6 +64,9 @@ final class DirectedPythonTypeCodegen
     public void customizeBeforeShapeGeneration(CustomizeDirective<GenerationContext, PythonSettings> directive) {
         new ServiceErrorGenerator(directive.settings(), directive.context().writerDelegator()).run();
         SchemaGenerator.generateAll(directive.context(), directive.connectedShapes().values(), shape -> {
+            if (shape.isOperationShape() || shape.isServiceShape()) {
+                return false;
+            }
             if (shape.isStructureShape()) {
                 return shouldGenerateStructure(directive.settings(), shape);
             }

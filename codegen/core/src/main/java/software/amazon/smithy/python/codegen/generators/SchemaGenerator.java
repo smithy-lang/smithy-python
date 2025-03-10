@@ -83,8 +83,7 @@ public final class SchemaGenerator implements Consumer<Shape> {
         var index = TopologicalIndex.of(context.model());
         Stream.concat(index.getOrderedShapes().stream(), index.getRecursiveShapes().stream())
                 .filter(shapes::contains)
-                .filter(shape -> !shape.isOperationShape() && !shape.isResourceShape()
-                        && !shape.isServiceShape()
+                .filter(shape -> !shape.isResourceShape()
                         && !shape.isMemberShape()
                         && !Prelude.isPreludeShape(shape))
                 .filter(filter::apply)
