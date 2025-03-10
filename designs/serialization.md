@@ -317,6 +317,9 @@ class ShapeSerializer(Protocol):
     def write_document(self, schema: "Schema", value: "Document") -> None:
         ...
 
+    def write_data_stream(self, schema: "Schema", value: StreamingBlob) -> None:
+        raise NotImplementedError()
+
 
 @runtime_checkable
 class MapSerializer(Protocol):
@@ -530,6 +533,9 @@ class ShapeDeserializer(Protocol):
 
     def read_timestamp(self, schema: "Schema") -> datetime.datetime:
         ...
+
+    def read_data_stream(self, schema: "Schema") -> StreamingBlob:
+        raise NotImplementedError()
 
 
 @runtime_checkable
