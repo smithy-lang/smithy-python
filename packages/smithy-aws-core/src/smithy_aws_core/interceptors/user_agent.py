@@ -68,5 +68,5 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
             import awscrt
 
             return [UserAgentComponent("md", "awscrt", awscrt.__version__)]
-        except AttributeError:
+        except (ImportError, AttributeError):
             return []
