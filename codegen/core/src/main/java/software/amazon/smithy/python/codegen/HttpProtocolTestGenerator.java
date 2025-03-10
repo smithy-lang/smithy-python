@@ -627,7 +627,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         self._client_config = client_config
 
                     async def send(
-                        self, *, request: HTTPRequest, request_config: HTTPRequestConfiguration | None = None
+                        self, request: HTTPRequest, *, request_config: HTTPRequestConfiguration | None = None
                     ) -> HTTPResponse:
                         # Raise the exception with the request object to bypass actual request handling
                         raise $1T(request)
@@ -650,7 +650,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         self.body = body
 
                     async def send(
-                        self, *, request: HTTPRequest, request_config: HTTPRequestConfiguration | None = None
+                        self, request: HTTPRequest, *, request_config: HTTPRequestConfiguration | None = None
                     ) -> _HTTPResponse:
                         # Pre-construct the response from the request and return it
                         return _HTTPResponse(

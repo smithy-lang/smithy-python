@@ -27,14 +27,13 @@ type StreamingBlob = SyncStreamingBlob | AsyncByteStream | AsyncIterable[bytes]
 
 
 class Request(Protocol):
-    """Protocol-agnostic representation of a request.
-
-    :param destination: The URI where the request should be sent to.
-    :param body: The request payload as iterable of chunks of bytes.
-    """
+    """Protocol-agnostic representation of a request."""
 
     destination: URI
+    """The URI where the request should be sent to."""
+
     body: StreamingBlob = b""
+    """The request payload."""
 
     async def consume_body_async(self) -> bytes:
         """Iterate over request body and return as bytes."""
@@ -59,4 +58,12 @@ class Response(Protocol):
 
     def consume_body(self) -> bytes:
         """Iterate over request body and return as bytes."""
+        ...
+
+
+class ClientTransport[I: Request, O: Response](Protocol):
+    """Protocol-agnostic representation of a client tranport (e.g. an HTTP client)."""
+
+    async def send(self, request: I) -> O:
+        """Send a request over the transport and receive the response."""
         ...
