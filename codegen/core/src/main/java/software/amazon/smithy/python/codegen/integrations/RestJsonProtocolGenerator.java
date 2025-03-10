@@ -412,7 +412,9 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                             payload_codec=codec,
                             initial_response=operation_output,
                             async_writer=execution_context.transport_request.body,  # type: ignore
-                            async_reader=AsyncBytesReader(execution_context.transport_response.body),  # type: ignore
+                            async_reader=AsyncBytesReader(
+                                execution_context.transport_response.body  # type: ignore
+                            ),
                             deserializer=event_deserializer,  # type: ignore
                         )
                     else:
@@ -425,7 +427,9 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                     return AWSOutputEventStream[Any, Any](
                         payload_codec=codec,
                         initial_response=operation_output,
-                        async_reader=AsyncBytesReader(execution_context.transport_response.body),  # type: ignore
+                        async_reader=AsyncBytesReader(
+                            execution_context.transport_response.body  # type: ignore
+                        ),
                         deserializer=event_deserializer,  # type: ignore
                     )
                 """);

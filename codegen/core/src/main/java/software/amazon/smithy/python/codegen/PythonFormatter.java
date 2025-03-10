@@ -61,28 +61,28 @@ public final class PythonFormatter implements Runnable {
             CodegenUtils.runCommand("python3 " + file, fileManifest.getBaseDir());
         }
         format(fileManifest);
-        check(fileManifest);
+        typeCheck(fileManifest);
     }
 
     private void format(FileManifest fileManifest) {
         try {
-            CodegenUtils.runCommand("python3 -m black -h", fileManifest.getBaseDir());
+            CodegenUtils.runCommand("python3 -m ruff -h", fileManifest.getBaseDir());
         } catch (CodegenException e) {
-            LOGGER.warning("Unable to find the python package black. Skipping formatting.");
+            LOGGER.warning("Unable to find the python package ruff. Skipping formatting.");
             return;
         }
         LOGGER.info("Running code formatter on generated code");
-        CodegenUtils.runCommand("python3 -m black . --exclude \"\"", fileManifest.getBaseDir());
+        CodegenUtils.runCommand("python3 -m ruff format", fileManifest.getBaseDir());
     }
 
-    private void check(FileManifest fileManifest) {
+    private void typeCheck(FileManifest fileManifest) {
         try {
             CodegenUtils.runCommand("python3 -m pyright -h", fileManifest.getBaseDir());
         } catch (CodegenException e) {
             LOGGER.warning("Unable to find the pyright package. Skipping type checking.");
             return;
         }
-        LOGGER.info("Running mypy on generated code");
+        LOGGER.info("Running type checker on generated code");
         CodegenUtils.runCommand("python3 -m pyright .", fileManifest.getBaseDir());
     }
 }
