@@ -1,12 +1,17 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
-from typing import NotRequired, Required, Self, TypedDict, overload, Any
+from typing import NotRequired, Required, Self, TypedDict, overload, Any, TYPE_CHECKING
 
 from .exceptions import ExpectationNotMetException, SmithyException
 from .shapes import ShapeID, ShapeType
-from .traits import Trait, DynamicTrait
+from .traits import Trait, DynamicTrait, IdempotencyTokenTrait, StreamingTrait
+
+
+if TYPE_CHECKING:
+    from .serializers import SerializeableShape
+    from .deserializers import DeserializeableShape
 
 
 @dataclass(kw_only=True, frozen=True, init=False)
@@ -263,3 +268,54 @@ class MemberSchema(TypedDict):
     target: Required[Schema]
     index: Required[int]
     traits: NotRequired[list["Trait | DynamicTrait"]]
+
+
+@dataclass(kw_only=True, frozen=True)
+class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
+    """A modeled Smithy operation."""
+
+    input: type[I]
+    """The input type of the operation."""
+
+    output: type[O]
+    """The output type of the operation."""
+
+    schema: Schema
+    """The schema of the operation."""
+
+    input_schema: Schema
+    """The schema of the operation's input shape."""
+
+    output_schema: Schema
+    """The schema of the operation's output shape."""
+
+    # TODO: Add a type registry for errors
+    error_registry: Any
+    """A TypeRegistry used to create errors."""
+
+    effective_auth_schemes: Sequence[ShapeID]
+    """A list of effective auth schemes for the operation."""
+
+    @property
+    def idempotency_token_member(self) -> Schema | None:
+        """The input schema member that serves as the idempotency token."""
+        for member in self.input_schema.members.values():
+            if member.get_trait(IdempotencyTokenTrait) is not None:
+                return member
+        return None
+
+    @property
+    def input_stream_member(self) -> Schema | None:
+        """The input schema member that contains an event stream or data stream."""
+        for member in self.input_schema.members.values():
+            if member.get_trait(StreamingTrait) is not None:
+                return member
+        return None
+
+    @property
+    def output_stream_member(self) -> Schema | None:
+        """The output schema member that contains an event stream or data stream."""
+        for member in self.output_schema.members.values():
+            if member.get_trait(StreamingTrait) is not None:
+                return member
+        return None

@@ -195,6 +195,12 @@ class JSONNameTrait(Trait, id=ShapeID("smithy.api#jsonName")):
         return self.document_value  # type: ignore
 
 
+@dataclass(init=False, frozen=True)
+class IdempotencyTokenTrait(Trait, id=ShapeID("smithy.api#IdempotencyToken")):
+    def __post_init__(self):
+        assert self.document_value is None
+
+
 # TODO: Get all this moved over to the http package
 @dataclass(init=False, frozen=True)
 class HTTPTrait(Trait, id=ShapeID("smithy.api#http")):

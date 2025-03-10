@@ -1,10 +1,17 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import AsyncIterable
-from typing import Protocol, runtime_checkable
+from typing import Protocol, runtime_checkable, TYPE_CHECKING, Any
 
-from ...interfaces import URI
+from ...interfaces import URI, Endpoint
 from ...interfaces import StreamingBlob as SyncStreamingBlob
+
+
+if TYPE_CHECKING:
+    from ...schemas import APIOperation
+    from ...shapes import ShapeID
+    from ...serializers import SerializeableShape
+    from ...deserializers import DeserializeableShape
 
 
 @runtime_checkable
@@ -66,4 +73,68 @@ class ClientTransport[I: Request, O: Response](Protocol):
 
     async def send(self, request: I) -> O:
         """Send a request over the transport and receive the response."""
+        ...
+
+
+class ClientProtocol[I: Request, O: Response](Protocol):
+    """A protocol used by a client to communicate with a server."""
+
+    @property
+    def id(self) -> "ShapeID":
+        """The ID of the protocol."""
+        ...
+
+    def serialize_request[
+        OperationInput: "SerializeableShape",
+        OperationOutput: "DeserializeableShape",
+    ](
+        self,
+        *,
+        operation: "APIOperation[OperationInput, OperationOutput]",
+        input: OperationInput,
+        endpoint: URI,
+        context: dict[str, Any],
+    ) -> I:
+        """Serialize an operation input into a transport request.
+
+        :param operation: The operation whose request is being serialized.
+        :param input: The input shape to be serialized.
+        :param endpoint: The base endpoint to serialize.
+        :param context: A context bag for the request.
+        """
+        ...
+
+    def set_service_endpoint(
+        self,
+        *,
+        request: I,
+        endpoint: Endpoint,
+    ) -> I:
+        """Update the endpoint of a transport request.
+
+        :param request: The request whose endpoint should be updated.
+        :param endpoint: The endpoint to set on the request.
+        """
+        ...
+
+    async def deserialize_response[
+        OperationInput: "SerializeableShape",
+        OperationOutput: "DeserializeableShape",
+    ](
+        self,
+        *,
+        operation: "APIOperation[OperationInput, OperationOutput]",
+        request: I,
+        response: O,
+        error_registry: Any,  # TODO: add error registry
+        context: dict[str, Any],  # TODO: replace with a typed context bag
+    ) -> OperationOutput:
+        """Deserializes the output from the tranport response or throws an exception.
+
+        :param operation: The operation whose response is being deserialized.
+        :param request: The transport request that was sent for this response.
+        :param response: The response to deserialize.
+        :param error_registry: A TypeRegistry used to deserialize errors.
+        :param context: A context bag for the request.
+        """
         ...
