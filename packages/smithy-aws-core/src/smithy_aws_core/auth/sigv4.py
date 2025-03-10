@@ -25,7 +25,7 @@ class SigV4AuthScheme(
 ):
     """SigV4 AuthScheme."""
 
-    scheme_id: str
+    scheme_id: str = "aws.auth#sigv4"
     signer: HTTPSigner[AWSCredentialsIdentity, SigV4SigningProperties]
 
     def __init__(
@@ -39,7 +39,6 @@ class SigV4AuthScheme(
         :param identity_resolver: The identity resolver to extract the api key identity.
         :param signer: The signer used to sign the request.
         """
-        self.scheme_id = "aws.auth#sigv4"
         # TODO: There are type mismatches in the signature of the "sign" method.
         self.signer = signer or AsyncSigV4Signer()  # type: ignore
 

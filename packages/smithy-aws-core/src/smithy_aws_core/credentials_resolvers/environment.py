@@ -2,12 +2,15 @@
 #  SPDX-License-Identifier: Apache-2.0
 import os
 
-from smithy_aws_core.identity import AWSCredentialsIdentity, AWSCredentialsResolver
+from smithy_aws_core.identity import AWSCredentialsIdentity
+from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyIdentityException
 from smithy_core.interfaces.identity import IdentityProperties
 
 
-class EnvironmentCredentialsResolver(AWSCredentialsResolver):
+class EnvironmentCredentialsResolver(
+    IdentityResolver[AWSCredentialsIdentity, IdentityProperties]
+):
     """Resolves AWS Credentials from system environment variables."""
 
     def __init__(self):

@@ -63,4 +63,6 @@ class AWSCredentialsIdentity(Identity):
         return self._account_id
 
 
-AWSCredentialsResolver = IdentityResolver[AWSCredentialsIdentity, IdentityProperties]
+type AWSCredentialsResolver = IdentityResolver[
+    AWSCredentialsIdentity, IdentityProperties
+]
