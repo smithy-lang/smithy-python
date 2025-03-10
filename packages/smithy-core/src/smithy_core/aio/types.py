@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
 from asyncio import iscoroutinefunction
+from collections import deque
 from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable
 from io import BytesIO
 from typing import Any, Self, cast
@@ -297,10 +298,9 @@ class AsyncBytesProvider:
             Calls to ``write`` will block until the number of chunks is less than this
             number. Default is 16.
         """
+        self._data = deque()
         if intial_data is not None:
-            self._data = [intial_data]
-        else:
-            self._data = []
+            self._data.append(intial_data)
 
         if max_buffered_chunks < 1:
             raise ValueError(
@@ -419,7 +419,7 @@ class AsyncBytesProvider:
 
             # Pop the next chunk of data from the buffer, then notify any waiting
             # coroutines, returning immediately after.
-            result = self._data.pop()
+            result = self._data.popleft()
             self._data_condition.notify()
             return result
 
