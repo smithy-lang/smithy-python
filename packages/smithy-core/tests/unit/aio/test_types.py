@@ -3,6 +3,7 @@
 import asyncio
 from io import BytesIO
 from typing import Self
+from unittest.mock import Mock
 
 import pytest
 
@@ -96,14 +97,18 @@ async def test_read_async_iterator() -> None:
     assert await reader.read() == b"foo"
     assert source.tell() == 3
 
-    source = BytesIO(b"foo,bar,baz\n")
+    source = Mock(wraps=BytesIO(b"foo,bar,baz\n"))
     reader = AsyncBytesReader(_AsyncIteratorWrapper(source, chunk_size=6))
     assert source.tell() == 0
     assert await reader.read(4) == b"foo,"
     assert source.tell() == 6
     assert await reader.read(4) == b"bar,"
     assert source.tell() == 12
+
+    assert source.read.call_count == 2
     assert await reader.read(4) == b"baz\n"
+    # sufficient bytes have been read from source, assert we don't call read again
+    assert source.read.call_count == 2
     assert source.tell() == 12
 
 
