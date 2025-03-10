@@ -7,6 +7,7 @@ package software.amazon.smithy.python.codegen.integrations;
 import java.util.Collections;
 import java.util.List;
 import software.amazon.smithy.codegen.core.SmithyIntegration;
+import software.amazon.smithy.model.Model;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.python.codegen.generators.ProtocolGenerator;
@@ -38,6 +39,11 @@ public interface PythonIntegration extends SmithyIntegration<PythonSettings, Pyt
     default List<RuntimeClientPlugin> getClientPlugins(GenerationContext context) {
         return Collections.emptyList();
     }
+
+    default Model preprocessModel(Model model, PythonSettings settings) {
+        return model;
+    }
+
 
     /**
      * Writes out all extra files required by runtime plugins.

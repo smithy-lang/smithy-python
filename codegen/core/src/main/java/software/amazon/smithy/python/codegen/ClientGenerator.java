@@ -69,10 +69,10 @@ final class ClientGenerator implements Runnable {
                         $L
 
                         :param config: Optional configuration for the client. Here you can set things like the
-                        endpoint for HTTP services or auth credentials.
+                            endpoint for HTTP services or auth credentials.
 
                         :param plugins: A list of callables that modify the configuration dynamically. These
-                        can be used to set defaults, for example.""", docs);
+                            can be used to set defaults, for example.""", docs);
             });
 
             var defaultPlugins = new LinkedHashSet<SymbolReference>();

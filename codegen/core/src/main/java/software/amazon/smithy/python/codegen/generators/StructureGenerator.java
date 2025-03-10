@@ -309,7 +309,7 @@ public final class StructureGenerator implements Runnable {
     private void writeMemberDocs(MemberShape member) {
         member.getMemberTrait(model, DocumentationTrait.class).ifPresent(trait -> {
             String memberName = symbolProvider.toMemberName(member);
-            String docs = writer.formatDocs(String.format(":param %s: %s", memberName, trait.getValue()));
+            String docs = writer.formatDocs(String.format(":param %s: %s", memberName, trait.getValue())).replace("\n", "\n\t");
             writer.write(docs);
         });
     }
