@@ -72,10 +72,11 @@ class AsyncBytesReader:
             self._remainder = b""
             return result
 
-        async for element in iterator:
-            result += element
-            if len(result) >= size:
-                break
+        if len(result) < size:
+            async for element in iterator:
+                result += element
+                if len(result) >= size:
+                    break
 
         self._remainder = result[size:]
         return result[:size]
