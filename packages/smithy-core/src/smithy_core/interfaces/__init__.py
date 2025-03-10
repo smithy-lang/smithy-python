@@ -83,3 +83,19 @@ def is_streaming_blob(obj: Any) -> TypeGuard[StreamingBlob]:
     :param obj: The object to inspect.
     """
     return isinstance(obj, bytes | bytearray) or is_bytes_reader(obj)
+
+
+# TODO: update HTTP package and existing endpoint implementations to use this.
+class Endpoint(Protocol):
+    """A resolved endpoint."""
+
+    uri: URI
+    """The endpoint URI."""
+
+    # TODO: replace this with a typed context bag
+    properties: dict[str, Any]
+    """Properties required to interact with the endpoint.
+
+    For example, in some AWS use cases this might contain HTTP headers to add to each
+    request.
+    """
