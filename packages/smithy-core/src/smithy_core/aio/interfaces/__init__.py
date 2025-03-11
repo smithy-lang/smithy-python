@@ -3,7 +3,7 @@
 from collections.abc import AsyncIterable
 from typing import Protocol, runtime_checkable, TYPE_CHECKING, Any
 
-from ...interfaces import URI, Endpoint
+from ...interfaces import URI, Endpoint, TypedProperties
 from ...interfaces import StreamingBlob as SyncStreamingBlob
 
 
@@ -93,7 +93,7 @@ class ClientProtocol[I: Request, O: Response](Protocol):
         operation: "APIOperation[OperationInput, OperationOutput]",
         input: OperationInput,
         endpoint: URI,
-        context: dict[str, Any],
+        context: TypedProperties,
     ) -> I:
         """Serialize an operation input into a transport request.
 
@@ -127,7 +127,7 @@ class ClientProtocol[I: Request, O: Response](Protocol):
         request: I,
         response: O,
         error_registry: Any,  # TODO: add error registry
-        context: dict[str, Any],  # TODO: replace with a typed context bag
+        context: TypedProperties,
     ) -> OperationOutput:
         """Deserializes the output from the tranport response or throws an exception.
 
