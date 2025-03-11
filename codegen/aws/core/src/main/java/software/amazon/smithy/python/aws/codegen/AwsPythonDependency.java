@@ -12,6 +12,10 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
  */
 @SmithyUnstableApi
 public class AwsPythonDependency {
+
+    private AwsPythonDependency() {
+    }
+
     /**
      * The core aws smithy runtime python package.
      *

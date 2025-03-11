@@ -7,9 +7,11 @@ package software.amazon.smithy.python.codegen.generators;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.TreeSet;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.knowledge.EventStreamIndex;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
@@ -288,9 +290,9 @@ public final class ConfigGenerator implements Runnable {
     private void generateConfig(GenerationContext context, PythonWriter writer) {
         var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
 
-        // Initialize the list of config properties with our base properties. Here a new
-        // list is constructed because that base list is immutable.
-        var properties = new ArrayList<>(BASE_PROPERTIES);
+        // Initialize a set of config properties with our base properties.
+        var properties = new TreeSet<>(Comparator.comparing(ConfigProperty::name));
+        properties.addAll(BASE_PROPERTIES);
 
         // Smithy is transport agnostic, so we don't add http-related properties by default.
         // Nevertheless, HTTP is the most common use case so we standardize those settings
