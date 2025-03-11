@@ -1,7 +1,9 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from copy import copy, deepcopy
-from typing import Any, TypeVar
+from typing import TypeVar
+
+from .types import TypedProperties
 
 Request = TypeVar("Request")
 Response = TypeVar("Response")
@@ -34,7 +36,7 @@ class InterceptorContext[Request, Response, TransportRequest, TransportResponse]
         self._response = response
         self._transport_request = transport_request
         self._transport_response = transport_response
-        self._properties: dict[str, Any] = {}
+        self._properties = TypedProperties()
 
     @property
     def request(self) -> Request:
@@ -73,7 +75,7 @@ class InterceptorContext[Request, Response, TransportRequest, TransportResponse]
         return self._transport_response
 
     @property
-    def properties(self) -> dict[str, Any]:
+    def properties(self) -> TypedProperties:
         """Retrieve the generic property bag.
 
         These untyped properties will be made available to all other interceptors or
