@@ -3,11 +3,19 @@
 
 # pyright: reportPrivateUsage=false
 from datetime import UTC, datetime
+from typing import Any, assert_type
 
 import pytest
 
 from smithy_core.exceptions import ExpectationNotMetException
-from smithy_core.types import JsonBlob, JsonString, TimestampFormat, PathPattern
+from smithy_core.types import (
+    JsonBlob,
+    JsonString,
+    TimestampFormat,
+    PathPattern,
+    PropertyKey,
+    TypedProperties,
+)
 
 
 def test_json_string() -> None:
@@ -219,3 +227,99 @@ def test_path_pattern_disallows_empty_segments(greedy: bool, value: str):
     pattern = PathPattern("/{foo+}/" if greedy else "/{foo}/")
     with pytest.raises(ValueError):
         pattern.format(foo=value)
+
+
+def test_properties_typed_get() -> None:
+    foo_key = PropertyKey(key="foo", value_type=str)
+    properties = TypedProperties()
+    properties[foo_key] = "bar"
+
+    assert assert_type(properties[foo_key], str) == "bar"
+    assert assert_type(properties["foo"], Any) == "bar"
+
+    assert assert_type(properties.get(foo_key), str | None) == "bar"
+    assert assert_type(properties.get(foo_key, "spam"), str) == "bar"
+    assert assert_type(properties.get(foo_key, 1), str | int) == "bar"
+
+    assert assert_type(properties.get("foo"), Any | None) == "bar"
+    assert assert_type(properties.get("foo", "spam"), Any | str) == "bar"
+    assert assert_type(properties.get("foo", 1), Any | int) == "bar"
+
+    baz_key = PropertyKey(key="baz", value_type=str)
+    assert assert_type(properties.get(baz_key), str | None) is None
+    assert assert_type(properties.get(baz_key, "spam"), str) == "spam"
+    assert assert_type(properties.get(baz_key, 1), str | int) == 1
+
+    assert assert_type(properties.get("baz"), Any | None) is None
+    assert assert_type(properties.get("baz", "spam"), Any | str) == "spam"
+    assert assert_type(properties.get("baz", 1), Any | int) == 1
+
+
+def test_properties_typed_set() -> None:
+    foo_key = PropertyKey(key="foo", value_type=str)
+    properties = TypedProperties()
+
+    properties[foo_key] = "foo"
+    assert properties.data["foo"] == "foo"
+
+    with pytest.raises(ValueError):
+        properties[foo_key] = b"foo"  # type: ignore
+
+
+def test_properties_del() -> None:
+    foo_key = PropertyKey(key="foo", value_type=str)
+    properties = TypedProperties()
+    properties[foo_key] = "bar"
+
+    assert "foo" in properties.data
+    del properties[foo_key]
+    assert "foo" not in properties.data
+
+    properties[foo_key] = "bar"
+
+    assert "foo" in properties.data
+    del properties["foo"]
+    assert "foo" not in properties.data
+
+
+def test_properties_contains() -> None:
+    foo_key = PropertyKey(key="foo", value_type=str)
+    bar_key = PropertyKey(key="bar", value_type=str)
+    properties = TypedProperties()
+    properties[foo_key] = "bar"
+
+    assert "foo" in properties
+    assert foo_key in properties
+    assert "bar" not in properties
+    assert bar_key not in properties
+
+
+def test_properties_typed_pop() -> None:
+    foo_key = PropertyKey(key="foo", value_type=str)
+    properties = TypedProperties()
+
+    properties[foo_key] = "bar"
+    assert assert_type(properties.pop(foo_key), str | None) == "bar"
+    assert "foo" not in properties.data
+
+    properties[foo_key] = "bar"
+    assert assert_type(properties.pop(foo_key, "foo"), str) == "bar"
+    assert "foo" not in properties.data
+
+    properties[foo_key] = "bar"
+    assert assert_type(properties.pop(foo_key, 1), str | int) == "bar"
+    assert "foo" not in properties.data
+
+    properties[foo_key] = "bar"
+    assert assert_type(properties.pop("foo"), Any | None) == "bar"
+    assert "foo" not in properties.data
+
+    properties[foo_key] = "bar"
+    assert assert_type(properties.pop("foo", "baz"), Any | str) == "bar"
+    assert "foo" not in properties.data
+
+    properties[foo_key] = "bar"
+    assert assert_type(properties.pop("foo", 1), Any | int) == "bar"
+    assert "foo" not in properties.data
+
+    assert properties.pop(foo_key) is None
