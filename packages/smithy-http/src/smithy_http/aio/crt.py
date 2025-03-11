@@ -292,8 +292,14 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         """Create :py:class:`awscrt.http.HttpRequest` from
         :py:class:`smithy_http.aio.HTTPRequest`"""
         headers_list = []
+        if "Host" not in request.fields:
+            request.fields.set_field(
+                Field(name="Host", values=[request.destination.host])
+            )
+
         for fld in request.fields.entries.values():
-            if fld.kind != FieldPosition.HEADER:
+            # TODO: Use literal values for "header"/"trailer".
+            if fld.kind.value != FieldPosition.HEADER.value:
                 continue
             for val in fld.values:
                 headers_list.append((fld.name, val))
