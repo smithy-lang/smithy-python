@@ -1,7 +1,8 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from typing import Protocol, Self
+from typing import Protocol, Self, Any
 
+from smithy_core.interceptors import Interceptor, InterceptorContext
 from smithy_core.aio.interfaces import Request, Response, ClientTransport
 from smithy_core.aio.utils import read_streaming_blob, read_streaming_blob_async
 
@@ -97,3 +98,16 @@ class HTTPClient(ClientTransport[HTTPRequest, HTTPResponse], Protocol):
         :param request_config: Configuration specific to this request.
         """
         ...
+
+
+# Deliberately not a type alias because those can't be subclassed
+AnyHTTPInterceptor = Interceptor[Any, Any, HTTPRequest, HTTPResponse]
+"""Interceptor alias for interceptors that work with HTTP transport types."""
+
+type HTTPInterceptorContext[Request, Response] = InterceptorContext[
+    Request, Response, HTTPRequest, HTTPResponse
+]
+"""Type alias for interceptor contexts that can contain HTTP transport types."""
+
+type AnyHTTPInterceptorContext = InterceptorContext[Any, Any, HTTPRequest, HTTPResponse]
+"""Type alias for interceptor contexts that can contain HTTP transport types."""

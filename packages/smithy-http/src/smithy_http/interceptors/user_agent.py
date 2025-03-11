@@ -1,31 +1,30 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import platform
-from typing import Self, Any
+from typing import Self
 
 import smithy_core
-from smithy_core.interceptors import Interceptor, InterceptorContext
 from smithy_http import Field
-from smithy_http.aio.interfaces import HTTPRequest
+from smithy_http.aio.interfaces import (
+    HTTPRequest,
+    AnyHTTPInterceptor,
+    AnyHTTPInterceptorContext,
+)
 from smithy_http.user_agent import UserAgent, UserAgentComponent
 
 
-class UserAgentInterceptor(Interceptor[Any, None, HTTPRequest, None]):
+class UserAgentInterceptor(AnyHTTPInterceptor):
     """Adds interceptors that initialize UserAgent in the context and add the user-agent
     header."""
 
-    def read_before_execution(
-        self, context: InterceptorContext[Any, None, None, None]
-    ) -> None:
+    def read_before_execution(self, context: AnyHTTPInterceptorContext) -> None:
         context.properties["user_agent"] = _UserAgentBuilder.from_environment().build()
 
-    def modify_before_signing(
-        self, context: InterceptorContext[Any, None, HTTPRequest, None]
-    ) -> HTTPRequest:
+    def modify_before_signing(self, context: AnyHTTPInterceptorContext) -> HTTPRequest:
         user_agent = context.properties["user_agent"]
-        request = context.transport_request
+        request = context.expect_transport_request()
         request.fields.set_field(Field(name="User-Agent", values=[str(user_agent)]))
-        return context.transport_request
+        return request
 
 
 _USERAGENT_ALLOWED_OS_NAMES = (
