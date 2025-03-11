@@ -1,15 +1,35 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from copy import deepcopy
+from io import BytesIO
 
 import pytest
 
+from smithy_core import URI
+from smithy_http import Fields
+from smithy_http.aio import HTTPRequest
 from smithy_http.aio.crt import AWSCRTHTTPClient, BufferableByteStream
 
 
 def test_deepcopy_client() -> None:
     client = AWSCRTHTTPClient()
     deepcopy(client)
+
+
+async def test_client_marshal_request() -> None:
+    client = AWSCRTHTTPClient()
+    request = HTTPRequest(
+        method="GET",
+        destination=URI(
+            host="example.com", path="/path", query="key1=value1&key2=value2"
+        ),
+        body=BytesIO(),
+        fields=Fields(),
+    )
+    crt_request = await client._marshal_request(request)  # type: ignore
+    assert crt_request.headers.get("host") == "example.com"  # type: ignore
+    assert crt_request.method == "GET"  # type: ignore
+    assert crt_request.path == "/path?key1=value1&key2=value2"  # type: ignore
 
 
 def test_stream_write() -> None:
