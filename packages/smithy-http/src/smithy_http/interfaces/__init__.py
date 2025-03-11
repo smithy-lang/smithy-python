@@ -98,6 +98,10 @@ class Fields(Protocol):
         """Get total number of Field entries."""
         ...
 
+    def __contains__(self, key: str) -> bool:
+        """Allows in/not in checks on Field entries."""
+        ...
+
     def get_by_type(self, kind: FieldPosition) -> list[Field]:
         """Helper function for retrieving specific types of fields.
 
