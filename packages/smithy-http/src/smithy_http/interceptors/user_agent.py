@@ -5,9 +5,12 @@ from typing import Self, Any
 
 import smithy_core
 from smithy_core.interceptors import Interceptor, InterceptorContext
+from smithy_core.types import PropertyKey
 from smithy_http import Field
 from smithy_http.aio.interfaces import HTTPRequest
 from smithy_http.user_agent import UserAgent, UserAgentComponent
+
+USER_AGENT = PropertyKey(key="user_agent", value_type=UserAgent)
 
 
 class UserAgentInterceptor(Interceptor[Any, None, HTTPRequest, None]):
@@ -17,12 +20,12 @@ class UserAgentInterceptor(Interceptor[Any, None, HTTPRequest, None]):
     def read_before_execution(
         self, context: InterceptorContext[Any, None, None, None]
     ) -> None:
-        context.properties["user_agent"] = _UserAgentBuilder.from_environment().build()
+        context.properties[USER_AGENT] = _UserAgentBuilder.from_environment().build()
 
     def modify_before_signing(
         self, context: InterceptorContext[Any, None, HTTPRequest, None]
     ) -> HTTPRequest:
-        user_agent = context.properties["user_agent"]
+        user_agent = context.properties[USER_AGENT]
         request = context.transport_request
         request.fields.set_field(Field(name="User-Agent", values=[str(user_agent)]))
         return context.transport_request

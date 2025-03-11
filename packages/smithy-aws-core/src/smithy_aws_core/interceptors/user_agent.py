@@ -6,6 +6,7 @@ from typing import Any
 import smithy_aws_core
 import smithy_core
 from smithy_core.interceptors import Interceptor, InterceptorContext
+from smithy_http.interceptors.user_agent import USER_AGENT
 from smithy_http.user_agent import UserAgentComponent, RawStringUserAgentComponent
 
 _USERAGENT_SDK_NAME = "aws-sdk-python"
@@ -39,8 +40,8 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
     def read_after_serialization(
         self, context: InterceptorContext[Any, Any, Any, Any]
     ) -> None:
-        if "user_agent" in context.properties:
-            user_agent = context.properties["user_agent"]
+        if USER_AGENT in context.properties:
+            user_agent = context.properties[USER_AGENT]
             user_agent.sdk_metadata = self._build_sdk_metadata()
             user_agent.api_metadata.append(
                 UserAgentComponent("api", self._service_id, self._sdk_version)
