@@ -12,10 +12,12 @@
 # language governing permissions and limitations under the License.
 from datetime import datetime
 
+from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.identity import Identity
+from smithy_core.interfaces.identity import IdentityProperties
 
 
-class AWSCredentialIdentity(Identity):
+class AWSCredentialsIdentity(Identity):
     """Container for AWS authentication credentials."""
 
     def __init__(
@@ -25,6 +27,7 @@ class AWSCredentialIdentity(Identity):
         secret_access_key: str,
         session_token: str | None = None,
         expiration: datetime | None = None,
+        account_id: str | None = None,
     ) -> None:
         """Initialize the AWSCredentialIdentity.
 
@@ -35,11 +38,13 @@ class AWSCredentialIdentity(Identity):
             the supplied credentials.
         :param expiration: The expiration time of the identity. If time zone is
             provided, it is updated to UTC. The value must always be in UTC.
+        :param account_id: The AWS account's ID.
         """
         super().__init__(expiration=expiration)
         self._access_key_id: str = access_key_id
         self._secret_access_key: str = secret_access_key
         self._session_token: str | None = session_token
+        self._account_id: str | None = account_id
 
     @property
     def access_key_id(self) -> str:
@@ -52,3 +57,12 @@ class AWSCredentialIdentity(Identity):
     @property
     def session_token(self) -> str | None:
         return self._session_token
+
+    @property
+    def account_id(self) -> str | None:
+        return self._account_id
+
+
+type AWSCredentialsResolver = IdentityResolver[
+    AWSCredentialsIdentity, IdentityProperties
+]

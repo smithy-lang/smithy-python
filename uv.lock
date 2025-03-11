@@ -653,11 +653,17 @@ name = "smithy-aws-core"
 version = "0.0.1"
 source = { editable = "packages/smithy-aws-core" }
 dependencies = [
+    { name = "aws-sdk-signers" },
     { name = "smithy-core" },
+    { name = "smithy-http" },
 ]
 
 [package.metadata]
-requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
+requires-dist = [
+    { name = "aws-sdk-signers", editable = "packages/aws-sdk-signers" },
+    { name = "smithy-core", editable = "packages/smithy-core" },
+    { name = "smithy-http", editable = "packages/smithy-http" },
+]
 
 [[package]]
 name = "smithy-core"

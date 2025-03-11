@@ -417,6 +417,7 @@ final class ClientGenerator implements Runnable {
                             for option in auth_options:
                                 if option.scheme_id in config.http_auth_schemes:
                                     auth_option = option
+                                    break
 
                             signer: HTTPSigner[Any, Any] | None = None
                             identity: Identity | None = None

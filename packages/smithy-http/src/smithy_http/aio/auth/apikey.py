@@ -74,7 +74,7 @@ class ApiKeyAuthScheme(
     ) -> IdentityResolver[ApiKeyIdentity, IdentityProperties]:
         if not config.api_key_identity_resolver:
             raise SmithyIdentityException(
-                "Attempted to use API key auth, but api_key_identity_resolver was not"
+                "Attempted to use API key auth, but api_key_identity_resolver was not "
                 "set on the config."
             )
         return config.api_key_identity_resolver
