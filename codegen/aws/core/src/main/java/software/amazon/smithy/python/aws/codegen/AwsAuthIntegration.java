@@ -10,6 +10,7 @@ import software.amazon.smithy.aws.traits.auth.SigV4Trait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.traits.HttpApiKeyAuthTrait;
+import static software.amazon.smithy.python.aws.codegen.AwsConfiguration.REGION;
 import software.amazon.smithy.python.codegen.ApplicationProtocol;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.ConfigProperty;
@@ -30,13 +31,6 @@ public class AwsAuthIntegration implements PythonIntegration {
 
     @Override
     public List<RuntimeClientPlugin> getClientPlugins(GenerationContext context) {
-        var regionConfig = ConfigProperty.builder()
-                .name("region")
-                .type(Symbol.builder().name("str").build())
-                .documentation(" The AWS region to connect to. The configured region is used to "
-                        + "determine the service endpoint.")
-                .build();
-
         return List.of(
                 RuntimeClientPlugin.builder()
                         .servicePredicate((model, service) -> service.hasTrait(SigV4Trait.class))
@@ -65,7 +59,7 @@ public class AwsAuthIntegration implements PythonIntegration {
                                 // TODO: Initialize with the provider chain?
                                 .nullable(true)
                                 .build())
-                        .addConfigProperty(regionConfig)
+                        .addConfigProperty(REGION)
                         .authScheme(new Sigv4AuthScheme())
                         .build()
         );

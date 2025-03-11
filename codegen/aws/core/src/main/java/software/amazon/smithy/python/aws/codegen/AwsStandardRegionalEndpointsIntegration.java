@@ -7,6 +7,7 @@ package software.amazon.smithy.python.aws.codegen;
 import java.util.List;
 import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.Symbol;
+import static software.amazon.smithy.python.aws.codegen.AwsConfiguration.REGION;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
@@ -23,15 +24,9 @@ public class AwsStandardRegionalEndpointsIntegration implements PythonIntegratio
     @Override
     public List<RuntimeClientPlugin> getClientPlugins(GenerationContext context) {
         if (context.applicationProtocol().isHttpProtocol()) {
-            var region = ConfigProperty.builder()
-                    .name("region")
-                    .type(Symbol.builder().name("str").build())
-                    .documentation(" The AWS region to connect to. The configured region is used to "
-                            + "determine the service endpoint.")
-                    .build();
             return List.of(
                     RuntimeClientPlugin.builder()
-                            .addConfigProperty(region)
+                            .addConfigProperty(REGION)
                             .build());
         } else {
             return List.of();
