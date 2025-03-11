@@ -313,3 +313,9 @@ class EndpointTrait(Trait, id=ShapeID("smithy.api#endpoint")):
 class HostLabelTrait(Trait, id=ShapeID("smithy.api#hostLabel")):
     def __post_init__(self):
         assert self.document_value is None
+
+
+@dataclass(init=False, frozen=True)
+class RestJson1Trait(Trait, id=ShapeID("aws.protocols#restJson1")):
+    def __post_init__(self):
+        assert self.document_value is None

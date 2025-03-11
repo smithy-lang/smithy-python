@@ -26,6 +26,21 @@ resource City {
 resource Forecast {
     identifiers: { cityId: CityId }
     read: GetForecast,
+    update: PutForecast
+}
+
+@http(method: "PUT", uri: "/city/{cityId}/forecast", code: 200)
+@idempotent
+operation PutForecast {
+    input := for Forecast {
+        @required
+        @httpLabel
+        $cityId
+
+        chanceOfRain: Float
+    }
+
+    output := {}
 }
 
 // "pattern" is a trait.
@@ -154,3 +169,5 @@ structure GetForecastInput {
 structure GetForecastOutput {
     chanceOfRain: Float
 }
+
+

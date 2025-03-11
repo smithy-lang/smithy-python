@@ -143,6 +143,12 @@ class Document:
         """The Smithy data model type for the underlying contents of the document."""
         return self._type
 
+    @property
+    def discriminator(self) -> ShapeID:
+        """The shape ID that corresponds to the contents of the document."""
+        # TODO: custom exception?
+        raise NotImplementedError(f"{self} document has no discriminator.")
+
     def is_none(self) -> bool:
         """Indicates whether the document contains a null value."""
         return self._value is None and self._raw_value is None
