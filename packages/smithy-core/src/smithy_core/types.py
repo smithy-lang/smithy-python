@@ -2,11 +2,13 @@
 #  SPDX-License-Identifier: Apache-2.0
 import json
 import re
+import sys
+from collections import UserDict
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from email.utils import format_datetime, parsedate_to_datetime
 from enum import Enum
-from typing import Any
+from typing import Any, overload
 from dataclasses import dataclass
 
 from .exceptions import ExpectationNotMetException
@@ -17,6 +19,8 @@ from .utils import (
     serialize_epoch_seconds,
     serialize_rfc3339,
 )
+from .interfaces import PropertyKey as _PropertyKey
+from .interfaces import TypedProperties as _TypedProperties
 
 _GREEDY_LABEL_RE = re.compile(r"\{(\w+)\+\}")
 
@@ -153,3 +157,99 @@ class PathPattern:
                 f'Path must not contain empty segments, but was "{result}".'
             )
         return result
+
+
+@dataclass(kw_only=True, frozen=True, slots=True, init=False)
+class PropertyKey[T](_PropertyKey[T]):
+    """A typed property key."""
+
+    key: str
+    """The string key used to access the value."""
+
+    value_type: type[T]
+    """The type of the associated value in the property bag."""
+
+    def __init__(self, *, key: str, value_type: type[T]) -> None:
+        # Intern the key to speed up dict access
+        object.__setattr__(self, "key", sys.intern(key))
+        object.__setattr__(self, "value_type", value_type)
+
+
+class TypedProperties(UserDict[str, Any], _TypedProperties):
+    """A map with typed setters and getters.
+
+    Keys can be either a string or a :py:class:`smithy_core.interfaces.PropertyKey`.
+    Using a PropertyKey instead of a string enables type checkers to narrow to the
+    associated value type rather than having to use Any.
+
+    Letting the value be either a string or PropertyKey allows consumers who care about
+    typing to get it, and those who don't care about typing to not have to think about
+    it.
+
+    ..code-block:: python
+
+        foo = PropertyKey(key="foo", value_type=str)
+        properties = TypedProperties()
+        properties[foo] = "bar"
+
+        assert assert_type(properties[foo], str) == "bar
+        assert assert_type(properties["foo"], Any) == "bar
+    """
+
+    @overload
+    def __getitem__[T](self, key: _PropertyKey[T]) -> T: ...
+    @overload
+    def __getitem__(self, key: str) -> Any: ...
+    def __getitem__(self, key: str | _PropertyKey[Any]) -> Any:
+        return self.data[key if isinstance(key, str) else key.key]
+
+    @overload
+    def __setitem__[T](self, key: _PropertyKey[T], value: T) -> None: ...
+    @overload
+    def __setitem__(self, key: str, value: Any) -> None: ...
+    def __setitem__(self, key: str | _PropertyKey[Any], value: Any) -> None:
+        if isinstance(key, _PropertyKey):
+            if not isinstance(value, key.value_type):
+                raise ValueError(
+                    f"Expected value type of {key.value_type}, but was {type(value)}"
+                )
+            key = key.key
+        self.data[key] = value
+
+    def __delitem__(self, key: str | _PropertyKey[Any]) -> None:
+        del self.data[key if isinstance(key, str) else key.key]
+
+    def __contains__(self, key: object) -> bool:
+        return super().__contains__(key.key if isinstance(key, _PropertyKey) else key)
+
+    @overload
+    def get[T](self, key: _PropertyKey[T], default: None = None) -> T | None: ...
+    @overload
+    def get[T](self, key: _PropertyKey[T], default: T) -> T: ...
+    @overload
+    def get[T, DT](self, key: _PropertyKey[T], default: DT) -> T | DT: ...
+    @overload
+    def get(self, key: str, default: None = None) -> Any | None: ...
+    @overload
+    def get[T](self, key: str, default: T) -> Any | T: ...
+
+    # pyright has trouble detecting compatible overrides when both the superclass
+    # and subclass have overloads.
+    def get(self, key: str | _PropertyKey[Any], default: Any = None) -> Any:  # type: ignore
+        return self.data.get(key if isinstance(key, str) else key.key, default)
+
+    @overload
+    def pop[T](self, key: _PropertyKey[T], default: None = None) -> T | None: ...
+    @overload
+    def pop[T](self, key: _PropertyKey[T], default: T) -> T: ...
+    @overload
+    def pop[T, DT](self, key: _PropertyKey[T], default: DT) -> T | DT: ...
+    @overload
+    def pop(self, key: str, default: None = None) -> Any | None: ...
+    @overload
+    def pop[T](self, key: str, default: T) -> Any | T: ...
+
+    # pyright has trouble detecting compatible overrides when both the superclass
+    # and subclass have overloads.
+    def pop(self, key: str | _PropertyKey[Any], default: Any = None) -> Any:  # type: ignore
+        return self.data.pop(key if isinstance(key, str) else key.key, default)
