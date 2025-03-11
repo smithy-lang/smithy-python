@@ -26,6 +26,7 @@ import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
 import software.amazon.smithy.python.codegen.sections.ConfigSection;
+import software.amazon.smithy.python.codegen.sections.InitDefaultEndpointResolverSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.CodeInterceptor;
 import software.amazon.smithy.utils.SmithyInternalApi;
@@ -79,30 +80,6 @@ public final class ConfigGenerator implements Runnable {
                     .documentation("Configuration for individual HTTP requests.")
                     .build(),
             ConfigProperty.builder()
-                    .name("endpoint_resolver")
-                    .type(Symbol.builder()
-                            .name("EndpointResolver[Any]")
-                            .addReference(Symbol.builder()
-                                    .name("Any")
-                                    .namespace("typing", ".")
-                                    .putProperty(SymbolProperties.STDLIB, true)
-                                    .build())
-                            .addReference(Symbol.builder()
-                                    .name("EndpointResolver")
-                                    .namespace("smithy_http.aio.interfaces", ".")
-                                    .addDependency(SmithyPythonDependency.SMITHY_HTTP)
-                                    .build())
-                            .build())
-                    .documentation("""
-                            The endpoint resolver used to resolve the final endpoint per-operation based on the \
-                            configuration.""")
-                    .nullable(false)
-                    .initialize(writer -> {
-                        writer.addImport("smithy_http.aio.endpoints", "StaticEndpointResolver");
-                        writer.write("self.endpoint_resolver = endpoint_resolver or StaticEndpointResolver()");
-                    })
-                    .build(),
-            ConfigProperty.builder()
                     .name("endpoint_uri")
                     .type(Symbol.builder()
                             .name("str | URI")
@@ -124,7 +101,7 @@ public final class ConfigGenerator implements Runnable {
     }
 
     private static List<ConfigProperty> getHttpProperties(GenerationContext context) {
-        var properties = new ArrayList<ConfigProperty>(HTTP_PROPERTIES.size() + 1);
+        var properties = new ArrayList<ConfigProperty>(HTTP_PROPERTIES.size() + 2);
         var clientBuilder = ConfigProperty.builder()
                 .name("http_client")
                 .type(Symbol.builder()
@@ -152,6 +129,25 @@ public final class ConfigGenerator implements Runnable {
                     });
         }
         properties.add(clientBuilder.build());
+
+        var endpointResolver = CodegenUtils.getEndpointResolverSymbol(context.settings());
+        properties.add(ConfigProperty.builder()
+                .name("endpoint_resolver")
+                .type(Symbol.builder()
+                        .name("_EndpointResolver[EndpointParameters]")
+                        .addReference(CodegenUtils.getEndpointParametersSymbol(context.settings()))
+                        .build())
+                .documentation("""
+                        The endpoint resolver used to resolve the final endpoint per-operation based on the \
+                        configuration.""")
+                .nullable(false)
+                .initialize(writer -> {
+                    writer.addImport("smithy_http.aio.interfaces", "EndpointResolver", "_EndpointResolver");
+                    writer.pushState(new InitDefaultEndpointResolverSection());
+                    writer.write("self.endpoint_resolver = endpoint_resolver or $T()", endpointResolver);
+                    writer.popState();
+                })
+                .build());
 
         properties.addAll(HTTP_PROPERTIES);
         return List.copyOf(properties);

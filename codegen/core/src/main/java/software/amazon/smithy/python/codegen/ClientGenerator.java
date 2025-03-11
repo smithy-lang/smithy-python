@@ -444,16 +444,10 @@ final class ClientGenerator implements Runnable {
         if (context.applicationProtocol().isHttpProtocol()) {
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
             writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-            // TODO: implement the endpoints 2.0 spec and remove the hard-coded handling of static params.
-            writer.addImport("smithy_http.endpoints", "StaticEndpointParams");
             writer.addImport("smithy_core", "URI");
             writer.write("""
                             # Step 7f: Invoke endpoint_resolver.resolve_endpoint
-                            if config.endpoint_uri is None:
-                                raise $1T(
-                                    "No endpoint_uri found on the operation config."
-                                )
-                            endpoint_resolver_parameters = StaticEndpointParams(uri=config.endpoint_uri)
+                            endpoint_resolver_parameters = $1T.build(config=config)
                             logger.debug("Calling endpoint resolver with parameters: %s", endpoint_resolver_parameters)
                             endpoint = await config.endpoint_resolver.resolve_endpoint(
                                 endpoint_resolver_parameters
@@ -476,7 +470,8 @@ final class ClientGenerator implements Runnable {
                             )
                             context._transport_request.fields.extend(endpoint.headers)
 
-                    """, errorSymbol);
+                    """,
+                    CodegenUtils.getEndpointParametersSymbol(context.settings()));
         }
         writer.popState();
 
