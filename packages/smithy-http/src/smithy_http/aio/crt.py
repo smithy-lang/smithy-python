@@ -368,8 +368,10 @@ class BufferableByteStream(BufferedIOBase):
             return b""
 
         if len(self._chunks) == 0:
-            # When the CRT recieves this, it'll try again later.
-            raise BlockingIOError("read")
+            if self._done:
+                return b""
+            else:
+                raise BlockingIOError("read")
 
         # We could compile all the chunks here instead of just returning
         # the one, BUT the CRT will keep calling read until empty bytes
