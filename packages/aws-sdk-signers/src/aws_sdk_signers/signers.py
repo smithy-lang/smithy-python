@@ -442,7 +442,7 @@ class AsyncSigV4Signer:
         # Construct core signing components
         canonical_request = await self.canonical_request(
             signing_properties=signing_properties,
-            request=http_request,
+            request=new_request,
         )
         string_to_sign = await self.string_to_sign(
             canonical_request=canonical_request,
@@ -454,7 +454,7 @@ class AsyncSigV4Signer:
             signing_properties=new_signing_properties,
         )
 
-        signing_fields = await self._normalize_signing_fields(request=http_request)
+        signing_fields = await self._normalize_signing_fields(request=new_request)
         credential_scope = await self._scope(signing_properties=new_signing_properties)
         credential = f"{identity.access_key_id}/{credential_scope}"
         authorization = await self.generate_authorization_field(
