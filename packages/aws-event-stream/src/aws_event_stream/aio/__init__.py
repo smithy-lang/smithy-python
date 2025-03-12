@@ -17,7 +17,7 @@ from smithy_event_stream.aio.interfaces import (
 
 from .._private.deserializers import AWSAsyncEventReceiver as _AWSEventReceiver
 from .._private.serializers import AWSAsyncEventPublisher as _AWSEventPublisher
-from .._private.serializers import Signer
+from .._private.serializers import EventSigner
 from ..exceptions import MissingInitialResponse
 
 
@@ -36,7 +36,7 @@ class AWSDuplexEventStream[
         awaitable_response: Awaitable[Response],
         awaitable_output: Awaitable[R],
         deserializeable_response: type[R] | None = None,
-        signer: Signer | None = None,
+        signer: EventSigner | None = None,
         is_client_mode: bool = True,
     ) -> None:
         """Construct an AWSDuplexEventStream.
@@ -112,7 +112,7 @@ class AWSInputEventStream[I: SerializeableShape, R](InputEventStream[I, R]):
         payload_codec: Codec,
         async_writer: AsyncWriter,
         awaitable_output: Awaitable[R],
-        signer: Signer | None = None,
+        signer: EventSigner | None = None,
         is_client_mode: bool = True,
     ) -> None:
         """Construct an AWSInputEventStream.

@@ -1,15 +1,17 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+import asyncio
 import datetime
 import hmac
 import io
 import warnings
 from asyncio import iscoroutinefunction
+from binascii import hexlify
 from collections.abc import AsyncIterable, Iterable
 from copy import deepcopy
 from hashlib import sha256
-from typing import Required, TypedDict
+from typing import Required, TypedDict, TYPE_CHECKING
 from urllib.parse import parse_qsl, quote
 
 from .interfaces.io import AsyncSeekable, Seekable
@@ -18,6 +20,9 @@ from ._identity import AWSCredentialIdentity
 from .interfaces.identity import AWSCredentialsIdentity as _AWSCredentialsIdentity
 from ._io import AsyncBytesReader
 from .exceptions import AWSSDKWarning, MissingExpectedParameterException
+
+if TYPE_CHECKING:
+    from .interfaces.events import EventMessage, EventHeaderEncoder
 
 HEADERS_EXCLUDED_FROM_SIGNING: tuple[str, ...] = (
     "accept",
@@ -772,6 +777,108 @@ class AsyncSigV4Signer:
             buffer.seek(0)
             request.body = AsyncBytesReader(buffer)
         return checksum.hexdigest()
+
+
+class AsyncEventSigner:
+    def __init__(
+        self,
+        *,
+        signing_properties: SigV4SigningProperties,
+        identity: AWSCredentialIdentity,
+        initial_signature: bytes,
+    ):
+        self._signing_properties = signing_properties
+        self._identity = identity
+        self._prior_signature = initial_signature
+        self._signing_lock = asyncio.Lock()
+
+    async def sign_event(
+        self,
+        *,
+        event_message: "EventMessage",
+        event_encoder_cls: type["EventHeaderEncoder"],
+    ) -> "EventMessage":
+        async with self._signing_lock:
+            # Copy and prepopulate any missing values in the
+            # signing properties.
+            new_signing_properties = SigV4SigningProperties(  # type: ignore
+                **self._signing_properties
+            )
+            if "date" not in new_signing_properties:
+                date_obj = datetime.datetime.now(datetime.UTC)
+                new_signing_properties["date"] = date_obj.strftime(
+                    SIGV4_TIMESTAMP_FORMAT
+                )
+
+            timestamp = new_signing_properties["date"]
+            headers: dict[str, str | bytes] = {":date": timestamp}
+            encoder = event_encoder_cls()
+            encoder.encode_headers(event_message.headers)
+            encoded_headers = encoder.get_result()
+
+            string_to_sign = await self._event_string_to_sign(
+                timestamp=timestamp,
+                scope=self._scope(new_signing_properties),
+                encoded_headers=encoded_headers,
+                payload=event_message.payload,
+                prior_signature=self._prior_signature,
+            )
+            event_signature = await self._sign_event(
+                timestamp=timestamp,
+                string_to_sign=string_to_sign,
+                signing_properties=new_signing_properties,
+            )
+            headers[":chunk-signature"] = event_signature
+            event_message.headers.update(headers)  # type: ignore
+
+            # set new prior signature before releasing the lock
+            self._prior_signature = event_signature
+
+        return event_message
+
+    async def _event_string_to_sign(
+        self,
+        *,
+        timestamp: str,
+        scope: str,
+        encoded_headers: bytes,
+        payload: bytes,
+        prior_signature: bytes,
+    ) -> str:
+        return (
+            "AWS-HMAC-SHA256-PAYLOAD\n"
+            f"{timestamp}\n"
+            f"{scope}\n"
+            f"{hexlify(prior_signature).decode('utf-8')}\n"
+            f"{sha256(encoded_headers).hexdigest()}\n"
+            f"{sha256(payload).hexdigest()}\n"
+        )
+
+    async def _sign_event(
+        self,
+        *,
+        timestamp: str,
+        string_to_sign: str,
+        signing_properties: SigV4SigningProperties,
+    ) -> bytes:
+        key = self._identity.secret_access_key.encode("utf-8")
+        today = timestamp[:8].encode("utf-8")
+        k_date = self._hash(b"AWS4" + key, today)
+        k_region = self._hash(k_date, signing_properties["region"].encode("utf-8"))
+        k_service = self._hash(k_region, signing_properties["service"].encode("utf-8"))
+        k_signing = self._hash(k_service, b"aws4_request")
+        return self._hash(k_signing, string_to_sign.encode("utf-8"))
+
+    def _hash(self, key: bytes, msg: bytes) -> bytes:
+        return hmac.new(key, msg, sha256).digest()
+
+    def _scope(self, signing_properties: SigV4SigningProperties) -> str:
+        assert "date" in signing_properties
+        formatted_date = signing_properties["date"][0:8]
+        region = signing_properties["region"]
+        service = signing_properties["service"]
+        # Scope format: <YYYYMMDD>/<AWS Region>/<AWS Service>/aws4_request
+        return f"{formatted_date}/{region}/{service}/aws4_request"
 
 
 def _remove_dot_segments(path: str, remove_consecutive_slashes: bool = True) -> str:

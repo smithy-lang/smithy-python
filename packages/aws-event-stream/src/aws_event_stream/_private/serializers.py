@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 import asyncio
 import datetime
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from contextlib import contextmanager
 from io import BytesIO
-from typing import Never
+from typing import Never, Protocol
 
 from smithy_core.aio.interfaces import AsyncWriter
 from smithy_core.codecs import Codec
@@ -20,7 +20,7 @@ from smithy_core.serializers import (
 from smithy_core.shapes import ShapeType
 from smithy_event_stream.aio.interfaces import AsyncEventPublisher
 
-from ..events import EventMessage, HEADER_VALUE, Short, Byte, Long
+from ..events import EventHeaderEncoder, EventMessage, HEADER_VALUE, Short, Byte, Long
 from ..exceptions import InvalidHeaderValue
 from . import (
     INITIAL_REQUEST_EVENT_TYPE,
@@ -33,8 +33,15 @@ _DEFAULT_STRING_CONTENT_TYPE = "text/plain"
 _DEFAULT_BLOB_CONTENT_TYPE = "application/octet-stream"
 
 
-type Signer = Callable[[EventMessage], EventMessage]
-"""A function that takes an event message and signs it, and returns it signed."""
+class EventSigner(Protocol):
+    """A signer to manage credentials and EventMessages for an Event Stream lifecyle."""
+
+    def sign_event(
+        self,
+        *,
+        event_message: EventMessage,
+        event_encoder_cls: type[EventHeaderEncoder],
+    ) -> EventMessage: ...
 
 
 class AWSAsyncEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
@@ -42,7 +49,7 @@ class AWSAsyncEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
         self,
         payload_codec: Codec,
         async_writer: AsyncWriter,
-        signer: Signer | None = None,
+        signer: EventSigner | None = None,
         is_client_mode: bool = True,
     ):
         self._writer = async_writer
@@ -59,7 +66,11 @@ class AWSAsyncEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
                 "Expected an event message to be serialized, but was None."
             )
         if self._signer is not None:
-            result = self._signer(result)
+            encoder = self._serializer.event_header_encoder_cls
+            result = await self._signer.sign_event(
+                event_message=result,
+                event_encoder_cls=encoder,
+            )
         await self._writer.write(result.encode())
 
     async def close(self) -> None:
@@ -80,6 +91,7 @@ class EventSerializer(SpecificShapeSerializer):
             self._initial_message_event_type = INITIAL_REQUEST_EVENT_TYPE
         else:
             self._initial_message_event_type = INITIAL_RESPONSE_EVENT_TYPE
+        self.event_header_encoder_cls = EventHeaderEncoder
 
     def get_result(self) -> EventMessage | None:
         return self._result

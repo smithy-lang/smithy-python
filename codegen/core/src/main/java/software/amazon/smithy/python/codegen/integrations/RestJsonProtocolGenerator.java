@@ -426,6 +426,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                                 transport_response.body  # type: ignore
                             ),
                             deserializer=event_deserializer,  # type: ignore
+                            signer=signer,  # type: ignore
                         )
                         """);
     }
