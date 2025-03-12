@@ -95,6 +95,12 @@ def test_done_stream_read() -> None:
     assert stream.read() == b""
 
 
+def test_end_empty_stream() -> None:
+    stream = BufferableByteStream()
+    stream.end_stream()
+    assert stream.read() == b""
+
+
 def test_stream_read1() -> None:
     stream = BufferableByteStream()
     stream.write(b"foo")

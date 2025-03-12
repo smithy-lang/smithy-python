@@ -369,8 +369,10 @@ class BufferableByteStream(BufferedIOBase):
 
         if len(self._chunks) == 0:
             if self._done:
+                self.close()
                 return b""
             else:
+                # When the CRT recieves this, it'll try again
                 raise BlockingIOError("read")
 
         # We could compile all the chunks here instead of just returning
@@ -429,4 +431,7 @@ class BufferableByteStream(BufferedIOBase):
 
     def end_stream(self) -> None:
         """End the stream, letting any remaining chunks be read before it is closed."""
-        self._done = True
+        if len(self._chunks) == 0:
+            self.close()
+        else:
+            self._done = True
