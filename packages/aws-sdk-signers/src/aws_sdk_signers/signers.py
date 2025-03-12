@@ -15,6 +15,7 @@ from urllib.parse import parse_qsl, quote
 from .interfaces.io import AsyncSeekable, Seekable
 from ._http import URI, AWSRequest, Field
 from ._identity import AWSCredentialIdentity
+from .interfaces.identity import AWSCredentialsIdentity as _AWSCredentialsIdentity
 from ._io import AsyncBytesReader
 from .exceptions import AWSSDKWarning, MissingExpectedParameterException
 
@@ -49,14 +50,14 @@ class SigV4Signer:
         self,
         *,
         signing_properties: SigV4SigningProperties,
-        request: AWSRequest,
+        http_request: AWSRequest,
         identity: AWSCredentialIdentity,
     ) -> AWSRequest:
         """Generate and apply a SigV4 Signature to a copy of the supplied request.
 
         :param signing_properties: SigV4SigningProperties to define signing primitives
             such as the target service, region, and date.
-        :param request: An AWSRequest to sign prior to sending to the service.
+        :param http_request: An AWSRequest to sign prior to sending to the service.
         :param identity: A set of credentials representing an AWS Identity or role
             capacity.
         """
@@ -68,7 +69,7 @@ class SigV4Signer:
         )
         assert "date" in new_signing_properties
 
-        new_request = self._generate_new_request(request=request)
+        new_request = self._generate_new_request(request=http_request)
         self._apply_required_fields(
             request=new_request,
             signing_properties=new_signing_properties,
@@ -159,7 +160,7 @@ class SigV4Signer:
 
     def _validate_identity(self, *, identity: AWSCredentialIdentity) -> None:
         """Perform runtime and expiration checks before attempting signing."""
-        if not isinstance(identity, AWSCredentialIdentity):  # pyright: ignore
+        if not isinstance(identity, _AWSCredentialsIdentity):  # pyright: ignore
             raise ValueError(
                 "Received unexpected value for identity parameter. Expected "
                 f"AWSCredentialIdentity but received {type(identity)}."
@@ -413,14 +414,14 @@ class AsyncSigV4Signer:
         self,
         *,
         signing_properties: SigV4SigningProperties,
-        request: AWSRequest,
+        http_request: AWSRequest,
         identity: AWSCredentialIdentity,
     ) -> AWSRequest:
         """Generate and apply a SigV4 Signature to a copy of the supplied request.
 
         :param signing_properties: SigV4SigningProperties to define signing primitives
             such as the target service, region, and date.
-        :param request: An AWSRequest to sign prior to sending to the service.
+        :param http_request: An AWSRequest to sign prior to sending to the service.
         :param identity: A set of credentials representing an AWS Identity or role
             capacity.
         """
@@ -431,7 +432,7 @@ class AsyncSigV4Signer:
         new_signing_properties = await self._normalize_signing_properties(
             signing_properties=signing_properties
         )
-        new_request = await self._generate_new_request(request=request)
+        new_request = await self._generate_new_request(request=http_request)
         await self._apply_required_fields(
             request=new_request,
             signing_properties=new_signing_properties,
@@ -441,7 +442,7 @@ class AsyncSigV4Signer:
         # Construct core signing components
         canonical_request = await self.canonical_request(
             signing_properties=signing_properties,
-            request=request,
+            request=http_request,
         )
         string_to_sign = await self.string_to_sign(
             canonical_request=canonical_request,
@@ -453,7 +454,7 @@ class AsyncSigV4Signer:
             signing_properties=new_signing_properties,
         )
 
-        signing_fields = await self._normalize_signing_fields(request=request)
+        signing_fields = await self._normalize_signing_fields(request=http_request)
         credential_scope = await self._scope(signing_properties=new_signing_properties)
         credential = f"{identity.access_key_id}/{credential_scope}"
         authorization = await self.generate_authorization_field(
@@ -522,7 +523,7 @@ class AsyncSigV4Signer:
 
     async def _validate_identity(self, *, identity: AWSCredentialIdentity) -> None:
         """Perform runtime and expiration checks before attempting signing."""
-        if not isinstance(identity, AWSCredentialIdentity):  # pyright: ignore
+        if not isinstance(identity, _AWSCredentialsIdentity):  # pyright: ignore
             raise ValueError(
                 "Received unexpected value for identity parameter. Expected "
                 f"AWSCredentialIdentity but received {type(identity)}."
