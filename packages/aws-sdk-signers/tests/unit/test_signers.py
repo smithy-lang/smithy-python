@@ -86,7 +86,7 @@ class TestSigV4Signer:
         original_request = copy.deepcopy(aws_request)
         signed_request = self.SIGV4_SYNC_SIGNER.sign(
             signing_properties=signing_properties,
-            request=aws_request,
+            http_request=aws_request,
             identity=aws_identity,
         )
         assert isinstance(signed_request, AWSRequest)
@@ -154,7 +154,7 @@ class TestAsyncSigV4Signer:
         original_request = copy.deepcopy(aws_request)
         signed_request = await self.SIGV4_ASYNC_SIGNER.sign(
             signing_properties=signing_properties,
-            request=aws_request,
+            http_request=aws_request,
             identity=aws_identity,
         )
         assert isinstance(signed_request, AWSRequest)
