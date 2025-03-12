@@ -5,7 +5,7 @@ test-logger-plugin = "4.0.0"
 spotbugs = "6.0.22"
 spotless = "7.0.2"
 smithy-gradle-plugins = "1.2.0"
-dep-analysis = "2.10.1"
+dep-analysis = "2.11.0"
 
 [libraries]
 smithy-model = { module = "software.amazon.smithy:smithy-model", version.ref = "smithy" }
