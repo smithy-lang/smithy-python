@@ -12,7 +12,7 @@ import struct
 import uuid
 from binascii import crc32
 from collections.abc import Callable, Iterator, Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from io import BytesIO
 from struct import pack, unpack
 from types import MappingProxyType
@@ -147,6 +147,7 @@ class EventPrelude:
             raise InvalidPayloadLength(payload_length)
 
 
+@dataclass(kw_only=True, eq=False)
 class EventMessage:
     """A message that may be sent over an event stream.
 
@@ -186,76 +187,31 @@ class EventMessage:
       message.
     """
 
-    def __init__(
+    headers: HEADERS_DICT = field(default_factory=dict)
+    """The headers present in the event message.
+
+    Sized integer values may be indicated for the purpose of serialization
+    using the `Byte`, `Short`, or `Long` types. int values of unspecified size
+    will be assumed to be 32-bit.
+    """
+
+    payload: bytes = b""
+    """The serialized bytes of the message payload."""
+
+    def __post_init__(
         self,
-        *,
-        headers: HEADERS_DICT | None = None,
-        headers_bytes: bytes | None = None,
-        payload: bytes = b"",
     ) -> None:
-        """Initialize an EventMessage.
-
-        :param headers: The headers present in the event message. If this parameter is
-            unspecified, the default value will be the decoded value of the
-            `headers_bytes` parameter.
-
-            Sized integer values may be indicated for the purpose of serialization
-            using the `Byte`, `Short`, or `Long` types. int values of unspecified size
-            will be assumed to be 32-bit.
-
-        :param headers_bytes: The serialized bytes of the headers present in the event
-            message.
-
-        :param payload: The serialized bytes of the message payload.
-        """
-        self._payload = payload
-        self._headers_bytes = headers_bytes
-
-        if len(payload) > MAX_PAYLOAD_LENGTH:
-            raise InvalidPayloadLength(len(payload))
-
-        if headers_bytes is None:
-            if headers is None:
-                headers = {}
-        elif headers is None:
-            headers = EventHeaderDecoder(headers_bytes).decode_headers()
-
-        self._headers = headers
-
-    @property
-    def payload(self) -> bytes:
-        """The serialized bytes of the message payload.
-
-        These bytes may be in any format or media type. The `:content-type` header, if
-        present, indicates the media type.
-        """
-        return self._payload
-
-    @property
-    def headers(self) -> HEADERS_DICT:
-        """The headers of the event message.
-
-        Headers prefixed with `:` contain metadata by convention.
-        """
-        return self._headers
+        if len(self.payload) > MAX_PAYLOAD_LENGTH:
+            raise InvalidPayloadLength(len(self.payload))
 
     def _get_headers_bytes(self) -> bytes:
-        if self._headers_bytes is None:
-            encoder = EventHeaderEncoder()
-            encoder.encode_headers(self._headers)
-            self._headers_bytes = encoder.get_result()
-
-        return self._headers_bytes
+        encoder = EventHeaderEncoder()
+        encoder.encode_headers(self.headers)
+        return encoder.get_result()
 
     def encode(self) -> bytes:
         return _EventEncoder().encode_bytes(
-            headers=self._get_headers_bytes(), payload=self._payload
-        )
-
-    def __repr__(self) -> str:
-        return (
-            f"EventMessage(payload={self._payload!r}, headers={self.headers!r}, "
-            f"headers_bytes={self._get_headers_bytes()!r})"
+            headers=self._get_headers_bytes(), payload=self.payload
         )
 
     def __eq__(self, other: object) -> bool:
@@ -325,8 +281,9 @@ class Event:
 
         _validate_checksum(prelude_crc_bytes + message_bytes, crc, prelude_crc)
 
+        headers_bytes = message_bytes[: prelude.headers_length]
         message = EventMessage(
-            headers_bytes=message_bytes[: prelude.headers_length],
+            headers=EventHeaderDecoder(headers_bytes).decode_headers(),
             payload=message_bytes[prelude.headers_length :],
         )
         return cls(prelude, message, crc)
@@ -369,8 +326,9 @@ class Event:
 
         _validate_checksum(prelude_crc_bytes + message_bytes, crc, prelude_crc)
 
+        headers_bytes = message_bytes[: prelude.headers_length]
         message = EventMessage(
-            headers_bytes=message_bytes[: prelude.headers_length],
+            headers=EventHeaderDecoder(headers_bytes).decode_headers(),
             payload=message_bytes[prelude.headers_length :],
         )
         return cls(prelude, message, crc)
@@ -647,7 +605,7 @@ class _DecodeUtils:
         :returns: A tuple containing the (parsed integer value, bytes consumed)
         """
         value = unpack(_DecodeUtils.INT8_BYTE_FORMAT, data[:1])[0]
-        return value, 1
+        return Byte(value), 1
 
     @staticmethod
     def unpack_int16(data: BytesLike) -> tuple[int, int]:
@@ -657,7 +615,7 @@ class _DecodeUtils:
         :returns: A tuple containing the (parsed integer value, bytes consumed)
         """
         value = unpack(_DecodeUtils.INT16_BYTE_FORMAT, data[:2])[0]
-        return value, 2
+        return Short(value), 2
 
     @staticmethod
     def unpack_int32(data: BytesLike) -> tuple[int, int]:
@@ -677,7 +635,7 @@ class _DecodeUtils:
         :returns: A tuple containing the (parsed integer value, bytes consumed)
         """
         value = unpack(_DecodeUtils.INT64_BYTE_FORMAT, data[:8])[0]
-        return value, 8
+        return Long(value), 8
 
     @staticmethod
     def unpack_byte_array(

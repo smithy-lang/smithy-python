@@ -580,33 +580,6 @@ def test_event_message_rejects_long_header_value():
         EventMessage(headers=headers).encode()
 
 
-def test_event_message_rejects_long_headers():
-    # 5 of these is more than enough to overcome the header size limit.
-    long_value = b"0" * (MAX_HEADER_VALUE_BYTE_LENGTH - 1)
-    headers = {
-        "1": long_value,
-        "2": long_value,
-        "3": long_value,
-        "4": long_value,
-        "5": long_value,
-    }
-    with pytest.raises(InvalidHeadersLength):
-        EventMessage(headers=headers).encode()
-
-    # These are correctly encoded, and individually valid, but collectively too long.
-    long_headers = b""
-    for i in range(5):
-        long_headers += b"\x01" + str(i).encode("utf-8") + b"\x06\x7f\xfe" + long_value
-
-    with pytest.raises(InvalidHeadersLength):
-        EventMessage(headers_bytes=long_headers)
-
-
-def test_event_message_decodes_headers():
-    message = EventMessage(headers_bytes=b"\x04true\x00")
-    assert message.headers == {"true": True}
-
-
 def test_event_encoder_rejects_long_headers():
     long_value = b"0" * (MAX_HEADER_VALUE_BYTE_LENGTH - 1)
     long_headers = b""
