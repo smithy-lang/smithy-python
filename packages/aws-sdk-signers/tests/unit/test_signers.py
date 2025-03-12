@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+import copy
 import re
 import typing
 from datetime import UTC, datetime
@@ -76,6 +77,23 @@ class TestSigV4Signer:
         authorization_field = signed_request.fields["authorization"]
         assert SIGV4_RE.match(authorization_field.as_string())
 
+    def test_sign_doesnt_modify_original_request(
+        self,
+        aws_identity: AWSCredentialIdentity,
+        aws_request: AWSRequest,
+        signing_properties: SigV4SigningProperties,
+    ) -> None:
+        original_request = copy.deepcopy(aws_request)
+        signed_request = self.SIGV4_SYNC_SIGNER.sign(
+            signing_properties=signing_properties,
+            request=aws_request,
+            identity=aws_identity,
+        )
+        assert isinstance(signed_request, AWSRequest)
+        assert signed_request is not aws_request
+        assert aws_request.fields == original_request.fields
+        assert signed_request.fields != aws_request.fields
+
     @typing.no_type_check
     def test_sign_with_invalid_identity(
         self, aws_request: AWSRequest, signing_properties: SigV4SigningProperties
@@ -126,6 +144,23 @@ class TestAsyncSigV4Signer:
         assert "authorization" in signed_request.fields
         authorization_field = signed_request.fields["authorization"]
         assert SIGV4_RE.match(authorization_field.as_string())
+
+    async def test_sign_doesnt_modify_original_request(
+        self,
+        aws_identity: AWSCredentialIdentity,
+        aws_request: AWSRequest,
+        signing_properties: SigV4SigningProperties,
+    ) -> None:
+        original_request = copy.deepcopy(aws_request)
+        signed_request = await self.SIGV4_ASYNC_SIGNER.sign(
+            signing_properties=signing_properties,
+            request=aws_request,
+            identity=aws_identity,
+        )
+        assert isinstance(signed_request, AWSRequest)
+        assert signed_request is not aws_request
+        assert aws_request.fields == original_request.fields
+        assert signed_request.fields != aws_request.fields
 
     @typing.no_type_check
     async def test_sign_with_invalid_identity(
