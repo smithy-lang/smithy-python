@@ -1,11 +1,13 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import logging
-from asyncio import sleep
+import asyncio
+from asyncio import sleep, Future
 from dataclasses import dataclass, replace
-from typing import Any
+from typing import Any, Callable, Awaitable
 
 from .interfaces import ClientProtocol, Request, Response, ClientTransport
+from .interfaces.eventstream import DuplexEventStream, InputEventStream, OutputEventStream, AsyncEventReceiver
 from .. import URI
 from ..interfaces import TypedProperties, Endpoint
 from ..interfaces.retries import RetryStrategy, RetryErrorInfo, RetryErrorType
@@ -19,7 +21,7 @@ from ..interceptors import (
 from ..schemas import APIOperation
 from ..shapes import ShapeID
 from ..serializers import SerializeableShape
-from ..deserializers import DeserializeableShape
+from ..deserializers import DeserializeableShape, ShapeDeserializer
 from ..exceptions import SmithyRetryException, SmithyException
 from ..types import PropertyKey
 
@@ -85,12 +87,65 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
     async def __call__[I: SerializeableShape, O: DeserializeableShape](
         self, call: ClientCall[I, O], /
     ) -> O:
+        output, _ = await self._execute_request(call, None)
+        return output
+
+    # async def input_stream[I: SerializeableShape, O: DeserializeableShape, E: SerializeableShape](
+    #     self, call: ClientCall[I, O], event_serializer: E, /
+    # ) -> InputEventStream[E, O]:
+    #     request_future = Future[RequestContext[I, TRequest]]()
+    #     execute_task = asyncio.create_task(self._await_output(self._execute_request(call, request_future)))
+    #     request_context = await request_future
+    #     stream: InputEventStream[E, O] = InputEventStream(
+    #         awaitable_output=execute_task,
+    #         event_publisher=self.protocol.create_event_publisher(event_serializer, request_context)
+    #     )
+    #     return stream
+
+    # async def _await_output[I: SerializeableShape, O: DeserializeableShape](
+    #         self, execute_task: Awaitable[tuple[O, OutputContext[I, O, TRequest | None, TResponse | None]]]
+    # ) -> O:
+    #     output, _ = await execute_task
+    #     return output
+
+    # async def output_stream[I: SerializeableShape, O: DeserializeableShape, E: DeserializeableShape](
+    #     self, call: ClientCall[I, O], event_deserializer: Callable[[ShapeDeserializer], E], /
+    # ) -> OutputEventStream[E, O]:
+    #     output, output_context = await self._execute_request(call, None)
+    #     stream: OutputEventStream[E, O] = OutputEventStream(
+    #         output=output,
+    #         event_receiver=self.protocol.create_event_receiver(event_deserializer, output_context)
+    #     )
+    #     return stream
+
+    # async def duplex_stream[I: SerializeableShape, O: DeserializeableShape, IE: SerializeableShape, OE: DeserializeableShape](
+    #     self, call: ClientCall[I, O], event_serializer: IE, event_deserializer: Callable[[ShapeDeserializer], OE], /
+    # ) -> DuplexEventStream[IE, OE, O]:
+    #     request_future = Future[RequestContext[I, TRequest]]()
+    #     execute_task = asyncio.create_task(self._execute_request(call, request_future))
+    #     request_context = await request_future
+    #     stream: DuplexEventStream[IE, OE, O] = DuplexEventStream(
+    #         awaitable_output=self._await_output_stream(execute_task, event_deserializer),
+    #         event_publisher=self.protocol.create_event_publisher(event_serializer, request_context)
+    #     )
+    #     return stream
+
+    # async def _await_output_stream[I: SerializeableShape, O: DeserializeableShape, E: DeserializeableShape](
+    #         self, execute_task: Awaitable[tuple[O, OutputContext[I, O, TRequest | None, TResponse | None]]],
+    #         event_deserializer: Callable[[ShapeDeserializer], E],
+    # ) -> tuple[O, AsyncEventReceiver[E]]:
+    #     output, output_context = await execute_task
+    #     return output, self.protocol.create_event_receiver(event_deserializer, output_context)
+    
+    async def _execute_request[I: SerializeableShape, O: DeserializeableShape](
+        self, call: ClientCall[I, O], request_future: Future[RequestContext[I, TRequest]] | None
+    ) -> tuple[O, OutputContext[I, O, TRequest | None, TResponse | None]]:
         _LOGGER.debug(
             'Making request for operation "%s" with parameters: %s',
             call.operation.schema.id.name,
             call.input,
         )
-        output_context = await self._handle_execution(call)
+        output_context = await self._handle_execution(call, None)
         output_context = self._finalize_execution(call, output_context)
 
         if isinstance(output_context.response, Exception):
@@ -99,13 +154,10 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 raise SmithyException(e) from e
             raise e
 
-        # TODO: wrap event streams
-        # This needs to go on the protocols
-
-        return output_context.response
+        return output_context.response, output_context
 
     async def _handle_execution[I: SerializeableShape, O: DeserializeableShape](
-        self, call: ClientCall[I, O]
+        self, call: ClientCall[I, O], request_future: Future[RequestContext[I, TRequest]] | None
     ) -> OutputContext[I, O, TRequest | None, TResponse | None]:
         try:
             interceptor = call.interceptor
@@ -163,7 +215,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 transport_request=interceptor.modify_before_retry_loop(request_context),
             )
 
-            return await self._retry(call, request_context)
+            return await self._retry(call, request_context, request_future)
         except Exception as e:
             return OutputContext(
                 request=request_context.request,
@@ -174,7 +226,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             )
 
     async def _retry[I: SerializeableShape, O: DeserializeableShape](
-        self, call: ClientCall[I, O], request_context: RequestContext[I, TRequest]
+        self, call: ClientCall[I, O], request_context: RequestContext[I, TRequest], request_future: Future[RequestContext[I, TRequest]] | None
     ) -> OutputContext[I, O, TRequest | None, TResponse | None]:
         # 8. Invoke AcquireInitialRetryToken
         retry_strategy = call.retry_strategy
@@ -187,7 +239,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             if retry_token.retry_delay:
                 await sleep(retry_token.retry_delay)
 
-            output_context = await self._handle_attempt(call, request_context)
+            output_context = await self._handle_attempt(call, request_context, request_future)
 
             if isinstance(output_context.response, Exception):
                 try:
@@ -217,7 +269,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 return output_context
 
     async def _handle_attempt[I: SerializeableShape, O: DeserializeableShape](
-        self, call: ClientCall[I, O], request_context: RequestContext[I, TRequest]
+        self, call: ClientCall[I, O], request_context: RequestContext[I, TRequest], request_future: Future[RequestContext[I, TRequest]] | None
     ) -> OutputContext[I, O, TRequest, TResponse | None]:
         output_context: OutputContext[I, O, TRequest, TResponse | None]
         try:
@@ -294,9 +346,24 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
 
             _LOGGER.debug("Sending request %s", request_context.transport_request)
 
-            transport_response = await self.transport.send(
-                request=request_context.transport_request
-            )
+            if request_future is not None:
+                # If we have an input event stream (or duplex event stream) then we
+                # need to let the client return ASAP so that it can start sending
+                # events. So here we start the transport send in a background task
+                # then set the result of the request future. It's important to sequence
+                # it just like that so that the client gets a stream that's ready
+                # to send.
+                transport_task = asyncio.create_task(self.transport.send(
+                    request=request_context.transport_request
+                ))
+                request_future.set_result(request_context)
+                transport_response = await transport_task
+            else:
+                # If we don't have an input stream, there's no point in creating a
+                # task, so we just immediately await the coroutine.
+                transport_response = await self.transport.send(
+                    request=request_context.transport_request
+                )
 
             _LOGGER.debug("Received response: %s", transport_response)
 
