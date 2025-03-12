@@ -441,7 +441,7 @@ class AsyncSigV4Signer:
         # Construct core signing components
         canonical_request = await self.canonical_request(
             signing_properties=signing_properties,
-            request=request,
+            request=new_request,
         )
         string_to_sign = await self.string_to_sign(
             canonical_request=canonical_request,
