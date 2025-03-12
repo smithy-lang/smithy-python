@@ -18,7 +18,7 @@ from smithy_core.serializers import (
     SpecificShapeSerializer,
 )
 from smithy_core.shapes import ShapeType
-from smithy_event_stream.aio.interfaces import AsyncEventPublisher
+from smithy_core.aio.interfaces.eventstream import AsyncEventPublisher
 
 from ..events import EventMessage, HEADER_VALUE, Short, Byte, Long
 from ..exceptions import InvalidHeaderValue

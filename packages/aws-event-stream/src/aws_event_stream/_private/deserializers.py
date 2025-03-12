@@ -14,7 +14,7 @@ from smithy_core.deserializers import (
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeType
 from smithy_core.utils import expect_type
-from smithy_event_stream.aio.interfaces import AsyncEventReceiver
+from smithy_core.aio.interfaces.eventstream import AsyncEventReceiver
 
 from ..events import HEADERS_DICT, Event
 from ..exceptions import EventError, UnmodeledEventError

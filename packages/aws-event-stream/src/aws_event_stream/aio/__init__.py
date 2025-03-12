@@ -8,7 +8,7 @@ from smithy_core.aio.interfaces import AsyncByteStream, AsyncWriter
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
 from smithy_core.serializers import SerializeableShape
-from smithy_event_stream.aio.interfaces import (
+from smithy_core.aio.interfaces.eventstream import (
     AsyncEventReceiver,
     DuplexEventStream,
     InputEventStream,
