@@ -1,7 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import json
-import threading
+import asyncio
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Literal
@@ -55,7 +55,7 @@ class TokenCache:
         self._http_client = http_client
         self._base_uri = base_uri
         self._token_ttl = self._validate_token_ttl(token_ttl)
-        self._refresh_lock = threading.Lock()
+        self._refresh_lock = asyncio.Lock()
         self._token = None
 
     def _validate_token_ttl(self, ttl: int) -> int:
@@ -72,7 +72,7 @@ class TokenCache:
 
     async def _refresh(self) -> None:
         """Refreshes the token if needed, with thread safety."""
-        with self._refresh_lock:
+        async with self._refresh_lock:
             if not self._should_refresh():
                 return
             headers = Fields(
