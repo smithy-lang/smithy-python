@@ -15,6 +15,7 @@ if TYPE_CHECKING:
     from ...schemas import APIOperation
     from ...serializers import SerializeableShape
     from ...shapes import ShapeID
+    from .auth import AuthScheme
 
 
 @runtime_checkable
@@ -164,6 +165,7 @@ class ClientProtocol[I: Request, O: Response](Protocol):
         request: I,
         event_type: type[Event],
         context: TypedProperties,
+        auth_scheme: "AuthScheme[Any, Any, Any, Any] | None" = None,
     ) -> EventPublisher[Event]:
         """Creates an event publisher for a protocol event stream.
 
@@ -171,6 +173,7 @@ class ClientProtocol[I: Request, O: Response](Protocol):
         :param request: The transport request that was sent for this stream.
         :param event_type: The type of event to publish.
         :param context: A context bag for the request.
+        :param auth_scheme: The optional auth scheme used to sign events.
         """
         raise UnsupportedStreamError()
 

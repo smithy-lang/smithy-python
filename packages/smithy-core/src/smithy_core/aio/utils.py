@@ -58,3 +58,10 @@ async def close(stream: Any) -> None:
     if (close := getattr(stream, "close", None)) is not None:
         if iscoroutine(result := close()):
             await result
+
+
+async def seek(stream: Any, to: int) -> None:
+    """Seek a stream to a specified point."""
+    if (seek := getattr(stream, "seek", None)) is not None:
+        if iscoroutine(result := seek(to)):
+            await result
