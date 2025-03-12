@@ -186,8 +186,7 @@ class IMDSCredentialsResolver(
 ):
     """Resolves AWS Credentials from an EC2 Instance Metadata Service (IMDS) client."""
 
-    # TODO: Handle fallback to legacy path when a 404 is received.
-    _METADATA_PATH_BASE = "/latest/meta-data/iam/security-credentials-extended/"
+    _METADATA_PATH_BASE = "/latest/meta-data/iam/security-credentials"
 
     def __init__(self, http_client: HTTPClient, config: Config | None = None):
         self._http_client = http_client
