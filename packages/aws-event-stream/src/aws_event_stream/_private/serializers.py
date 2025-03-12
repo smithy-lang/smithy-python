@@ -5,7 +5,7 @@ import logging
 from collections.abc import Iterator
 from contextlib import contextmanager
 from io import BytesIO
-from typing import Never
+from typing import Never, Protocol
 
 from smithy_core.codecs import Codec
 from smithy_core.schemas import Schema
@@ -16,7 +16,7 @@ from smithy_core.serializers import (
 )
 from smithy_core.shapes import ShapeType
 
-from ..events import EventMessage, HEADER_VALUE, Short, Byte, Long
+from ..events import EventHeaderEncoder, EventMessage, HEADER_VALUE, Short, Byte, Long
 from ..exceptions import InvalidHeaderValue
 from . import (
     INITIAL_REQUEST_EVENT_TYPE,
@@ -43,6 +43,7 @@ class EventSerializer(SpecificShapeSerializer):
             self._initial_message_event_type = INITIAL_REQUEST_EVENT_TYPE
         else:
             self._initial_message_event_type = INITIAL_RESPONSE_EVENT_TYPE
+        self.event_header_encoder_cls = EventHeaderEncoder
 
     def get_result(self) -> EventMessage | None:
         return self._result

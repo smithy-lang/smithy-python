@@ -20,8 +20,15 @@ from ..exceptions import EventError
 logger = logging.getLogger(__name__)
 
 
-type Signer = Callable[[EventMessage], EventMessage]
-"""A function that takes an event message and signs it, and returns it signed."""
+class EventSigner(Protocol):
+    """A signer to manage credentials and EventMessages for an Event Stream lifecyle."""
+
+    def sign_event(
+        self,
+        *,
+        event_message: EventMessage,
+        event_encoder_cls: type[EventHeaderEncoder],
+    ) -> EventMessage: ...
 
 
 class AWSEventPublisher[E: SerializeableShape](EventPublisher[E]):
@@ -29,7 +36,7 @@ class AWSEventPublisher[E: SerializeableShape](EventPublisher[E]):
         self,
         payload_codec: Codec,
         async_writer: AsyncWriter,
-        signer: Signer | None = None,
+        signer: EventSigner | None = None,
         is_client_mode: bool = True,
     ):
         self._writer = async_writer
