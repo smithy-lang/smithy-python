@@ -20,7 +20,7 @@ from smithy_core.serializers import (
 from smithy_core.shapes import ShapeType
 from smithy_event_stream.aio.interfaces import AsyncEventPublisher
 
-from ..events import EventHeaderEncoder, EventMessage
+from ..events import EventMessage, HEADER_VALUE, Short, Byte, Long
 from ..exceptions import InvalidHeaderValue
 from . import (
     INITIAL_REQUEST_EVENT_TYPE,
@@ -100,30 +100,27 @@ class EventSerializer(SpecificShapeSerializer):
             finally:
                 return
 
-        headers_encoder = EventHeaderEncoder()
+        headers: dict[str, HEADER_VALUE] = {}
 
         if ErrorTrait in schema:
-            headers_encoder.encode_string(":message-type", "exception")
-            headers_encoder.encode_string(
-                ":exception-type", schema.expect_member_name()
-            )
+            headers[":message-type"] = "exception"
+            headers[":exception-type"] = schema.expect_member_name()
         else:
-            headers_encoder.encode_string(":message-type", "event")
+            headers[":message-type"] = "event"
             if schema.member_name is None:
                 # If there's no member name, that must mean that the structure is
                 # either an input or output structure, and so this represents the
                 # initial message.
-                headers_encoder.encode_string(
-                    ":event-type", self._initial_message_event_type
-                )
+                headers[":event-type"] = self._initial_message_event_type
             else:
-                headers_encoder.encode_string(":event-type", schema.member_name)
+                headers[":event-type"] = schema.member_name
 
         payload = BytesIO()
         payload_serializer: ShapeSerializer = self._payload_codec.create_serializer(
             payload
         )
-        header_serializer = EventHeaderSerializer(headers_encoder)
+
+        header_serializer = EventHeaderSerializer(headers)
 
         media_type = self._payload_codec.media_type
 
@@ -138,11 +135,9 @@ class EventSerializer(SpecificShapeSerializer):
 
         payload_bytes = payload.getvalue()
         if payload_bytes:
-            headers_encoder.encode_string(":content-type", media_type)
+            headers[":content-type"] = media_type
 
-        self._result = EventMessage(
-            headers_bytes=headers_encoder.get_result(), payload=payload_bytes
-        )
+        self._result = EventMessage(headers=headers, payload=payload_bytes)
 
     def _get_payload_media_type(self, schema: Schema, default: str) -> str:
         if (media_type := schema.get_trait(MediaTypeTrait)) is not None:
@@ -158,8 +153,8 @@ class EventSerializer(SpecificShapeSerializer):
 
 
 class EventHeaderSerializer(SpecificShapeSerializer):
-    def __init__(self, encoder: EventHeaderEncoder) -> None:
-        self._encoder = encoder
+    def __init__(self, headers: dict[str, HEADER_VALUE]) -> None:
+        self._headers = headers
 
     def _invalid_state(
         self, schema: "Schema | None" = None, message: str | None = None
@@ -169,28 +164,28 @@ class EventHeaderSerializer(SpecificShapeSerializer):
         raise InvalidHeaderValue(message)
 
     def write_boolean(self, schema: "Schema", value: bool) -> None:
-        self._encoder.encode_boolean(schema.expect_member_name(), value)
+        self._headers[schema.expect_member_name()] = value
 
     def write_byte(self, schema: "Schema", value: int) -> None:
-        self._encoder.encode_byte(schema.expect_member_name(), value)
+        self._headers[schema.expect_member_name()] = Byte(value)
 
     def write_short(self, schema: "Schema", value: int) -> None:
-        self._encoder.encode_short(schema.expect_member_name(), value)
+        self._headers[schema.expect_member_name()] = Short(value)
 
     def write_integer(self, schema: "Schema", value: int) -> None:
-        self._encoder.encode_integer(schema.expect_member_name(), value)
+        self._headers[schema.expect_member_name()] = value
 
     def write_long(self, schema: "Schema", value: int) -> None:
-        self._encoder.encode_long(schema.expect_member_name(), value)
+        self._headers[schema.expect_member_name()] = Long(value)
 
     def write_string(self, schema: "Schema", value: str) -> None:
-        self._encoder.encode_string(schema.expect_member_name(), value)
+        self._headers[schema.expect_member_name()] = value
 
     def write_blob(self, schema: "Schema", value: bytes) -> None:
-        self._encoder.encode_blob(schema.expect_member_name(), value)
+        self._headers[schema.expect_member_name()] = value
 
     def write_timestamp(self, schema: "Schema", value: datetime.datetime) -> None:
-        self._encoder.encode_timestamp(schema.expect_member_name(), value)
+        self._headers[schema.expect_member_name()] = value
 
 
 class RawPayloadSerializer(SpecificShapeSerializer):
