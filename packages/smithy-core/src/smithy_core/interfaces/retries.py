@@ -26,6 +26,9 @@ class RetryErrorType(Enum):
     This could be something like a 401 challenge in HTTP.
     """
 
+    # TODO:
+    # def classify(error: Exception) -> RetryErrorType | None
+
 
 @dataclass(kw_only=True)
 class RetryErrorInfo:

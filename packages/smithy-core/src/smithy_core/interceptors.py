@@ -1,6 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any, Iterable
 
 from .interfaces import TypedProperties
@@ -645,5 +645,13 @@ class InterceptorChain(AnyInterceptor):
     def read_after_execution(
         self, context: OutputContext[Any, Any, Any | None, Any | None]
     ) -> None:
+        exception: Exception | None = None
         for interceptor in self._chain:
-            interceptor.read_after_execution(context)
+            # Every one of these is supposed to be guaranteed to be called.
+            try:
+                interceptor.read_after_execution(context)
+            except Exception as e:
+                context = replace(context, response=e)
+                exception = e
+        if exception is not None:
+            raise exception
