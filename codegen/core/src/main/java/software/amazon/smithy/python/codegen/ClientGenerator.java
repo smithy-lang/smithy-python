@@ -199,12 +199,12 @@ final class ClientGenerator implements Runnable {
                                 config: $4T,
                                 operation_name: str,
                             ) -> Any:
-                                request_future = Future[$2T]()
+                                request_future = Future[InterceptorContext[Any, Any, $2T, Any]]()
                                 awaitable_output = asyncio.create_task(self._execute_operation(
                                     input, plugins, serialize, deserialize, config, operation_name,
                                     request_future=request_future
                                 ))
-                                transport_request = await request_future
+                                request_context = await request_future
                                 ${5C|}
 
                             async def _output_stream(
@@ -235,14 +235,14 @@ final class ClientGenerator implements Runnable {
                                 operation_name: str,
                                 event_deserializer: Callable[[ShapeDeserializer], Any],
                             ) -> Any:
-                                request_future = Future[$2T]()
+                                request_future = Future[InterceptorContext[Any, Any, $2T, Any]]()
                                 response_future = Future[$3T]()
                                 awaitable_output = asyncio.create_task(self._execute_operation(
                                     input, plugins, serialize, deserialize, config, operation_name,
                                     request_future=request_future,
                                     response_future=response_future
                                 ))
-                                transport_request = await request_future
+                                request_context = await request_future
                                 ${7C|}
                             """,
                     pluginSymbol,
@@ -264,7 +264,7 @@ final class ClientGenerator implements Runnable {
                             deserialize: Callable[[$3T, $5T], Awaitable[Output]],
                             config: $5T,
                             operation_name: str,
-                            request_future: Future[$2T] | None = None,
+                            request_future: Future[InterceptorContext[Any, Any, $2T, Any]] | None = None,
                             response_future: Future[$3T] | None = None,
                         ) -> Output:
                             try:
@@ -292,7 +292,7 @@ final class ClientGenerator implements Runnable {
                             deserialize: Callable[[$3T, $5T], Awaitable[Output]],
                             config: $5T,
                             operation_name: str,
-                            request_future: Future[$2T] | None,
+                            request_future: Future[InterceptorContext[Any, Any, $2T, Any]] | None,
                             response_future: Future[$3T] | None,
                         ) -> Output:
                             logger.debug('Making request for operation "%s" with parameters: %s', operation_name, input)
@@ -409,7 +409,7 @@ final class ClientGenerator implements Runnable {
                                         retry_strategy.record_success(token=retry_token)
                                         if response_future is not None:
                                             response_future.set_result(
-                                                context_with_response.transport_response,  # type: ignore
+                                                context_with_response.transport_response  # type: ignore
                                             )
                                         break
                             except Exception as e:
@@ -433,7 +433,7 @@ final class ClientGenerator implements Runnable {
                             context: InterceptorContext[Input, None, $2T, None],
                             config: $5T,
                             operation_name: str,
-                            request_future: Future[$2T] | None,
+                            request_future: Future[InterceptorContext[Any, Any, $2T, Any]] | None,
                         ) -> InterceptorContext[Input, Output, $2T, $3T | None]:
                             try:
                                 # assert config.interceptors is not None
@@ -599,7 +599,7 @@ final class ClientGenerator implements Runnable {
                                     request=context_with_response.transport_request,
                                     request_config=request_config,
                                 ))
-                                request_future.set_result(context_with_response.transport_request)
+                                request_future.set_result(context_with_response)
                                 context_with_response._transport_response = await response_task
                             else:
                                 context_with_response._transport_response = await config.http_client.send(

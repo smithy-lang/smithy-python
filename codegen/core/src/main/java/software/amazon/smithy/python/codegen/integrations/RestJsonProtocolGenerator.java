@@ -403,7 +403,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                         return AWSInputEventStream[Any, Any](
                             payload_codec=codec,
                             awaitable_output=awaitable_output,
-                            async_writer=transport_request.body,  # type: ignore
+                            async_writer=request_context.transport_request.body,  # type: ignore
                         )
                         """);
     }
@@ -443,7 +443,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                         codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
                         return AWSDuplexEventStream[Any, Any, Any](
                             payload_codec=codec,
-                            async_writer=transport_request.body,  # type: ignore
+                            async_writer=request_context.transport_request.body,  # type: ignore
                             awaitable_output=awaitable_output,
                             awaitable_response=response_future,
                             deserializer=event_deserializer,  # type: ignore
