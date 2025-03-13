@@ -111,4 +111,5 @@ async def test_token_cache_get_token():
     await token_cache.get_token()
     token_cache._refresh.assert_awaited()
 
+
 # TODO: Add tests for EC2Metadata and IMDSCredentialsResolver
