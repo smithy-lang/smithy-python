@@ -156,7 +156,6 @@ class CRTResponseFactory:
     def on_response(
         self, status_code: int, headers: list[tuple[str, str]], **kwargs: Any
     ) -> None:  # pragma: crt-callback
-        print("on-response")
         fields = Fields()
         for header_name, header_val in headers:
             try:
