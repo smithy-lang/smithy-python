@@ -1,7 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 from asyncio import Future
-from typing import Any, Protocol, Self
+from typing import Any, Self
 
 from ..deserializers import DeserializeableShape
 from ..serializers import SerializeableShape
@@ -216,7 +216,7 @@ class InputEventStream[IE: SerializeableShape, O]:
         await self.close()
 
 
-class OutputEventStream[OE: DeserializeableShape, O: DeserializeableShape](Protocol):
+class OutputEventStream[OE: DeserializeableShape, O: DeserializeableShape]:
     """An event stream that streams messages from the service.
 
     To ensure that streams are closed upon exiting, this class may be used as an async
