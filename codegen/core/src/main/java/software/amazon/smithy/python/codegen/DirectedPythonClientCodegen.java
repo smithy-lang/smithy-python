@@ -21,6 +21,7 @@ import software.amazon.smithy.codegen.core.directed.GenerateErrorDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateIntEnumDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateListDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateMapDirective;
+import software.amazon.smithy.codegen.core.directed.GenerateOperationDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateServiceDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateStructureDirective;
 import software.amazon.smithy.codegen.core.directed.GenerateUnionDirective;
@@ -35,6 +36,7 @@ import software.amazon.smithy.python.codegen.generators.InitGenerator;
 import software.amazon.smithy.python.codegen.generators.IntEnumGenerator;
 import software.amazon.smithy.python.codegen.generators.ListGenerator;
 import software.amazon.smithy.python.codegen.generators.MapGenerator;
+import software.amazon.smithy.python.codegen.generators.OperationGenerator;
 import software.amazon.smithy.python.codegen.generators.ProtocolGenerator;
 import software.amazon.smithy.python.codegen.generators.SchemaGenerator;
 import software.amazon.smithy.python.codegen.generators.ServiceErrorGenerator;
@@ -131,6 +133,19 @@ final class DirectedPythonClientCodegen
         protocolGenerator.generateResponseDeserializers(directive.context());
 
         protocolGenerator.generateProtocolTests(directive.context());
+    }
+
+    @Override
+    public void generateOperation(GenerateOperationDirective<GenerationContext, PythonSettings> directive) {
+        DirectedCodegen.super.generateOperation(directive);
+
+        directive.context().writerDelegator().useShapeWriter(directive.shape(), writer -> {
+            OperationGenerator generator = new OperationGenerator(
+                    directive.context(),
+                    writer,
+                    directive.shape());
+            generator.run();
+        });
     }
 
     @Override

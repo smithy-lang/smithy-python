@@ -25,6 +25,7 @@ import software.amazon.smithy.python.codegen.sections.ResolveIdentitySection;
 import software.amazon.smithy.python.codegen.sections.SendRequestSection;
 import software.amazon.smithy.python.codegen.sections.SignRequestSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
+import software.amazon.smithy.utils.CaseUtils;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
 /**
@@ -705,6 +706,7 @@ final class ClientGenerator implements Runnable {
      */
     private void generateOperation(PythonWriter writer, OperationShape operation) {
         var operationSymbol = context.symbolProvider().toSymbol(operation);
+        var operationMethodSymbol = operationSymbol.expectProperty(SymbolProperties.OPERATION_METHOD);
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
 
         var input = context.model().expectShape(operation.getInputShape());
@@ -715,7 +717,7 @@ final class ClientGenerator implements Runnable {
 
         writer.openBlock("async def $L(self, input: $T, plugins: list[$T] | None = None) -> $T:",
                 "",
-                operationSymbol.getName(),
+                operationMethodSymbol.getName(),
                 inputSymbol,
                 pluginSymbol,
                 outputSymbol,

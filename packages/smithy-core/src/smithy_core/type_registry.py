@@ -13,7 +13,7 @@ from smithy_core.shapes import ShapeID
 class TypeRegistry:
     def __init__(
         self,
-        types: dict[ShapeID, DeserializeableShape],
+        types: dict[ShapeID, type[DeserializeableShape]],
         sub_registry: "TypeRegistry | None" = None,
     ):
         self._types = types
@@ -21,10 +21,10 @@ class TypeRegistry:
 
     def get(self, shape: ShapeID) -> type[DeserializeableShape]:
         if shape in self._types:
-            return type(self._types[shape])
+            return self._types[shape]
         if self._sub_registry is not None:
             return self._sub_registry.get(shape)
-        raise ValueError(f"Unknown shape: {shape}")  # TODO: real exception?
+        raise KeyError(f"Unknown shape: {shape}")
 
     def deserialize(self, document: Document) -> DeserializeableShape:
         return document.as_shape(self.get(document.discriminator))
