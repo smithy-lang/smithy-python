@@ -3,7 +3,7 @@
 import json
 import asyncio
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Literal
 
 from smithy_core import URI
@@ -38,11 +38,9 @@ class Token:
 
 
 class TokenCache:
-    """Holds the token needed to fetch instance metadata. In addition, it knows how to
-    refresh itself.
+    """Holds the token needed to fetch instance metadata.
 
-    :param HTTPClient http_client: The client used for making http requests.
-    :param int token_ttl: The time in seconds before a token expires.
+    In addition, it knows how to refresh itself.
     """
 
     _MIN_TTL = 5
@@ -109,6 +107,8 @@ class TokenCache:
 class Config:
     """Configuration for EC2Metadata."""
 
+    _HOST_MAPPING = {"IPv4": "169.254.169.254", "IPv6": "[fd00:ec2::254]"}
+
     retry_strategy: RetryStrategy
     endpoint_uri: URI
     endpoint_mode: Literal["IPv4", "IPv6"]
@@ -138,10 +138,9 @@ class Config:
         if endpoint_uri is not None:
             return endpoint_uri
 
-        host_mapping = {"IPv4": "169.254.169.254", "IPv6": "[fd00:ec2::254]"}
-
         return URI(
-            scheme="http", host=host_mapping.get(endpoint_mode, host_mapping["IPv4"])
+            scheme="http",
+            host=self._HOST_MAPPING.get(endpoint_mode, self._HOST_MAPPING["IPv4"]),
         )
 
 
@@ -198,7 +197,11 @@ class IMDSCredentialsResolver(
     async def get_identity(
         self, *, identity_properties: IdentityProperties
     ) -> AWSCredentialsIdentity:
-        if self._credentials is not None:
+        if (
+            self._credentials is not None
+            and self._credentials.expiration
+            and datetime.now(timezone.utc) < self._credentials.expiration
+        ):
             return self._credentials
 
         profile = self._profile_name
@@ -214,6 +217,9 @@ class IMDSCredentialsResolver(
         secret_access_key = creds.get("SecretAccessKey")
         session_token = creds.get("Token")
         account_id = creds.get("AccountId")
+        expiration = creds.get("Expiration")
+        if expiration is not None:
+            expiration = datetime.fromisoformat(expiration).replace(tzinfo=timezone.utc)
 
         if access_key_id is None or secret_access_key is None:
             raise SmithyIdentityException(
@@ -224,6 +230,7 @@ class IMDSCredentialsResolver(
             access_key_id=access_key_id,
             secret_access_key=secret_access_key,
             session_token=session_token,
+            expiration=expiration,
             account_id=account_id,
         )
         return self._credentials
