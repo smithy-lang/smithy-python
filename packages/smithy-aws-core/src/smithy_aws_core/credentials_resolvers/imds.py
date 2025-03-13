@@ -75,7 +75,7 @@ class Token:
     """Represents an IMDSv2 session token with a value and method for checking
     expiration."""
 
-    def __init__(self, value: bytes, ttl: int):
+    def __init__(self, value: str, ttl: int):
         self._value = value
         self._ttl = ttl
         self._created_time = datetime.now()
@@ -85,7 +85,7 @@ class Token:
         return datetime.now() - self._created_time >= timedelta(seconds=self._ttl)
 
     @property
-    def value(self) -> bytes:
+    def value(self) -> str:
         return self._value
 
 
@@ -133,7 +133,7 @@ class TokenCache:
             )
             response = await self._http_client.send(request)
             token_value = await response.consume_body_async()
-            self._token = Token(token_value, self._config.token_ttl)
+            self._token = Token(token_value.decode("utf-8"), self._config.token_ttl)
 
     async def get_token(self) -> Token:
         """Get the current token, refreshing it if expired."""
@@ -158,7 +158,7 @@ class EC2Metadata:
                 # TODO: Add user-agent
                 Field(
                     name="x-aws-ec2-metadata-token",
-                    values=[token.value.decode("utf-8")],
+                    values=[token.value],
                 )
             ]
         )
