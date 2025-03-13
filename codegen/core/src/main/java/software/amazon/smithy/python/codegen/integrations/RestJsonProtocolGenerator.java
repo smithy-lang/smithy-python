@@ -397,13 +397,25 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
         writer.addImport("smithy_core.types", "TimestampFormat");
         writer.addImport("aws_event_stream.aio", "AWSInputEventStream");
+        writer.addImport("aws_sdk_signers", "AsyncEventSigner");
         writer.write(
                 """
+                        # TODO - Move this out of the RestJSON generator
+                        ctx = request_context
+                        signer_properties = ctx.properties.get("signer_properties")  # type: ignore
+                        identity = ctx.properties.get("identity")  # type: ignore
+                        signature = ctx.properties.get("signature")  # type: ignore
+                        signer = AsyncEventSigner(
+                            signing_properties=signer_properties,  # type: ignore
+                            identity=identity,  # type: ignore
+                            initial_signature=signature,  # type: ignore
+                        )
                         codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
                         return AWSInputEventStream[Any, Any](
                             payload_codec=codec,
                             awaitable_output=awaitable_output,
                             async_writer=request_context.transport_request.body,  # type: ignore
+                            signer=signer,  # type: ignore
                         )
                         """);
     }
@@ -439,8 +451,20 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
         writer.addImport("smithy_core.types", "TimestampFormat");
         writer.addImport("aws_event_stream.aio", "AWSDuplexEventStream");
+        writer.addImport("aws_sdk_signers", "AsyncEventSigner");
         writer.write(
                 """
+                        # TODO - Move this out of the RestJSON generator
+                        ctx = request_context
+                        signer_properties = ctx.properties.get("signer_properties")  # type: ignore
+                        identity = ctx.properties.get("identity")  # type: ignore
+                        signature = ctx.properties.get("signature")  # type: ignore
+                        signer = AsyncEventSigner(
+                            signing_properties=signer_properties,  # type: ignore
+                            identity=identity,  # type: ignore
+                            initial_signature=signature,  # type: ignore
+                        )
+
                         codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
                         return AWSDuplexEventStream[Any, Any, Any](
                             payload_codec=codec,
@@ -448,6 +472,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                             awaitable_output=awaitable_output,
                             awaitable_response=response_future,
                             deserializer=event_deserializer,  # type: ignore
+                            signer=signer,  # type: ignore
                         )
                         """);
     }

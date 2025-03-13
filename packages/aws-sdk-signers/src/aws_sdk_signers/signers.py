@@ -353,7 +353,7 @@ class SigV4Signer:
         if request.destination.scheme != "https":
             return True
 
-        return signing_properties.get("payload_signing_enabled", True)
+        return signing_properties.get("payload_signing_enabled", False)
 
     def _format_canonical_payload(
         self,
@@ -364,7 +364,7 @@ class SigV4Signer:
         payload_hash = self._compute_payload_hash(
             request=request, signing_properties=signing_properties
         )
-        if signing_properties.get("content_checksum_enabled", False):
+        if signing_properties.get("content_checksum_enabled", True):
             request.fields.set_field(
                 Field(name="X-Amz-Content-SHA256", values=[payload_hash])
             )
@@ -721,7 +721,7 @@ class AsyncSigV4Signer:
         if request.destination.scheme != "https":
             return True
 
-        return signing_properties.get("payload_signing_enabled", True)
+        return signing_properties.get("payload_signing_enabled", False)
 
     async def _format_canonical_payload(
         self,
@@ -732,7 +732,7 @@ class AsyncSigV4Signer:
         payload_hash = await self._compute_payload_hash(
             request=request, signing_properties=signing_properties
         )
-        if signing_properties.get("content_checksum_enabled", False):
+        if signing_properties.get("content_checksum_enabled", True):
             request.fields.set_field(
                 Field(name="X-Amz-Content-SHA256", values=[payload_hash])
             )
