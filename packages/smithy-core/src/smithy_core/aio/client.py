@@ -4,10 +4,9 @@ import logging
 import asyncio
 from asyncio import sleep, Future
 from dataclasses import dataclass, replace
-from typing import Any, Callable, Awaitable
+from typing import Any
 
 from .interfaces import ClientProtocol, Request, Response, ClientTransport
-from .interfaces.eventstream import DuplexEventStream, InputEventStream, OutputEventStream, AsyncEventReceiver
 from .. import URI
 from ..interfaces import TypedProperties, Endpoint
 from ..interfaces.retries import RetryStrategy, RetryErrorInfo, RetryErrorType
@@ -21,7 +20,7 @@ from ..interceptors import (
 from ..schemas import APIOperation
 from ..shapes import ShapeID
 from ..serializers import SerializeableShape
-from ..deserializers import DeserializeableShape, ShapeDeserializer
+from ..deserializers import DeserializeableShape
 from ..exceptions import SmithyRetryException, SmithyException
 from ..types import PropertyKey
 
@@ -136,9 +135,11 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
     # ) -> tuple[O, AsyncEventReceiver[E]]:
     #     output, output_context = await execute_task
     #     return output, self.protocol.create_event_receiver(event_deserializer, output_context)
-    
+
     async def _execute_request[I: SerializeableShape, O: DeserializeableShape](
-        self, call: ClientCall[I, O], request_future: Future[RequestContext[I, TRequest]] | None
+        self,
+        call: ClientCall[I, O],
+        request_future: Future[RequestContext[I, TRequest]] | None,
     ) -> tuple[O, OutputContext[I, O, TRequest | None, TResponse | None]]:
         _LOGGER.debug(
             'Making request for operation "%s" with parameters: %s',
@@ -157,7 +158,9 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         return output_context.response, output_context
 
     async def _handle_execution[I: SerializeableShape, O: DeserializeableShape](
-        self, call: ClientCall[I, O], request_future: Future[RequestContext[I, TRequest]] | None
+        self,
+        call: ClientCall[I, O],
+        request_future: Future[RequestContext[I, TRequest]] | None,
     ) -> OutputContext[I, O, TRequest | None, TResponse | None]:
         try:
             interceptor = call.interceptor
@@ -226,7 +229,10 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             )
 
     async def _retry[I: SerializeableShape, O: DeserializeableShape](
-        self, call: ClientCall[I, O], request_context: RequestContext[I, TRequest], request_future: Future[RequestContext[I, TRequest]] | None
+        self,
+        call: ClientCall[I, O],
+        request_context: RequestContext[I, TRequest],
+        request_future: Future[RequestContext[I, TRequest]] | None,
     ) -> OutputContext[I, O, TRequest | None, TResponse | None]:
         # 8. Invoke AcquireInitialRetryToken
         retry_strategy = call.retry_strategy
@@ -239,7 +245,9 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             if retry_token.retry_delay:
                 await sleep(retry_token.retry_delay)
 
-            output_context = await self._handle_attempt(call, request_context, request_future)
+            output_context = await self._handle_attempt(
+                call, request_context, request_future
+            )
 
             if isinstance(output_context.response, Exception):
                 try:
@@ -269,7 +277,10 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 return output_context
 
     async def _handle_attempt[I: SerializeableShape, O: DeserializeableShape](
-        self, call: ClientCall[I, O], request_context: RequestContext[I, TRequest], request_future: Future[RequestContext[I, TRequest]] | None
+        self,
+        call: ClientCall[I, O],
+        request_context: RequestContext[I, TRequest],
+        request_future: Future[RequestContext[I, TRequest]] | None,
     ) -> OutputContext[I, O, TRequest, TResponse | None]:
         output_context: OutputContext[I, O, TRequest, TResponse | None]
         try:
@@ -353,9 +364,9 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 # then set the result of the request future. It's important to sequence
                 # it just like that so that the client gets a stream that's ready
                 # to send.
-                transport_task = asyncio.create_task(self.transport.send(
-                    request=request_context.transport_request
-                ))
+                transport_task = asyncio.create_task(
+                    self.transport.send(request=request_context.transport_request)
+                )
                 request_future.set_result(request_context)
                 transport_response = await transport_task
             else:

@@ -8,10 +8,8 @@ from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.deserializers import DeserializeableShape
 from smithy_json import JSONCodec
 
-from aws_event_stream._private.deserializers import (
-    AWSAsyncEventReceiver,
-    EventDeserializer,
-)
+from aws_event_stream.aio import AWSEventReceiver
+from aws_event_stream._private.deserializers import EventDeserializer
 from aws_event_stream.events import Event, EventMessage
 from aws_event_stream.exceptions import UnmodeledEventError
 
@@ -30,7 +28,7 @@ from . import (
 async def test_event_receiver(expected: DeserializeableShape, given: EventMessage):
     source = AsyncBytesReader(given.encode())
     deserializer = EventStreamDeserializer()
-    receiver = AWSAsyncEventReceiver[Any](
+    receiver = AWSEventReceiver[Any](
         payload_codec=JSONCodec(), source=source, deserializer=deserializer.deserialize
     )
 
