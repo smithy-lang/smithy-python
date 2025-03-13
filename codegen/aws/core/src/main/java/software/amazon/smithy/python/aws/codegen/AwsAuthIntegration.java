@@ -4,13 +4,12 @@
  */
 package software.amazon.smithy.python.aws.codegen;
 
-import java.util.Collections;
+import static software.amazon.smithy.python.aws.codegen.AwsConfiguration.REGION;
+
 import java.util.List;
 import software.amazon.smithy.aws.traits.auth.SigV4Trait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.shapes.ShapeId;
-import software.amazon.smithy.model.traits.HttpApiKeyAuthTrait;
-import static software.amazon.smithy.python.aws.codegen.AwsConfiguration.REGION;
 import software.amazon.smithy.python.codegen.ApplicationProtocol;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.ConfigProperty;
@@ -61,8 +60,7 @@ public class AwsAuthIntegration implements PythonIntegration {
                                 .build())
                         .addConfigProperty(REGION)
                         .authScheme(new Sigv4AuthScheme())
-                        .build()
-        );
+                        .build());
     }
 
     @Override
@@ -129,10 +127,8 @@ public class AwsAuthIntegration implements PythonIntegration {
                             .source(DerivedProperty.Source.CONFIG)
                             .type(Symbol.builder().name("str").build())
                             .sourcePropertyName("region")
-                            .build()
-            );
+                            .build());
         }
-
 
         @Override
         public Symbol getAuthOptionGenerator(GenerationContext context) {

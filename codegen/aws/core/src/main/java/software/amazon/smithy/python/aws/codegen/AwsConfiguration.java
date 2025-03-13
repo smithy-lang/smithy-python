@@ -13,8 +13,7 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
  */
 @SmithyUnstableApi
 public final class AwsConfiguration {
-    private AwsConfiguration() {
-    }
+    private AwsConfiguration() {}
 
     public static final ConfigProperty REGION = ConfigProperty.builder()
             .name("region")

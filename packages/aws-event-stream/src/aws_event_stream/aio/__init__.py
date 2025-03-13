@@ -1,10 +1,10 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-import asyncio
 from collections.abc import Callable
-from typing import Self
+from typing import Self, Awaitable
 
-from smithy_core.aio.interfaces import AsyncByteStream, AsyncWriter
+from smithy_core.aio.interfaces import AsyncByteStream, AsyncWriter, Response
+from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
 from smithy_core.serializers import SerializeableShape
@@ -33,8 +33,8 @@ class AWSDuplexEventStream[
         payload_codec: Codec,
         async_writer: AsyncWriter,
         deserializer: Callable[[ShapeDeserializer], O],
-        async_reader: AsyncByteStream | None = None,
-        initial_response: R | None = None,
+        awaitable_response: Awaitable[Response],
+        awaitable_output: Awaitable[R],
         deserializeable_response: type[R] | None = None,
         signer: Signer | None = None,
         is_client_mode: bool = True,
@@ -68,36 +68,14 @@ class AWSDuplexEventStream[
         self._deserializer = deserializer
         self._payload_codec = payload_codec
         self._is_client_mode = is_client_mode
+        self._deserializeable_response = deserializeable_response
 
-        # Create a future to allow awaiting the reader
-        loop = asyncio.get_event_loop()
-        self._reader_future: asyncio.Future[AsyncByteStream] = loop.create_future()
-        if async_reader is not None:
-            self._reader_future.set_result(async_reader)
-
-        # Create a future to allow awaiting the initial response
-        self._response = initial_response
-        self._deserializerable_response = deserializeable_response
-        self._response_future: asyncio.Future[R] = loop.create_future()
-
-    @property
-    def response(self) -> R | None:
-        return self._response
-
-    @response.setter
-    def response(self, value: R) -> None:
-        self._response_future.set_result(value)
-        self._response = value
-
-    def set_reader(self, value: AsyncByteStream) -> None:
-        """Sets the object to read events from.
-
-        :param value: An async readable object to read event bytes from.
-        """
-        self._reader_future.set_result(value)
+        self._awaitable_response = awaitable_response
+        self._awaitable_output = awaitable_output
+        self.response: R | None = None
 
     async def await_output(self) -> tuple[R, AsyncEventReceiver[O]]:
-        async_reader = await self._reader_future
+        async_reader = AsyncBytesReader((await self._awaitable_response).body)
         if self.output_stream is None:
             self.output_stream = _AWSEventReceiver[O](
                 payload_codec=self._payload_codec,
@@ -107,13 +85,13 @@ class AWSDuplexEventStream[
             )
 
         if self.response is None:
-            if self._deserializerable_response is None:
-                initial_response = await self._response_future
+            if self._deserializeable_response is None:
+                initial_response = await self._awaitable_output
             else:
                 initial_response_stream = _AWSEventReceiver(
                     payload_codec=self._payload_codec,
                     source=async_reader,
-                    deserializer=self._deserializerable_response.deserialize,
+                    deserializer=self._deserializeable_response.deserialize,
                     is_client_mode=self._is_client_mode,
                 )
                 initial_response = await initial_response_stream.receive()
@@ -133,7 +111,7 @@ class AWSInputEventStream[I: SerializeableShape, R](InputEventStream[I, R]):
         self,
         payload_codec: Codec,
         async_writer: AsyncWriter,
-        initial_response: R | None = None,
+        awaitable_output: Awaitable[R],
         signer: Signer | None = None,
         is_client_mode: bool = True,
     ) -> None:
@@ -147,13 +125,8 @@ class AWSInputEventStream[I: SerializeableShape, R](InputEventStream[I, R]):
         :param is_client_mode: Whether the stream is being constructed for a client or
             server implementation.
         """
-        self._response = initial_response
-
-        # Create a future to allow awaiting the initial response.
-        loop = asyncio.get_event_loop()
-        self._response_future: asyncio.Future[R] = loop.create_future()
-        if initial_response is not None:
-            self._response_future.set_result(initial_response)
+        self.response: R | None = None
+        self._awaitable_response = awaitable_output
 
         self.input_stream = _AWSEventPublisher(
             payload_codec=payload_codec,
@@ -162,17 +135,10 @@ class AWSInputEventStream[I: SerializeableShape, R](InputEventStream[I, R]):
             is_client_mode=is_client_mode,
         )
 
-    @property
-    def response(self) -> R | None:
-        return self._response
-
-    @response.setter
-    def response(self, value: R) -> None:
-        self._response_future.set_result(value)
-        self._response = value
-
     async def await_output(self) -> R:
-        return await self._response_future
+        if self.response is None:
+            self.response = await self._awaitable_response
+        return self.response
 
 
 class AWSOutputEventStream[O: DeserializeableShape, R: DeserializeableShape](
