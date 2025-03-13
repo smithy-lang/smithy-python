@@ -4,12 +4,11 @@
  */
 package software.amazon.smithy.python.aws.codegen;
 
+import static software.amazon.smithy.python.aws.codegen.AwsConfiguration.REGION;
+
 import java.util.List;
 import software.amazon.smithy.aws.traits.ServiceTrait;
-import software.amazon.smithy.codegen.core.Symbol;
-import static software.amazon.smithy.python.aws.codegen.AwsConfiguration.REGION;
 import software.amazon.smithy.python.codegen.CodegenUtils;
-import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;

@@ -120,10 +120,7 @@ final class ClientGenerator implements Runnable {
         var hasStreaming = hasEventStream();
         writer.putContext("hasEventStream", hasStreaming);
         if (hasStreaming) {
-            writer.addImports("smithy_core.deserializers",
-                    Set.of(
-                            "ShapeDeserializer",
-                            "DeserializeableShape"));
+            writer.addImport("smithy_core.deserializers", "ShapeDeserializer");
             writer.addStdlibImport("typing", "Any");
         }
 
@@ -137,7 +134,8 @@ final class ClientGenerator implements Runnable {
         writer.addStdlibImport("typing", "Awaitable");
         writer.addStdlibImport("typing", "cast");
         writer.addStdlibImport("copy", "deepcopy");
-        writer.addStdlibImport("asyncio", "sleep");
+        writer.addStdlibImport("asyncio");
+        writer.addStdlibImports("asyncio", Set.of("sleep", "Future"));
 
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addImport("smithy_core.exceptions", "SmithyRetryException");
@@ -187,6 +185,75 @@ final class ClientGenerator implements Runnable {
                 """);
         writer.dedent();
 
+        if (hasStreaming) {
+            writer.addStdlibImports("typing", Set.of("Any", "Awaitable"));
+            writer.addStdlibImport("asyncio");
+            writer.write(
+                    """
+                            async def _input_stream(
+                                self,
+                                input: Input,
+                                plugins: list[$1T],
+                                serialize: Callable[[Input, $4T], Awaitable[$2T]],
+                                deserialize: Callable[[$3T, $4T], Awaitable[Output]],
+                                config: $4T,
+                                operation_name: str,
+                            ) -> Any:
+                                request_future = Future[InterceptorContext[Any, Any, $2T, Any]]()
+                                awaitable_output = asyncio.create_task(self._execute_operation(
+                                    input, plugins, serialize, deserialize, config, operation_name,
+                                    request_future=request_future
+                                ))
+                                request_context = await request_future
+                                ${5C|}
+
+                            async def _output_stream(
+                                self,
+                                input: Input,
+                                plugins: list[$1T],
+                                serialize: Callable[[Input, $4T], Awaitable[$2T]],
+                                deserialize: Callable[[$3T, $4T], Awaitable[Output]],
+                                config: $4T,
+                                operation_name: str,
+                                event_deserializer: Callable[[ShapeDeserializer], Any],
+                            ) -> Any:
+                                response_future = Future[$3T]()
+                                output = await self._execute_operation(
+                                    input, plugins, serialize, deserialize, config, operation_name,
+                                    response_future=response_future
+                                )
+                                transport_response = await response_future
+                                ${6C|}
+
+                            async def _duplex_stream(
+                                self,
+                                input: Input,
+                                plugins: list[$1T],
+                                serialize: Callable[[Input, $4T], Awaitable[$2T]],
+                                deserialize: Callable[[$3T, $4T], Awaitable[Output]],
+                                config: $4T,
+                                operation_name: str,
+                                event_deserializer: Callable[[ShapeDeserializer], Any],
+                            ) -> Any:
+                                request_future = Future[InterceptorContext[Any, Any, $2T, Any]]()
+                                response_future = Future[$3T]()
+                                awaitable_output = asyncio.create_task(self._execute_operation(
+                                    input, plugins, serialize, deserialize, config, operation_name,
+                                    request_future=request_future,
+                                    response_future=response_future
+                                ))
+                                request_context = await request_future
+                                ${7C|}
+                            """,
+                    pluginSymbol,
+                    transportRequest,
+                    transportResponse,
+                    configSymbol,
+                    writer.consumer(w -> context.protocolGenerator().wrapInputStream(context, w)),
+                    writer.consumer(w -> context.protocolGenerator().wrapOutputStream(context, w)),
+                    writer.consumer(w -> context.protocolGenerator().wrapDuplexStream(context, w)));
+        }
+
         writer.write(
                 """
                         async def _execute_operation(
@@ -197,25 +264,25 @@ final class ClientGenerator implements Runnable {
                             deserialize: Callable[[$3T, $5T], Awaitable[Output]],
                             config: $5T,
                             operation_name: str,
-                            ${?hasEventStream}
-                            has_input_stream: bool = False,
-                            event_deserializer: Callable[[ShapeDeserializer], Any] | None = None,
-                            event_response_deserializer: DeserializeableShape | None = None,
-                            ${/hasEventStream}
+                            request_future: Future[InterceptorContext[Any, Any, $2T, Any]] | None = None,
+                            response_future: Future[$3T] | None = None,
                         ) -> Output:
                             try:
                                 return await self._handle_execution(
                                     input, plugins, serialize, deserialize, config, operation_name,
-                                    ${?hasEventStream}
-                                    has_input_stream, event_deserializer, event_response_deserializer,
-                                    ${/hasEventStream}
+                                    request_future, response_future,
                                 )
                             except Exception as e:
+                                if request_future is not None and not request_future.done:
+                                    request_future.set_exception($4T(e))
+                                if response_future is not None and not response_future.done:
+                                    response_future.set_exception($4T(e))
+
                                 # Make sure every exception that we throw is an instance of $4T so
                                 # customers can reliably catch everything we throw.
                                 if not isinstance(e, $4T):
                                     raise $4T(e) from e
-                                raise e
+                                raise
 
                         async def _handle_execution(
                             self,
@@ -225,11 +292,8 @@ final class ClientGenerator implements Runnable {
                             deserialize: Callable[[$3T, $5T], Awaitable[Output]],
                             config: $5T,
                             operation_name: str,
-                            ${?hasEventStream}
-                            has_input_stream: bool = False,
-                            event_deserializer: Callable[[ShapeDeserializer], Any] | None = None,
-                            event_response_deserializer: DeserializeableShape | None = None,
-                            ${/hasEventStream}
+                            request_future: Future[InterceptorContext[Any, Any, $2T, Any]] | None,
+                            response_future: Future[$3T] | None,
                         ) -> Output:
                             logger.debug('Making request for operation "%s" with parameters: %s', operation_name, input)
                             context: InterceptorContext[Input, None, None, None] = InterceptorContext(
@@ -307,6 +371,7 @@ final class ClientGenerator implements Runnable {
                                         context_with_transport_request.copy(),
                                         config,
                                         operation_name,
+                                        request_future,
                                     )
 
                                     # We perform this type-ignored re-assignment because `context` needs
@@ -342,6 +407,10 @@ final class ClientGenerator implements Runnable {
                                     else:
                                         # Step 8: Invoke record_success
                                         retry_strategy.record_success(token=retry_token)
+                                        if response_future is not None:
+                                            response_future.set_result(
+                                                context_with_response.transport_response  # type: ignore
+                                            )
                                         break
                             except Exception as e:
                                 if context.response is not None:
@@ -355,16 +424,7 @@ final class ClientGenerator implements Runnable {
                             execution_context = cast(
                                 InterceptorContext[Input, Output, $2T | None, $3T | None], context
                             )
-                            ${^hasEventStream}
                             return await self._finalize_execution(interceptors, execution_context)
-                            ${/hasEventStream}
-                            ${?hasEventStream}
-                            operation_output = await self._finalize_execution(interceptors, execution_context)
-                            if has_input_stream or event_deserializer is not None:
-                                ${6C|}
-                            else:
-                                return operation_output
-                            ${/hasEventStream}
 
                         async def _handle_attempt(
                             self,
@@ -373,6 +433,7 @@ final class ClientGenerator implements Runnable {
                             context: InterceptorContext[Input, None, $2T, None],
                             config: $5T,
                             operation_name: str,
+                            request_future: Future[InterceptorContext[Any, Any, $2T, Any]] | None,
                         ) -> InterceptorContext[Input, Output, $2T, $3T | None]:
                             try:
                                 # assert config.interceptors is not None
@@ -385,8 +446,7 @@ final class ClientGenerator implements Runnable {
                 transportRequest,
                 transportResponse,
                 errorSymbol,
-                configSymbol,
-                writer.consumer(w -> context.protocolGenerator().wrapEventStream(context, w)));
+                configSymbol);
 
         boolean supportsAuth = !ServiceIndex.of(context.model()).getAuthSchemes(service).isEmpty();
         writer.pushState(new ResolveIdentitySection());
@@ -533,10 +593,19 @@ final class ClientGenerator implements Runnable {
                             )
                             logger.debug("HTTP request config: %s", request_config)
                             logger.debug("Sending HTTP request: %s", context_with_response.transport_request)
-                            context_with_response._transport_response = await config.http_client.send(
-                                request=context_with_response.transport_request,
-                                request_config=request_config,
-                            )
+
+                            if request_future is not None:
+                                response_task = asyncio.create_task(config.http_client.send(
+                                    request=context_with_response.transport_request,
+                                    request_config=request_config,
+                                ))
+                                request_future.set_result(context_with_response)
+                                context_with_response._transport_response = await response_task
+                            else:
+                                context_with_response._transport_response = await config.http_client.send(
+                                    request=context_with_response.transport_request,
+                                    request_config=request_config,
+                                )
                             logger.debug("Received HTTP response: %s", context_with_response.transport_response)
 
                     """, transportRequest, transportResponse);
@@ -834,16 +903,14 @@ final class ClientGenerator implements Runnable {
                             raise NotImplementedError()
                             ${/hasProtocol}
                             ${?hasProtocol}
-                            return await self._execute_operation(
+                            return await self._duplex_stream(
                                 input=input,
                                 plugins=operation_plugins,
                                 serialize=${serSymbol:T},
                                 deserialize=${deserSymbol:T},
                                 config=self._config,
                                 operation_name=${operationName:S},
-                                has_input_stream=True,
                                 event_deserializer=$T().deserialize,
-                                event_response_deserializer=${output:T},
                             )  # type: ignore
                             ${/hasProtocol}
                         """,
@@ -862,14 +929,13 @@ final class ClientGenerator implements Runnable {
                             raise NotImplementedError()
                             ${/hasProtocol}
                             ${?hasProtocol}
-                            return await self._execute_operation(
+                            return await self._input_stream(
                                 input=input,
                                 plugins=operation_plugins,
                                 serialize=${serSymbol:T},
                                 deserialize=${deserSymbol:T},
                                 config=self._config,
                                 operation_name=${operationName:S},
-                                has_input_stream=True,
                             )  # type: ignore
                             ${/hasProtocol}
                         """, writer.consumer(w -> writeSharedOperationInit(w, operation, input)));
@@ -887,7 +953,7 @@ final class ClientGenerator implements Runnable {
                         raise NotImplementedError()
                         ${/hasProtocol}
                         ${?hasProtocol}
-                        return await self._execute_operation(
+                        return await self._output_stream(
                             input=input,
                             plugins=operation_plugins,
                             serialize=${serSymbol:T},
@@ -895,7 +961,6 @@ final class ClientGenerator implements Runnable {
                             config=self._config,
                             operation_name=${operationName:S},
                             event_deserializer=$T().deserialize,
-                            event_response_deserializer=${output:T},
                         )  # type: ignore
                         ${/hasProtocol}
                     """,

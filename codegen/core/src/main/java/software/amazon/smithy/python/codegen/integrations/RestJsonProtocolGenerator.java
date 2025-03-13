@@ -390,48 +390,64 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
     }
 
     @Override
-    public void wrapEventStream(GenerationContext context, PythonWriter writer) {
+    public void wrapInputStream(GenerationContext context, PythonWriter writer) {
         writer.addDependency(SmithyPythonDependency.SMITHY_JSON);
         writer.addDependency(SmithyPythonDependency.AWS_EVENT_STREAM);
-        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-        writer.addImports("aws_event_stream.aio",
-                Set.of(
-                        "AWSDuplexEventStream",
-                        "AWSInputEventStream",
-                        "AWSOutputEventStream"));
         writer.addImport("smithy_json", "JSONCodec");
         writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
         writer.addImport("smithy_core.types", "TimestampFormat");
-        writer.addStdlibImport("typing", "Any");
-
-        writer.write("""
-                codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
-                if has_input_stream:
-                    if event_deserializer is not None:
-                        return AWSDuplexEventStream[Any, Any, Any](
+        writer.addImport("aws_event_stream.aio", "AWSInputEventStream");
+        writer.write(
+                """
+                        codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
+                        return AWSInputEventStream[Any, Any](
                             payload_codec=codec,
-                            initial_response=operation_output,
-                            async_writer=execution_context.transport_request.body,  # type: ignore
+                            awaitable_output=awaitable_output,
+                            async_writer=request_context.transport_request.body,  # type: ignore
+                        )
+                        """);
+    }
+
+    @Override
+    public void wrapOutputStream(GenerationContext context, PythonWriter writer) {
+        writer.addDependency(SmithyPythonDependency.SMITHY_JSON);
+        writer.addDependency(SmithyPythonDependency.AWS_EVENT_STREAM);
+        writer.addImport("smithy_json", "JSONCodec");
+        writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
+        writer.addImport("smithy_core.types", "TimestampFormat");
+        writer.addImport("aws_event_stream.aio", "AWSOutputEventStream");
+        writer.write(
+                """
+                        codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
+                        return AWSOutputEventStream[Any, Any](
+                            payload_codec=codec,
+                            initial_response=output,
                             async_reader=AsyncBytesReader(
-                                execution_context.transport_response.body  # type: ignore
+                                transport_response.body  # type: ignore
                             ),
                             deserializer=event_deserializer,  # type: ignore
                         )
-                    else:
-                        return AWSInputEventStream[Any, Any](
+                        """);
+    }
+
+    @Override
+    public void wrapDuplexStream(GenerationContext context, PythonWriter writer) {
+        writer.addDependency(SmithyPythonDependency.SMITHY_JSON);
+        writer.addDependency(SmithyPythonDependency.AWS_EVENT_STREAM);
+        writer.addImport("smithy_json", "JSONCodec");
+        writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
+        writer.addImport("smithy_core.types", "TimestampFormat");
+        writer.addImport("aws_event_stream.aio", "AWSDuplexEventStream");
+        writer.write(
+                """
+                        codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
+                        return AWSDuplexEventStream[Any, Any, Any](
                             payload_codec=codec,
-                            initial_response=operation_output,
-                            async_writer=execution_context.transport_request.body,  # type: ignore
+                            async_writer=request_context.transport_request.body,  # type: ignore
+                            awaitable_output=awaitable_output,
+                            awaitable_response=response_future,
+                            deserializer=event_deserializer,  # type: ignore
                         )
-                else:
-                    return AWSOutputEventStream[Any, Any](
-                        payload_codec=codec,
-                        initial_response=operation_output,
-                        async_reader=AsyncBytesReader(
-                            execution_context.transport_response.body  # type: ignore
-                        ),
-                        deserializer=event_deserializer,  # type: ignore
-                    )
-                """);
+                        """);
     }
 }
