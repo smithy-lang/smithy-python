@@ -28,6 +28,7 @@ async def test_client_marshal_request() -> None:
     )
     crt_request = await client._marshal_request(request)  # type: ignore
     assert crt_request.headers.get("host") == "example.com"  # type: ignore
+    assert crt_request.headers.get("accept") == "*/*"  # type: ignore
     assert crt_request.method == "GET"  # type: ignore
     assert crt_request.path == "/path?key1=value1&key2=value2"  # type: ignore
 

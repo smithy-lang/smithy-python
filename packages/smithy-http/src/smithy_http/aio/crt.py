@@ -11,6 +11,7 @@ from io import BytesIO, BufferedIOBase
 from threading import Lock
 from typing import TYPE_CHECKING, Any
 
+
 if TYPE_CHECKING:
     # pyright doesn't like optional imports. This is reasonable because if we use these
     # in type hints then they'd result in runtime errors.
@@ -292,10 +293,13 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         """Create :py:class:`awscrt.http.HttpRequest` from
         :py:class:`smithy_http.aio.HTTPRequest`"""
         headers_list = []
-        if "Host" not in request.fields:
+        if "host" not in request.fields:
             request.fields.set_field(
-                Field(name="Host", values=[request.destination.host])
+                Field(name="host", values=[request.destination.host])
             )
+
+        if "accept" not in request.fields:
+            request.fields.set_field(Field(name="accept", values=["*/*"]))
 
         for fld in request.fields.entries.values():
             # TODO: Use literal values for "header"/"trailer".
