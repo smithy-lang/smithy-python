@@ -8,7 +8,6 @@ members = [
     "aws-sdk-signers",
     "smithy-aws-core",
     "smithy-core",
-    "smithy-event-stream",
     "smithy-http",
     "smithy-json",
     "smithy-python",
@@ -99,14 +98,10 @@ version = "0.0.1"
 source = { editable = "packages/aws-event-stream" }
 dependencies = [
     { name = "smithy-core" },
-    { name = "smithy-event-stream" },
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "smithy-core", editable = "packages/smithy-core" },
-    { name = "smithy-event-stream", editable = "packages/smithy-event-stream" },
-]
+requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
 
 [[package]]
 name = "aws-sdk-signers"
@@ -679,17 +674,6 @@ dev = [
 
 [package.metadata.requires-dev]
 dev = [{ name = "freezegun", specifier = ">=1.5.1" }]
-
-[[package]]
-name = "smithy-event-stream"
-version = "0.0.1"
-source = { editable = "packages/smithy-event-stream" }
-dependencies = [
-    { name = "smithy-core" },
-]
-
-[package.metadata]
-requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
 
 [[package]]
 name = "smithy-http"

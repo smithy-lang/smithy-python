@@ -6,7 +6,6 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "smithy-core",
-    "smithy-event-stream",
 ]
 
 [build-system]

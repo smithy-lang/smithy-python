@@ -53,6 +53,8 @@ async with publisher:
     publisher.send(FooEvent(foo="bar"))
 ```
 
+Protocol implementations will be responsible for creating publishers.
+
 ## Event Receivers
 
 An `AsyncEventReceiver` is used to receive events from a service.
@@ -131,6 +133,8 @@ async for event in reciever:
     handle_event(event)
 ```
 
+Protocol implementations will be responsible for creating receivers.
+
 ### Errors
 
 Event streams may define modeled errors that may be sent over the stream. These
@@ -169,38 +173,30 @@ are handled by the following classes:
 * `OutputEventStream` is returned when the operation only has an output stream.
 
 ```python
-class DuplexEventStream[I: SerializableShape, O: DeserializableShape, R](Protocol):
+class DuplexEventStream[
+    IE: SerializeableShape,
+    OE: DeserializeableShape,
+    O: DeserializeableShape,
+]:
 
-    input_stream: AsyncEventPublisher[I]
+    input_stream: EventPublisher[IE]
+    output_stream: EventReceiver[OE] | None = None
+    response: O | None = None
 
-    _output_stream: AsyncEventReceiver[O] | None = None
-    _response: R | None = None
+    def __init__(
+        self,
+        *,
+        input_stream: EventPublisher[IE],
+        output_future: Future[tuple[O, EventReceiver[OE]]],
+    ) -> None:
+        self.input_stream = input_stream
+        self._output_future = output_future
 
-    @property
-    def output_stream(self) -> AsyncEventReceiver[O] | None:
-        return self._output_stream
-
-    @output_stream.setter
-    def output_stream(self, value: AsyncEventReceiver[O]) -> None:
-        self._output_stream = value
-
-    @property
-    def response(self) -> R | None:
-        return self._response
-
-    @response.setter
-    def response(self, value: R) -> None:
-        self._response = value
-
-    async def await_output(self) -> tuple[R, AsyncEventReceiver[O]]:
+    async def await_output(self) -> tuple[O, EventReceiver[OE]]:
         ...
 
     async def close(self) -> None:
-        if self.output_stream is None:
-            _, self.output_stream = await self.await_output()
-
-        await self.input_stream.close()
-        await self.output_stream.close()
+        ...
 
     async def __aenter__(self) -> Self:
         return self
@@ -209,21 +205,21 @@ class DuplexEventStream[I: SerializableShape, O: DeserializableShape, R](Protoco
         await self.close()
 
 
-class InputEventStream[I: SerializableShape, R](Protocol):
+class InputEventStream[IE: SerializeableShape, O]:
 
-    input_stream: AsyncEventPublisher[I]
+    input_stream: EventPublisher[IE]
+    response: O | None = None
 
-    _response: R | None = None
+    def __init__(
+        self,
+        *,
+        input_stream: EventPublisher[IE],
+        output_future: Future[O],
+    ) -> None:
+        self.input_stream = input_stream
+        self._output_future = output_future
 
-    @property
-    def response(self) -> R | None:
-        return self._response
-
-    @response.setter
-    def response(self, value: R) -> None:
-        self._response = value
-
-    async def await_output(self) -> R:
+    async def await_output(self) -> O:
         ...
 
     async def close(self) -> None:
@@ -236,11 +232,14 @@ class InputEventStream[I: SerializableShape, R](Protocol):
         await self.close()
 
 
-class OutputEventStream[O: DeserializableShape, R](Protocol):
+class OutputEventStream[OE: DeserializeableShape, O: DeserializeableShape]:
 
-    output_stream: AsyncEventReceiver[O]
-
-    response: R
+    output_stream: EventReceiver[OE]
+    response: O
+    
+    def __init__(self, output_stream: EventReceiver[OE], output: O) -> None:
+        self.output_stream = output_stream
+        self.response = output
 
     async def close(self) -> None:
         await self.output_stream.close()
@@ -289,6 +288,9 @@ with await client.output_operation() as stream:
     for event in output_stream:
         handle_event(event)
 ```
+
+All three output types are centrally located and will be constructed by filling
+in the relevant publishers and receivers from the protocol implementation.
 
 ## Event Structure
 

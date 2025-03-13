@@ -1,17 +1,21 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import AsyncIterable
-from typing import Protocol, runtime_checkable, TYPE_CHECKING
+from typing import Protocol, runtime_checkable, TYPE_CHECKING, Callable
 
+from ...exceptions import UnsupportedStreamException
 from ...interfaces import URI, Endpoint, TypedProperties
 from ...interfaces import StreamingBlob as SyncStreamingBlob
 from ...documents import TypeRegistry
+
+from .eventstream import EventPublisher, EventReceiver
+
 
 if TYPE_CHECKING:
     from ...schemas import APIOperation
     from ...shapes import ShapeID
     from ...serializers import SerializeableShape
-    from ...deserializers import DeserializeableShape
+    from ...deserializers import DeserializeableShape, ShapeDeserializer
 
 
 @runtime_checkable
@@ -138,3 +142,49 @@ class ClientProtocol[I: Request, O: Response](Protocol):
         :param context: A context bag for the request.
         """
         ...
+
+    def create_event_publisher[
+        OperationInput: "SerializeableShape",
+        OperationOutput: "DeserializeableShape",
+        Event: "SerializeableShape",
+    ](
+        self,
+        *,
+        operation: "APIOperation[OperationInput, OperationOutput]",
+        request: I,
+        event_type: type[Event],
+        context: TypedProperties,
+    ) -> EventPublisher[Event]:
+        """Creates an event publisher for a protocol event stream.
+
+        :param operation: The event stream operation.
+        :param request: The transport request that was sent for this stream.
+        :param event_type: The type of event to publish.
+        :param context: A context bag for the request.
+        """
+        raise UnsupportedStreamException()
+
+    def create_event_receiver[
+        OperationInput: "SerializeableShape",
+        OperationOutput: "DeserializeableShape",
+        Event: "DeserializeableShape",
+    ](
+        self,
+        *,
+        operation: "APIOperation[OperationInput, OperationOutput]",
+        request: I,
+        response: O,
+        event_type: type[Event],
+        event_deserializer: Callable[["ShapeDeserializer"], Event],
+        context: TypedProperties,
+    ) -> EventReceiver[Event]:
+        """Creates an event receiver for a protocol event stream.
+
+        :param operation: The event stream operation.
+        :param request: The transport request that was sent for this stream.
+        :param response: The transport response that was received for this stream.
+        :param event_type: The type of event to publish.
+        :param event_deserializer: The deserializer to be used to deserialize events.
+        :param context: A context bag for the request.
+        """
+        raise UnsupportedStreamException()
