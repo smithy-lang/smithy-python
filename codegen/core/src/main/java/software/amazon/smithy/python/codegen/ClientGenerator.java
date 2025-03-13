@@ -409,7 +409,7 @@ final class ClientGenerator implements Runnable {
                                         retry_strategy.record_success(token=retry_token)
                                         if response_future is not None:
                                             response_future.set_result(
-                                                context_with_response.response,  # type: ignore
+                                                context_with_response.transport_response,  # type: ignore
                                             )
                                         break
                             except Exception as e:
