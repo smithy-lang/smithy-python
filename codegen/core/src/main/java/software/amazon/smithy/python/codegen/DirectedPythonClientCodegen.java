@@ -108,9 +108,10 @@ final class DirectedPythonClientCodegen
 
         new ConfigGenerator(directive.settings(), directive.context()).run();
         var serviceIndex = ServiceIndex.of(directive.model());
-        if (directive.context().applicationProtocol().isHttpProtocol()
-                && !serviceIndex.getAuthSchemes(directive.service()).isEmpty()) {
-            new HttpAuthGenerator(directive.context(), directive.settings()).run();
+        if (directive.context().applicationProtocol().isHttpProtocol()) {
+            if (!serviceIndex.getAuthSchemes(directive.service()).isEmpty()) {
+                new HttpAuthGenerator(directive.context(), directive.settings()).run();
+            }
             new EndpointsGenerator(directive.context(), directive.settings()).run();
         }
     }
