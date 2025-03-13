@@ -1,25 +1,20 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-import asyncio
 import datetime
 import logging
-from collections.abc import Callable, Iterator
+from collections.abc import Iterator
 from contextlib import contextmanager
 from io import BytesIO
 from typing import Never
 
-from smithy_core.aio.interfaces import AsyncWriter
 from smithy_core.codecs import Codec
-from smithy_core.exceptions import ExpectationNotMetException
 from smithy_core.schemas import Schema
 from smithy_core.serializers import (
     InterceptingSerializer,
-    SerializeableShape,
     ShapeSerializer,
     SpecificShapeSerializer,
 )
 from smithy_core.shapes import ShapeType
-from smithy_event_stream.aio.interfaces import AsyncEventPublisher
 
 from ..events import EventMessage, HEADER_VALUE, Short, Byte, Long
 from ..exceptions import InvalidHeaderValue
@@ -34,60 +29,6 @@ logger = logging.getLogger(__name__)
 
 _DEFAULT_STRING_CONTENT_TYPE = "text/plain"
 _DEFAULT_BLOB_CONTENT_TYPE = "application/octet-stream"
-
-
-type Signer = Callable[[EventMessage], EventMessage]
-"""A function that takes an event message and signs it, and returns it signed."""
-
-
-class AWSAsyncEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
-    def __init__(
-        self,
-        payload_codec: Codec,
-        async_writer: AsyncWriter,
-        signer: Signer | None = None,
-        is_client_mode: bool = True,
-    ):
-        self._writer = async_writer
-        self._signer = signer
-        self._serializer = EventSerializer(
-            payload_codec=payload_codec, is_client_mode=is_client_mode
-        )
-        self._closed = False
-
-    async def send(self, event: E) -> None:
-        if self._closed:
-            raise IOError("Attempted to write to closed stream.")
-        logger.debug("Preparing to publish event: %s", event)
-        event.serialize(self._serializer)
-        result = self._serializer.get_result()
-        if result is None:
-            raise ExpectationNotMetException(
-                "Expected an event message to be serialized, but was None."
-            )
-        if self._signer is not None:
-            result = self._signer(result)
-
-        encoded_result = result.encode()
-        try:
-            logger.debug("Publishing serialized event: %s", result)
-            await self._writer.write(encoded_result)
-        except Exception as e:
-            await self.close()
-            raise IOError("Failed to write to stream.") from e
-
-    async def close(self) -> None:
-        if self._closed:
-            return
-        self._closed = True
-
-        if (close := getattr(self._writer, "close", None)) is not None:
-            if asyncio.iscoroutine(result := close()):
-                await result
-
-    @property
-    def closed(self) -> bool:
-        return self._closed
 
 
 class EventSerializer(SpecificShapeSerializer):
