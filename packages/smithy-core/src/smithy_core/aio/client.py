@@ -4,9 +4,11 @@ import logging
 import asyncio
 from asyncio import sleep, Future
 from dataclasses import dataclass, replace
-from typing import Any
+from typing import Any, Awaitable, Callable
 
 from .interfaces import ClientProtocol, Request, Response, ClientTransport
+from .interfaces.eventstream import EventReceiver
+from .eventstream import InputEventStream, OutputEventStream, DuplexEventStream
 from .. import URI
 from ..interfaces import TypedProperties, Endpoint
 from ..interfaces.retries import RetryStrategy, RetryErrorInfo, RetryErrorType
@@ -20,7 +22,7 @@ from ..interceptors import (
 from ..schemas import APIOperation
 from ..shapes import ShapeID
 from ..serializers import SerializeableShape
-from ..deserializers import DeserializeableShape
+from ..deserializers import DeserializeableShape, ShapeDeserializer
 from ..exceptions import SmithyRetryException, SmithyException
 from ..types import PropertyKey
 
@@ -86,61 +88,123 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
     async def __call__[I: SerializeableShape, O: DeserializeableShape](
         self, call: ClientCall[I, O], /
     ) -> O:
-        output, _ = await self._execute_request(call, None)
-        return output
+        output_context = await self._execute_request(call, None)
+        return output_context.response  # type: ignore
 
-    # async def input_stream[I: SerializeableShape, O: DeserializeableShape, E: SerializeableShape](
-    #     self, call: ClientCall[I, O], event_serializer: E, /
-    # ) -> InputEventStream[E, O]:
-    #     request_future = Future[RequestContext[I, TRequest]]()
-    #     execute_task = asyncio.create_task(self._await_output(self._execute_request(call, request_future)))
-    #     request_context = await request_future
-    #     stream: InputEventStream[E, O] = InputEventStream(
-    #         awaitable_output=execute_task,
-    #         event_publisher=self.protocol.create_event_publisher(event_serializer, request_context)
-    #     )
-    #     return stream
+    async def input_stream[
+        I: SerializeableShape,
+        O: DeserializeableShape,
+        E: SerializeableShape,
+    ](self, call: ClientCall[I, O], event_type: type[E], /) -> InputEventStream[E, O]:
+        request_future = Future[RequestContext[I, TRequest]]()
+        execute_task = asyncio.create_task(
+            self._await_output(self._execute_request(call, request_future))
+        )
+        request_context = await request_future
+        input_stream = self.protocol.create_event_publisher(
+            operation=call.operation,
+            request=request_context.transport_request,
+            event_type=event_type,
+            context=request_context.properties,
+        )
+        stream: InputEventStream[E, O] = InputEventStream(
+            input_stream=input_stream, output_future=execute_task
+        )
+        return stream
 
-    # async def _await_output[I: SerializeableShape, O: DeserializeableShape](
-    #         self, execute_task: Awaitable[tuple[O, OutputContext[I, O, TRequest | None, TResponse | None]]]
-    # ) -> O:
-    #     output, _ = await execute_task
-    #     return output
+    async def _await_output[I: SerializeableShape, O: DeserializeableShape](
+        self,
+        execute_task: Awaitable[OutputContext[I, O, TRequest | None, TResponse | None]],
+    ) -> O:
+        output_context = await execute_task
+        return output_context.response  # type: ignore
 
-    # async def output_stream[I: SerializeableShape, O: DeserializeableShape, E: DeserializeableShape](
-    #     self, call: ClientCall[I, O], event_deserializer: Callable[[ShapeDeserializer], E], /
-    # ) -> OutputEventStream[E, O]:
-    #     output, output_context = await self._execute_request(call, None)
-    #     stream: OutputEventStream[E, O] = OutputEventStream(
-    #         output=output,
-    #         event_receiver=self.protocol.create_event_receiver(event_deserializer, output_context)
-    #     )
-    #     return stream
+    async def output_stream[
+        I: SerializeableShape,
+        O: DeserializeableShape,
+        E: DeserializeableShape,
+    ](
+        self,
+        call: ClientCall[I, O],
+        event_type: type[E],
+        event_deserializer: Callable[[ShapeDeserializer], E],
+        /,
+    ) -> OutputEventStream[E, O]:
+        output_context = await self._execute_request(call, None)
+        output_stream = self.protocol.create_event_receiver(
+            operation=call.operation,
+            request=output_context.transport_request,  # type: ignore
+            response=output_context.transport_response,  # type: ignore
+            event_type=event_type,
+            event_deserializer=event_deserializer,
+            context=output_context.properties,
+        )
+        stream: OutputEventStream[E, O] = OutputEventStream(
+            output_stream=output_stream,
+            output=output_context.response,  # type: ignore
+        )
+        return stream
 
-    # async def duplex_stream[I: SerializeableShape, O: DeserializeableShape, IE: SerializeableShape, OE: DeserializeableShape](
-    #     self, call: ClientCall[I, O], event_serializer: IE, event_deserializer: Callable[[ShapeDeserializer], OE], /
-    # ) -> DuplexEventStream[IE, OE, O]:
-    #     request_future = Future[RequestContext[I, TRequest]]()
-    #     execute_task = asyncio.create_task(self._execute_request(call, request_future))
-    #     request_context = await request_future
-    #     stream: DuplexEventStream[IE, OE, O] = DuplexEventStream(
-    #         awaitable_output=self._await_output_stream(execute_task, event_deserializer),
-    #         event_publisher=self.protocol.create_event_publisher(event_serializer, request_context)
-    #     )
-    #     return stream
+    async def duplex_stream[
+        I: SerializeableShape,
+        O: DeserializeableShape,
+        IE: SerializeableShape,
+        OE: DeserializeableShape,
+    ](
+        self,
+        call: ClientCall[I, O],
+        input_event_type: type[IE],
+        event_serializer: IE,
+        output_event_type: type[OE],
+        event_deserializer: Callable[[ShapeDeserializer], OE],
+        /,
+    ) -> DuplexEventStream[IE, OE, O]:
+        request_future = Future[RequestContext[I, TRequest]]()
+        execute_task = asyncio.create_task(self._execute_request(call, request_future))
+        request_context = await request_future
+        input_stream = self.protocol.create_event_publisher(
+            operation=call.operation,
+            request=request_context.transport_request,
+            event_type=input_event_type,
+            context=request_context.properties,
+        )
+        output_future = asyncio.create_task(
+            self._await_output_stream(
+                call=call,
+                execute_task=execute_task,
+                output_event_type=output_event_type,
+                event_deserializer=event_deserializer,
+            )
+        )
+        return DuplexEventStream(input_stream=input_stream, output_future=output_future)
 
-    # async def _await_output_stream[I: SerializeableShape, O: DeserializeableShape, E: DeserializeableShape](
-    #         self, execute_task: Awaitable[tuple[O, OutputContext[I, O, TRequest | None, TResponse | None]]],
-    #         event_deserializer: Callable[[ShapeDeserializer], E],
-    # ) -> tuple[O, AsyncEventReceiver[E]]:
-    #     output, output_context = await execute_task
-    #     return output, self.protocol.create_event_receiver(event_deserializer, output_context)
+    async def _await_output_stream[
+        I: SerializeableShape,
+        O: DeserializeableShape,
+        OE: DeserializeableShape,
+    ](
+        self,
+        call: ClientCall[I, O],
+        execute_task: Awaitable[OutputContext[I, O, TRequest | None, TResponse | None]],
+        output_event_type: type[OE],
+        event_deserializer: Callable[[ShapeDeserializer], OE],
+    ) -> tuple[O, EventReceiver[OE]]:
+        output_context = await execute_task
+        output_stream = self.protocol.create_event_receiver(
+            operation=call.operation,
+            request=output_context.transport_request,  # type: ignore
+            response=output_context.transport_response,  # type: ignore
+            event_type=output_event_type,
+            event_deserializer=event_deserializer,
+            context=output_context.properties,
+        )
+        return output_context.response, output_stream  # type: ignore
 
     async def _execute_request[I: SerializeableShape, O: DeserializeableShape](
         self,
         call: ClientCall[I, O],
         request_future: Future[RequestContext[I, TRequest]] | None,
-    ) -> tuple[O, OutputContext[I, O, TRequest | None, TResponse | None]]:
+    ) -> OutputContext[I, O, TRequest | None, TResponse | None]:
         _LOGGER.debug(
             'Making request for operation "%s" with parameters: %s',
             call.operation.schema.id.name,
@@ -155,7 +219,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 raise SmithyException(e) from e
             raise e
 
-        return output_context.response, output_context
+        return output_context
 
     async def _handle_execution[I: SerializeableShape, O: DeserializeableShape](
         self,
