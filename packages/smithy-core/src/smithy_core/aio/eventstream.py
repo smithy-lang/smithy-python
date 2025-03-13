@@ -74,11 +74,9 @@ class DuplexEventStream[
         self,
         *,
         input_stream: EventPublisher[IE],
-        output_stream_future: Future[EventReceiver[OE]],
-        output_future: Future[O],
+        output_future: Future[tuple[O, EventReceiver[OE]]],
     ) -> None:
         self.input_stream = input_stream
-        self._output_stream_future = output_stream_future
         self._output_future = output_future
 
     async def await_response(self) -> O:
@@ -93,7 +91,8 @@ class DuplexEventStream[
         :returns: The service's initial response.
         """
         if self.response is None:
-            self.response = await self._output_future
+            response, _ = await self.await_output()
+            return response
         return self.response
 
     async def await_output_stream(self) -> EventReceiver[OE]:
@@ -108,7 +107,8 @@ class DuplexEventStream[
         :returns: The output stream.
         """
         if self.output_stream is None:
-            self.output_stream = await self._output_stream_future
+            _, output_stream = await self.await_output()
+            return output_stream
         return self.output_stream
 
     async def await_output(self) -> tuple[O, EventReceiver[OE]]:
@@ -130,7 +130,8 @@ class DuplexEventStream[
         :returns: A tuple containing the initial response and output stream. If the
             operation has no output stream, the second value will be None.
         """
-        return await self.await_response(), await self.await_output_stream()
+        self.response, self.output_stream = await self._output_future
+        return self.response, self.output_stream
 
     async def close(self) -> None:
         """Closes the event stream.
