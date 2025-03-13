@@ -176,7 +176,6 @@ class CRTResponseFactory:
         )
 
     async def await_response(self) -> AWSCRTHTTPResponse:
-        print(f"Initial status: {self._response_future._state}")
         return await asyncio.wrap_future(self._response_future)
 
     def set_done_callback(self, stream: "crt_http.HttpClientStream") -> None:
