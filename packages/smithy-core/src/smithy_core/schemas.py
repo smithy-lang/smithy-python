@@ -7,9 +7,9 @@ from typing import NotRequired, Required, Self, TypedDict, overload, Any, TYPE_C
 from .exceptions import ExpectationNotMetException, SmithyException
 from .shapes import ShapeID, ShapeType
 from .traits import Trait, DynamicTrait, IdempotencyTokenTrait, StreamingTrait
-from .type_registry import TypeRegistry
 
 if TYPE_CHECKING:
+    from .documents import TypeRegistry
     from .serializers import SerializeableShape
     from .deserializers import DeserializeableShape
 
@@ -289,7 +289,7 @@ class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
     output_schema: Schema
     """The schema of the operation's output shape."""
 
-    error_registry: TypeRegistry
+    error_registry: "TypeRegistry"
     """A TypeRegistry used to create errors."""
 
     effective_auth_schemes: Sequence[ShapeID]

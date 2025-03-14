@@ -1,40 +1,41 @@
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
-from smithy_core.documents import Document
+from smithy_core.documents import Document, TypeRegistry
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.type_registry import TypeRegistry
 import pytest
 
 
-class TestTypeRegistry:
-    def test_get(self):
-        registry = TypeRegistry({ShapeID("com.example#Test"): TestShape})
+def test_get():
+    registry = TypeRegistry({ShapeID("com.example#Test"): TestShape})
 
-        result = registry.get(ShapeID("com.example#Test"))
+    result = registry.get(ShapeID("com.example#Test"))
 
-        assert result == TestShape
+    assert result == TestShape
 
-    def test_get_sub_registry(self):
-        sub_registry = TypeRegistry({ShapeID("com.example#Test"): TestShape})
-        registry = TypeRegistry({}, sub_registry)
 
-        result = registry.get(ShapeID("com.example#Test"))
+def test_get_sub_registry():
+    sub_registry = TypeRegistry({ShapeID("com.example#Test"): TestShape})
+    registry = TypeRegistry({}, sub_registry)
 
-        assert result == TestShape
+    result = registry.get(ShapeID("com.example#Test"))
 
-    def test_get_no_match(self):
-        registry = TypeRegistry({ShapeID("com.example#Test"): TestShape})
+    assert result == TestShape
 
-        with pytest.raises(KeyError, match="Unknown shape: com.example#Test2"):
-            registry.get(ShapeID("com.example#Test2"))
 
-    def test_deserialize(self):
-        shape_id = ShapeID("com.example#Test")
-        registry = TypeRegistry({shape_id: TestShape})
+def test_get_no_match():
+    registry = TypeRegistry({ShapeID("com.example#Test"): TestShape})
 
-        result = registry.deserialize(Document("abc123", schema=TestShape.schema))
+    with pytest.raises(KeyError, match="Unknown shape: com.example#Test2"):
+        registry.get(ShapeID("com.example#Test2"))
 
-        assert isinstance(result, TestShape) and result.value == "abc123"
+
+def test_deserialize():
+    shape_id = ShapeID("com.example#Test")
+    registry = TypeRegistry({shape_id: TestShape})
+
+    result = registry.deserialize(Document("abc123", schema=TestShape.schema))
+
+    assert isinstance(result, TestShape) and result.value == "abc123"
 
 
 class TestShape(DeserializeableShape):

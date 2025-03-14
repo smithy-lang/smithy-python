@@ -5,7 +5,7 @@ from typing import Protocol, runtime_checkable, TYPE_CHECKING
 
 from ...interfaces import URI, Endpoint, TypedProperties
 from ...interfaces import StreamingBlob as SyncStreamingBlob
-from ...type_registry import TypeRegistry
+from ...documents import TypeRegistry
 
 if TYPE_CHECKING:
     from ...schemas import APIOperation
