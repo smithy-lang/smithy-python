@@ -2,11 +2,20 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 # pyright: reportPrivateUsage=false
+import json
 import pytest
 import time
+from datetime import datetime, timezone
 from smithy_core.retries import SimpleRetryStrategy
 from smithy_core import URI
-from smithy_aws_core.credentials_resolvers.imds import Config, Token, TokenCache
+from smithy_http.aio import HTTPRequest
+from smithy_aws_core.credentials_resolvers.imds import (
+    Config,
+    Token,
+    TokenCache,
+    EC2Metadata,
+    IMDSCredentialsResolver,
+)
 from unittest.mock import MagicMock, AsyncMock
 
 
@@ -112,4 +121,57 @@ async def test_token_cache_get_token():
     token_cache._refresh.assert_awaited()
 
 
-# TODO: Add tests for EC2Metadata and IMDSCredentialsResolver
+async def test_ec2_metadata_get():
+    # Test EC2Metadata.get() method to retrieve metadata from IMDS
+    http_client = AsyncMock()
+    config = Config()
+    response = AsyncMock()
+    response.consume_body_async.return_value = b"metadata-response"
+    http_client.send.return_value = response
+
+    ec2_metadata = EC2Metadata(http_client, config)
+    ec2_metadata._token_cache.get_token = AsyncMock(
+        return_value=Token("mocked-token", config.token_ttl)
+    )
+
+    result = await ec2_metadata.get(path="/test-path")
+    assert result == "metadata-response"
+
+    request = http_client.send.call_args.kwargs["request"]
+    assert isinstance(request, HTTPRequest)
+    assert request.destination.path == "/test-path"
+    assert request.method == "GET"
+    assert request.fields["x-aws-ec2-metadata-token"].values == ["mocked-token"]
+
+
+async def test_imds_credentials_resolver():
+    # Test IMDSCredentialsResolver retrieving credentials
+    http_client = AsyncMock()
+    config = Config()
+    ec2_metadata = AsyncMock()
+    resolver = IMDSCredentialsResolver(http_client, config)
+    resolver._ec2_metadata_client = ec2_metadata
+
+    # Mock EC2Metadata client get responses
+    ec2_metadata.get.side_effect = [
+        "test-profile",
+        json.dumps(
+            {
+                "AccessKeyId": "test-access-key",
+                "SecretAccessKey": "test-secret-key",
+                "Token": "test-session-token",
+                "AccountId": "test-account",
+                "Expiration": "2025-03-13T07:28:47Z",
+            }
+        ),
+    ]
+
+    credentials = await resolver.get_identity(identity_properties=MagicMock())
+    assert credentials.access_key_id == "test-access-key"
+    assert credentials.secret_access_key == "test-secret-key"
+    assert credentials.session_token == "test-session-token"
+    assert credentials.account_id == "test-account"
+    assert credentials.expiration == datetime(
+        2025, 3, 13, 7, 28, 47, tzinfo=timezone.utc
+    )
+    ec2_metadata.get.assert_awaited()
