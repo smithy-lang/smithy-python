@@ -185,6 +185,7 @@ class IMDSCredentialsResolver(
     _METADATA_PATH_BASE = "/latest/meta-data/iam/security-credentials"
 
     def __init__(self, http_client: HTTPClient, config: Config | None = None):
+        # TODO: Respect IMDS specific config values from aws shared config file and environment.
         self._http_client = http_client
         self._ec2_metadata_client = EC2Metadata(http_client=http_client, config=config)
         self._config = config or Config()
