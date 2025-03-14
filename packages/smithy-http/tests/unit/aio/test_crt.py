@@ -1,14 +1,18 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import asyncio
 from copy import deepcopy
 from io import BytesIO
+from unittest.mock import Mock
+from concurrent.futures import Future as ConcurrentFuture
 
 import pytest
+from awscrt.http import HttpClientStream  # type: ignore
 
 from smithy_core import URI
 from smithy_http import Fields
 from smithy_http.aio import HTTPRequest
-from smithy_http.aio.crt import AWSCRTHTTPClient, BufferableByteStream
+from smithy_http.aio.crt import AWSCRTHTTPClient, BufferableByteStream, CRTResponseBody
 
 
 def test_deepcopy_client() -> None:
@@ -136,3 +140,77 @@ def test_end_stream() -> None:
     assert not stream.closed
     assert stream.read() == b"foo"
     assert stream.closed
+
+
+async def test_response_body_completed_stream() -> None:
+    completion_future = ConcurrentFuture[int]()
+    mock_stream = Mock(spec=HttpClientStream)
+    mock_stream.completion_future = completion_future
+
+    response_body = CRTResponseBody()
+    response_body.set_stream(mock_stream)
+    completion_future.set_result(200)
+
+    assert await response_body.next() == b""
+
+
+async def test_response_body_empty_stream() -> None:
+    completion_future = ConcurrentFuture[int]()
+    mock_stream = Mock(spec=HttpClientStream)
+    mock_stream.completion_future = completion_future
+
+    response_body = CRTResponseBody()
+    response_body.set_stream(mock_stream)
+
+    read_task = asyncio.create_task(response_body.next())
+
+    # Sleep briefly so the read task gets priority. It should
+    # add a chunk future and then await it.
+    await asyncio.sleep(0.01)
+
+    assert len(response_body._chunk_futures) == 1  # type: ignore
+    response_body.on_body(b"foo")
+    assert await read_task == b"foo"
+
+
+async def test_response_body_stream_completion_clears_buffer() -> None:
+    completion_future = ConcurrentFuture[int]()
+    mock_stream = Mock(spec=HttpClientStream)
+    mock_stream.completion_future = completion_future
+
+    response_body = CRTResponseBody()
+    response_body.set_stream(mock_stream)
+
+    read_tasks = (
+        asyncio.create_task(response_body.next()),
+        asyncio.create_task(response_body.next()),
+        asyncio.create_task(response_body.next()),
+        asyncio.create_task(response_body.next()),
+    )
+
+    # Sleep briefly so the read tasks gets priority. It should
+    # add a chunk future and then await it.
+    await asyncio.sleep(0.01)
+
+    assert len(response_body._chunk_futures) == 4  # type: ignore
+    completion_future.set_result(200)
+    await asyncio.sleep(0.01)
+
+    # Tasks should have been drained
+    assert len(response_body._chunk_futures) == 0  # type: ignore
+
+    # Tasks should still be awaited, and should all return empty
+    results = asyncio.gather(*read_tasks)
+    assert results.result() == [b"", b"", b"", b""]
+
+
+async def test_response_body_non_empty_stream() -> None:
+    completion_future = ConcurrentFuture[int]()
+    mock_stream = Mock(spec=HttpClientStream)
+    mock_stream.completion_future = completion_future
+
+    response_body = CRTResponseBody()
+    response_body.set_stream(mock_stream)
+    response_body.on_body(b"foo")
+
+    assert await response_body.next() == b"foo"

@@ -3,6 +3,7 @@
 #  pyright: reportMissingTypeStubs=false,reportUnknownMemberType=false
 #  flake8: noqa: F811
 import asyncio
+from asyncio import Future as AsyncFuture
 from concurrent.futures import Future as ConcurrentFuture
 from collections import deque
 from collections.abc import AsyncGenerator, AsyncIterable
@@ -105,6 +106,7 @@ class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
 class CRTResponseBody:
     def __init__(self) -> None:
         self._stream: "crt_http.HttpClientStream | None" = None
+        self._completion_future: AsyncFuture[int] | None = None
         self._chunk_futures: deque[ConcurrentFuture[bytes]] = deque()
 
         # deque is thread safe and the crt is only going to be writing
@@ -117,7 +119,9 @@ class CRTResponseBody:
         if self._stream is not None:
             raise SmithyHTTPException("Stream already set on AWSCRTHTTPResponse object")
         self._stream = stream
-        self._stream.completion_future.add_done_callback(self._on_complete)
+        concurrent_future: ConcurrentFuture[int] = stream.completion_future
+        self._completion_future = asyncio.wrap_future(concurrent_future)
+        self._completion_future.add_done_callback(self._on_complete)
         self._stream.activate()
 
     def on_body(self, chunk: bytes, **kwargs: Any) -> None:  # pragma: crt-callback
@@ -129,13 +133,13 @@ class CRTResponseBody:
             self._received_chunks.append(chunk)
 
     async def next(self) -> bytes:
-        if self._stream is None:
+        if self._completion_future is None:
             raise SmithyHTTPException("Stream not set")
 
         # TODO: update backpressure window once CRT supports it
         if self._received_chunks:
             return self._received_chunks.popleft()
-        elif self._stream.completion_future.done():
+        elif self._completion_future.done():
             return b""
         else:
             future = ConcurrentFuture[bytes]()
@@ -143,7 +147,7 @@ class CRTResponseBody:
             return await asyncio.wrap_future(future)
 
     def _on_complete(
-        self, completion_future: ConcurrentFuture[int]
+        self, completion_future: AsyncFuture[int]
     ) -> None:  # pragma: crt-callback
         for future in self._chunk_futures:
             future.set_result(b"")
