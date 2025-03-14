@@ -30,6 +30,7 @@ async def parse_rest_json_error_info(
     for field in http_response.fields:
         if field.name.lower() == _REST_JSON_CODE_HEADER:
             code = field.values[0]
+            break
 
     if check_body:
         if body := await http_response.consume_body_async():
