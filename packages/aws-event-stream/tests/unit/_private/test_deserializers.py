@@ -89,3 +89,43 @@ def test_deserialize_unmodeled_error():
 
     with pytest.raises(UnmodeledEventError, match="InternalError"):
         EventStreamOperationInputOutput.deserialize(deserializer)
+
+
+async def test_receiver_closes_source() -> None:
+    source = AsyncBytesReader(b"")
+    deserializer = EventStreamDeserializer()
+    receiver = AWSAsyncEventReceiver[Any](
+        payload_codec=JSONCodec(), source=source, deserializer=deserializer.deserialize
+    )
+    assert not receiver.closed
+    assert not source.closed
+    await receiver.close()
+    assert receiver.closed
+    assert source.closed
+
+
+async def test_read_closed_receiver() -> None:
+    source = AsyncBytesReader(b"")
+    deserializer = EventStreamDeserializer()
+    receiver = AWSAsyncEventReceiver[Any](
+        payload_codec=JSONCodec(), source=source, deserializer=deserializer.deserialize
+    )
+
+    await receiver.close()
+    assert receiver.closed
+    assert await receiver.receive() is None
+
+
+async def test_read_closed_receiver_source() -> None:
+    source = AsyncBytesReader(b"")
+    deserializer = EventStreamDeserializer()
+    receiver = AWSAsyncEventReceiver[Any](
+        payload_codec=JSONCodec(), source=source, deserializer=deserializer.deserialize
+    )
+
+    await source.close()
+    assert source.closed
+    assert not receiver.closed
+    with pytest.raises(IOError):
+        await receiver.receive()
+    assert receiver.closed
