@@ -114,12 +114,12 @@ class AsyncBytesReader:
 
     async def close(self) -> None:
         """Closes the stream, as well as the underlying stream where possible."""
+        self._closed = True
         if (close := getattr(self._data, "close", None)) is not None:
             if asyncio.iscoroutine(result := close()):
                 await result
 
         self._data = None
-        self._closed = True
 
 
 class SeekableAsyncBytesReader:

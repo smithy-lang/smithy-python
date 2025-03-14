@@ -57,8 +57,11 @@ class AWSAsyncEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
         self._serializer = EventSerializer(
             payload_codec=payload_codec, is_client_mode=is_client_mode
         )
+        self._closed = False
 
     async def send(self, event: E) -> None:
+        if self._closed:
+            raise IOError("Attempted to write to closed stream.")
         event.serialize(self._serializer)
         result = self._serializer.get_result()
         if result is None:
@@ -71,12 +74,26 @@ class AWSAsyncEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
                 event_message=result,
                 event_encoder_cls=encoder,
             )
-        await self._writer.write(result.encode())
+
+        encoded_result = result.encode()
+        try:
+            await self._writer.write(encoded_result)
+        except Exception as e:
+            await self.close()
+            raise IOError("Failed to write to stream.") from e
 
     async def close(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+
         if (close := getattr(self._writer, "close", None)) is not None:
             if asyncio.iscoroutine(result := close()):
                 await result
+
+    @property
+    def closed(self) -> bool:
+        return self._closed
 
 
 class EventSerializer(SpecificShapeSerializer):
