@@ -40,9 +40,18 @@ class AWSAsyncEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
         self._source = source
         self._is_client_mode = is_client_mode
         self._deserializer = deserializer
+        self._closed = False
 
     async def receive(self) -> E | None:
-        event = await Event.decode_async(self._source)
+        if self._closed:
+            return None
+
+        try:
+            event = await Event.decode_async(self._source)
+        except Exception as e:
+            await self.close()
+            raise IOError("Failed to read from stream.") from e
+
         if event is None:
             return None
 
@@ -57,9 +66,17 @@ class AWSAsyncEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
         return result
 
     async def close(self) -> None:
+        if self._closed:
+            return
+        self._closed = True
+
         if (close := getattr(self._source, "close", None)) is not None:
             if asyncio.iscoroutine(result := close()):
                 await result
+
+    @property
+    def closed(self) -> bool:
+        return self._closed
 
 
 class EventDeserializer(SpecificShapeDeserializer):

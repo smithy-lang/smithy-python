@@ -7,6 +7,7 @@ from concurrent.futures import Future as ConcurrentFuture
 from collections import deque
 from collections.abc import AsyncGenerator, AsyncIterable
 from copy import deepcopy
+from functools import partial
 from io import BytesIO, BufferedIOBase
 from typing import TYPE_CHECKING, Any
 
@@ -231,7 +232,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         :param request: The request including destination URI, fields, payload.
         :param request_config: Configuration specific to this request.
         """
-        crt_request = await self._marshal_request(request)
+        crt_request, crt_body = await self._marshal_request(request)
         connection = await self._get_connection(request.destination)
         response_body = CRTResponseBody()
         response_factory = CRTResponseFactory(response_body)
@@ -242,7 +243,16 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         )
         response_factory.set_done_callback(crt_stream)
         response_body.set_stream(crt_stream)
+        crt_stream.completion_future.add_done_callback(
+            partial(self._close_input_body, body=crt_body)
+        )
         return await response_factory.await_response()
+
+    def _close_input_body(
+        self, future: ConcurrentFuture[int], *, body: "BufferableByteStream | BytesIO"
+    ) -> None:
+        if future.exception(timeout=0):
+            body.close()
 
     async def _create_connection(
         self, url: core_interfaces.URI
@@ -314,7 +324,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
     async def _marshal_request(
         self, request: http_aio_interfaces.HTTPRequest
-    ) -> "crt_http.HttpRequest":
+    ) -> tuple["crt_http.HttpRequest", "BufferableByteStream | BytesIO"]:
         """Create :py:class:`awscrt.http.HttpRequest` from
         :py:class:`smithy_http.aio.HTTPRequest`"""
         headers_list = []
@@ -343,13 +353,11 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             crt_body = BytesIO(body)
         else:
             # If the body is async, or potentially very large, start up a task to read
-            # it into the BytesIO object that CRT needs. By using asyncio.create_task
-            # we'll start the coroutine without having to explicitly await it.
+            # it into the intermediate object that CRT needs. By using
+            # asyncio.create_task we'll start the coroutine without having to
+            # explicitly await it.
             crt_body = BufferableByteStream()
-            if not isinstance(body, AsyncIterable):
-                # If the body isn't already an async iterable, wrap it in one. Objects
-                # with read methods will be read in chunks so as not to exhaust memory.
-                body = AsyncBytesReader(body)
+            body = AsyncBytesReader(body)
 
             # Start the read task in the background.
             read_task = asyncio.create_task(self._consume_body_async(body, crt_body))
@@ -365,13 +373,19 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             headers=headers,
             body_stream=crt_body,
         )
-        return crt_request
+        return crt_request, crt_body
 
     async def _consume_body_async(
-        self, source: AsyncIterable[bytes], dest: "BufferableByteStream"
+        self, source: AsyncBytesReader, dest: "BufferableByteStream"
     ) -> None:
-        async for chunk in source:
-            dest.write(chunk)
+        try:
+            async for chunk in source:
+                dest.write(chunk)
+        except Exception:
+            dest.close()
+            raise
+        finally:
+            await source.close()
         dest.end_stream()
 
     def __deepcopy__(self, memo: Any) -> "AWSCRTHTTPClient":

@@ -75,31 +75,35 @@ class AWSDuplexEventStream[
         self.response: R | None = None
 
     async def await_output(self) -> tuple[R, AsyncEventReceiver[O]]:
-        async_reader = AsyncBytesReader((await self._awaitable_response).body)
-        if self.output_stream is None:
-            self.output_stream = _AWSEventReceiver[O](
-                payload_codec=self._payload_codec,
-                source=async_reader,
-                deserializer=self._deserializer,
-                is_client_mode=self._is_client_mode,
-            )
-
-        if self.response is None:
-            if self._deserializeable_response is None:
-                initial_response = await self._awaitable_output
-            else:
-                initial_response_stream = _AWSEventReceiver(
+        try:
+            async_reader = AsyncBytesReader((await self._awaitable_response).body)
+            if self.output_stream is None:
+                self.output_stream = _AWSEventReceiver[O](
                     payload_codec=self._payload_codec,
                     source=async_reader,
-                    deserializer=self._deserializeable_response.deserialize,
+                    deserializer=self._deserializer,
                     is_client_mode=self._is_client_mode,
                 )
-                initial_response = await initial_response_stream.receive()
-                if initial_response is None:
-                    raise MissingInitialResponse()
-                self.response = initial_response
-        else:
-            initial_response = self.response
+
+            if self.response is None:
+                if self._deserializeable_response is None:
+                    initial_response = await self._awaitable_output
+                else:
+                    initial_response_stream = _AWSEventReceiver(
+                        payload_codec=self._payload_codec,
+                        source=async_reader,
+                        deserializer=self._deserializeable_response.deserialize,
+                        is_client_mode=self._is_client_mode,
+                    )
+                    initial_response = await initial_response_stream.receive()
+                    if initial_response is None:
+                        raise MissingInitialResponse()
+                    self.response = initial_response
+            else:
+                initial_response = self.response
+        except Exception:
+            await self.input_stream.close()
+            raise
 
         return initial_response, self.output_stream
 
@@ -137,7 +141,11 @@ class AWSInputEventStream[I: SerializeableShape, R](InputEventStream[I, R]):
 
     async def await_output(self) -> R:
         if self.response is None:
-            self.response = await self._awaitable_response
+            try:
+                self.response = await self._awaitable_response
+            except Exception:
+                await self.input_stream.close()
+                raise
         return self.response
 
 
