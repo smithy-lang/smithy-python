@@ -4,21 +4,17 @@
  */
 package software.amazon.smithy.python.codegen.generators;
 
-import software.amazon.smithy.codegen.core.Symbol;
+import java.util.List;
+import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.model.shapes.OperationShape;
-import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.ShapeId;
-import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
-
-import java.util.List;
-import java.util.logging.Logger;
 
 @SmithyInternalApi
 public final class OperationGenerator implements Runnable {
@@ -29,7 +25,6 @@ public final class OperationGenerator implements Runnable {
     private final OperationShape shape;
     private final SymbolProvider symbolProvider;
     private final Model model;
-
 
     public OperationGenerator(GenerationContext context, PythonWriter writer, OperationShape shape) {
         this.context = context;
@@ -52,7 +47,7 @@ public final class OperationGenerator implements Runnable {
         writer.write("""
                 @dataclass(kw_only=True, frozen=True)
                 class $1L(APIOperation["$2T", "$3T"]):
-                        input = $2T                        
+                        input = $2T
                         output = $3T
                         schema = $4T
                         input_schema = $5T
@@ -72,8 +67,8 @@ public final class OperationGenerator implements Runnable {
                 outSymbol.expectProperty(SymbolProperties.SCHEMA),
                 writer.consumer(this::writeErrorTypeRegistry),
                 writer.consumer(this::writeAuthSchemes)
-                // TODO: Docs? Maybe not necessary on the operation type itself
-                // TODO: Singleton?
+        // TODO: Docs? Maybe not necessary on the operation type itself
+        // TODO: Singleton?
         );
     }
 
@@ -89,14 +84,16 @@ public final class OperationGenerator implements Runnable {
     }
 
     private void writeAuthSchemes(PythonWriter writer) {
-        var authSchemes = ServiceIndex.of(model).getEffectiveAuthSchemes(context.settings().service(), shape.getId(),
-                ServiceIndex.AuthSchemeMode.NO_AUTH_AWARE);
+        var authSchemes = ServiceIndex.of(model)
+                .getEffectiveAuthSchemes(context.settings().service(),
+                        shape.getId(),
+                        ServiceIndex.AuthSchemeMode.NO_AUTH_AWARE);
 
         if (!authSchemes.isEmpty()) {
             writer.addImport("smithy_core.shapes", "ShapeID");
         }
 
-        for(var authSchemeId : authSchemes.keySet()) {
+        for (var authSchemeId : authSchemes.keySet()) {
             writer.write("ShapeID($S)", authSchemeId);
         }
 

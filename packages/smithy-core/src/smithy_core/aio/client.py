@@ -468,7 +468,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 operation=call.operation,
                 request=response_context.transport_request,
                 response=response_context.transport_response,
-                error_registry="foo",
+                error_registry=call.operation.error_registry,
                 context=response_context.properties,
             )
 

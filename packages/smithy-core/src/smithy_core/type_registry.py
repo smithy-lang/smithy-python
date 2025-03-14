@@ -9,7 +9,7 @@ from smithy_core.shapes import ShapeID
 
 
 # A registry for on-demand deserialization of types by using a mapping of shape IDs to their deserializers.
-# TODO: protocol
+# TODO: protocol? Also, move into documents.py?
 class TypeRegistry:
     def __init__(
         self,

@@ -21,10 +21,8 @@ import software.amazon.smithy.model.node.NullNode;
 import software.amazon.smithy.model.node.NumberNode;
 import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.model.node.StringNode;
-import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.PythonSettings;
-import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 import software.amazon.smithy.utils.StringUtils;
 
@@ -305,9 +303,7 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
                 Symbol typeSymbol = (Symbol) type;
                 // Check if the symbol is an operation - we shouldn't add imports for operations, since
                 //  they are methods of the service object and *can't* be imported
-                if (!isOperationSymbol(typeSymbol)) {
-                    addUseImports(typeSymbol);
-                }
+                addUseImports(typeSymbol);
                 return typeSymbol.getName();
             } else if (type instanceof SymbolReference) {
                 SymbolReference typeSymbol = (SymbolReference) type;
@@ -318,10 +314,6 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
                         "Invalid type provided to $T. Expected a Symbol, but found `" + type + "`");
             }
         }
-    }
-
-    private Boolean isOperationSymbol(Symbol typeSymbol) {
-        return typeSymbol.getProperty(SymbolProperties.SHAPE).map(Shape::isOperationShape).orElse(false);
     }
 
     private final class PythonNodeFormatter implements BiFunction<Object, String, String> {
