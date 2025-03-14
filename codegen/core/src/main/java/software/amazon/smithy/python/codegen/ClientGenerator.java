@@ -4,10 +4,14 @@
  */
 package software.amazon.smithy.python.codegen;
 
+import static software.amazon.smithy.python.codegen.SymbolProperties.OPERATION_METHOD;
+
 import java.util.Collection;
 import java.util.LinkedHashSet;
 import java.util.Set;
+import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.SymbolReference;
+import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.EventStreamIndex;
 import software.amazon.smithy.model.knowledge.EventStreamInfo;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
@@ -34,10 +38,14 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 final class ClientGenerator implements Runnable {
 
     private final GenerationContext context;
+    private final Model model;
     private final ServiceShape service;
+    private final SymbolProvider symbolProvider;
 
     ClientGenerator(GenerationContext context, ServiceShape service) {
         this.context = context;
+        this.symbolProvider = context.symbolProvider();
+        this.model = context.model();
         this.service = service;
     }
 
@@ -47,7 +55,7 @@ final class ClientGenerator implements Runnable {
     }
 
     private void generateService(PythonWriter writer) {
-        var serviceSymbol = context.symbolProvider().toSymbol(service);
+        var serviceSymbol = symbolProvider.toSymbol(service);
         var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
         writer.addLogger();
@@ -77,7 +85,7 @@ final class ClientGenerator implements Runnable {
 
             for (PythonIntegration integration : context.integrations()) {
                 for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins(context)) {
-                    if (runtimeClientPlugin.matchesService(context.model(), service)) {
+                    if (runtimeClientPlugin.matchesService(model, service)) {
                         runtimeClientPlugin.getPythonPlugin().ifPresent(defaultPlugins::add);
                     }
                 }
@@ -97,8 +105,8 @@ final class ClientGenerator implements Runnable {
                             plugin(self._config)
                     """, configSymbol, pluginSymbol, writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)));
 
-            var topDownIndex = TopDownIndex.of(context.model());
-            var eventStreamIndex = EventStreamIndex.of(context.model());
+            var topDownIndex = TopDownIndex.of(model);
+            var eventStreamIndex = EventStreamIndex.of(model);
             for (OperationShape operation : topDownIndex.getContainedOperations(service)) {
                 if (eventStreamIndex.getInputInfo(operation).isPresent()
                         || eventStreamIndex.getOutputInfo(operation).isPresent()) {
@@ -253,7 +261,7 @@ final class ClientGenerator implements Runnable {
                     writer.consumer(w -> context.protocolGenerator().wrapOutputStream(context, w)),
                     writer.consumer(w -> context.protocolGenerator().wrapDuplexStream(context, w)));
         }
-
+        writer.addStdlibImport("typing", "Any");
         writer.write(
                 """
                         async def _execute_operation(
@@ -448,7 +456,7 @@ final class ClientGenerator implements Runnable {
                 errorSymbol,
                 configSymbol);
 
-        boolean supportsAuth = !ServiceIndex.of(context.model()).getAuthSchemes(service).isEmpty();
+        boolean supportsAuth = !ServiceIndex.of(model).getAuthSchemes(service).isEmpty();
         writer.pushState(new ResolveIdentitySection());
         if (context.applicationProtocol().isHttpProtocol() && supportsAuth) {
             writer.pushState(new InitializeHttpAuthParametersSection());
@@ -731,8 +739,8 @@ final class ClientGenerator implements Runnable {
     }
 
     private boolean hasEventStream() {
-        var streamIndex = EventStreamIndex.of(context.model());
-        var topDownIndex = TopDownIndex.of(context.model());
+        var streamIndex = EventStreamIndex.of(model);
+        var topDownIndex = TopDownIndex.of(model);
         for (OperationShape operation : topDownIndex.getContainedOperations(context.settings().service())) {
             if (streamIndex.getInputInfo(operation).isPresent() || streamIndex.getOutputInfo(operation).isPresent()) {
                 return true;
@@ -745,7 +753,7 @@ final class ClientGenerator implements Runnable {
         var derived = new LinkedHashSet<DerivedProperty>();
         for (PythonIntegration integration : context.integrations()) {
             for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
-                if (plugin.matchesService(context.model(), service)
+                if (plugin.matchesService(model, service)
                         && plugin.getAuthScheme().isPresent()
                         && plugin.getAuthScheme().get().getApplicationProtocol().isHttpProtocol()) {
                     derived.addAll(plugin.getAuthScheme().get().getAuthProperties());
@@ -773,18 +781,18 @@ final class ClientGenerator implements Runnable {
      * Generates the function for a single operation.
      */
     private void generateOperation(PythonWriter writer, OperationShape operation) {
-        var operationSymbol = context.symbolProvider().toSymbol(operation);
+        var operationMethodSymbol = symbolProvider.toSymbol(operation).expectProperty(OPERATION_METHOD);
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
 
-        var input = context.model().expectShape(operation.getInputShape());
-        var inputSymbol = context.symbolProvider().toSymbol(input);
+        var input = model.expectShape(operation.getInputShape());
+        var inputSymbol = symbolProvider.toSymbol(input);
 
-        var output = context.model().expectShape(operation.getOutputShape());
-        var outputSymbol = context.symbolProvider().toSymbol(output);
+        var output = model.expectShape(operation.getOutputShape());
+        var outputSymbol = symbolProvider.toSymbol(output);
 
         writer.openBlock("async def $L(self, input: $T, plugins: list[$T] | None = None) -> $T:",
                 "",
-                operationSymbol.getName(),
+                operationMethodSymbol.getName(),
                 inputSymbol,
                 pluginSymbol,
                 outputSymbol,
@@ -834,7 +842,7 @@ final class ClientGenerator implements Runnable {
         var defaultPlugins = new LinkedHashSet<SymbolReference>();
         for (PythonIntegration integration : context.integrations()) {
             for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins(context)) {
-                if (runtimeClientPlugin.matchesOperation(context.model(), service, operation)) {
+                if (runtimeClientPlugin.matchesOperation(model, service, operation)) {
                     runtimeClientPlugin.getPythonPlugin().ifPresent(defaultPlugins::add);
                 }
             }
@@ -852,29 +860,29 @@ final class ClientGenerator implements Runnable {
     private void generateEventStreamOperation(PythonWriter writer, OperationShape operation) {
         writer.pushState();
         writer.addDependency(SmithyPythonDependency.SMITHY_EVENT_STREAM);
-        var operationSymbol = context.symbolProvider().toSymbol(operation);
-        writer.putContext("operationName", operationSymbol.getName());
+        var operationMethodSymbol = symbolProvider.toSymbol(operation).expectProperty(OPERATION_METHOD);
+        writer.putContext("operationName", operationMethodSymbol.getName());
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
         writer.putContext("plugin", pluginSymbol);
 
-        var input = context.model().expectShape(operation.getInputShape());
-        var inputSymbol = context.symbolProvider().toSymbol(input);
+        var input = model.expectShape(operation.getInputShape());
+        var inputSymbol = symbolProvider.toSymbol(input);
         writer.putContext("input", inputSymbol);
 
-        var eventStreamIndex = EventStreamIndex.of(context.model());
+        var eventStreamIndex = EventStreamIndex.of(model);
         var inputStreamSymbol = eventStreamIndex.getInputInfo(operation)
                 .map(EventStreamInfo::getEventStreamTarget)
-                .map(target -> context.symbolProvider().toSymbol(target))
+                .map(symbolProvider::toSymbol)
                 .orElse(null);
         writer.putContext("inputStream", inputStreamSymbol);
 
-        var output = context.model().expectShape(operation.getOutputShape());
-        var outputSymbol = context.symbolProvider().toSymbol(output);
+        var output = model.expectShape(operation.getOutputShape());
+        var outputSymbol = symbolProvider.toSymbol(output);
         writer.putContext("output", outputSymbol);
 
         var outputStreamSymbol = eventStreamIndex.getOutputInfo(operation)
                 .map(EventStreamInfo::getEventStreamTarget)
-                .map(target -> context.symbolProvider().toSymbol(target))
+                .map(symbolProvider::toSymbol)
                 .orElse(null);
         writer.putContext("outputStream", outputStreamSymbol);
 

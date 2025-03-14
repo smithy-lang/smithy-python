@@ -276,8 +276,16 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
     public Symbol operationShape(OperationShape shape) {
         // Operation names are escaped like members because ultimately they're
         // properties on an object too.
-        var name = escaper.escapeMemberName(CaseUtils.toSnakeCase(shape.getId().getName(service)));
-        return createGeneratedSymbolBuilder(shape, name, "client").build();
+        var methodName = escaper.escapeMemberName(CaseUtils.toSnakeCase(shape.getId().getName(service)));
+        var methodSymbol = createGeneratedSymbolBuilder(shape, methodName, "client", false)
+                .putProperty(SymbolProperties.IMPORTABLE, false)
+                .build();
+
+        // We add a symbol for the method in the client as a property, whereas the actual
+        // operation symbol points to the generated type for it
+        return createGeneratedSymbolBuilder(shape, getDefaultShapeName(shape), SHAPES_FILE)
+                .putProperty(SymbolProperties.OPERATION_METHOD, methodSymbol)
+                .build();
     }
 
     @Override

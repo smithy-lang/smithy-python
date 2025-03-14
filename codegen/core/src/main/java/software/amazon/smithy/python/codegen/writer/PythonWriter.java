@@ -4,6 +4,8 @@
  */
 package software.amazon.smithy.python.codegen.writer;
 
+import static software.amazon.smithy.python.codegen.SymbolProperties.IMPORTABLE;
+
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -21,10 +23,8 @@ import software.amazon.smithy.model.node.NullNode;
 import software.amazon.smithy.model.node.NumberNode;
 import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.model.node.StringNode;
-import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.PythonSettings;
-import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 import software.amazon.smithy.utils.StringUtils;
 
@@ -301,16 +301,14 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
     private final class PythonSymbolFormatter implements BiFunction<Object, String, String> {
         @Override
         public String apply(Object type, String indent) {
-            if (type instanceof Symbol) {
-                Symbol typeSymbol = (Symbol) type;
-                // Check if the symbol is an operation - we shouldn't add imports for operations, since
-                //  they are methods of the service object and *can't* be imported
-                if (!isOperationSymbol(typeSymbol)) {
+            if (type instanceof Symbol typeSymbol) {
+                // If a symbol has the IMPORTABLE property set to false, don't import it and
+                // treat the lack of the property being set as true
+                if (typeSymbol.getProperty(IMPORTABLE).orElse(true)) {
                     addUseImports(typeSymbol);
                 }
                 return typeSymbol.getName();
-            } else if (type instanceof SymbolReference) {
-                SymbolReference typeSymbol = (SymbolReference) type;
+            } else if (type instanceof SymbolReference typeSymbol) {
                 addImport(typeSymbol.getSymbol(), typeSymbol.getAlias(), SymbolReference.ContextOption.USE);
                 return typeSymbol.getAlias();
             } else {
@@ -318,10 +316,6 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
                         "Invalid type provided to $T. Expected a Symbol, but found `" + type + "`");
             }
         }
-    }
-
-    private Boolean isOperationSymbol(Symbol typeSymbol) {
-        return typeSymbol.getProperty(SymbolProperties.SHAPE).map(Shape::isOperationShape).orElse(false);
     }
 
     private final class PythonNodeFormatter implements BiFunction<Object, String, String> {

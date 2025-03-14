@@ -73,5 +73,16 @@ public final class SymbolProperties {
      */
     public static final Property<Symbol> DESERIALIZER = Property.named("deserializer");
 
+    /**
+     * Contains a symbol pointing to an operation shape's method in the client. This is
+     * only used for operations.
+     */
+    public static final Property<Symbol> OPERATION_METHOD = Property.named("operationMethod");
+
+    /**
+     * Whether a symbol is importable (i.e. an instance method is not "importable")
+     */
+    public static final Property<Boolean> IMPORTABLE = Property.named("nonImportable");
+
     private SymbolProperties() {}
 }
