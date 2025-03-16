@@ -126,6 +126,7 @@ class CRTResponseBody:
 
     def on_body(self, chunk: bytes, **kwargs: Any) -> None:  # pragma: crt-callback
         # TODO: update back pressure window once CRT supports it
+        print("<-----", chunk)
         if self._chunk_futures:
             future = self._chunk_futures.popleft()
             future.set_result(chunk)
@@ -361,7 +362,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             # asyncio.create_task we'll start the coroutine without having to
             # explicitly await it.
             crt_body = BufferableByteStream()
-            body = AsyncBytesReader(body)
+            # body = AsyncBytesReader(body) # TODO: AsyncBytesReader wrapping seems to be broken currently
 
             # Start the read task in the background.
             read_task = asyncio.create_task(self._consume_body_async(body, crt_body))
@@ -384,6 +385,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
     ) -> None:
         try:
             async for chunk in source:
+                print("------> ", chunk)
                 dest.write(chunk)
         except Exception:
             dest.close()
