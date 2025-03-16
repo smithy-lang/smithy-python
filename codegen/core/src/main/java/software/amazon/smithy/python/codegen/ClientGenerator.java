@@ -570,7 +570,6 @@ final class ClientGenerator implements Runnable {
 
         writer.pushState(new SignRequestSection());
         if (context.applicationProtocol().isHttpProtocol() && supportsAuth) {
-            writer.addStdlibImport("binascii", "hexlify");
             writer.addStdlibImport("re");
             writer.write("""
                             # Step 7i: sign the request
@@ -591,12 +590,12 @@ final class ClientGenerator implements Runnable {
                                 logger.debug("Signed HTTP request: %s", context.transport_request)
 
                                 # TODO - Move this to separate resolution/population function
-                                fields = context._transport_request.fields
+                                fields = context.transport_request.fields
                                 auth_value = fields["Authorization"].as_string()  # type: ignore
                                 signature = re.split("Signature=", auth_value)[-1]  # type: ignore
-                                context._properties["signature"] = hexlify(signature.encode('utf-8'))  # type: ignore
-                                context._properties["identity"] = identity
-                                context._properties["signer_properties"] = auth_option.signer_properties
+                                context.properties["signature"] = signature.encode('utf-8')
+                                context.properties["identity"] = identity
+                                context.properties["signer_properties"] = auth_option.signer_properties
                     """);
         }
         writer.popState();

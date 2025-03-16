@@ -744,6 +744,12 @@ class AsyncSigV4Signer:
         request: AWSRequest,
         signing_properties: SigV4SigningProperties,
     ) -> str:
+        if (
+            "X-Amz-Content-SHA256" in request.fields
+            and len(request.fields["X-Amz-Content-SHA256"].values) == 1
+        ):
+            return request.fields["X-Amz-Content-SHA256"].values[0]
+
         payload_hash = await self._compute_payload_hash(
             request=request, signing_properties=signing_properties
         )
@@ -819,23 +825,26 @@ class AsyncEventSigner:
             new_signing_properties = SigV4SigningProperties(  # type: ignore
                 **self._signing_properties
             )
+            # TODO: If date is in properties, parse a datetime from it.
+            date_obj = datetime.datetime.now(datetime.UTC)
             if "date" not in new_signing_properties:
-                date_obj = datetime.datetime.now(datetime.UTC)
                 new_signing_properties["date"] = date_obj.strftime(
                     SIGV4_TIMESTAMP_FORMAT
                 )
 
             timestamp = new_signing_properties["date"]
-            headers: dict[str, str | bytes] = {":date": timestamp}
+            headers: dict[str, str | bytes] = {":date": date_obj}
             encoder = event_encoder_cls()
-            encoder.encode_headers(event_message.headers)
+            encoder.encode_headers(headers)
             encoded_headers = encoder.get_result()
+
+            payload = event_message.encode()
 
             string_to_sign = await self._event_string_to_sign(
                 timestamp=timestamp,
                 scope=self._scope(new_signing_properties),
                 encoded_headers=encoded_headers,
-                payload=event_message.payload,
+                payload=payload,
                 prior_signature=self._prior_signature,
             )
             event_signature = await self._sign_event(
@@ -844,10 +853,12 @@ class AsyncEventSigner:
                 signing_properties=new_signing_properties,
             )
             headers[":chunk-signature"] = event_signature
-            event_message.headers.update(headers)  # type: ignore
+
+            event_message.headers = headers
+            event_message.payload = payload
 
             # set new prior signature before releasing the lock
-            self._prior_signature = event_signature
+            self._prior_signature = hexlify(event_signature)
 
         return event_message
 
@@ -861,10 +872,10 @@ class AsyncEventSigner:
         prior_signature: bytes,
     ) -> str:
         return (
-            "AWS-HMAC-SHA256-PAYLOAD\n"
+            "AWS4-HMAC-SHA256-PAYLOAD\n"
             f"{timestamp}\n"
             f"{scope}\n"
-            f"{hexlify(prior_signature).decode('utf-8')}\n"
+            f"{prior_signature.decode('utf-8')}\n"
             f"{sha256(encoded_headers).hexdigest()}\n"
             f"{sha256(payload).hexdigest()}"
         )

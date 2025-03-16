@@ -7,6 +7,7 @@ package software.amazon.smithy.python.codegen.integrations;
 import java.util.List;
 import java.util.Set;
 import software.amazon.smithy.aws.traits.protocols.RestJson1Trait;
+import software.amazon.smithy.model.knowledge.EventStreamIndex;
 import software.amazon.smithy.model.knowledge.HttpBinding;
 import software.amazon.smithy.model.node.ArrayNode;
 import software.amazon.smithy.model.node.ObjectNode;
@@ -155,6 +156,21 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
 
         writer.popState();
     }
+
+    @Override
+    protected void writeDefaultHeaders(GenerationContext context, PythonWriter writer, OperationShape operation) {
+        var eventStreamIndex = EventStreamIndex.of(context.model());
+        if (eventStreamIndex.getInputInfo(operation).isPresent()) {
+            writer.addImport("smithy_http", "Field");
+            writer.write(
+                    "Field(name=\"Content-Type\", values=[$S]),",
+                    "application/vnd.amazon.eventstream");
+            writer.write(
+                    "Field(name=\"X-Amz-Content-SHA256\", values=[$S]),",
+                    "STREAMING-AWS4-HMAC-SHA256-EVENTS");
+        }
+    }
+
 
     @Override
     protected void serializePayloadBody(
