@@ -12,5 +12,4 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  * A section that controls writing a structure.
  */
 @SmithyInternalApi
-public record StructureSection(StructureShape structure) implements CodeSection {
-}
+public record StructureSection(StructureShape structure) implements CodeSection {}

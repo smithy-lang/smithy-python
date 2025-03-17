@@ -12,5 +12,4 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  * A section that controls writing an error.
  */
 @SmithyInternalApi
-public record ErrorSection(Symbol errorSymbol) implements CodeSection {
-}
+public record ErrorSection(Symbol errorSymbol) implements CodeSection {}

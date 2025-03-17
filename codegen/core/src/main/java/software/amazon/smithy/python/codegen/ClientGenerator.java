@@ -807,9 +807,9 @@ final class ClientGenerator implements Runnable {
                     :param plugins: A list of callables that modify the configuration dynamically.
                         Changes made by these plugins only apply for the duration of the operation
                         execution and will not affect any other operation invocations.
-                        
+
                         $L
-                        """,inputDocs, docs);
+                        """, inputDocs, docs);
         });
 
         var defaultPlugins = new LinkedHashSet<SymbolReference>();

@@ -19,7 +19,8 @@ import org.jsoup.nodes.TextNode;
 import org.jsoup.select.NodeVisitor;
 
 /**
- * Adds a runtime plugin to set user agent.
+ * Add a runtime plugin to convert the HTML docs that are provided by services into
+ * RST
  */
 @SmithyInternalApi
 public class AwsDocConverter implements PythonIntegration {
@@ -121,7 +122,7 @@ public class AwsDocConverter implements PythonIntegration {
                         sb.append("``");
                         break;
                     case "important":
-                    case "note":
+                    case "note", "p", "li":
                         sb.append("\n");
                         break;
                     case "ul":
@@ -130,9 +131,6 @@ public class AwsDocConverter implements PythonIntegration {
                             inList = false;
                         }
                         sb.append("\n\n");
-                        break;
-                    case "p":
-                        sb.append("\n");
                         break;
                 }
             }

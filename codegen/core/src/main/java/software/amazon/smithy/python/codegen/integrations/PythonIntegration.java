@@ -44,7 +44,6 @@ public interface PythonIntegration extends SmithyIntegration<PythonSettings, Pyt
         return model;
     }
 
-
     /**
      * Writes out all extra files required by runtime plugins.
      */

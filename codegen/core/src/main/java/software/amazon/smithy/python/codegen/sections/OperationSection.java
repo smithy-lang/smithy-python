@@ -13,5 +13,4 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  * A section that controls writing an operation.
  */
 @SmithyInternalApi
-public record OperationSection(Shape service, OperationShape operation) implements CodeSection {
-}
+public record OperationSection(Shape service, OperationShape operation) implements CodeSection {}

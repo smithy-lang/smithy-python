@@ -6,7 +6,6 @@ package software.amazon.smithy.python.codegen.generators;
 
 import java.util.ArrayList;
 import java.util.Set;
-
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.MemberShape;
@@ -133,8 +132,8 @@ public final class UnionGenerator implements Runnable {
         memberNames.add(unknownSymbol.getName());
         writer.popState();
 
-        writer.write("type $L = $L\n", parentName, String.join(" | ", memberNames));
         writer.pushState(new UnionSection(shape, parentName, memberNames));
+        writer.write("$L = Union[$L]\n", parentName, String.join(" | ", memberNames));
         shape.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeDocs(trait.getValue()));
         writer.popState();
 

@@ -103,17 +103,17 @@ public final class StructureGenerator implements Runnable {
         writer.pushState(new StructureSection(shape));
 
         writer.write("""
-                        @dataclass(kw_only=True)
-                        class $L:
-                            ${C|}
-                        
-                            ${C|}
-                        
-                            ${C|}
-                        
-                            ${C|}
-                        
-                        """,
+                @dataclass(kw_only=True)
+                class $L:
+                    ${C|}
+
+                    ${C|}
+
+                    ${C|}
+
+                    ${C|}
+
+                """,
                 symbol.getName(),
                 writer.consumer(w -> writeClassDocs(false)),
                 writer.consumer(w -> writeProperties()),
@@ -160,7 +160,7 @@ public final class StructureGenerator implements Runnable {
                 writer.consumer(w -> generateDeserializeMethod()));
         writer.popState();
 
-        }
+    }
 
     private void writeProperties() {
         for (MemberShape member : requiredMembers) {
@@ -317,7 +317,8 @@ public final class StructureGenerator implements Runnable {
     private void writeMemberDocs(MemberShape member) {
         member.getMemberTrait(model, DocumentationTrait.class).ifPresent(trait -> {
             String memberName = symbolProvider.toMemberName(member);
-            String docs = writer.formatDocs(String.format(":param %s: %s", memberName, trait.getValue())).replace("\n", "\n    ");
+            String docs = writer.formatDocs(String.format(":param %s: %s", memberName, trait.getValue()))
+                    .replace("\n", "\n    ");
             writer.write(docs);
         });
     }

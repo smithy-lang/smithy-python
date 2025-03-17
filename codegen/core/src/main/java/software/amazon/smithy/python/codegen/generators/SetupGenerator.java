@@ -275,39 +275,38 @@ public final class SetupGenerator {
         String version = settings.moduleVersion();
         context.writerDelegator().useFileWriter("docs/conf.py", "", writer -> {
             writer.write("""
-import os
-import sys
-sys.path.insert(0, os.path.abspath('..'))
+                    import os
+                    import sys
+                    sys.path.insert(0, os.path.abspath('..'))
 
-project = 'AWS SDK for Python'
-author = 'Boto'
-release = '$L'
+                    project = 'AWS SDK for Python'
+                    author = 'Boto'
+                    release = '$L'
 
-extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.viewcode',
-]
+                    extensions = [
+                        'sphinx.ext.autodoc',
+                        'sphinx.ext.viewcode',
+                    ]
 
-templates_path = ['_templates']
-exclude_patterns = []
+                    templates_path = ['_templates']
+                    exclude_patterns = []
 
-autodoc_default_options = {
-    'exclude-members': 'deserialize,deserialize_kwargs,serialize,serialize_members'
-}
+                    autodoc_default_options = {
+                        'exclude-members': 'deserialize,deserialize_kwargs,serialize,serialize_members'
+                    }
 
-html_theme = 'pydata_sphinx_theme'
-html_theme_options = {
-    "navbar_center": [],
-    "logo": {
-        "text": "AWS SDK for Python",
-    }
-}
+                    html_theme = 'pydata_sphinx_theme'
+                    html_theme_options = {
+                        "navbar_center": [],
+                        "logo": {
+                            "text": "AWS SDK for Python",
+                        }
+                    }
 
-autodoc_typehints = 'both'
-            """, version);
+                    autodoc_typehints = 'both'
+                                """, version);
         });
     }
-
 
     /**
      * Write a make.bat file.
@@ -321,40 +320,40 @@ autodoc_typehints = 'both'
     ) {
         context.writerDelegator().useFileWriter("docs/make.bat", "", writer -> {
             writer.write("""
-@ECHO OFF
+                    @ECHO OFF
 
-pushd %~dp0
+                    pushd %~dp0
 
-REM Command file for Sphinx documentation
+                    REM Command file for Sphinx documentation
 
-if "%SPHINXBUILD%" == "" (
-    set SPHINXBUILD=sphinx-build
-)
-set BUILDDIR=build
-set SERVICESDIR=source/reference/services
-set SPHINXOPTS=-j auto
-set ALLSPHINXOPTS=-d %BUILDDIR%/doctrees %SPHINXOPTS% .
+                    if "%SPHINXBUILD%" == "" (
+                        set SPHINXBUILD=sphinx-build
+                    )
+                    set BUILDDIR=build
+                    set SERVICESDIR=source/reference/services
+                    set SPHINXOPTS=-j auto
+                    set ALLSPHINXOPTS=-d %BUILDDIR%/doctrees %SPHINXOPTS% .
 
-if "%1" == "" goto help
+                    if "%1" == "" goto help
 
-if "%1" == "clean" (
-    rmdir /S /Q %BUILDDIR%
-    goto end
-)
+                    if "%1" == "clean" (
+                        rmdir /S /Q %BUILDDIR%
+                        goto end
+                    )
 
-if "%1" == "html" (
-    %SPHINXBUILD% -b html %ALLSPHINXOPTS% %BUILDDIR%/html
-    echo.
-    echo "Build finished. The HTML pages are in %BUILDDIR%/html."
-    goto end
-)
+                    if "%1" == "html" (
+                        %SPHINXBUILD% -b html %ALLSPHINXOPTS% %BUILDDIR%/html
+                        echo.
+                        echo "Build finished. The HTML pages are in %BUILDDIR%/html."
+                        goto end
+                    )
 
-:help
-%SPHINXBUILD% -M help %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
+                    :help
+                    %SPHINXBUILD% -M help %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
 
-:end
-popd
-        """);
+                    :end
+                    popd
+                            """);
         });
     }
 
@@ -370,23 +369,22 @@ popd
     ) {
         context.writerDelegator().useFileWriter("docs/Makefile", "", writer -> {
             writer.write("""
-SPHINXBUILD   = sphinx-build
-BUILDDIR      = build
-SERVICESDIR   = source/reference/services
-SPHINXOPTS    = -j auto
-ALLSPHINXOPTS   = -d $$(BUILDDIR)/doctrees $$(SPHINXOPTS) .
+                    SPHINXBUILD   = sphinx-build
+                    BUILDDIR      = build
+                    SERVICESDIR   = source/reference/services
+                    SPHINXOPTS    = -j auto
+                    ALLSPHINXOPTS   = -d $$(BUILDDIR)/doctrees $$(SPHINXOPTS) .
 
-clean:
-\t-rm -rf $$(BUILDDIR)/*
+                    clean:
+                    \t-rm -rf $$(BUILDDIR)/*
 
-html:
-\t$$(SPHINXBUILD) -b html $$(ALLSPHINXOPTS) $$(BUILDDIR)/html
-\t@echo
-\t@echo "Build finished. The HTML pages are in $$(BUILDDIR)/html."
-    """);
+                    html:
+                    \t$$(SPHINXBUILD) -b html $$(ALLSPHINXOPTS) $$(BUILDDIR)/html
+                    \t@echo
+                    \t@echo "Build finished. The HTML pages are in $$(BUILDDIR)/html."
+                        """);
         });
     }
-
 
     /**
      * Write the main index files for the documentation.
@@ -399,16 +397,16 @@ html:
         // Write the main index file for the documentation
         context.writerDelegator().useFileWriter("docs/index.rst", "", writer -> {
             writer.write("""
-AWS SDK For Python
-====================================================
+                    AWS SDK For Python
+                    ====================================================
 
-..  toctree::
-    :maxdepth: 2
-    :titlesonly:
-    :glob:
+                    ..  toctree::
+                        :maxdepth: 2
+                        :titlesonly:
+                        :glob:
 
-    */index
-            """);
+                        */index
+                                """);
         });
 
         // Write the index file for the client section
@@ -429,15 +427,15 @@ AWS SDK For Python
     private static void writeIndexFile(GenerationContext context, String filePath, String title) {
         context.writerDelegator().useFileWriter(filePath, "", writer -> {
             writer.write("""
-$L
-=======
-.. toctree::
-   :maxdepth: 1
-   :titlesonly:
-   :glob:
+                    $L
+                    =======
+                    .. toctree::
+                       :maxdepth: 1
+                       :titlesonly:
+                       :glob:
 
-   *
-            """, title);
+                       *
+                                """, title);
         });
     }
 
