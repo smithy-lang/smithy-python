@@ -50,7 +50,9 @@ class AWSAsyncEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
             event = await Event.decode_async(self._source)
         except Exception as e:
             await self.close()
-            raise IOError("Failed to read from stream.") from e
+            if not isinstance(e, EventError):
+                raise IOError("Failed to read from stream.") from e
+            raise
 
         if event is None:
             return None
