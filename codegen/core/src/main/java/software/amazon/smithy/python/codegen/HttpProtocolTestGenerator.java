@@ -255,7 +255,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
                             except Exception as err:
                                 fail(f"Expected '$2L' exception to be thrown, but received {type(err).__name__}: {err}")
                             """,
-                            context.symbolProvider().toSymbol(operation),
+                            context.symbolProvider()
+                                    .toSymbol(operation)
+                                    .expectProperty(SymbolProperties.OPERATION_METHOD),
                             TEST_HTTP_SERVICE_ERR_SYMBOL,
                             testCase.getMethod(),
                             testCase.getUri(),
@@ -459,7 +461,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
                                 ${C|}
                             """,
-                            context.symbolProvider().toSymbol(operation),
+                            context.symbolProvider()
+                                    .toSymbol(operation)
+                                    .expectProperty(SymbolProperties.OPERATION_METHOD),
                             (Runnable) () -> testCase.getParams().accept(new ValueNodeVisitor(outputShape)),
                             (Runnable) () -> assertResponseEqual(testCase, operation));
                 });
@@ -507,7 +511,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                         if type(err).__name__ != $2S:
                                             fail(f"Expected '$2L' exception to be thrown, but received {type(err).__name__}: {err}")
                                     """,
-                            context.symbolProvider().toSymbol(operation),
+                            context.symbolProvider()
+                                    .toSymbol(operation)
+                                    .expectProperty(SymbolProperties.OPERATION_METHOD),
                             error.getId().getName());
                     // TODO: Correctly assert the status code and other values
                 });

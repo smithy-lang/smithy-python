@@ -682,7 +682,7 @@ class TypeRegistry:
     def __contains__(self, item: object, /):
         """Check if the registry contains the given shape.
 
-        :param shape: The shape ID to check for.
+        :param item: The shape ID to check for.
         """
         return item in self._types or (
             self._sub_registry is not None and item in self._sub_registry
