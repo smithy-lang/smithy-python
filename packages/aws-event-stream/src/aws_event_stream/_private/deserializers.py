@@ -58,8 +58,9 @@ class AWSAsyncEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
             raise
 
         if event is None:
+            logger.debug("No event received from the source.")
             return None
-        logger.debug("Received raw event message: %s", event)
+        logger.debug("Received raw event: %s", event)
 
         deserializer = EventDeserializer(
             event=event,
@@ -67,7 +68,7 @@ class AWSAsyncEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
             is_client_mode=self._is_client_mode,
         )
         result = self._deserializer(deserializer)
-        logger.debug("Deserialized event message: %s", result)
+        logger.debug("Successfully deserialized event: %s", result)
         if isinstance(getattr(result, "value"), Exception):
             raise result.value  # type: ignore
         return result
