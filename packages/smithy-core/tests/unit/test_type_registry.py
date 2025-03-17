@@ -8,25 +8,44 @@ import pytest
 def test_get():
     registry = TypeRegistry({ShapeID("com.example#Test"): TestShape})
 
-    result = registry.get(ShapeID("com.example#Test"))
+    result = registry[ShapeID("com.example#Test")]
 
     assert result == TestShape
+
+
+def test_contains():
+    registry = TypeRegistry({ShapeID("com.example#Test"): TestShape})
+
+    assert ShapeID("com.example#Test") in registry
 
 
 def test_get_sub_registry():
     sub_registry = TypeRegistry({ShapeID("com.example#Test"): TestShape})
     registry = TypeRegistry({}, sub_registry)
 
-    result = registry.get(ShapeID("com.example#Test"))
+    result = registry[ShapeID("com.example#Test")]
 
     assert result == TestShape
+
+
+def test_contains_sub_registry():
+    sub_registry = TypeRegistry({ShapeID("com.example#Test"): TestShape})
+    registry = TypeRegistry({}, sub_registry)
+
+    assert ShapeID("com.example#Test") in registry
 
 
 def test_get_no_match():
     registry = TypeRegistry({ShapeID("com.example#Test"): TestShape})
 
     with pytest.raises(KeyError, match="Unknown shape: com.example#Test2"):
-        registry.get(ShapeID("com.example#Test2"))
+        registry[ShapeID("com.example#Test2")]
+
+
+def test_contains_no_match():
+    registry = TypeRegistry({ShapeID("com.example#Test"): TestShape})
+
+    assert ShapeID("com.example#Test2") not in registry
 
 
 def test_deserialize():
@@ -39,6 +58,7 @@ def test_deserialize():
 
 
 class TestShape(DeserializeableShape):
+    __test__ = False
     schema = Schema(id=ShapeID("com.example#Test"), shape_type=ShapeType.STRING)
 
     def __init__(self, value: str):
