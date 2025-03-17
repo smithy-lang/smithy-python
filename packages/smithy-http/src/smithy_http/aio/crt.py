@@ -35,6 +35,7 @@ except ImportError:
 
 from smithy_core import interfaces as core_interfaces
 from smithy_core.aio.types import AsyncBytesReader
+from smithy_core.aio.utils import close
 from smithy_core.exceptions import MissingDependencyException
 
 from .. import Field, Fields
@@ -361,7 +362,9 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             # asyncio.create_task we'll start the coroutine without having to
             # explicitly await it.
             crt_body = BufferableByteStream()
-            body = AsyncBytesReader(body)
+
+            if not isinstance(body, AsyncIterable):
+                body = AsyncBytesReader(body)
 
             # Start the read task in the background.
             read_task = asyncio.create_task(self._consume_body_async(body, crt_body))
@@ -380,7 +383,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         return crt_request, crt_body
 
     async def _consume_body_async(
-        self, source: AsyncBytesReader, dest: "BufferableByteStream"
+        self, source: AsyncIterable[bytes], dest: "BufferableByteStream"
     ) -> None:
         try:
             async for chunk in source:
@@ -389,7 +392,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             dest.close()
             raise
         finally:
-            await source.close()
+            await close(source)
         dest.end_stream()
 
     def __deepcopy__(self, memo: Any) -> "AWSCRTHTTPClient":

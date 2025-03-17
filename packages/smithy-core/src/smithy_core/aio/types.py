@@ -10,6 +10,7 @@ from typing import Any, Self, cast
 from ..exceptions import SmithyException
 from ..interfaces import BytesReader
 from .interfaces import AsyncByteStream, StreamingBlob
+from .utils import close
 
 # The default chunk size for iterating streams.
 _DEFAULT_CHUNK_SIZE = 1024
@@ -115,10 +116,7 @@ class AsyncBytesReader:
     async def close(self) -> None:
         """Closes the stream, as well as the underlying stream where possible."""
         self._closed = True
-        if (close := getattr(self._data, "close", None)) is not None:
-            if asyncio.iscoroutine(result := close()):
-                await result
-
+        await close(self._data)
         self._data = None
 
 
@@ -250,12 +248,9 @@ class SeekableAsyncBytesReader:
 
     async def close(self) -> None:
         """Closes the stream, as well as the underlying stream where possible."""
-        if (close := getattr(self._data_source, "close", None)) is not None:
-            if asyncio.iscoroutine(result := close()):
-                await result
-
-        self._data_source = None
         self._buffer.close()
+        await close(self._data_source)
+        self._data_source = None
 
 
 class _AsyncByteStreamIterator:
