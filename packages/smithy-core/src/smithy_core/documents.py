@@ -143,6 +143,11 @@ class Document:
         """The Smithy data model type for the underlying contents of the document."""
         return self._type
 
+    @property
+    def discriminator(self) -> ShapeID:
+        """The shape ID that corresponds to the contents of the document."""
+        return self._schema.id
+
     def is_none(self) -> bool:
         """Indicates whether the document contains a null value."""
         return self._value is None and self._raw_value is None
@@ -633,3 +638,55 @@ class _DocumentDeserializer(ShapeDeserializer):
     @override
     def read_timestamp(self, schema: "Schema") -> datetime.datetime:
         return self._value.as_timestamp()
+
+
+class TypeRegistry:
+    """A registry for on-demand deserialization of types by using a mapping of shape IDs
+    to their deserializers."""
+
+    def __init__(
+        self,
+        types: dict[ShapeID, type[DeserializeableShape]],
+        sub_registry: "TypeRegistry | None" = None,
+    ):
+        """Initialize a TypeRegistry.
+
+        :param types: A mapping of ShapeID to the shapes they deserialize to.
+        :param sub_registry: A registry to delegate to if an ID is not found in types.
+        """
+        self._types = types
+        self._sub_registry = sub_registry
+
+    def get(self, shape: ShapeID) -> type[DeserializeableShape]:
+        """Get the deserializable shape for the given shape ID.
+
+        :param shape: The shape ID to get from the registry.
+        :returns: The corresponding deserializable shape.
+        :raises KeyError: If the shape ID is not found in the registry.
+        """
+        if shape in self._types:
+            return self._types[shape]
+        if self._sub_registry is not None:
+            return self._sub_registry.get(shape)
+        raise KeyError(f"Unknown shape: {shape}")
+
+    def __getitem__(self, shape: ShapeID):
+        """Get the deserializable shape for the given shape ID.
+
+        :param shape: The shape ID to get from the registry.
+        :returns: The corresponding deserializable shape.
+        :raises KeyError: If the shape ID is not found in the registry.
+        """
+        return self.get(shape)
+
+    def __contains__(self, item: object, /):
+        """Check if the registry contains the given shape.
+
+        :param shape: The shape ID to check for.
+        """
+        return item in self._types or (
+            self._sub_registry is not None and item in self._sub_registry
+        )
+
+    def deserialize(self, document: Document) -> DeserializeableShape:
+        return document.as_shape(self.get(document.discriminator))

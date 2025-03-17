@@ -1,11 +1,11 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import AsyncIterable
-from typing import Protocol, runtime_checkable, TYPE_CHECKING, Any
+from typing import Protocol, runtime_checkable, TYPE_CHECKING
 
 from ...interfaces import URI, Endpoint, TypedProperties
 from ...interfaces import StreamingBlob as SyncStreamingBlob
-
+from ...documents import TypeRegistry
 
 if TYPE_CHECKING:
     from ...schemas import APIOperation
@@ -126,7 +126,7 @@ class ClientProtocol[I: Request, O: Response](Protocol):
         operation: "APIOperation[OperationInput, OperationOutput]",
         request: I,
         response: O,
-        error_registry: Any,  # TODO: add error registry
+        error_registry: TypeRegistry,
         context: TypedProperties,
     ) -> OperationOutput:
         """Deserializes the output from the tranport response or throws an exception.
