@@ -44,24 +44,25 @@ public class AwsDocConverter implements PythonIntegration {
         Document document = Jsoup.parse(html);
         RstNodeVisitor visitor = new RstNodeVisitor();
         document.body().traverse(visitor);
-        return visitor.toString();
+        return "\n" + visitor;
     }
 
     private static class RstNodeVisitor implements NodeVisitor {
         private final StringBuilder sb = new StringBuilder();
         private boolean inList = false;
+        private int listDepth = 0;
 
         @Override
         public void head(Node node, int depth) {
             if (node instanceof TextNode) {
-                //TODO properly handle stripping whitespace
-                Node parentNode = node.parent();
-                if (parentNode != null && parentNode.nodeName().equals("p")) {
-                    //TODO write a test case like the following: <p> Foo <i>bar
-                    // </i> baz</p> -> "Foo *bar* baz"
-                    sb.append(((TextNode) node).text().strip());
-                } else {
-                    sb.append(((TextNode) node).text());
+                TextNode textNode = (TextNode) node;
+                String text = textNode.text();
+                if (!text.trim().isEmpty()) {
+                    sb.append(text);
+                // Account for services making a paragraph tag that's empty except
+                // for a newline
+                } else if (node.parent() instanceof Element && ((Element) node.parent()).tagName().equals("p")) {
+                    sb.append(text.replaceAll("[ \\t]+", ""));
                 }
             } else if (node instanceof Element) {
                 Element element = (Element) node;
@@ -78,24 +79,22 @@ public class AwsDocConverter implements PythonIntegration {
                         sb.append("*");
                         break;
                     case "code":
-                        sb.append(" ``");
+                        sb.append("``");
                         break;
                     case "important":
-                        sb.append(".. important::\n\n    ");
+                        sb.append("\n.. important::\n    ");
                         break;
                     case "note":
-                        sb.append(".. note::\n\n    ");
+                        sb.append("\n.. note::\n    ");
                         break;
-                    //TODO this looks a little weird on modelid for invoke_model input
-                    // do I do something weird based on if it's in a parameter cause
-                    // those are already bullets?
                     case "ul":
                         inList = true;
+                        listDepth++;
                         sb.append("\n");
                         break;
                     case "li":
                         if (inList) {
-                            sb.append("- ");
+                            sb.append("  ".repeat(listDepth - 1)).append("* ");
                         }
                         break;
                 }
@@ -119,18 +118,21 @@ public class AwsDocConverter implements PythonIntegration {
                         sb.append("*");
                         break;
                     case "code":
-                        sb.append("`` ");
+                        sb.append("``");
                         break;
                     case "important":
                     case "note":
-                        sb.append("\n\n");
-                        break;
-                    case "ul":
-                        inList = false;
                         sb.append("\n");
                         break;
-                    case "p":
+                    case "ul":
+                        listDepth--;
+                        if (listDepth == 0) {
+                            inList = false;
+                        }
                         sb.append("\n\n");
+                        break;
+                    case "p":
+                        sb.append("\n");
                         break;
                 }
             }
@@ -138,7 +140,7 @@ public class AwsDocConverter implements PythonIntegration {
 
         @Override
         public String toString() {
-            return sb.toString().trim();
+            return sb.toString();
         }
     }
 }

@@ -41,7 +41,7 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
     private static final Logger LOGGER = Logger.getLogger(PythonWriter.class.getName());
 
     private final String fullPackageName;
-    private final boolean addCodegenWarningHeader;
+    private final String commentStart;
     private boolean addLogger = false;
 
     /**
@@ -51,7 +51,7 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
      * @param fullPackageName The fully-qualified name of the package.
      */
     public PythonWriter(PythonSettings settings, String fullPackageName) {
-        this(settings, fullPackageName, true);
+        this(settings, fullPackageName, "#");
     }
 
     /**
@@ -59,16 +59,16 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
      *
      * @param settings The python plugin settings.
      * @param fullPackageName The fully-qualified name of the package.
-     * @param addCodegenWarningHeader Whether to add a header comment warning that the file is code generated.
+     * @param commentStart The string that starts a comment in the given file format
      */
-    public PythonWriter(PythonSettings settings, String fullPackageName, boolean addCodegenWarningHeader) {
+    public PythonWriter(PythonSettings settings, String fullPackageName, String commentStart) {
         super(new ImportDeclarations(settings, fullPackageName));
         this.fullPackageName = fullPackageName;
         trimBlankLines();
         trimTrailingSpaces();
         putFormatter('T', new PythonSymbolFormatter());
         putFormatter('N', new PythonNodeFormatter(this));
-        this.addCodegenWarningHeader = addCodegenWarningHeader;
+        this.commentStart = commentStart;
     }
 
     /**
@@ -87,10 +87,19 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
 
         @Override
         public PythonWriter apply(String filename, String namespace) {
+            //Default is #
+            String commentStart = "#";
             // Markdown doesn't have comments, so there's no non-intrusive way to
             // add the warning.
-            var addWarningHeader = !filename.endsWith(".md");
-            return new PythonWriter(settings, namespace, addWarningHeader);
+            if (filename.endsWith(".md")) {
+                commentStart = "";
+            } else if (filename.endsWith(".rst")) {
+                commentStart = "..\n    ";
+            } else if (filename.endsWith(".bat")) {
+                commentStart = "REM";
+            }
+
+            return new PythonWriter(settings, namespace, commentStart);
         }
     }
 
@@ -133,6 +142,8 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         return this;
     }
 
+    private static final int MAX_LINE_LENGTH = CodegenUtils.MAX_PREFERRED_LINE_LENGTH - 8;
+
     /**
      * Formats a given Commonmark string and wraps it for use in a doc
      * comment.
@@ -141,10 +152,81 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
      * @return Formatted documentation.
      */
     public String formatDocs(String docs) {
-        // TODO: write a documentation converter to convert markdown to rst
-        return StringUtils.wrap(docs, CodegenUtils.MAX_PREFERRED_LINE_LENGTH - 8)
-                .replace("$", "$$");
+        String rstDocs = wrapRST(docs).toString();
+        return rstDocs.replace("$", "$$");
     }
+
+    public static String wrapRST(String text) {
+        StringBuilder wrappedText = new StringBuilder();
+        String[] lines = text.split("\n");
+        for (String line : lines) {
+            wrapLine(line, wrappedText);
+        }
+        return wrappedText.toString();
+    }
+
+    private static void wrapLine(String line, StringBuilder wrappedText) {
+        int indent = getIndentationLevel(line);
+        String indentStr = " ".repeat(indent);
+        line = line.trim();
+
+        while (line.length() > MAX_LINE_LENGTH) {
+            int wrapAt = findWrapPosition(line, MAX_LINE_LENGTH);
+            wrappedText.append(indentStr).append(line, 0, wrapAt).append("\n");
+            line = line.substring(wrapAt).trim();
+            if (line.isEmpty()) {
+                return;
+            }
+        }
+        wrappedText.append(indentStr).append(line).append("\n");
+    }
+
+    private static int findWrapPosition(String line, int maxLineLength) {
+        // Find the last space before maxLineLength
+        int wrapAt = line.lastIndexOf(' ', maxLineLength);
+        if (wrapAt == -1) {
+            // If no space found, force wrap at maxLineLength
+            wrapAt = maxLineLength;
+        } else {
+            // Ensure we don't break a link
+            int linkStart = line.lastIndexOf("`", wrapAt);
+            int linkEnd = line.indexOf("`_", wrapAt);
+            if (linkStart != -1 && (linkEnd == -1 || linkEnd < linkStart)) {
+                linkEnd = line.indexOf("`_", linkStart);
+                if (linkEnd != -1 && linkEnd <= maxLineLength) {
+                    wrapAt = linkEnd + 2;
+                } else {
+                    // No matching `_` found, keep the original wrap position
+                    wrapAt = line.lastIndexOf(' ', maxLineLength);
+                    if (wrapAt == -1) {
+                        wrapAt = maxLineLength;
+                    }
+                }
+            }
+        }
+        // Include trailing punctuation before a space in the previous line
+        int nextSpace = line.indexOf(' ', wrapAt);
+        if (nextSpace != -1) {
+            int i = wrapAt;
+            while (i < nextSpace && !Character.isLetterOrDigit(line.charAt(i))) {
+                i++;
+            }
+            if (i == nextSpace) {
+                wrapAt = nextSpace;
+            }
+        }
+        return wrapAt;
+    }
+
+
+    private static int getIndentationLevel(String line) {
+        int indent = 0;
+        while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) {
+            indent++;
+        }
+        return indent;
+    }
+
 
     /**
      * Opens a block to write comments.
@@ -288,8 +370,8 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         }
 
         contents += super.toString();
-        if (addCodegenWarningHeader) {
-            String header = "# Code generated by smithy-python-codegen DO NOT EDIT.\n\n";
+        if (!commentStart.equals("")) {
+            String header = String.format("%s Code generated by smithy-python-codegen DO NOT EDIT.\n\n", commentStart);
             contents = header + contents;
         }
         return contents;

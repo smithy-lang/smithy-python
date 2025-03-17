@@ -23,11 +23,7 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
-import software.amazon.smithy.python.codegen.sections.InitializeHttpAuthParametersSection;
-import software.amazon.smithy.python.codegen.sections.ResolveEndpointSection;
-import software.amazon.smithy.python.codegen.sections.ResolveIdentitySection;
-import software.amazon.smithy.python.codegen.sections.SendRequestSection;
-import software.amazon.smithy.python.codegen.sections.SignRequestSection;
+import software.amazon.smithy.python.codegen.sections.*;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -763,6 +759,7 @@ final class ClientGenerator implements Runnable {
         var output = model.expectShape(operation.getOutputShape());
         var outputSymbol = symbolProvider.toSymbol(output);
 
+        writer.pushState(new OperationSection(service, operation));
         writer.openBlock("async def $L(self, input: $T, plugins: list[$T] | None = None) -> $T:",
                 "",
                 operationMethodSymbol.getName(),
@@ -790,26 +787,29 @@ final class ClientGenerator implements Runnable {
                                 """, serSymbol, deserSymbol, operation.getId().getName());
                     }
                 });
+        writer.popState();
     }
 
     private void writeSharedOperationInit(PythonWriter writer, OperationShape operation, Shape input) {
         writer.writeDocs(() -> {
-            var docs = operation.getTrait(DocumentationTrait.class)
+            var docs = writer.formatDocs(operation.getTrait(DocumentationTrait.class)
                     .map(StringTrait::getValue)
-                    .orElse(String.format("Invokes the %s operation.", operation.getId().getName()));
+                    .orElse(String.format("Invokes the %s operation.",
+                            operation.getId().getName())));
 
             var inputDocs = input.getTrait(DocumentationTrait.class)
                     .map(StringTrait::getValue)
                     .orElse("The operation's input.");
 
             writer.write("""
-                    $L
-
                     :param input: $L
 
                     :param plugins: A list of callables that modify the configuration dynamically.
-                    Changes made by these plugins only apply for the duration of the operation
-                    execution and will not affect any other operation invocations.""", docs, inputDocs);
+                        Changes made by these plugins only apply for the duration of the operation
+                        execution and will not affect any other operation invocations.
+                        
+                        $L
+                        """,inputDocs, docs);
         });
 
         var defaultPlugins = new LinkedHashSet<SymbolReference>();

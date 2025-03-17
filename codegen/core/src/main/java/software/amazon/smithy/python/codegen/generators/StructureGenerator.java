@@ -35,6 +35,8 @@ import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.python.codegen.SymbolProperties;
+import software.amazon.smithy.python.codegen.sections.ErrorSection;
+import software.amazon.smithy.python.codegen.sections.StructureSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -98,24 +100,27 @@ public final class StructureGenerator implements Runnable {
     private void renderStructure() {
         writer.addStdlibImport("dataclasses", "dataclass");
         var symbol = symbolProvider.toSymbol(shape);
+        writer.pushState(new StructureSection(shape));
 
         writer.write("""
-                @dataclass(kw_only=True)
-                class $L:
-                    ${C|}
-
-                    ${C|}
-
-                    ${C|}
-
-                    ${C|}
-
-                """,
+                        @dataclass(kw_only=True)
+                        class $L:
+                            ${C|}
+                        
+                            ${C|}
+                        
+                            ${C|}
+                        
+                            ${C|}
+                        
+                        """,
                 symbol.getName(),
                 writer.consumer(w -> writeClassDocs(false)),
                 writer.consumer(w -> writeProperties()),
                 writer.consumer(w -> generateSerializeMethod()),
                 writer.consumer(w -> generateDeserializeMethod()));
+
+        writer.popState();
     }
 
     private void renderError() {
@@ -128,7 +133,7 @@ public final class StructureGenerator implements Runnable {
         var code = shape.getId().getName();
         var symbol = symbolProvider.toSymbol(shape);
         var apiError = CodegenUtils.getApiError(settings);
-
+        writer.pushState(new ErrorSection(symbol));
         writer.write("""
                 @dataclass(kw_only=True)
                 class $1L($2T):
@@ -153,7 +158,9 @@ public final class StructureGenerator implements Runnable {
                 writer.consumer(w -> writeProperties()),
                 writer.consumer(w -> generateSerializeMethod()),
                 writer.consumer(w -> generateDeserializeMethod()));
-    }
+        writer.popState();
+
+        }
 
     private void writeProperties() {
         for (MemberShape member : requiredMembers) {
@@ -231,7 +238,8 @@ public final class StructureGenerator implements Runnable {
                 });
 
                 if (isError) {
-                    writer.write(":param message: A message associated with the specific error.");
+                    writer.write("\n:param message: A message associated with the " +
+                            "specific error.");
                 }
 
                 if (!shape.members().isEmpty()) {
@@ -309,7 +317,7 @@ public final class StructureGenerator implements Runnable {
     private void writeMemberDocs(MemberShape member) {
         member.getMemberTrait(model, DocumentationTrait.class).ifPresent(trait -> {
             String memberName = symbolProvider.toMemberName(member);
-            String docs = writer.formatDocs(String.format(":param %s: %s", memberName, trait.getValue())).replace("\n", "\n\t");
+            String docs = writer.formatDocs(String.format(":param %s: %s", memberName, trait.getValue())).replace("\n", "\n    ");
             writer.write(docs);
         });
     }
