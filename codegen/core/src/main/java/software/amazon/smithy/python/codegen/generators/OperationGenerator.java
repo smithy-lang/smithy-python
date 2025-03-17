@@ -12,6 +12,7 @@ import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
@@ -41,23 +42,24 @@ public final class OperationGenerator implements Runnable {
         var outSymbol = symbolProvider.toSymbol(model.expectShape(shape.getOutputShape()));
 
         writer.addStdlibImport("dataclasses", "dataclass");
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addImport("smithy_core.schemas", "APIOperation");
-        writer.addImport("smithy_core.type_registry", "TypeRegistry");
+        writer.addImport("smithy_core.documents", "TypeRegistry");
 
         writer.write("""
-                @dataclass(kw_only=True, frozen=True)
-                class $1L(APIOperation["$2T", "$3T"]):
-                        input = $2T
-                        output = $3T
-                        schema = $4T
-                        input_schema = $5T
-                        output_schema = $6T
+                $1L = APIOperation(
+                        input = $2T,
+                        output = $3T,
+                        schema = $4T,
+                        input_schema = $5T,
+                        output_schema = $6T,
                         error_registry = TypeRegistry({
                             $7C
-                        })
+                        }),
                         effective_auth_schemes = [
                             $8C
                         ]
+                )
                 """,
                 opSymbol.getName(),
                 inSymbol,
@@ -67,8 +69,6 @@ public final class OperationGenerator implements Runnable {
                 outSymbol.expectProperty(SymbolProperties.SCHEMA),
                 writer.consumer(this::writeErrorTypeRegistry),
                 writer.consumer(this::writeAuthSchemes)
-        // TODO: Docs? Maybe not necessary on the operation type itself
-        // TODO: Singleton?
         );
     }
 
