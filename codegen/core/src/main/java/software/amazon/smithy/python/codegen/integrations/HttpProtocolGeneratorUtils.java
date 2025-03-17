@@ -149,7 +149,7 @@ public final class HttpProtocolGeneratorUtils {
                             ${7C|}
 
                             case _:
-                                return $5T(message)
+                                return $5T(f"{code}: {message}")
                     """,
                     errorDispatcher.getName(),
                     transportResponse,
