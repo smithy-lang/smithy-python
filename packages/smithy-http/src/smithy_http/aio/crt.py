@@ -273,12 +273,14 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
     ) -> "crt_http.HttpClientConnection":
         # TODO: Use CRT connection pooling instead of this basic kind
         connection_key = (url.scheme, url.host, url.port)
-        if connection_key in self._connections:
-            return self._connections[connection_key]
-        else:
-            connection = await self._create_connection(url)
-            self._connections[connection_key] = connection
+        connection = self._connections.get(connection_key)
+
+        if connection and connection.is_open():
             return connection
+
+        connection = await self._create_connection(url)
+        self._connections[connection_key] = connection
+        return connection
 
     def _build_new_connection(
         self, url: core_interfaces.URI
