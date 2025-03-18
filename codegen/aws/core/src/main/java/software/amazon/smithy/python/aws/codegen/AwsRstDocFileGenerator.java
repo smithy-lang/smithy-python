@@ -4,6 +4,9 @@
  */
 package software.amazon.smithy.python.aws.codegen;
 
+import static software.amazon.smithy.python.codegen.SymbolProperties.OPERATION_METHOD;
+
+import java.util.List;
 import software.amazon.smithy.model.traits.InputTrait;
 import software.amazon.smithy.model.traits.OutputTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
@@ -12,9 +15,6 @@ import software.amazon.smithy.python.codegen.sections.*;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.CodeInterceptor;
 import software.amazon.smithy.utils.CodeSection;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class AwsRstDocFileGenerator implements PythonIntegration {
 
@@ -27,8 +27,7 @@ public class AwsRstDocFileGenerator implements PythonIntegration {
                 new StructureGenerationInterceptor(context),
                 new ErrorGenerationInterceptor(context),
                 new UnionGenerationInterceptor(context),
-                new UnionMemberGenerationInterceptor(context)
-        );
+                new UnionMemberGenerationInterceptor(context));
     }
 
     /**
@@ -38,7 +37,7 @@ public class AwsRstDocFileGenerator implements PythonIntegration {
      * @return A formatted header string.
      */
     private static String generateHeader(String title) {
-        return String.format("%s\n%s\n\n", title, "=".repeat(title.length()));
+        return String.format("%s%n%s%n%n", title, "=".repeat(title.length()));
     }
 
     private static final class OperationGenerationInterceptor
@@ -58,7 +57,7 @@ public class AwsRstDocFileGenerator implements PythonIntegration {
         @Override
         public void append(PythonWriter pythonWriter, OperationSection section) {
             var operation = section.operation();
-            var operationSymbol = context.symbolProvider().toSymbol(operation);
+            var operationSymbol = context.symbolProvider().toSymbol(operation).expectProperty(OPERATION_METHOD);
             var input = context.model().expectShape(operation.getInputShape());
             var inputSymbol = context.symbolProvider().toSymbol(input);
             var output = context.model().expectShape(operation.getOutputShape());
@@ -158,12 +157,12 @@ public class AwsRstDocFileGenerator implements PythonIntegration {
         @Override
         public void append(PythonWriter pythonWriter, UnionSection section) {
             String parentName = section.parentName();
-            ArrayList<String> memberNames = section.memberNames();
             String docsFileName = String.format("docs/models/%s.rst", parentName);
             context.writerDelegator().useFileWriter(docsFileName, "", writer -> {
                 writer.write(".. _" + parentName + ":\n\n");
                 writer.write(generateHeader(parentName));
-                writer.write(".. autodata:: " + context.symbolProvider().toSymbol(section.unionShape()).toString() + "  \n");
+                writer.write(
+                        ".. autodata:: " + context.symbolProvider().toSymbol(section.unionShape()).toString() + "  \n");
             });
         }
     }

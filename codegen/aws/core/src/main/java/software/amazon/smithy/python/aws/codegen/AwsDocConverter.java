@@ -4,19 +4,19 @@
  */
 package software.amazon.smithy.python.aws.codegen;
 
-import software.amazon.smithy.model.shapes.Shape;
-import software.amazon.smithy.model.traits.DocumentationTrait;
-import software.amazon.smithy.python.codegen.PythonSettings;
-import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
-import software.amazon.smithy.utils.SmithyInternalApi;
-import software.amazon.smithy.model.Model;
-import software.amazon.smithy.model.transform.ModelTransformer;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.select.NodeVisitor;
+import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.shapes.Shape;
+import software.amazon.smithy.model.traits.DocumentationTrait;
+import software.amazon.smithy.model.transform.ModelTransformer;
+import software.amazon.smithy.python.codegen.PythonSettings;
+import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
+import software.amazon.smithy.utils.SmithyInternalApi;
 
 /**
  * Add a runtime plugin to convert the HTML docs that are provided by services into
@@ -41,7 +41,7 @@ public class AwsDocConverter implements PythonIntegration {
         });
     }
 
-    private String convertHtmlToRst(String html) {
+    String convertHtmlToRst(String html) {
         Document document = Jsoup.parse(html);
         RstNodeVisitor visitor = new RstNodeVisitor();
         document.body().traverse(visitor);
@@ -60,8 +60,8 @@ public class AwsDocConverter implements PythonIntegration {
                 String text = textNode.text();
                 if (!text.trim().isEmpty()) {
                     sb.append(text);
-                // Account for services making a paragraph tag that's empty except
-                // for a newline
+                    // Account for services making a paragraph tag that's empty except
+                    // for a newline
                 } else if (node.parent() instanceof Element && ((Element) node.parent()).tagName().equals("p")) {
                     sb.append(text.replaceAll("[ \\t]+", ""));
                 }
@@ -98,6 +98,11 @@ public class AwsDocConverter implements PythonIntegration {
                             sb.append("  ".repeat(listDepth - 1)).append("* ");
                         }
                         break;
+                    case "h1":
+                        sb.append("\n");
+                        break;
+                    default:
+                        break;
                 }
             }
         }
@@ -108,7 +113,7 @@ public class AwsDocConverter implements PythonIntegration {
                 Element element = (Element) node;
                 switch (element.tagName()) {
                     case "a":
-                        sb.append(" <").append(element.attr("href")).append(">`_ ");
+                        sb.append(" <").append(element.attr("href")).append(">`_");
                         break;
                     case "b":
                     case "strong":
@@ -122,7 +127,7 @@ public class AwsDocConverter implements PythonIntegration {
                         sb.append("``");
                         break;
                     case "important":
-                    case "note", "p", "li":
+                    case "note", "p":
                         sb.append("\n");
                         break;
                     case "ul":
@@ -130,7 +135,20 @@ public class AwsDocConverter implements PythonIntegration {
                         if (listDepth == 0) {
                             inList = false;
                         }
-                        sb.append("\n\n");
+                        if (sb.charAt(sb.length() - 1) != '\n') {
+                            sb.append("\n\n");
+                        }
+                        break;
+                    case "li":
+                        if (sb.charAt(sb.length() - 1) != '\n') {
+                            sb.append("\n\n");
+                        }
+                        break;
+                    case "h1":
+                        String title = element.text();
+                        sb.append("\n").append("=".repeat(title.length())).append("\n");
+                        break;
+                    default:
                         break;
                 }
             }

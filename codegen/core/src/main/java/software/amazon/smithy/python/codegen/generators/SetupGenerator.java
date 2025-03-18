@@ -20,10 +20,7 @@ import software.amazon.smithy.codegen.core.WriterDelegator;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.model.traits.TitleTrait;
-import software.amazon.smithy.python.codegen.GenerationContext;
-import software.amazon.smithy.python.codegen.PythonDependency;
-import software.amazon.smithy.python.codegen.PythonSettings;
-import software.amazon.smithy.python.codegen.SymbolProperties;
+import software.amazon.smithy.python.codegen.*;
 import software.amazon.smithy.python.codegen.sections.PyprojectSection;
 import software.amazon.smithy.python.codegen.sections.ReadmeSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
@@ -42,10 +39,10 @@ public final class SetupGenerator {
             PythonSettings settings,
             GenerationContext context
     ) {
+        writeDocsSkeleton(settings, context);
         var dependencies = gatherDependencies(context.writerDelegator().getDependencies().stream());
         writePyproject(settings, context.writerDelegator(), dependencies);
         writeReadme(settings, context);
-        writeDocsSkeleton(settings, context);
     }
 
     /**
@@ -150,9 +147,24 @@ public final class SetupGenerator {
                 writer.openBlock("dependencies = [", "]", () -> writeDependencyList(writer, deps.values()));
             });
 
-            Optional.ofNullable(dependencies.get(PythonDependency.Type.TEST_DEPENDENCY.getType())).ifPresent(deps -> {
+            Optional<Collection<SymbolDependency>> testDeps =
+                    Optional.ofNullable(dependencies.get(PythonDependency.Type.TEST_DEPENDENCY.getType()))
+                            .map(Map::values);
+
+            Optional<Collection<SymbolDependency>> docsDeps =
+                    Optional.ofNullable(dependencies.get(PythonDependency.Type.DOCS_DEPENDENCY.getType()))
+                            .map(Map::values);
+
+            if (testDeps.isPresent() || docsDeps.isPresent()) {
                 writer.write("[project.optional-dependencies]");
-                writer.openBlock("tests = [", "]", () -> writeDependencyList(writer, deps.values()));
+            }
+
+            testDeps.ifPresent(deps -> {
+                writer.openBlock("tests = [", "]", () -> writeDependencyList(writer, deps));
+            });
+
+            docsDeps.ifPresent(deps -> {
+                writer.openBlock("docs = [", "]", () -> writeDependencyList(writer, deps));
             });
 
             // TODO: remove the pyright global suppressions after the serde redo is done
@@ -254,7 +266,14 @@ public final class SetupGenerator {
     /**
      * Write the files required for sphinx doc generation
      */
-    private static void writeDocsSkeleton(PythonSettings settings, GenerationContext context) {
+    private static void writeDocsSkeleton(
+            PythonSettings settings,
+            GenerationContext context
+    ) {
+        context.writerDelegator().useFileWriter("pyproject.toml", "", writer -> {
+            writer.addDependency(SmithyPythonDependency.SPHINX);
+            writer.addDependency(SmithyPythonDependency.SPHINX_PYDATA_THEME);
+        });
         writeConf(settings, context);
         writeMakeBat(context);
         writeMakeFile(context);

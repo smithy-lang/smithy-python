@@ -191,9 +191,9 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
             // Ensure we don't break a link
             int linkStart = line.lastIndexOf("`", wrapAt);
             int linkEnd = line.indexOf("`_", wrapAt);
-            if (linkStart != -1 && (linkEnd == -1 || linkEnd < linkStart)) {
+            if (linkStart != -1 && (linkEnd != -1 && linkEnd > linkStart)) {
                 linkEnd = line.indexOf("`_", linkStart);
-                if (linkEnd != -1 && linkEnd <= maxLineLength) {
+                if (linkEnd != -1) {
                     wrapAt = linkEnd + 2;
                 } else {
                     // No matching `_` found, keep the original wrap position
