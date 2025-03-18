@@ -396,13 +396,12 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         writer.addImport("smithy_json", "JSONCodec");
         writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
         writer.addImport("smithy_core.types", "TimestampFormat");
-        writer.addImport("aws_event_stream.aio", "AWSInputEventStream");
+        writer.addImport("aws_event_stream.aio", "AWSEventPublisher");
         writer.write(
                 """
                         codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
-                        return AWSInputEventStream[Any, Any](
+                        publisher = AWSEventPublisher[Any](
                             payload_codec=codec,
-                            awaitable_output=awaitable_output,
                             async_writer=request_context.transport_request.body,  # type: ignore
                         )
                         """);
@@ -415,37 +414,15 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         writer.addImport("smithy_json", "JSONCodec");
         writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
         writer.addImport("smithy_core.types", "TimestampFormat");
-        writer.addImport("aws_event_stream.aio", "AWSOutputEventStream");
+        writer.addImport("aws_event_stream.aio", "AWSEventReceiver");
         writer.write(
                 """
                         codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
-                        return AWSOutputEventStream[Any, Any](
+                        receiver = AWSEventReceiver(
                             payload_codec=codec,
-                            initial_response=output,
-                            async_reader=AsyncBytesReader(
+                            source=AsyncBytesReader(
                                 transport_response.body  # type: ignore
                             ),
-                            deserializer=event_deserializer,  # type: ignore
-                        )
-                        """);
-    }
-
-    @Override
-    public void wrapDuplexStream(GenerationContext context, PythonWriter writer) {
-        writer.addDependency(SmithyPythonDependency.SMITHY_JSON);
-        writer.addDependency(SmithyPythonDependency.AWS_EVENT_STREAM);
-        writer.addImport("smithy_json", "JSONCodec");
-        writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
-        writer.addImport("smithy_core.types", "TimestampFormat");
-        writer.addImport("aws_event_stream.aio", "AWSDuplexEventStream");
-        writer.write(
-                """
-                        codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
-                        return AWSDuplexEventStream[Any, Any, Any](
-                            payload_codec=codec,
-                            async_writer=request_context.transport_request.body,  # type: ignore
-                            awaitable_output=awaitable_output,
-                            awaitable_response=response_future,
                             deserializer=event_deserializer,  # type: ignore
                         )
                         """);

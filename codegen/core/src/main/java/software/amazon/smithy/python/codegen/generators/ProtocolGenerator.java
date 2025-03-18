@@ -157,6 +157,4 @@ public interface ProtocolGenerator {
     default void wrapInputStream(GenerationContext context, PythonWriter writer) {}
 
     default void wrapOutputStream(GenerationContext context, PythonWriter writer) {}
-
-    default void wrapDuplexStream(GenerationContext context, PythonWriter writer) {}
 }
