@@ -75,7 +75,6 @@ class AWSAsyncEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
         except Exception as e:
             await self.close()
             raise IOError("Failed to write to stream.") from e
-        await self._writer.write(result.encode())
 
     async def close(self) -> None:
         if self._closed:
