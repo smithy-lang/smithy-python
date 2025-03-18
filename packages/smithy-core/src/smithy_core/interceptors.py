@@ -1,119 +1,55 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from copy import copy, deepcopy
-from typing import TypeVar
+from dataclasses import dataclass, replace
+from typing import Any, Sequence
 
-from .types import TypedProperties
-
-Request = TypeVar("Request")
-Response = TypeVar("Response")
-TransportRequest = TypeVar("TransportRequest")
-TransportResponse = TypeVar("TransportResponse")
+from .interfaces import TypedProperties
+from .serializers import SerializeableShape
+from .deserializers import DeserializeableShape
 
 
-class InterceptorContext[Request, Response, TransportRequest, TransportResponse]:
-    def __init__(
-        self,
-        *,
-        request: Request,
-        response: Response | Exception,
-        transport_request: TransportRequest,
-        transport_response: TransportResponse,
-    ):
-        """A container for the current data available to an interceptor.
+@dataclass(kw_only=True, frozen=True, slots=True)
+class InputContext[Request: SerializeableShape]:
+    request: Request
+    """The modeled request for the operation being invoked."""
 
-        :param request: The modeled request for the operation being invoked.
-        :param response: The modeled response for the operation being invoked. This will
-            only be available once the transport_response has been deserialized or the
-            attempt/execution has failed.
-        :param transport_request: The transmittable request for the operation being
-            invoked. This will only be available once request serialization has
-            completed.
-        :param transport_response: The transmitted response for the operation being
-            invoked. This will only be available once transmission has completed.
-        """
-        self._request = request
-        self._response = response
-        self._transport_request = transport_request
-        self._transport_response = transport_response
-        self._properties = TypedProperties()
-
-    @property
-    def request(self) -> Request:
-        """Retrieve the modeled request for the operation being invoked."""
-        return self._request
-
-    @property
-    def response(self) -> Response | Exception:
-        """Retrieve the modeled response for the operation being invoked.
-
-        This will only be available once the transport_response has been deserialized or
-        the attempt/execution has failed.
-        """
-        return self._response
-
-    # Note that TransportRequest (and TransportResponse below) aren't resolved types,
-    # but rather TypeVars. This is very important, because in the actual Interceptor
-    # interface class these are sometimes typed as None rather than, say, HTTPRequest.
-    # That lets us use the type system to tell people when something will be set and
-    # when it will not be set without leaking nullability into the cases where the
-    # property will ALWAYS be set.
-    @property
-    def transport_request(self) -> TransportRequest:
-        """Retrieve the transmittable request for the operation being invoked.
-
-        This will only be available once request serialization has completed.
-        """
-        return self._transport_request
-
-    @property
-    def transport_response(self) -> TransportResponse:
-        """Retrieve the transmitted response for the operation being invoked.
-
-        This will only be available once transmission has completed.
-        """
-        return self._transport_response
-
-    @property
-    def properties(self) -> TypedProperties:
-        """Retrieve the generic property bag.
-
-        These untyped properties will be made available to all other interceptors or
-        hooks that are called for this execution.
-        """
-        return self._properties
-
-    # The static properties of this class are made 'read-only' like this to discourage
-    # people from trying to modify the context outside of the specific hooks where that
-    # is allowed.
-    def copy(
-        self,
-        *,
-        request: Request | None = None,
-        response: Response | Exception | None = None,
-        transport_request: TransportRequest | None = None,
-        transport_response: TransportResponse | None = None,
-    ) -> "InterceptorContext[Request, Response, TransportRequest, TransportResponse]":
-        """Copy the context object, optionally overriding certain properties."""
-        if transport_request is None:
-            transport_request = copy(self._transport_request)
-
-        if transport_response is None:
-            transport_response = copy(self._transport_response)
-
-        context: InterceptorContext[
-            Request, Response, TransportRequest, TransportResponse
-        ] = InterceptorContext(
-            request=request if request is not None else self._request,
-            response=response if response is not None else self._response,
-            transport_request=transport_request,
-            transport_response=transport_response,
-        )
-        context._properties = deepcopy(self._properties)
-        return context
+    properties: TypedProperties
+    """A typed context property bag."""
 
 
-class Interceptor[Request, Response, TransportRequest, TransportResponse]:
+@dataclass(kw_only=True, frozen=True, slots=True)
+class RequestContext[Request: SerializeableShape, TransportRequest](
+    InputContext[Request]
+):
+    transport_request: TransportRequest
+    """The transmittable request for the operation being invoked."""
+
+
+@dataclass(kw_only=True, frozen=True, slots=True)
+class ResponseContext[Request: SerializeableShape, TransportRequest, TransportResponse](
+    RequestContext[Request, TransportRequest]
+):
+    transport_response: TransportResponse
+    """The transmitted response for the operation being invoked."""
+
+
+@dataclass(kw_only=True, frozen=True, slots=True)
+class OutputContext[
+    Request: SerializeableShape,
+    Response: DeserializeableShape,
+    TransportRequest,
+    TransportResponse,
+](ResponseContext[Request, TransportRequest, TransportResponse]):
+    response: Response | Exception
+    """The modeled response for the operation being invoked."""
+
+
+class Interceptor[
+    Request: SerializeableShape,
+    Response: DeserializeableShape,
+    TransportRequest,
+    TransportResponse,
+]:
     """Allows injecting code into the SDK's request execution pipeline.
 
     Terminology:
@@ -128,9 +64,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
         requests or responses.
     """
 
-    def read_before_execution(
-        self, context: InterceptorContext[Request, None, None, None]
-    ) -> None:
+    def read_before_execution(self, context: InputContext[Request]) -> None:
         """A hook called at the start of an execution, before the SDK does anything
         else.
 
@@ -151,9 +85,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
         the latest will be used and earlier ones will be logged and dropped.
         """
 
-    def modify_before_serialization(
-        self, context: InterceptorContext[Request, None, None, None]
-    ) -> Request:
+    def modify_before_serialization(self, context: InputContext[Request]) -> Request:
         """A hook called before the request is serialized into a transport request.
 
         This method has the ability to modify and return a new request of the same
@@ -174,9 +106,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
         """
         return context.request
 
-    def read_before_serialization(
-        self, context: InterceptorContext[Request, None, None, None]
-    ) -> None:
+    def read_before_serialization(self, context: InputContext[Request]) -> None:
         """A hook called before the input message is serialized into a transport
         request.
 
@@ -196,7 +126,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
         """
 
     def read_after_serialization(
-        self, context: InterceptorContext[Request, None, TransportRequest, None]
+        self, context: RequestContext[Request, TransportRequest]
     ) -> None:
         """A hook called after the input message is serialized into a transport request.
 
@@ -216,7 +146,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
         """
 
     def modify_before_retry_loop(
-        self, context: InterceptorContext[Request, None, TransportRequest, None]
+        self, context: RequestContext[Request, TransportRequest]
     ) -> TransportRequest:
         """A hook called before the retry loop is entered.
 
@@ -235,7 +165,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
         return context.transport_request
 
     def read_before_attempt(
-        self, context: InterceptorContext[Request, None, TransportRequest, None]
+        self, context: RequestContext[Request, TransportRequest]
     ) -> None:
         """A hook called before each attempt at sending the transport request to the
         service.
@@ -260,7 +190,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
         """
 
     def modify_before_signing(
-        self, context: InterceptorContext[Request, None, TransportRequest, None]
+        self, context: RequestContext[Request, TransportRequest]
     ) -> TransportRequest:
         """A hook called before the transport request is signed.
 
@@ -286,7 +216,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
         return context.transport_request
 
     def read_before_signing(
-        self, context: InterceptorContext[Request, None, TransportRequest, None]
+        self, context: RequestContext[Request, TransportRequest]
     ) -> None:
         """A hook called before the transport request is signed.
 
@@ -309,7 +239,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
         """
 
     def read_after_signing(
-        self, context: InterceptorContext[Request, None, TransportRequest, None]
+        self, context: RequestContext[Request, TransportRequest]
     ) -> None:
         """A hook called after the transport request is signed.
 
@@ -332,7 +262,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
         """
 
     def modify_before_transmit(
-        self, context: InterceptorContext[Request, None, TransportRequest, None]
+        self, context: RequestContext[Request, TransportRequest]
     ) -> TransportRequest:
         """A hook called before the transport request is sent to the service.
 
@@ -358,7 +288,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
         return context.transport_request
 
     def read_before_transmit(
-        self, context: InterceptorContext[Request, None, TransportRequest, None]
+        self, context: RequestContext[Request, TransportRequest]
     ) -> None:
         """A hook called before the transport request is sent to the service.
 
@@ -383,7 +313,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
 
     def read_after_transmit(
         self,
-        context: InterceptorContext[Request, None, TransportRequest, TransportResponse],
+        context: ResponseContext[Request, TransportRequest, TransportResponse],
     ) -> None:
         """A hook called after the transport request is sent to the service and a
         transport response is received.
@@ -409,7 +339,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
 
     def modify_before_deserialization(
         self,
-        context: InterceptorContext[Request, None, TransportRequest, TransportResponse],
+        context: ResponseContext[Request, TransportRequest, TransportResponse],
     ) -> TransportResponse:
         """A hook called before the transport response is deserialized.
 
@@ -439,7 +369,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
 
     def read_before_deserialization(
         self,
-        context: InterceptorContext[Request, None, TransportRequest, TransportResponse],
+        context: ResponseContext[Request, TransportRequest, TransportResponse],
     ) -> None:
         """A hook called before the transport response is deserialized.
 
@@ -464,9 +394,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
 
     def read_after_deserialization(
         self,
-        context: InterceptorContext[
-            Request, Response, TransportRequest, TransportResponse
-        ],
+        context: OutputContext[Request, Response, TransportRequest, TransportResponse],
     ) -> None:
         """A hook called after the transport response is deserialized.
 
@@ -491,7 +419,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
 
     def modify_before_attempt_completion(
         self,
-        context: InterceptorContext[
+        context: OutputContext[
             Request, Response, TransportRequest, TransportResponse | None
         ],
     ) -> Response | Exception:
@@ -521,7 +449,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
 
     def read_after_attempt(
         self,
-        context: InterceptorContext[
+        context: OutputContext[
             Request, Response, TransportRequest, TransportResponse | None
         ],
     ) -> None:
@@ -549,7 +477,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
 
     def modify_before_completion(
         self,
-        context: InterceptorContext[
+        context: OutputContext[
             Request, Response, TransportRequest | None, TransportResponse | None
         ],
     ) -> Response | Exception:
@@ -574,7 +502,7 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
 
     def read_after_execution(
         self,
-        context: InterceptorContext[
+        context: OutputContext[
             Request, Response, TransportRequest | None, TransportResponse | None
         ],
     ) -> None:
@@ -596,3 +524,135 @@ class Interceptor[Request, Response, TransportRequest, TransportResponse]:
         final response. If multiple `read_after_execution` methods throw exceptions,
         the latest will be used and earlier ones will be logged and dropped.
         """
+
+
+AnyInterceptor = Interceptor[Any, Any, Any, Any]
+
+
+class InterceptorChain(AnyInterceptor):
+    """An interceptor that contains an ordered list of delegate interceptors.
+
+    This is primarily intended for use within the client itself.
+    """
+
+    def __init__(self, chain: Sequence[AnyInterceptor]) -> None:
+        """Construct an InterceptorChain.
+
+        :param chain: The ordered interceptors to chain together.
+        """
+        self._chain = tuple(chain)
+
+    def __repr__(self) -> str:
+        return f"InterceptorChain(chain={self._chain!r})"
+
+    def read_before_execution(self, context: InputContext[Any]) -> None:
+        for interceptor in self._chain:
+            interceptor.read_before_execution(context)
+
+    def modify_before_serialization(self, context: InputContext[Any]) -> Any:
+        request = context.request
+        for interceptor in self._chain:
+            request = interceptor.modify_before_serialization(context)
+        return request
+
+    def read_before_serialization(self, context: InputContext[Any]) -> None:
+        for interceptor in self._chain:
+            interceptor.read_before_serialization(context)
+
+    def read_after_serialization(self, context: RequestContext[Any, Any]) -> None:
+        for interceptor in self._chain:
+            interceptor.read_after_serialization(context)
+
+    def modify_before_retry_loop(self, context: RequestContext[Any, Any]) -> Any:
+        transport_request = context.transport_request
+        for interceptor in self._chain:
+            transport_request = interceptor.modify_before_retry_loop(context)
+        return transport_request
+
+    def read_before_attempt(self, context: RequestContext[Any, Any]) -> None:
+        for interceptor in self._chain:
+            interceptor.read_before_attempt(context)
+
+    def modify_before_signing(self, context: RequestContext[Any, Any]) -> Any:
+        transport_request = context.transport_request
+        for interceptor in self._chain:
+            transport_request = interceptor.modify_before_retry_loop(context)
+        return transport_request
+
+    def read_before_signing(self, context: RequestContext[Any, Any]) -> None:
+        for interceptor in self._chain:
+            interceptor.read_before_signing(context)
+
+    def read_after_signing(self, context: RequestContext[Any, Any]) -> None:
+        for interceptor in self._chain:
+            interceptor.read_after_signing(context)
+
+    def modify_before_transmit(self, context: RequestContext[Any, Any]) -> Any:
+        transport_request = context.transport_request
+        for interceptor in self._chain:
+            transport_request = interceptor.modify_before_retry_loop(context)
+        return transport_request
+
+    def read_before_transmit(self, context: RequestContext[Any, Any]) -> None:
+        for interceptor in self._chain:
+            interceptor.read_before_transmit(context)
+
+    def read_after_transmit(self, context: ResponseContext[Any, Any, Any]) -> None:
+        for interceptor in self._chain:
+            interceptor.read_after_transmit(context)
+
+    def modify_before_deserialization(
+        self, context: ResponseContext[Any, Any, Any]
+    ) -> Any:
+        transport_response = context.transport_response
+        for interceptor in self._chain:
+            transport_response = interceptor.modify_before_deserialization(context)
+        return transport_response
+
+    def read_before_deserialization(
+        self, context: ResponseContext[Any, Any, Any]
+    ) -> None:
+        for interceptor in self._chain:
+            interceptor.read_before_deserialization(context)
+
+    def read_after_deserialization(
+        self, context: OutputContext[Any, Any, Any, Any]
+    ) -> None:
+        for interceptor in self._chain:
+            interceptor.read_after_deserialization(context)
+
+    def modify_before_attempt_completion(
+        self, context: OutputContext[Any, Any, Any, Any | None]
+    ) -> Any | Exception:
+        response = context.response
+        for interceptor in self._chain:
+            response = interceptor.modify_before_attempt_completion(context)
+        return response
+
+    def read_after_attempt(
+        self, context: OutputContext[Any, Any, Any, Any | None]
+    ) -> None:
+        for interceptor in self._chain:
+            interceptor.read_after_attempt(context)
+
+    def modify_before_completion(
+        self, context: OutputContext[Any, Any, Any | None, Any | None]
+    ) -> Any | Exception:
+        response = context.response
+        for interceptor in self._chain:
+            response = interceptor.modify_before_attempt_completion(context)
+        return response
+
+    def read_after_execution(
+        self, context: OutputContext[Any, Any, Any | None, Any | None]
+    ) -> None:
+        exception: Exception | None = None
+        for interceptor in self._chain:
+            # Every one of these is supposed to be guaranteed to be called.
+            try:
+                interceptor.read_after_execution(context)
+            except Exception as e:
+                context = replace(context, response=e)
+                exception = e
+        if exception is not None:
+            raise exception
