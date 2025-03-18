@@ -185,8 +185,8 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         // Find the last space before maxLineLength
         int wrapAt = line.lastIndexOf(' ', maxLineLength);
         if (wrapAt == -1) {
-            // If no space found, force wrap at maxLineLength
-            wrapAt = maxLineLength;
+            // If no space found, don't wrap
+            wrapAt = line.length();
         } else {
             // Ensure we don't break a link
             int linkStart = line.lastIndexOf("`", wrapAt);

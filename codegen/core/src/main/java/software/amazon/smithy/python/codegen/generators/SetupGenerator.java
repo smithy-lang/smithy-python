@@ -316,7 +316,6 @@ public final class SetupGenerator {
 
                     html_theme = 'pydata_sphinx_theme'
                     html_theme_options = {
-                        "navbar_center": [],
                         "logo": {
                             "text": "AWS SDK for Python",
                         }
