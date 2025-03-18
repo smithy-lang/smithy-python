@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 import json
 import asyncio
+import smithy_aws_core
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from typing import Literal
@@ -17,6 +18,11 @@ from smithy_http.aio import HTTPRequest
 from smithy_http.aio.interfaces import HTTPClient
 
 from smithy_aws_core.identity import AWSCredentialsIdentity
+
+_USER_AGENT_FIELD = Field(
+    name="User-Agent",
+    values=[f"aws-sdk-python-imds-client/{smithy_aws_core.__version__}"],
+)
 
 
 @dataclass(init=False)
@@ -111,7 +117,7 @@ class TokenCache:
                 return
             headers = Fields(
                 [
-                    # TODO: Add user-agent
+                    _USER_AGENT_FIELD,
                     Field(
                         name="x-aws-ec2-metadata-token-ttl-seconds",
                         values=[str(self._config.token_ttl)],
@@ -150,11 +156,11 @@ class EC2Metadata:
         token = await self._token_cache.get_token()
         headers = Fields(
             [
-                # TODO: Add user-agent
+                _USER_AGENT_FIELD,
                 Field(
                     name="x-aws-ec2-metadata-token",
                     values=[token.value],
-                )
+                ),
             ]
         )
         request = HTTPRequest(
