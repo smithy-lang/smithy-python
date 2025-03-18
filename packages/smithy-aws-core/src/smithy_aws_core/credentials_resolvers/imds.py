@@ -52,7 +52,6 @@ class Config:
         self.ec2_instance_profile_name = ec2_instance_profile_name
 
     def _validate_token_ttl(self, ttl: int) -> int:
-        """Validates the token TTL value."""
         if not self._MIN_TTL <= ttl <= self._MAX_TTL:
             raise ValueError(
                 f"Token TTL must be between {self._MIN_TTL} and {self._MAX_TTL} seconds."
@@ -81,7 +80,6 @@ class Token:
         self._created_time = datetime.now()
 
     def is_expired(self) -> bool:
-        """Check if the token has expired."""
         return datetime.now() - self._created_time >= timedelta(seconds=self._ttl)
 
     @property
@@ -105,11 +103,9 @@ class TokenCache:
         self._token = None
 
     def _should_refresh(self) -> bool:
-        """Determines if the token should be refreshed."""
         return self._token is None or self._token.is_expired()
 
     async def _refresh(self) -> None:
-        """Refreshes the token if needed, with thread safety."""
         async with self._refresh_lock:
             if not self._should_refresh():
                 return
@@ -136,7 +132,6 @@ class TokenCache:
             self._token = Token(token_value.decode("utf-8"), self._config.token_ttl)
 
     async def get_token(self) -> Token:
-        """Get the current token, refreshing it if expired."""
         if self._should_refresh():
             await self._refresh()
         assert self._token is not None
