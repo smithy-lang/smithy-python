@@ -41,6 +41,7 @@ class SigV4SigningProperties(TypedDict, total=False):
     date: str
     payload_signing_enabled: bool
     content_checksum_enabled: bool
+    uri_encode_path: bool
 
 
 class SigV4Signer:
@@ -232,7 +233,9 @@ class SigV4Signer:
         canonical_payload = self._format_canonical_payload(
             request=request, signing_properties=signing_properties
         )
-        canonical_path = self._format_canonical_path(path=request.destination.path)
+        canonical_path = self._format_canonical_path(
+            path=request.destination.path, signing_properties=signing_properties
+        )
         canonical_query = self._format_canonical_query(query=request.destination.query)
         normalized_fields = self._normalize_signing_fields(request=request)
         canonical_fields = self._format_canonical_fields(fields=normalized_fields)
@@ -290,11 +293,17 @@ class SigV4Signer:
         # Scope format: <YYYYMMDD>/<AWS Region>/<AWS Service>/aws4_request
         return f"{formatted_date}/{region}/{service}/aws4_request"
 
-    def _format_canonical_path(self, *, path: str | None) -> str:
+    def _format_canonical_path(
+        self, *, path: str | None, signing_properties: SigV4SigningProperties
+    ) -> str:
         if path is None:
             path = "/"
-        normalized_path = _remove_dot_segments(path)
-        return quote(string=normalized_path, safe="/%")
+
+        if signing_properties.get("uri_encode_path", True):
+            normalized_path = _remove_dot_segments(path)
+            return quote(string=normalized_path, safe="/")
+        else:
+            return _remove_dot_segments(path, remove_consecutive_slashes=False)
 
     def _format_canonical_query(self, *, query: str | None) -> str:
         if query is None:
@@ -596,7 +605,7 @@ class AsyncSigV4Signer:
             request=request, signing_properties=signing_properties
         )
         canonical_path = await self._format_canonical_path(
-            path=request.destination.path
+            path=request.destination.path, signing_properties=signing_properties
         )
         canonical_query = await self._format_canonical_query(
             query=request.destination.query
@@ -658,11 +667,17 @@ class AsyncSigV4Signer:
         # Scope format: <YYYYMMDD>/<AWS Region>/<AWS Service>/aws4_request
         return f"{formatted_date}/{region}/{service}/aws4_request"
 
-    async def _format_canonical_path(self, *, path: str | None) -> str:
+    async def _format_canonical_path(
+        self, *, path: str | None, signing_properties: SigV4SigningProperties
+    ) -> str:
         if path is None:
             path = "/"
-        normalized_path = _remove_dot_segments(path)
-        return quote(string=normalized_path, safe="/%")
+
+        if signing_properties.get("uri_encode_path", True):
+            normalized_path = _remove_dot_segments(path)
+            return quote(string=normalized_path, safe="/")
+        else:
+            return _remove_dot_segments(path, remove_consecutive_slashes=False)
 
     async def _format_canonical_query(self, *, query: str | None) -> str:
         if query is None:

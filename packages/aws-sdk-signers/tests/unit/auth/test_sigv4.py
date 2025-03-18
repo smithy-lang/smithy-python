@@ -99,9 +99,7 @@ def _test_signature_version_4_sync(test_case_name: str, signer: SigV4Signer) -> 
     request = create_request_from_raw_request(test_case)
 
     signing_props = SigV4SigningProperties(
-        region=REGION,
-        service=SERVICE,
-        date=DATE_STR,
+        region=REGION, service=SERVICE, date=DATE_STR
     )
     with pytest.warns(AWSSDKWarning):
         actual_canonical_request = signer.canonical_request(
@@ -198,6 +196,7 @@ def create_request_from_raw_request(
         query = ""
     host = raw.headers.get("host", "")
     url = URI(host=host, path=path, query=query)
+
     return AWSRequest(
         destination=url,
         method=request_method,
