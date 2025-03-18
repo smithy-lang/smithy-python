@@ -26,7 +26,7 @@ from . import (
 )
 from smithy_core.traits import EventHeaderTrait
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 INITIAL_MESSAGE_TYPES = (INITIAL_REQUEST_EVENT_TYPE, INITIAL_RESPONSE_EVENT_TYPE)
 
@@ -58,9 +58,9 @@ class AWSAsyncEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
             raise
 
         if event is None:
-            logger.debug("No event received from the source.")
+            LOGGER.debug("No event received from the source.")
             return None
-        logger.debug("Received raw event: %s", event)
+        LOGGER.debug("Received raw event: %s", event)
 
         deserializer = EventDeserializer(
             event=event,
@@ -68,7 +68,7 @@ class AWSAsyncEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
             is_client_mode=self._is_client_mode,
         )
         result = self._deserializer(deserializer)
-        logger.debug("Successfully deserialized event: %s", result)
+        LOGGER.debug("Successfully deserialized event: %s", result)
         if isinstance(getattr(result, "value"), Exception):
             raise result.value  # type: ignore
         return result
