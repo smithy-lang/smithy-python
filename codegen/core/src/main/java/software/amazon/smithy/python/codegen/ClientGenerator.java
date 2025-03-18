@@ -200,6 +200,13 @@ final class ClientGenerator implements Runnable {
         if (hasStreaming) {
             writer.addStdlibImports("typing", Set.of("Any", "Awaitable"));
             writer.addStdlibImport("asyncio");
+
+            writer.addImports("smithy_core.aio.eventstream",
+                    Set.of(
+                            "InputEventStream",
+                            "OutputEventStream",
+                            "DuplexEventStream"));
+            writer.addImport("smithy_core.aio.interfaces.eventstream", "EventReceiver");
             writer.write(
                     """
                             async def _input_stream[Input: SerializeableShape, Output: DeserializeableShape](
@@ -218,6 +225,10 @@ final class ClientGenerator implements Runnable {
                                 ))
                                 request_context = await request_future
                                 ${5C|}
+                                return InputEventStream[Any, Any](
+                                    input_stream=publisher,
+                                    output_future=awaitable_output,
+                                )
 
                             async def _output_stream[Input: SerializeableShape, Output: DeserializeableShape](
                                 self,
@@ -236,6 +247,10 @@ final class ClientGenerator implements Runnable {
                                 )
                                 transport_response = await response_future
                                 ${6C|}
+                                return OutputEventStream[Any, Any](
+                                    output_stream=receiver,
+                                    output=output
+                                )
 
                             async def _duplex_stream[Input: SerializeableShape, Output: DeserializeableShape](
                                 self,
@@ -255,15 +270,34 @@ final class ClientGenerator implements Runnable {
                                     response_future=response_future
                                 ))
                                 request_context = await request_future
-                                ${7C|}
+                                ${5C|}
+                                output_future = asyncio.create_task(self._wrap_duplex_output(
+                                    response_future, awaitable_output, config, operation_name,
+                                    event_deserializer
+                                ))
+                                return DuplexEventStream[Any, Any, Any](
+                                    input_stream=publisher,
+                                    output_future=output_future,
+                                )
+
+                            async def _wrap_duplex_output(
+                                self,
+                                response_future: Future[$3T],
+                                awaitable_output: Future[Any],
+                                config: $4T,
+                                operation_name: str,
+                                event_deserializer: Callable[[ShapeDeserializer], Any],
+                            ) -> tuple[Any, EventReceiver[Any]]:
+                                transport_response = await response_future
+                                ${6C|}
+                                return await awaitable_output, receiver
                             """,
                     pluginSymbol,
                     transportRequest,
                     transportResponse,
                     configSymbol,
                     writer.consumer(w -> context.protocolGenerator().wrapInputStream(context, w)),
-                    writer.consumer(w -> context.protocolGenerator().wrapOutputStream(context, w)),
-                    writer.consumer(w -> context.protocolGenerator().wrapDuplexStream(context, w)));
+                    writer.consumer(w -> context.protocolGenerator().wrapOutputStream(context, w)));
         }
         writer.addStdlibImport("typing", "Any");
         writer.addStdlibImport("asyncio", "iscoroutine");
@@ -872,7 +906,6 @@ final class ClientGenerator implements Runnable {
 
         if (inputStreamSymbol != null) {
             if (outputStreamSymbol != null) {
-                writer.addImport("smithy_event_stream.aio.interfaces", "DuplexEventStream");
                 writer.write("""
                         async def ${operationName:L}(
                             self,
@@ -922,7 +955,6 @@ final class ClientGenerator implements Runnable {
                         """, writer.consumer(w -> writeSharedOperationInit(w, operation, input)));
             }
         } else {
-            writer.addImport("smithy_event_stream.aio.interfaces", "OutputEventStream");
             writer.write("""
                     async def ${operationName:L}(
                         self,
