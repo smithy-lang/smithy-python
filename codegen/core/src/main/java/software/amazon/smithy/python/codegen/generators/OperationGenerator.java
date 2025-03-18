@@ -68,8 +68,7 @@ public final class OperationGenerator implements Runnable {
                 inSymbol.expectProperty(SymbolProperties.SCHEMA),
                 outSymbol.expectProperty(SymbolProperties.SCHEMA),
                 writer.consumer(this::writeErrorTypeRegistry),
-                writer.consumer(this::writeAuthSchemes)
-        );
+                writer.consumer(this::writeAuthSchemes));
     }
 
     private void writeErrorTypeRegistry(PythonWriter writer) {

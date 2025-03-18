@@ -60,12 +60,6 @@ final class ClientGenerator implements Runnable {
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
         writer.addLogger();
 
-        writer.addStdlibImport("typing", "TypeVar");
-        writer.write("""
-                Input = TypeVar("Input")
-                Output = TypeVar("Output")
-                """);
-
         writer.openBlock("class $L:", "", serviceSymbol.getName(), () -> {
             var docs = service.getTrait(DocumentationTrait.class)
                     .map(StringTrait::getValue)
@@ -144,12 +138,22 @@ final class ClientGenerator implements Runnable {
         writer.addStdlibImport("copy", "deepcopy");
         writer.addStdlibImport("asyncio");
         writer.addStdlibImports("asyncio", Set.of("sleep", "Future"));
+        writer.addStdlibImport("dataclasses", "replace");
 
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addImport("smithy_core.exceptions", "SmithyRetryException");
-        writer.addImports("smithy_core.interceptors", Set.of("Interceptor", "InterceptorContext"));
+        writer.addImports("smithy_core.interceptors",
+                Set.of("Interceptor",
+                        "InterceptorChain",
+                        "InputContext",
+                        "OutputContext",
+                        "RequestContext",
+                        "ResponseContext"));
         writer.addImports("smithy_core.interfaces.retries", Set.of("RetryErrorInfo", "RetryErrorType"));
         writer.addImport("smithy_core.interfaces.exceptions", "HasFault");
+        writer.addImport("smithy_core.types", "TypedProperties");
+        writer.addImport("smithy_core.serializers", "SerializeableShape");
+        writer.addImport("smithy_core.deserializers", "DeserializeableShape");
 
         writer.indent();
         writer.write("""
@@ -157,7 +161,7 @@ final class ClientGenerator implements Runnable {
                     self,
                     *,
                     error: Exception,
-                    context: InterceptorContext[Input, Output, $1T, $2T | None]
+                    context: ResponseContext[Any, $1T, $2T | None]
                 ) -> RetryErrorInfo:
                     logger.debug("Classifying error: %s", error)
                 """, transportRequest, transportResponse);
@@ -198,7 +202,7 @@ final class ClientGenerator implements Runnable {
             writer.addStdlibImport("asyncio");
             writer.write(
                     """
-                            async def _input_stream(
+                            async def _input_stream[Input: SerializeableShape, Output: DeserializeableShape](
                                 self,
                                 input: Input,
                                 plugins: list[$1T],
@@ -207,7 +211,7 @@ final class ClientGenerator implements Runnable {
                                 config: $4T,
                                 operation_name: str,
                             ) -> Any:
-                                request_future = Future[InterceptorContext[Any, Any, $2T, Any]]()
+                                request_future = Future[RequestContext[Any, $2T]]()
                                 awaitable_output = asyncio.create_task(self._execute_operation(
                                     input, plugins, serialize, deserialize, config, operation_name,
                                     request_future=request_future
@@ -215,7 +219,7 @@ final class ClientGenerator implements Runnable {
                                 request_context = await request_future
                                 ${5C|}
 
-                            async def _output_stream(
+                            async def _output_stream[Input: SerializeableShape, Output: DeserializeableShape](
                                 self,
                                 input: Input,
                                 plugins: list[$1T],
@@ -233,7 +237,7 @@ final class ClientGenerator implements Runnable {
                                 transport_response = await response_future
                                 ${6C|}
 
-                            async def _duplex_stream(
+                            async def _duplex_stream[Input: SerializeableShape, Output: DeserializeableShape](
                                 self,
                                 input: Input,
                                 plugins: list[$1T],
@@ -243,7 +247,7 @@ final class ClientGenerator implements Runnable {
                                 operation_name: str,
                                 event_deserializer: Callable[[ShapeDeserializer], Any],
                             ) -> Any:
-                                request_future = Future[InterceptorContext[Any, Any, $2T, Any]]()
+                                request_future = Future[RequestContext[Any, $2T]]()
                                 response_future = Future[$3T]()
                                 awaitable_output = asyncio.create_task(self._execute_operation(
                                     input, plugins, serialize, deserialize, config, operation_name,
@@ -262,9 +266,10 @@ final class ClientGenerator implements Runnable {
                     writer.consumer(w -> context.protocolGenerator().wrapDuplexStream(context, w)));
         }
         writer.addStdlibImport("typing", "Any");
+        writer.addStdlibImport("asyncio", "iscoroutine");
         writer.write(
                 """
-                        async def _execute_operation(
+                        async def _execute_operation[Input: SerializeableShape, Output: DeserializeableShape](
                             self,
                             input: Input,
                             plugins: list[$1T],
@@ -272,7 +277,7 @@ final class ClientGenerator implements Runnable {
                             deserialize: Callable[[$3T, $5T], Awaitable[Output]],
                             config: $5T,
                             operation_name: str,
-                            request_future: Future[InterceptorContext[Any, Any, $2T, Any]] | None = None,
+                            request_future: Future[RequestContext[Any, $2T]] | None = None,
                             response_future: Future[$3T] | None = None,
                         ) -> Output:
                             try:
@@ -292,7 +297,7 @@ final class ClientGenerator implements Runnable {
                                     raise $4T(e) from e
                                 raise
 
-                        async def _handle_execution(
+                        async def _handle_execution[Input: SerializeableShape, Output: DeserializeableShape](
                             self,
                             input: Input,
                             plugins: list[$1T],
@@ -300,154 +305,128 @@ final class ClientGenerator implements Runnable {
                             deserialize: Callable[[$3T, $5T], Awaitable[Output]],
                             config: $5T,
                             operation_name: str,
-                            request_future: Future[InterceptorContext[Any, Any, $2T, Any]] | None,
+                            request_future: Future[RequestContext[Any, $2T]] | None,
                             response_future: Future[$3T] | None,
                         ) -> Output:
                             logger.debug('Making request for operation "%s" with parameters: %s', operation_name, input)
-                            context: InterceptorContext[Input, None, None, None] = InterceptorContext(
-                                request=input,
-                                response=None,
-                                transport_request=None,
-                                transport_response=None,
-                            )
-                            _client_interceptors = config.interceptors
+                            config = deepcopy(config)
+                            for plugin in plugins:
+                                plugin(config)
+
+                            input_context = InputContext(request=input, properties=TypedProperties())
+                            transport_request: $2T | None = None
+                            output_context: OutputContext[Input, Output, $2T | None, $3T | None] | None = None
+
                             client_interceptors = cast(
-                                list[Interceptor[Input, Output, $2T, $3T]], _client_interceptors
+                                list[Interceptor[Input, Output, $2T, $3T]], list(config.interceptors)
                             )
-                            interceptors = client_interceptors
+                            interceptor_chain = InterceptorChain(client_interceptors)
 
                             try:
-                                # Step 1a: Invoke read_before_execution on client-level interceptors
-                                for interceptor in client_interceptors:
-                                    interceptor.read_before_execution(context)
-
-                                # Step 1b: Run operation-level plugins
-                                config = deepcopy(config)
-                                for plugin in plugins:
-                                    plugin(config)
-
-                                _client_interceptors = config.interceptors
-                                interceptors = cast(
-                                    list[Interceptor[Input, Output, $2T, $3T]],
-                                    _client_interceptors,
-                                )
-
-                                # Step 1c: Invoke the read_before_execution hooks on newly added
-                                # interceptors.
-                                for interceptor in interceptors:
-                                    if interceptor not in client_interceptors:
-                                        interceptor.read_before_execution(context)
+                                # Step 1: Invoke read_before_execution
+                                interceptor_chain.read_before_execution(input_context)
 
                                 # Step 2: Invoke the modify_before_serialization hooks
-                                for interceptor in interceptors:
-                                    context._request = interceptor.modify_before_serialization(context)
+                                input_context = replace(
+                                    input_context,
+                                    request=interceptor_chain.modify_before_serialization(input_context)
+                                )
 
                                 # Step 3: Invoke the read_before_serialization hooks
-                                for interceptor in interceptors:
-                                    interceptor.read_before_serialization(context)
+                                interceptor_chain.read_before_serialization(input_context)
 
                                 # Step 4: Serialize the request
-                                context_with_transport_request = cast(
-                                    InterceptorContext[Input, None, $2T, None], context
+                                logger.debug("Serializing request for: %s", input_context.request)
+                                transport_request = await serialize(input_context.request, config)
+                                request_context = RequestContext(
+                                    request=input_context.request,
+                                    transport_request=transport_request,
+                                    properties=input_context.properties,
                                 )
-                                logger.debug("Serializing request for: %s", context_with_transport_request.request)
-                                context_with_transport_request._transport_request = await serialize(
-                                    context_with_transport_request.request, config
-                                )
-                                logger.debug("Serialization complete. Transport request: %s", context_with_transport_request._transport_request)
+                                logger.debug("Serialization complete. Transport request: %s", request_context.transport_request)
 
                                 # Step 5: Invoke read_after_serialization
-                                for interceptor in interceptors:
-                                    interceptor.read_after_serialization(context_with_transport_request)
+                                interceptor_chain.read_after_serialization(request_context)
 
                                 # Step 6: Invoke modify_before_retry_loop
-                                for interceptor in interceptors:
-                                    context_with_transport_request._transport_request = (
-                                        interceptor.modify_before_retry_loop(context_with_transport_request)
-                                    )
+                                request_context = replace(
+                                    request_context,
+                                    transport_request=interceptor_chain.modify_before_retry_loop(request_context)
+                                )
 
                                 # Step 7: Acquire the retry token.
                                 retry_strategy = config.retry_strategy
                                 retry_token = retry_strategy.acquire_initial_retry_token()
 
                                 while True:
-                                    # Make an attempt, creating a copy of the context so we don't pass
-                                    # around old data.
-                                    context_with_response = await self._handle_attempt(
+                                    # Make an attempt
+                                    output_context = await self._handle_attempt(
                                         deserialize,
-                                        interceptors,
-                                        context_with_transport_request.copy(),
+                                        interceptor_chain,
+                                        request_context,
                                         config,
                                         operation_name,
                                         request_future,
                                     )
 
-                                    # We perform this type-ignored re-assignment because `context` needs
-                                    # to point at the latest context so it can be generically handled
-                                    # later on. This is only an issue here because we've created a copy,
-                                    # so we're no longer simply pointing at the same object in memory
-                                    # with different names and type hints. It is possible to address this
-                                    # without having to fall back to the type ignore, but it would impose
-                                    # unnecessary runtime costs.
-                                    context = context_with_response  # type: ignore
-
-                                    if isinstance(context_with_response.response, Exception):
+                                    if isinstance(output_context.response, Exception):
                                         # Step 7u: Reacquire retry token if the attempt failed
                                         try:
                                             retry_token = retry_strategy.refresh_retry_token_for_retry(
                                                 token_to_renew=retry_token,
                                                 error_info=self._classify_error(
-                                                    error=context_with_response.response,
-                                                    context=context_with_response,
+                                                    error=output_context.response,
+                                                    context=output_context,
                                                 )
                                             )
                                         except SmithyRetryException:
-                                            raise context_with_response.response
+                                            raise output_context.response
                                         logger.debug(
                                             "Retry needed. Attempting request #%s in %.4f seconds.",
                                             retry_token.retry_count + 1,
                                             retry_token.retry_delay
                                         )
                                         await sleep(retry_token.retry_delay)
-                                        current_body =  context_with_transport_request.transport_request.body
+                                        current_body = output_context.transport_request.body
                                         if (seek := getattr(current_body, "seek", None)) is not None:
-                                            await seek(0)
+                                            if iscoroutine((result := seek(0))):
+                                                await result
                                     else:
                                         # Step 8: Invoke record_success
                                         retry_strategy.record_success(token=retry_token)
                                         if response_future is not None:
                                             response_future.set_result(
-                                                context_with_response.transport_response  # type: ignore
+                                                output_context.transport_response  # type: ignore
                                             )
                                         break
                             except Exception as e:
-                                if context.response is not None:
-                                    logger.exception("Exception occurred while handling: %s", context.response)
-                                    pass
-                                context._response = e
+                                if output_context is not None:
+                                    logger.exception("Exception occurred while handling: %s", output_context.response)
+                                    output_context = replace(output_context, response=e)
+                                else:
+                                    output_context = OutputContext(
+                                        request=input_context.request,
+                                        response=e,
+                                        transport_request=transport_request,
+                                        transport_response=None,
+                                        properties=input_context.properties
+                                    )
 
-                            # At this point, the context's request will have been definitively set, and
-                            # The response will be set either with the modeled output or an exception. The
-                            # transport_request and transport_response may be set or None.
-                            execution_context = cast(
-                                InterceptorContext[Input, Output, $2T | None, $3T | None], context
-                            )
-                            return await self._finalize_execution(interceptors, execution_context)
+                            return await self._finalize_execution(interceptor_chain, output_context)
 
-                        async def _handle_attempt(
+                        async def _handle_attempt[Input: SerializeableShape, Output: DeserializeableShape](
                             self,
                             deserialize: Callable[[$3T, $5T], Awaitable[Output]],
-                            interceptors: list[Interceptor[Input, Output, $2T, $3T]],
-                            context: InterceptorContext[Input, None, $2T, None],
+                            interceptor: Interceptor[Input, Output, $2T, $3T],
+                            context: RequestContext[Input, $2T],
                             config: $5T,
                             operation_name: str,
-                            request_future: Future[InterceptorContext[Any, Any, $2T, Any]] | None,
-                        ) -> InterceptorContext[Input, Output, $2T, $3T | None]:
+                            request_future: Future[RequestContext[Input, $2T]] | None,
+                        ) -> OutputContext[Input, Output, $2T, $3T | None]:
+                            transport_response: $3T | None = None
                             try:
-                                # assert config.interceptors is not None
                                 # Step 7a: Invoke read_before_attempt
-                                for interceptor in interceptors:
-                                    interceptor.read_before_attempt(context)
+                                interceptor.read_before_attempt(context)
 
                         """,
                 pluginSymbol,
@@ -529,14 +508,14 @@ final class ClientGenerator implements Runnable {
                                 path = endpoint.uri.path
                             if context.transport_request.destination.path:
                                 path += context.transport_request.destination.path
-                            context._transport_request.destination = URI(
+                            context.transport_request.destination = URI(
                                 scheme=endpoint.uri.scheme,
                                 host=context.transport_request.destination.host + endpoint.uri.host,
                                 path=path,
                                 port=endpoint.uri.port,
                                 query=context.transport_request.destination.query,
                             )
-                            context._transport_request.fields.extend(endpoint.headers)
+                            context.transport_request.fields.extend(endpoint.headers)
 
                     """,
                     CodegenUtils.getEndpointParametersSymbol(context.settings()));
@@ -545,12 +524,13 @@ final class ClientGenerator implements Runnable {
 
         writer.write("""
                         # Step 7g: Invoke modify_before_signing
-                        for interceptor in interceptors:
-                            context._transport_request = interceptor.modify_before_signing(context)
+                        context = replace(
+                            context,
+                            transport_request=interceptor.modify_before_signing(context)
+                        )
 
                         # Step 7h: Invoke read_before_signing
-                        for interceptor in interceptors:
-                            interceptor.read_before_signing(context)
+                        interceptor.read_before_signing(context)
 
                 """);
 
@@ -564,28 +544,31 @@ final class ClientGenerator implements Runnable {
                                     "Signer properties: %s",
                                     auth_option.signer_properties
                                 )
-                                context._transport_request = await signer.sign(
-                                    http_request=context.transport_request,
-                                    identity=identity,
-                                    signing_properties=auth_option.signer_properties,
+                                context = replace(
+                                    context,
+                                    transport_request= await signer.sign(
+                                        http_request=context.transport_request,
+                                        identity=identity,
+                                        signing_properties=auth_option.signer_properties,
+                                    )
                                 )
-                                logger.debug("Signed HTTP request: %s", context._transport_request)
+                                logger.debug("Signed HTTP request: %s", context.transport_request)
                     """);
         }
         writer.popState();
 
         writer.write("""
                         # Step 7j: Invoke read_after_signing
-                        for interceptor in interceptors:
-                            interceptor.read_after_signing(context)
+                        interceptor.read_after_signing(context)
 
                         # Step 7k: Invoke modify_before_transmit
-                        for interceptor in interceptors:
-                            context._transport_request = interceptor.modify_before_transmit(context)
+                        context = replace(
+                            context,
+                            transport_request=interceptor.modify_before_transmit(context)
+                        )
 
                         # Step 7l: Invoke read_before_transmit
-                        for interceptor in interceptors:
-                            interceptor.read_before_transmit(context)
+                        interceptor.read_before_transmit(context)
 
                 """);
 
@@ -596,112 +579,108 @@ final class ClientGenerator implements Runnable {
             writer.write("""
                             # Step 7m: Invoke http_client.send
                             request_config = config.http_request_config or HTTPRequestConfiguration()
-                            context_with_response = cast(
-                                InterceptorContext[Input, None, $1T, $2T], context
-                            )
                             logger.debug("HTTP request config: %s", request_config)
-                            logger.debug("Sending HTTP request: %s", context_with_response.transport_request)
+                            logger.debug("Sending HTTP request: %s", context.transport_request)
 
                             if request_future is not None:
                                 response_task = asyncio.create_task(config.http_client.send(
-                                    request=context_with_response.transport_request,
+                                    request=context.transport_request,
                                     request_config=request_config,
                                 ))
-                                request_future.set_result(context_with_response)
-                                context_with_response._transport_response = await response_task
+                                request_future.set_result(context)
+                                transport_response = await response_task
                             else:
-                                context_with_response._transport_response = await config.http_client.send(
-                                    request=context_with_response.transport_request,
+                                transport_response = await config.http_client.send(
+                                    request=context.transport_request,
                                     request_config=request_config,
                                 )
-                            logger.debug("Received HTTP response: %s", context_with_response.transport_response)
 
-                    """, transportRequest, transportResponse);
+                            response_context = ResponseContext(
+                                request=context.request,
+                                transport_request=context.transport_request,
+                                transport_response=transport_response,
+                                properties=context.properties
+                            )
+                            logger.debug("Received HTTP response: %s", response_context.transport_response)
+
+                    """);
         }
         writer.popState();
 
         writer.write("""
                         # Step 7n: Invoke read_after_transmit
-                        for interceptor in interceptors:
-                            interceptor.read_after_transmit(context_with_response)
+                        interceptor.read_after_transmit(response_context)
 
                         # Step 7o: Invoke modify_before_deserialization
-                        for interceptor in interceptors:
-                            context_with_response._transport_response = (
-                                interceptor.modify_before_deserialization(context_with_response)
-                            )
+                        response_context = replace(
+                            response_context,
+                            transport_response=interceptor.modify_before_deserialization(response_context)
+                        )
 
                         # Step 7p: Invoke read_before_deserialization
-                        for interceptor in interceptors:
-                            interceptor.read_before_deserialization(context_with_response)
+                        interceptor.read_before_deserialization(response_context)
 
                         # Step 7q: deserialize
-                        context_with_output = cast(
-                            InterceptorContext[Input, Output, $1T, $2T],
-                            context_with_response,
+                        logger.debug("Deserializing transport response: %s", response_context.transport_response)
+                        output = await deserialize(
+                            response_context.transport_response, config
                         )
-                        logger.debug("Deserializing transport response: %s", context_with_output._transport_response)
-                        context_with_output._response = await deserialize(
-                            context_with_output._transport_response, config
+                        output_context = OutputContext(
+                            request=response_context.request,
+                            response=output,
+                            transport_request=response_context.transport_request,
+                            transport_response=response_context.transport_response,
+                            properties=response_context.properties
                         )
-                        logger.debug("Deserialization complete. Response: %s", context_with_output._response)
+                        logger.debug("Deserialization complete. Response: %s", output_context.response)
 
                         # Step 7r: Invoke read_after_deserialization
-                        for interceptor in interceptors:
-                            interceptor.read_after_deserialization(context_with_output)
+                        interceptor.read_after_deserialization(output_context)
                     except Exception as e:
-                        if context.response is not None:
-                            logger.exception("Exception occurred while handling: %s", context.response)
-                            pass
-                        context._response = e
+                        output_context: OutputContext[Input, Output, $1T, $2T] = OutputContext(
+                            request=context.request,
+                            response=e,  # type: ignore
+                            transport_request=context.transport_request,
+                            transport_response=transport_response,
+                            properties=context.properties
+                        )
 
-                    # At this point, the context's request and transport_request have definitively been set,
-                    # the response is either set or an exception, and the transport_resposne is either set or
-                    # None. This will also be true after _finalize_attempt because there is no opportunity
-                    # there to set the transport_response.
-                    attempt_context = cast(
-                        InterceptorContext[Input, Output, $1T, $2T | None], context
-                    )
-                    return await self._finalize_attempt(interceptors, attempt_context)
+                    return await self._finalize_attempt(interceptor, output_context)
 
-                async def _finalize_attempt(
+                async def _finalize_attempt[Input: SerializeableShape, Output: DeserializeableShape](
                     self,
-                    interceptors: list[Interceptor[Input, Output, $1T, $2T]],
-                    context: InterceptorContext[Input, Output, $1T, $2T | None],
-                ) -> InterceptorContext[Input, Output, $1T, $2T | None]:
+                    interceptor: Interceptor[Input, Output, $1T, $2T],
+                    context: OutputContext[Input, Output, $1T, $2T | None],
+                ) -> OutputContext[Input, Output, $1T, $2T | None]:
                     # Step 7s: Invoke modify_before_attempt_completion
                     try:
-                        for interceptor in interceptors:
-                            context._response = interceptor.modify_before_attempt_completion(
-                                context
-                            )
+                        context = replace(
+                            context,
+                            response=interceptor.modify_before_attempt_completion(context)
+                        )
                     except Exception as e:
-                        if context.response is not None:
-                            logger.exception("Exception occurred while handling: %s", context.response)
-                            pass
-                        context._response = e
+                        logger.exception("Exception occurred while handling: %s", context.response)
+                        context = replace(context, response=e)
 
                     # Step 7t: Invoke read_after_attempt
-                    for interceptor in interceptors:
-                        try:
-                            interceptor.read_after_attempt(context)
-                        except Exception as e:
-                            if context.response is not None:
-                                logger.exception("Exception occurred while handling: %s", context.response)
-                                pass
-                            context._response = e
+                    try:
+                        interceptor.read_after_attempt(context)
+                    except Exception as e:
+                        context = replace(context, response=e)
 
                     return context
 
-                async def _finalize_execution(
+                async def _finalize_execution[Input: SerializeableShape, Output: DeserializeableShape](
                     self,
-                    interceptors: list[Interceptor[Input, Output, $1T, $2T]],
-                    context: InterceptorContext[Input, Output, $1T | None, $2T | None],
+                    interceptor: Interceptor[Input, Output, $1T, $2T],
+                    context: OutputContext[Input, Output, $1T | None, $2T | None],
                 ) -> Output:
                     try:
                         # Step 9: Invoke modify_before_completion
-                        for interceptor in interceptors:
-                            context._response = interceptor.modify_before_completion(context)
+                        context = replace(
+                            context,
+                            response=interceptor.modify_before_completion(context)
+                        )
 
                         # Step 10: Invoke trace_probe.dispatch_events
                         try:
@@ -711,20 +690,14 @@ final class ClientGenerator implements Runnable {
                             logger.exception("Exception occurred while dispatching trace events: %s", e)
                             pass
                     except Exception as e:
-                        if context.response is not None:
-                            logger.exception("Exception occurred while handling: %s", context.response)
-                            pass
-                        context._response = e
+                        logger.exception("Exception occurred while handling: %s", context.response)
+                        context = replace(context, response=e)
 
                     # Step 11: Invoke read_after_execution
-                    for interceptor in interceptors:
-                        try:
-                            interceptor.read_after_execution(context)
-                        except Exception as e:
-                            if context.response is not None:
-                                logger.exception("Exception occurred while handling: %s", context.response)
-                                pass
-                            context._response = e
+                    try:
+                        interceptor.read_after_execution(context)
+                    except Exception as e:
+                        context = replace(context, response=e)
 
                     # Step 12: Return / throw
                     if isinstance(context.response, Exception):
