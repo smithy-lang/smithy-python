@@ -22,9 +22,10 @@ from unittest.mock import MagicMock, AsyncMock
 def test_config_defaults():
     config = Config()
     assert isinstance(config.retry_strategy, SimpleRetryStrategy)
-    assert config.endpoint_uri == URI(scheme="http", host=Config._HOST_MAPPING["IPv4"])
+    assert config.endpoint_uri == URI(
+        scheme="http", host=Config._HOST_MAPPING["IPv4"], port=80
+    )
     assert config.endpoint_mode == "IPv4"
-    assert config.port == 80
     assert config.token_ttl == 21600
 
 
@@ -38,15 +39,17 @@ def test_endpoint_resolution():
 def test_config_uses_custom_endpoint():
     # The custom endpoint should take precedence over IPv4 endpoint resolution.
     config = Config(
-        endpoint_uri=URI(scheme="http", host="test.host"), endpoint_mode="IPv4"
+        endpoint_uri=URI(scheme="https", host="test.host", port=123),
+        endpoint_mode="IPv4",
     )
-    assert config.endpoint_uri == URI(scheme="http", host="test.host")
+    assert config.endpoint_uri == URI(scheme="https", host="test.host", port=123)
 
     # The custom endpoint takes precedence over IPv6 endpoint resolution.
     config = Config(
-        endpoint_uri=URI(scheme="http", host="test.host"), endpoint_mode="IPv6"
+        endpoint_uri=URI(scheme="https", host="test.host", port=123),
+        endpoint_mode="IPv6",
     )
-    assert config.endpoint_uri == URI(scheme="http", host="test.host")
+    assert config.endpoint_uri == URI(scheme="https", host="test.host", port=123)
 
 
 def test_config_ttl_validation():

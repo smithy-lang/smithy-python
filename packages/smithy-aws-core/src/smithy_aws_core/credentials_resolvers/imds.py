@@ -36,7 +36,6 @@ class Config:
     retry_strategy: RetryStrategy
     endpoint_uri: URI
     endpoint_mode: Literal["IPv4", "IPv6"]
-    port: int
     token_ttl: int
 
     def __init__(
@@ -45,7 +44,6 @@ class Config:
         retry_strategy: RetryStrategy | None = None,
         endpoint_uri: URI | None = None,
         endpoint_mode: Literal["IPv4", "IPv6"] = "IPv4",
-        port: int = 80,
         token_ttl: int = _MAX_TTL,
         ec2_instance_profile_name: str | None = None,
     ):
@@ -53,7 +51,6 @@ class Config:
         self.retry_strategy = retry_strategy or SimpleRetryStrategy(max_attempts=3)
         self.endpoint_mode = endpoint_mode
         self.endpoint_uri = self._resolve_endpoint(endpoint_uri, endpoint_mode)
-        self.port = port
         self.token_ttl = self._validate_token_ttl(token_ttl)
         self.ec2_instance_profile_name = ec2_instance_profile_name
 
@@ -73,6 +70,7 @@ class Config:
         return URI(
             scheme="http",
             host=self._HOST_MAPPING.get(endpoint_mode, self._HOST_MAPPING["IPv4"]),
+            port=80,
         )
 
 
@@ -129,6 +127,7 @@ class TokenCache:
                 destination=URI(
                     scheme=self._base_uri.scheme,
                     host=self._base_uri.host,
+                    port=self._base_uri.port,
                     path=self._TOKEN_PATH,
                 ),
                 fields=headers,
@@ -168,7 +167,7 @@ class EC2Metadata:
             destination=URI(
                 scheme=self._config.endpoint_uri.scheme,
                 host=self._config.endpoint_uri.host,
-                port=self._config.port,
+                port=self._config.endpoint_uri.port,
                 path=path,
             ),
             fields=headers,
