@@ -349,7 +349,6 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
                 headers_list.append((fld.name, val))
 
         path = self._render_path(request.destination)
-        print("CRT path: ", path)
         headers = crt_http.HttpHeaders(headers_list)
 
         body = request.body
