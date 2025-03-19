@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import asyncio
 import datetime
+import logging
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from io import BytesIO
@@ -29,6 +30,8 @@ from . import (
 )
 from smithy_core.traits import ErrorTrait, EventHeaderTrait, MediaTypeTrait
 
+logger = logging.getLogger(__name__)
+
 _DEFAULT_STRING_CONTENT_TYPE = "text/plain"
 _DEFAULT_BLOB_CONTENT_TYPE = "application/octet-stream"
 
@@ -55,6 +58,7 @@ class AWSAsyncEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
     async def send(self, event: E) -> None:
         if self._closed:
             raise IOError("Attempted to write to closed stream.")
+        logger.debug("Preparing to publish event: %s", event)
         event.serialize(self._serializer)
         result = self._serializer.get_result()
         if result is None:
@@ -66,6 +70,7 @@ class AWSAsyncEventPublisher[E: SerializeableShape](AsyncEventPublisher[E]):
 
         encoded_result = result.encode()
         try:
+            logger.debug("Publishing serialized event: %s", result)
             await self._writer.write(encoded_result)
         except Exception as e:
             await self.close()
