@@ -320,9 +320,9 @@ final class ClientGenerator implements Runnable {
                                     request_future, response_future,
                                 )
                             except Exception as e:
-                                if request_future is not None and not request_future.done:
+                                if request_future is not None and not request_future.done():
                                     request_future.set_exception($4T(e))
-                                if response_future is not None and not response_future.done:
+                                if response_future is not None and not response_future.done():
                                     response_future.set_exception($4T(e))
 
                                 # Make sure every exception that we throw is an instance of $4T so
