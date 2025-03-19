@@ -30,7 +30,6 @@ import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.generators.ConfigGenerator;
-import software.amazon.smithy.python.codegen.generators.EndpointsGenerator;
 import software.amazon.smithy.python.codegen.generators.EnumGenerator;
 import software.amazon.smithy.python.codegen.generators.InitGenerator;
 import software.amazon.smithy.python.codegen.generators.IntEnumGenerator;
@@ -114,7 +113,6 @@ final class DirectedPythonClientCodegen
             if (!serviceIndex.getAuthSchemes(directive.service()).isEmpty()) {
                 new HttpAuthGenerator(directive.context(), directive.settings()).run();
             }
-            new EndpointsGenerator(directive.context(), directive.settings()).run();
         }
     }
 

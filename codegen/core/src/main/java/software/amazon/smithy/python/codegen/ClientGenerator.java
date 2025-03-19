@@ -154,6 +154,7 @@ final class ClientGenerator implements Runnable {
         writer.addImport("smithy_core.types", "TypedProperties");
         writer.addImport("smithy_core.serializers", "SerializeableShape");
         writer.addImport("smithy_core.deserializers", "DeserializeableShape");
+        writer.addImport("smithy_core.schemas", "APIOperation");
 
         writer.indent();
         writer.write("""
@@ -216,11 +217,11 @@ final class ClientGenerator implements Runnable {
                                 serialize: Callable[[Input, $4T], Awaitable[$2T]],
                                 deserialize: Callable[[$3T, $4T], Awaitable[Output]],
                                 config: $4T,
-                                operation_name: str,
+                                operation: APIOperation[Input, Output],
                             ) -> Any:
                                 request_future = Future[RequestContext[Any, $2T]]()
                                 awaitable_output = asyncio.create_task(self._execute_operation(
-                                    input, plugins, serialize, deserialize, config, operation_name,
+                                    input, plugins, serialize, deserialize, config, operation,
                                     request_future=request_future
                                 ))
                                 request_context = await request_future
@@ -237,12 +238,12 @@ final class ClientGenerator implements Runnable {
                                 serialize: Callable[[Input, $4T], Awaitable[$2T]],
                                 deserialize: Callable[[$3T, $4T], Awaitable[Output]],
                                 config: $4T,
-                                operation_name: str,
+                                operation: APIOperation[Input, Output],
                                 event_deserializer: Callable[[ShapeDeserializer], Any],
                             ) -> Any:
                                 response_future = Future[$3T]()
                                 output = await self._execute_operation(
-                                    input, plugins, serialize, deserialize, config, operation_name,
+                                    input, plugins, serialize, deserialize, config, operation,
                                     response_future=response_future
                                 )
                                 transport_response = await response_future
@@ -259,20 +260,20 @@ final class ClientGenerator implements Runnable {
                                 serialize: Callable[[Input, $4T], Awaitable[$2T]],
                                 deserialize: Callable[[$3T, $4T], Awaitable[Output]],
                                 config: $4T,
-                                operation_name: str,
+                                operation: APIOperation[Input, Output],
                                 event_deserializer: Callable[[ShapeDeserializer], Any],
                             ) -> Any:
                                 request_future = Future[RequestContext[Any, $2T]]()
                                 response_future = Future[$3T]()
                                 awaitable_output = asyncio.create_task(self._execute_operation(
-                                    input, plugins, serialize, deserialize, config, operation_name,
+                                    input, plugins, serialize, deserialize, config, operation,
                                     request_future=request_future,
                                     response_future=response_future
                                 ))
                                 request_context = await request_future
                                 ${5C|}
                                 output_future = asyncio.create_task(self._wrap_duplex_output(
-                                    response_future, awaitable_output, config, operation_name,
+                                    response_future, awaitable_output, config, operation,
                                     event_deserializer
                                 ))
                                 return DuplexEventStream[Any, Any, Any](
@@ -280,12 +281,12 @@ final class ClientGenerator implements Runnable {
                                     output_future=output_future,
                                 )
 
-                            async def _wrap_duplex_output(
+                            async def _wrap_duplex_output[Input: SerializeableShape, Output: DeserializeableShape](
                                 self,
                                 response_future: Future[$3T],
                                 awaitable_output: Future[Any],
                                 config: $4T,
-                                operation_name: str,
+                                operation: APIOperation[Input, Output],
                                 event_deserializer: Callable[[ShapeDeserializer], Any],
                             ) -> tuple[Any, EventReceiver[Any]]:
                                 transport_response = await response_future
@@ -310,13 +311,13 @@ final class ClientGenerator implements Runnable {
                             serialize: Callable[[Input, $5T], Awaitable[$2T]],
                             deserialize: Callable[[$3T, $5T], Awaitable[Output]],
                             config: $5T,
-                            operation_name: str,
+                            operation: APIOperation[Input, Output],
                             request_future: Future[RequestContext[Any, $2T]] | None = None,
                             response_future: Future[$3T] | None = None,
                         ) -> Output:
                             try:
                                 return await self._handle_execution(
-                                    input, plugins, serialize, deserialize, config, operation_name,
+                                    input, plugins, serialize, deserialize, config, operation,
                                     request_future, response_future,
                                 )
                             except Exception as e:
@@ -338,16 +339,17 @@ final class ClientGenerator implements Runnable {
                             serialize: Callable[[Input, $5T], Awaitable[$2T]],
                             deserialize: Callable[[$3T, $5T], Awaitable[Output]],
                             config: $5T,
-                            operation_name: str,
+                            operation: APIOperation[Input, Output],
                             request_future: Future[RequestContext[Any, $2T]] | None,
                             response_future: Future[$3T] | None,
                         ) -> Output:
+                            operation_name = operation.schema.id.name
                             logger.debug('Making request for operation "%s" with parameters: %s', operation_name, input)
                             config = deepcopy(config)
                             for plugin in plugins:
                                 plugin(config)
 
-                            input_context = InputContext(request=input, properties=TypedProperties())
+                            input_context = InputContext(request=input, properties=TypedProperties({"config": config}))
                             transport_request: $2T | None = None
                             output_context: OutputContext[Input, Output, $2T | None, $3T | None] | None = None
 
@@ -399,7 +401,7 @@ final class ClientGenerator implements Runnable {
                                         interceptor_chain,
                                         request_context,
                                         config,
-                                        operation_name,
+                                        operation,
                                         request_future,
                                     )
 
@@ -454,7 +456,7 @@ final class ClientGenerator implements Runnable {
                             interceptor: Interceptor[Input, Output, $2T, $3T],
                             context: RequestContext[Input, $2T],
                             config: $5T,
-                            operation_name: str,
+                            operation: APIOperation[Input, Output],
                             request_future: Future[RequestContext[Input, $2T]] | None,
                         ) -> OutputContext[Input, Output, $2T, $3T | None]:
                             transport_response: $3T | None = None
@@ -476,7 +478,7 @@ final class ClientGenerator implements Runnable {
             writer.write("""
                             # Step 7b: Invoke service_auth_scheme_resolver.resolve_auth_scheme
                             auth_parameters: $1T = $1T(
-                                operation=operation_name,
+                                operation=operation.schema.id.name,
                                 ${2C|}
                             )
 
@@ -522,37 +524,44 @@ final class ClientGenerator implements Runnable {
         writer.popState();
 
         writer.pushState(new ResolveEndpointSection());
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+        writer.addImport("smithy_core", "URI");
+        writer.addImport("smithy_core.endpoints", "EndpointResolverParams");
+        writer.write("""
+                        # Step 7f: Invoke endpoint_resolver.resolve_endpoint
+                        context.properties["endpoint_uri"] = config.endpoint_uri
+                        endpoint_resolver_parameters = EndpointResolverParams(
+                            operation=operation,
+                            input=context.request,
+                            context=context.properties
+                        )
+                        logger.debug("Calling endpoint resolver with parameters: %s", endpoint_resolver_parameters)
+                        endpoint = await config.endpoint_resolver.resolve_endpoint(
+                            endpoint_resolver_parameters
+                        )
+                        logger.debug("Endpoint resolver result: %s", endpoint)
+                        if not endpoint.uri.path:
+                            path = ""
+                        elif endpoint.uri.path.endswith("/"):
+                            path = endpoint.uri.path[:-1]
+                        else:
+                            path = endpoint.uri.path
+                        if context.transport_request.destination.path:
+                            path += context.transport_request.destination.path
+                        context.transport_request.destination = URI(
+                            scheme=endpoint.uri.scheme,
+                            host=context.transport_request.destination.host + endpoint.uri.host,
+                            path=path,
+                            port=endpoint.uri.port,
+                            query=context.transport_request.destination.query,
+                        )
+                """);
         if (context.applicationProtocol().isHttpProtocol()) {
-            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-            writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-            writer.addImport("smithy_core", "URI");
             writer.write("""
-                            # Step 7f: Invoke endpoint_resolver.resolve_endpoint
-                            endpoint_resolver_parameters = $1T.build(config=config)
-                            logger.debug("Calling endpoint resolver with parameters: %s", endpoint_resolver_parameters)
-                            endpoint = await config.endpoint_resolver.resolve_endpoint(
-                                endpoint_resolver_parameters
-                            )
-                            logger.debug("Endpoint resolver result: %s", endpoint)
-                            if not endpoint.uri.path:
-                                path = ""
-                            elif endpoint.uri.path.endswith("/"):
-                                path = endpoint.uri.path[:-1]
-                            else:
-                                path = endpoint.uri.path
-                            if context.transport_request.destination.path:
-                                path += context.transport_request.destination.path
-                            context.transport_request.destination = URI(
-                                scheme=endpoint.uri.scheme,
-                                host=context.transport_request.destination.host + endpoint.uri.host,
-                                path=path,
-                                port=endpoint.uri.port,
-                                query=context.transport_request.destination.query,
-                            )
-                            context.transport_request.fields.extend(endpoint.headers)
-
-                    """,
-                    CodegenUtils.getEndpointParametersSymbol(context.settings()));
+                            if (headers := endpoint.properties.get("headers")) is not None:
+                                context.transport_request.fields.extend(headers)
+                    """);
         }
         writer.popState();
 
@@ -809,7 +818,8 @@ final class ClientGenerator implements Runnable {
      * Generates the function for a single operation.
      */
     private void generateOperation(PythonWriter writer, OperationShape operation) {
-        var operationMethodSymbol = symbolProvider.toSymbol(operation).expectProperty(OPERATION_METHOD);
+        var operationSymbol = symbolProvider.toSymbol(operation);
+        var operationMethodSymbol = operationSymbol.expectProperty(OPERATION_METHOD);
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
 
         var input = model.expectShape(operation.getInputShape());
@@ -840,9 +850,9 @@ final class ClientGenerator implements Runnable {
                                     serialize=$T,
                                     deserialize=$T,
                                     config=self._config,
-                                    operation_name=$S,
+                                    operation=$T,
                                 )
-                                """, serSymbol, deserSymbol, operation.getId().getName());
+                                """, serSymbol, deserSymbol, operationSymbol);
                     }
                 });
     }
@@ -888,7 +898,9 @@ final class ClientGenerator implements Runnable {
     private void generateEventStreamOperation(PythonWriter writer, OperationShape operation) {
         writer.pushState();
         writer.addDependency(SmithyPythonDependency.SMITHY_EVENT_STREAM);
-        var operationMethodSymbol = symbolProvider.toSymbol(operation).expectProperty(OPERATION_METHOD);
+        var operationSymbol = symbolProvider.toSymbol(operation);
+        writer.putContext("operation", operationSymbol);
+        var operationMethodSymbol = operationSymbol.expectProperty(OPERATION_METHOD);
         writer.putContext("operationName", operationMethodSymbol.getName());
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
         writer.putContext("plugin", pluginSymbol);
@@ -944,7 +956,7 @@ final class ClientGenerator implements Runnable {
                                 serialize=${serSymbol:T},
                                 deserialize=${deserSymbol:T},
                                 config=self._config,
-                                operation_name=${operationName:S},
+                                operation=${operation:T},
                                 event_deserializer=$T().deserialize,
                             )  # type: ignore
                             ${/hasProtocol}
@@ -970,7 +982,7 @@ final class ClientGenerator implements Runnable {
                                 serialize=${serSymbol:T},
                                 deserialize=${deserSymbol:T},
                                 config=self._config,
-                                operation_name=${operationName:S},
+                                operation=${operation:T},
                             )  # type: ignore
                             ${/hasProtocol}
                         """, writer.consumer(w -> writeSharedOperationInit(w, operation, input)));
@@ -993,7 +1005,7 @@ final class ClientGenerator implements Runnable {
                             serialize=${serSymbol:T},
                             deserialize=${deserSymbol:T},
                             config=self._config,
-                            operation_name=${operationName:S},
+                            operation=${operation:T},
                             event_deserializer=$T().deserialize,
                         )  # type: ignore
                         ${/hasProtocol}

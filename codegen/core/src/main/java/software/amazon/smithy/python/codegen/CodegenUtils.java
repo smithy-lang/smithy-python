@@ -140,34 +140,6 @@ public final class CodegenUtils {
     }
 
     /**
-     * Gets the symbol for the endpoint parameters object.
-     *
-     * @param settings The client settings, used to account for module configuration.
-     * @return Returns the symbol for endpoint parameters.
-     */
-    public static Symbol getEndpointParametersSymbol(PythonSettings settings) {
-        return Symbol.builder()
-                .name("EndpointParameters")
-                .namespace(String.format("%s.endpoints", settings.moduleName()), ".")
-                .definitionFile(String.format("./%s/endpoints.py", settings.moduleName()))
-                .build();
-    }
-
-    /**
-     * Gets the symbol for the endpoint resolver object.
-     *
-     * @param settings The client settings, used to account for module configuration.
-     * @return Returns the symbol for endpoint resolver.
-     */
-    public static Symbol getEndpointResolverSymbol(PythonSettings settings) {
-        return Symbol.builder()
-                .name("EndpointResolver")
-                .namespace(String.format("%s.endpoints", settings.moduleName()), ".")
-                .definitionFile(String.format("./%s/endpoints.py", settings.moduleName()))
-                .build();
-    }
-
-    /**
      * Gets the symbol for the http auth params.
      *
      * @param settings The client settings, used to account for module configuration.

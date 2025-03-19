@@ -5,7 +5,6 @@
 package software.amazon.smithy.python.codegen.generators;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
@@ -42,7 +41,7 @@ public final class ConfigGenerator implements Runnable {
     // This list contains any properties that should unconditionally be added to every
     // config object. This should be as minimal as possible, and importantly should
     // not contain any HTTP related config since Smithy is transport agnostic.
-    private static final List<ConfigProperty> BASE_PROPERTIES = Arrays.asList(
+    private static final List<ConfigProperty> BASE_PROPERTIES = List.of(
             ConfigProperty.builder()
                     .name("interceptors")
                     .type(Symbol.builder()
@@ -67,19 +66,6 @@ public final class ConfigGenerator implements Runnable {
                         writer.addImport("smithy_core.retries", "SimpleRetryStrategy");
                         writer.write("self.retry_strategy = retry_strategy or SimpleRetryStrategy()");
                     })
-                    .build());
-
-    // This list contains any properties that must be added to any http-based
-    // service client, except for the http client itself.
-    private static final List<ConfigProperty> HTTP_PROPERTIES = Arrays.asList(
-            ConfigProperty.builder()
-                    .name("http_request_config")
-                    .type(Symbol.builder()
-                            .name("HTTPRequestConfiguration")
-                            .namespace("smithy_http.interfaces", ".")
-                            .addDependency(SmithyPythonDependency.SMITHY_HTTP)
-                            .build())
-                    .documentation("Configuration for individual HTTP requests.")
                     .build(),
             ConfigProperty.builder()
                     .name("endpoint_uri")
@@ -92,6 +78,19 @@ public final class ConfigGenerator implements Runnable {
                                     .build())
                             .build())
                     .documentation("A static URI to route requests to.")
+                    .build());
+
+    // This list contains any properties that must be added to any http-based
+    // service client, except for the http client itself.
+    private static final List<ConfigProperty> HTTP_PROPERTIES = List.of(
+            ConfigProperty.builder()
+                    .name("http_request_config")
+                    .type(Symbol.builder()
+                            .name("HTTPRequestConfiguration")
+                            .namespace("smithy_http.interfaces", ".")
+                            .addDependency(SmithyPythonDependency.SMITHY_HTTP)
+                            .build())
+                    .documentation("Configuration for individual HTTP requests.")
                     .build());
 
     private final PythonSettings settings;
@@ -132,21 +131,20 @@ public final class ConfigGenerator implements Runnable {
         }
         properties.add(clientBuilder.build());
 
-        var endpointResolver = CodegenUtils.getEndpointResolverSymbol(context.settings());
         properties.add(ConfigProperty.builder()
                 .name("endpoint_resolver")
                 .type(Symbol.builder()
-                        .name("_EndpointResolver[EndpointParameters]")
-                        .addReference(CodegenUtils.getEndpointParametersSymbol(context.settings()))
+                        .name("_EndpointResolver")
                         .build())
                 .documentation("""
                         The endpoint resolver used to resolve the final endpoint per-operation based on the \
                         configuration.""")
                 .nullable(false)
                 .initialize(writer -> {
-                    writer.addImport("smithy_http.aio.interfaces", "EndpointResolver", "_EndpointResolver");
+                    writer.addImport("smithy_core.aio.interfaces", "EndpointResolver", "_EndpointResolver");
                     writer.pushState(new InitDefaultEndpointResolverSection());
-                    writer.write("self.endpoint_resolver = endpoint_resolver or $T()", endpointResolver);
+                    writer.addImport("smithy_core.aio.endpoints", "StaticEndpointResolver");
+                    writer.write("self.endpoint_resolver = endpoint_resolver or StaticEndpointResolver()");
                     writer.popState();
                 })
                 .build());
