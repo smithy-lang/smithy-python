@@ -95,15 +95,13 @@ def is_streaming_blob(obj: Any) -> TypeGuard[StreamingBlob]:
     return isinstance(obj, bytes | bytearray) or is_bytes_reader(obj)
 
 
-# TODO: update HTTP package and existing endpoint implementations to use this.
 class Endpoint(Protocol):
     """A resolved endpoint."""
 
     uri: URI
     """The endpoint URI."""
 
-    # TODO: replace this with a typed context bag
-    properties: dict[str, Any]
+    properties: "TypedProperties"
     """Properties required to interact with the endpoint.
 
     For example, in some AWS use cases this might contain HTTP headers to add to each
@@ -140,6 +138,7 @@ class PropertyKey[T](Protocol):
     key: str
     """The string key used to access the value."""
 
+    # TODO: update this when PEP 747 lands to allow for unions and literals
     value_type: type[T]
     """The type of the associated value in the properties bag."""
 

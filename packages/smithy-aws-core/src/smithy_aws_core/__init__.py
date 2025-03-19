@@ -4,3 +4,10 @@
 import importlib.metadata
 
 __version__: str = importlib.metadata.version("smithy-aws-core")
+
+
+from smithy_core.types import PropertyKey
+
+
+REGION = PropertyKey(key="region", value_type=str)
+"""An AWS region."""
