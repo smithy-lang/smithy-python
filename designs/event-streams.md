@@ -181,7 +181,7 @@ class DuplexEventStream[
 
     input_stream: EventPublisher[IE]
     output_stream: EventReceiver[OE] | None = None
-    response: O | None = None
+    output: O | None = None
 
     def __init__(
         self,
@@ -208,7 +208,7 @@ class DuplexEventStream[
 class InputEventStream[IE: SerializeableShape, O]:
 
     input_stream: EventPublisher[IE]
-    response: O | None = None
+    output: O | None = None
 
     def __init__(
         self,
@@ -235,11 +235,11 @@ class InputEventStream[IE: SerializeableShape, O]:
 class OutputEventStream[OE: DeserializeableShape, O: DeserializeableShape]:
 
     output_stream: EventReceiver[OE]
-    response: O
+    output: O
     
     def __init__(self, output_stream: EventReceiver[OE], output: O) -> None:
         self.output_stream = output_stream
-        self.response = output
+        self.output = output
 
     async def close(self) -> None:
         await self.output_stream.close()
@@ -257,7 +257,7 @@ the underlying publisher and/or receiver.
 
 Both `InputEventStream` and `DuplexEventStream` have an `await_output` method
 that waits for the initial request to be received, returning that and the output
-stream. Their `response` and `output_stream` properties will not be set until
+stream. Their `output` and `output_stream` properties will not be set until
 then. This is important because clients MUST be able to start sending events to
 the service immediately, without waiting for the initial response. This is
 critical because there are existing services that require one or more events to
@@ -277,8 +277,8 @@ with await client.input_operation() as stream:
     stream.input_stream.send(FooEvent(foo="bar"))
 ```
 
-The `OutputEventStream`'s initial `response` and `output_stream` will never be
-`None`, however. Instead, the `ClientProtocol` MUST set values for these when
+The `OutputEventStream`'s `output` and `output_stream` will never be `None`,
+however. Instead, the `ClientProtocol` MUST set values for these when
 constructing the object. This differs from the other stream types because the
 lack of an input stream means that the service has nothing to wait on from the
 client before sending responses.
