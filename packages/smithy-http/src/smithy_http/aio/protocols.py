@@ -71,9 +71,7 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             endpoint_trait=operation.schema.get_trait(EndpointTrait),
         )
 
-        input.serialize(
-            serializer=serializer
-        )  # TODO: ensure serializer adds content-type
+        input.serialize(serializer=serializer)
         request = serializer.result
 
         if request is None:
@@ -95,7 +93,7 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         error_registry: TypeRegistry,
         context: TypedProperties,
     ) -> OperationOutput:
-        if not (200 <= response.status <= 299):  # TODO: extract to utility
+        if not (200 <= response.status <= 299):
             # TODO: implement error serde from type registry
             raise NotImplementedError
 

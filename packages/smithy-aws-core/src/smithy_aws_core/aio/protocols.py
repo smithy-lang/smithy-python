@@ -1,7 +1,7 @@
 from typing import Literal
 
 from smithy_aws_core.traits import RestJson1Trait
-from smithy_core.protocols import HttpBindingClientProtocol
+from smithy_http.aio.protocols import HttpBindingClientProtocol
 from smithy_core.codecs import Codec
 from smithy_core.shapes import ShapeID
 from smithy_json import JSONCodec

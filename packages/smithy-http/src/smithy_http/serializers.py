@@ -29,6 +29,8 @@ from smithy_core.traits import (
     TimestampFormatTrait,
     EndpointTrait,
     HTTPErrorTrait,
+    MediaTypeTrait,
+    StreamingTrait,
 )
 from smithy_core.shapes import ShapeType
 from smithy_core.utils import serialize_float
@@ -83,8 +85,15 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
         if self._endpoint_trait is not None:
             host_prefix = self._endpoint_trait.host_prefix
 
+        content_type = self._payload_codec.media_type
+
         if (payload_member := self._get_payload_member(schema)) is not None:
             if payload_member.shape_type in (ShapeType.BLOB, ShapeType.STRING):
+                content_type = (
+                    "application/octet-stream"
+                    if payload_member.shape_type is ShapeType.BLOB
+                    else "text/plain"
+                )
                 payload_serializer = RawPayloadSerializer()
                 binding_serializer = HTTPRequestBindingSerializer(
                     payload_serializer, self._http_trait.path, host_prefix
@@ -92,6 +101,8 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                 yield binding_serializer
                 payload = payload_serializer.payload
             else:
+                if (media_type := payload_member.get_trait(MediaTypeTrait)) is not None:
+                    content_type = media_type.value
                 payload = BytesIO()
                 payload_serializer = self._payload_codec.create_serializer(payload)
                 binding_serializer = HTTPRequestBindingSerializer(
@@ -99,6 +110,8 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                 )
                 yield binding_serializer
         else:
+            if self._get_eventstreaming_member(schema) is not None:
+                content_type = "application/vnd.amazon.eventstream"
             payload = BytesIO()
             payload_serializer = self._payload_codec.create_serializer(payload)
             with payload_serializer.begin_struct(schema) as body_serializer:
@@ -112,9 +125,9 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
         ) is not None and not iscoroutinefunction(seek):
             seek(0)
 
-        # TODO: conditional on empty-ness and a param of the protocol?
+        # TODO: conditional on empty-ness and based on the protocol
         headers = binding_serializer.header_serializer.headers
-        headers.append(("content-type", self._payload_codec.media_type))
+        headers.append(("content-type", content_type))
 
         self.result = _HTTPRequest(
             method=self._http_trait.method,
@@ -133,6 +146,15 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
     def _get_payload_member(self, schema: Schema) -> Schema | None:
         for member in schema.members.values():
             if HTTPPayloadTrait in member:
+                return member
+        return None
+
+    def _get_eventstreaming_member(self, schema: Schema) -> Schema | None:
+        for member in schema.members.values():
+            if (
+                member.get_trait(StreamingTrait) is not None
+                and member.shape_type is ShapeType.UNION
+            ):
                 return member
         return None
 

@@ -1572,11 +1572,16 @@ def payload_cases() -> list[HTTPMessageTestCase]:
         ),
         HTTPMessageTestCase(
             HTTPStringPayload(payload="foo"),
-            HTTPMessage(body=b"foo"),
+            HTTPMessage(
+                fields=tuples_to_fields([("content-type", "text/plain")]), body=b"foo"
+            ),
         ),
         HTTPMessageTestCase(
             HTTPBlobPayload(payload=b"\xde\xad\xbe\xef"),
-            HTTPMessage(body=b"\xde\xad\xbe\xef"),
+            HTTPMessage(
+                fields=tuples_to_fields([("content-type", "application/octet-stream")]),
+                body=b"\xde\xad\xbe\xef",
+            ),
         ),
         HTTPMessageTestCase(
             HTTPStructuredPayload(payload=HTTPStringPayload(payload="foo")),
@@ -1589,7 +1594,10 @@ def async_streaming_payload_cases() -> list[HTTPMessageTestCase]:
     return [
         HTTPMessageTestCase(
             HTTPStreamingPayload(payload=AsyncBytesReader(b"\xde\xad\xbe\xef")),
-            HTTPMessage(body=AsyncBytesReader(b"\xde\xad\xbe\xef")),
+            HTTPMessage(
+                fields=tuples_to_fields([("content-type", "application/octet-stream")]),
+                body=AsyncBytesReader(b"\xde\xad\xbe\xef"),
+            ),
         ),
     ]
 
@@ -1625,8 +1633,10 @@ async def test_serialize_http_request(case: HTTPMessageTestCase) -> None:
     actual_query = actual.destination.query or ""
     expected_query = case.request.destination.query or ""
     assert actual_query == expected_query
-    # set the content-type field here, otherwise cases would have to duplicate it everywhere
-    expected.fields.set_field(CONTENT_TYPE_FIELD)
+    # set the content-type field here, otherwise cases would have to duplicate it everywhere,
+    # but if the field is already set in the case, don't override it
+    if expected.fields.get(CONTENT_TYPE_FIELD.name) is None:
+        expected.fields.set_field(CONTENT_TYPE_FIELD)
     assert actual.fields == expected.fields
 
     if case.request.body:
@@ -1651,6 +1661,9 @@ async def test_serialize_http_response(case: HTTPMessageTestCase) -> None:
     expected = case.request
 
     assert actual is not None
+    # Remove content-type from expected, we're re-using the request cases for brevity
+    if expected.fields.get(CONTENT_TYPE_FIELD.name) is not None:
+        del expected.fields[CONTENT_TYPE_FIELD.name]
     assert actual.fields == expected.fields
     assert actual.status == expected.status
 
