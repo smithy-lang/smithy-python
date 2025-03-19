@@ -61,7 +61,7 @@ class DuplexEventStream[
     This value will also be None if the operation has no output stream.
     """
 
-    response: O | None = None
+    output: O | None = None
     """The initial response from the service.
 
     This value may be None until ``await_output`` has been called.
@@ -98,8 +98,8 @@ class DuplexEventStream[
         :returns: A tuple containing the initial response and output stream. If the
             operation has no output stream, the second value will be None.
         """
-        self.response, self.output_stream = await self._output_future
-        return self.response, self.output_stream
+        self.output, self.output_stream = await self._output_future
+        return self.output, self.output_stream
 
     async def close(self) -> None:
         """Closes the event stream.
@@ -141,7 +141,7 @@ class InputEventStream[IE: SerializeableShape, O]:
     input_stream: EventPublisher[IE]
     """An event stream that sends events to the service."""
 
-    response: O | None = None
+    output: O | None = None
     """The initial response from the service.
 
     This value may be None until ``await_output`` has been called.
@@ -170,9 +170,9 @@ class InputEventStream[IE: SerializeableShape, O]:
 
         :returns: The service's initial response.
         """
-        if self.response is None:
-            self.response = await self._output_future
-        return self.response
+        if self.output is None:
+            self.output = await self._output_future
+        return self.output
 
     async def close(self) -> None:
         """Closes the event stream."""
@@ -212,7 +212,7 @@ class OutputEventStream[OE: DeserializeableShape, O: DeserializeableShape]:
     This value will also be None if the operation has no output stream.
     """
 
-    response: O
+    output: O
     """The initial response from the service.
 
     This may include context necessary to interpret output events or prepare input
@@ -221,7 +221,7 @@ class OutputEventStream[OE: DeserializeableShape, O: DeserializeableShape]:
 
     def __init__(self, output_stream: EventReceiver[OE], output: O) -> None:
         self.output_stream = output_stream
-        self.response = output
+        self.output = output
 
     async def close(self) -> None:
         """Closes the event stream."""
