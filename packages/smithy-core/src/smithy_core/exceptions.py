@@ -33,3 +33,7 @@ class AsyncBodyException(SmithyException):
 class UnsupportedStreamException(SmithyException):
     """Indicates that a serializer or deserializer's stream method was called, but data
     streams are not supported."""
+
+
+class EndpointResolutionError(SmithyException):
+    """Exception type for all exceptions raised by endpoint resolution."""

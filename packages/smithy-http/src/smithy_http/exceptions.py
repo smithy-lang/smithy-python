@@ -5,7 +5,3 @@ from smithy_core.exceptions import SmithyException
 
 class SmithyHTTPException(SmithyException):
     """Base exception type for all exceptions raised in HTTP clients."""
-
-
-class EndpointResolutionError(SmithyException):
-    """Exception type for all exceptions raised by endpoint resolution."""

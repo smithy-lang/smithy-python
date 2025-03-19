@@ -1,12 +1,13 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import AsyncIterable
-from typing import Protocol, runtime_checkable, TYPE_CHECKING, Callable
+from typing import Protocol, runtime_checkable, TYPE_CHECKING, Callable, Any
 
 from ...exceptions import UnsupportedStreamException
 from ...interfaces import URI, Endpoint, TypedProperties
 from ...interfaces import StreamingBlob as SyncStreamingBlob
 from ...documents import TypeRegistry
+from ...endpoints import EndpointResolverParams
 
 from .eventstream import EventPublisher, EventReceiver
 
@@ -69,6 +70,17 @@ class Response(Protocol):
 
     def consume_body(self) -> bytes:
         """Iterate over request body and return as bytes."""
+        ...
+
+
+class EndpointResolver(Protocol):
+    """Resolves an operation's endpoint based given parameters."""
+
+    async def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Endpoint:
+        """Resolve an endpoint for the given operation.
+
+        :param params: The parameters available to resolve the endpoint.
+        """
         ...
 
 
