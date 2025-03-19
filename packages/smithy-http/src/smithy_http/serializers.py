@@ -112,6 +112,10 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
         ) is not None and not iscoroutinefunction(seek):
             seek(0)
 
+        # TODO: conditional on empty-ness and a param of the protocol?
+        headers = binding_serializer.header_serializer.headers
+        headers.append(("content-type", self._payload_codec.media_type))
+
         self.result = _HTTPRequest(
             method=self._http_trait.method,
             destination=URI(
@@ -122,7 +126,7 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                     prefix=self._http_trait.query or "",
                 ),
             ),
-            fields=tuples_to_fields(binding_serializer.header_serializer.headers),
+            fields=tuples_to_fields(headers),
             body=payload,
         )
 

@@ -19,7 +19,7 @@ class RestJsonClientProtocol(HttpBindingClientProtocol):
         return self._id
 
     @property
-    def codec(self) -> Codec:
+    def payload_codec(self) -> Codec:
         return self._codec
 
     @property

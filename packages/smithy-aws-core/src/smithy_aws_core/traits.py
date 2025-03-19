@@ -16,26 +16,29 @@ from smithy_core.traits import Trait, DocumentValue, DynamicTrait
 
 @dataclass(init=False, frozen=True)
 class RestJson1Trait(Trait, id=ShapeID("aws.protocols#restJson1")):
-    http: set[str] = field(repr=False, hash=False, compare=False, default_factory=set)
-    eventStreamHttp: set[str] = field(
-        repr=False, hash=False, compare=False, default_factory=set
+    http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+    event_stream_http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
     )
 
     def __init__(self, value: DocumentValue | DynamicTrait = None):
         super().__init__(value)
         assert isinstance(self.document_value, Mapping)
 
-        assert isinstance(self.document_value["http"], Sequence)
-        for val in self.document_value["http"]:
+        http_versions = self.document_value["http"]
+        assert isinstance(http_versions, Sequence)
+        for val in http_versions:
             assert isinstance(val, str)
-            self.http.add(val)
-
-        if vals := self.document_value.get("eventStreamHttp") is None:
-            object.__setattr__(self, "eventStreamHttp", self.http)
+        object.__setattr__(self, "http", tuple(http_versions))
+        event_stream_http_versions = self.document_value.get("eventStreamHttp")
+        if not event_stream_http_versions:
+            object.__setattr__(self, "event_stream_http", self.http)
         else:
-            # check that eventStreamHttp is a subset of http
-            assert isinstance(vals, Sequence)
-            for val in self.document_value["eventStreamHttp"]:
-                assert val in self.http
+            assert isinstance(event_stream_http_versions, Sequence)
+            for val in event_stream_http_versions:
                 assert isinstance(val, str)
-                self.eventStreamHttp.add(val)
+            object.__setattr__(
+                self, "event_stream_http", tuple(event_stream_http_versions)
+            )

@@ -6,6 +6,7 @@ from smithy_core.aio.interfaces import ClientProtocol
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape
 from smithy_core.documents import TypeRegistry
+from smithy_core.exceptions import ExpectationNotMetException
 from smithy_core.interfaces import Endpoint, TypedProperties, URI
 from smithy_core.schemas import APIOperation
 from smithy_core.serializers import SerializeableShape
@@ -43,8 +44,8 @@ class HttpBindingClientProtocol(HttpClientProtocol):
     """An HTTP-based protocol that uses HTTP binding traits."""
 
     @property
-    def codec(self) -> Codec:
-        """The codec used for the serde of input and output shapes."""
+    def payload_codec(self) -> Codec:
+        """The codec used for the serde of input and output payloads."""
         ...
 
     @property
@@ -63,20 +64,23 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         endpoint: URI,
         context: TypedProperties,
     ) -> HTTPRequest:
-        # TODO: request binding cache like done in SJ
+        # TODO(optimization): request binding cache like done in SJ
         serializer = HTTPRequestSerializer(
-            payload_codec=self.codec,
-            http_trait=operation.schema.expect_trait(HTTPTrait),  # TODO
+            payload_codec=self.payload_codec,
+            http_trait=operation.schema.expect_trait(HTTPTrait),
             endpoint_trait=operation.schema.get_trait(EndpointTrait),
         )
 
-        input.serialize(serializer=serializer)
+        input.serialize(
+            serializer=serializer
+        )  # TODO: ensure serializer adds content-type
         request = serializer.result
 
         if request is None:
-            raise ValueError("Request is None")  # TODO
+            raise ExpectationNotMetException(
+                "Expected request to be serialized, but was None"
+            )
 
-        request.fields["content-type"].add(self.content_type)
         return request
 
     async def deserialize_response[
@@ -96,15 +100,17 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             raise NotImplementedError
 
         body = response.body
-        # TODO: extract to utility, seems common
-        if (read := getattr(body, "read", None)) is not None and iscoroutinefunction(
-            read
-        ):
-            body = BytesIO(await read())
 
-        # TODO: response binding cache like done in SJ
+        # if body is not streaming and is async, we have to buffer it
+        if not operation.output_stream_member:
+            if (
+                read := getattr(body, "read", None)
+            ) is not None and iscoroutinefunction(read):
+                body = BytesIO(await read())
+
+        # TODO(optimization): response binding cache like done in SJ
         deserializer = HTTPResponseDeserializer(
-            payload_codec=self.codec,
+            payload_codec=self.payload_codec,
             http_trait=operation.schema.expect_trait(HTTPTrait),
             response=response,
             body=body,  # type: ignore
