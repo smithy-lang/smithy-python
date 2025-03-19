@@ -307,7 +307,7 @@ public final class SetupGenerator {
                     sys.path.insert(0, os.path.abspath('..'))
 
                     project = '$L'
-                    author = 'Boto'
+                    author = 'Amazon Web Services'
                     release = '$L'
 
                     extensions = [
