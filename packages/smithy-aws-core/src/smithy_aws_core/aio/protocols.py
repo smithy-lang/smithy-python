@@ -1,4 +1,4 @@
-from typing import Literal
+from typing import Final
 
 from smithy_aws_core.traits import RestJson1Trait
 from smithy_http.aio.protocols import HttpBindingClientProtocol
@@ -12,7 +12,7 @@ class RestJsonClientProtocol(HttpBindingClientProtocol):
 
     _id: ShapeID = RestJson1Trait.id
     _codec: JSONCodec = JSONCodec()
-    _contentType: Literal["application/json"] = "application/json"
+    _contentType: Final = "application/json"
 
     @property
     def id(self) -> ShapeID:
