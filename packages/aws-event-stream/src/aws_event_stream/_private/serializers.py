@@ -5,7 +5,7 @@ import logging
 from collections.abc import Iterator
 from contextlib import contextmanager
 from io import BytesIO
-from typing import Never, Protocol
+from typing import Never
 
 from smithy_core.codecs import Codec
 from smithy_core.schemas import Schema

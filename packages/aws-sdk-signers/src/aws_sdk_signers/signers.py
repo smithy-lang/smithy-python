@@ -833,7 +833,7 @@ class AsyncEventSigner:
                 )
 
             timestamp = new_signing_properties["date"]
-            headers: dict[str, str | bytes] = {":date": date_obj}
+            headers: dict[str, str | bytes | datetime.datetime] = {":date": date_obj}
             encoder = event_encoder_cls()
             encoder.encode_headers(headers)
             encoded_headers = encoder.get_result()

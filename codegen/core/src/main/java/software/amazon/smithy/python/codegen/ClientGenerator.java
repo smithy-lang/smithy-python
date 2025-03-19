@@ -571,6 +571,9 @@ final class ClientGenerator implements Runnable {
         writer.pushState(new SignRequestSection());
         if (context.applicationProtocol().isHttpProtocol() && supportsAuth) {
             writer.addStdlibImport("re");
+            writer.addStdlibImport("typing", "Any");
+            writer.addImport("smithy_core.interfaces.identity", "Identity");
+            writer.addImport("smithy_core.types", "PropertyKey");
             writer.write("""
                             # Step 7i: sign the request
                             if auth_option and signer:
@@ -594,8 +597,11 @@ final class ClientGenerator implements Runnable {
                                 auth_value = fields["Authorization"].as_string()  # type: ignore
                                 signature = re.split("Signature=", auth_value)[-1]  # type: ignore
                                 context.properties["signature"] = signature.encode('utf-8')
-                                context.properties["identity"] = identity
-                                context.properties["signer_properties"] = auth_option.signer_properties
+
+                                identity_key = PropertyKey(key="identity", value_type=Identity | None)
+                                sp_key = PropertyKey(key="signer_properties", value_type=dict)
+                                context.properties[identity_key] = identity
+                                context.properties[sp_key] = auth_option.signer_properties
                     """);
         }
         writer.popState();

@@ -387,7 +387,7 @@ class EventHeaderEncoder:
             raise InvalidHeadersLength(len(result))
         return result
 
-    def encode_headers(self, headers: HEADERS_DICT):
+    def encode_headers(self, headers: HEADERS_DICT) -> None:
         """Encode a map of headers.
 
         :param headers: A mapping of headers to encode.
