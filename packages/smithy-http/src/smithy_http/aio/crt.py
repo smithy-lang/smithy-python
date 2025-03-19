@@ -174,13 +174,15 @@ class CRTResponseFactory:
                     kind=FieldPosition.HEADER,
                 )
 
-        self._response_future.set_result(
-            AWSCRTHTTPResponse(
-                status=status_code,
-                fields=fields,
-                body=self._body,
-            )
+        response = AWSCRTHTTPResponse(
+            status=status_code,
+            fields=fields,
+            body=self._body,
         )
+        if status_code != 200 and status_code >= 300:
+            self._response_future.set_exception(CRTErrorResponse(response))
+        else:
+            self._response_future.set_result(response)
 
     async def await_response(self) -> AWSCRTHTTPResponse:
         return await asyncio.wrap_future(self._response_future)
@@ -191,6 +193,18 @@ class CRTResponseFactory:
     def _cancel(self, completion_future: ConcurrentFuture[int | Exception]) -> None:
         if not self._response_future.done():
             self._response_future.cancel()
+
+
+class CRTErrorResponse(Exception):
+    def __init__(self, response: AWSCRTHTTPResponse) -> None:
+        self._status = response.status
+        self._response = response
+
+        super().__init__(f"Request failed with status code {self._status}")
+
+    @property
+    def response(self) -> AWSCRTHTTPResponse:
+        return self._response
 
 
 ConnectionPoolKey = tuple[str, str, int | None]
@@ -251,7 +265,11 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         crt_stream.completion_future.add_done_callback(
             partial(self._close_input_body, body=crt_body)
         )
-        return await response_factory.await_response()
+        try:
+            return await response_factory.await_response()
+        except CRTErrorResponse as e:
+            await close(crt_body)
+            return e.response
 
     def _close_input_body(
         self, future: ConcurrentFuture[int], *, body: "BufferableByteStream | BytesIO"
