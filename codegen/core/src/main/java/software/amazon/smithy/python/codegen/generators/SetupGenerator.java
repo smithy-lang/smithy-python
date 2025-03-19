@@ -170,6 +170,9 @@ public final class SetupGenerator {
                     [tool.ruff]
                     target-version = "py312"
 
+                    [tool.ruff.lint]
+                    ignore = ["F841"]
+
                     [tool.pytest.ini_options]
                     python_classes = ["!Test"]
                     asyncio_mode = "auto"
