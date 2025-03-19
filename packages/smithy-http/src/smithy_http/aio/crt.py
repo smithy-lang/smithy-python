@@ -174,13 +174,13 @@ class CRTResponseFactory:
                     kind=FieldPosition.HEADER,
                 )
 
-            self._response_future.set_result(
-                AWSCRTHTTPResponse(
-                    status=status_code,
-                    fields=fields,
-                    body=self._body,
-                )
+        self._response_future.set_result(
+            AWSCRTHTTPResponse(
+                status=status_code,
+                fields=fields,
+                body=self._body,
             )
+        )
 
     async def await_response(self) -> AWSCRTHTTPResponse:
         return await asyncio.wrap_future(self._response_future)
