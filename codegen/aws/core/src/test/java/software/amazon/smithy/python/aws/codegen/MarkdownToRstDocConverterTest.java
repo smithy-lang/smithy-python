@@ -8,101 +8,102 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import software.amazon.smithy.python.codegen.writer.MarkdownToRstDocConverter;
 
-public class AwsDocConverterTest {
+public class MarkdownToRstDocConverterTest {
 
-    private AwsDocConverter awsDocConverter;
+    private MarkdownToRstDocConverter markdownToRstDocConverter;
 
     @BeforeEach
     public void setUp() {
-        awsDocConverter = new AwsDocConverter();
+        markdownToRstDocConverter = new MarkdownToRstDocConverter();
     }
 
     @Test
-    public void testConvertHtmlToRstWithTitleAndParagraph() {
+    public void testConvertCommonmarkToRstWithTitleAndParagraph() {
         String html = "<html><body><h1>Title</h1><p>Paragraph</p></body></html>";
         String expected = "\n\nTitle\n=====\nParagraph\n";
-        String result = awsDocConverter.convertHtmlToRst(html);
+        String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
         assertEquals(expected, result);
     }
 
     @Test
-    public void testConvertHtmlToRstWithImportantNote() {
+    public void testConvertCommonmarkToRstWithImportantNote() {
         String html = "<html><body><important>Important note</important></body></html>";
         String expected = "\n\n.. important::\n    Important note\n";
-        String result = awsDocConverter.convertHtmlToRst(html);
+        String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
         assertEquals(expected, result);
     }
 
     @Test
-    public void testConvertHtmlToRstWithList() {
+    public void testConvertCommonmarkToRstWithList() {
         String html = "<html><body><ul><li>Item 1</li><li>Item 2</li></ul></body></html>";
         String expected = "\n\n* Item 1\n\n* Item 2\n\n";
-        String result = awsDocConverter.convertHtmlToRst(html);
+        String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
         assertEquals(expected, result);
     }
 
     @Test
-    public void testConvertHtmlToRstWithMixedElements() {
+    public void testConvertCommonmarkToRstWithMixedElements() {
         String html = "<html><body><h1>Title</h1><p>Paragraph</p><ul><li>Item 1</li><li>Item 2</li></ul></body></html>";
         String expected = "\n\nTitle\n=====\nParagraph\n\n* Item 1\n\n* Item 2\n\n";
-        String result = awsDocConverter.convertHtmlToRst(html);
+        String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
         assertEquals(expected, result);
     }
 
     @Test
-    public void testConvertHtmlToRstWithNestedElements() {
+    public void testConvertCommonmarkToRstWithNestedElements() {
         String html = "<html><body><h1>Title</h1><p>Paragraph with <strong>bold</strong> text</p></body></html>";
         String expected = "\n\nTitle\n=====\nParagraph with **bold** text\n";
-        String result = awsDocConverter.convertHtmlToRst(html);
+        String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
         assertEquals(expected, result);
     }
 
     @Test
-    public void testConvertHtmlToRstWithAnchorTag() {
+    public void testConvertCommonmarkToRstWithAnchorTag() {
         String html = "<html><body><a href='https://example.com'>Link</a></body></html>";
         String expected = "\n`Link <https://example.com>`_";
-        String result = awsDocConverter.convertHtmlToRst(html);
+        String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
         assertEquals(expected, result);
     }
 
     @Test
-    public void testConvertHtmlToRstWithBoldTag() {
+    public void testConvertCommonmarkToRstWithBoldTag() {
         String html = "<html><body><b>Bold text</b></body></html>";
         String expected = "\n**Bold text**";
-        String result = awsDocConverter.convertHtmlToRst(html);
+        String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
         assertEquals(expected, result);
     }
 
     @Test
-    public void testConvertHtmlToRstWithItalicTag() {
+    public void testConvertCommonmarkToRstWithItalicTag() {
         String html = "<html><body><i>Italic text</i></body></html>";
         String expected = "\n*Italic text*";
-        String result = awsDocConverter.convertHtmlToRst(html);
+        String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
         assertEquals(expected, result);
     }
 
     @Test
-    public void testConvertHtmlToRstWithCodeTag() {
+    public void testConvertCommonmarkToRstWithCodeTag() {
         String html = "<html><body><code>code snippet</code></body></html>";
         String expected = "\n``code snippet``";
-        String result = awsDocConverter.convertHtmlToRst(html);
+        String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
         assertEquals(expected, result);
     }
 
     @Test
-    public void testConvertHtmlToRstWithNoteTag() {
+    public void testConvertCommonmarkToRstWithNoteTag() {
         String html = "<html><body><note>Note text</note></body></html>";
         String expected = "\n\n.. note::\n    Note text\n";
-        String result = awsDocConverter.convertHtmlToRst(html);
+        String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
         assertEquals(expected, result);
     }
 
     @Test
-    public void testConvertHtmlToRstWithNestedList() {
+    public void testConvertCommonmarkToRstWithNestedList() {
         String html = "<html><body><ul><li>Item 1<ul><li>Subitem 1</li></ul></li><li>Item 2</li></ul></body></html>";
         String expected = "\n\n* Item 1\n  * Subitem 1\n\n* Item 2\n\n";
-        String result = awsDocConverter.convertHtmlToRst(html);
+        String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
         assertEquals(expected, result);
     }
 }

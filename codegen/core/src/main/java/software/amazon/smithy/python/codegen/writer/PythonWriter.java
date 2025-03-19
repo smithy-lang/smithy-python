@@ -39,6 +39,7 @@ import software.amazon.smithy.utils.StringUtils;
 public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclarations> {
 
     private static final Logger LOGGER = Logger.getLogger(PythonWriter.class.getName());
+    private static final MarkdownToRstDocConverter DOC_CONVERTER = MarkdownToRstDocConverter.getInstance();
 
     private final String fullPackageName;
     private final String commentStart;
@@ -152,8 +153,8 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
      * @return Formatted documentation.
      */
     public String formatDocs(String docs) {
-        String rstDocs = wrapRST(docs).toString();
-        return rstDocs.replace("$", "$$");
+        String rstDocs = DOC_CONVERTER.convertCommonmarkToRst(docs);
+        return wrapRST(rstDocs).toString().replace("$", "$$");
     }
 
     public static String wrapRST(String text) {

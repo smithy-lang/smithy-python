@@ -12,5 +12,4 @@ extra["moduleName"] = "software.amazon.smithy.python.aws.codegen"
 dependencies {
     implementation(project(":core"))
     implementation(libs.smithy.aws.traits)
-    implementation("org.jsoup:jsoup:1.19.1")
 }

@@ -14,6 +14,8 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+
+import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.SymbolDependency;
 import software.amazon.smithy.codegen.core.WriterDelegator;
@@ -270,6 +272,8 @@ public final class SetupGenerator {
             PythonSettings settings,
             GenerationContext context
     ) {
+        //TODO Add a configurable flag to disable the generation of the sphinx files
+        //TODO Add a configuration that will allow users to select a sphinx theme
         context.writerDelegator().useFileWriter("pyproject.toml", "", writer -> {
             writer.addDependency(SmithyPythonDependency.SPHINX);
             writer.addDependency(SmithyPythonDependency.SPHINX_PYDATA_THEME);
@@ -291,14 +295,18 @@ public final class SetupGenerator {
             PythonSettings settings,
             GenerationContext context
     ) {
+        var service = context.model().expectShape(settings.service());
         String version = settings.moduleVersion();
+        String project = service.getTrait(TitleTrait.class)
+                .map(StringTrait::getValue)
+                .orElse(service.getTrait(ServiceTrait.class).get().getSdkId());
         context.writerDelegator().useFileWriter("docs/conf.py", "", writer -> {
             writer.write("""
                     import os
                     import sys
                     sys.path.insert(0, os.path.abspath('..'))
 
-                    project = 'AWS SDK for Python'
+                    project = '$L'
                     author = 'Boto'
                     release = '$L'
 
@@ -322,7 +330,7 @@ public final class SetupGenerator {
                     }
 
                     autodoc_typehints = 'both'
-                                """, version);
+                                """, project, version);
         });
     }
 

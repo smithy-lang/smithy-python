@@ -2,7 +2,7 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
-package software.amazon.smithy.python.aws.codegen;
+package software.amazon.smithy.python.codegen.writer;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -10,45 +10,54 @@ import org.jsoup.nodes.Element;
 import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.select.NodeVisitor;
-import software.amazon.smithy.model.Model;
-import software.amazon.smithy.model.shapes.Shape;
-import software.amazon.smithy.model.traits.DocumentationTrait;
-import software.amazon.smithy.model.transform.ModelTransformer;
-import software.amazon.smithy.python.codegen.PythonSettings;
-import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
+import software.amazon.smithy.utils.SetUtils;
 import software.amazon.smithy.utils.SmithyInternalApi;
+import org.commonmark.node.BlockQuote;
+import org.commonmark.node.FencedCodeBlock;
+import org.commonmark.node.Heading;
+import org.commonmark.node.HtmlBlock;
+import org.commonmark.node.ListBlock;
+import org.commonmark.node.ThematicBreak;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
+
+import static org.jsoup.nodes.Document.OutputSettings.Syntax.html;
 
 /**
- * Add a runtime plugin to convert the HTML docs that are provided by services into
- * RST
+ * Add a runtime plugin to convert the HTML docs that are provided by services into RST
  */
 @SmithyInternalApi
-public class AwsDocConverter implements PythonIntegration {
-    @Override
-    public Model preprocessModel(Model model, PythonSettings settings) {
-        return ModelTransformer.create().mapShapes(model, shape -> {
-            if (shape.hasTrait(DocumentationTrait.class)) {
-                DocumentationTrait docTrait = shape.getTrait(DocumentationTrait.class).get();
-                String html = docTrait.getValue();
-                String rst = convertHtmlToRst(html);
-                DocumentationTrait newDocTrait = new DocumentationTrait(rst);
-                return Shape.shapeToBuilder(shape)
-                        .addTrait(newDocTrait)
-                        .build();
-            } else {
-                return shape;
-            }
-        });
+public class MarkdownToRstDocConverter {
+    private static final Parser MARKDOWN_PARSER = Parser.builder()
+            .enabledBlockTypes(SetUtils.of(
+                    Heading.class, HtmlBlock.class, ThematicBreak.class, FencedCodeBlock.class,
+                    BlockQuote.class, ListBlock.class))
+            .build();
+
+    // Singleton instance
+    private static final MarkdownToRstDocConverter DOC_CONVERTER = new MarkdownToRstDocConverter();
+
+    // Private constructor to prevent instantiation
+    private MarkdownToRstDocConverter() {
+        // Constructor
     }
 
-    String convertHtmlToRst(String html) {
-        Document document = Jsoup.parse(html);
+    public static MarkdownToRstDocConverter getInstance() {
+        return DOC_CONVERTER;
+    }
+
+
+    public String convertCommonmarkToRst(String commonmark) {
+        String html =
+                HtmlRenderer.builder().escapeHtml(false).build().render(MARKDOWN_PARSER.parse(commonmark));
+        Document document = Jsoup.parse(commonmark);
         RstNodeVisitor visitor = new RstNodeVisitor();
         document.body().traverse(visitor);
         return "\n" + visitor;
     }
 
     private static class RstNodeVisitor implements NodeVisitor {
+        //TODO migrate away from StringBuilder to use a SimpleCodeWriter
         private final StringBuilder sb = new StringBuilder();
         private boolean inList = false;
         private int listDepth = 0;
@@ -127,7 +136,8 @@ public class AwsDocConverter implements PythonIntegration {
                         sb.append("``");
                         break;
                     case "important":
-                    case "note", "p":
+                    case "note":
+                    case "p":
                         sb.append("\n");
                         break;
                     case "ul":

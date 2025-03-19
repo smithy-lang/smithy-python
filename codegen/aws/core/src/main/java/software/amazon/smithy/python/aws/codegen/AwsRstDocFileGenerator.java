@@ -23,6 +23,10 @@ public class AwsRstDocFileGenerator implements PythonIntegration {
             GenerationContext context
     ) {
         return List.of(
+                // We generate custom RST files for each member that we want to have
+                //  its own page.  This gives us much more fine-grained control of
+                //  what gets generated than just using automodule or autoclass on
+                //  the client would alone.
                 new OperationGenerationInterceptor(context),
                 new StructureGenerationInterceptor(context),
                 new ErrorGenerationInterceptor(context),
