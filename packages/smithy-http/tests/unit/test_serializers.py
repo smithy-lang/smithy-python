@@ -44,7 +44,7 @@ from smithy_core.aio.types import AsyncBytesReader
 from smithy_http.deserializers import HTTPResponseDeserializer
 from smithy_json import JSONCodec
 from smithy_http.aio import HTTPResponse as _HTTPResponse
-from smithy_http import tuples_to_fields, Fields
+from smithy_http import tuples_to_fields, Field, Fields
 from smithy_http.serializers import HTTPRequestSerializer, HTTPResponseSerializer
 
 # TODO: empty header prefix, query map
@@ -1604,6 +1604,8 @@ REQUEST_SER_CASES = (
     + async_streaming_payload_cases()
 )
 
+CONTENT_TYPE_FIELD = Field(name="content-type", values=["application/json"])
+
 
 @pytest.mark.parametrize("case", REQUEST_SER_CASES)
 async def test_serialize_http_request(case: HTTPMessageTestCase) -> None:
@@ -1623,6 +1625,8 @@ async def test_serialize_http_request(case: HTTPMessageTestCase) -> None:
     actual_query = actual.destination.query or ""
     expected_query = case.request.destination.query or ""
     assert actual_query == expected_query
+    # set the content-type field here, otherwise cases would have to duplicate it everywhere
+    expected.fields.set_field(CONTENT_TYPE_FIELD)
     assert actual.fields == expected.fields
 
     if case.request.body:
