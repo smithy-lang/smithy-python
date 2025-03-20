@@ -118,6 +118,23 @@ class PropertyKey[T](Protocol):
     Used with :py:class:`Context` to set and get typed values.
 
     For a concrete implementation, see :py:class:`smithy_core.types.PropertyKey`.
+
+    Note that unions and other special types cannot easily be used here due to being
+    incompatible with ``type[T]``. PEP747 proposes a fix to this case, but it has not
+    yet been accepted. In the meantime, there is a workaround. The PropertyKey must
+    be assigned to an explicitly typed variable, and the ``value_type`` parameter of
+    the constructor must have a ``# type: ignore`` comment, like so:
+
+    .. code-block:: python
+
+        UNION_PROPERTY: PropertyKey[str | int] = PropertyKey(
+            key="union",
+            value_type=str | int  # type: ignore
+        )
+
+    Type checkers will be able to use such a property as expected, and the
+    ``value_type`` property may still be used in ``isinstance`` checks since it also
+    supports union types as of Python 3.10.
     """
 
     key: str
@@ -151,11 +168,32 @@ class TypedProperties(Protocol):
         properties = TypedProperties()
         properties[foo] = "bar"
 
-        assert assert_type(properties[foo], str) == "bar
-        assert assert_type(properties["foo"], Any) == "bar
-
+        assert assert_type(properties[foo], str) == "bar"
+        assert assert_type(properties["foo"], Any) == "bar"
 
     For a concrete implementation, see :py:class:`smithy_core.types.TypedProperties`.
+
+    Note that unions and other special types cannot easily be used here due to being
+    incompatible with ``type[T]``. PEP747 proposes a fix to this case, but it has not
+    yet been accepted. In the meantime, there is a workaround. The PropertyKey must
+    be assigned to an explicitly typed variable, and the ``value_type`` parameter of
+    the constructor must have a ``# type: ignore`` comment, like so:
+
+    .. code-block:: python
+
+        UNION_PROPERTY: PropertyKey[str | int] = PropertyKey(
+            key="union",
+            value_type=str | int  # type: ignore
+        )
+
+        properties = TypedProperties()
+        properties[UNION_PROPERTY] = "foo"
+
+        assert assert_type(properties[UNION_PROPERTY], str | int) == "foo"
+
+    Type checkers will be able to use such a property as expected, and the
+    ``value_type`` property may still be used in ``isinstance`` checks since it also
+    supports union types as of Python 3.10.
     """
 
     @overload
