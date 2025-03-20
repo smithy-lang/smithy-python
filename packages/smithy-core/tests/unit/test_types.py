@@ -323,3 +323,30 @@ def test_properties_typed_pop() -> None:
     assert "foo" not in properties.data
 
     assert properties.pop(foo_key) is None
+
+
+def test_union_property() -> None:
+    properties = TypedProperties()
+    union: PropertyKey[str | int] = PropertyKey(
+        key="union",
+        value_type=str | int,  # type: ignore
+    )
+
+    properties[union] = "foo"
+    assert assert_type(properties[union], str | int) == "foo"
+    assert assert_type(properties.get(union), str | int | None) == "foo"
+    assert assert_type(properties.get(union, b"foo"), str | int | bytes) == "foo"
+    assert assert_type(properties.pop(union), str | int | None) == "foo"
+    properties[union] = "foo"
+    assert assert_type(properties.pop(union, b"bar"), str | int | bytes) == "foo"
+
+    properties[union] = 1
+    assert assert_type(properties[union], str | int) == 1
+    assert assert_type(properties.get(union), str | int | None) == 1
+    assert assert_type(properties.get(union, b"foo"), str | int | bytes) == 1
+    assert assert_type(properties.pop(union), str | int | None) == 1
+    properties[union] = 1
+    assert assert_type(properties.pop(union, b"bar"), str | int | bytes) == 1
+
+    with pytest.raises(ValueError):
+        properties[union] = b"bar"  # type: ignore
