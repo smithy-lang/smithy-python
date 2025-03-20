@@ -58,7 +58,7 @@ public final class ServiceErrorGenerator implements Runnable {
 
                     @dataclass
                     class $3L($1L):
-                        ""\"Error representing any unknown api errors""\"
+                        ""\"Error representing any unknown api errors.""\"
                         code: ClassVar[str] = 'Unknown'
                         fault: ClassVar[Literal["client", "server"]] = "client"
                     """, apiError.getName(), serviceError, unknownApiError.getName());
