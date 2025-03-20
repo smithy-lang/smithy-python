@@ -13,7 +13,6 @@ commonmark = "0.15.2"
 smithy-model = { module = "software.amazon.smithy:smithy-model", version.ref = "smithy" }
 smithy-codegen = { module = "software.amazon.smithy:smithy-codegen-core", version.ref = "smithy" }
 smithy-aws-traits = { module = "software.amazon.smithy:smithy-aws-traits", version.ref = "smithy" }
-smithy-aws-endpoints = { module = "software.amazon.smithy:smithy-aws-endpoints", version.ref = "smithy" }
 smithy-aws-protocol-tests = { module = "software.amazon.smithy:smithy-aws-protocol-tests", version.ref = "smithy" }
 smithy-protocol-test-traits = { module = "software.amazon.smithy:smithy-protocol-test-traits", version.ref = "smithy"}
 smithy-waiters = { module = "software.amazon.smithy:smithy-waiters", version.ref = "smithy" }
