@@ -4,14 +4,8 @@
  */
 package software.amazon.smithy.python.codegen.writer;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
-import org.jsoup.nodes.TextNode;
-import org.jsoup.select.NodeVisitor;
-import software.amazon.smithy.utils.SetUtils;
-import software.amazon.smithy.utils.SmithyInternalApi;
+import static org.jsoup.nodes.Document.OutputSettings.Syntax.html;
+
 import org.commonmark.node.BlockQuote;
 import org.commonmark.node.FencedCodeBlock;
 import org.commonmark.node.Heading;
@@ -20,8 +14,14 @@ import org.commonmark.node.ListBlock;
 import org.commonmark.node.ThematicBreak;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
-
-import static org.jsoup.nodes.Document.OutputSettings.Syntax.html;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
+import org.jsoup.nodes.Node;
+import org.jsoup.nodes.TextNode;
+import org.jsoup.select.NodeVisitor;
+import software.amazon.smithy.utils.SetUtils;
+import software.amazon.smithy.utils.SmithyInternalApi;
 
 /**
  * Add a runtime plugin to convert the HTML docs that are provided by services into RST
@@ -30,8 +30,12 @@ import static org.jsoup.nodes.Document.OutputSettings.Syntax.html;
 public class MarkdownToRstDocConverter {
     private static final Parser MARKDOWN_PARSER = Parser.builder()
             .enabledBlockTypes(SetUtils.of(
-                    Heading.class, HtmlBlock.class, ThematicBreak.class, FencedCodeBlock.class,
-                    BlockQuote.class, ListBlock.class))
+                    Heading.class,
+                    HtmlBlock.class,
+                    ThematicBreak.class,
+                    FencedCodeBlock.class,
+                    BlockQuote.class,
+                    ListBlock.class))
             .build();
 
     // Singleton instance
@@ -46,11 +50,10 @@ public class MarkdownToRstDocConverter {
         return DOC_CONVERTER;
     }
 
-
     public String convertCommonmarkToRst(String commonmark) {
         String html =
                 HtmlRenderer.builder().escapeHtml(false).build().render(MARKDOWN_PARSER.parse(commonmark));
-        Document document = Jsoup.parse(commonmark);
+        Document document = Jsoup.parse(html);
         RstNodeVisitor visitor = new RstNodeVisitor();
         document.body().traverse(visitor);
         return "\n" + visitor;

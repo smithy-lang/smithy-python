@@ -14,7 +14,6 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
 import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.SymbolDependency;
@@ -278,10 +277,16 @@ public final class SetupGenerator {
             writer.addDependency(SmithyPythonDependency.SPHINX);
             writer.addDependency(SmithyPythonDependency.SPHINX_PYDATA_THEME);
         });
-        writeConf(settings, context);
+        var service = context.model().expectShape(settings.service());
+        String projectName = service.getTrait(TitleTrait.class)
+                .map(StringTrait::getValue)
+                .orElseGet(() -> service.getTrait(ServiceTrait.class)
+                        .map(ServiceTrait::getSdkId)
+                        .orElse(context.settings().service().getName()));
+        writeConf(settings, context, projectName);
+        writeIndexes(context, projectName);
         writeMakeBat(context);
         writeMakeFile(context);
-        writeIndexes(context);
     }
 
     /**
@@ -293,13 +298,10 @@ public final class SetupGenerator {
      */
     private static void writeConf(
             PythonSettings settings,
-            GenerationContext context
+            GenerationContext context,
+            String projectName
     ) {
-        var service = context.model().expectShape(settings.service());
         String version = settings.moduleVersion();
-        String project = service.getTrait(TitleTrait.class)
-                .map(StringTrait::getValue)
-                .orElse(service.getTrait(ServiceTrait.class).get().getSdkId());
         context.writerDelegator().useFileWriter("docs/conf.py", "", writer -> {
             writer.write("""
                     import os
@@ -325,12 +327,12 @@ public final class SetupGenerator {
                     html_theme = 'pydata_sphinx_theme'
                     html_theme_options = {
                         "logo": {
-                            "text": "AWS SDK for Python",
+                            "text": "$L",
                         }
                     }
 
                     autodoc_typehints = 'both'
-                                """, project, version);
+                                """, projectName, version, projectName);
         });
     }
 
@@ -419,12 +421,12 @@ public final class SetupGenerator {
      *
      * @param context The generation context containing the writer delegator.
      */
-    private static void writeIndexes(GenerationContext context) {
+    private static void writeIndexes(GenerationContext context, String projectName) {
         // Write the main index file for the documentation
         context.writerDelegator().useFileWriter("docs/index.rst", "", writer -> {
             writer.write("""
-                    AWS SDK For Python
-                    ====================================================
+                    $L
+                    $L
 
                     ..  toctree::
                         :maxdepth: 2
@@ -432,7 +434,7 @@ public final class SetupGenerator {
                         :glob:
 
                         */index
-                                """);
+                                """, projectName, "=".repeat(projectName.length()));
         });
 
         // Write the index file for the client section
