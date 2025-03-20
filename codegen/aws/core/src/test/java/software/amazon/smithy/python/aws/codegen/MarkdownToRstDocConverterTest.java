@@ -16,7 +16,7 @@ public class MarkdownToRstDocConverterTest {
 
     @BeforeEach
     public void setUp() {
-        markdownToRstDocConverter = new MarkdownToRstDocConverter();
+        markdownToRstDocConverter = MarkdownToRstDocConverter.getInstance();
     }
 
     @Test
