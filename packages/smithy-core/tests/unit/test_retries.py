@@ -72,3 +72,15 @@ def test_simple_retry_strategy(max_attempts: int) -> None:
         strategy.refresh_retry_token_for_retry(
             token_to_renew=token, error_info=error_info
         )
+
+def test_simple_retry_strategy_does_not_retry_client_errors() -> None:
+    strategy = SimpleRetryStrategy(
+        backoff_strategy=ExponentialRetryBackoffStrategy(backoff_scale_value=5),
+        max_attempts=2,
+    )
+    error_info = RetryErrorInfo(error_type=RetryErrorType.CLIENT_ERROR)
+    token = strategy.acquire_initial_retry_token()
+    with pytest.raises(SmithyRetryException):
+        strategy.refresh_retry_token_for_retry(
+            token_to_renew=token, error_info=error_info
+        )
