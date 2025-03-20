@@ -73,6 +73,7 @@ def test_simple_retry_strategy(max_attempts: int) -> None:
             token_to_renew=token, error_info=error_info
         )
 
+
 def test_simple_retry_strategy_does_not_retry_client_errors() -> None:
     strategy = SimpleRetryStrategy(
         backoff_strategy=ExponentialRetryBackoffStrategy(backoff_scale_value=5),

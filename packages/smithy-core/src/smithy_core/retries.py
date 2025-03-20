@@ -234,7 +234,11 @@ class SimpleRetryStrategy(retries_interface.RetryStrategy):
 
         :raises SmithyRetryException: If no further retry attempts are allowed.
         """
-        if error_info.error_type in [RetryErrorType.TRANSIENT, RetryErrorType.THROTTLING, RetryErrorType.SERVER_ERROR]:
+        if error_info.error_type in [
+            RetryErrorType.TRANSIENT,
+            RetryErrorType.THROTTLING,
+            RetryErrorType.SERVER_ERROR,
+        ]:
             retry_count = token_to_renew.retry_count + 1
             if retry_count >= self.max_attempts:
                 raise SmithyRetryException(
@@ -243,9 +247,7 @@ class SimpleRetryStrategy(retries_interface.RetryStrategy):
             retry_delay = self.backoff_strategy.compute_next_backoff_delay(retry_count)
             return SimpleRetryToken(retry_count=retry_count, retry_delay=retry_delay)
         else:
-            raise SmithyRetryException(
-                "Non retryable error"
-            )
+            raise SmithyRetryException("Non retryable error")
 
     def record_success(self, *, token: retries_interface.RetryToken) -> None:
         """Not used by this retry strategy."""
