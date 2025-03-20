@@ -14,14 +14,23 @@ from smithy_core.aio.interfaces import AsyncWriter
 
 from .._private.serializers import EventSerializer as _EventSerializer
 from .._private.deserializers import EventDeserializer as _EventDeserializer
-from ..events import Event, EventMessage
+from ..events import Event, EventHeaderEncoder, EventMessage
 from ..exceptions import EventError
+
+from typing import Protocol
 
 logger = logging.getLogger(__name__)
 
 
-type Signer = Callable[[EventMessage], EventMessage]
-"""A function that takes an event message and signs it, and returns it signed."""
+class EventSigner(Protocol):
+    """A signer to manage credentials and EventMessages for an Event Stream lifecyle."""
+
+    def sign_event(
+        self,
+        *,
+        event_message: EventMessage,
+        event_encoder_cls: type[EventHeaderEncoder],
+    ) -> EventMessage: ...
 
 
 class AWSEventPublisher[E: SerializeableShape](EventPublisher[E]):
@@ -29,7 +38,7 @@ class AWSEventPublisher[E: SerializeableShape](EventPublisher[E]):
         self,
         payload_codec: Codec,
         async_writer: AsyncWriter,
-        signer: Signer | None = None,
+        signer: EventSigner | None = None,
         is_client_mode: bool = True,
     ):
         self._writer = async_writer
@@ -50,8 +59,13 @@ class AWSEventPublisher[E: SerializeableShape](EventPublisher[E]):
                 "Expected an event message to be serialized, but was None."
             )
         if self._signer is not None:
-            result = self._signer(result)
+            encoder = self._serializer.event_header_encoder_cls
+            result = await self._signer.sign_event(  # type: ignore
+                event_message=result,
+                event_encoder_cls=encoder,
+            )
 
+        assert isinstance(result, EventMessage)
         encoded_result = result.encode()
         try:
             logger.debug("Publishing serialized event: %s", result)
