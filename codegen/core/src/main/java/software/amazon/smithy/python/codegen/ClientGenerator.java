@@ -598,8 +598,14 @@ final class ClientGenerator implements Runnable {
                                 signature = re.split("Signature=", auth_value)[-1]  # type: ignore
                                 context.properties["signature"] = signature.encode('utf-8')
 
-                                identity_key = PropertyKey(key="identity", value_type=Identity | None)
-                                sp_key = PropertyKey(key="signer_properties", value_type=dict)
+                                identity_key: PropertyKey[Identity | None] = PropertyKey(
+                                    key="identity",
+                                    value_type=Identity | None  # type: ignore
+                                )
+                                sp_key: PropertyKey[dict[str, Any]] = PropertyKey(
+                                    key="signer_properties",
+                                    value_type=dict[str, Any]  # type: ignore
+                                )
                                 context.properties[identity_key] = identity
                                 context.properties[sp_key] = auth_option.signer_properties
                     """);
