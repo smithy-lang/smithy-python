@@ -25,7 +25,6 @@ members = ["packages/*"]
 
 [tool.uv.sources]
 smithy_core = { workspace = true }
-smithy_event_stream = { workspace = true }
 smithy_http = { workspace = true }
 smithy_json = { workspace = true }
 smithy_aws_core = { workspace = true }
