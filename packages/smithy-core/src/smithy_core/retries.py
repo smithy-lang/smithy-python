@@ -247,7 +247,9 @@ class SimpleRetryStrategy(retries_interface.RetryStrategy):
             retry_delay = self.backoff_strategy.compute_next_backoff_delay(retry_count)
             return SimpleRetryToken(retry_count=retry_count, retry_delay=retry_delay)
         else:
-            raise SmithyRetryException("Non retryable error")
+            raise SmithyRetryException(
+                f"Error is not retryable: {error_info}"
+            )
 
     def record_success(self, *, token: retries_interface.RetryToken) -> None:
         """Not used by this retry strategy."""
