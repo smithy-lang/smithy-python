@@ -1,7 +1,9 @@
 import pytest
-import os
 
-from smithy_aws_core.credentials_resolvers import CredentialsResolverChain, StaticCredentialsResolver
+from smithy_aws_core.credentials_resolvers import (
+    CredentialsResolverChain,
+    StaticCredentialsResolver,
+)
 from smithy_aws_core.identity import AWSCredentialsIdentity
 from smithy_core.exceptions import SmithyIdentityException
 from smithy_core.interfaces.identity import IdentityProperties
@@ -36,7 +38,9 @@ async def test_env_credentials_resolver_success(monkeypatch: pytest.MonkeyPatch)
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "secret")
     resolver_chain = CredentialsResolverChain()
 
-    credentials = await resolver_chain.get_identity(identity_properties=IdentityProperties())
+    credentials = await resolver_chain.get_identity(
+        identity_properties=IdentityProperties()
+    )
     assert credentials.access_key_id == "akid"
     assert credentials.secret_access_key == "secret"
 
@@ -48,9 +52,11 @@ async def test_custom_sources_with_static_credentials():
     )
     static_resolver = StaticCredentialsResolver(credentials=static_credentials)
     resolver_chain = CredentialsResolverChain(
-        sources=[(lambda: False, lambda: None), (lambda: True, lambda: static_resolver)])
+        sources=[(lambda: False, lambda: None), (lambda: True, lambda: static_resolver)]  # type: ignore
+    )
 
-    credentials = await resolver_chain.get_identity(identity_properties=IdentityProperties())
+    credentials = await resolver_chain.get_identity(
+        identity_properties=IdentityProperties()
+    )
     assert credentials.access_key_id == "static_akid"
     assert credentials.secret_access_key == "static_secret"
-
