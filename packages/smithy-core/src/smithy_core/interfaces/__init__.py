@@ -136,7 +136,6 @@ class PropertyKey[T](Protocol):
     key: str
     """The string key used to access the value."""
 
-    # TODO: update this when PEP 747 lands to allow for unions and literals
     value_type: type[T]
     """The type of the associated value in the properties bag."""
 

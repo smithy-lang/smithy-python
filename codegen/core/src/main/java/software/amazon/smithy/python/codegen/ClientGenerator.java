@@ -530,7 +530,6 @@ final class ClientGenerator implements Runnable {
         writer.addImport("smithy_core.endpoints", "EndpointResolverParams");
         writer.write("""
                         # Step 7f: Invoke endpoint_resolver.resolve_endpoint
-                        context.properties["endpoint_uri"] = config.endpoint_uri
                         endpoint_resolver_parameters = EndpointResolverParams(
                             operation=operation,
                             input=context.request,

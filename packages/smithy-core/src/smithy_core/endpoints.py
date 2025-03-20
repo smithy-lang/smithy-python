@@ -1,6 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-from typing import Any
+from typing import Any, Protocol
 from dataclasses import dataclass, field
 from urllib.parse import urlparse
 
@@ -12,17 +12,6 @@ from .interfaces import Endpoint as _Endpoint
 from .interfaces import URI as _URI
 from .types import TypedProperties, PropertyKey
 from .exceptions import EndpointResolutionError
-
-
-STATIC_URI: PropertyKey[str | _URI] = PropertyKey(
-    key="endpoint_uri",
-    # Python currently has problems expressing parametric types that can be
-    # unions, literals, or other special types in addition to a class. So
-    # we have to ignore the type below. PEP 747 should resolve the issue.
-    # TODO: update this when PEP 747 lands
-    value_type=str | _URI,  # type: ignore
-)
-"""The property key for a statically defined URI."""
 
 
 @dataclass(kw_only=True)
@@ -54,6 +43,17 @@ class EndpointResolverParams[I: SerializeableShape]:
     """The context of the operation invocation."""
 
 
+class StaticEndpointConfig(Protocol):
+    """A config that has a static endpoint."""
+
+    endpoint_uri: str | URI | None
+    """A static endpoint to use for the request."""
+
+
+STATIC_ENDPOINT_CONFIG = PropertyKey(key="config", value_type=StaticEndpointConfig)
+"""Property containing a config that has a static endpoint."""
+
+
 def resolve_static_uri(
     properties: _TypedProperties | EndpointResolverParams[Any],
 ) -> _URI | None:
@@ -66,9 +66,11 @@ def resolve_static_uri(
         if isinstance(properties, EndpointResolverParams)
         else properties
     )
-    static_uri = properties.get(STATIC_URI)
-    if static_uri is None:
+    static_uri_config = properties.get(STATIC_ENDPOINT_CONFIG)
+    if static_uri_config is None or static_uri_config.endpoint_uri is None:
         return None
+
+    static_uri = static_uri_config.endpoint_uri
 
     # If it's not a string, it's already a parsed URI so just pass it along.
     if not isinstance(static_uri, str):
