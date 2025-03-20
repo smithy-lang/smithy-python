@@ -171,7 +171,6 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         }
     }
 
-
     @Override
     protected void serializePayloadBody(
             GenerationContext context,

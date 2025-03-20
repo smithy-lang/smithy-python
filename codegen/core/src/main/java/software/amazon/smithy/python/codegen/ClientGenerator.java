@@ -896,7 +896,7 @@ final class ClientGenerator implements Runnable {
 
     private void generateEventStreamOperation(PythonWriter writer, OperationShape operation) {
         writer.pushState();
-        writer.addDependency(SmithyPythonDependency.SMITHY_EVENT_STREAM);
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         var operationSymbol = symbolProvider.toSymbol(operation);
         writer.putContext("operation", operationSymbol);
         var operationMethodSymbol = operationSymbol.expectProperty(OPERATION_METHOD);
@@ -963,7 +963,7 @@ final class ClientGenerator implements Runnable {
                         writer.consumer(w -> writeSharedOperationInit(w, operation, input)),
                         outputStreamSymbol.expectProperty(SymbolProperties.DESERIALIZER));
             } else {
-                writer.addImport("smithy_event_stream.aio.interfaces", "InputEventStream");
+                writer.addImport("smithy_core.aio.eventstream", "InputEventStream");
                 writer.write("""
                         async def ${operationName:L}(
                             self,
