@@ -1,20 +1,17 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-import asyncio
 import datetime
+import logging
 from collections.abc import Callable
 
-from smithy_core.aio.interfaces import AsyncByteStream
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import (
-    DeserializeableShape,
     ShapeDeserializer,
     SpecificShapeDeserializer,
 )
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeType
 from smithy_core.utils import expect_type
-from smithy_event_stream.aio.interfaces import AsyncEventReceiver
 
 from ..events import HEADERS_DICT, Event
 from ..exceptions import EventError, UnmodeledEventError
@@ -25,60 +22,9 @@ from . import (
 )
 from smithy_core.traits import EventHeaderTrait
 
+logger = logging.getLogger(__name__)
+
 INITIAL_MESSAGE_TYPES = (INITIAL_REQUEST_EVENT_TYPE, INITIAL_RESPONSE_EVENT_TYPE)
-
-
-class AWSAsyncEventReceiver[E: DeserializeableShape](AsyncEventReceiver[E]):
-    def __init__(
-        self,
-        payload_codec: Codec,
-        source: AsyncByteStream,
-        deserializer: Callable[[ShapeDeserializer], E],
-        is_client_mode: bool = True,
-    ) -> None:
-        self._payload_codec = payload_codec
-        self._source = source
-        self._is_client_mode = is_client_mode
-        self._deserializer = deserializer
-        self._closed = False
-
-    async def receive(self) -> E | None:
-        if self._closed:
-            return None
-
-        try:
-            event = await Event.decode_async(self._source)
-        except Exception as e:
-            await self.close()
-            if not isinstance(e, EventError):
-                raise IOError("Failed to read from stream.") from e
-            raise
-
-        if event is None:
-            return None
-
-        deserializer = EventDeserializer(
-            event=event,
-            payload_codec=self._payload_codec,
-            is_client_mode=self._is_client_mode,
-        )
-        result = self._deserializer(deserializer)
-        if isinstance(getattr(result, "value"), Exception):
-            raise result.value  # type: ignore
-        return result
-
-    async def close(self) -> None:
-        if self._closed:
-            return
-        self._closed = True
-
-        if (close := getattr(self._source, "close", None)) is not None:
-            if asyncio.iscoroutine(result := close()):
-                await result
-
-    @property
-    def closed(self) -> bool:
-        return self._closed
 
 
 class EventDeserializer(SpecificShapeDeserializer):

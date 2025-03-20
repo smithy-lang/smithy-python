@@ -251,7 +251,12 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         crt_stream.completion_future.add_done_callback(
             partial(self._close_input_body, body=crt_body)
         )
-        return await response_factory.await_response()
+
+        response = await response_factory.await_response()
+        if response.status != 200 and response.status >= 300:
+            await close(crt_body)
+
+        return response
 
     def _close_input_body(
         self, future: ConcurrentFuture[int], *, body: "BufferableByteStream | BytesIO"
