@@ -176,9 +176,7 @@ class PropertyKey[T](_PropertyKey[T]):
             value_type=str | int  # type: ignore
         )
 
-    Type checkers will be able to use such a property as expected, and the
-    ``value_type`` property may still be used in ``isinstance`` checks since it also
-    supports union types as of Python 3.10.
+    Type checkers will be able to use such a property as expected.
     """
 
     key: str
@@ -203,6 +201,8 @@ class TypedProperties(UserDict[str, Any], _TypedProperties):
     Letting the value be either a string or PropertyKey allows consumers who care about
     typing to get it, and those who don't care about typing to not have to think about
     it.
+
+    No runtime type assertion is performed.
 
     ..code-block:: python
 
@@ -231,9 +231,7 @@ class TypedProperties(UserDict[str, Any], _TypedProperties):
 
         assert assert_type(properties[UNION_PROPERTY], str | int) == "foo"
 
-    Type checkers will be able to use such a property as expected, and the
-    ``value_type`` property may still be used in ``isinstance`` checks since it also
-    supports union types as of Python 3.10.
+    Type checkers will be able to use such a property as expected.
     """
 
     @overload
@@ -248,13 +246,7 @@ class TypedProperties(UserDict[str, Any], _TypedProperties):
     @overload
     def __setitem__(self, key: str, value: Any) -> None: ...
     def __setitem__(self, key: str | _PropertyKey[Any], value: Any) -> None:
-        if isinstance(key, _PropertyKey):
-            if not isinstance(value, key.value_type):
-                raise ValueError(
-                    f"Expected value type of {key.value_type}, but was {type(value)}"
-                )
-            key = key.key
-        self.data[key] = value
+        self.data[key if isinstance(key, str) else key.key] = value
 
     def __delitem__(self, key: str | _PropertyKey[Any]) -> None:
         del self.data[key if isinstance(key, str) else key.key]

@@ -132,9 +132,7 @@ class PropertyKey[T](Protocol):
             value_type=str | int  # type: ignore
         )
 
-    Type checkers will be able to use such a property as expected, and the
-    ``value_type`` property may still be used in ``isinstance`` checks since it also
-    supports union types as of Python 3.10.
+    Type checkers will be able to use such a property as expected.
     """
 
     key: str
@@ -191,9 +189,7 @@ class TypedProperties(Protocol):
 
         assert assert_type(properties[UNION_PROPERTY], str | int) == "foo"
 
-    Type checkers will be able to use such a property as expected, and the
-    ``value_type`` property may still be used in ``isinstance`` checks since it also
-    supports union types as of Python 3.10.
+    Type checkers will be able to use such a property as expected.
     """
 
     @overload

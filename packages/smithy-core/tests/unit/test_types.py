@@ -262,9 +262,6 @@ def test_properties_typed_set() -> None:
     properties[foo_key] = "foo"
     assert properties.data["foo"] == "foo"
 
-    with pytest.raises(ValueError):
-        properties[foo_key] = b"foo"  # type: ignore
-
 
 def test_properties_del() -> None:
     foo_key = PropertyKey(key="foo", value_type=str)
@@ -348,5 +345,10 @@ def test_union_property() -> None:
     properties[union] = 1
     assert assert_type(properties.pop(union, b"bar"), str | int | bytes) == 1
 
-    with pytest.raises(ValueError):
-        properties[union] = b"bar"  # type: ignore
+
+def test_parametric_property() -> None:
+    properties = TypedProperties()
+    parametric = PropertyKey(key="parametric", value_type=dict[str, str])
+    properties[parametric] = {"foo": "bar"}
+
+    assert assert_type(properties[parametric], dict[str, str]) == {"foo": "bar"}
