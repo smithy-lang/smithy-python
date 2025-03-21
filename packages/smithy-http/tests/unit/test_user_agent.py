@@ -1,10 +1,9 @@
 import pytest
-
 from smithy_http.user_agent import (
-    sanitize_user_agent_string_component,
-    UserAgentComponent,
     RawStringUserAgentComponent,
     UserAgent,
+    UserAgentComponent,
+    sanitize_user_agent_string_component,
 )
 
 

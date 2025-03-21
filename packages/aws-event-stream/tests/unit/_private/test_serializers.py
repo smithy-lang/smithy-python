@@ -3,13 +3,12 @@
 from typing import Any
 
 import pytest
-from smithy_core.serializers import SerializeableShape
-from smithy_core.aio.types import AsyncBytesProvider
-from smithy_json import JSONCodec
-
-from aws_event_stream.aio import AWSEventPublisher
 from aws_event_stream._private.serializers import EventSerializer
+from aws_event_stream.aio import AWSEventPublisher
 from aws_event_stream.events import EventMessage
+from smithy_core.aio.types import AsyncBytesProvider
+from smithy_core.serializers import SerializeableShape
+from smithy_json import JSONCodec
 
 from . import EVENT_STREAM_SERDE_CASES, INITIAL_REQUEST_CASE, INITIAL_RESPONSE_CASE
 

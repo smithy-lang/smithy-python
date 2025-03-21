@@ -1,34 +1,33 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from collections.abc import Callable
-from typing import TYPE_CHECKING
-from decimal import Decimal
 import datetime
+from collections.abc import Callable
+from decimal import Decimal
+from typing import TYPE_CHECKING
 
-from smithy_core.deserializers import ShapeDeserializer, SpecificShapeDeserializer
 from smithy_core.codecs import Codec
-from smithy_core.schemas import Schema
-from smithy_core.traits import (
-    HTTPTrait,
-    HTTPHeaderTrait,
-    HTTPPrefixHeadersTrait,
-    HTTPPayloadTrait,
-    HTTPResponseCodeTrait,
-    TimestampFormatTrait,
-)
-from smithy_core.utils import strict_parse_bool, strict_parse_float, ensure_utc
-from smithy_core.types import TimestampFormat
-from smithy_core.shapes import ShapeType
+from smithy_core.deserializers import ShapeDeserializer, SpecificShapeDeserializer
 from smithy_core.exceptions import UnsupportedStreamException
 from smithy_core.interfaces import is_bytes_reader, is_streaming_blob
+from smithy_core.schemas import Schema
+from smithy_core.shapes import ShapeType
+from smithy_core.traits import (
+    HTTPHeaderTrait,
+    HTTPPayloadTrait,
+    HTTPPrefixHeadersTrait,
+    HTTPResponseCodeTrait,
+    HTTPTrait,
+    TimestampFormatTrait,
+)
+from smithy_core.types import TimestampFormat
+from smithy_core.utils import ensure_utc, strict_parse_bool, strict_parse_float
 
 from .aio.interfaces import HTTPResponse
-
 from .interfaces import Field, Fields
 
 if TYPE_CHECKING:
-    from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
     from smithy_core.aio.interfaces import StreamingBlob as AsyncStreamingBlob
+    from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
 
 
 __all__ = ["HTTPResponseDeserializer"]

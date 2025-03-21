@@ -6,9 +6,9 @@ from typing import TYPE_CHECKING, Never, Protocol, Self, runtime_checkable
 from .exceptions import SmithyException, UnsupportedStreamException
 
 if TYPE_CHECKING:
+    from .aio.interfaces import StreamingBlob as _Stream
     from .documents import Document
     from .schemas import Schema
-    from .aio.interfaces import StreamingBlob as _Stream
 
 
 @runtime_checkable

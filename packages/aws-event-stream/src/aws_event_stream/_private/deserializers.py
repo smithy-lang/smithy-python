@@ -11,6 +11,7 @@ from smithy_core.deserializers import (
 )
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeType
+from smithy_core.traits import EventHeaderTrait
 from smithy_core.utils import expect_type
 
 from ..events import HEADERS_DICT, Event
@@ -20,7 +21,6 @@ from . import (
     INITIAL_RESPONSE_EVENT_TYPE,
     get_payload_member,
 )
-from smithy_core.traits import EventHeaderTrait
 
 logger = logging.getLogger(__name__)
 

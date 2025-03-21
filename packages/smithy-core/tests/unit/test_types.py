@@ -6,14 +6,13 @@ from datetime import UTC, datetime
 from typing import Any, assert_type
 
 import pytest
-
 from smithy_core.exceptions import ExpectationNotMetException
 from smithy_core.types import (
     JsonBlob,
     JsonString,
-    TimestampFormat,
     PathPattern,
     PropertyKey,
+    TimestampFormat,
     TypedProperties,
 )
 

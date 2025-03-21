@@ -1,22 +1,20 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from collections.abc import AsyncIterable
-from typing import Protocol, runtime_checkable, TYPE_CHECKING, Callable, Any
+from collections.abc import AsyncIterable, Callable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
+from ...documents import TypeRegistry
+from ...endpoints import EndpointResolverParams
 from ...exceptions import UnsupportedStreamException
 from ...interfaces import URI, Endpoint, TypedProperties
 from ...interfaces import StreamingBlob as SyncStreamingBlob
-from ...documents import TypeRegistry
-from ...endpoints import EndpointResolverParams
-
 from .eventstream import EventPublisher, EventReceiver
 
-
 if TYPE_CHECKING:
-    from ...schemas import APIOperation
-    from ...shapes import ShapeID
-    from ...serializers import SerializeableShape
     from ...deserializers import DeserializeableShape, ShapeDeserializer
+    from ...schemas import APIOperation
+    from ...serializers import SerializeableShape
+    from ...shapes import ShapeID
 
 
 @runtime_checkable

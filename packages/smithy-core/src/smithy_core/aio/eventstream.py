@@ -5,7 +5,6 @@ from typing import Any, Self
 
 from ..deserializers import DeserializeableShape
 from ..serializers import SerializeableShape
-
 from .interfaces.eventstream import EventPublisher, EventReceiver
 
 

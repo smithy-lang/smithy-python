@@ -7,11 +7,11 @@
 # they're correct regardless, so it's okay if the checks are stripped out.
 # ruff: noqa: S101
 
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
-from typing import Mapping, Sequence
 
 from smithy_core.shapes import ShapeID
-from smithy_core.traits import Trait, DocumentValue, DynamicTrait
+from smithy_core.traits import DocumentValue, DynamicTrait, Trait
 
 
 @dataclass(init=False, frozen=True)

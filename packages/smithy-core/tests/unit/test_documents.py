@@ -5,7 +5,6 @@ from decimal import Decimal
 from typing import Any, Self, cast
 
 import pytest
-
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import (
     Document,
@@ -27,7 +26,6 @@ from smithy_core.prelude import (
 from smithy_core.schemas import Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
-
 from smithy_core.traits import SparseTrait
 
 

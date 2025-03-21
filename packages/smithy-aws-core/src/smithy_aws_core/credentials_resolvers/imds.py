@@ -1,10 +1,10 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-import json
 import asyncio
-import smithy_aws_core
+import json
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
+from types import MappingProxyType
 from typing import Literal
 
 from smithy_core import URI
@@ -17,11 +17,12 @@ from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest
 from smithy_http.aio.interfaces import HTTPClient
 
-from smithy_aws_core.identity import AWSCredentialsIdentity
+from .. import __version__
+from ..identity import AWSCredentialsIdentity
 
 _USER_AGENT_FIELD = Field(
     name="User-Agent",
-    values=[f"aws-sdk-python-imds-client/{smithy_aws_core.__version__}"],
+    values=[f"aws-sdk-python-imds-client/{__version__}"],
 )
 
 
@@ -29,7 +30,9 @@ _USER_AGENT_FIELD = Field(
 class Config:
     """Configuration for EC2Metadata."""
 
-    _HOST_MAPPING = {"IPv4": "169.254.169.254", "IPv6": "[fd00:ec2::254]"}
+    _HOST_MAPPING = MappingProxyType(
+        {"IPv4": "169.254.169.254", "IPv6": "[fd00:ec2::254]"}
+    )
     _MIN_TTL = 5
     _MAX_TTL = 21600
 
@@ -97,7 +100,7 @@ class TokenCache:
     In addition, it knows how to refresh itself.
     """
 
-    _TOKEN_PATH = "/latest/api/token"
+    _TOKEN_PATH = "/latest/api/token"  # noqa: S105
 
     def __init__(self, http_client: HTTPClient, config: Config):
         self._http_client = http_client
@@ -139,7 +142,7 @@ class TokenCache:
     async def get_token(self) -> Token:
         if self._should_refresh():
             await self._refresh()
-        assert self._token is not None
+        assert self._token is not None  # noqa: S101
         return self._token
 
 
@@ -198,7 +201,7 @@ class IMDSCredentialsResolver(
         if (
             self._credentials is not None
             and self._credentials.expiration
-            and datetime.now(timezone.utc) < self._credentials.expiration
+            and datetime.now(UTC) < self._credentials.expiration
         ):
             return self._credentials
 
@@ -217,7 +220,7 @@ class IMDSCredentialsResolver(
         account_id = creds.get("AccountId")
         expiration = creds.get("Expiration")
         if expiration is not None:
-            expiration = datetime.fromisoformat(expiration).replace(tzinfo=timezone.utc)
+            expiration = datetime.fromisoformat(expiration).replace(tzinfo=UTC)
 
         if access_key_id is None or secret_access_key is None:
             raise SmithyIdentityException(

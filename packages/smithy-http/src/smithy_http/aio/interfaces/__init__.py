@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 from typing import Protocol
 
-from smithy_core.aio.interfaces import Request, Response, ClientTransport
+from smithy_core.aio.interfaces import ClientTransport, Request, Response
 from smithy_core.aio.utils import read_streaming_blob, read_streaming_blob_async
 
 from ...interfaces import (

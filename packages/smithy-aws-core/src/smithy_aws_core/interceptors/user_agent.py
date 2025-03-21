@@ -3,11 +3,12 @@
 # pyright: reportMissingTypeStubs=false
 from typing import Any
 
-import smithy_aws_core
 import smithy_core
 from smithy_core.interceptors import Interceptor, RequestContext
 from smithy_http.interceptors.user_agent import USER_AGENT
-from smithy_http.user_agent import UserAgentComponent, RawStringUserAgentComponent
+from smithy_http.user_agent import RawStringUserAgentComponent, UserAgentComponent
+
+from .. import __version__
 
 _USERAGENT_SDK_NAME = "aws-sdk-python"
 
@@ -57,7 +58,7 @@ class UserAgentInterceptor(Interceptor[Any, Any, Any, Any]):
 
     def _build_sdk_metadata(self) -> list[UserAgentComponent]:
         return [
-            UserAgentComponent(_USERAGENT_SDK_NAME, smithy_aws_core.__version__),
+            UserAgentComponent(_USERAGENT_SDK_NAME, __version__),
             UserAgentComponent("md", "smithy-core", smithy_core.__version__),
             *self._crt_version(),
         ]

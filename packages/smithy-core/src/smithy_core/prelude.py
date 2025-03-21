@@ -6,7 +6,6 @@ from .schemas import Schema
 from .shapes import ShapeID, ShapeType
 from .traits import DefaultTrait, UnitTypeTrait
 
-
 BLOB = Schema(
     id=ShapeID("smithy.api#Blob"),
     shape_type=ShapeType.BLOB,

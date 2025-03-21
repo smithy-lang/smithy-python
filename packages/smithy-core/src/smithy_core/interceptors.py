@@ -1,11 +1,12 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+from collections.abc import Sequence
 from dataclasses import dataclass, replace
-from typing import Any, Sequence
+from typing import Any
 
+from .deserializers import DeserializeableShape
 from .interfaces import TypedProperties
 from .serializers import SerializeableShape
-from .deserializers import DeserializeableShape
 
 
 @dataclass(kw_only=True, frozen=True, slots=True)

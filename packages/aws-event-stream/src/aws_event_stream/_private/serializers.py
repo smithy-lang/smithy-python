@@ -15,15 +15,15 @@ from smithy_core.serializers import (
     SpecificShapeSerializer,
 )
 from smithy_core.shapes import ShapeType
+from smithy_core.traits import ErrorTrait, EventHeaderTrait, MediaTypeTrait
 
-from ..events import EventHeaderEncoder, EventMessage, HEADER_VALUE, Short, Byte, Long
+from ..events import HEADER_VALUE, Byte, EventHeaderEncoder, EventMessage, Long, Short
 from ..exceptions import InvalidHeaderValue
 from . import (
     INITIAL_REQUEST_EVENT_TYPE,
     INITIAL_RESPONSE_EVENT_TYPE,
     get_payload_member,
 )
-from smithy_core.traits import ErrorTrait, EventHeaderTrait, MediaTypeTrait
 
 logger = logging.getLogger(__name__)
 

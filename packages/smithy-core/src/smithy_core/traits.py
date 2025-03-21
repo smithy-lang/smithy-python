@@ -7,12 +7,13 @@
 # they're correct regardless, so it's okay if the checks are stripped out.
 # ruff: noqa: S101
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import TYPE_CHECKING, ClassVar, Mapping
+from typing import TYPE_CHECKING, ClassVar
 
-from .types import TimestampFormat, PathPattern
 from .shapes import ShapeID
+from .types import PathPattern, TimestampFormat
 
 if TYPE_CHECKING:
     from .documents import DocumentValue

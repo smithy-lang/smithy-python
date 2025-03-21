@@ -2,10 +2,11 @@
 #  SPDX-License-Identifier: Apache-2.0
 import os
 
-from smithy_aws_core.identity import AWSCredentialsIdentity
 from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyIdentityException
 from smithy_core.interfaces.identity import IdentityProperties
+
+from ..identity import AWSCredentialsIdentity
 
 
 class EnvironmentCredentialsResolver(

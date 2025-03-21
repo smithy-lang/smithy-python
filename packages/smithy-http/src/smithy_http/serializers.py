@@ -1,47 +1,46 @@
+from asyncio import iscoroutinefunction
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from datetime import datetime
 from decimal import Decimal
 from io import BytesIO
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from urllib.parse import quote as urlquote
-from asyncio import iscoroutinefunction
 
+from smithy_core import URI
+from smithy_core.codecs import Codec
+from smithy_core.schemas import Schema
 from smithy_core.serializers import (
+    InterceptingSerializer,
     MapSerializer,
     ShapeSerializer,
     SpecificShapeSerializer,
-    InterceptingSerializer,
 )
-from smithy_core.codecs import Codec
-from smithy_core.types import TimestampFormat, PathPattern
-from smithy_core.schemas import Schema
+from smithy_core.shapes import ShapeType
 from smithy_core.traits import (
-    HTTPTrait,
-    HTTPPayloadTrait,
+    EndpointTrait,
+    HostLabelTrait,
+    HTTPErrorTrait,
     HTTPHeaderTrait,
+    HTTPLabelTrait,
+    HTTPPayloadTrait,
     HTTPPrefixHeadersTrait,
     HTTPQueryParamsTrait,
     HTTPQueryTrait,
-    HTTPLabelTrait,
     HTTPResponseCodeTrait,
-    HostLabelTrait,
-    TimestampFormatTrait,
-    EndpointTrait,
-    HTTPErrorTrait,
+    HTTPTrait,
     MediaTypeTrait,
     StreamingTrait,
+    TimestampFormatTrait,
 )
-from smithy_core.shapes import ShapeType
+from smithy_core.types import PathPattern, TimestampFormat
 from smithy_core.utils import serialize_float
 
+from . import tuples_to_fields
 from .aio import HTTPRequest as _HTTPRequest
 from .aio import HTTPResponse as _HTTPResponse
 from .aio.interfaces import HTTPRequest, HTTPResponse
-from smithy_core import URI
-from . import tuples_to_fields
 from .utils import join_query_params
-
 
 if TYPE_CHECKING:
     from smithy_core.aio.interfaces import StreamingBlob as AsyncStreamingBlob
@@ -299,7 +298,7 @@ class RawPayloadSerializer(SpecificShapeSerializer):
 
     def __init__(self) -> None:
         """Initialize a RawPayloadSerializer."""
-        self.payload: "AsyncStreamingBlob | None" = None
+        self.payload: AsyncStreamingBlob | None = None
 
     def write_string(self, schema: Schema, value: str) -> None:
         self.payload = value.encode("utf-8")
@@ -408,7 +407,7 @@ class HTTPHeaderMapSerializer(MapSerializer):
 
     def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]):
         value_writer(self._delegate)
-        assert self._delegate.result is not None
+        assert self._delegate.result is not None  # noqa: S101
         self._headers.append((self._prefix + key, self._delegate.result))
 
 
@@ -575,7 +574,7 @@ class HTTPQueryMapSerializer(MapSerializer):
 
     def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]):
         value_writer(self._delegate)
-        assert self._delegate.result is not None
+        assert self._delegate.result is not None  # noqa: S101
         self._query_params.append((key, urlquote(self._delegate.result, safe="")))
 
 
