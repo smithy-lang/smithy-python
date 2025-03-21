@@ -24,6 +24,7 @@ import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
 import software.amazon.smithy.python.codegen.sections.*;
+import software.amazon.smithy.python.codegen.writer.MarkdownToRstDocConverter;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -60,6 +61,8 @@ final class ClientGenerator implements Runnable {
             var docs = service.getTrait(DocumentationTrait.class)
                     .map(StringTrait::getValue)
                     .orElse("Client for " + serviceSymbol.getName());
+            String rstDocs =
+                    MarkdownToRstDocConverter.getInstance().convertCommonmarkToRst(docs);
             writer.writeDocs(() -> {
                 writer.write("""
                         $L
@@ -68,7 +71,7 @@ final class ClientGenerator implements Runnable {
                             endpoint for HTTP services or auth credentials.
 
                         :param plugins: A list of callables that modify the configuration dynamically. These
-                            can be used to set defaults, for example.""", docs);
+                            can be used to set defaults, for example.""", rstDocs);
             });
 
             var defaultPlugins = new LinkedHashSet<SymbolReference>();
@@ -866,14 +869,17 @@ final class ClientGenerator implements Runnable {
                     .orElse("The operation's input.");
 
             writer.write("""
-                    :param input: $L
-
+                        $L
+                        """,docs);
+            writer.write("");
+            writer.write(":param input: $L", inputDocs);
+            writer.write("");
+            writer.write("""
                     :param plugins: A list of callables that modify the configuration dynamically.
                         Changes made by these plugins only apply for the duration of the operation
                         execution and will not affect any other operation invocations.
+                        """);
 
-                        $L
-                        """, inputDocs, docs);
         });
 
         var defaultPlugins = new LinkedHashSet<SymbolReference>();

@@ -174,6 +174,9 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         while (line.length() > MAX_LINE_LENGTH) {
             int wrapAt = findWrapPosition(line, MAX_LINE_LENGTH);
             wrappedText.append(indentStr).append(line, 0, wrapAt).append("\n");
+            if (line.startsWith("* ")) {
+                indentStr += "  ";
+            }
             line = line.substring(wrapAt).trim();
             if (line.isEmpty()) {
                 return;
