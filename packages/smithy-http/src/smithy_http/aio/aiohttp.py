@@ -3,7 +3,9 @@
 from copy import copy, deepcopy
 from itertools import chain
 from typing import TYPE_CHECKING, Any
-from urllib.parse import parse_qs, urlunparse
+from urllib.parse import parse_qs
+
+import yarl
 
 if TYPE_CHECKING:
     # pyright doesn't like optional imports. This is reasonable because if we use these
@@ -97,10 +99,17 @@ class AIOHTTPClient(HTTPClient):
         ) as resp:
             return await self._marshal_response(resp)
 
-    def _serialize_uri_without_query(self, uri: URI) -> str:
+    def _serialize_uri_without_query(self, uri: URI) -> yarl.URL:
         """Serialize all parts of the URI up to and including the path."""
-        components = (uri.scheme, uri.netloc, uri.path or "", "", "", "")
-        return urlunparse(components)
+        return yarl.URL.build(
+            scheme=uri.scheme or "",
+            host=uri.host,
+            port=uri.port,
+            user=uri.username,
+            password=uri.password,
+            path=uri.path or "",
+            encoded=True,
+        )
 
     async def _marshal_response(
         self, aiohttp_resp: "aiohttp.ClientResponse"
