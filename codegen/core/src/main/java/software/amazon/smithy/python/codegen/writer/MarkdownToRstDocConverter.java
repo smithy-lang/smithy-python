@@ -63,7 +63,6 @@ public class MarkdownToRstDocConverter {
     private static class RstNodeVisitor implements NodeVisitor {
         SimpleCodeWriter writer = new SimpleCodeWriter();
         private boolean inList = false;
-        private boolean inParam = false;
         private int listDepth = 0;
 
         @Override
@@ -73,16 +72,17 @@ public class MarkdownToRstDocConverter {
                 String text = textNode.text();
                 if (!text.trim().isEmpty()) {
                     if (text.startsWith(":param ")) {
-                        //TODO streamline this code by calling writer.writedocs on
-                        // param and the parameters separately.  It should probably
-                        // be this way instead of the other way around; we want to be
-                        // able to perma-indent
                         int secondColonIndex = text.indexOf(':',  1);
                         writer.write(text.substring(0, secondColonIndex + 1));
+                        //TODO right now the code generator gives us a mixture of
+                        // commonmark and HTML (for instance :param xyz: <p> docs
+                        // </p>).  Since we standardize to html above, that <p> tag
+                        // starts a newline.  We account for that with this if/else
+                        // statement, but we should refactor this in the future to
+                        // have a more elegant codepath.
                         if (secondColonIndex +1 == text.strip().length()) {
                             writer.indent();
                             writer.ensureNewline();
-                            inParam = true;
                         } else {
                             writer.ensureNewline();
                             writer.indent();

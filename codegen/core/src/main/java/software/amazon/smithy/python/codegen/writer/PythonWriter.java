@@ -193,6 +193,7 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
             wrapAt = line.length();
         } else {
             // Ensure we don't break a link
+            //TODO account for earlier backticks on the same line as a link
             int linkStart = line.lastIndexOf("`", wrapAt);
             int linkEnd = line.indexOf("`_", wrapAt);
             if (linkStart != -1 && (linkEnd != -1 && linkEnd > linkStart)) {
