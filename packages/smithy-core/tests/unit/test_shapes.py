@@ -1,5 +1,4 @@
 import pytest
-
 from smithy_core.exceptions import ExpectationNotMetException, SmithyException
 from smithy_core.shapes import ShapeID
 

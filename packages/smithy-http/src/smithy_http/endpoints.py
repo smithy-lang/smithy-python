@@ -2,13 +2,12 @@
 #  SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass
 
+from smithy_core.endpoints import Endpoint
 from smithy_core.interfaces import URI
 from smithy_core.interfaces import TypedProperties as _TypedProperties
-from smithy_core.endpoints import Endpoint
 from smithy_core.types import PropertyKey, TypedProperties
 
 from . import Fields, interfaces
-
 
 HEADERS = PropertyKey(key="headers", value_type=interfaces.Fields)
 """An Endpoint property indicating the given fields MUST be added to the request."""

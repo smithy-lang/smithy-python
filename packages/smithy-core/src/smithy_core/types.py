@@ -5,13 +5,15 @@ import re
 import sys
 from collections import UserDict
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from datetime import datetime
 from email.utils import format_datetime, parsedate_to_datetime
 from enum import Enum
 from typing import Any, overload
-from dataclasses import dataclass
 
 from .exceptions import ExpectationNotMetException
+from .interfaces import PropertyKey as _PropertyKey
+from .interfaces import TypedProperties as _TypedProperties
 from .utils import (
     ensure_utc,
     epoch_seconds_to_datetime,
@@ -19,8 +21,6 @@ from .utils import (
     serialize_epoch_seconds,
     serialize_rfc3339,
 )
-from .interfaces import PropertyKey as _PropertyKey
-from .interfaces import TypedProperties as _TypedProperties
 
 _GREEDY_LABEL_RE = re.compile(r"\{(\w+)\+\}")
 
@@ -173,7 +173,7 @@ class PropertyKey[T](_PropertyKey[T]):
 
         UNION_PROPERTY: PropertyKey[str | int] = PropertyKey(
             key="union",
-            value_type=str | int  # type: ignore
+            value_type=str | int,  # type: ignore
         )
 
     Type checkers will be able to use such a property as expected.
@@ -223,7 +223,7 @@ class TypedProperties(UserDict[str, Any], _TypedProperties):
 
         UNION_PROPERTY: PropertyKey[str | int] = PropertyKey(
             key="union",
-            value_type=str | int  # type: ignore
+            value_type=str | int,  # type: ignore
         )
 
         properties = TypedProperties()

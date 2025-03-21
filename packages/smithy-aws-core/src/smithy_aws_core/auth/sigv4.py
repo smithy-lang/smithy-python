@@ -3,12 +3,13 @@
 from dataclasses import dataclass
 from typing import Protocol
 
-from smithy_aws_core.identity import AWSCredentialsIdentity
+from aws_sdk_signers import AsyncSigV4Signer, SigV4SigningProperties
 from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyIdentityException
 from smithy_core.interfaces.identity import IdentityProperties
 from smithy_http.aio.interfaces.auth import HTTPAuthScheme, HTTPSigner
-from aws_sdk_signers import SigV4SigningProperties, AsyncSigV4Signer
+
+from ..identity import AWSCredentialsIdentity
 
 
 class SigV4Config(Protocol):

@@ -1,6 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-
+# ruff: noqa: S101
 import asyncio
 import datetime
 import hmac
@@ -11,18 +11,18 @@ from binascii import hexlify
 from collections.abc import AsyncIterable, Iterable
 from copy import deepcopy
 from hashlib import sha256
-from typing import Required, TypedDict, TYPE_CHECKING
+from typing import TYPE_CHECKING, Required, TypedDict
 from urllib.parse import parse_qsl, quote
 
-from .interfaces.io import AsyncSeekable, Seekable
 from ._http import URI, AWSRequest, Field
 from ._identity import AWSCredentialIdentity
-from .interfaces.identity import AWSCredentialsIdentity as _AWSCredentialsIdentity
 from ._io import AsyncBytesReader
 from .exceptions import AWSSDKWarning, MissingExpectedParameterException
+from .interfaces.identity import AWSCredentialsIdentity as _AWSCredentialsIdentity
+from .interfaces.io import AsyncSeekable, Seekable
 
 if TYPE_CHECKING:
-    from .interfaces.events import EventMessage, EventHeaderEncoder
+    from .interfaces.events import EventHeaderEncoder, EventMessage
 
 HEADERS_EXCLUDED_FROM_SIGNING: tuple[str, ...] = (
     "accept",

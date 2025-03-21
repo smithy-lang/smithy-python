@@ -1,16 +1,13 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 from asyncio import iscoroutinefunction
+from collections.abc import ItemsView, Iterator, KeysView, ValuesView
 from typing import (
-    Protocol,
-    runtime_checkable,
     Any,
+    Protocol,
     TypeGuard,
     overload,
-    Iterator,
-    KeysView,
-    ValuesView,
-    ItemsView,
+    runtime_checkable,
 )
 
 
@@ -127,7 +124,7 @@ class PropertyKey[T](Protocol):
 
         UNION_PROPERTY: PropertyKey[str | int] = PropertyKey(
             key="union",
-            value_type=str | int  # type: ignore
+            value_type=str | int,  # type: ignore
         )
 
     Type checkers will be able to use such a property as expected.
@@ -179,7 +176,7 @@ class TypedProperties(Protocol):
 
         UNION_PROPERTY: PropertyKey[str | int] = PropertyKey(
             key="union",
-            value_type=str | int  # type: ignore
+            value_type=str | int,  # type: ignore
         )
 
         properties = TypedProperties()

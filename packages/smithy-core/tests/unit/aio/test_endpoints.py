@@ -3,10 +3,11 @@
 from dataclasses import dataclass
 from typing import Any
 from unittest.mock import Mock
-from smithy_core.types import TypedProperties
-from smithy_core.endpoints import EndpointResolverParams, STATIC_ENDPOINT_CONFIG
-from smithy_core.aio.endpoints import StaticEndpointResolver
+
 from smithy_core import URI
+from smithy_core.aio.endpoints import StaticEndpointResolver
+from smithy_core.endpoints import STATIC_ENDPOINT_CONFIG, EndpointResolverParams
+from smithy_core.types import TypedProperties
 
 
 @dataclass

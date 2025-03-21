@@ -1,8 +1,8 @@
+import pytest
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
 from smithy_core.documents import Document, TypeRegistry
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID, ShapeType
-import pytest
 
 
 def test_get():

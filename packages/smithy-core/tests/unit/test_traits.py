@@ -2,16 +2,15 @@
 #  SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass
 
+import pytest
+from smithy_core.shapes import ShapeID
 from smithy_core.traits import (
     DynamicTrait,
-    Trait,
-    ErrorTrait,
     ErrorFault,
+    ErrorTrait,
     JSONNameTrait,
+    Trait,
 )
-from smithy_core.shapes import ShapeID
-
-import pytest
 
 
 def test_trait_factory_constructs_dynamic_trait():

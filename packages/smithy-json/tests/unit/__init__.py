@@ -18,9 +18,7 @@ from smithy_core.prelude import (
 from smithy_core.schemas import Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
-
-from smithy_core.traits import TimestampFormatTrait, JSONNameTrait, SparseTrait
-
+from smithy_core.traits import JSONNameTrait, SparseTrait, TimestampFormatTrait
 
 STRING_LIST_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringList"),

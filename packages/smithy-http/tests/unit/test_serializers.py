@@ -2,50 +2,49 @@
 #  SPDX-License-Identifier: Apache-2.0
 import datetime
 from asyncio import iscoroutinefunction
-from decimal import Decimal
 from dataclasses import dataclass, field
-from typing import ClassVar, Self, Any, Protocol
 from datetime import UTC
+from decimal import Decimal
 from io import BytesIO
+from typing import Any, ClassVar, Protocol, Self
 
 import pytest
-
 from smithy_core import URI
 from smithy_core.aio.interfaces import StreamingBlob
-from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import (
-    HTTPLabelTrait,
-    TimestampFormatTrait,
-    HTTPPayloadTrait,
-    StreamingTrait,
-    HTTPHeaderTrait,
-    HTTPResponseCodeTrait,
-    HTTPPrefixHeadersTrait,
-    Trait,
-    HTTPQueryTrait,
-    HTTPQueryParamsTrait,
-    HTTPTrait,
-    HostLabelTrait,
-    EndpointTrait,
-)
-from smithy_core.schemas import Schema
-from smithy_core.serializers import ShapeSerializer, SerializeableShape
-from smithy_core.deserializers import ShapeDeserializer, DeserializeableShape
+from smithy_core.aio.types import AsyncBytesReader
+from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
 from smithy_core.prelude import (
-    BLOB,
-    STRING,
-    INTEGER,
-    FLOAT,
     BIG_DECIMAL,
+    BLOB,
     BOOLEAN,
+    FLOAT,
+    INTEGER,
+    STRING,
     TIMESTAMP,
 )
-from smithy_core.aio.types import AsyncBytesReader
-from smithy_http.deserializers import HTTPResponseDeserializer
-from smithy_json import JSONCodec
+from smithy_core.schemas import Schema
+from smithy_core.serializers import SerializeableShape, ShapeSerializer
+from smithy_core.shapes import ShapeID, ShapeType
+from smithy_core.traits import (
+    EndpointTrait,
+    HostLabelTrait,
+    HTTPHeaderTrait,
+    HTTPLabelTrait,
+    HTTPPayloadTrait,
+    HTTPPrefixHeadersTrait,
+    HTTPQueryParamsTrait,
+    HTTPQueryTrait,
+    HTTPResponseCodeTrait,
+    HTTPTrait,
+    StreamingTrait,
+    TimestampFormatTrait,
+    Trait,
+)
+from smithy_http import Field, Fields, tuples_to_fields
 from smithy_http.aio import HTTPResponse as _HTTPResponse
-from smithy_http import tuples_to_fields, Field, Fields
+from smithy_http.deserializers import HTTPResponseDeserializer
 from smithy_http.serializers import HTTPRequestSerializer, HTTPResponseSerializer
+from smithy_json import JSONCodec
 
 # TODO: empty header prefix, query map
 
@@ -1103,7 +1102,7 @@ class HostLabel:
 @dataclass
 class HTTPMessage:
     method: str = "POST"
-    destination: URI = URI(host="", path="/")
+    destination: URI = field(default_factory=lambda: URI(host="", path="/"))
     fields: Fields = field(default_factory=Fields)
     body: StreamingBlob = field(repr=False, default=b"")
     status: int = 200
@@ -1116,7 +1115,9 @@ class Shape(SerializeableShape, DeserializeableShape, Protocol): ...
 class HTTPMessageTestCase:
     shape: Shape
     request: HTTPMessage
-    http_trait: HTTPTrait = HTTPTrait({"method": "POST", "code": 200, "uri": "/"})
+    http_trait: HTTPTrait = field(
+        default_factory=lambda: HTTPTrait({"method": "POST", "code": 200, "uri": "/"})
+    )
     endpoint_trait: EndpointTrait | None = None
 
 

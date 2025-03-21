@@ -2,10 +2,10 @@
 #  SPDX-License-Identifier: Apache-2.0
 from typing import Any
 
-from .interfaces import EndpointResolver
-from ..endpoints import EndpointResolverParams, Endpoint, resolve_static_uri
+from ..endpoints import Endpoint, EndpointResolverParams, resolve_static_uri
 from ..exceptions import EndpointResolutionError
 from ..interfaces import Endpoint as _Endpoint
+from .interfaces import EndpointResolver
 
 
 class StaticEndpointResolver(EndpointResolver):

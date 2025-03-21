@@ -6,7 +6,6 @@ from typing import Self
 from unittest.mock import Mock
 
 import pytest
-
 from smithy_core.aio.types import (
     AsyncBytesProvider,
     AsyncBytesReader,

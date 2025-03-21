@@ -1,14 +1,13 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
+from concurrent.futures import Future as ConcurrentFuture
 from copy import deepcopy
 from io import BytesIO
 from unittest.mock import Mock
-from concurrent.futures import Future as ConcurrentFuture
 
 import pytest
 from awscrt.http import HttpClientStream  # type: ignore
-
 from smithy_core import URI
 from smithy_http import Fields
 from smithy_http.aio import HTTPRequest

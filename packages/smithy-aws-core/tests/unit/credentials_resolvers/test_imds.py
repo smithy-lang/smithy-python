@@ -3,20 +3,21 @@
 
 # pyright: reportPrivateUsage=false
 import json
-import pytest
 import time
-from datetime import datetime, timezone
-from smithy_core.retries import SimpleRetryStrategy
-from smithy_core import URI
-from smithy_http.aio import HTTPRequest
+from datetime import UTC, datetime
+from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 from smithy_aws_core.credentials_resolvers.imds import (
     Config,
-    Token,
-    TokenCache,
     EC2Metadata,
     IMDSCredentialsResolver,
+    Token,
+    TokenCache,
 )
-from unittest.mock import MagicMock, AsyncMock
+from smithy_core import URI
+from smithy_core.retries import SimpleRetryStrategy
+from smithy_http.aio import HTTPRequest
 
 
 def test_config_defaults():
@@ -174,7 +175,5 @@ async def test_imds_credentials_resolver():
     assert credentials.secret_access_key == "test-secret-key"
     assert credentials.session_token == "test-session-token"
     assert credentials.account_id == "test-account"
-    assert credentials.expiration == datetime(
-        2025, 3, 13, 7, 28, 47, tzinfo=timezone.utc
-    )
+    assert credentials.expiration == datetime(2025, 3, 13, 7, 28, 47, tzinfo=UTC)
     ec2_metadata.get.assert_awaited()

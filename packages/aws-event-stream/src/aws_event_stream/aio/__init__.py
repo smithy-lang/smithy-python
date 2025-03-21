@@ -3,21 +3,19 @@
 import asyncio
 import logging
 from collections.abc import Callable
+from typing import Protocol
 
-from smithy_core.aio.interfaces import AsyncByteStream
+from smithy_core.aio.interfaces import AsyncByteStream, AsyncWriter
+from smithy_core.aio.interfaces.eventstream import EventPublisher, EventReceiver
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
 from smithy_core.exceptions import ExpectationNotMetException
 from smithy_core.serializers import SerializeableShape
-from smithy_core.aio.interfaces.eventstream import EventPublisher, EventReceiver
-from smithy_core.aio.interfaces import AsyncWriter
 
-from .._private.serializers import EventSerializer as _EventSerializer
 from .._private.deserializers import EventDeserializer as _EventDeserializer
+from .._private.serializers import EventSerializer as _EventSerializer
 from ..events import Event, EventHeaderEncoder, EventMessage
 from ..exceptions import EventError
-
-from typing import Protocol
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +23,7 @@ logger = logging.getLogger(__name__)
 class EventSigner(Protocol):
     """A signer to manage credentials and EventMessages for an Event Stream lifecyle."""
 
-    def sign_event(
+    async def sign_event(
         self,
         *,
         event_message: EventMessage,
@@ -50,7 +48,7 @@ class AWSEventPublisher[E: SerializeableShape](EventPublisher[E]):
 
     async def send(self, event: E) -> None:
         if self._closed:
-            raise IOError("Attempted to write to closed stream.")
+            raise OSError("Attempted to write to closed stream.")
         logger.debug("Preparing to publish event: %s", event)
         event.serialize(self._serializer)
         result = self._serializer.get_result()
@@ -60,19 +58,18 @@ class AWSEventPublisher[E: SerializeableShape](EventPublisher[E]):
             )
         if self._signer is not None:
             encoder = self._serializer.event_header_encoder_cls
-            result = await self._signer.sign_event(  # type: ignore
+            result = await self._signer.sign_event(
                 event_message=result,
                 event_encoder_cls=encoder,
             )
 
-        assert isinstance(result, EventMessage)
         encoded_result = result.encode()
         try:
             logger.debug("Publishing serialized event: %s", result)
             await self._writer.write(encoded_result)
         except Exception as e:
             await self.close()
-            raise IOError("Failed to write to stream.") from e
+            raise OSError("Failed to write to stream.") from e
 
     async def close(self) -> None:
         if self._closed:
@@ -111,7 +108,7 @@ class AWSEventReceiver[E: DeserializeableShape](EventReceiver[E]):
         except Exception as e:
             await self.close()
             if not isinstance(e, EventError):
-                raise IOError("Failed to read from stream.") from e
+                raise OSError("Failed to read from stream.") from e
             raise
 
         if event is None:

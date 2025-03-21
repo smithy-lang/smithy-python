@@ -1,17 +1,17 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-from typing import Any, Protocol
 from dataclasses import dataclass, field
+from typing import Any, Protocol
 from urllib.parse import urlparse
 
 from . import URI
-from .serializers import SerializeableShape
-from .schemas import APIOperation
-from .interfaces import TypedProperties as _TypedProperties
-from .interfaces import Endpoint as _Endpoint
-from .interfaces import URI as _URI
-from .types import TypedProperties, PropertyKey
 from .exceptions import EndpointResolutionError
+from .interfaces import URI as _URI
+from .interfaces import Endpoint as _Endpoint
+from .interfaces import TypedProperties as _TypedProperties
+from .schemas import APIOperation
+from .serializers import SerializeableShape
+from .types import PropertyKey, TypedProperties
 
 
 @dataclass(kw_only=True)

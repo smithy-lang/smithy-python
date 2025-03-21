@@ -1,11 +1,12 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import platform
-from typing import Self, Any
+from typing import Any, Self
 
 import smithy_core
-from smithy_core.interceptors import Interceptor, InputContext, RequestContext
+from smithy_core.interceptors import InputContext, Interceptor, RequestContext
 from smithy_core.types import PropertyKey
+
 from smithy_http import Field
 from smithy_http.aio.interfaces import HTTPRequest
 from smithy_http.user_agent import UserAgent, UserAgentComponent

@@ -15,10 +15,10 @@ from smithy_core.exceptions import SmithyException
 from smithy_core.interfaces import BytesReader
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID, ShapeType
+from smithy_core.traits import JSONNameTrait, TimestampFormatTrait
 from smithy_core.types import TimestampFormat
 
 from .documents import JSONDocument
-from smithy_core.traits import TimestampFormatTrait, JSONNameTrait
 
 # TODO: put these type hints in a pyi somewhere. There here because ijson isn't
 # typed.

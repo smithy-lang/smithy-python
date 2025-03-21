@@ -1,6 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from asyncio import sleep, iscoroutine
+from asyncio import iscoroutine, sleep
 from collections.abc import AsyncIterable, Iterable
 from typing import Any
 
