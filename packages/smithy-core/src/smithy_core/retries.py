@@ -234,11 +234,7 @@ class SimpleRetryStrategy(retries_interface.RetryStrategy):
 
         :raises SmithyRetryException: If no further retry attempts are allowed.
         """
-        if error_info.error_type in [
-            RetryErrorType.TRANSIENT,
-            RetryErrorType.THROTTLING,
-            RetryErrorType.SERVER_ERROR,
-        ]:
+        if error_info.error_type is not RetryErrorType.CLIENT_ERROR:
             retry_count = token_to_renew.retry_count + 1
             if retry_count >= self.max_attempts:
                 raise SmithyRetryException(
