@@ -43,6 +43,6 @@ public final class InitGenerator implements Runnable {
         context.writerDelegator()
                 .useFileWriter(
                         "%s/__init__.py".formatted(context.settings().moduleName()),
-                        w -> w.write("__version__: str = '$L'", context.settings().moduleVersion()));
+                        w -> w.write("__version__: str = $S", context.settings().moduleVersion()));
     }
 }
