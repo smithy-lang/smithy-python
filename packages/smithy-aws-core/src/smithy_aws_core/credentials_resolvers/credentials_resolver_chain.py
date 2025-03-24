@@ -10,8 +10,9 @@ import os
 
 
 def _env_creds_available() -> bool:
-    return bool(os.getenv("AWS_ACCESS_KEY_ID")) and bool(
-        os.getenv("AWS_SECRET_ACCESS_KEY")
+    return (
+        "AWS_ACCESS_KEY_ID" in os.environ
+        and "AWS_SECRET_ACCESS_KEY" in os.environ
     )
 
 
