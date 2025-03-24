@@ -1,5 +1,4 @@
 import pytest
-
 from smithy_aws_core.credentials_resolvers import (
     CredentialsResolverChain,
     StaticCredentialsResolver,
