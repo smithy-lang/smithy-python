@@ -132,6 +132,7 @@ final class ClientGenerator implements Runnable {
         writer.addStdlibImport("typing", "Awaitable");
         writer.addStdlibImport("typing", "cast");
         writer.addStdlibImport("copy", "deepcopy");
+        writer.addStdlibImport("copy", "copy");
         writer.addStdlibImport("asyncio");
         writer.addStdlibImports("asyncio", Set.of("sleep", "Future"));
         writer.addStdlibImport("dataclasses", "replace");
@@ -395,7 +396,10 @@ final class ClientGenerator implements Runnable {
                                     output_context = await self._handle_attempt(
                                         deserialize,
                                         interceptor_chain,
-                                        request_context,
+                                        replace(
+                                          request_context,
+                                          transport_request = copy(request_context.transport_request)
+                                        ),
                                         config,
                                         operation,
                                         request_future,
