@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 from ...documents import TypeRegistry
 from ...endpoints import EndpointResolverParams
 from ...exceptions import UnsupportedStreamException
-from ...interfaces import URI, Endpoint, TypedProperties
+from ...interfaces import Endpoint, TypedProperties, URI
 from ...interfaces import StreamingBlob as SyncStreamingBlob
 from .eventstream import EventPublisher, EventReceiver
 

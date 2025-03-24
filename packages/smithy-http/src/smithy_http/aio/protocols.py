@@ -7,7 +7,7 @@ from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape
 from smithy_core.documents import TypeRegistry
 from smithy_core.exceptions import ExpectationNotMetException
-from smithy_core.interfaces import URI, Endpoint, TypedProperties
+from smithy_core.interfaces import Endpoint, TypedProperties, URI
 from smithy_core.schemas import APIOperation
 from smithy_core.serializers import SerializeableShape
 from smithy_core.traits import EndpointTrait, HTTPTrait

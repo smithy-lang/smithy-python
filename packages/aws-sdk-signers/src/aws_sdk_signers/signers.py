@@ -14,7 +14,7 @@ from hashlib import sha256
 from typing import TYPE_CHECKING, Required, TypedDict
 from urllib.parse import parse_qsl, quote
 
-from ._http import URI, AWSRequest, Field
+from ._http import AWSRequest, Field, URI
 from ._identity import AWSCredentialIdentity
 from ._io import AsyncBytesReader
 from .exceptions import AWSSDKWarning, MissingExpectedParameterException

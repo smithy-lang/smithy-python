@@ -6,9 +6,9 @@ from urllib.parse import urlparse
 
 from . import URI
 from .exceptions import EndpointResolutionError
-from .interfaces import URI as _URI
 from .interfaces import Endpoint as _Endpoint
 from .interfaces import TypedProperties as _TypedProperties
+from .interfaces import URI as _URI
 from .schemas import APIOperation
 from .serializers import SerializeableShape
 from .types import PropertyKey, TypedProperties

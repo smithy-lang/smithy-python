@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import importlib.metadata
 
-from ._http import URI, AWSRequest, Field, Fields
+from ._http import AWSRequest, Field, Fields, URI
 from ._identity import AWSCredentialIdentity
 from ._io import AsyncBytesReader
 from .signers import (
