@@ -8,12 +8,12 @@ from io import BytesIO
 
 import pytest
 from aws_sdk_signers import (
-    URI,
     AsyncBytesReader,
     AWSCredentialIdentity,
     AWSRequest,
     Field,
     Fields,
+    URI,
 )
 from aws_sdk_signers.exceptions import AWSSDKWarning
 from aws_sdk_signers.signers import (
