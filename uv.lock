@@ -686,6 +686,7 @@ dependencies = [
 [package.optional-dependencies]
 aiohttp = [
     { name = "aiohttp" },
+    { name = "yarl" },
 ]
 awscrt = [
     { name = "awscrt" },
@@ -693,9 +694,10 @@ awscrt = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiohttp", marker = "extra == 'aiohttp'", specifier = ">=3.11.12" },
+    { name = "aiohttp", marker = "extra == 'aiohttp'", specifier = ">=3.11.12,<4.0" },
     { name = "awscrt", marker = "extra == 'awscrt'", specifier = ">=0.23.10" },
     { name = "smithy-core", editable = "packages/smithy-core" },
+    { name = "yarl", marker = "extra == 'aiohttp'" },
 ]
 provides-extras = ["awscrt", "aiohttp"]
 

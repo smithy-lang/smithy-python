@@ -4,6 +4,7 @@ from typing import Protocol
 
 from smithy_core.aio.interfaces import ClientTransport, Request, Response
 from smithy_core.aio.utils import read_streaming_blob, read_streaming_blob_async
+from smithy_core.shapes import ShapeID
 
 from ...interfaces import (
     Fields,
@@ -81,5 +82,20 @@ class HTTPClient(ClientTransport[HTTPRequest, HTTPResponse], Protocol):
 
         :param request: The request including destination URI, fields, payload.
         :param request_config: Configuration specific to this request.
+        """
+        ...
+
+
+class ErrorExtractor(Protocol):
+    """Extract error shape IDs from an HTTP response."""
+
+    def get_error(
+        self,
+        response: HTTPResponse,
+    ) -> ShapeID | None:
+        """Get the shape id for an error by using information (such as headers) from a
+        response.
+
+        :param response: The response object to derive an error shape from.
         """
         ...

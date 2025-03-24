@@ -3,13 +3,19 @@
 import datetime
 from collections.abc import Callable
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import ShapeDeserializer, SpecificShapeDeserializer
-from smithy_core.exceptions import UnsupportedStreamException
-from smithy_core.interfaces import is_bytes_reader, is_streaming_blob
-from smithy_core.schemas import Schema
+from smithy_core.documents import TypeRegistry
+from smithy_core.errors import CallException, ModeledException
+from smithy_core.exceptions import (
+    ExpectationNotMetException,
+    UnsupportedStreamException,
+)
+from smithy_core.interfaces import TypedProperties, is_bytes_reader, is_streaming_blob
+from smithy_core.prelude import DOCUMENT
+from smithy_core.schemas import APIOperation, Schema
 from smithy_core.shapes import ShapeType
 from smithy_core.traits import (
     HTTPHeaderTrait,
@@ -22,15 +28,15 @@ from smithy_core.traits import (
 from smithy_core.types import TimestampFormat
 from smithy_core.utils import ensure_utc, strict_parse_bool, strict_parse_float
 
-from .aio.interfaces import HTTPResponse
-from .interfaces import Field, Fields
+from smithy_http.aio.interfaces import ErrorExtractor, HTTPResponse
+from smithy_http.interfaces import Field, Fields
 
 if TYPE_CHECKING:
     from smithy_core.aio.interfaces import StreamingBlob as AsyncStreamingBlob
     from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
 
 
-__all__ = ["HTTPResponseDeserializer"]
+__all__ = ["HTTPErrorDeserializer", "HTTPResponseDeserializer"]
 
 
 class HTTPResponseDeserializer(SpecificShapeDeserializer):
@@ -257,3 +263,72 @@ class RawPayloadDeserializer(SpecificShapeDeserializer):
             "Unable to read async stream. This stream must be buffered prior "
             "to creating the deserializer."
         )
+
+
+class HTTPErrorDeserializer:
+    """Binds an error response to a modelled or unknown exception."""
+
+    def __init__(
+        self,
+        payload_codec: Codec,
+        extractor: ErrorExtractor,
+        response: HTTPResponse,
+        body: "SyncStreamingBlob",
+    ) -> None:
+        """Initialize an HTTPErrorDeserializer.
+
+        :param payload_codec: The Codec to use to deserialize the payload, if present.
+        :param extractor: The error extractor to get error shape id from the response.
+        :param response: The HTTP response to read from.
+        :param body: The HTTP response body in a synchronously readable form. This is
+            necessary for async response bodies when there is no streaming member.
+        """
+        self._payload_codec = payload_codec
+        self._response = response
+        self._body = body
+        self._extractor = extractor
+        self._codec = payload_codec
+
+    def read_error(
+        self,
+        operation: APIOperation[Any, Any],
+        error_registry: TypeRegistry,
+        context: TypedProperties,
+    ) -> CallException:
+        body = self._body
+        if isinstance(body, bytearray):
+            body = bytes(body)
+        deserializer = self._payload_codec.create_deserializer(body)
+        document = deserializer.read_document(DOCUMENT)
+
+        # try to get the error shape-id from the extractor
+        error_id = self._extractor.get_error(self._response)
+
+        # if none, get it from the parsed document (e.g. '__type')
+        if error_id is None:
+            error_id = document.discriminator
+
+        if error_id is not None:
+            error_shape = error_registry.get(error_id)
+            # make sure the error shape is derived from modeled exception
+            if not isinstance(error_shape, ModeledException):
+                raise ExpectationNotMetException(
+                    f"Modeled errors must be derived from 'ModeledException', but got {error_shape}"
+                )
+
+            # return the deserialized error
+            return error_shape.deserialize(deserializer)
+
+        # unknown error (no header, no type/unrecognized type)
+        fault = "other"
+        if 400 <= self._response.status < 500:
+            fault = "client"
+        elif self._response.status >= 500:
+            fault = "server"
+        message = (
+            f"Unknown error: {operation.output_schema.id} "
+            f"- code: {self._response.status} "
+            f"- reason: {self._response.reason}"
+        )
+
+        return CallException(message=message, fault=fault)

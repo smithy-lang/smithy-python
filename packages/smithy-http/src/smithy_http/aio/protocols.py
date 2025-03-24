@@ -12,8 +12,8 @@ from smithy_core.schemas import APIOperation
 from smithy_core.serializers import SerializeableShape
 from smithy_core.traits import EndpointTrait, HTTPTrait
 
-from smithy_http.aio.interfaces import HTTPRequest, HTTPResponse
-from smithy_http.deserializers import HTTPResponseDeserializer
+from smithy_http.aio.interfaces import ErrorExtractor, HTTPRequest, HTTPResponse
+from smithy_http.deserializers import HTTPErrorDeserializer, HTTPResponseDeserializer
 from smithy_http.serializers import HTTPRequestSerializer
 
 
@@ -47,12 +47,17 @@ class HttpBindingClientProtocol(HttpClientProtocol):
     @property
     def payload_codec(self) -> Codec:
         """The codec used for the serde of input and output payloads."""
-        raise NotImplementedError()
+        raise NotImplementedError
 
     @property
     def content_type(self) -> str:
         """The media type of the http payload."""
-        raise NotImplementedError()
+        raise NotImplementedError
+
+    @property
+    def error_extractor(self) -> ErrorExtractor:
+        """The error extractor used to extract errors from the response."""
+        raise NotImplementedError
 
     def serialize_request[
         OperationInput: "SerializeableShape",
@@ -94,18 +99,24 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         error_registry: TypeRegistry,
         context: TypedProperties,
     ) -> OperationOutput:
-        if not (200 <= response.status <= 299):
-            # TODO: implement error serde from type registry
-            raise NotImplementedError
-
-        body = response.body
-
         # if body is not streaming and is async, we have to buffer it
+        body = response.body
         if not operation.output_stream_member:
             if (
                 read := getattr(body, "read", None)
             ) is not None and iscoroutinefunction(read):
                 body = BytesIO(await read())
+
+        # handle error response
+        if not (200 <= response.status <= 299):
+            error_deserializer = HTTPErrorDeserializer(
+                payload_codec=self.payload_codec,
+                extractor=self.error_extractor,
+                response=response,
+                body=body,  # type: ignore
+            )
+
+            raise error_deserializer.read_error(operation, error_registry, context)
 
         # TODO(optimization): response binding cache like done in SJ
         deserializer = HTTPResponseDeserializer(
