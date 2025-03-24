@@ -1,11 +1,13 @@
 [versions]
-junit5 = "5.12.0"
+junit5 = "5.12.1"
 smithy = "1.55.0"
 test-logger-plugin = "4.0.0"
 spotbugs = "6.0.22"
 spotless = "7.0.2"
 smithy-gradle-plugins = "1.2.0"
-dep-analysis = "2.11.0"
+dep-analysis = "2.12.0"
+jsoup = "1.19.1"
+commonmark = "0.15.2"
 
 [libraries]
 smithy-model = { module = "software.amazon.smithy:smithy-model", version.ref = "smithy" }
@@ -27,6 +29,9 @@ test-logger-plugin = { module = "com.adarshr:gradle-test-logger-plugin", version
 spotbugs = { module = "com.github.spotbugs.snom:spotbugs-gradle-plugin", version.ref = "spotbugs" }
 spotless = { module = "com.diffplug.spotless:spotless-plugin-gradle", version.ref = "spotless" }
 dependency-analysis = { module = "com.autonomousapps:dependency-analysis-gradle-plugin", version.ref = "dep-analysis" }
+
+jsoup = { module = "org.jsoup:jsoup", version.ref = "jsoup" }
+commonmark = { module = "com.atlassian.commonmark:commonmark", version.ref ="commonmark" }
 
 [plugins]
 smithy-gradle-base = { id = "software.amazon.smithy.gradle.smithy-base", version.ref = "smithy-gradle-plugins" }

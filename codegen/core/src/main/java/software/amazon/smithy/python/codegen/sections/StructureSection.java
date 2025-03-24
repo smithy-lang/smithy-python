@@ -4,11 +4,12 @@
  */
 package software.amazon.smithy.python.codegen.sections;
 
+import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.utils.CodeSection;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
 /**
- * A section that controls generating the EndpointParameters class.
+ * A section that controls writing a structure.
  */
 @SmithyInternalApi
-public record EndpointParametersSection() implements CodeSection {}
+public record StructureSection(StructureShape structure) implements CodeSection {}

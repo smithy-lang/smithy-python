@@ -10,10 +10,9 @@ from smithy_core.documents import Document, DocumentValue
 from smithy_core.prelude import DOCUMENT
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeType
+from smithy_core.traits import JSONNameTrait, TimestampFormatTrait
 from smithy_core.types import TimestampFormat
 from smithy_core.utils import expect_type
-
-from smithy_core.traits import JSONNameTrait, TimestampFormatTrait
 
 
 class JSONDocument(Document):

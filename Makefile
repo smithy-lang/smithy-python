@@ -21,14 +21,14 @@ test-protocols: ## Generates and runs the restJson1 protocol tests.
 
 lint-py: ## Runs linters and formatters on the python packages.
 	uv run docformatter packages --in-place || true
-	uv run ruff check packages --fix
-	uv run ruff format packages
+	uv run ruff check packages --fix --config pyproject.toml
+	uv run ruff format packages --config pyproject.toml
 
 
 check-py: ## Runs checks (formatting, lints, type-checking) on the python packages.
 	uv run docformatter packages
-	uv run ruff check packages
-	uv run ruff format --check
+	uv run ruff check packages --config pyproject.toml
+	uv run ruff format --check --config pyproject.toml
 	uv run pyright packages
 
 

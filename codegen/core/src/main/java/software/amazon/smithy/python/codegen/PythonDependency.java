@@ -60,7 +60,10 @@ public record PythonDependency(
         DEPENDENCY("dependency"),
 
         /** A dependency only used for testing purposes. */
-        TEST_DEPENDENCY("testDependency");
+        TEST_DEPENDENCY("testDependency"),
+
+        /** A dependency only used for docs generation. */
+        DOCS_DEPENDENCY("docsDependency");
 
         private final String type;
 

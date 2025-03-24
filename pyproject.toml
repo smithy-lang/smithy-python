@@ -25,7 +25,6 @@ members = ["packages/*"]
 
 [tool.uv.sources]
 smithy_core = { workspace = true }
-smithy_event_stream = { workspace = true }
 smithy_http = { workspace = true }
 smithy_json = { workspace = true }
 smithy_aws_core = { workspace = true }
@@ -53,6 +52,9 @@ target-version = "py312"
 
 select = [ "ASYNC", "C4", "E1", "E4", "E7", "E9", "F", "FURB", "G", "I", "LOG", "PIE", "RUF", "S", "T", "UP" ]
 exclude = [ "packages/smithy-core/src/smithy_core/rfc3986.py" ]
+
+[tool.ruff.lint.isort]
+classes = ["URI"]
 
 [tool.ruff.lint.per-file-ignores]
 "**/{tests}/*" = ["S"]

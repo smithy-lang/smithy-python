@@ -5,8 +5,6 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Protocol
 
-from smithy_core.interfaces import URI
-
 
 class FieldPosition(Enum):
     """The type of a field.
@@ -120,11 +118,6 @@ class Fields(Protocol):
 
 
 QueryParamsList = list[tuple[str, str]]
-
-
-class Endpoint(Protocol):
-    uri: URI
-    headers: Fields
 
 
 @dataclass(kw_only=True)

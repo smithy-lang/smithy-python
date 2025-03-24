@@ -1,45 +1,46 @@
+from asyncio import iscoroutinefunction
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from datetime import datetime
 from decimal import Decimal
 from io import BytesIO
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 from urllib.parse import quote as urlquote
-from asyncio import iscoroutinefunction
 
+from smithy_core import URI
+from smithy_core.codecs import Codec
+from smithy_core.schemas import Schema
 from smithy_core.serializers import (
+    InterceptingSerializer,
     MapSerializer,
     ShapeSerializer,
     SpecificShapeSerializer,
-    InterceptingSerializer,
 )
-from smithy_core.codecs import Codec
-from smithy_core.types import TimestampFormat, PathPattern
-from smithy_core.schemas import Schema
+from smithy_core.shapes import ShapeType
 from smithy_core.traits import (
-    HTTPTrait,
-    HTTPPayloadTrait,
+    EndpointTrait,
+    HostLabelTrait,
+    HTTPErrorTrait,
     HTTPHeaderTrait,
+    HTTPLabelTrait,
+    HTTPPayloadTrait,
     HTTPPrefixHeadersTrait,
     HTTPQueryParamsTrait,
     HTTPQueryTrait,
-    HTTPLabelTrait,
     HTTPResponseCodeTrait,
-    HostLabelTrait,
+    HTTPTrait,
+    MediaTypeTrait,
+    StreamingTrait,
     TimestampFormatTrait,
-    EndpointTrait,
-    HTTPErrorTrait,
 )
-from smithy_core.shapes import ShapeType
+from smithy_core.types import PathPattern, TimestampFormat
 from smithy_core.utils import serialize_float
 
+from . import tuples_to_fields
 from .aio import HTTPRequest as _HTTPRequest
 from .aio import HTTPResponse as _HTTPResponse
 from .aio.interfaces import HTTPRequest, HTTPResponse
-from smithy_core import URI
-from . import tuples_to_fields
 from .utils import join_query_params
-
 
 if TYPE_CHECKING:
     from smithy_core.aio.interfaces import StreamingBlob as AsyncStreamingBlob
@@ -83,8 +84,15 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
         if self._endpoint_trait is not None:
             host_prefix = self._endpoint_trait.host_prefix
 
+        content_type = self._payload_codec.media_type
+
         if (payload_member := self._get_payload_member(schema)) is not None:
             if payload_member.shape_type in (ShapeType.BLOB, ShapeType.STRING):
+                content_type = (
+                    "application/octet-stream"
+                    if payload_member.shape_type is ShapeType.BLOB
+                    else "text/plain"
+                )
                 payload_serializer = RawPayloadSerializer()
                 binding_serializer = HTTPRequestBindingSerializer(
                     payload_serializer, self._http_trait.path, host_prefix
@@ -92,6 +100,8 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                 yield binding_serializer
                 payload = payload_serializer.payload
             else:
+                if (media_type := payload_member.get_trait(MediaTypeTrait)) is not None:
+                    content_type = media_type.value
                 payload = BytesIO()
                 payload_serializer = self._payload_codec.create_serializer(payload)
                 binding_serializer = HTTPRequestBindingSerializer(
@@ -99,6 +109,8 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                 )
                 yield binding_serializer
         else:
+            if self._get_eventstreaming_member(schema) is not None:
+                content_type = "application/vnd.amazon.eventstream"
             payload = BytesIO()
             payload_serializer = self._payload_codec.create_serializer(payload)
             with payload_serializer.begin_struct(schema) as body_serializer:
@@ -112,6 +124,10 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
         ) is not None and not iscoroutinefunction(seek):
             seek(0)
 
+        # TODO: conditional on empty-ness and based on the protocol
+        headers = binding_serializer.header_serializer.headers
+        headers.append(("content-type", content_type))
+
         self.result = _HTTPRequest(
             method=self._http_trait.method,
             destination=URI(
@@ -122,13 +138,22 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                     prefix=self._http_trait.query or "",
                 ),
             ),
-            fields=tuples_to_fields(binding_serializer.header_serializer.headers),
+            fields=tuples_to_fields(headers),
             body=payload,
         )
 
     def _get_payload_member(self, schema: Schema) -> Schema | None:
         for member in schema.members.values():
             if HTTPPayloadTrait in member:
+                return member
+        return None
+
+    def _get_eventstreaming_member(self, schema: Schema) -> Schema | None:
+        for member in schema.members.values():
+            if (
+                member.get_trait(StreamingTrait) is not None
+                and member.shape_type is ShapeType.UNION
+            ):
                 return member
         return None
 
@@ -273,7 +298,7 @@ class RawPayloadSerializer(SpecificShapeSerializer):
 
     def __init__(self) -> None:
         """Initialize a RawPayloadSerializer."""
-        self.payload: "AsyncStreamingBlob | None" = None
+        self.payload: AsyncStreamingBlob | None = None
 
     def write_string(self, schema: Schema, value: str) -> None:
         self.payload = value.encode("utf-8")
@@ -382,7 +407,7 @@ class HTTPHeaderMapSerializer(MapSerializer):
 
     def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]):
         value_writer(self._delegate)
-        assert self._delegate.result is not None
+        assert self._delegate.result is not None  # noqa: S101
         self._headers.append((self._prefix + key, self._delegate.result))
 
 
@@ -549,7 +574,7 @@ class HTTPQueryMapSerializer(MapSerializer):
 
     def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]):
         value_writer(self._delegate)
-        assert self._delegate.result is not None
+        assert self._delegate.result is not None  # noqa: S101
         self._query_params.append((key, urlquote(self._delegate.result, safe="")))
 
 

@@ -72,6 +72,7 @@ public final class PythonFormatter implements Runnable {
             return;
         }
         LOGGER.info("Running code formatter on generated code");
+        CodegenUtils.runCommand("python3 -m ruff check --fix", fileManifest.getBaseDir());
         CodegenUtils.runCommand("python3 -m ruff format", fileManifest.getBaseDir());
     }
 

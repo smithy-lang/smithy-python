@@ -14,16 +14,14 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.SymbolDependency;
 import software.amazon.smithy.codegen.core.WriterDelegator;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.model.traits.TitleTrait;
-import software.amazon.smithy.python.codegen.GenerationContext;
-import software.amazon.smithy.python.codegen.PythonDependency;
-import software.amazon.smithy.python.codegen.PythonSettings;
-import software.amazon.smithy.python.codegen.SymbolProperties;
+import software.amazon.smithy.python.codegen.*;
 import software.amazon.smithy.python.codegen.sections.PyprojectSection;
 import software.amazon.smithy.python.codegen.sections.ReadmeSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
@@ -42,6 +40,7 @@ public final class SetupGenerator {
             PythonSettings settings,
             GenerationContext context
     ) {
+        writeDocsSkeleton(settings, context);
         var dependencies = gatherDependencies(context.writerDelegator().getDependencies().stream());
         writePyproject(settings, context.writerDelegator(), dependencies);
         writeReadme(settings, context);
@@ -149,9 +148,24 @@ public final class SetupGenerator {
                 writer.openBlock("dependencies = [", "]", () -> writeDependencyList(writer, deps.values()));
             });
 
-            Optional.ofNullable(dependencies.get(PythonDependency.Type.TEST_DEPENDENCY.getType())).ifPresent(deps -> {
+            Optional<Collection<SymbolDependency>> testDeps =
+                    Optional.ofNullable(dependencies.get(PythonDependency.Type.TEST_DEPENDENCY.getType()))
+                            .map(Map::values);
+
+            Optional<Collection<SymbolDependency>> docsDeps =
+                    Optional.ofNullable(dependencies.get(PythonDependency.Type.DOCS_DEPENDENCY.getType()))
+                            .map(Map::values);
+
+            if (testDeps.isPresent() || docsDeps.isPresent()) {
                 writer.write("[project.optional-dependencies]");
-                writer.openBlock("tests = [", "]", () -> writeDependencyList(writer, deps.values()));
+            }
+
+            testDeps.ifPresent(deps -> {
+                writer.openBlock("tests = [", "]", () -> writeDependencyList(writer, deps));
+            });
+
+            docsDeps.ifPresent(deps -> {
+                writer.openBlock("docs = [", "]", () -> writeDependencyList(writer, deps));
             });
 
             // TODO: remove the pyright global suppressions after the serde redo is done
@@ -169,6 +183,9 @@ public final class SetupGenerator {
 
                     [tool.ruff]
                     target-version = "py312"
+
+                    [tool.ruff.lint]
+                    ignore = ["F841"]
 
                     [tool.pytest.ini_options]
                     python_classes = ["!Test"]
@@ -240,12 +257,6 @@ public final class SetupGenerator {
                     """, title, description);
 
             service.getTrait(DocumentationTrait.class).map(StringTrait::getValue).ifPresent(documentation -> {
-                // TODO: make sure this documentation is well-formed
-                // Existing services in AWS, for example, have a lot of HTML docs.
-                // HTML nodes *are* valid commonmark technically, so it should be
-                // fine here. If we were to make this file RST formatted though,
-                // we'd have a problem. We have to solve that at some point anyway
-                // since the python code docs are RST format.
                 writer.write("""
                         ### Documentation
 
@@ -255,4 +266,208 @@ public final class SetupGenerator {
             writer.popState();
         });
     }
+
+    /**
+     * Write the files required for sphinx doc generation
+     */
+    private static void writeDocsSkeleton(
+            PythonSettings settings,
+            GenerationContext context
+    ) {
+        //TODO Add a configurable flag to disable the generation of the sphinx files
+        //TODO Add a configuration that will allow users to select a sphinx theme
+        context.writerDelegator().useFileWriter("pyproject.toml", "", writer -> {
+            writer.addDependency(SmithyPythonDependency.SPHINX);
+            writer.addDependency(SmithyPythonDependency.SPHINX_PYDATA_THEME);
+        });
+        var service = context.model().expectShape(settings.service());
+        String projectName = service.getTrait(TitleTrait.class)
+                .map(StringTrait::getValue)
+                .orElseGet(() -> service.getTrait(ServiceTrait.class)
+                        .map(ServiceTrait::getSdkId)
+                        .orElse(context.settings().service().getName()));
+        writeConf(settings, context, projectName);
+        writeIndexes(context, projectName);
+        writeMakeBat(context);
+        writeMakeFile(context);
+    }
+
+    /**
+     * Write a conf.py file.
+     * A conf.py file is a configuration file used by Sphinx, a documentation
+     * generation tool for Python projects. This file contains settings and
+     * configurations that control the behavior and appearance of the generated
+     * documentation.
+     */
+    private static void writeConf(
+            PythonSettings settings,
+            GenerationContext context,
+            String projectName
+    ) {
+        String version = settings.moduleVersion();
+        context.writerDelegator().useFileWriter("docs/conf.py", "", writer -> {
+            writer.write("""
+                    import os
+                    import sys
+                    sys.path.insert(0, os.path.abspath('..'))
+
+                    project = '$L'
+                    author = 'Amazon Web Services'
+                    release = '$L'
+
+                    extensions = [
+                        'sphinx.ext.autodoc',
+                        'sphinx.ext.viewcode',
+                    ]
+
+                    templates_path = ['_templates']
+                    exclude_patterns = []
+
+                    autodoc_default_options = {
+                        'exclude-members': 'deserialize,deserialize_kwargs,serialize,serialize_members'
+                    }
+
+                    html_theme = 'pydata_sphinx_theme'
+                    html_theme_options = {
+                        "logo": {
+                            "text": "$L",
+                        }
+                    }
+
+                    autodoc_typehints = 'both'
+                                """, projectName, version, projectName);
+        });
+    }
+
+    /**
+     * Write a make.bat file.
+     * A make.bat file is a batch script used on Windows to build Sphinx documentation.
+     * This script sets up the environment and runs the Sphinx build commands.
+     *
+     * @param context The generation context containing the writer delegator.
+     */
+    private static void writeMakeBat(
+            GenerationContext context
+    ) {
+        context.writerDelegator().useFileWriter("docs/make.bat", "", writer -> {
+            writer.write("""
+                    @ECHO OFF
+
+                    pushd %~dp0
+
+                    REM Command file for Sphinx documentation
+
+                    if "%SPHINXBUILD%" == "" (
+                        set SPHINXBUILD=sphinx-build
+                    )
+                    set BUILDDIR=build
+                    set SERVICESDIR=source/reference/services
+                    set SPHINXOPTS=-j auto
+                    set ALLSPHINXOPTS=-d %BUILDDIR%/doctrees %SPHINXOPTS% .
+
+                    if "%1" == "" goto help
+
+                    if "%1" == "clean" (
+                        rmdir /S /Q %BUILDDIR%
+                        goto end
+                    )
+
+                    if "%1" == "html" (
+                        %SPHINXBUILD% -b html %ALLSPHINXOPTS% %BUILDDIR%/html
+                        echo.
+                        echo "Build finished. The HTML pages are in %BUILDDIR%/html."
+                        goto end
+                    )
+
+                    :help
+                    %SPHINXBUILD% -M help %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
+
+                    :end
+                    popd
+                            """);
+        });
+    }
+
+    /**
+     * Write a Makefile.
+     * A Makefile is used on Unix-based systems to build Sphinx documentation.
+     * This file contains rules for cleaning the build directory and generating HTML documentation.
+     *
+     * @param context The generation context containing the writer delegator.
+     */
+    private static void writeMakeFile(
+            GenerationContext context
+    ) {
+        context.writerDelegator().useFileWriter("docs/Makefile", "", writer -> {
+            writer.write("""
+                    SPHINXBUILD   = sphinx-build
+                    BUILDDIR      = build
+                    SERVICESDIR   = source/reference/services
+                    SPHINXOPTS    = -j auto
+                    ALLSPHINXOPTS   = -d $$(BUILDDIR)/doctrees $$(SPHINXOPTS) .
+
+                    clean:
+                    \t-rm -rf $$(BUILDDIR)/*
+
+                    html:
+                    \t$$(SPHINXBUILD) -b html $$(ALLSPHINXOPTS) $$(BUILDDIR)/html
+                    \t@echo
+                    \t@echo "Build finished. The HTML pages are in $$(BUILDDIR)/html."
+                        """);
+        });
+    }
+
+    /**
+     * Write the main index files for the documentation.
+     * This method creates the main index.rst file and additional index files for
+     * the client and models sections.
+     *
+     * @param context The generation context containing the writer delegator.
+     */
+    private static void writeIndexes(GenerationContext context, String projectName) {
+        // Write the main index file for the documentation
+        context.writerDelegator().useFileWriter("docs/index.rst", "", writer -> {
+            writer.write("""
+                    $L
+                    $L
+
+                    ..  toctree::
+                        :maxdepth: 2
+                        :titlesonly:
+                        :glob:
+
+                        */index
+                                """, projectName, "=".repeat(projectName.length()));
+        });
+
+        // Write the index file for the client section
+        writeIndexFile(context, "docs/client/index.rst", "Client");
+
+        // Write the index file for the models section
+        writeIndexFile(context, "docs/models/index.rst", "Models");
+    }
+
+    /**
+     * Helper method to write an index file with the given title.
+     * This method creates an index file at the specified file path with the provided title.
+     *
+     * @param context  The generation context.
+     * @param filePath The file path of the index file.
+     * @param title    The title of the index file.
+     */
+    private static void writeIndexFile(GenerationContext context, String filePath, String title) {
+        context.writerDelegator().useFileWriter(filePath, "", writer -> {
+            writer.write("""
+                    $L
+                    =======
+                    .. toctree::
+                       :maxdepth: 1
+                       :titlesonly:
+                       :glob:
+
+                       *
+                                """, title);
+        });
+    }
+
 }

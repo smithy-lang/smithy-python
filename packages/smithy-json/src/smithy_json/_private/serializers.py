@@ -18,8 +18,8 @@ from smithy_core.serializers import (
     MapSerializer,
     ShapeSerializer,
 )
+from smithy_core.traits import JSONNameTrait, TimestampFormatTrait
 from smithy_core.types import TimestampFormat
-from smithy_core.traits import TimestampFormatTrait, JSONNameTrait
 
 from . import Flushable
 

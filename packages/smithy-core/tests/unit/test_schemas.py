@@ -1,15 +1,13 @@
 from dataclasses import replace
-
-import pytest
-
 from typing import Any
 
+import pytest
 from smithy_core.exceptions import ExpectationNotMetException
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import (
-    InternalTrait,
     DynamicTrait,
+    InternalTrait,
     SensitiveTrait,
 )
 

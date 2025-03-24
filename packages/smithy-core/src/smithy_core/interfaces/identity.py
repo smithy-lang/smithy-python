@@ -1,9 +1,10 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from datetime import datetime
-from typing import Protocol, TypedDict, TypeVar
+from typing import Protocol, TypedDict, TypeVar, runtime_checkable
 
 
+@runtime_checkable
 class Identity(Protocol):
     """An entity available to the client representing who the user is."""
 

@@ -1,8 +1,9 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from typing import Protocol, Any
+from typing import Any, Protocol
 
 from smithy_core.interceptors import Interceptor
+
 from smithy_http.interceptors.user_agent import UserAgentInterceptor
 
 

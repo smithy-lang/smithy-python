@@ -2,16 +2,16 @@
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
-from typing import NotRequired, Required, Self, TypedDict, overload, Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, NotRequired, Required, Self, TypedDict, overload
 
 from .exceptions import ExpectationNotMetException, SmithyException
 from .shapes import ShapeID, ShapeType
-from .traits import Trait, DynamicTrait, IdempotencyTokenTrait, StreamingTrait
+from .traits import DynamicTrait, IdempotencyTokenTrait, StreamingTrait, Trait
 
 if TYPE_CHECKING:
+    from .deserializers import DeserializeableShape
     from .documents import TypeRegistry
     from .serializers import SerializeableShape
-    from .deserializers import DeserializeableShape
 
 
 @dataclass(kw_only=True, frozen=True, init=False)

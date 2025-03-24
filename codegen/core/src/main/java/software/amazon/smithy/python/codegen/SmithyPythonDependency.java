@@ -67,15 +67,6 @@ public final class SmithyPythonDependency {
             false);
 
     /**
-     * Core interfaces for event streams.
-     */
-    public static final PythonDependency SMITHY_EVENT_STREAM = new PythonDependency(
-            "smithy_event_stream",
-            "==0.0.1",
-            Type.DEPENDENCY,
-            false);
-
-    /**
      * EventStream implementations for application/vnd.amazon.eventstream.
      */
     public static final PythonDependency AWS_EVENT_STREAM = new PythonDependency(
@@ -100,6 +91,24 @@ public final class SmithyPythonDependency {
             "pytest-asyncio",
             ">=0.20.3,<0.21.0",
             Type.TEST_DEPENDENCY,
+            false);
+
+    /**
+     * library used for documentation generation
+     */
+    public static final PythonDependency SPHINX = new PythonDependency(
+            "sphinx",
+            ">=8.2.3",
+            Type.DOCS_DEPENDENCY,
+            false);
+
+    /**
+     * sphinx theme
+     */
+    public static final PythonDependency SPHINX_PYDATA_THEME = new PythonDependency(
+            "pydata-sphinx-theme",
+            ">=0.16.1",
+            Type.DOCS_DEPENDENCY,
             false);
 
     private SmithyPythonDependency() {}

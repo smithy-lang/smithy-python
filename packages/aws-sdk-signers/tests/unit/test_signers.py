@@ -9,13 +9,13 @@ from io import BytesIO
 
 import pytest
 from aws_sdk_signers import (
-    URI,
     AsyncSigV4Signer,
     AWSCredentialIdentity,
     AWSRequest,
     Fields,
     SigV4Signer,
     SigV4SigningProperties,
+    URI,
 )
 
 SIGV4_RE = re.compile(

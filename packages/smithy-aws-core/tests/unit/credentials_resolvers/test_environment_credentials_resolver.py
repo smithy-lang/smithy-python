@@ -2,7 +2,6 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 import pytest
-
 from smithy_aws_core.credentials_resolvers import EnvironmentCredentialsResolver
 from smithy_core.exceptions import SmithyIdentityException
 from smithy_core.interfaces.identity import IdentityProperties

@@ -4,26 +4,25 @@
 #  flake8: noqa: F811
 import asyncio
 from asyncio import Future as AsyncFuture
-from concurrent.futures import Future as ConcurrentFuture
 from collections import deque
 from collections.abc import AsyncGenerator, AsyncIterable
+from concurrent.futures import Future as ConcurrentFuture
 from copy import deepcopy
 from functools import partial
-from io import BytesIO, BufferedIOBase
+from io import BufferedIOBase, BytesIO
 from typing import TYPE_CHECKING, Any
 
-
 if TYPE_CHECKING:
+    # Both of these are types that essentially are "castable to bytes/memoryview"
+    # Unfortunately they're not exposed anywhere so we have to import them from
+    # _typeshed.
+    from _typeshed import ReadableBuffer, WriteableBuffer
+
     # pyright doesn't like optional imports. This is reasonable because if we use these
     # in type hints then they'd result in runtime errors.
     # TODO: add integ tests that import these without the dependendency installed
     from awscrt import http as crt_http
     from awscrt import io as crt_io
-
-    # Both of these are types that essentially are "castable to bytes/memoryview"
-    # Unfortunately they're not exposed anywhere so we have to import them from
-    # _typeshed.
-    from _typeshed import WriteableBuffer, ReadableBuffer
 
 try:
     from awscrt import http as crt_http
@@ -106,7 +105,7 @@ class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
 
 class CRTResponseBody:
     def __init__(self) -> None:
-        self._stream: "crt_http.HttpClientStream | None" = None
+        self._stream: crt_http.HttpClientStream | None = None
         self._completion_future: AsyncFuture[int] | None = None
         self._chunk_futures: deque[ConcurrentFuture[bytes]] = deque()
 
@@ -251,7 +250,12 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         crt_stream.completion_future.add_done_callback(
             partial(self._close_input_body, body=crt_body)
         )
-        return await response_factory.await_response()
+
+        response = await response_factory.await_response()
+        if response.status != 200 and response.status >= 300:
+            await close(crt_body)
+
+        return response
 
     def _close_input_body(
         self, future: ConcurrentFuture[int], *, body: "BufferableByteStream | BytesIO"
@@ -273,12 +277,14 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
     ) -> "crt_http.HttpClientConnection":
         # TODO: Use CRT connection pooling instead of this basic kind
         connection_key = (url.scheme, url.host, url.port)
-        if connection_key in self._connections:
-            return self._connections[connection_key]
-        else:
-            connection = await self._create_connection(url)
-            self._connections[connection_key] = connection
+        connection = self._connections.get(connection_key)
+
+        if connection and connection.is_open():
             return connection
+
+        connection = await self._create_connection(url)
+        self._connections[connection_key] = connection
+        return connection
 
     def _build_new_connection(
         self, url: core_interfaces.URI
@@ -462,7 +468,7 @@ class BufferableByteStream(BufferedIOBase):
             )
 
         if self._closed:
-            raise IOError("Stream is completed and doesn't support further writes.")
+            raise OSError("Stream is completed and doesn't support further writes.")
 
         if buffer:
             self._chunks.append(buffer)

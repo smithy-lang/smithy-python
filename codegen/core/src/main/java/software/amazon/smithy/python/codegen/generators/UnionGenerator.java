@@ -15,6 +15,8 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.SymbolProperties;
+import software.amazon.smithy.python.codegen.sections.UnionMemberSection;
+import software.amazon.smithy.python.codegen.sections.UnionSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -47,6 +49,7 @@ public final class UnionGenerator implements Runnable {
 
     @Override
     public void run() {
+        writer.addStdlibImports("typing", Set.of("Union"));
         writer.pushState();
         var parentName = symbolProvider.toSymbol(shape).getName();
         writer.addStdlibImport("dataclasses", "dataclass");
@@ -61,7 +64,7 @@ public final class UnionGenerator implements Runnable {
 
             var target = model.expectShape(member.getTarget());
             var targetSymbol = symbolProvider.toSymbol(target);
-
+            writer.pushState(new UnionMemberSection(memberSymbol));
             writer.write("""
                     @dataclass
                     class $1L:
@@ -92,6 +95,7 @@ public final class UnionGenerator implements Runnable {
                             new MemberDeserializerGenerator(context, w, member, "deserializer")))
 
             );
+            writer.popState();
         }
 
         // Note that the unknown variant doesn't implement __eq__. This is because
@@ -99,6 +103,7 @@ public final class UnionGenerator implements Runnable {
         // Since the underlying value is unknown and un-comparable, that is the only
         // realistic implementation.
         var unknownSymbol = symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.UNION_UNKNOWN);
+        writer.pushState(new UnionMemberSection(unknownSymbol));
         writer.addImport("smithy_core.exceptions", "SmithyException");
         writer.write("""
                 @dataclass
@@ -125,9 +130,14 @@ public final class UnionGenerator implements Runnable {
 
                 """, unknownSymbol.getName());
         memberNames.add(unknownSymbol.getName());
+        writer.popState();
 
-        writer.write("type $L = $L\n", parentName, String.join(" | ", memberNames));
+        writer.pushState(new UnionSection(shape, parentName, memberNames));
+        // We need to use the old union syntax until we either migrate away from
+        // Sphinx or Sphinx fixes the issue upstream: https://github.com/sphinx-doc/sphinx/issues/10785
+        writer.write("$L = Union[$L]\n", parentName, String.join(" | ", memberNames));
         shape.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeDocs(trait.getValue()));
+        writer.popState();
 
         generateDeserializer();
         writer.popState();

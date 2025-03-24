@@ -7,6 +7,7 @@ package software.amazon.smithy.python.codegen.integrations;
 import java.util.List;
 import java.util.Set;
 import software.amazon.smithy.aws.traits.protocols.RestJson1Trait;
+import software.amazon.smithy.model.knowledge.EventStreamIndex;
 import software.amazon.smithy.model.knowledge.HttpBinding;
 import software.amazon.smithy.model.node.ArrayNode;
 import software.amazon.smithy.model.node.ObjectNode;
@@ -154,6 +155,20 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         }
 
         writer.popState();
+    }
+
+    @Override
+    protected void writeDefaultHeaders(GenerationContext context, PythonWriter writer, OperationShape operation) {
+        var eventStreamIndex = EventStreamIndex.of(context.model());
+        if (eventStreamIndex.getInputInfo(operation).isPresent()) {
+            writer.addImport("smithy_http", "Field");
+            writer.write(
+                    "Field(name=\"Content-Type\", values=[$S]),",
+                    "application/vnd.amazon.eventstream");
+            writer.write(
+                    "Field(name=\"X-Amz-Content-SHA256\", values=[$S]),",
+                    "STREAMING-AWS4-HMAC-SHA256-EVENTS");
+        }
     }
 
     @Override
@@ -396,14 +411,25 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         writer.addImport("smithy_json", "JSONCodec");
         writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
         writer.addImport("smithy_core.types", "TimestampFormat");
-        writer.addImport("aws_event_stream.aio", "AWSInputEventStream");
+        writer.addImport("aws_event_stream.aio", "AWSEventPublisher");
+        writer.addImport("aws_sdk_signers", "AsyncEventSigner");
         writer.write(
                 """
+                        # TODO - Move this out of the RestJSON generator
+                        ctx = request_context
+                        signer_properties = ctx.properties.get("signer_properties")  # type: ignore
+                        identity = ctx.properties.get("identity")  # type: ignore
+                        signature = ctx.properties.get("signature")  # type: ignore
+                        signer = AsyncEventSigner(
+                            signing_properties=signer_properties,  # type: ignore
+                            identity=identity,  # type: ignore
+                            initial_signature=signature,  # type: ignore
+                        )
                         codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
-                        return AWSInputEventStream[Any, Any](
+                        publisher = AWSEventPublisher[Any](
                             payload_codec=codec,
-                            awaitable_output=awaitable_output,
                             async_writer=request_context.transport_request.body,  # type: ignore
+                            signer=signer,  # type: ignore
                         )
                         """);
     }
@@ -415,37 +441,15 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         writer.addImport("smithy_json", "JSONCodec");
         writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
         writer.addImport("smithy_core.types", "TimestampFormat");
-        writer.addImport("aws_event_stream.aio", "AWSOutputEventStream");
+        writer.addImport("aws_event_stream.aio", "AWSEventReceiver");
         writer.write(
                 """
                         codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
-                        return AWSOutputEventStream[Any, Any](
+                        receiver = AWSEventReceiver(
                             payload_codec=codec,
-                            initial_response=output,
-                            async_reader=AsyncBytesReader(
+                            source=AsyncBytesReader(
                                 transport_response.body  # type: ignore
                             ),
-                            deserializer=event_deserializer,  # type: ignore
-                        )
-                        """);
-    }
-
-    @Override
-    public void wrapDuplexStream(GenerationContext context, PythonWriter writer) {
-        writer.addDependency(SmithyPythonDependency.SMITHY_JSON);
-        writer.addDependency(SmithyPythonDependency.AWS_EVENT_STREAM);
-        writer.addImport("smithy_json", "JSONCodec");
-        writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
-        writer.addImport("smithy_core.types", "TimestampFormat");
-        writer.addImport("aws_event_stream.aio", "AWSDuplexEventStream");
-        writer.write(
-                """
-                        codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
-                        return AWSDuplexEventStream[Any, Any, Any](
-                            payload_codec=codec,
-                            async_writer=request_context.transport_request.body,  # type: ignore
-                            awaitable_output=awaitable_output,
-                            awaitable_response=response_future,
                             deserializer=event_deserializer,  # type: ignore
                         )
                         """);

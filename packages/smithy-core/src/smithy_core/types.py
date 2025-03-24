@@ -5,13 +5,15 @@ import re
 import sys
 from collections import UserDict
 from collections.abc import Mapping, Sequence
+from dataclasses import dataclass
 from datetime import datetime
 from email.utils import format_datetime, parsedate_to_datetime
 from enum import Enum
 from typing import Any, overload
-from dataclasses import dataclass
 
 from .exceptions import ExpectationNotMetException
+from .interfaces import PropertyKey as _PropertyKey
+from .interfaces import TypedProperties as _TypedProperties
 from .utils import (
     ensure_utc,
     epoch_seconds_to_datetime,
@@ -19,8 +21,6 @@ from .utils import (
     serialize_epoch_seconds,
     serialize_rfc3339,
 )
-from .interfaces import PropertyKey as _PropertyKey
-from .interfaces import TypedProperties as _TypedProperties
 
 _GREEDY_LABEL_RE = re.compile(r"\{(\w+)\+\}")
 
@@ -161,7 +161,23 @@ class PathPattern:
 
 @dataclass(kw_only=True, frozen=True, slots=True, init=False)
 class PropertyKey[T](_PropertyKey[T]):
-    """A typed property key."""
+    """A typed property key.
+
+    Note that unions and other special types cannot easily be used here due to being
+    incompatible with ``type[T]``. PEP747 proposes a fix to this case, but it has not
+    yet been accepted. In the meantime, there is a workaround. The PropertyKey must
+    be assigned to an explicitly typed variable, and the ``value_type`` parameter of
+    the constructor must have a ``# type: ignore`` comment, like so:
+
+    .. code-block:: python
+
+        UNION_PROPERTY: PropertyKey[str | int] = PropertyKey(
+            key="union",
+            value_type=str | int,  # type: ignore
+        )
+
+    Type checkers will be able to use such a property as expected.
+    """
 
     key: str
     """The string key used to access the value."""
@@ -186,14 +202,36 @@ class TypedProperties(UserDict[str, Any], _TypedProperties):
     typing to get it, and those who don't care about typing to not have to think about
     it.
 
+    No runtime type assertion is performed.
+
     ..code-block:: python
 
         foo = PropertyKey(key="foo", value_type=str)
         properties = TypedProperties()
         properties[foo] = "bar"
 
-        assert assert_type(properties[foo], str) == "bar
-        assert assert_type(properties["foo"], Any) == "bar
+        assert assert_type(properties[foo], str) == "bar"
+        assert assert_type(properties["foo"], Any) == "bar"
+
+    Note that unions and other special types cannot easily be used here due to being
+    incompatible with ``type[T]``. PEP747 proposes a fix to this case, but it has not
+    yet been accepted. In the meantime, there is a workaround. The PropertyKey must
+    be assigned to an explicitly typed variable, and the ``value_type`` parameter of
+    the constructor must have a ``# type: ignore`` comment, like so:
+
+    .. code-block:: python
+
+        UNION_PROPERTY: PropertyKey[str | int] = PropertyKey(
+            key="union",
+            value_type=str | int,  # type: ignore
+        )
+
+        properties = TypedProperties()
+        properties[UNION_PROPERTY] = "foo"
+
+        assert assert_type(properties[UNION_PROPERTY], str | int) == "foo"
+
+    Type checkers will be able to use such a property as expected.
     """
 
     @overload
@@ -208,13 +246,7 @@ class TypedProperties(UserDict[str, Any], _TypedProperties):
     @overload
     def __setitem__(self, key: str, value: Any) -> None: ...
     def __setitem__(self, key: str | _PropertyKey[Any], value: Any) -> None:
-        if isinstance(key, _PropertyKey):
-            if not isinstance(value, key.value_type):
-                raise ValueError(
-                    f"Expected value type of {key.value_type}, but was {type(value)}"
-                )
-            key = key.key
-        self.data[key] = value
+        self.data[key if isinstance(key, str) else key.key] = value
 
     def __delitem__(self, key: str | _PropertyKey[Any]) -> None:
         del self.data[key if isinstance(key, str) else key.key]

@@ -1,5 +1,5 @@
 GET
-/example%20space/
+/example%2520space/
 
 host:example.amazonaws.com
 x-amz-date:20150830T123600Z

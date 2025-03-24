@@ -1,29 +1,15 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from typing import Protocol, Self
+from typing import Protocol
 
-from smithy_core.aio.interfaces import Request, Response, ClientTransport
+from smithy_core.aio.interfaces import ClientTransport, Request, Response
 from smithy_core.aio.utils import read_streaming_blob, read_streaming_blob_async
 
 from ...interfaces import (
-    Endpoint,
     Fields,
     HTTPClientConfiguration,
     HTTPRequestConfiguration,
 )
-
-
-class EndpointParameters[C](Protocol):
-    @classmethod
-    def build(cls, config: C) -> Self:
-        raise NotImplementedError()
-
-
-class EndpointResolver[T](Protocol):
-    """Resolves an operation's endpoint based given parameters."""
-
-    async def resolve_endpoint(self, params: T) -> Endpoint:
-        raise NotImplementedError()
 
 
 class HTTPRequest(Request, Protocol):

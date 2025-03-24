@@ -23,11 +23,7 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
-import software.amazon.smithy.python.codegen.sections.InitializeHttpAuthParametersSection;
-import software.amazon.smithy.python.codegen.sections.ResolveEndpointSection;
-import software.amazon.smithy.python.codegen.sections.ResolveIdentitySection;
-import software.amazon.smithy.python.codegen.sections.SendRequestSection;
-import software.amazon.smithy.python.codegen.sections.SignRequestSection;
+import software.amazon.smithy.python.codegen.sections.*;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -69,10 +65,10 @@ final class ClientGenerator implements Runnable {
                         $L
 
                         :param config: Optional configuration for the client. Here you can set things like the
-                        endpoint for HTTP services or auth credentials.
+                            endpoint for HTTP services or auth credentials.
 
                         :param plugins: A list of callables that modify the configuration dynamically. These
-                        can be used to set defaults, for example.""", docs);
+                            can be used to set defaults, for example.""", docs);
             });
 
             var defaultPlugins = new LinkedHashSet<SymbolReference>();
@@ -154,6 +150,7 @@ final class ClientGenerator implements Runnable {
         writer.addImport("smithy_core.types", "TypedProperties");
         writer.addImport("smithy_core.serializers", "SerializeableShape");
         writer.addImport("smithy_core.deserializers", "DeserializeableShape");
+        writer.addImport("smithy_core.schemas", "APIOperation");
 
         writer.indent();
         writer.write("""
@@ -200,6 +197,13 @@ final class ClientGenerator implements Runnable {
         if (hasStreaming) {
             writer.addStdlibImports("typing", Set.of("Any", "Awaitable"));
             writer.addStdlibImport("asyncio");
+
+            writer.addImports("smithy_core.aio.eventstream",
+                    Set.of(
+                            "InputEventStream",
+                            "OutputEventStream",
+                            "DuplexEventStream"));
+            writer.addImport("smithy_core.aio.interfaces.eventstream", "EventReceiver");
             writer.write(
                     """
                             async def _input_stream[Input: SerializeableShape, Output: DeserializeableShape](
@@ -209,15 +213,19 @@ final class ClientGenerator implements Runnable {
                                 serialize: Callable[[Input, $4T], Awaitable[$2T]],
                                 deserialize: Callable[[$3T, $4T], Awaitable[Output]],
                                 config: $4T,
-                                operation_name: str,
+                                operation: APIOperation[Input, Output],
                             ) -> Any:
                                 request_future = Future[RequestContext[Any, $2T]]()
                                 awaitable_output = asyncio.create_task(self._execute_operation(
-                                    input, plugins, serialize, deserialize, config, operation_name,
+                                    input, plugins, serialize, deserialize, config, operation,
                                     request_future=request_future
                                 ))
                                 request_context = await request_future
                                 ${5C|}
+                                return InputEventStream[Any, Any](
+                                    input_stream=publisher,
+                                    output_future=awaitable_output,
+                                )
 
                             async def _output_stream[Input: SerializeableShape, Output: DeserializeableShape](
                                 self,
@@ -226,16 +234,20 @@ final class ClientGenerator implements Runnable {
                                 serialize: Callable[[Input, $4T], Awaitable[$2T]],
                                 deserialize: Callable[[$3T, $4T], Awaitable[Output]],
                                 config: $4T,
-                                operation_name: str,
+                                operation: APIOperation[Input, Output],
                                 event_deserializer: Callable[[ShapeDeserializer], Any],
                             ) -> Any:
                                 response_future = Future[$3T]()
                                 output = await self._execute_operation(
-                                    input, plugins, serialize, deserialize, config, operation_name,
+                                    input, plugins, serialize, deserialize, config, operation,
                                     response_future=response_future
                                 )
                                 transport_response = await response_future
                                 ${6C|}
+                                return OutputEventStream[Any, Any](
+                                    output_stream=receiver,
+                                    output=output
+                                )
 
                             async def _duplex_stream[Input: SerializeableShape, Output: DeserializeableShape](
                                 self,
@@ -244,26 +256,45 @@ final class ClientGenerator implements Runnable {
                                 serialize: Callable[[Input, $4T], Awaitable[$2T]],
                                 deserialize: Callable[[$3T, $4T], Awaitable[Output]],
                                 config: $4T,
-                                operation_name: str,
+                                operation: APIOperation[Input, Output],
                                 event_deserializer: Callable[[ShapeDeserializer], Any],
                             ) -> Any:
                                 request_future = Future[RequestContext[Any, $2T]]()
                                 response_future = Future[$3T]()
                                 awaitable_output = asyncio.create_task(self._execute_operation(
-                                    input, plugins, serialize, deserialize, config, operation_name,
+                                    input, plugins, serialize, deserialize, config, operation,
                                     request_future=request_future,
                                     response_future=response_future
                                 ))
                                 request_context = await request_future
-                                ${7C|}
+                                ${5C|}
+                                output_future = asyncio.create_task(self._wrap_duplex_output(
+                                    response_future, awaitable_output, config, operation,
+                                    event_deserializer
+                                ))
+                                return DuplexEventStream[Any, Any, Any](
+                                    input_stream=publisher,
+                                    output_future=output_future,
+                                )
+
+                            async def _wrap_duplex_output[Input: SerializeableShape, Output: DeserializeableShape](
+                                self,
+                                response_future: Future[$3T],
+                                awaitable_output: Future[Any],
+                                config: $4T,
+                                operation: APIOperation[Input, Output],
+                                event_deserializer: Callable[[ShapeDeserializer], Any],
+                            ) -> tuple[Any, EventReceiver[Any]]:
+                                transport_response = await response_future
+                                ${6C|}
+                                return await awaitable_output, receiver
                             """,
                     pluginSymbol,
                     transportRequest,
                     transportResponse,
                     configSymbol,
                     writer.consumer(w -> context.protocolGenerator().wrapInputStream(context, w)),
-                    writer.consumer(w -> context.protocolGenerator().wrapOutputStream(context, w)),
-                    writer.consumer(w -> context.protocolGenerator().wrapDuplexStream(context, w)));
+                    writer.consumer(w -> context.protocolGenerator().wrapOutputStream(context, w)));
         }
         writer.addStdlibImport("typing", "Any");
         writer.addStdlibImport("asyncio", "iscoroutine");
@@ -276,19 +307,19 @@ final class ClientGenerator implements Runnable {
                             serialize: Callable[[Input, $5T], Awaitable[$2T]],
                             deserialize: Callable[[$3T, $5T], Awaitable[Output]],
                             config: $5T,
-                            operation_name: str,
+                            operation: APIOperation[Input, Output],
                             request_future: Future[RequestContext[Any, $2T]] | None = None,
                             response_future: Future[$3T] | None = None,
                         ) -> Output:
                             try:
                                 return await self._handle_execution(
-                                    input, plugins, serialize, deserialize, config, operation_name,
+                                    input, plugins, serialize, deserialize, config, operation,
                                     request_future, response_future,
                                 )
                             except Exception as e:
-                                if request_future is not None and not request_future.done:
+                                if request_future is not None and not request_future.done():
                                     request_future.set_exception($4T(e))
-                                if response_future is not None and not response_future.done:
+                                if response_future is not None and not response_future.done():
                                     response_future.set_exception($4T(e))
 
                                 # Make sure every exception that we throw is an instance of $4T so
@@ -304,16 +335,17 @@ final class ClientGenerator implements Runnable {
                             serialize: Callable[[Input, $5T], Awaitable[$2T]],
                             deserialize: Callable[[$3T, $5T], Awaitable[Output]],
                             config: $5T,
-                            operation_name: str,
+                            operation: APIOperation[Input, Output],
                             request_future: Future[RequestContext[Any, $2T]] | None,
                             response_future: Future[$3T] | None,
                         ) -> Output:
+                            operation_name = operation.schema.id.name
                             logger.debug('Making request for operation "%s" with parameters: %s', operation_name, input)
                             config = deepcopy(config)
                             for plugin in plugins:
                                 plugin(config)
 
-                            input_context = InputContext(request=input, properties=TypedProperties())
+                            input_context = InputContext(request=input, properties=TypedProperties({"config": config}))
                             transport_request: $2T | None = None
                             output_context: OutputContext[Input, Output, $2T | None, $3T | None] | None = None
 
@@ -365,7 +397,7 @@ final class ClientGenerator implements Runnable {
                                         interceptor_chain,
                                         request_context,
                                         config,
-                                        operation_name,
+                                        operation,
                                         request_future,
                                     )
 
@@ -420,7 +452,7 @@ final class ClientGenerator implements Runnable {
                             interceptor: Interceptor[Input, Output, $2T, $3T],
                             context: RequestContext[Input, $2T],
                             config: $5T,
-                            operation_name: str,
+                            operation: APIOperation[Input, Output],
                             request_future: Future[RequestContext[Input, $2T]] | None,
                         ) -> OutputContext[Input, Output, $2T, $3T | None]:
                             transport_response: $3T | None = None
@@ -442,7 +474,7 @@ final class ClientGenerator implements Runnable {
             writer.write("""
                             # Step 7b: Invoke service_auth_scheme_resolver.resolve_auth_scheme
                             auth_parameters: $1T = $1T(
-                                operation=operation_name,
+                                operation=operation.schema.id.name,
                                 ${2C|}
                             )
 
@@ -488,37 +520,43 @@ final class ClientGenerator implements Runnable {
         writer.popState();
 
         writer.pushState(new ResolveEndpointSection());
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+        writer.addImport("smithy_core", "URI");
+        writer.addImport("smithy_core.endpoints", "EndpointResolverParams");
+        writer.write("""
+                        # Step 7f: Invoke endpoint_resolver.resolve_endpoint
+                        endpoint_resolver_parameters = EndpointResolverParams(
+                            operation=operation,
+                            input=context.request,
+                            context=context.properties
+                        )
+                        logger.debug("Calling endpoint resolver with parameters: %s", endpoint_resolver_parameters)
+                        endpoint = await config.endpoint_resolver.resolve_endpoint(
+                            endpoint_resolver_parameters
+                        )
+                        logger.debug("Endpoint resolver result: %s", endpoint)
+                        if not endpoint.uri.path:
+                            path = ""
+                        elif endpoint.uri.path.endswith("/"):
+                            path = endpoint.uri.path[:-1]
+                        else:
+                            path = endpoint.uri.path
+                        if context.transport_request.destination.path:
+                            path += context.transport_request.destination.path
+                        context.transport_request.destination = URI(
+                            scheme=endpoint.uri.scheme,
+                            host=context.transport_request.destination.host + endpoint.uri.host,
+                            path=path,
+                            port=endpoint.uri.port,
+                            query=context.transport_request.destination.query,
+                        )
+                """);
         if (context.applicationProtocol().isHttpProtocol()) {
-            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-            writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-            writer.addImport("smithy_core", "URI");
             writer.write("""
-                            # Step 7f: Invoke endpoint_resolver.resolve_endpoint
-                            endpoint_resolver_parameters = $1T.build(config=config)
-                            logger.debug("Calling endpoint resolver with parameters: %s", endpoint_resolver_parameters)
-                            endpoint = await config.endpoint_resolver.resolve_endpoint(
-                                endpoint_resolver_parameters
-                            )
-                            logger.debug("Endpoint resolver result: %s", endpoint)
-                            if not endpoint.uri.path:
-                                path = ""
-                            elif endpoint.uri.path.endswith("/"):
-                                path = endpoint.uri.path[:-1]
-                            else:
-                                path = endpoint.uri.path
-                            if context.transport_request.destination.path:
-                                path += context.transport_request.destination.path
-                            context.transport_request.destination = URI(
-                                scheme=endpoint.uri.scheme,
-                                host=context.transport_request.destination.host + endpoint.uri.host,
-                                path=path,
-                                port=endpoint.uri.port,
-                                query=context.transport_request.destination.query,
-                            )
-                            context.transport_request.fields.extend(endpoint.headers)
-
-                    """,
-                    CodegenUtils.getEndpointParametersSymbol(context.settings()));
+                            if (headers := endpoint.properties.get("headers")) is not None:
+                                context.transport_request.fields.extend(headers)
+                    """);
         }
         writer.popState();
 
@@ -536,6 +574,10 @@ final class ClientGenerator implements Runnable {
 
         writer.pushState(new SignRequestSection());
         if (context.applicationProtocol().isHttpProtocol() && supportsAuth) {
+            writer.addStdlibImport("re");
+            writer.addStdlibImport("typing", "Any");
+            writer.addImport("smithy_core.interfaces.identity", "Identity");
+            writer.addImport("smithy_core.types", "PropertyKey");
             writer.write("""
                             # Step 7i: sign the request
                             if auth_option and signer:
@@ -553,6 +595,23 @@ final class ClientGenerator implements Runnable {
                                     )
                                 )
                                 logger.debug("Signed HTTP request: %s", context.transport_request)
+
+                                # TODO - Move this to separate resolution/population function
+                                fields = context.transport_request.fields
+                                auth_value = fields["Authorization"].as_string()  # type: ignore
+                                signature = re.split("Signature=", auth_value)[-1]  # type: ignore
+                                context.properties["signature"] = signature.encode('utf-8')
+
+                                identity_key: PropertyKey[Identity | None] = PropertyKey(
+                                    key="identity",
+                                    value_type=Identity | None  # type: ignore
+                                )
+                                sp_key: PropertyKey[dict[str, Any]] = PropertyKey(
+                                    key="signer_properties",
+                                    value_type=dict[str, Any]  # type: ignore
+                                )
+                                context.properties[identity_key] = identity
+                                context.properties[sp_key] = auth_option.signer_properties
                     """);
         }
         writer.popState();
@@ -754,7 +813,8 @@ final class ClientGenerator implements Runnable {
      * Generates the function for a single operation.
      */
     private void generateOperation(PythonWriter writer, OperationShape operation) {
-        var operationMethodSymbol = symbolProvider.toSymbol(operation).expectProperty(OPERATION_METHOD);
+        var operationSymbol = symbolProvider.toSymbol(operation);
+        var operationMethodSymbol = operationSymbol.expectProperty(OPERATION_METHOD);
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
 
         var input = model.expectShape(operation.getInputShape());
@@ -763,6 +823,7 @@ final class ClientGenerator implements Runnable {
         var output = model.expectShape(operation.getOutputShape());
         var outputSymbol = symbolProvider.toSymbol(output);
 
+        writer.pushState(new OperationSection(service, operation));
         writer.openBlock("async def $L(self, input: $T, plugins: list[$T] | None = None) -> $T:",
                 "",
                 operationMethodSymbol.getName(),
@@ -785,31 +846,34 @@ final class ClientGenerator implements Runnable {
                                     serialize=$T,
                                     deserialize=$T,
                                     config=self._config,
-                                    operation_name=$S,
+                                    operation=$T,
                                 )
-                                """, serSymbol, deserSymbol, operation.getId().getName());
+                                """, serSymbol, deserSymbol, operationSymbol);
                     }
                 });
+        writer.popState();
     }
 
     private void writeSharedOperationInit(PythonWriter writer, OperationShape operation, Shape input) {
         writer.writeDocs(() -> {
-            var docs = operation.getTrait(DocumentationTrait.class)
+            var docs = writer.formatDocs(operation.getTrait(DocumentationTrait.class)
                     .map(StringTrait::getValue)
-                    .orElse(String.format("Invokes the %s operation.", operation.getId().getName()));
+                    .orElse(String.format("Invokes the %s operation.",
+                            operation.getId().getName())));
 
             var inputDocs = input.getTrait(DocumentationTrait.class)
                     .map(StringTrait::getValue)
                     .orElse("The operation's input.");
 
             writer.write("""
-                    $L
-
                     :param input: $L
 
                     :param plugins: A list of callables that modify the configuration dynamically.
-                    Changes made by these plugins only apply for the duration of the operation
-                    execution and will not affect any other operation invocations.""", docs, inputDocs);
+                        Changes made by these plugins only apply for the duration of the operation
+                        execution and will not affect any other operation invocations.
+
+                        $L
+                        """, inputDocs, docs);
         });
 
         var defaultPlugins = new LinkedHashSet<SymbolReference>();
@@ -832,8 +896,10 @@ final class ClientGenerator implements Runnable {
 
     private void generateEventStreamOperation(PythonWriter writer, OperationShape operation) {
         writer.pushState();
-        writer.addDependency(SmithyPythonDependency.SMITHY_EVENT_STREAM);
-        var operationMethodSymbol = symbolProvider.toSymbol(operation).expectProperty(OPERATION_METHOD);
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        var operationSymbol = symbolProvider.toSymbol(operation);
+        writer.putContext("operation", operationSymbol);
+        var operationMethodSymbol = operationSymbol.expectProperty(OPERATION_METHOD);
         writer.putContext("operationName", operationMethodSymbol.getName());
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
         writer.putContext("plugin", pluginSymbol);
@@ -872,7 +938,6 @@ final class ClientGenerator implements Runnable {
 
         if (inputStreamSymbol != null) {
             if (outputStreamSymbol != null) {
-                writer.addImport("smithy_event_stream.aio.interfaces", "DuplexEventStream");
                 writer.write("""
                         async def ${operationName:L}(
                             self,
@@ -890,7 +955,7 @@ final class ClientGenerator implements Runnable {
                                 serialize=${serSymbol:T},
                                 deserialize=${deserSymbol:T},
                                 config=self._config,
-                                operation_name=${operationName:S},
+                                operation=${operation:T},
                                 event_deserializer=$T().deserialize,
                             )  # type: ignore
                             ${/hasProtocol}
@@ -898,7 +963,7 @@ final class ClientGenerator implements Runnable {
                         writer.consumer(w -> writeSharedOperationInit(w, operation, input)),
                         outputStreamSymbol.expectProperty(SymbolProperties.DESERIALIZER));
             } else {
-                writer.addImport("smithy_event_stream.aio.interfaces", "InputEventStream");
+                writer.addImport("smithy_core.aio.eventstream", "InputEventStream");
                 writer.write("""
                         async def ${operationName:L}(
                             self,
@@ -916,13 +981,12 @@ final class ClientGenerator implements Runnable {
                                 serialize=${serSymbol:T},
                                 deserialize=${deserSymbol:T},
                                 config=self._config,
-                                operation_name=${operationName:S},
+                                operation=${operation:T},
                             )  # type: ignore
                             ${/hasProtocol}
                         """, writer.consumer(w -> writeSharedOperationInit(w, operation, input)));
             }
         } else {
-            writer.addImport("smithy_event_stream.aio.interfaces", "OutputEventStream");
             writer.write("""
                     async def ${operationName:L}(
                         self,
@@ -940,7 +1004,7 @@ final class ClientGenerator implements Runnable {
                             serialize=${serSymbol:T},
                             deserialize=${deserSymbol:T},
                             config=self._config,
-                            operation_name=${operationName:S},
+                            operation=${operation:T},
                             event_deserializer=$T().deserialize,
                         )  # type: ignore
                         ${/hasProtocol}

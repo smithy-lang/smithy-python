@@ -4,16 +4,13 @@ from io import BytesIO
 from typing import Any
 
 import pytest
+from aws_event_stream._private.deserializers import EventDeserializer
+from aws_event_stream.aio import AWSEventReceiver
+from aws_event_stream.events import Event, EventMessage
+from aws_event_stream.exceptions import UnmodeledEventError
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.deserializers import DeserializeableShape
 from smithy_json import JSONCodec
-
-from aws_event_stream._private.deserializers import (
-    AWSAsyncEventReceiver,
-    EventDeserializer,
-)
-from aws_event_stream.events import Event, EventMessage
-from aws_event_stream.exceptions import UnmodeledEventError
 
 from . import (
     EVENT_STREAM_SERDE_CASES,
@@ -30,7 +27,7 @@ from . import (
 async def test_event_receiver(expected: DeserializeableShape, given: EventMessage):
     source = AsyncBytesReader(given.encode())
     deserializer = EventStreamDeserializer()
-    receiver = AWSAsyncEventReceiver[Any](
+    receiver = AWSEventReceiver[Any](
         payload_codec=JSONCodec(), source=source, deserializer=deserializer.deserialize
     )
 
@@ -94,7 +91,7 @@ def test_deserialize_unmodeled_error():
 async def test_receiver_closes_source() -> None:
     source = AsyncBytesReader(b"")
     deserializer = EventStreamDeserializer()
-    receiver = AWSAsyncEventReceiver[Any](
+    receiver = AWSEventReceiver[Any](
         payload_codec=JSONCodec(), source=source, deserializer=deserializer.deserialize
     )
     assert not receiver.closed
@@ -107,7 +104,7 @@ async def test_receiver_closes_source() -> None:
 async def test_read_closed_receiver() -> None:
     source = AsyncBytesReader(b"")
     deserializer = EventStreamDeserializer()
-    receiver = AWSAsyncEventReceiver[Any](
+    receiver = AWSEventReceiver[Any](
         payload_codec=JSONCodec(), source=source, deserializer=deserializer.deserialize
     )
 
@@ -119,7 +116,7 @@ async def test_read_closed_receiver() -> None:
 async def test_read_closed_receiver_source() -> None:
     source = AsyncBytesReader(b"")
     deserializer = EventStreamDeserializer()
-    receiver = AWSAsyncEventReceiver[Any](
+    receiver = AWSEventReceiver[Any](
         payload_codec=JSONCodec(), source=source, deserializer=deserializer.deserialize
     )
 
