@@ -1,27 +1,24 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-import os
-from collections.abc import Callable, Sequence
+from collections.abc import Sequence
 
 from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyIdentityException
 from smithy_core.interfaces.identity import IdentityProperties
 
-from smithy_aws_core.credentials_resolvers import EnvironmentCredentialsResolver
+from smithy_aws_core.credentials_resolvers.environment import (
+    EnvironmentCredentialsSource,
+)
+from smithy_aws_core.credentials_resolvers.imds import IMDSCredentialsSource
+from smithy_aws_core.credentials_resolvers.interfaces import (
+    AwsCredentialsConfig,
+    CredentialsSource,
+)
 from smithy_aws_core.identity import AWSCredentialsIdentity, AWSCredentialsResolver
 
-
-def _env_creds_available() -> bool:
-    return "AWS_ACCESS_KEY_ID" in os.environ and "AWS_SECRET_ACCESS_KEY" in os.environ
-
-
-def _build_env_creds() -> AWSCredentialsResolver:
-    return EnvironmentCredentialsResolver()
-
-
-type CredentialSource = tuple[Callable[[], bool], Callable[[], AWSCredentialsResolver]]
-_DEFAULT_SOURCES: Sequence[CredentialSource] = (
-    (_env_creds_available, _build_env_creds),
+_DEFAULT_SOURCES: Sequence[CredentialsSource] = (
+    EnvironmentCredentialsSource(),
+    IMDSCredentialsSource(),
 )
 
 
@@ -30,8 +27,14 @@ class CredentialsResolverChain(
 ):
     """Resolves AWS Credentials from system environment variables."""
 
-    def __init__(self, *, sources: Sequence[CredentialSource] = _DEFAULT_SOURCES):
-        self._sources: Sequence[CredentialSource] = sources
+    def __init__(
+        self,
+        *,
+        config: AwsCredentialsConfig,
+        sources: Sequence[CredentialsSource] = _DEFAULT_SOURCES,
+    ):
+        self._config = config
+        self._sources: Sequence[CredentialsSource] = sources
         self._credentials_resolver: AWSCredentialsResolver | None = None
 
     async def get_identity(
@@ -43,8 +46,8 @@ class CredentialsResolverChain(
             )
 
         for source in self._sources:
-            if source[0]():
-                self._credentials_resolver = source[1]()
+            if source.is_available(config=self._config):
+                self._credentials_resolver = source.build_resolver(config=self._config)
                 return await self._credentials_resolver.get_identity(
                     identity_properties=identity_properties
                 )

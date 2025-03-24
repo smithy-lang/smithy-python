@@ -6,7 +6,12 @@ from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyIdentityException
 from smithy_core.interfaces.identity import IdentityProperties
 
-from ..identity import AWSCredentialsIdentity
+from smithy_aws_core.credentials_resolvers.interfaces import (
+    AwsCredentialsConfig,
+    CredentialsSource,
+)
+
+from ..identity import AWSCredentialsIdentity, AWSCredentialsResolver
 
 
 class EnvironmentCredentialsResolver(
@@ -41,3 +46,13 @@ class EnvironmentCredentialsResolver(
         )
 
         return self._credentials
+
+
+class EnvironmentCredentialsSource(CredentialsSource):
+    def is_available(self, config: AwsCredentialsConfig) -> bool:
+        return (
+            "AWS_ACCESS_KEY_ID" in os.environ and "AWS_SECRET_ACCESS_KEY" in os.environ
+        )
+
+    def build_resolver(self, config: AwsCredentialsConfig) -> AWSCredentialsResolver:
+        return EnvironmentCredentialsResolver()

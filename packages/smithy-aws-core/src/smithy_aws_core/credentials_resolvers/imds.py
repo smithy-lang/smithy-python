@@ -17,8 +17,13 @@ from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest
 from smithy_http.aio.interfaces import HTTPClient
 
+from smithy_aws_core.credentials_resolvers.interfaces import (
+    AwsCredentialsConfig,
+    CredentialsSource,
+)
+
 from .. import __version__
-from ..identity import AWSCredentialsIdentity
+from ..identity import AWSCredentialsIdentity, AWSCredentialsResolver
 
 _USER_AGENT_FIELD = Field(
     name="User-Agent",
@@ -235,3 +240,13 @@ class IMDSCredentialsResolver(
             account_id=account_id,
         )
         return self._credentials
+
+
+class IMDSCredentialsSource(CredentialsSource):
+    def is_available(self, config: AwsCredentialsConfig) -> bool:
+        # IMDS credentials should always be the last in the chain
+        # We cannot check if they available without actually making a call
+        return True
+
+    def build_resolver(self, config: AwsCredentialsConfig) -> AWSCredentialsResolver:
+        return IMDSCredentialsResolver(http_client=config.http_client)
