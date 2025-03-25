@@ -249,4 +249,5 @@ class IMDSCredentialsSource(CredentialsSource):
         return True
 
     def build_resolver(self, config: AwsCredentialsConfig) -> AWSCredentialsResolver:
+        # TODO: Configure lower number of retries/lower timeout
         return IMDSCredentialsResolver(http_client=config.http_client)

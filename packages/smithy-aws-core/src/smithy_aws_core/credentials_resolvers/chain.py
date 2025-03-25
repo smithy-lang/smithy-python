@@ -25,7 +25,7 @@ _DEFAULT_SOURCES: Sequence[CredentialsSource] = (
 class CredentialsResolverChain(
     IdentityResolver[AWSCredentialsIdentity, IdentityProperties]
 ):
-    """Resolves AWS Credentials from system environment variables."""
+    """Resolves AWS Credentials from an ordered list of credentials sources."""
 
     def __init__(
         self,
