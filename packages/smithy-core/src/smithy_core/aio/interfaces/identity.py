@@ -1,22 +1,20 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from typing import Protocol
+from collections.abc import Mapping
+from typing import Any, Protocol
 
-from ...interfaces.identity import IdentityPropertiesType_contra, IdentityType_cov
+from ...interfaces.identity import Identity
 
 
-class IdentityResolver(Protocol[IdentityType_cov, IdentityPropertiesType_contra]):
+class IdentityResolver[I: Identity, IP: Mapping[str, Any]](Protocol):
     """Used to load a user's `Identity` from a given source.
 
     Each `Identity` may have one or more resolver implementations.
     """
 
-    async def get_identity(
-        self, *, identity_properties: IdentityPropertiesType_contra
-    ) -> IdentityType_cov:
+    async def get_identity(self, *, properties: IP) -> I:
         """Load the user's identity from this resolver.
 
-        :param identity_properties: Properties used to help determine the identity to
-            return.
+        :param properties: Properties used to help determine the identity to return.
         """
         ...

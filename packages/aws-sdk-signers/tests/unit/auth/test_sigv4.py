@@ -112,8 +112,8 @@ def _test_signature_version_4_sync(test_case_name: str, signer: SigV4Signer) -> 
     assert test_case.string_to_sign == actual_string_to_sign
     with pytest.warns(AWSSDKWarning):
         signed_request = signer.sign(
-            signing_properties=signing_props,
-            http_request=request,
+            properties=signing_props,
+            request=request,
             identity=test_case.credentials,
         )
     assert (
@@ -151,8 +151,8 @@ async def _test_signature_version_4_async(
     assert test_case.string_to_sign == actual_string_to_sign
     with pytest.warns(AWSSDKWarning):
         signed_request = await signer.sign(
-            signing_properties=signing_props,
-            http_request=request,
+            properties=signing_props,
+            request=request,
             identity=test_case.credentials,
         )
     assert (

@@ -7,18 +7,20 @@ package software.amazon.smithy.python.aws.codegen;
 import static software.amazon.smithy.python.aws.codegen.AwsConfiguration.REGION;
 
 import java.util.List;
+import java.util.Set;
 import software.amazon.smithy.aws.traits.auth.SigV4Trait;
 import software.amazon.smithy.codegen.core.Symbol;
+import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.ApplicationProtocol;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.ConfigProperty;
-import software.amazon.smithy.python.codegen.DerivedProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.integrations.AuthScheme;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
+import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
 /**
@@ -38,7 +40,7 @@ public class AwsAuthIntegration implements PythonIntegration {
                                 .name("aws_credentials_identity_resolver")
                                 .documentation("Resolves AWS Credentials. Required for operations that use Sigv4 Auth.")
                                 .type(Symbol.builder()
-                                        .name("IdentityResolver[AWSCredentialsIdentity, IdentityProperties]")
+                                        .name("IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]")
                                         .addReference(Symbol.builder()
                                                 .addDependency(SmithyPythonDependency.SMITHY_CORE)
                                                 .name("IdentityResolver")
@@ -51,8 +53,8 @@ public class AwsAuthIntegration implements PythonIntegration {
                                                 .build())
                                         .addReference(Symbol.builder()
                                                 .addDependency(SmithyPythonDependency.SMITHY_CORE)
-                                                .name("IdentityProperties")
-                                                .namespace("smithy_core.interfaces.identity", ".")
+                                                .name("AWSIdentityProperties")
+                                                .namespace("smithy_aws_core.identity", ".")
                                                 .build())
                                         .build())
                                 // TODO: Initialize with the provider chain?
@@ -69,7 +71,6 @@ public class AwsAuthIntegration implements PythonIntegration {
             return;
         }
         var trait = context.settings().service(context.model()).expectTrait(SigV4Trait.class);
-        var params = CodegenUtils.getHttpAuthParamsSymbol(context.settings());
         var resolver = CodegenUtils.getHttpAuthSchemeResolverSymbol(context.settings());
 
         // Add a function that generates the http auth option for api key auth.
@@ -77,22 +78,19 @@ public class AwsAuthIntegration implements PythonIntegration {
         // must be accounted for.
         context.writerDelegator().useFileWriter(resolver.getDefinitionFile(), resolver.getNamespace(), writer -> {
             writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-            writer.addImport("smithy_http.aio.interfaces.auth", "HTTPAuthOption");
+            writer.addImport("smithy_core.interfaces.auth", "AuthOption", "AuthOptionProtocol");
+            writer.addImports("smithy_core.auth", Set.of("AuthOption", "AuthParams"));
             writer.pushState();
 
             writer.write("""
-                    def $1L(auth_params: $2T) -> HTTPAuthOption | None:
-                        return HTTPAuthOption(
-                            scheme_id=$3S,
-                            identity_properties={},
-                            signer_properties={
-                                "service": $4S,
-                                "region": auth_params.region
-                            }
+                    def $1L(auth_params: AuthParams[Any, Any]) -> AuthOptionProtocol | None:
+                        return AuthOption(
+                            scheme_id=$2S,
+                            identity_properties={},  # type: ignore
+                            signer_properties={}  # type: ignore
                         )
                     """,
                     SIGV4_OPTION_GENERATOR_NAME,
-                    params,
                     SigV4Trait.ID.toString(),
                     trait.getName());
             writer.popState();
@@ -120,17 +118,6 @@ public class AwsAuthIntegration implements PythonIntegration {
         }
 
         @Override
-        public List<DerivedProperty> getAuthProperties() {
-            return List.of(
-                    DerivedProperty.builder()
-                            .name("region")
-                            .source(DerivedProperty.Source.CONFIG)
-                            .type(Symbol.builder().name("str").build())
-                            .sourcePropertyName("region")
-                            .build());
-        }
-
-        @Override
         public Symbol getAuthOptionGenerator(GenerationContext context) {
             var resolver = CodegenUtils.getHttpAuthSchemeResolverSymbol(context.settings());
             return Symbol.builder()
@@ -147,6 +134,12 @@ public class AwsAuthIntegration implements PythonIntegration {
                     .namespace("smithy_aws_core.auth", ".")
                     .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                     .build();
+        }
+
+        @Override
+        public void initializeScheme(GenerationContext context, PythonWriter writer, ServiceShape service) {
+            var trait = service.expectTrait(SigV4Trait.class);
+            writer.write("$T(service=$S)", getAuthSchemeSymbol(context), trait.getName());
         }
     }
 }

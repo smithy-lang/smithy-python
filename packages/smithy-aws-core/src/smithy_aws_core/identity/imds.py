@@ -10,7 +10,6 @@ from typing import Literal
 from smithy_core import URI
 from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
-from smithy_core.interfaces.identity import IdentityProperties
 from smithy_core.interfaces.retries import RetryStrategy
 from smithy_core.retries import SimpleRetryStrategy
 from smithy_http import Field, Fields
@@ -18,7 +17,7 @@ from smithy_http.aio import HTTPRequest
 from smithy_http.aio.interfaces import HTTPClient
 
 from .. import __version__
-from ..identity import AWSCredentialsIdentity
+from ..identity import AWSCredentialsIdentity, AWSIdentityProperties
 
 _USER_AGENT_FIELD = Field(
     name="User-Agent",
@@ -181,7 +180,7 @@ class EC2Metadata:
 
 
 class IMDSCredentialsResolver(
-    IdentityResolver[AWSCredentialsIdentity, IdentityProperties]
+    IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
 ):
     """Resolves AWS Credentials from an EC2 Instance Metadata Service (IMDS) client."""
 
@@ -196,7 +195,7 @@ class IMDSCredentialsResolver(
         self._profile_name = self._config.ec2_instance_profile_name
 
     async def get_identity(
-        self, *, identity_properties: IdentityProperties
+        self, *, properties: AWSIdentityProperties
     ) -> AWSCredentialsIdentity:
         if (
             self._credentials is not None

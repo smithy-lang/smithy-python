@@ -256,9 +256,11 @@ final class ClientGenerator implements Runnable {
                     writer.consumer(w -> context.protocolGenerator().wrapInputStream(context, w)),
                     writer.consumer(w -> context.protocolGenerator().wrapOutputStream(context, w)));
         }
+
         writer.addStdlibImport("typing", "Any");
         writer.addStdlibImport("asyncio", "iscoroutine");
         writer.addImports("smithy_core.exceptions", Set.of("SmithyError", "CallError", "RetryError"));
+        writer.addImport("smithy_core.auth", "AuthParams");
         writer.pushState();
         writer.putContext("request", transportRequest);
         writer.putContext("response", transportResponse);
@@ -438,53 +440,60 @@ final class ClientGenerator implements Runnable {
 
         boolean supportsAuth = !ServiceIndex.of(model).getAuthSchemes(service).isEmpty();
         writer.pushState(new ResolveIdentitySection());
-        if (context.applicationProtocol().isHttpProtocol() && supportsAuth) {
-            writer.pushState(new InitializeHttpAuthParametersSection());
-            writer.write("""
-                            # Step 7b: Invoke service_auth_scheme_resolver.resolve_auth_scheme
-                            auth_parameters: $1T = $1T(
-                                operation=operation.schema.id.name,
-                                ${2C|}
-                            )
-
-                    """,
-                    CodegenUtils.getHttpAuthParamsSymbol(context.settings()),
-                    writer.consumer(this::initializeHttpAuthParameters));
-            writer.popState();
+        if (supportsAuth) {
+            // TODO: delete InitializeHttpAuthParametersSection
 
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-            writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
             writer.addImport("smithy_core.interfaces.identity", "Identity");
-            writer.addImports("smithy_http.aio.interfaces.auth", Set.of("HTTPSigner", "HTTPAuthOption"));
+            writer.addImport("smithy_core.interfaces.auth", "AuthOption");
+            writer.addImport("smithy_core.aio.interfaces.auth", "Signer");
+            writer.addImport("smithy_core.shapes", "ShapeID");
             writer.addStdlibImport("typing", "Any");
             writer.write("""
-                            auth_options = config.http_auth_scheme_resolver.resolve_auth_scheme(
+                            auth_parameters = AuthParams(
+                                protocol_id=ShapeID($1S),
+                                operation=operation,
+                                context=context.properties,
+                            )
+                            auth_options = config.auth_scheme_resolver.resolve_auth_scheme(
                                 auth_parameters=auth_parameters
                             )
-                            auth_option: HTTPAuthOption | None = None
+
+                            auth_option: AuthOption | None = None
                             for option in auth_options:
-                                if option.scheme_id in config.http_auth_schemes:
+                                if option.scheme_id in config.auth_schemes:
                                     auth_option = option
                                     break
 
-                            signer: HTTPSigner[Any, Any] | None = None
+                            signer: Signer[$2T, Any, Any] | None = None
                             identity: Identity | None = None
+                            auth_scheme: Any = None
 
                             if auth_option:
-                                auth_scheme = config.http_auth_schemes[auth_option.scheme_id]
+                                auth_scheme = config.auth_schemes[auth_option.scheme_id]
+                                context.properties["auth_scheme"] = auth_scheme
 
                                 # Step 7c: Invoke auth_scheme.identity_resolver
-                                identity_resolver = auth_scheme.identity_resolver(config=config)
+                                identity_resolver = auth_scheme.identity_resolver(context=context.properties)
+                                context.properties["identity_resolver"] = identity_resolver
 
                                 # Step 7d: Invoke auth_scheme.signer
-                                signer = auth_scheme.signer
+                                signer = auth_scheme.signer()
+
+                                # TODO: merge from auth_option
+                                identity_properties = auth_scheme.identity_properties(
+                                    context=context.properties
+                                )
+                                context.properties["identity_properties"] = identity_properties
 
                                 # Step 7e: Invoke identity_resolver.get_identity
                                 identity = await identity_resolver.get_identity(
-                                    identity_properties=auth_option.identity_properties
+                                    identity_properties=identity_properties
                                 )
 
-                    """);
+                    """,
+                    context.protocolGenerator().getProtocol(),
+                    transportRequest);
         }
         writer.popState();
 
@@ -543,7 +552,7 @@ final class ClientGenerator implements Runnable {
 
         writer.pushState(new SignRequestSection());
         writer.addStdlibImport("typing", "cast");
-        if (context.applicationProtocol().isHttpProtocol() && supportsAuth) {
+        if (supportsAuth) {
             writer.addStdlibImport("re");
             writer.addStdlibImport("typing", "Any");
             writer.addImport("smithy_core.interfaces.identity", "Identity");
@@ -551,40 +560,21 @@ final class ClientGenerator implements Runnable {
             writer.write("""
                             # Step 7i: sign the request
                             if auth_option and signer:
-                                logger.debug("HTTP request to sign: %s", context.transport_request)
-                                logger.debug(
-                                    "Signer properties: %s",
-                                    auth_option.signer_properties
-                                )
+                                signer_properties = auth_scheme.signer_properties(context=context.properties)
+                                context.properties["signer_properties"] = signer_properties
+
+                                logger.debug("Request to sign: %s", context.transport_request)
+                                logger.debug("Signer properties: %s", signer_properties)
+
                                 context = replace(
                                     context,
-                                    transport_request= await signer.sign(
-                                        http_request=context.transport_request,
+                                    transport_request = await signer.sign(
+                                        request=context.transport_request,
                                         identity=identity,
-                                        signing_properties=auth_option.signer_properties,
+                                        properties=signer_properties,
                                     )
                                 )
                                 logger.debug("Signed HTTP request: %s", context.transport_request)
-
-                                # TODO - Move this to separate resolution/population function
-                                fields = context.transport_request.fields
-                                auth_value = fields["Authorization"].as_string()  # type: ignore
-                                signature = re.split("Signature=", auth_value)[-1]  # type: ignore
-                                context.properties["signature"] = signature.encode('utf-8')
-
-                                identity_key = cast(
-                                    PropertyKey[Identity | None],
-                                    PropertyKey(
-                                        key="identity",
-                                        value_type=Identity | None  # type: ignore
-                                    )
-                                )
-                                sp_key: PropertyKey[dict[str, Any]] = PropertyKey(
-                                    key="signer_properties",
-                                    value_type=dict[str, Any]  # type: ignore
-                                )
-                                context.properties[identity_key] = identity
-                                context.properties[sp_key] = auth_option.signer_properties
                     """);
         }
         writer.popState();
@@ -755,28 +745,6 @@ final class ClientGenerator implements Runnable {
             }
         }
         return false;
-    }
-
-    private void initializeHttpAuthParameters(PythonWriter writer) {
-        var derived = new LinkedHashSet<DerivedProperty>();
-        for (PythonIntegration integration : context.integrations()) {
-            for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
-                if (plugin.matchesService(model, service)
-                        && plugin.getAuthScheme().isPresent()
-                        && plugin.getAuthScheme().get().getApplicationProtocol().isHttpProtocol()) {
-                    derived.addAll(plugin.getAuthScheme().get().getAuthProperties());
-                }
-            }
-        }
-
-        for (DerivedProperty property : derived) {
-            var source = property.source().scopeLocation();
-            if (property.initializationFunction().isPresent()) {
-                writer.write("$L=$T($L),", property.name(), property.initializationFunction().get(), source);
-            } else if (property.sourcePropertyName().isPresent()) {
-                writer.write("$L=$L.$L,", property.name(), source, property.sourcePropertyName().get());
-            }
-        }
     }
 
     private void writeDefaultPlugins(PythonWriter writer, Collection<SymbolReference> plugins) {

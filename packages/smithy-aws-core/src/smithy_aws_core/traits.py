@@ -43,3 +43,14 @@ class RestJson1Trait(Trait, id=ShapeID("aws.protocols#restJson1")):
             object.__setattr__(
                 self, "event_stream_http", tuple(event_stream_http_versions)
             )
+
+
+@dataclass(init=False, frozen=True)
+class SigV4Trait(Trait, id=ShapeID("aws.auth#sigv4")):
+    def __post_init__(self):
+        assert isinstance(self.document_value, Mapping)
+        assert isinstance(self.document_value["name"], str)
+
+    @property
+    def name(self) -> str:
+        return self.document_value["name"]  # type: ignore

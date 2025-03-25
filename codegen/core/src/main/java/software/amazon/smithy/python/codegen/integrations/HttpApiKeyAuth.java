@@ -5,7 +5,10 @@
 package software.amazon.smithy.python.codegen.integrations;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 import software.amazon.smithy.codegen.core.Symbol;
+import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.traits.HttpApiKeyAuthTrait;
 import software.amazon.smithy.python.codegen.ApplicationProtocol;
@@ -14,6 +17,7 @@ import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
+import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
 /**
@@ -30,10 +34,16 @@ public final class HttpApiKeyAuth implements PythonIntegration {
                 RuntimeClientPlugin.builder()
                         .servicePredicate((model, service) -> service.hasTrait(HttpApiKeyAuthTrait.class))
                         .addConfigProperty(ConfigProperty.builder()
+                                .name("api_key")
+                                .documentation("The API key to send along with requests.")
+                                .type(Symbol.builder().name("str").build())
+                                .nullable(true)
+                                .build())
+                        .addConfigProperty(ConfigProperty.builder()
                                 .name("api_key_identity_resolver")
-                                .documentation("Resolves the API key. Required for operations that use API key auth.")
+                                .documentation("Resolves the API key.")
                                 .type(Symbol.builder()
-                                        .name("IdentityResolver[ApiKeyIdentity, IdentityProperties]")
+                                        .name("IdentityResolver[APIKeyIdentity, APIKeyIdentityProperties]")
                                         .addReference(Symbol.builder()
                                                 .addDependency(SmithyPythonDependency.SMITHY_CORE)
                                                 .name("IdentityResolver")
@@ -41,16 +51,22 @@ public final class HttpApiKeyAuth implements PythonIntegration {
                                                 .build())
                                         .addReference(Symbol.builder()
                                                 .addDependency(SmithyPythonDependency.SMITHY_HTTP)
-                                                .name("ApiKeyIdentity")
+                                                .name("APIKeyIdentity")
                                                 .namespace("smithy_http.aio.identity.apikey", ".")
                                                 .build())
                                         .addReference(Symbol.builder()
-                                                .addDependency(SmithyPythonDependency.SMITHY_CORE)
-                                                .name("IdentityProperties")
-                                                .namespace("smithy_core.interfaces.identity", ".")
+                                                .addDependency(SmithyPythonDependency.SMITHY_HTTP)
+                                                .name("APIKeyIdentityProperties")
+                                                .namespace("smithy_http.aio.identity.apikey", ".")
                                                 .build())
                                         .build())
-                                .nullable(true)
+                                .initialize(writer -> {
+                                    writer.addImport("smithy_http.aio.identity.apikey", "APIKeyIdentityResolver");
+                                    writer.write("""
+                                            if api_key_identity_resolver is None:
+                                                api_key_identity_resolver = APIKeyIdentityResolver()
+                                            """);
+                                })
                                 .build())
                         .authScheme(new ApiKeyAuthScheme())
                         .build());
@@ -61,8 +77,6 @@ public final class HttpApiKeyAuth implements PythonIntegration {
         if (!hasApiKeyAuth(context)) {
             return;
         }
-        var trait = context.settings().service(context.model()).expectTrait(HttpApiKeyAuthTrait.class);
-        var params = CodegenUtils.getHttpAuthParamsSymbol(context.settings());
         var resolver = CodegenUtils.getHttpAuthSchemeResolverSymbol(context.settings());
 
         // Add a function that generates the http auth option for api key auth.
@@ -71,32 +85,21 @@ public final class HttpApiKeyAuth implements PythonIntegration {
         context.writerDelegator().useFileWriter(resolver.getDefinitionFile(), resolver.getNamespace(), writer -> {
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
             writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-            writer.addImport("smithy_http.aio.interfaces.auth", "HTTPAuthOption");
-            writer.addImport("smithy_http.aio.auth.apikey", "ApiKeyLocation");
+            writer.addImport("smithy_core.interfaces.auth", "AuthOption", "AuthOptionProtocol");
+            writer.addImports("smithy_core.auth", Set.of("AuthOption", "AuthParams"));
+            writer.addImport("smithy_core.shapes", "ShapeID");
+            writer.addStdlibImport("typing", "Any");
             writer.pushState();
-
-            // Push the scheme into the context to allow for conditionally adding
-            // it to the properties dict.
-            writer.putContext("scheme", trait.getScheme().orElse(null));
             writer.write("""
-                    def $1L(auth_params: $2T) -> HTTPAuthOption | None:
-                        return HTTPAuthOption(
-                            scheme_id=$3S,
-                            identity_properties={},
-                            signer_properties={
-                                "name": $4S,
-                                "location": ApiKeyLocation($5S),
-                                ${?scheme}
-                                "scheme": ${scheme:S},
-                                ${/scheme}
-                            }
+                    def $1L(auth_params: AuthParams[Any, Any]) -> AuthOptionProtocol | None:
+                        return AuthOption(
+                            scheme_id=ShapeID($2S),
+                            identity_properties={},  # type: ignore
+                            signer_properties={},  # type: ignore
                         )
                     """,
                     OPTION_GENERATOR_NAME,
-                    params,
-                    HttpApiKeyAuthTrait.ID.toString(),
-                    trait.getName(),
-                    trait.getIn().toString());
+                    HttpApiKeyAuthTrait.ID.toString());
             writer.popState();
         });
     }
@@ -137,10 +140,31 @@ public final class HttpApiKeyAuth implements PythonIntegration {
         @Override
         public Symbol getAuthSchemeSymbol(GenerationContext context) {
             return Symbol.builder()
-                    .name("ApiKeyAuthScheme")
+                    .name("APIKeyAuthScheme")
                     .namespace("smithy_http.aio.auth.apikey", ".")
                     .addDependency(SmithyPythonDependency.SMITHY_HTTP)
                     .build();
+        }
+
+        @Override
+        public void initializeScheme(GenerationContext context, PythonWriter writer, ServiceShape service) {
+            var trait = service.expectTrait(HttpApiKeyAuthTrait.class);
+            writer.pushState();
+            writer.putContext("scheme", trait.getScheme().orElse(null));
+            writer.addImport("smithy_core.traits", "APIKeyLocation");
+            writer.write("""
+                    $T(
+                        name=$S,
+                        location=APIKeyLocation.$L,
+                        ${?scheme}
+                        scheme=${scheme:S},
+                        ${/scheme}
+                    )
+                    """,
+                    getAuthSchemeSymbol(context),
+                    trait.getName(),
+                    trait.getIn().name().toUpperCase(Locale.ENGLISH));
+            writer.popState();
         }
     }
 }

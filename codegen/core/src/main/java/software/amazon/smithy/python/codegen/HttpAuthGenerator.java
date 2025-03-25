@@ -4,9 +4,7 @@
  */
 package software.amazon.smithy.python.codegen;
 
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import software.amazon.smithy.codegen.core.Symbol;
@@ -18,7 +16,6 @@ import software.amazon.smithy.model.traits.AuthTrait;
 import software.amazon.smithy.python.codegen.integrations.AuthScheme;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
-import software.amazon.smithy.python.codegen.sections.GenerateHttpAuthParametersSection;
 import software.amazon.smithy.python.codegen.sections.GenerateHttpAuthSchemeResolverSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
@@ -40,7 +37,6 @@ final class HttpAuthGenerator implements Runnable {
     @Override
     public void run() {
         var supportedAuthSchemes = new HashMap<ShapeId, AuthScheme>();
-        var properties = new ArrayList<DerivedProperty>();
         var service = context.settings().service(context.model());
         for (PythonIntegration integration : context.integrations()) {
             for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
@@ -49,43 +45,18 @@ final class HttpAuthGenerator implements Runnable {
                         && plugin.getAuthScheme().get().getApplicationProtocol().isHttpProtocol()) {
                     var scheme = plugin.getAuthScheme().get();
                     supportedAuthSchemes.put(scheme.getAuthTrait(), scheme);
-                    properties.addAll(scheme.getAuthProperties());
                 }
             }
         }
 
-        var params = CodegenUtils.getHttpAuthParamsSymbol(settings);
-        context.writerDelegator().useFileWriter(params.getDefinitionFile(), params.getNamespace(), writer -> {
-            generateAuthParameters(writer, params, properties);
-        });
-
         var resolver = CodegenUtils.getHttpAuthSchemeResolverSymbol(settings);
         context.writerDelegator().useFileWriter(resolver.getDefinitionFile(), resolver.getNamespace(), writer -> {
-            generateAuthSchemeResolver(writer, params, resolver, supportedAuthSchemes);
+            generateAuthSchemeResolver(writer, resolver, supportedAuthSchemes);
         });
-    }
-
-    private void generateAuthParameters(PythonWriter writer, Symbol symbol, List<DerivedProperty> properties) {
-        var propertyMap = new LinkedHashMap<String, Symbol>();
-        for (DerivedProperty property : properties) {
-            propertyMap.put(property.name(), property.type());
-        }
-        writer.pushState(new GenerateHttpAuthParametersSection(Map.copyOf(propertyMap)));
-        writer.addStdlibImport("dataclasses", "dataclass");
-        writer.write("""
-                @dataclass
-                class $L:
-                    operation: str
-                    ${#properties}
-                    ${key:L}: ${value:T} | None
-                    ${/properties}
-                """, symbol.getName());
-        writer.popState();
     }
 
     private void generateAuthSchemeResolver(
             PythonWriter writer,
-            Symbol paramsSymbol,
             Symbol resolverSymbol,
             Map<ShapeId, AuthScheme> supportedAuthSchemes
     ) {
@@ -100,18 +71,19 @@ final class HttpAuthGenerator implements Runnable {
         writer.pushState(new GenerateHttpAuthSchemeResolverSection(resolvedAuthSchemes));
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-        writer.addImport("smithy_http.aio.interfaces.auth", "HTTPAuthOption");
+        writer.addImport("smithy_core.interfaces.auth", "AuthOption", "AuthOptionProtocol");
+        writer.addImport("smithy_core.auth", "AuthParams");
+        writer.addStdlibImport("typing", "Any");
         writer.write("""
                 class $1L:
-                    def resolve_auth_scheme(self, auth_parameters: $2T) -> list[HTTPAuthOption]:
-                        auth_options: list[HTTPAuthOption] = []
+                    def resolve_auth_scheme(self, auth_parameters: AuthParams[Any, Any]) -> list[AuthOptionProtocol]:
+                        auth_options: list[AuthOptionProtocol] = []
 
+                        ${2C|}
                         ${3C|}
-                        ${4C|}
 
                 """,
                 resolverSymbol.getName(),
-                paramsSymbol,
                 writer.consumer(w -> writeOperationAuthOptions(w, supportedAuthSchemes)),
                 writer.consumer(w -> writeAuthOptions(w, resolvedAuthSchemes)));
         writer.popState();
