@@ -2,10 +2,12 @@ from typing import Final
 
 from smithy_core.codecs import Codec
 from smithy_core.shapes import ShapeID
+from smithy_http.aio.interfaces import ErrorExtractor
 from smithy_http.aio.protocols import HttpBindingClientProtocol
 from smithy_json import JSONCodec
 
 from ..traits import RestJson1Trait
+from . import AmznErrorExtractor
 
 
 class RestJsonClientProtocol(HttpBindingClientProtocol):
@@ -13,7 +15,8 @@ class RestJsonClientProtocol(HttpBindingClientProtocol):
 
     _id: ShapeID = RestJson1Trait.id
     _codec: JSONCodec = JSONCodec()
-    _contentType: Final = "application/json"
+    _content_type: Final = "application/json"
+    _error_extractor: ErrorExtractor = AmznErrorExtractor()
 
     @property
     def id(self) -> ShapeID:
@@ -25,4 +28,8 @@ class RestJsonClientProtocol(HttpBindingClientProtocol):
 
     @property
     def content_type(self) -> str:
-        return self._contentType
+        return self._content_type
+
+    @property
+    def error_extractor(self) -> ErrorExtractor:
+        return self._error_extractor
