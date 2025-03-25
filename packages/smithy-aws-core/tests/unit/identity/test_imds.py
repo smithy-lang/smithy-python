@@ -8,7 +8,7 @@ from datetime import UTC, datetime
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from smithy_aws_core.credentials_resolvers.imds import (
+from smithy_aws_core.identity.imds import (
     Config,
     EC2Metadata,
     IMDSCredentialsResolver,
@@ -170,7 +170,7 @@ async def test_imds_credentials_resolver():
         ),
     ]
 
-    credentials = await resolver.get_identity(identity_properties=MagicMock())
+    credentials = await resolver.get_identity(properties={})
     assert credentials.access_key_id == "test-access-key"
     assert credentials.secret_access_key == "test-secret-key"
     assert credentials.session_token == "test-session-token"

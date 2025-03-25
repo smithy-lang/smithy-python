@@ -684,12 +684,19 @@ dependencies = [
     { name = "smithy-http" },
 ]
 
+[package.optional-dependencies]
+eventstream = [
+    { name = "smithy-aws-event-stream" },
+]
+
 [package.metadata]
 requires-dist = [
     { name = "aws-sdk-signers", editable = "packages/aws-sdk-signers" },
+    { name = "smithy-aws-event-stream", marker = "extra == 'eventstream'", editable = "packages/smithy-aws-event-stream" },
     { name = "smithy-core", editable = "packages/smithy-core" },
     { name = "smithy-http", editable = "packages/smithy-http" },
 ]
+provides-extras = ["eventstream"]
 
 [[package]]
 name = "smithy-aws-event-stream"

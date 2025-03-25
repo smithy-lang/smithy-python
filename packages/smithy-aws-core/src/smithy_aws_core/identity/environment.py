@@ -4,13 +4,12 @@ import os
 
 from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
-from smithy_core.interfaces.identity import IdentityProperties
 
-from ..identity import AWSCredentialsIdentity
+from . import AWSCredentialsIdentity, AWSIdentityProperties
 
 
 class EnvironmentCredentialsResolver(
-    IdentityResolver[AWSCredentialsIdentity, IdentityProperties]
+    IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
 ):
     """Resolves AWS Credentials from system environment variables."""
 
@@ -18,7 +17,7 @@ class EnvironmentCredentialsResolver(
         self._credentials = None
 
     async def get_identity(
-        self, *, identity_properties: IdentityProperties
+        self, *, properties: AWSIdentityProperties
     ) -> AWSCredentialsIdentity:
         if self._credentials is not None:
             return self._credentials

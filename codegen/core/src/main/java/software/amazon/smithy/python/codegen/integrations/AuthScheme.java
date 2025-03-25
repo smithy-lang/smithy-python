@@ -4,13 +4,12 @@
  */
 package software.amazon.smithy.python.codegen.integrations;
 
-import java.util.Collections;
-import java.util.List;
 import software.amazon.smithy.codegen.core.Symbol;
+import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.ApplicationProtocol;
-import software.amazon.smithy.python.codegen.DerivedProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
@@ -35,15 +34,6 @@ public interface AuthScheme {
     ApplicationProtocol getApplicationProtocol();
 
     /**
-     * Gets a list of properties needed from config or input to authenticate requests.
-     *
-     * @return Returns a list of properties to gather for auth.
-     */
-    default List<DerivedProperty> getAuthProperties() {
-        return Collections.emptyList();
-    }
-
-    /**
      * Gets a function that returns a potential auth option for a request.
      *
      * <p>This function will be given an object containing all the properties
@@ -59,4 +49,7 @@ public interface AuthScheme {
      * @return Returns the symbol for the auth scheme implementation.
      */
     Symbol getAuthSchemeSymbol(GenerationContext context);
+
+    // TODO: replace with from_trait
+    void initializeScheme(GenerationContext context, PythonWriter writer, ServiceShape service);
 }

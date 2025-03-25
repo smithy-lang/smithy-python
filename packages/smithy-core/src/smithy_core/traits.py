@@ -314,3 +314,30 @@ class EndpointTrait(Trait, id=ShapeID("smithy.api#endpoint")):
 class HostLabelTrait(Trait, id=ShapeID("smithy.api#hostLabel")):
     def __post_init__(self):
         assert self.document_value is None
+
+
+class APIKeyLocation(Enum):
+    """The locations that the api key could be placed in the signed request."""
+
+    HEADER = "header"
+    QUERY = "query"
+
+
+@dataclass(init=False, frozen=True)
+class HTTPAPIKeyAuthTrait(Trait, id=ShapeID("smithy.api#httpApiKeyAuth")):
+    location: APIKeyLocation = field(repr=False, hash=False, compare=False)
+
+    def __init__(self, value: "DocumentValue | DynamicTrait" = None):
+        super().__init__(value)
+        object.__setattr__(self, "location", APIKeyLocation(value))
+        assert isinstance(self.document_value, Mapping)
+        assert isinstance(self.document_value["name"], str)
+        assert isinstance(self.document_value.get("scheme"), str | None)
+
+    @property
+    def name(self) -> str:
+        return self.document_value["name"]  # type: ignore
+
+    @property
+    def scheme(self) -> str | None:
+        return self.document_value.get("scheme")  # type: ignore

@@ -103,20 +103,6 @@ public final class CodegenUtils {
     }
 
     /**
-     * Gets the symbol for the http auth params.
-     *
-     * @param settings The client settings, used to account for module configuration.
-     * @return Returns the http auth params symbol.
-     */
-    public static Symbol getHttpAuthParamsSymbol(PythonSettings settings) {
-        return Symbol.builder()
-                .name("HTTPAuthParams")
-                .namespace(String.format("%s.auth", settings.moduleName()), ".")
-                .definitionFile(String.format("./src/%s/auth.py", settings.moduleName()))
-                .build();
-    }
-
-    /**
      * Gets the symbol for the http auth scheme resolver.
      *
      * @param settings The client settings, used to account for module configuration.

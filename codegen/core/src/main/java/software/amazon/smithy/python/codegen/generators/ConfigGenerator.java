@@ -7,7 +7,6 @@ package software.amazon.smithy.python.codegen.generators;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.TreeSet;
@@ -78,6 +77,23 @@ public final class ConfigGenerator implements Runnable {
                                     .build())
                             .build())
                     .documentation("A static URI to route requests to.")
+                    .build(),
+            ConfigProperty.builder()
+                    .name("endpoint_resolver")
+                    .type(Symbol.builder()
+                            .name("_EndpointResolver")
+                            .build())
+                    .documentation("""
+                            The endpoint resolver used to resolve the final endpoint per-operation based on the \
+                            configuration.""")
+                    .nullable(false)
+                    .initialize(writer -> {
+                        writer.addImport("smithy_core.aio.interfaces", "EndpointResolver", "_EndpointResolver");
+                        writer.pushState(new InitDefaultEndpointResolverSection());
+                        writer.addImport("smithy_core.aio.endpoints", "StaticEndpointResolver");
+                        writer.write("self.endpoint_resolver = endpoint_resolver or StaticEndpointResolver()");
+                        writer.popState();
+                    })
                     .build());
 
     // This list contains any properties that must be added to any http-based
@@ -131,24 +147,6 @@ public final class ConfigGenerator implements Runnable {
         }
         properties.add(clientBuilder.build());
 
-        properties.add(ConfigProperty.builder()
-                .name("endpoint_resolver")
-                .type(Symbol.builder()
-                        .name("_EndpointResolver")
-                        .build())
-                .documentation("""
-                        The endpoint resolver used to resolve the final endpoint per-operation based on the \
-                        configuration.""")
-                .nullable(false)
-                .initialize(writer -> {
-                    writer.addImport("smithy_core.aio.interfaces", "EndpointResolver", "_EndpointResolver");
-                    writer.pushState(new InitDefaultEndpointResolverSection());
-                    writer.addImport("smithy_core.aio.endpoints", "StaticEndpointResolver");
-                    writer.write("self.endpoint_resolver = endpoint_resolver or StaticEndpointResolver()");
-                    writer.popState();
-                })
-                .build());
-
         properties.addAll(HTTP_PROPERTIES);
         return List.copyOf(properties);
     }
@@ -180,16 +178,21 @@ public final class ConfigGenerator implements Runnable {
         return false;
     }
 
-    private static List<ConfigProperty> getHttpAuthProperties(GenerationContext context) {
+    private static List<ConfigProperty> getAuthProperties(GenerationContext context) {
         return List.of(
                 ConfigProperty.builder()
-                        .name("http_auth_schemes")
+                        .name("auth_schemes")
                         .type(Symbol.builder()
-                                .name("dict[str, HTTPAuthScheme[Any, Any, Any, Any]]")
+                                .name("dict[ShapeID, AuthScheme[Any, Any, Any, Any]]")
                                 .addReference(Symbol.builder()
-                                        .name("HTTPAuthScheme")
-                                        .namespace("smithy_http.aio.interfaces.auth", ".")
-                                        .addDependency(SmithyPythonDependency.SMITHY_HTTP)
+                                        .name("ShapeID")
+                                        .namespace("smithy_core.shapes", ".")
+                                        .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                                        .build())
+                                .addReference(Symbol.builder()
+                                        .name("AuthScheme")
+                                        .namespace("smithy_core.aio.interfaces.auth", ".")
+                                        .addDependency(SmithyPythonDependency.SMITHY_CORE)
                                         .build())
                                 .addReference(Symbol.builder()
                                         .name("Any")
@@ -197,43 +200,38 @@ public final class ConfigGenerator implements Runnable {
                                         .putProperty(SymbolProperties.STDLIB, true)
                                         .build())
                                 .build())
-                        .documentation("A map of http auth scheme ids to http auth schemes.")
+                        .documentation("A map of auth scheme ids to auth schemes.")
                         .nullable(false)
-                        .initialize(writer -> writeDefaultHttpAuthSchemes(context, writer))
+                        .initialize(writer -> writeDefaultAuthSchemes(context, writer))
                         .build(),
                 ConfigProperty.builder()
-                        .name("http_auth_scheme_resolver")
+                        .name("auth_scheme_resolver")
                         .type(CodegenUtils.getHttpAuthSchemeResolverSymbol(context.settings()))
                         .documentation(
-                                "An http auth scheme resolver that determines the auth scheme for each operation.")
+                                "An auth scheme resolver that determines the auth scheme for each operation.")
                         .nullable(false)
                         .initialize(writer -> writer.write(
-                                "self.http_auth_scheme_resolver = http_auth_scheme_resolver or HTTPAuthSchemeResolver()"))
+                                "self.auth_scheme_resolver = auth_scheme_resolver or HTTPAuthSchemeResolver()"))
                         .build());
     }
 
-    private static void writeDefaultHttpAuthSchemes(GenerationContext context, PythonWriter writer) {
-        var supportedAuthSchemes = new LinkedHashMap<String, Symbol>();
+    private static void writeDefaultAuthSchemes(GenerationContext context, PythonWriter writer) {
+        writer.pushState();
         var service = context.settings().service(context.model());
+
+        writer.openBlock("self.auth_schemes = auth_schemes or {");
+        writer.addImport("smithy_core.shapes", "ShapeID");
         for (PythonIntegration integration : context.integrations()) {
             for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
-                if (plugin.matchesService(context.model(), service)
-                        && plugin.getAuthScheme().isPresent()
-                        && plugin.getAuthScheme().get().getApplicationProtocol().isHttpProtocol()) {
+                if (plugin.matchesService(context.model(), service) && plugin.getAuthScheme().isPresent()) {
                     var scheme = plugin.getAuthScheme().get();
-                    supportedAuthSchemes.put(scheme.getAuthTrait().toString(), scheme.getAuthSchemeSymbol(context));
+                    writer.write("ShapeID($S): ${C|},",
+                            scheme.getAuthTrait(),
+                            writer.consumer(w -> scheme.initializeScheme(context, writer, service)));
                 }
             }
         }
-        writer.pushState();
-        writer.putContext("authSchemes", supportedAuthSchemes);
-        writer.write("""
-                self.http_auth_schemes = http_auth_schemes or {
-                    ${#authSchemes}
-                    ${key:S}: ${value:T}(),
-                    ${/authSchemes}
-                }
-                """);
+        writer.closeBlock("}");
         writer.popState();
     }
 
@@ -292,16 +290,18 @@ public final class ConfigGenerator implements Runnable {
         var properties = new TreeSet<>(Comparator.comparing(ConfigProperty::name));
         properties.addAll(BASE_PROPERTIES);
 
+        // Add in auth configuration if the service supports auth.
+        var serviceIndex = ServiceIndex.of(context.model());
+        if (!serviceIndex.getAuthSchemes(settings.service()).isEmpty()) {
+            properties.addAll(getAuthProperties(context));
+            writer.onSection(new AddAuthHelper());
+        }
+
         // Smithy is transport agnostic, so we don't add http-related properties by default.
         // Nevertheless, HTTP is the most common use case so we standardize those settings
         // and add them in if the protocol is going to need them.
-        var serviceIndex = ServiceIndex.of(context.model());
         if (context.applicationProtocol().isHttpProtocol()) {
             properties.addAll(getHttpProperties(context));
-            if (!serviceIndex.getAuthSchemes(settings.service()).isEmpty()) {
-                properties.addAll(getHttpAuthProperties(context));
-                writer.onSection(new AddAuthHelper());
-            }
         }
 
         var model = context.model();
@@ -398,14 +398,14 @@ public final class ConfigGenerator implements Runnable {
             // Note that this is indented to keep it at the proper indentation level.
             writer.write("""
 
-                        def set_http_auth_scheme(self, scheme: HTTPAuthScheme[Any, Any, Any, Any]) -> None:
+                        def set_auth_scheme(self, scheme: AuthScheme[Any, Any, Any, Any]) -> None:
                             \"""Sets the implementation of an auth scheme.
 
                             Using this method ensures the correct key is used.
 
                             :param scheme: The auth scheme to add.
                             \"""
-                            self.http_auth_schemes[scheme.scheme_id] = scheme
+                            self.auth_schemes[scheme.scheme_id] = scheme
                     """);
         }
     }
