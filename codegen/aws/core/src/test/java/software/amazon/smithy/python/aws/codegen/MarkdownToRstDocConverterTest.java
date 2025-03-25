@@ -22,88 +22,88 @@ public class MarkdownToRstDocConverterTest {
     @Test
     public void testConvertCommonmarkToRstWithTitleAndParagraph() {
         String html = "<html><body><h1>Title</h1><p>Paragraph</p></body></html>";
-        String expected = "\n\nTitle\n=====\nParagraph\n";
+        String expected = "Title\n=====\nParagraph";
         String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
-        assertEquals(expected, result);
+        assertEquals(expected, result.trim());
     }
 
     @Test
     public void testConvertCommonmarkToRstWithImportantNote() {
         String html = "<html><body><important>Important note</important></body></html>";
-        String expected = "\n\n.. important::\n    Important note\n";
+        String expected = ".. important::\n    Important note";
         String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
-        assertEquals(expected, result);
+        assertEquals(expected, result.trim());
     }
 
     @Test
     public void testConvertCommonmarkToRstWithList() {
         String html = "<html><body><ul><li>Item 1</li><li>Item 2</li></ul></body></html>";
-        String expected = "\n\n* Item 1\n\n* Item 2\n\n";
+        String expected = "* Item 1\n* Item 2";
         String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
-        assertEquals(expected, result);
+        assertEquals(expected, result.trim());
     }
 
     @Test
     public void testConvertCommonmarkToRstWithMixedElements() {
         String html = "<html><body><h1>Title</h1><p>Paragraph</p><ul><li>Item 1</li><li>Item 2</li></ul></body></html>";
-        String expected = "\n\nTitle\n=====\nParagraph\n\n* Item 1\n\n* Item 2\n\n";
+        String expected = "Title\n=====\nParagraph\n\n\n* Item 1\n* Item 2";
         String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
-        assertEquals(expected, result);
+        assertEquals(expected, result.trim());
     }
 
     @Test
     public void testConvertCommonmarkToRstWithNestedElements() {
         String html = "<html><body><h1>Title</h1><p>Paragraph with <strong>bold</strong> text</p></body></html>";
-        String expected = "\n\nTitle\n=====\nParagraph with **bold** text\n";
+        String expected = "Title\n=====\nParagraph with **bold** text";
         String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
-        assertEquals(expected, result);
+        assertEquals(expected, result.trim());
     }
 
     @Test
     public void testConvertCommonmarkToRstWithAnchorTag() {
         String html = "<html><body><a href='https://example.com'>Link</a></body></html>";
-        String expected = "\n`Link <https://example.com>`_";
+        String expected = "`Link <https://example.com>`_";
         String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
-        assertEquals(expected, result);
+        assertEquals(expected, result.trim());
     }
 
     @Test
     public void testConvertCommonmarkToRstWithBoldTag() {
         String html = "<html><body><b>Bold text</b></body></html>";
-        String expected = "\n**Bold text**";
+        String expected = "**Bold text**";
         String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
-        assertEquals(expected, result);
+        assertEquals(expected, result.trim());
     }
 
     @Test
     public void testConvertCommonmarkToRstWithItalicTag() {
         String html = "<html><body><i>Italic text</i></body></html>";
-        String expected = "\n*Italic text*";
+        String expected = "*Italic text*";
         String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
-        assertEquals(expected, result);
+        assertEquals(expected, result.trim());
     }
 
     @Test
     public void testConvertCommonmarkToRstWithCodeTag() {
         String html = "<html><body><code>code snippet</code></body></html>";
-        String expected = "\n``code snippet``";
+        String expected = "``code snippet``";
         String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
-        assertEquals(expected, result);
+        assertEquals(expected, result.trim());
     }
 
     @Test
     public void testConvertCommonmarkToRstWithNoteTag() {
         String html = "<html><body><note>Note text</note></body></html>";
-        String expected = "\n\n.. note::\n    Note text\n";
+        String expected = ".. note::\n    Note text";
         String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
-        assertEquals(expected, result);
+        assertEquals(expected, result.trim());
     }
 
     @Test
     public void testConvertCommonmarkToRstWithNestedList() {
         String html = "<html><body><ul><li>Item 1<ul><li>Subitem 1</li></ul></li><li>Item 2</li></ul></body></html>";
-        String expected = "\n\n* Item 1\n  * Subitem 1\n\n* Item 2\n\n";
+        String expected = "* Item 1\n\n    * Subitem 1\n* Item 2";
         String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
-        assertEquals(expected, result);
+        assertEquals(expected, result.trim());
     }
 }

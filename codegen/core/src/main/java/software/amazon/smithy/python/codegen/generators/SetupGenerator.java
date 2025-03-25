@@ -334,7 +334,7 @@ public final class SetupGenerator {
                         }
                     }
 
-                    autodoc_typehints = 'both'
+                    autodoc_typehints = 'description'
                                 """, projectName, version, projectName);
         });
     }

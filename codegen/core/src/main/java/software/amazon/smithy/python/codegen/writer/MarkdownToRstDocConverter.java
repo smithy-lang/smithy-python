@@ -21,6 +21,7 @@ import org.jsoup.nodes.Node;
 import org.jsoup.nodes.TextNode;
 import org.jsoup.select.NodeVisitor;
 import software.amazon.smithy.utils.SetUtils;
+import software.amazon.smithy.utils.SimpleCodeWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
 /**
@@ -60,8 +61,7 @@ public class MarkdownToRstDocConverter {
     }
 
     private static class RstNodeVisitor implements NodeVisitor {
-        //TODO migrate away from StringBuilder to use a SimpleCodeWriter
-        private final StringBuilder sb = new StringBuilder();
+        SimpleCodeWriter writer = new SimpleCodeWriter();
         private boolean inList = false;
         private int listDepth = 0;
 
@@ -71,47 +71,73 @@ public class MarkdownToRstDocConverter {
                 TextNode textNode = (TextNode) node;
                 String text = textNode.text();
                 if (!text.trim().isEmpty()) {
-                    sb.append(text);
-                    // Account for services making a paragraph tag that's empty except
-                    // for a newline
+                    if (text.startsWith(":param ")) {
+                        int secondColonIndex = text.indexOf(':',  1);
+                        writer.write(text.substring(0, secondColonIndex + 1));
+                        //TODO right now the code generator gives us a mixture of
+                        // commonmark and HTML (for instance :param xyz: <p> docs
+                        // </p>).  Since we standardize to html above, that <p> tag
+                        // starts a newline.  We account for that with this if/else
+                        // statement, but we should refactor this in the future to
+                        // have a more elegant codepath.
+                        if (secondColonIndex +1 == text.strip().length()) {
+                            writer.indent();
+                            writer.ensureNewline();
+                        } else {
+                            writer.ensureNewline();
+                            writer.indent();
+                            writer.write(text.substring(secondColonIndex + 1));
+                            writer.dedent();
+                        }
+                    } else {
+                        writer.writeInline(text);
+                    }
+                // Account for services making a paragraph tag that's empty except
+                // for a newline
                 } else if (node.parent() instanceof Element && ((Element) node.parent()).tagName().equals("p")) {
-                    sb.append(text.replaceAll("[ \\t]+", ""));
+                    writer.writeInline(text.replaceAll("[ \\t]+", ""));
                 }
             } else if (node instanceof Element) {
                 Element element = (Element) node;
                 switch (element.tagName()) {
                     case "a":
-                        sb.append("`");
+                        writer.writeInline("`");
                         break;
                     case "b":
                     case "strong":
-                        sb.append("**");
+                        writer.writeInline("**");
                         break;
                     case "i":
                     case "em":
-                        sb.append("*");
+                        writer.writeInline("*");
                         break;
                     case "code":
-                        sb.append("``");
+                        writer.writeInline("``");
                         break;
                     case "important":
-                        sb.append("\n.. important::\n    ");
+                        writer.ensureNewline();
+                        writer.write("");
+                        writer.openBlock(".. important::");
                         break;
                     case "note":
-                        sb.append("\n.. note::\n    ");
+                        writer.ensureNewline();
+                        writer.write("");
+                        writer.openBlock(".. note::");
                         break;
                     case "ul":
+                        if (inList) {
+                            writer.indent();
+                        }
                         inList = true;
                         listDepth++;
-                        sb.append("\n");
+                        writer.ensureNewline();
+                        writer.write("");
                         break;
                     case "li":
-                        if (inList) {
-                            sb.append("  ".repeat(listDepth - 1)).append("* ");
-                        }
+                        writer.writeInline("* ");
                         break;
                     case "h1":
-                        sb.append("\n");
+                        writer.ensureNewline();
                         break;
                     default:
                         break;
@@ -125,41 +151,47 @@ public class MarkdownToRstDocConverter {
                 Element element = (Element) node;
                 switch (element.tagName()) {
                     case "a":
-                        sb.append(" <").append(element.attr("href")).append(">`_");
+                        String href = element.attr("href");
+                        if (!href.isEmpty()) {
+                            writer.writeInline(" <").writeInline(href).writeInline(">`_");
+                        } else {
+                            writer.writeInline("`");
+                        }
                         break;
                     case "b":
                     case "strong":
-                        sb.append("**");
+                        writer.writeInline("**");
                         break;
                     case "i":
                     case "em":
-                        sb.append("*");
+                        writer.writeInline("*");
                         break;
                     case "code":
-                        sb.append("``");
+                        writer.writeInline("``");
                         break;
                     case "important":
                     case "note":
+                        writer.closeBlock("");
+                        break;
                     case "p":
-                        sb.append("\n");
+                        writer.ensureNewline();
+                        writer.write("");
                         break;
                     case "ul":
                         listDepth--;
                         if (listDepth == 0) {
                             inList = false;
+                        } else {
+                            writer.dedent();
                         }
-                        if (sb.charAt(sb.length() - 1) != '\n') {
-                            sb.append("\n\n");
-                        }
+                        writer.ensureNewline();
                         break;
                     case "li":
-                        if (sb.charAt(sb.length() - 1) != '\n') {
-                            sb.append("\n\n");
-                        }
+                        writer.ensureNewline();
                         break;
                     case "h1":
                         String title = element.text();
-                        sb.append("\n").append("=".repeat(title.length())).append("\n");
+                        writer.ensureNewline().writeInline("=".repeat(title.length())).ensureNewline();
                         break;
                     default:
                         break;
@@ -169,7 +201,7 @@ public class MarkdownToRstDocConverter {
 
         @Override
         public String toString() {
-            return sb.toString();
+            return writer.toString();
         }
     }
 }

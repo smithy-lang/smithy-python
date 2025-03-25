@@ -174,6 +174,9 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         while (line.length() > MAX_LINE_LENGTH) {
             int wrapAt = findWrapPosition(line, MAX_LINE_LENGTH);
             wrappedText.append(indentStr).append(line, 0, wrapAt).append("\n");
+            if (line.startsWith("* ")) {
+                indentStr += "  ";
+            }
             line = line.substring(wrapAt).trim();
             if (line.isEmpty()) {
                 return;
@@ -190,6 +193,7 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
             wrapAt = line.length();
         } else {
             // Ensure we don't break a link
+            //TODO account for earlier backticks on the same line as a link
             int linkStart = line.lastIndexOf("`", wrapAt);
             int linkEnd = line.indexOf("`_", wrapAt);
             if (linkStart != -1 && (linkEnd != -1 && linkEnd > linkStart)) {
