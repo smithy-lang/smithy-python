@@ -245,7 +245,7 @@ class IMDSCredentialsResolver(
 class IMDSCredentialsSource(CredentialsSource):
     def is_available(self, config: AwsCredentialsConfig) -> bool:
         # IMDS credentials should always be the last in the chain
-        # We cannot check if they available without actually making a call
+        # We cannot check if they're available without actually making a call
         return True
 
     def build_resolver(self, config: AwsCredentialsConfig) -> AWSCredentialsResolver:
