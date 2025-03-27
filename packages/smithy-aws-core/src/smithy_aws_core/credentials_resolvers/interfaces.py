@@ -11,7 +11,6 @@ class AwsCredentialsConfig(Protocol):
     """Configuration required for resolving credentials."""
 
     http_client: HTTPClient
-    """A static endpoint to use for the request."""
 
 
 class CredentialsSource(Protocol):
