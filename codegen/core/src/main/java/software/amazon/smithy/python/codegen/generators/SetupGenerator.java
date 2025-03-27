@@ -465,11 +465,10 @@ public final class SetupGenerator {
                 following:
                 
                 ```
-                $$ uv pip install ".[docs]"
-                $$ cd docs
-                $$ make html
+                $ uv pip install ".[docs]"
+                $ cd docs
+                $ make html
                 ```
-                
                     """);
         });
     }
