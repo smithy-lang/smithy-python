@@ -447,6 +447,36 @@ public final class SetupGenerator {
         writeIndexFile(context, "docs/models/index.rst", "Models");
     }
 
+
+    /**
+     * Write a Makefile.
+     * A Makefile is used on Unix-based systems to build Sphinx documentation.
+     * This file contains rules for cleaning the build directory and generating HTML documentation.
+     *
+     * @param context The generation context containing the writer delegator.
+     */
+    private static void writeDocsReadme(
+            GenerationContext context
+    ) {
+        context.writerDelegator().useFileWriter("docs/README.", "", writer -> {
+            writer.write("""
+                # Documentation
+                                
+                ## Generating Documentation
+                
+                Sphinx is used for documentation. You can generate HTML locally with the
+                following:
+                
+                ```
+                $ uv pip install ".[docs]"
+                $ cd docs
+                $ make html
+                ```
+                
+                        """);
+        });
+    }
+
     /**
      * Helper method to write an index file with the given title.
      * This method creates an index file at the specified file path with the provided title.
