@@ -1,0 +1,6 @@
+# Changelog
+
+## Unreleased
+
+### Feature
+* Added support for minimal components required for SDK generation.
