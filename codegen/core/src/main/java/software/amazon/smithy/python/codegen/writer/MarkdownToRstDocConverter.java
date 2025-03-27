@@ -6,6 +6,8 @@ package software.amazon.smithy.python.codegen.writer;
 
 import static org.jsoup.nodes.Document.OutputSettings.Syntax.html;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.commonmark.node.BlockQuote;
 import org.commonmark.node.FencedCodeBlock;
 import org.commonmark.node.Heading;
@@ -52,8 +54,11 @@ public class MarkdownToRstDocConverter {
     }
 
     public String convertCommonmarkToRst(String commonmark) {
-        String html =
-                HtmlRenderer.builder().escapeHtml(false).build().render(MARKDOWN_PARSER.parse(commonmark));
+        String html = HtmlRenderer.builder().escapeHtml(false).build().render(MARKDOWN_PARSER.parse(commonmark));
+        //Replace the outer HTML paragraph tag with a div tag
+        Pattern pattern = Pattern.compile("^<p>(.*)</p>$", Pattern.DOTALL);
+        Matcher matcher = pattern.matcher(html);
+        html = matcher.replaceAll("<div>$1</div>");
         Document document = Jsoup.parse(html);
         RstNodeVisitor visitor = new RstNodeVisitor();
         document.body().traverse(visitor);
@@ -75,7 +80,7 @@ public class MarkdownToRstDocConverter {
                         int secondColonIndex = text.indexOf(':',  1);
                         writer.write(text.substring(0, secondColonIndex + 1));
                         //TODO right now the code generator gives us a mixture of
-                        // commonmark and HTML (for instance :param xyz: <p> docs
+                        // RST and HTML (for instance :param xyz: <p> docs
                         // </p>).  Since we standardize to html above, that <p> tag
                         // starts a newline.  We account for that with this if/else
                         // statement, but we should refactor this in the future to

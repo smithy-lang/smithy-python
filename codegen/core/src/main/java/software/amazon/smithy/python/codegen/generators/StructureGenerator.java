@@ -24,11 +24,13 @@ import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.StructureShape;
+import software.amazon.smithy.model.traits.ClientOptionalTrait;
 import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.InputTrait;
 import software.amazon.smithy.model.traits.OutputTrait;
+import software.amazon.smithy.model.traits.RequiredTrait;
 import software.amazon.smithy.model.traits.SensitiveTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.python.codegen.CodegenUtils;
@@ -316,8 +318,14 @@ public final class StructureGenerator implements Runnable {
 
     private void writeMemberDocs(MemberShape member) {
         member.getMemberTrait(model, DocumentationTrait.class).ifPresent(trait -> {
+            String descriptionPrefix = "";
+            if (member.hasTrait(RequiredTrait.class) && !member.hasTrait(ClientOptionalTrait.class)) {
+                descriptionPrefix = "**[Required]** - ";
+            }
+
             String memberName = symbolProvider.toMemberName(member);
-            String docs = writer.formatDocs(String.format(":param %s: %s", memberName, trait.getValue()));
+            String docs = writer.formatDocs(String.format(":param %s: %s%s",
+                    memberName, descriptionPrefix, trait.getValue()));
             writer.write(docs);
         });
     }
