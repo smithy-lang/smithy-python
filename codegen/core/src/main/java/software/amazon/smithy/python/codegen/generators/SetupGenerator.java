@@ -288,6 +288,7 @@ public final class SetupGenerator {
                         .orElse(context.settings().service().getName()));
         writeConf(settings, context, projectName);
         writeIndexes(context, projectName);
+        writeDocsReadme(context);
         writeMakeBat(context);
         writeMakeFile(context);
     }
@@ -449,31 +450,27 @@ public final class SetupGenerator {
 
 
     /**
-     * Write a Makefile.
-     * A Makefile is used on Unix-based systems to build Sphinx documentation.
-     * This file contains rules for cleaning the build directory and generating HTML documentation.
+     * Write the readme in the docs folder describing instructions for generation
      *
      * @param context The generation context containing the writer delegator.
      */
     private static void writeDocsReadme(
             GenerationContext context
     ) {
-        context.writerDelegator().useFileWriter("docs/README.", "", writer -> {
-            writer.write("""
-                # Documentation
-                                
+        context.writerDelegator().useFileWriter("docs/README.md", writer -> {
+            writer.write("""                                
                 ## Generating Documentation
                 
                 Sphinx is used for documentation. You can generate HTML locally with the
                 following:
                 
                 ```
-                $ uv pip install ".[docs]"
-                $ cd docs
-                $ make html
+                $$ uv pip install ".[docs]"
+                $$ cd docs
+                $$ make html
                 ```
                 
-                        """);
+                    """);
         });
     }
 
