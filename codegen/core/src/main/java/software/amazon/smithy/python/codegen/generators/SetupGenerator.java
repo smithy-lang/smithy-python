@@ -288,6 +288,7 @@ public final class SetupGenerator {
                         .orElse(context.settings().service().getName()));
         writeConf(settings, context, projectName);
         writeIndexes(context, projectName);
+        writeDocsReadme(context);
         writeMakeBat(context);
         writeMakeFile(context);
     }
@@ -445,6 +446,31 @@ public final class SetupGenerator {
 
         // Write the index file for the models section
         writeIndexFile(context, "docs/models/index.rst", "Models");
+    }
+
+
+    /**
+     * Write the readme in the docs folder describing instructions for generation
+     *
+     * @param context The generation context containing the writer delegator.
+     */
+    private static void writeDocsReadme(
+            GenerationContext context
+    ) {
+        context.writerDelegator().useFileWriter("docs/README.md", writer -> {
+            writer.write("""                                
+                ## Generating Documentation
+                
+                Sphinx is used for documentation. You can generate HTML locally with the
+                following:
+                
+                ```
+                $$ uv pip install ".[docs]"
+                $$ cd docs
+                $$ make html
+                ```
+                    """);
+        });
     }
 
     /**
