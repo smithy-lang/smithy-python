@@ -1,7 +1,7 @@
 [project]
-name = "aws-event-stream"
+name = "smithy-aws-event-stream"
 version = "0.0.1"
-description = "Core Smithy components for AWS services and protocols."
+description = "Smithy components for Amazon Event Streams."
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [

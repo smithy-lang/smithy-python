@@ -3,4 +3,4 @@
 
 import importlib.metadata
 
-__version__: str = importlib.metadata.version("aws-event-stream")
+__version__: str = importlib.metadata.version("smithy-aws-event-stream")

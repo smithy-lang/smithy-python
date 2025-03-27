@@ -69,8 +69,8 @@ public final class SmithyPythonDependency {
     /**
      * EventStream implementations for application/vnd.amazon.eventstream.
      */
-    public static final PythonDependency AWS_EVENT_STREAM = new PythonDependency(
-            "aws_event_stream",
+    public static final PythonDependency SMITHY_AWS_EVENT_STREAM = new PythonDependency(
+            "smithy_aws_event_stream",
             "==0.0.1",
             Type.DEPENDENCY,
             false);

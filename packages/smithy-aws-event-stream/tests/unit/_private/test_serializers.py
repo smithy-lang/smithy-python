@@ -3,9 +3,9 @@
 from typing import Any
 
 import pytest
-from aws_event_stream._private.serializers import EventSerializer
-from aws_event_stream.aio import AWSEventPublisher
-from aws_event_stream.events import EventMessage
+from smithy_aws_event_stream._private.serializers import EventSerializer
+from smithy_aws_event_stream.aio import AWSEventPublisher
+from smithy_aws_event_stream.events import EventMessage
 from smithy_core.aio.types import AsyncBytesProvider
 from smithy_core.serializers import SerializeableShape
 from smithy_json import JSONCodec
