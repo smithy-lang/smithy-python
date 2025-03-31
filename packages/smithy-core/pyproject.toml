@@ -1,5 +1,5 @@
 [project]
-name = "smithy_core"
+name = "smithy-core"
 version = "0.0.1"
 description = "Core components for implementing Smithy tooling in Python."
 readme = "README.md"
