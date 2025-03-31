@@ -4,7 +4,7 @@ import datetime
 from dataclasses import dataclass
 from typing import Any, ClassVar, Literal, Self
 
-from aws_event_stream.events import Byte, EventMessage, Long, Short
+from smithy_aws_event_stream.events import Byte, EventMessage, Long, Short
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.exceptions import SmithyException
 from smithy_core.prelude import (

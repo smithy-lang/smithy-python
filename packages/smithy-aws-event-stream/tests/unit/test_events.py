@@ -6,7 +6,7 @@ import uuid
 from io import BytesIO
 
 import pytest
-from aws_event_stream.events import (
+from smithy_aws_event_stream.events import (
     MAX_HEADER_VALUE_BYTE_LENGTH,
     MAX_HEADERS_LENGTH,
     MAX_PAYLOAD_LENGTH,
@@ -19,8 +19,8 @@ from aws_event_stream.events import (
     Long,
     Short,
 )
-from aws_event_stream.events import _EventEncoder as EventEncoder
-from aws_event_stream.exceptions import (
+from smithy_aws_event_stream.events import _EventEncoder as EventEncoder
+from smithy_aws_event_stream.exceptions import (
     ChecksumMismatch,
     DuplicateHeader,
     InvalidEventBytes,

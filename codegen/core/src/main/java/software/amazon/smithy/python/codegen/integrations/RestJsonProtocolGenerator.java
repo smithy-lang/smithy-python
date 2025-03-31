@@ -407,11 +407,11 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
     @Override
     public void wrapInputStream(GenerationContext context, PythonWriter writer) {
         writer.addDependency(SmithyPythonDependency.SMITHY_JSON);
-        writer.addDependency(SmithyPythonDependency.AWS_EVENT_STREAM);
+        writer.addDependency(SmithyPythonDependency.SMITHY_AWS_EVENT_STREAM);
         writer.addImport("smithy_json", "JSONCodec");
         writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
         writer.addImport("smithy_core.types", "TimestampFormat");
-        writer.addImport("aws_event_stream.aio", "AWSEventPublisher");
+        writer.addImport("smithy_aws_event_stream.aio", "AWSEventPublisher");
         writer.addImport("aws_sdk_signers", "AsyncEventSigner");
         writer.write(
                 """
@@ -437,11 +437,11 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
     @Override
     public void wrapOutputStream(GenerationContext context, PythonWriter writer) {
         writer.addDependency(SmithyPythonDependency.SMITHY_JSON);
-        writer.addDependency(SmithyPythonDependency.AWS_EVENT_STREAM);
+        writer.addDependency(SmithyPythonDependency.SMITHY_AWS_EVENT_STREAM);
         writer.addImport("smithy_json", "JSONCodec");
         writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
         writer.addImport("smithy_core.types", "TimestampFormat");
-        writer.addImport("aws_event_stream.aio", "AWSEventReceiver");
+        writer.addImport("smithy_aws_event_stream.aio", "AWSEventReceiver");
         writer.write(
                 """
                         codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
