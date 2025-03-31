@@ -1,5 +1,5 @@
 [project]
-name = "smithy_http"
+name = "smithy-http"
 version = "0.0.1"
 description = "HTTP components for Smithy tooling."
 readme = "README.md"
