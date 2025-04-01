@@ -118,10 +118,6 @@ public final class SetupGenerator {
         writers.useFileWriter("pyproject.toml", "", writer -> {
             writer.pushState(new PyprojectSection(dependencies));
             writer.write("""
-                    [build-system]
-                    requires = ["setuptools", "setuptools-scm", "wheel"]
-                    build-backend = "setuptools.build_meta"
-
                     [project]
                     name = $1S
                     version = $2S
@@ -145,7 +141,7 @@ public final class SetupGenerator {
                     """, settings.moduleName(), settings.moduleVersion(), settings.moduleDescription());
 
             Optional.ofNullable(dependencies.get(PythonDependency.Type.DEPENDENCY.getType())).ifPresent(deps -> {
-                writer.openBlock("dependencies = [", "]", () -> writeDependencyList(writer, deps.values()));
+                writer.openBlock("dependencies = [", "]\n", () -> writeDependencyList(writer, deps.values()));
             });
 
             Optional<Collection<SymbolDependency>> testDeps =
@@ -161,17 +157,23 @@ public final class SetupGenerator {
             }
 
             testDeps.ifPresent(deps -> {
-                writer.openBlock("tests = [", "]", () -> writeDependencyList(writer, deps));
+                writer.openBlock("tests = [", "]\n", () -> writeDependencyList(writer, deps));
             });
 
             docsDeps.ifPresent(deps -> {
-                writer.openBlock("docs = [", "]", () -> writeDependencyList(writer, deps));
+                writer.openBlock("docs = [", "]\n", () -> writeDependencyList(writer, deps));
             });
 
             // TODO: remove the pyright global suppressions after the serde redo is done
             writer.write("""
-                    [tool.setuptools.packages.find]
-                    exclude=["tests*"]
+                    [build-system]
+                    requires = ["hatchling"]
+                    build-backend = "hatchling.build"
+
+                    [tool.hatch.build]
+                    exclude = [
+                      "tests",
+                    ]
 
                     [tool.pyright]
                     typeCheckingMode = "strict"
