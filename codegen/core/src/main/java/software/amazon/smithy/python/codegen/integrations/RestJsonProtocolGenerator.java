@@ -134,7 +134,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
         writer.pushState();
 
         if (documentBindings.isEmpty()) {
-            var body = shouldWriteDefaultBody(context, operation) ? "b'{}'" : "b''";
+            var body = shouldWriteDefaultBody(context, operation) ? "b\"{}\"" : "b\"\"";
             writer.write("""
                     content_length = 0
                     body = SeekableAsyncBytesReader($L)
@@ -147,7 +147,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
                     content = codec.serialize(input)
                     ${?writeDefaultBody}
                     if not content:
-                        content = b'{}'
+                        content = b\"{}\"
                     ${/writeDefaultBody}
                     content_length = len(content)
                     body = SeekableAsyncBytesReader(content)
@@ -255,7 +255,7 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
             writer.write("""
                     else:
                         content_length = 2
-                        body = SeekableAsyncBytesReader(b'{}')
+                        body = SeekableAsyncBytesReader(b\"{}\")
                     """);
         }
     }

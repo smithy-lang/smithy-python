@@ -149,7 +149,7 @@ final class HttpAuthGenerator implements Runnable {
         writer.putContext("authOptionInitializers", authOptionInitializers);
         writer.write("""
                 ${#authOptionInitializers}
-                if ((option := ${value:T}(auth_parameters)) is not None):
+                if (option := ${value:T}(auth_parameters)) is not None:
                     auth_options.append(option)
 
                 ${/authOptionInitializers}

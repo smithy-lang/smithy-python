@@ -28,7 +28,7 @@ public class AwsUserAgentIntegration implements PythonIntegration {
                         ua_suffix=config.user_agent_extra,
                         ua_app_id=config.sdk_ua_app_id,
                         sdk_version=$3T,
-                        service_id='$4L'
+                        service_id=$4S,
                     )
                 )
             """;
