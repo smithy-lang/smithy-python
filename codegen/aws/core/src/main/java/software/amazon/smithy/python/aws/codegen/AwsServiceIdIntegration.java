@@ -33,7 +33,7 @@ public final class AwsServiceIdIntegration implements PythonIntegration {
             Symbol symbol = this.delegate.toSymbol(shape);
             if (shape.isServiceShape() && shape.hasTrait(ServiceTrait.class)) {
                 var serviceTrait = shape.expectTrait(ServiceTrait.class);
-                var serviceName = StringUtils.capitalize(serviceTrait.getSdkId()).replace(" ", "");
+                var serviceName = StringUtils.capitalize(serviceTrait.getSdkId() + "Client").replace(" ", "");
                 symbol = symbol.toBuilder().name(serviceName).build();
             }
             return symbol;
