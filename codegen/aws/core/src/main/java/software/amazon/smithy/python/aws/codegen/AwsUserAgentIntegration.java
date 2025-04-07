@@ -60,7 +60,7 @@ public class AwsUserAgentIntegration implements PythonIntegration {
                                     moduleName,
                                     user_agent_plugin_file.replace('/', '.')), ".")
                             .definitionFile(String
-                                    .format("./%s/%s.py", moduleName, user_agent_plugin_file))
+                                    .format("./src/%s/%s.py", moduleName, user_agent_plugin_file))
                             .name("aws_user_agent_plugin")
                             .build())
                     .build();
@@ -90,7 +90,7 @@ public class AwsUserAgentIntegration implements PythonIntegration {
                             .addConfigProperty(uaAppId)
                             .pythonPlugin(userAgentPlugin)
                             .writeAdditionalFiles((c) -> {
-                                String filename = "%s/%s.py".formatted(moduleName, user_agent_plugin_file);
+                                String filename = "src/%s/%s.py".formatted(moduleName, user_agent_plugin_file);
                                 c.writerDelegator()
                                         .useFileWriter(
                                                 filename,

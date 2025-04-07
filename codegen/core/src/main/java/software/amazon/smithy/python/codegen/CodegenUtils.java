@@ -70,7 +70,7 @@ public final class CodegenUtils {
         return Symbol.builder()
                 .name("Config")
                 .namespace(String.format("%s.config", settings.moduleName()), ".")
-                .definitionFile(String.format("./%s/config.py", settings.moduleName()))
+                .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
                 .build();
     }
 
@@ -82,7 +82,7 @@ public final class CodegenUtils {
         return Symbol.builder()
                 .name("Plugin")
                 .namespace(String.format("%s.config", settings.moduleName()), ".")
-                .definitionFile(String.format("./%s/config.py", settings.moduleName()))
+                .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
                 .build();
     }
 
@@ -101,7 +101,7 @@ public final class CodegenUtils {
         return Symbol.builder()
                 .name("ServiceError")
                 .namespace(String.format("%s.models", settings.moduleName()), ".")
-                .definitionFile(String.format("./%s/models.py", settings.moduleName()))
+                .definitionFile(String.format("./src/%s/models.py", settings.moduleName()))
                 .build();
     }
 
@@ -118,7 +118,7 @@ public final class CodegenUtils {
         return Symbol.builder()
                 .name("ApiError")
                 .namespace(String.format("%s.models", settings.moduleName()), ".")
-                .definitionFile(String.format("./%s/models.py", settings.moduleName()))
+                .definitionFile(String.format("./src/%s/models.py", settings.moduleName()))
                 .build();
     }
 
@@ -135,7 +135,7 @@ public final class CodegenUtils {
         return Symbol.builder()
                 .name("UnknownApiError")
                 .namespace(String.format("%s.models", settings.moduleName()), ".")
-                .definitionFile(String.format("./%s/models.py", settings.moduleName()))
+                .definitionFile(String.format("./src/%s/models.py", settings.moduleName()))
                 .build();
     }
 
@@ -149,7 +149,7 @@ public final class CodegenUtils {
         return Symbol.builder()
                 .name("HTTPAuthParams")
                 .namespace(String.format("%s.auth", settings.moduleName()), ".")
-                .definitionFile(String.format("./%s/auth.py", settings.moduleName()))
+                .definitionFile(String.format("./src/%s/auth.py", settings.moduleName()))
                 .build();
     }
 
@@ -163,7 +163,7 @@ public final class CodegenUtils {
         return Symbol.builder()
                 .name("HTTPAuthSchemeResolver")
                 .namespace(String.format("%s.auth", settings.moduleName()), ".")
-                .definitionFile(String.format("./%s/auth.py", settings.moduleName()))
+                .definitionFile(String.format("./src/%s/auth.py", settings.moduleName()))
                 .build();
     }
 

@@ -408,7 +408,7 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
         } else {
             schemaSymbolBuilder
                     .namespace(String.format("%s.%s", settings.moduleName(), SCHEMAS_FILE.replace('/', '.')), ".")
-                    .definitionFile(String.format("./%s/%s.py", settings.moduleName(), SCHEMAS_FILE));
+                    .definitionFile(String.format("./src/%s/%s.py", settings.moduleName(), SCHEMAS_FILE));
         }
         var schemaSymbol = schemaSymbolBuilder.build();
         return SymbolReference.builder()
@@ -428,7 +428,7 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
             boolean includeSchema
     ) {
         var namespace = String.format("%s.%s", settings.moduleName(), file.replace('/', '.'));
-        var filename = String.format("./%s/%s.py", settings.moduleName(), file);
+        var filename = String.format("./src/%s/%s.py", settings.moduleName(), file);
         return createSymbolBuilder(shape, typeName, includeSchema)
                 .namespace(namespace, ".")
                 .definitionFile(filename);

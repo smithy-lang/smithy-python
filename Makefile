@@ -16,6 +16,7 @@ build-java: ## Builds the Java code generation packages.
 
 test-protocols: ## Generates and runs the restJson1 protocol tests.
 	cd codegen && ./gradlew :protocol-test:build
+	uv pip install codegen/protocol-test/build/smithyprojections/protocol-test/rest-json-1/python-client-codegen
 	uv run pytest codegen/protocol-test/build/smithyprojections/protocol-test/rest-json-1/python-client-codegen
 
 

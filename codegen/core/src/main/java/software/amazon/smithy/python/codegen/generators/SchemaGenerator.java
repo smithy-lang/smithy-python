@@ -207,7 +207,7 @@ public final class SchemaGenerator implements Consumer<Shape> {
     // references, but when generating schemas we need to instead defer creating those
     // members until all schemas exist.
     public void finalizeRecursiveShapes() {
-        var filename = String.format("%s/_private/schemas.py", context.settings().moduleName());
+        var filename = String.format("src/%s/_private/schemas.py", context.settings().moduleName());
         var namespace = String.format("%s._private.schemas", context.settings().moduleName());
         context.writerDelegator().useFileWriter(filename, namespace, this::finalizeRecursiveShapes);
     }
