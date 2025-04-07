@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* <Add new items here>
+
+## v0.0.3
+
 ### Features
 * Added AsyncEventSigner for Amazon Event Stream event signing.
 * Added new ``uri_encode_path`` parameter to SigV4SigningProperties.
@@ -11,7 +15,7 @@
 * Fixed bug with async seekable payloads on requests.
 * Fixed bug where paths were not being properly double-encoded.
 
-## 0.0.2
+## v0.0.2
 
 ### Feature
 * Added new ``content_checksum_enabled`` parameter to SigV4SigningProperties.
@@ -23,7 +27,7 @@
 ### Bugfixes
 * Fixed incorrect exclusion of `X-Amz-Content-SHA256` header from some requests.
 
-## 0.0.1
+## v0.0.1
 
 ### Features
 * Added SigV4Signer to sign arbitrary requests sychronously.

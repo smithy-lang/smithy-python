@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+* <Add new items here>
+
+## v0.0.1
+
 ### Feature
 * Added support for Instance Metadata Service (IMDS) credential resolution.
 * Added basic endpoint support.
