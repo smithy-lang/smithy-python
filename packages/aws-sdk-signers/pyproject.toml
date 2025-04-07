@@ -1,6 +1,6 @@
 [project]
 name = "aws-sdk-signers"
-version = "0.0.2"
+version = "0.0.3"
 requires-python = ">=3.12"
 authors = [
   {name = "Amazon Web Services"},
