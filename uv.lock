@@ -94,7 +94,7 @@ wheels = [
 
 [[package]]
 name = "aws-sdk-signers"
-version = "0.0.2"
+version = "0.0.3"
 source = { editable = "packages/aws-sdk-signers" }
 
 [package.optional-dependencies]
@@ -662,7 +662,7 @@ requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
 
 [[package]]
 name = "smithy-core"
-version = "0.0.1"
+version = "0.0.2"
 source = { editable = "packages/smithy-core" }
 
 [package.dev-dependencies]
