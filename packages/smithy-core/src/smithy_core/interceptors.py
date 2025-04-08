@@ -577,7 +577,7 @@ class InterceptorChain(AnyInterceptor):
     def modify_before_signing(self, context: RequestContext[Any, Any]) -> Any:
         transport_request = context.transport_request
         for interceptor in self._chain:
-            transport_request = interceptor.modify_before_retry_loop(context)
+            transport_request = interceptor.modify_before_signing(context)
         return transport_request
 
     def read_before_signing(self, context: RequestContext[Any, Any]) -> None:
@@ -591,7 +591,7 @@ class InterceptorChain(AnyInterceptor):
     def modify_before_transmit(self, context: RequestContext[Any, Any]) -> Any:
         transport_request = context.transport_request
         for interceptor in self._chain:
-            transport_request = interceptor.modify_before_retry_loop(context)
+            transport_request = interceptor.modify_before_transmit(context)
         return transport_request
 
     def read_before_transmit(self, context: RequestContext[Any, Any]) -> None:
