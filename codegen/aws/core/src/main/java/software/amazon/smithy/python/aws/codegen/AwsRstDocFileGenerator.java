@@ -7,8 +7,11 @@ package software.amazon.smithy.python.aws.codegen;
 import static software.amazon.smithy.python.codegen.SymbolProperties.OPERATION_METHOD;
 
 import java.util.List;
+import java.util.Optional;
+
 import software.amazon.smithy.model.traits.InputTrait;
 import software.amazon.smithy.model.traits.OutputTrait;
+import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.sections.*;
@@ -116,12 +119,15 @@ public class AwsRstDocFileGenerator implements PythonIntegration {
             var symbol = context.symbolProvider().toSymbol(shape);
             String docsFileName = String.format("docs/models/%s.rst",
                     symbol.getName());
+
+            boolean isStreaming = Optional.ofNullable(shape.getAllMembers().get("body"))
+                    .map(member -> context.model().expectShape(member.getTarget()))
+                    .map(memberShape -> memberShape.hasTrait(StreamingTrait.class))
+                    .orElse(false);            // Input and output shapes are typically skipped since they are generated
             // Input and output shapes are typically skipped since they are generated
-            // on the operation's page.  Shapes ending with "OperationOutput" are
-            // wrappers around streaming output shapes.  These should be documented
-            // because the streaming class refers to and documents the wrapped class
-            // and will link to the wrapper class.
-            if (!shape.hasTrait(InputTrait.class) && !shape.hasTrait(OutputTrait.class) || symbol.getName().endsWith("OperationOutput")) {
+            // on the operation's page. The exception to this is the output of
+            // streaming operations where we have a different output shape defined.
+            if (!shape.hasTrait(InputTrait.class) && !shape.hasTrait(OutputTrait.class) || isStreaming) {
                 context.writerDelegator().useFileWriter(docsFileName, "", writer -> {
                     writer.write(generateHeader(symbol.getName()));
                     writer.write(".. autoclass:: " + symbol.toString() + "\n   :members:\n");
