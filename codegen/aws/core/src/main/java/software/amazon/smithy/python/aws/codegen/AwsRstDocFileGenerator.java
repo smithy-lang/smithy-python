@@ -69,8 +69,7 @@ public class AwsRstDocFileGenerator implements PythonIntegration {
 
             String operationName = operationSymbol.getName();
             String inputSymbolName = inputSymbol.toString();
-            String outputSymbolName = outputSymbol.toString().replace("OperationOutput",
-                    "Output");
+            String outputSymbolName = outputSymbol.toString();
             String serviceName = context.symbolProvider().toSymbol(section.service()).getName();
             String docsFileName = String.format("docs/client/%s.rst", operationName);
             String fullOperationReference = String.format("%s.client.%s.%s",
@@ -85,7 +84,12 @@ public class AwsRstDocFileGenerator implements PythonIntegration {
                 fileWriter.write("=================\nInput:\n=================\n\n");
                 fileWriter.write(".. autoclass:: " + inputSymbolName + "\n    :members:\n");
                 fileWriter.write("=================\nOutput:\n=================\n\n");
-                fileWriter.write(".. autoclass:: " + outputSymbolName + "\n    :members:\n");
+                if (section.isStream()) {
+                    String unionShapeName = outputSymbolName.replace("OperationOutput", "Output");
+                    fileWriter.write(".. autodata:: " + unionShapeName + "  \n\n");
+                } else {
+                    fileWriter.write(".. autoclass:: " + outputSymbolName + "\n    " + ":members:\n\n");
+                }
             });
         }
     }
