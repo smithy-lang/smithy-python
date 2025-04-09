@@ -85,8 +85,10 @@ public class AwsRstDocFileGenerator implements PythonIntegration {
                 fileWriter.write(".. autoclass:: " + inputSymbolName + "\n    :members:\n");
                 fileWriter.write("=================\nOutput:\n=================\n\n");
                 if (section.isStream()) {
-                    String unionShapeName = outputSymbolName.replace("OperationOutput", "Output");
-                    fileWriter.write(".. autodata:: " + unionShapeName + "  \n\n");
+                    var streamShape =
+                            context.model().expectShape(output.getAllMembers().get("stream").getId());
+                    var streamName = context.symbolProvider().toSymbol(streamShape).toString();
+                    fileWriter.write(".. autodata:: " + streamName + "  \n\n");
                 } else {
                     fileWriter.write(".. autoclass:: " + outputSymbolName + "\n    " + ":members:\n\n");
                 }
@@ -114,11 +116,11 @@ public class AwsRstDocFileGenerator implements PythonIntegration {
             var symbol = context.symbolProvider().toSymbol(shape);
             String docsFileName = String.format("docs/models/%s.rst",
                     symbol.getName());
-            // Generally we want to skip input and output shapes because those will
-            // be generated on the operation's page; if it ends with
-            // "OperationOutput", that suggests it's a wrapper around the standard
-            // output shape.  In this case we want to document it since the streaming
-            // class documents the wrapped class.
+            // Input and output shapes are typically skipped since they are generated
+            // on the operation's page.  Shapes ending with "OperationOutput" are
+            // wrappers around streaming output shapes.  These should be documented
+            // because the streaming class refers to and documents the wrapped class
+            // and will link to the wrapper class.
             if (!shape.hasTrait(InputTrait.class) && !shape.hasTrait(OutputTrait.class) || symbol.getName().endsWith("OperationOutput")) {
                 context.writerDelegator().useFileWriter(docsFileName, "", writer -> {
                     writer.write(generateHeader(symbol.getName()));
