@@ -830,7 +830,7 @@ final class ClientGenerator implements Runnable {
         var output = model.expectShape(operation.getOutputShape());
         var outputSymbol = symbolProvider.toSymbol(output);
 
-        writer.pushState(new OperationSection(service, operation));
+        writer.pushState(new OperationSection(service, operation, false));
         writer.openBlock("async def $L(self, input: $T, plugins: list[$T] | None = None) -> $T:",
                 "",
                 operationMethodSymbol.getName(),
@@ -905,7 +905,7 @@ final class ClientGenerator implements Runnable {
     }
 
     private void generateEventStreamOperation(PythonWriter writer, OperationShape operation) {
-        writer.pushState(new OperationSection(service, operation));
+        writer.pushState(new OperationSection(service, operation, true));
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         var operationSymbol = symbolProvider.toSymbol(operation);
         writer.putContext("operation", operationSymbol);

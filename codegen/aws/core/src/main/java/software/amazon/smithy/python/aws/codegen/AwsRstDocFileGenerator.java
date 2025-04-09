@@ -69,7 +69,8 @@ public class AwsRstDocFileGenerator implements PythonIntegration {
 
             String operationName = operationSymbol.getName();
             String inputSymbolName = inputSymbol.toString();
-            String outputSymbolName = outputSymbol.toString();
+            String outputSymbolName = outputSymbol.toString().replace("OperationOutput",
+                    "Output");
             String serviceName = context.symbolProvider().toSymbol(section.service()).getName();
             String docsFileName = String.format("docs/client/%s.rst", operationName);
             String fullOperationReference = String.format("%s.client.%s.%s",
@@ -109,7 +110,12 @@ public class AwsRstDocFileGenerator implements PythonIntegration {
             var symbol = context.symbolProvider().toSymbol(shape);
             String docsFileName = String.format("docs/models/%s.rst",
                     symbol.getName());
-            if (!shape.hasTrait(InputTrait.class) && !shape.hasTrait(OutputTrait.class)) {
+            // Generally we want to skip input and output shapes because those will
+            // be generated on the operation's page; if it ends with
+            // "OperationOutput", that suggests it's a wrapper around the standard
+            // output shape.  In this case we want to document it since the streaming
+            // class documents the wrapped class.
+            if (!shape.hasTrait(InputTrait.class) && !shape.hasTrait(OutputTrait.class) || symbol.getName().endsWith("OperationOutput")) {
                 context.writerDelegator().useFileWriter(docsFileName, "", writer -> {
                     writer.write(generateHeader(symbol.getName()));
                     writer.write(".. autoclass:: " + symbol.toString() + "\n   :members:\n");
