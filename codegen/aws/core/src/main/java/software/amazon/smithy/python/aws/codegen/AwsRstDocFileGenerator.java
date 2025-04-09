@@ -123,7 +123,7 @@ public class AwsRstDocFileGenerator implements PythonIntegration {
             boolean isStreaming = Optional.ofNullable(shape.getAllMembers().get("body"))
                     .map(member -> context.model().expectShape(member.getTarget()))
                     .map(memberShape -> memberShape.hasTrait(StreamingTrait.class))
-                    .orElse(false);            // Input and output shapes are typically skipped since they are generated
+                    .orElse(false);
             // Input and output shapes are typically skipped since they are generated
             // on the operation's page. The exception to this is the output of
             // streaming operations where we have a different output shape defined.
