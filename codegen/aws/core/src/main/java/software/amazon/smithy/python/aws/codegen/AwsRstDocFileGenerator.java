@@ -7,11 +7,8 @@ package software.amazon.smithy.python.aws.codegen;
 import static software.amazon.smithy.python.codegen.SymbolProperties.OPERATION_METHOD;
 
 import java.util.List;
-import java.util.Optional;
-
 import software.amazon.smithy.model.traits.InputTrait;
 import software.amazon.smithy.model.traits.OutputTrait;
-import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.sections.*;
@@ -87,14 +84,7 @@ public class AwsRstDocFileGenerator implements PythonIntegration {
                 fileWriter.write("=================\nInput:\n=================\n\n");
                 fileWriter.write(".. autoclass:: " + inputSymbolName + "\n    :members:\n");
                 fileWriter.write("=================\nOutput:\n=================\n\n");
-                if (section.isStream()) {
-                    var streamShape =
-                            context.model().expectShape(output.getAllMembers().get("stream").getId());
-                    var streamName = context.symbolProvider().toSymbol(streamShape).toString();
-                    fileWriter.write(".. autodata:: " + streamName + "  \n\n");
-                } else {
-                    fileWriter.write(".. autoclass:: " + outputSymbolName + "\n    " + ":members:\n\n");
-                }
+                fileWriter.write(".. autoclass:: " + outputSymbolName + "\n    :members:\n");
             });
         }
     }
@@ -119,15 +109,7 @@ public class AwsRstDocFileGenerator implements PythonIntegration {
             var symbol = context.symbolProvider().toSymbol(shape);
             String docsFileName = String.format("docs/models/%s.rst",
                     symbol.getName());
-
-            boolean isStreaming = Optional.ofNullable(shape.getAllMembers().get("body"))
-                    .map(member -> context.model().expectShape(member.getTarget()))
-                    .map(memberShape -> memberShape.hasTrait(StreamingTrait.class))
-                    .orElse(false);
-            // Input and output shapes are typically skipped since they are generated
-            // on the operation's page. The exception to this is the output of
-            // streaming operations where we have a different output shape defined.
-            if (!shape.hasTrait(InputTrait.class) && !shape.hasTrait(OutputTrait.class) || isStreaming) {
+            if (!shape.hasTrait(InputTrait.class) && !shape.hasTrait(OutputTrait.class)) {
                 context.writerDelegator().useFileWriter(docsFileName, "", writer -> {
                     writer.write(generateHeader(symbol.getName()));
                     writer.write(".. autoclass:: " + symbol.toString() + "\n   :members:\n");
