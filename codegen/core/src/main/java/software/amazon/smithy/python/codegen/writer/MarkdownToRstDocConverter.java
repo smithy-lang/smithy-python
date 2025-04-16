@@ -77,7 +77,7 @@ public class MarkdownToRstDocConverter {
                 String text = textNode.text();
                 if (!text.trim().isEmpty()) {
                     if (text.startsWith(":param ")) {
-                        int secondColonIndex = text.indexOf(':',  1);
+                        int secondColonIndex = text.indexOf(':', 1);
                         writer.write(text.substring(0, secondColonIndex + 1));
                         //TODO right now the code generator gives us a mixture of
                         // RST and HTML (for instance :param xyz: <p> docs
@@ -85,7 +85,7 @@ public class MarkdownToRstDocConverter {
                         // starts a newline.  We account for that with this if/else
                         // statement, but we should refactor this in the future to
                         // have a more elegant codepath.
-                        if (secondColonIndex +1 == text.strip().length()) {
+                        if (secondColonIndex + 1 == text.strip().length()) {
                             writer.indent();
                             writer.ensureNewline();
                         } else {
@@ -97,8 +97,8 @@ public class MarkdownToRstDocConverter {
                     } else {
                         writer.writeInline(text);
                     }
-                // Account for services making a paragraph tag that's empty except
-                // for a newline
+                    // Account for services making a paragraph tag that's empty except
+                    // for a newline
                 } else if (node.parent() instanceof Element && ((Element) node.parent()).tagName().equals("p")) {
                     writer.writeInline(text.replaceAll("[ \\t]+", ""));
                 }

@@ -451,7 +451,6 @@ public final class SetupGenerator {
         writeIndexFile(context, "docs/models/index.rst", "Models");
     }
 
-
     /**
      * Write the readme in the docs folder describing instructions for generation
      *
@@ -461,18 +460,18 @@ public final class SetupGenerator {
             GenerationContext context
     ) {
         context.writerDelegator().useFileWriter("docs/README.md", writer -> {
-            writer.write("""                                
-                ## Generating Documentation
-                
-                Sphinx is used for documentation. You can generate HTML locally with the
-                following:
-                
-                ```
-                $$ uv pip install ".[docs]"
-                $$ cd docs
-                $$ make html
-                ```
-                    """);
+            writer.write("""
+                    ## Generating Documentation
+
+                    Sphinx is used for documentation. You can generate HTML locally with the
+                    following:
+
+                    ```
+                    $$ uv pip install ".[docs]"
+                    $$ cd docs
+                    $$ make html
+                    ```
+                        """);
         });
     }
 

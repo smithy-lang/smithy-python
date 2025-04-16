@@ -130,31 +130,26 @@ public final class StructureGenerator implements Runnable {
         writer.addStdlibImports("typing", Set.of("Literal", "ClassVar"));
         writer.addStdlibImport("dataclasses", "dataclass");
 
-        // TODO: Implement protocol-level customization of the error code
         var fault = errorTrait.getValue();
-        var code = shape.getId().getName();
         var symbol = symbolProvider.toSymbol(shape);
-        var apiError = CodegenUtils.getApiError(settings);
+        var baseError = CodegenUtils.getServiceError(settings);
         writer.pushState(new ErrorSection(symbol));
         writer.write("""
                 @dataclass(kw_only=True)
                 class $1L($2T):
+                    ${4C|}
+
+                    fault: Literal["client", "server"] | None = $3S
+
                     ${5C|}
 
-                    code: ClassVar[str] = $3S
-                    fault: ClassVar[Literal["client", "server"]] = $4S
-
-                    message: str
                     ${6C|}
 
                     ${7C|}
 
-                    ${8C|}
-
                 """,
                 symbol.getName(),
-                apiError,
-                code,
+                baseError,
                 fault,
                 writer.consumer(w -> writeClassDocs(true)),
                 writer.consumer(w -> writeProperties()),
@@ -325,7 +320,9 @@ public final class StructureGenerator implements Runnable {
 
             String memberName = symbolProvider.toMemberName(member);
             String docs = writer.formatDocs(String.format(":param %s: %s%s",
-                    memberName, descriptionPrefix, trait.getValue()));
+                    memberName,
+                    descriptionPrefix,
+                    trait.getValue()));
             writer.write(docs);
         });
     }

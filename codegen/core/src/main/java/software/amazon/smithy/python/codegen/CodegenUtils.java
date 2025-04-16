@@ -89,10 +89,10 @@ public final class CodegenUtils {
     /**
      * Gets the service error symbol.
      *
-     * <p>This error is the top-level error for the client. Every error surfaced by
-     * the client MUST be a subclass of this so that customers can reliably catch all
-     * exceptions it raises. The client implementation will wrap any errors that aren't
-     * already subclasses.
+     * <p>This error is the top-level error for the client. Errors surfaced by the client
+     * MUST be a subclass of this or SmithyException so that customers can reliably catch
+     * all the exceptions a client throws. The request pipeline will wrap exceptions of
+     * other types.
      *
      * @param settings The client settings, used to account for module configuration.
      * @return Returns the symbol for the client's error class.
@@ -100,40 +100,6 @@ public final class CodegenUtils {
     public static Symbol getServiceError(PythonSettings settings) {
         return Symbol.builder()
                 .name("ServiceError")
-                .namespace(String.format("%s.models", settings.moduleName()), ".")
-                .definitionFile(String.format("./src/%s/models.py", settings.moduleName()))
-                .build();
-    }
-
-    /**
-     * Gets the service API error symbol.
-     *
-     * <p>This error is the parent class for all errors returned over the wire by the
-     * service, including unknown errors.
-     *
-     * @param settings The client settings, used to account for module configuration.
-     * @return Returns the symbol for the client's API error class.
-     */
-    public static Symbol getApiError(PythonSettings settings) {
-        return Symbol.builder()
-                .name("ApiError")
-                .namespace(String.format("%s.models", settings.moduleName()), ".")
-                .definitionFile(String.format("./src/%s/models.py", settings.moduleName()))
-                .build();
-    }
-
-    /**
-     * Gets the unknown API error symbol.
-     *
-     * <p> This error is the parent class for all errors returned over the wire by
-     * the service which aren't in the model.
-     *
-     * @param settings The client settings, used to account for module configuration.
-     * @return Returns the symbol for unknown API errors.
-     */
-    public static Symbol getUnknownApiError(PythonSettings settings) {
-        return Symbol.builder()
-                .name("UnknownApiError")
                 .namespace(String.format("%s.models", settings.moduleName()), ".")
                 .definitionFile(String.format("./src/%s/models.py", settings.moduleName()))
                 .build();

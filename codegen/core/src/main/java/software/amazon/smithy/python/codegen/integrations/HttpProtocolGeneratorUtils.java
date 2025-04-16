@@ -136,26 +136,24 @@ public final class HttpProtocolGeneratorUtils {
         var transportResponse = context.applicationProtocol().responseType();
         var delegator = context.writerDelegator();
         var errorDispatcher = context.protocolGenerator().getErrorDeserializationFunction(context, operation);
-        var apiError = CodegenUtils.getApiError(context.settings());
-        var unknownApiError = CodegenUtils.getUnknownApiError(context.settings());
+        var apiError = CodegenUtils.getServiceError(context.settings());
         var canReadResponseBody = canReadResponseBody(operation, context.model());
         delegator.useFileWriter(errorDispatcher.getDefinitionFile(), errorDispatcher.getNamespace(), writer -> {
             writer.pushState(new ErrorDispatcherSection(operation, errorShapeToCode, errorMessageCodeGenerator));
             writer.write("""
                     async def $1L(http_response: $2T, config: $3T) -> $4T:
-                        ${6C|}
+                        ${5C|}
 
                         match code.lower():
-                            ${7C|}
+                            ${6C|}
 
                             case _:
-                                return $5T(f"{code}: {message}")
+                                return $4T(f"{code}: {message}")
                     """,
                     errorDispatcher.getName(),
                     transportResponse,
                     configSymbol,
                     apiError,
-                    unknownApiError,
                     writer.consumer(w -> errorMessageCodeGenerator.accept(context, w, canReadResponseBody)),
                     writer.consumer(w -> errorCases(context, w, operation, errorShapeToCode)));
             writer.popState();

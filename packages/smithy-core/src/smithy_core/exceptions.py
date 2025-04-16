@@ -1,7 +1,55 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+from dataclasses import dataclass, field
+from typing import Literal, Protocol
+
+
 class SmithyException(Exception):
     """Base exception type for all exceptions raised by smithy-python."""
+
+
+@dataclass(kw_only=True)
+class RetryInfo(Protocol):
+    is_retry_safe: bool | None = None
+    """Whether the exception is safe to retry.
+
+    A value of True does not mean a retry will occur, but rather that a retry is allowed
+    to occur.
+
+    A value of None indicates that there is not enough information available to
+    determine if a retry is safe.
+    """
+
+    retry_after: float | None = None
+    """The amount of time that should pass before a retry.
+
+    Retry strategies MAY choose to wait longer.
+    """
+
+    is_throttle: bool = False
+    """Whether the error is a throttling error."""
+
+
+@dataclass(kw_only=True)
+class CallException(SmithyException, RetryInfo):
+    """Base exceptio to be used in application-level errors."""
+
+    fault: Literal["client", "server"] | None = None
+    """Whether the client or server is at fault."""
+
+    message: str = field(default="", kw_only=False)
+    """The message of the error."""
+
+    def __post_init__(self):
+        super().__init__(self.message)
+
+
+@dataclass(kw_only=True)
+class ModeledException(CallException):
+    """Base excetpion to be used for modeled errors."""
+
+    fault: Literal["client", "server"] | None = "client"
+    """Whether the client or server is at fault."""
 
 
 class SerializationException(Exception):
