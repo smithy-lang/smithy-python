@@ -127,7 +127,6 @@ final class ClientGenerator implements Runnable {
 
         var transportRequest = context.applicationProtocol().requestType();
         var transportResponse = context.applicationProtocol().responseType();
-        var errorSymbol = CodegenUtils.getServiceError(context.settings());
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
         var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
 
@@ -302,18 +301,24 @@ final class ClientGenerator implements Runnable {
         }
         writer.addStdlibImport("typing", "Any");
         writer.addStdlibImport("asyncio", "iscoroutine");
+        writer.addImports("smithy_core.exceptions", Set.of("SmithyException", "CallException"));
+        writer.pushState();
+        writer.putContext("request", transportRequest);
+        writer.putContext("response", transportResponse);
+        writer.putContext("plugin", pluginSymbol);
+        writer.putContext("config", configSymbol);
         writer.write(
                 """
                         async def _execute_operation[Input: SerializeableShape, Output: DeserializeableShape](
                             self,
                             input: Input,
-                            plugins: list[$1T],
-                            serialize: Callable[[Input, $5T], Awaitable[$2T]],
-                            deserialize: Callable[[$3T, $5T], Awaitable[Output]],
-                            config: $5T,
+                            plugins: list[${plugin:T}],
+                            serialize: Callable[[Input, ${config:T}], Awaitable[${request:T}]],
+                            deserialize: Callable[[${response:T}, ${config:T}], Awaitable[Output]],
+                            config: ${config:T},
                             operation: APIOperation[Input, Output],
-                            request_future: Future[RequestContext[Any, $2T]] | None = None,
-                            response_future: Future[$3T] | None = None,
+                            request_future: Future[RequestContext[Any, ${request:T}]] | None = None,
+                            response_future: Future[${response:T}] | None = None,
                         ) -> Output:
                             try:
                                 return await self._handle_execution(
@@ -321,27 +326,29 @@ final class ClientGenerator implements Runnable {
                                     request_future, response_future,
                                 )
                             except Exception as e:
-                                if request_future is not None and not request_future.done():
-                                    request_future.set_exception($4T(e))
-                                if response_future is not None and not response_future.done():
-                                    response_future.set_exception($4T(e))
-
-                                # Make sure every exception that we throw is an instance of $4T so
+                                # Make sure every exception that we throw is an instance of SmithyException so
                                 # customers can reliably catch everything we throw.
-                                if not isinstance(e, $4T):
-                                    raise $4T(e) from e
+                                if not isinstance(e, SmithyException):
+                                    wrapped = CallException(str(e))
+                                    wrapped.__cause__ = e
+                                    e = wrapped
+
+                                if request_future is not None and not request_future.done():
+                                    request_future.set_exception(e)
+                                if response_future is not None and not response_future.done():
+                                    response_future.set_exception(e)
                                 raise
 
                         async def _handle_execution[Input: SerializeableShape, Output: DeserializeableShape](
                             self,
                             input: Input,
-                            plugins: list[$1T],
-                            serialize: Callable[[Input, $5T], Awaitable[$2T]],
-                            deserialize: Callable[[$3T, $5T], Awaitable[Output]],
-                            config: $5T,
+                            plugins: list[${plugin:T}],
+                            serialize: Callable[[Input, ${config:T}], Awaitable[${request:T}]],
+                            deserialize: Callable[[${response:T}, ${config:T}], Awaitable[Output]],
+                            config: ${config:T},
                             operation: APIOperation[Input, Output],
-                            request_future: Future[RequestContext[Any, $2T]] | None,
-                            response_future: Future[$3T] | None,
+                            request_future: Future[RequestContext[Any, ${request:T}]] | None,
+                            response_future: Future[${response:T}] | None,
                         ) -> Output:
                             operation_name = operation.schema.id.name
                             logger.debug('Making request for operation "%s" with parameters: %s', operation_name, input)
@@ -350,11 +357,16 @@ final class ClientGenerator implements Runnable {
                                 plugin(config)
 
                             input_context = InputContext(request=input, properties=TypedProperties({"config": config}))
-                            transport_request: $2T | None = None
-                            output_context: OutputContext[Input, Output, $2T | None, $3T | None] | None = None
+                            transport_request: ${request:T} | None = None
+                            output_context: OutputContext[
+                                Input,
+                                Output,
+                                ${request:T} | None,
+                                ${response:T} | None
+                            ] | None = None
 
                             client_interceptors = cast(
-                                list[Interceptor[Input, Output, $2T, $3T]], list(config.interceptors)
+                                list[Interceptor[Input, Output, ${request:T}, ${response:T}]], list(config.interceptors)
                             )
                             interceptor_chain = InterceptorChain(client_interceptors)
 
@@ -455,24 +467,20 @@ final class ClientGenerator implements Runnable {
 
                         async def _handle_attempt[Input: SerializeableShape, Output: DeserializeableShape](
                             self,
-                            deserialize: Callable[[$3T, $5T], Awaitable[Output]],
-                            interceptor: Interceptor[Input, Output, $2T, $3T],
-                            context: RequestContext[Input, $2T],
-                            config: $5T,
+                            deserialize: Callable[[${response:T}, ${config:T}], Awaitable[Output]],
+                            interceptor: Interceptor[Input, Output, ${request:T}, ${response:T}],
+                            context: RequestContext[Input, ${request:T}],
+                            config: ${config:T},
                             operation: APIOperation[Input, Output],
-                            request_future: Future[RequestContext[Input, $2T]] | None,
-                        ) -> OutputContext[Input, Output, $2T, $3T | None]:
-                            transport_response: $3T | None = None
+                            request_future: Future[RequestContext[Input, ${request:T}]] | None,
+                        ) -> OutputContext[Input, Output, ${request:T}, ${response:T} | None]:
+                            transport_response: ${response:T} | None = None
                             try:
                                 # Step 7a: Invoke read_before_attempt
                                 interceptor.read_before_attempt(context)
 
-                        """,
-                pluginSymbol,
-                transportRequest,
-                transportResponse,
-                errorSymbol,
-                configSymbol);
+                        """);
+        writer.popState();
 
         boolean supportsAuth = !ServiceIndex.of(model).getAuthSchemes(service).isEmpty();
         writer.pushState(new ResolveIdentitySection());
@@ -873,8 +881,8 @@ final class ClientGenerator implements Runnable {
                     .orElse("The operation's input.");
 
             writer.write("""
-                        $L
-                        """,docs);
+                    $L
+                    """, docs);
             writer.write("");
             writer.write(":param input: $L", inputDocs);
             writer.write("");

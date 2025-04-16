@@ -9,7 +9,6 @@ import static java.lang.String.format;
 import java.util.Locale;
 import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.ReservedWordSymbolProvider;
-import software.amazon.smithy.codegen.core.ReservedWords;
 import software.amazon.smithy.codegen.core.ReservedWordsBuilder;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
@@ -84,6 +83,10 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
         var reservedMemberNamesBuilder = new ReservedWordsBuilder()
                 .loadWords(PythonSymbolProvider.class.getResource("reserved-member-names.txt"), this::escapeWord);
 
+        // Reserved words that only apply to error members.
+        var reservedErrorMembers = new ReservedWordsBuilder()
+                .loadWords(PythonSymbolProvider.class.getResource("reserved-error-member-names.txt"), this::escapeWord);
+
         escaper = ReservedWordSymbolProvider.builder()
                 .nameReservedWords(reservedClassNames)
                 .memberReservedWords(reservedMemberNamesBuilder.build())
@@ -92,13 +95,8 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
                 .escapePredicate((shape, symbol) -> !StringUtils.isEmpty(symbol.getDefinitionFile()))
                 .buildEscaper();
 
-        // Reserved words that only apply to error members.
-        ReservedWords reservedErrorMembers = reservedMemberNamesBuilder
-                .put("code", "code_")
-                .build();
-
         errorMemberEscaper = ReservedWordSymbolProvider.builder()
-                .memberReservedWords(reservedErrorMembers)
+                .memberReservedWords(reservedErrorMembers.build())
                 .escapePredicate((shape, symbol) -> !StringUtils.isEmpty(symbol.getDefinitionFile()))
                 .buildEscaper();
     }
