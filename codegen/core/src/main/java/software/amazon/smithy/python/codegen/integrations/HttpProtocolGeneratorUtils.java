@@ -140,6 +140,7 @@ public final class HttpProtocolGeneratorUtils {
         delegator.useFileWriter(errorDispatcher.getDefinitionFile(), errorDispatcher.getNamespace(), writer -> {
             writer.pushState(new ErrorDispatcherSection(operation, errorShapeToCode, errorMessageCodeGenerator));
             writer.addImport("smithy_core.exceptions", "CallException");
+            // TODO: include standard retry-after in the pure-python version of this
             writer.write("""
                     async def $1L(http_response: $2T, config: $3T) -> CallException:
                         ${4C|}
@@ -148,9 +149,12 @@ public final class HttpProtocolGeneratorUtils {
                             ${5C|}
 
                             case _:
+                                is_throttle = http_response.status == 429
                                 return CallException(
                                     message=f"{code}: {message}",
-                                    fault="client" if http_response.status < 500 else "server"
+                                    fault="client" if http_response.status < 500 else "server",
+                                    is_throttle=is_throttle,
+                                    is_retry_safe=is_throttle or None,
                                 )
                     """,
                     errorDispatcher.getName(),

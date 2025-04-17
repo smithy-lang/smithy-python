@@ -31,6 +31,7 @@ import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.InputTrait;
 import software.amazon.smithy.model.traits.OutputTrait;
 import software.amazon.smithy.model.traits.RequiredTrait;
+import software.amazon.smithy.model.traits.RetryableTrait;
 import software.amazon.smithy.model.traits.SensitiveTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.python.codegen.CodegenUtils;
@@ -134,12 +135,26 @@ public final class StructureGenerator implements Runnable {
         var symbol = symbolProvider.toSymbol(shape);
         var baseError = CodegenUtils.getServiceError(settings);
         writer.pushState(new ErrorSection(symbol));
+        writer.putContext("retryable", false);
+        writer.putContext("throttling", false);
+
+        var retryableTrait = shape.getTrait(RetryableTrait.class);
+        if (retryableTrait.isPresent()) {
+            writer.putContext("retryable", true);
+            writer.putContext("throttling", retryableTrait.get().getThrottling());
+        }
         writer.write("""
                 @dataclass(kw_only=True)
                 class $1L($2T):
                     ${4C|}
 
                     fault: Literal["client", "server"] | None = $3S
+                    ${?retryable}
+                    is_retry_safe: bool | None = True
+                    ${?throttling}
+                    is_throttle: bool = True
+                    ${/throttling}
+                    ${/retryable}
 
                     ${5C|}
 
