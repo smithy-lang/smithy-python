@@ -136,24 +136,26 @@ public final class HttpProtocolGeneratorUtils {
         var transportResponse = context.applicationProtocol().responseType();
         var delegator = context.writerDelegator();
         var errorDispatcher = context.protocolGenerator().getErrorDeserializationFunction(context, operation);
-        var apiError = CodegenUtils.getServiceError(context.settings());
         var canReadResponseBody = canReadResponseBody(operation, context.model());
         delegator.useFileWriter(errorDispatcher.getDefinitionFile(), errorDispatcher.getNamespace(), writer -> {
             writer.pushState(new ErrorDispatcherSection(operation, errorShapeToCode, errorMessageCodeGenerator));
+            writer.addImport("smithy_core.exceptions", "CallException");
             writer.write("""
-                    async def $1L(http_response: $2T, config: $3T) -> $4T:
-                        ${5C|}
+                    async def $1L(http_response: $2T, config: $3T) -> CallException:
+                        ${4C|}
 
                         match code.lower():
-                            ${6C|}
+                            ${5C|}
 
                             case _:
-                                return $4T(f"{code}: {message}")
+                                return CallException(
+                                    message=f"{code}: {message}",
+                                    fault="client" if http_response.status < 500 else "server"
+                                )
                     """,
                     errorDispatcher.getName(),
                     transportResponse,
                     configSymbol,
-                    apiError,
                     writer.consumer(w -> errorMessageCodeGenerator.accept(context, w, canReadResponseBody)),
                     writer.consumer(w -> errorCases(context, w, operation, errorShapeToCode)));
             writer.popState();
