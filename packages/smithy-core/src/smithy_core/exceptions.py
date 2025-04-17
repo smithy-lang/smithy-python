@@ -1,14 +1,22 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass, field
-from typing import Literal, Protocol
+from typing import Literal, Protocol, runtime_checkable
 
 
 class SmithyException(Exception):
     """Base exception type for all exceptions raised by smithy-python."""
 
 
+type Fault = Literal["client", "server"] | None
+"""Whether the client or server is at fault.
+
+If None, then there was not enough information to determine fault.
+"""
+
+
 @dataclass(kw_only=True)
+@runtime_checkable
 class RetryInfo(Protocol):
     is_retry_safe: bool | None = None
     """Whether the exception is safe to retry.
@@ -32,9 +40,9 @@ class RetryInfo(Protocol):
 
 @dataclass(kw_only=True)
 class CallException(SmithyException, RetryInfo):
-    """Base exceptio to be used in application-level errors."""
+    """Base exception to be used in application-level errors."""
 
-    fault: Literal["client", "server"] | None = None
+    fault: Fault = None
     """Whether the client or server is at fault.
 
     If None, then there was not enough information to determine fault.
@@ -51,11 +59,7 @@ class CallException(SmithyException, RetryInfo):
 class ModeledException(CallException):
     """Base exception to be used for modeled errors."""
 
-    fault: Literal["client", "server"] | None = "client"
-    """Whether the client or server is at fault.
-
-    If None, then there was not enough information to determine fault.
-    """
+    fault: Fault = "client"
 
 
 class SerializationException(Exception):
