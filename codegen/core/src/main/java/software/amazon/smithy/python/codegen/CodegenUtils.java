@@ -89,10 +89,7 @@ public final class CodegenUtils {
     /**
      * Gets the service error symbol.
      *
-     * <p>This error is the top-level error for the client. Errors surfaced by the client
-     * MUST be a subclass of this or SmithyException so that customers can reliably catch
-     * all the exceptions a client throws. The request pipeline will wrap exceptions of
-     * other types.
+     * <p>This error is the top-level error for modeled client errors.
      *
      * @param settings The client settings, used to account for module configuration.
      * @return Returns the symbol for the client's error class.

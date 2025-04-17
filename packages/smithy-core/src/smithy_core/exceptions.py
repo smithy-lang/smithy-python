@@ -35,7 +35,10 @@ class CallException(SmithyException, RetryInfo):
     """Base exceptio to be used in application-level errors."""
 
     fault: Literal["client", "server"] | None = None
-    """Whether the client or server is at fault."""
+    """Whether the client or server is at fault.
+
+    If None, then there was not enough information to determine fault.
+    """
 
     message: str = field(default="", kw_only=False)
     """The message of the error."""
@@ -46,10 +49,13 @@ class CallException(SmithyException, RetryInfo):
 
 @dataclass(kw_only=True)
 class ModeledException(CallException):
-    """Base excetpion to be used for modeled errors."""
+    """Base exception to be used for modeled errors."""
 
     fault: Literal["client", "server"] | None = "client"
-    """Whether the client or server is at fault."""
+    """Whether the client or server is at fault.
+
+    If None, then there was not enough information to determine fault.
+    """
 
 
 class SerializationException(Exception):
