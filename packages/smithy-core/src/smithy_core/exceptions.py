@@ -1,7 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass, field
-from typing import Literal, Protocol, runtime_checkable
+from typing import Literal
 
 
 class SmithyException(Exception):
@@ -16,8 +16,21 @@ If None, then there was not enough information to determine fault.
 
 
 @dataclass(kw_only=True)
-@runtime_checkable
-class RetryInfo(Protocol):
+class CallException(SmithyException):
+    """Base exception to be used in application-level errors.
+
+    Implements :py:class:`.interfaces.retries.ErrorRetryInfo`.
+    """
+
+    fault: Fault = None
+    """Whether the client or server is at fault.
+
+    If None, then there was not enough information to determine fault.
+    """
+
+    message: str = field(default="", kw_only=False)
+    """The message of the error."""
+
     is_retry_safe: bool | None = None
     """Whether the exception is safe to retry.
 
@@ -36,20 +49,6 @@ class RetryInfo(Protocol):
 
     is_throttle: bool = False
     """Whether the error is a throttling error."""
-
-
-@dataclass(kw_only=True)
-class CallException(SmithyException, RetryInfo):
-    """Base exception to be used in application-level errors."""
-
-    fault: Fault = None
-    """Whether the client or server is at fault.
-
-    If None, then there was not enough information to determine fault.
-    """
-
-    message: str = field(default="", kw_only=False)
-    """The message of the error."""
 
     def __post_init__(self):
         super().__init__(self.message)

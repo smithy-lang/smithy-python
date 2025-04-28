@@ -2,7 +2,31 @@
 #  SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass
 from enum import Enum
-from typing import Protocol
+from typing import Protocol, runtime_checkable
+
+
+@runtime_checkable
+class ErrorRetryInfo(Protocol):
+    """A protocol for exceptions that have retry information embedded."""
+
+    is_retry_safe: bool | None = None
+    """Whether the exception is safe to retry.
+
+    A value of True does not mean a retry will occur, but rather that a retry is allowed
+    to occur.
+
+    A value of None indicates that there is not enough information available to
+    determine if a retry is safe.
+    """
+
+    retry_after: float | None = None
+    """The amount of time that should pass before a retry.
+
+    Retry strategies MAY choose to wait longer.
+    """
+
+    is_throttle: bool = False
+    """Whether the error is a throttling error."""
 
 
 class RetryErrorType(Enum):
