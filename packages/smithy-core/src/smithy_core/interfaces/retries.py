@@ -1,7 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass
-from enum import Enum
 from typing import Protocol, runtime_checkable
 
 
@@ -27,43 +26,6 @@ class ErrorRetryInfo(Protocol):
 
     is_throttle: bool = False
     """Whether the error is a throttling error."""
-
-
-class RetryErrorType(Enum):
-    """Classification of errors based on desired retry behavior."""
-
-    TRANSIENT = 1
-    """A connection level error such as a socket timeout, socket connect error, TLS
-    negotiation timeout."""
-
-    THROTTLING = 2
-    """The server explicitly told the client to back off, for example with HTTP status
-    429 or 503."""
-
-    SERVER_ERROR = 3
-    """A server error that should be retried and does not match the definition of
-    ``THROTTLING``."""
-
-    CLIENT_ERROR = 4
-    """Doesn't count against any budgets.
-
-    This could be something like a 401 challenge in HTTP.
-    """
-
-
-@dataclass(kw_only=True)
-class RetryErrorInfo:
-    """Container for information about a retryable error."""
-
-    error_type: RetryErrorType
-    """Classification of error based on desired retry behavior."""
-
-    retry_after_hint: float | None = None
-    """Protocol hint for computing the timespan to delay before the next retry.
-
-    This could come from HTTP's 'retry-after' header or similar mechanisms in other
-    protocols.
-    """
 
 
 class RetryBackoffStrategy(Protocol):
@@ -113,7 +75,7 @@ class RetryStrategy(Protocol):
         ...
 
     def refresh_retry_token_for_retry(
-        self, *, token_to_renew: RetryToken, error_info: RetryErrorInfo
+        self, *, token_to_renew: RetryToken, error: Exception
     ) -> RetryToken:
         """Replace an existing retry token from a failed attempt with a new token.
 
@@ -124,10 +86,7 @@ class RetryStrategy(Protocol):
         the retry attempt and raise the error as exception.
 
         :param token_to_renew: The token used for the previous failed attempt.
-
-        :param error_info: If no further retry is allowed, this information is used to
-        construct the exception.
-
+        :param error: The error that triggered the need for a retry.
         :raises SmithyRetryException: If no further retry attempts are allowed.
         """
         ...
