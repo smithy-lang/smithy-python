@@ -40,7 +40,7 @@ implement.
 ```python
 @dataclass(kw_only=True)
 @runtime_checkable
-class RetryInfo(Protocol):
+class ErrorRetryInfo(Protocol):
     is_retry_safe: bool | None = None
     """Whether the exception is safe to retry.
 
