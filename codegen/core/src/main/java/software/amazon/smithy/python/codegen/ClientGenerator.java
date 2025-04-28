@@ -148,54 +148,12 @@ final class ClientGenerator implements Runnable {
                         "OutputContext",
                         "RequestContext",
                         "ResponseContext"));
-        writer.addImports("smithy_core.interfaces.retries", Set.of("RetryErrorInfo", "RetryErrorType"));
         writer.addImport("smithy_core.interfaces.exceptions", "HasFault");
         writer.addImport("smithy_core.types", "TypedProperties");
         writer.addImport("smithy_core.serializers", "SerializeableShape");
         writer.addImport("smithy_core.deserializers", "DeserializeableShape");
         writer.addImport("smithy_core.schemas", "APIOperation");
-
         writer.indent();
-        writer.write("""
-                def _classify_error(
-                    self,
-                    *,
-                    error: Exception,
-                    context: ResponseContext[Any, $1T, $2T | None]
-                ) -> RetryErrorInfo:
-                    logger.debug("Classifying error: %s", error)
-                """, transportRequest, transportResponse);
-        writer.indent();
-
-        if (context.applicationProtocol().isHttpProtocol()) {
-            writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-            writer.write("""
-                    if not isinstance(error, HasFault) and not context.transport_response:
-                        return RetryErrorInfo(error_type=RetryErrorType.TRANSIENT)
-
-                    if context.transport_response:
-                        if context.transport_response.status in [429, 503]:
-                            retry_after = None
-                            retry_header = context.transport_response.fields["retry-after"]
-                            if retry_header and retry_header.values:
-                                retry_after = float(retry_header.values[0])
-                            return RetryErrorInfo(error_type=RetryErrorType.THROTTLING, retry_after_hint=retry_after)
-
-                        if context.transport_response.status >= 500:
-                            return RetryErrorInfo(error_type=RetryErrorType.SERVER_ERROR)
-
-                    """);
-        }
-
-        writer.write("""
-                error_type = RetryErrorType.CLIENT_ERROR
-                if isinstance(error, HasFault) and error.fault == "server":
-                    error_type = RetryErrorType.SERVER_ERROR
-
-                return RetryErrorInfo(error_type=error_type)
-
-                """);
-        writer.dedent();
 
         if (hasStreaming) {
             writer.addStdlibImports("typing", Set.of("Any", "Awaitable"));
@@ -425,10 +383,7 @@ final class ClientGenerator implements Runnable {
                                         try:
                                             retry_token = retry_strategy.refresh_retry_token_for_retry(
                                                 token_to_renew=retry_token,
-                                                error_info=self._classify_error(
-                                                    error=output_context.response,
-                                                    context=output_context,
-                                                )
+                                                error=output_context.response,
                                             )
                                         except SmithyRetryException:
                                             raise output_context.response
