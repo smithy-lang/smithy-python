@@ -3,12 +3,12 @@
 
 import pytest
 from smithy_aws_core.credentials_resolvers import EnvironmentCredentialsResolver
-from smithy_core.exceptions import SmithyIdentityException
+from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces.identity import IdentityProperties
 
 
 async def test_no_values_set():
-    with pytest.raises(SmithyIdentityException):
+    with pytest.raises(SmithyIdentityError):
         await EnvironmentCredentialsResolver().get_identity(
             identity_properties=IdentityProperties()
         )
@@ -17,7 +17,7 @@ async def test_no_values_set():
 async def test_required_values_missing(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("AWS_ACCOUNT_ID", "123456789012")
 
-    with pytest.raises(SmithyIdentityException):
+    with pytest.raises(SmithyIdentityError):
         await EnvironmentCredentialsResolver().get_identity(
             identity_properties=IdentityProperties()
         )
@@ -26,7 +26,7 @@ async def test_required_values_missing(monkeypatch: pytest.MonkeyPatch):
 async def test_akid_missing(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("AWS_SECRET_ACCESS_KEY", "secret")
 
-    with pytest.raises(SmithyIdentityException):
+    with pytest.raises(SmithyIdentityError):
         await EnvironmentCredentialsResolver().get_identity(
             identity_properties=IdentityProperties()
         )
@@ -35,7 +35,7 @@ async def test_akid_missing(monkeypatch: pytest.MonkeyPatch):
 async def test_secret_missing(monkeypatch: pytest.MonkeyPatch):
     monkeypatch.setenv("AWS_ACCESS_KEY_ID", "akid")
 
-    with pytest.raises(SmithyIdentityException):
+    with pytest.raises(SmithyIdentityError):
         await EnvironmentCredentialsResolver().get_identity(
             identity_properties=IdentityProperties()
         )

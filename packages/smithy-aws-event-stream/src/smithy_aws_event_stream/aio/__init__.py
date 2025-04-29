@@ -9,7 +9,7 @@ from smithy_core.aio.interfaces import AsyncByteStream, AsyncWriter
 from smithy_core.aio.interfaces.eventstream import EventPublisher, EventReceiver
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
-from smithy_core.exceptions import ExpectationNotMetException
+from smithy_core.exceptions import ExpectationNotMetError
 from smithy_core.serializers import SerializeableShape
 
 from .._private.deserializers import EventDeserializer as _EventDeserializer
@@ -53,7 +53,7 @@ class AWSEventPublisher[E: SerializeableShape](EventPublisher[E]):
         event.serialize(self._serializer)
         result = self._serializer.get_result()
         if result is None:
-            raise ExpectationNotMetException(
+            raise ExpectationNotMetError(
                 "Expected an event message to be serialized, but was None."
             )
         if self._signer is not None:

@@ -6,7 +6,7 @@ from typing import Any, ClassVar, Literal, Self
 
 from smithy_aws_event_stream.events import Byte, EventMessage, Long, Short
 from smithy_core.deserializers import ShapeDeserializer
-from smithy_core.exceptions import SmithyException
+from smithy_core.exceptions import SmithyError
 from smithy_core.prelude import (
     BLOB,
     BOOLEAN,
@@ -232,7 +232,7 @@ class MessageEvent:
                     )
 
                 case _:
-                    raise SmithyException(f"Unexpected member schema: {schema}")
+                    raise SmithyError(f"Unexpected member schema: {schema}")
 
         deserializer.read_struct(schema=SCHEMA_MESSAGE_EVENT, consumer=_consumer)
         return cls(**kwargs)
@@ -277,7 +277,7 @@ class PayloadEvent:
                         SCHEMA_PAYLOAD_EVENT.members["payload"]
                     )
                 case _:
-                    raise SmithyException(f"Unexpected member schema: {schema}")
+                    raise SmithyError(f"Unexpected member schema: {schema}")
 
         deserializer.read_struct(schema=SCHEMA_PAYLOAD_EVENT, consumer=_consumer)
         return cls(**kwargs)
@@ -326,7 +326,7 @@ class BlobPayloadEvent:
                         SCHEMA_BLOB_PAYLOAD_EVENT.members["payload"]
                     )
                 case _:
-                    raise SmithyException(f"Unexpected member schema: {schema}")
+                    raise SmithyError(f"Unexpected member schema: {schema}")
 
         deserializer.read_struct(schema=SCHEMA_BLOB_PAYLOAD_EVENT, consumer=_consumer)
         return cls(**kwargs)
@@ -368,7 +368,7 @@ class ErrorEvent(Exception):
                         SCHEMA_ERROR_EVENT.members["message"]
                     )
                 case _:
-                    raise SmithyException(f"Unexpected member schema: {schema}")
+                    raise SmithyError(f"Unexpected member schema: {schema}")
 
         deserializer.read_struct(schema=SCHEMA_ERROR_EVENT, consumer=_consumer)
         return cls(**kwargs)
@@ -390,10 +390,10 @@ class EventStreamUnknownEvent:
     tag: str
 
     def serialize(self, serializer: ShapeSerializer):
-        raise SmithyException("Unknown union variants may not be serialized.")
+        raise SmithyError("Unknown union variants may not be serialized.")
 
     def serialize_members(self, serializer: ShapeSerializer):
-        raise SmithyException("Unknown union variants may not be serialized.")
+        raise SmithyError("Unknown union variants may not be serialized.")
 
 
 type EventStream = (
@@ -413,7 +413,7 @@ class EventStreamDeserializer:
         deserializer.read_struct(SCHEMA_EVENT_STREAM, self._consumer)
 
         if self._result is None:
-            raise SmithyException("Unions must have exactly one value, but found none.")
+            raise SmithyError("Unions must have exactly one value, but found none.")
 
         return self._result
 
@@ -434,11 +434,11 @@ class EventStreamDeserializer:
                 self._set_result(EventStreamErrorEvent(ErrorEvent.deserialize(de)))
 
             case _:
-                raise SmithyException(f"Unexpected member schema: {schema}")
+                raise SmithyError(f"Unexpected member schema: {schema}")
 
     def _set_result(self, value: EventStream) -> None:
         if self._result is not None:
-            raise SmithyException(
+            raise SmithyError(
                 "Unions must have exactly one value, but found more than one."
             )
         self._result = value
@@ -466,7 +466,7 @@ class EventStreamOperationInputOutput:
                         SCHEMA_INITIAL_MESSAGE.members["message"]
                     )
                 case _:
-                    raise SmithyException(f"Unexpected member schema: {schema}")
+                    raise SmithyError(f"Unexpected member schema: {schema}")
 
         deserializer.read_struct(schema=SCHEMA_INITIAL_MESSAGE, consumer=_consumer)
         return cls(**kwargs)

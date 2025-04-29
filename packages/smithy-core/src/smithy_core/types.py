@@ -11,7 +11,7 @@ from email.utils import format_datetime, parsedate_to_datetime
 from enum import Enum
 from typing import Any, overload
 
-from .exceptions import ExpectationNotMetException
+from .exceptions import ExpectationNotMetError
 from .interfaces import PropertyKey as _PropertyKey
 from .interfaces import TypedProperties as _TypedProperties
 from .utils import (
@@ -113,7 +113,7 @@ class TimestampFormat(Enum):
                     try:
                         value = float(value)
                     except ValueError as e:
-                        raise ExpectationNotMetException from e
+                        raise ExpectationNotMetError from e
                 return epoch_seconds_to_datetime(value=value)
             case TimestampFormat.HTTP_DATE:
                 return ensure_utc(parsedate_to_datetime(expect_type(str, value)))

@@ -7,7 +7,7 @@ from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable
 from io import BytesIO
 from typing import Any, Self, cast
 
-from ..exceptions import SmithyException
+from ..exceptions import SmithyError
 from ..interfaces import BytesReader
 from .interfaces import AsyncByteStream, StreamingBlob
 from .utils import close
@@ -312,7 +312,7 @@ class AsyncBytesProvider:
 
     async def write(self, data: bytes) -> None:
         if self._closed:
-            raise SmithyException("Attempted to write to a closed provider.")
+            raise SmithyError("Attempted to write to a closed provider.")
 
         # Acquire a lock on the data buffer, releasing it automatically when the
         # block exits.
@@ -327,9 +327,7 @@ class AsyncBytesProvider:
             if self._closed or self._closing:
                 # Notify to allow other coroutines to check their conditions.
                 self._data_condition.notify()
-                raise SmithyException(
-                    "Attempted to write to a closed or closing provider."
-                )
+                raise SmithyError("Attempted to write to a closed or closing provider.")
 
             # Add a new chunk of data to the buffer and notify the next waiting
             # coroutine.

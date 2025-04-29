@@ -11,7 +11,7 @@ from typing import Any, NamedTuple
 from unittest.mock import Mock
 
 import pytest
-from smithy_core.exceptions import ExpectationNotMetException
+from smithy_core.exceptions import ExpectationNotMetError
 from smithy_core.utils import (
     ensure_utc,
     epoch_seconds_to_datetime,
@@ -71,7 +71,7 @@ def test_expect_type(typ: Any, value: Any) -> None:
     ],
 )
 def test_expect_type_raises(typ: Any, value: Any) -> None:
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         expect_type(typ, value)
 
 
@@ -100,7 +100,7 @@ def test_limited_parse_float(given: float | str, expected: float) -> None:
     ],
 )
 def test_limited_parse_float_raises(given: float | str) -> None:
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         limited_parse_float(given)
 
 
@@ -111,7 +111,7 @@ def test_limited_parse_float_nan() -> None:
 def test_strict_parse_bool() -> None:
     assert strict_parse_bool("true") is True
     assert strict_parse_bool("false") is False
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         strict_parse_bool("")
 
 
@@ -150,7 +150,7 @@ def test_strict_parse_float_nan() -> None:
     ],
 )
 def test_strict_parse_float_raises(given: str) -> None:
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         strict_parse_float(given)
 
 

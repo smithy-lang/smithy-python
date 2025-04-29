@@ -5,7 +5,7 @@ from typing import Protocol
 
 from aws_sdk_signers import AsyncSigV4Signer, SigV4SigningProperties
 from smithy_core.aio.interfaces.identity import IdentityResolver
-from smithy_core.exceptions import SmithyIdentityException
+from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces.identity import IdentityProperties
 from smithy_http.aio.interfaces.auth import HTTPAuthScheme, HTTPSigner
 
@@ -47,7 +47,7 @@ class SigV4AuthScheme(
         self, *, config: SigV4Config
     ) -> IdentityResolver[AWSCredentialsIdentity, IdentityProperties]:
         if not config.aws_credentials_identity_resolver:
-            raise SmithyIdentityException(
+            raise SmithyIdentityError(
                 "Attempted to use SigV4 auth, but aws_credentials_identity_resolver was not "
                 "set on the config."
             )

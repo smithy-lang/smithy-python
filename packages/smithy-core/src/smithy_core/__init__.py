@@ -7,7 +7,7 @@ from functools import cached_property
 from urllib.parse import urlunparse
 
 from . import interfaces, rfc3986
-from .exceptions import SmithyException
+from .exceptions import SmithyError
 
 __version__: str = importlib.metadata.version("smithy-core")
 
@@ -61,7 +61,7 @@ class URI(interfaces.URI):
         if not rfc3986.HOST_MATCHER.match(self.host) and not rfc3986.IPv6_MATCHER.match(
             f"[{self.host}]"
         ):
-            raise SmithyException(f"Invalid host: {self.host}")
+            raise SmithyError(f"Invalid host: {self.host}")
 
     @property
     def netloc(self) -> str:

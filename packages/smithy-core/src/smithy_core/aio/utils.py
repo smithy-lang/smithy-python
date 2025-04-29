@@ -4,7 +4,7 @@ from asyncio import iscoroutine, sleep
 from collections.abc import AsyncIterable, Iterable
 from typing import Any
 
-from ..exceptions import AsyncBodyException
+from ..exceptions import AsyncBodyError
 from ..interfaces import BytesReader
 from ..interfaces import StreamingBlob as SyncStreamingBlob
 from .interfaces import AsyncByteStream, StreamingBlob
@@ -38,7 +38,7 @@ def read_streaming_blob(body: StreamingBlob) -> bytes:
     """Synchronously reads a streaming blob into bytes.
 
     :param body: The streaming blob to read from.
-    :raises AsyncBodyException: If the body is an async type.
+    :raises AsyncBodyError: If the body is an async type.
     """
     match body:
         case bytes():
@@ -48,7 +48,7 @@ def read_streaming_blob(body: StreamingBlob) -> bytes:
         case BytesReader():
             return body.read()
         case _:
-            raise AsyncBodyException(
+            raise AsyncBodyError(
                 f"Expected type {SyncStreamingBlob}, but was {type(body)}"
             )
 

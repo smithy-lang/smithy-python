@@ -6,7 +6,7 @@ from typing import NotRequired, Protocol, TypedDict
 
 from smithy_core import URI
 from smithy_core.aio.interfaces.identity import IdentityResolver
-from smithy_core.exceptions import SmithyIdentityException
+from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces.identity import IdentityProperties
 
 from ... import Field
@@ -73,7 +73,7 @@ class ApiKeyAuthScheme(
         self, *, config: ApiKeyConfig
     ) -> IdentityResolver[ApiKeyIdentity, IdentityProperties]:
         if not config.api_key_identity_resolver:
-            raise SmithyIdentityException(
+            raise SmithyIdentityError(
                 "Attempted to use API key auth, but api_key_identity_resolver was not "
                 "set on the config."
             )

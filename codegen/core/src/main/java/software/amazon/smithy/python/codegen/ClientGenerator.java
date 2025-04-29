@@ -140,7 +140,6 @@ final class ClientGenerator implements Runnable {
         writer.addStdlibImport("dataclasses", "replace");
 
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-        writer.addImport("smithy_core.exceptions", "SmithyRetryException");
         writer.addImports("smithy_core.interceptors",
                 Set.of("Interceptor",
                         "InterceptorChain",
@@ -259,7 +258,7 @@ final class ClientGenerator implements Runnable {
         }
         writer.addStdlibImport("typing", "Any");
         writer.addStdlibImport("asyncio", "iscoroutine");
-        writer.addImports("smithy_core.exceptions", Set.of("SmithyException", "CallException"));
+        writer.addImports("smithy_core.exceptions", Set.of("SmithyError", "CallError", "RetryError"));
         writer.pushState();
         writer.putContext("request", transportRequest);
         writer.putContext("response", transportResponse);
@@ -284,10 +283,10 @@ final class ClientGenerator implements Runnable {
                                     request_future, response_future,
                                 )
                             except Exception as e:
-                                # Make sure every exception that we throw is an instance of SmithyException so
+                                # Make sure every exception that we throw is an instance of SmithyError so
                                 # customers can reliably catch everything we throw.
-                                if not isinstance(e, SmithyException):
-                                    wrapped = CallException(str(e))
+                                if not isinstance(e, SmithyError):
+                                    wrapped = CallError(str(e))
                                     wrapped.__cause__ = e
                                     e = wrapped
 
@@ -385,7 +384,7 @@ final class ClientGenerator implements Runnable {
                                                 token_to_renew=retry_token,
                                                 error=output_context.response,
                                             )
-                                        except SmithyRetryException:
+                                        except RetryError:
                                             raise output_context.response
                                         logger.debug(
                                             "Retry needed. Attempting request #%s in %.4f seconds.",

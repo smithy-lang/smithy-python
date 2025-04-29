@@ -3,7 +3,7 @@
 from collections.abc import Sequence
 from urllib.parse import quote as urlquote
 
-from smithy_core.exceptions import SmithyException
+from smithy_core.exceptions import SmithyError
 
 
 def split_header(given: str, handle_unquoted_http_date: bool = False) -> list[str]:
@@ -40,7 +40,7 @@ def split_header(given: str, handle_unquoted_http_date: bool = False) -> list[st
             result.append(entry)
 
             if i > len(given) or given[i - 1] != '"':
-                raise SmithyException(
+                raise SmithyError(
                     f"Invalid header list syntax: expected end quote but reached end "
                     f"of value: `{given}`"
                 )
@@ -48,7 +48,7 @@ def split_header(given: str, handle_unquoted_http_date: bool = False) -> list[st
             # Skip until the next comma.
             excess, i = _consume_until(given, i, ",")
             if excess.strip():
-                raise SmithyException(
+                raise SmithyError(
                     f"Invalid header list syntax: Found quote contents after "
                     f"end-quote: `{excess}` in `{given}`"
                 )

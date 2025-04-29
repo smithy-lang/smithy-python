@@ -6,7 +6,7 @@ from datetime import UTC, datetime
 from typing import Any, assert_type
 
 import pytest
-from smithy_core.exceptions import ExpectationNotMetException
+from smithy_core.exceptions import ExpectationNotMetError
 from smithy_core.types import (
     JsonBlob,
     JsonString,
@@ -185,7 +185,7 @@ def test_timestamp_format_deserialize(
 def test_invalid_timestamp_format_type_raises(
     format: TimestampFormat, value: str | float
 ):
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         format.deserialize(value)
 
 

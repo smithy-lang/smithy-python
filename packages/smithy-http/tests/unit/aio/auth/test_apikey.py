@@ -6,7 +6,7 @@ from dataclasses import dataclass
 import pytest
 from smithy_core import URI
 from smithy_core.aio.interfaces.identity import IdentityResolver
-from smithy_core.exceptions import SmithyIdentityException
+from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces.identity import IdentityProperties
 from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest
@@ -142,5 +142,5 @@ async def test_auth_scheme_gets_resolver() -> None:
 
 async def test_auth_scheme_missing_resolver() -> None:
     scheme = ApiKeyAuthScheme()
-    with pytest.raises(SmithyIdentityException):
+    with pytest.raises(SmithyIdentityError):
         scheme.identity_resolver(config=ApiKeyConfig())

@@ -4,7 +4,7 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any, NotRequired, Required, Self, TypedDict, overload
 
-from .exceptions import ExpectationNotMetException, SmithyException
+from .exceptions import ExpectationNotMetError, SmithyError
 from .shapes import ShapeID, ShapeType
 from .traits import DynamicTrait, IdempotencyTokenTrait, StreamingTrait, Trait
 
@@ -55,7 +55,7 @@ class Schema:
             member_index is not None,
         ]
         if any(_member_props) and not all(_member_props):
-            raise SmithyException(
+            raise SmithyError(
                 "If any member property is set, all member properties must be set. "
                 f"member_name: {id.member!r}, member_target: "
                 f"{member_target!r}, member_index: {member_index!r}"
@@ -96,7 +96,7 @@ class Schema:
     def expect_member_name(self) -> str:
         """Assert the schema is a member schema and return its member name.
 
-        :raises ExpectationNotMetException: If member_name wasn't set.
+        :raises ExpectationNotMetError: If member_name wasn't set.
         :returns: Returns the member name.
         """
         return self.id.expect_member()
@@ -107,11 +107,11 @@ class Schema:
         If the target is a class containing a schema, the schema is extracted and
         returned.
 
-        :raises ExpectationNotMetException: If member_target wasn't set.
+        :raises ExpectationNotMetError: If member_target wasn't set.
         :returns: Returns the target schema.
         """
         if self.member_target is None:
-            raise ExpectationNotMetException(
+            raise ExpectationNotMetError(
                 "Expected member_target to be set, but was None."
             )
         return self.member_target
@@ -119,11 +119,11 @@ class Schema:
     def expect_member_index(self) -> int:
         """Assert the schema is a member schema and return its member index.
 
-        :raises ExpectationNotMetException: If member_index wasn't set.
+        :raises ExpectationNotMetError: If member_index wasn't set.
         :returns: Returns the member index.
         """
         if self.member_index is None:
-            raise ExpectationNotMetException(
+            raise ExpectationNotMetError(
                 "Expected member_index to be set, but was None."
             )
         return self.member_index
@@ -243,7 +243,7 @@ class Schema:
         """
         id.expect_member()
         if target.member_target is not None:
-            raise ExpectationNotMetException("Member targets must not be members.")
+            raise ExpectationNotMetError("Member targets must not be members.")
         resolved_traits = target.traits.copy()
         if member_traits:
             resolved_traits.update({t.id: t for t in member_traits})

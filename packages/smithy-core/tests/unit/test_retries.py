@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 import pytest
-from smithy_core.exceptions import CallException, SmithyRetryException
+from smithy_core.exceptions import CallError, RetryError
 from smithy_core.retries import ExponentialBackoffJitterType as EBJT
 from smithy_core.retries import ExponentialRetryBackoffStrategy, SimpleRetryStrategy
 
@@ -60,13 +60,13 @@ def test_simple_retry_strategy(max_attempts: int) -> None:
         backoff_strategy=ExponentialRetryBackoffStrategy(backoff_scale_value=5),
         max_attempts=max_attempts,
     )
-    error = CallException(is_retry_safe=True)
+    error = CallError(is_retry_safe=True)
     token = strategy.acquire_initial_retry_token()
     for _ in range(max_attempts - 1):
         token = strategy.refresh_retry_token_for_retry(
             token_to_renew=token, error=error
         )
-    with pytest.raises(SmithyRetryException):
+    with pytest.raises(RetryError):
         strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
 
 
@@ -76,7 +76,7 @@ def test_simple_retry_does_not_retry_unclassified() -> None:
         max_attempts=2,
     )
     token = strategy.acquire_initial_retry_token()
-    with pytest.raises(SmithyRetryException):
+    with pytest.raises(RetryError):
         strategy.refresh_retry_token_for_retry(token_to_renew=token, error=Exception())
 
 
@@ -85,9 +85,9 @@ def test_simple_retry_does_not_retry_when_safety_unknown() -> None:
         backoff_strategy=ExponentialRetryBackoffStrategy(backoff_scale_value=5),
         max_attempts=2,
     )
-    error = CallException(is_retry_safe=None)
+    error = CallError(is_retry_safe=None)
     token = strategy.acquire_initial_retry_token()
-    with pytest.raises(SmithyRetryException):
+    with pytest.raises(RetryError):
         strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
 
 
@@ -96,7 +96,7 @@ def test_simple_retry_does_not_retry_unsafe() -> None:
         backoff_strategy=ExponentialRetryBackoffStrategy(backoff_scale_value=5),
         max_attempts=2,
     )
-    error = CallException(fault="client", is_retry_safe=False)
+    error = CallError(fault="client", is_retry_safe=False)
     token = strategy.acquire_initial_retry_token()
-    with pytest.raises(SmithyRetryException):
+    with pytest.raises(RetryError):
         strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)

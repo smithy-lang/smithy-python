@@ -139,10 +139,10 @@ public final class HttpProtocolGeneratorUtils {
         var canReadResponseBody = canReadResponseBody(operation, context.model());
         delegator.useFileWriter(errorDispatcher.getDefinitionFile(), errorDispatcher.getNamespace(), writer -> {
             writer.pushState(new ErrorDispatcherSection(operation, errorShapeToCode, errorMessageCodeGenerator));
-            writer.addImport("smithy_core.exceptions", "CallException");
+            writer.addImport("smithy_core.exceptions", "CallError");
             // TODO: include standard retry-after in the pure-python version of this
             writer.write("""
-                    async def $1L(http_response: $2T, config: $3T) -> CallException:
+                    async def $1L(http_response: $2T, config: $3T) -> CallError:
                         ${4C|}
 
                         match code.lower():
@@ -150,7 +150,7 @@ public final class HttpProtocolGeneratorUtils {
 
                             case _:
                                 is_throttle = http_response.status == 429
-                                return CallException(
+                                return CallError(
                                     message=f"{code}: {message}",
                                     fault="client" if http_response.status < 500 else "server",
                                     is_throttling_error=is_throttle,

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import ShapeDeserializer, SpecificShapeDeserializer
-from smithy_core.exceptions import UnsupportedStreamException
+from smithy_core.exceptions import UnsupportedStreamError
 from smithy_core.interfaces import is_bytes_reader, is_streaming_blob
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeType
@@ -102,7 +102,7 @@ class HTTPResponseDeserializer(SpecificShapeDeserializer):
             return RawPayloadDeserializer(body)
 
         if not is_streaming_blob(body):
-            raise UnsupportedStreamException(
+            raise UnsupportedStreamError(
                 "Unable to read async stream. This stream must be buffered prior "
                 "to creating the deserializer."
             )
@@ -253,7 +253,7 @@ class RawPayloadDeserializer(SpecificShapeDeserializer):
             return bytes(self._payload)
         if is_bytes_reader(self._payload):
             return self._payload.read()
-        raise UnsupportedStreamException(
+        raise UnsupportedStreamError(
             "Unable to read async stream. This stream must be buffered prior "
             "to creating the deserializer."
         )
