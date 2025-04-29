@@ -12,4 +12,4 @@ class HasFault(Protocol):
     All modeled errors will have a fault that is either "client" or "server".
     """
 
-    fault: Fault | None
+    fault: Fault
