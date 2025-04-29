@@ -10,7 +10,7 @@ smithy-python clients will expose exceptions to customers.
   specific catch statement (that is, not just `except Exception`).
 * Every modeled exception raised by a service should be catchable with a single,
   specific catch statement.
-* Exceptions should contain information about retryablility where relevant.
+* Exceptions should contain information about retryability where relevant.
 
 ## Specification
 
