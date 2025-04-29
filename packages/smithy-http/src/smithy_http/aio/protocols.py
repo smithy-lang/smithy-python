@@ -6,7 +6,7 @@ from smithy_core.aio.interfaces import ClientProtocol
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape
 from smithy_core.documents import TypeRegistry
-from smithy_core.exceptions import ExpectationNotMetException
+from smithy_core.exceptions import ExpectationNotMetError
 from smithy_core.interfaces import Endpoint, TypedProperties, URI
 from smithy_core.schemas import APIOperation
 from smithy_core.serializers import SerializeableShape
@@ -76,7 +76,7 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         request = serializer.result
 
         if request is None:
-            raise ExpectationNotMetException(
+            raise ExpectationNotMetError(
                 "Expected request to be serialized, but was None"
             )
 

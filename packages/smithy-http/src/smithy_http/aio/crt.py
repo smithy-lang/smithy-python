@@ -35,18 +35,18 @@ except ImportError:
 from smithy_core import interfaces as core_interfaces
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.aio.utils import close
-from smithy_core.exceptions import MissingDependencyException
+from smithy_core.exceptions import MissingDependencyError
 
 from .. import Field, Fields
 from .. import interfaces as http_interfaces
-from ..exceptions import SmithyHTTPException
+from ..exceptions import SmithyHTTPError
 from ..interfaces import FieldPosition
 from . import interfaces as http_aio_interfaces
 
 
 def _assert_crt() -> None:
     if not HAS_CRT:
-        raise MissingDependencyException(
+        raise MissingDependencyError(
             "Attempted to use awscrt component, but awscrt is not installed."
         )
 
@@ -117,7 +117,7 @@ class CRTResponseBody:
 
     def set_stream(self, stream: "crt_http.HttpClientStream") -> None:
         if self._stream is not None:
-            raise SmithyHTTPException("Stream already set on AWSCRTHTTPResponse object")
+            raise SmithyHTTPError("Stream already set on AWSCRTHTTPResponse object")
         self._stream = stream
         concurrent_future: ConcurrentFuture[int] = stream.completion_future
         self._completion_future = asyncio.wrap_future(concurrent_future)
@@ -134,7 +134,7 @@ class CRTResponseBody:
 
     async def next(self) -> bytes:
         if self._completion_future is None:
-            raise SmithyHTTPException("Stream not set")
+            raise SmithyHTTPError("Stream not set")
 
         # TODO: update backpressure window once CRT supports it
         if self._received_chunks:
@@ -299,7 +299,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             # TODO: Support TLS configuration, including alpn
             tls_connection_options.set_alpn_list(["h2", "http/1.1"])
         else:
-            raise SmithyHTTPException(
+            raise SmithyHTTPError(
                 f"AWSCRTHTTPClient does not support URL scheme {url.scheme}"
             )
         if url.port is not None:
@@ -326,7 +326,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         if force_http_2 and connection.version is not crt_http.HttpVersion.Http2:
             connection.close()
             negotiated = crt_http.HttpVersion(connection.version).name
-            raise SmithyHTTPException(f"HTTP/2 could not be negotiated: {negotiated}")
+            raise SmithyHTTPError(f"HTTP/2 could not be negotiated: {negotiated}")
 
     def _render_path(self, url: core_interfaces.URI) -> str:
         path = url.path if url.path is not None else "/"

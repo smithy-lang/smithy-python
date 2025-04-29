@@ -7,7 +7,7 @@ from math import isinf, isnan
 from types import UnionType
 from typing import Any, TypeVar, overload
 
-from .exceptions import ExpectationNotMetException
+from .exceptions import ExpectationNotMetError
 
 RFC3339 = "%Y-%m-%dT%H:%M:%SZ"
 # Same as RFC3339, but with microsecond precision.
@@ -41,7 +41,7 @@ def limited_parse_float(value: Any) -> float:
 
     :param value: An object that is expected to be a float.
     :returns: The given value as a float.
-    :raises SmithyException: If the value is not a float or one of the strings ``NaN``,
+    :raises SmithyError: If the value is not a float or one of the strings ``NaN``,
         ``Infinity``, or ``-Infinity``.
     """
     # TODO: add limited bounds checking
@@ -92,12 +92,10 @@ def expect_type(typ: UnionType | type, value: Any) -> Any:
     :param typ: The expected type.
     :param value: The value which is expected to be the given type.
     :returns: The given value cast as the given type.
-    :raises SmithyException: If the value does not match the type.
+    :raises SmithyError: If the value does not match the type.
     """
     if not isinstance(value, typ):
-        raise ExpectationNotMetException(
-            f"Expected {typ}, found {type(value)}: {value}"
-        )
+        raise ExpectationNotMetError(f"Expected {typ}, found {type(value)}: {value}")
     return value
 
 
@@ -118,8 +116,7 @@ def strict_parse_bool(given: str) -> bool:
 
     :param given: A string that is expected to contain either "true" or "false".
     :returns: The given string parsed to a boolean.
-    :raises ExpectationNotMetException: if the given string is neither "true" nor
-        "false".
+    :raises ExpectationNotMetError: if the given string is neither "true" nor "false".
     """
     match given:
         case "true":
@@ -127,9 +124,7 @@ def strict_parse_bool(given: str) -> bool:
         case "false":
             return False
         case _:
-            raise ExpectationNotMetException(
-                f"Expected 'true' or 'false', found: {given}"
-            )
+            raise ExpectationNotMetError(f"Expected 'true' or 'false', found: {given}")
 
 
 # A regex for Smithy floats. It matches JSON-style numbers.
@@ -161,11 +156,11 @@ def strict_parse_float(given: str) -> float:
 
     :param given: A string that is expected to contain a float.
     :returns: The given string parsed to a float.
-    :raises ExpectationNotMetException: If the given string isn't a float.
+    :raises ExpectationNotMetError: If the given string isn't a float.
     """
     if _FLOAT_REGEX.fullmatch(given):
         return float(given)
-    raise ExpectationNotMetException(f"Expected float, found: {given}")
+    raise ExpectationNotMetError(f"Expected float, found: {given}")
 
 
 def serialize_float(given: float | Decimal) -> str:

@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 from typing import Literal
 
 
-class SmithyException(Exception):
+class SmithyError(Exception):
     """Base exception type for all exceptions raised by smithy-python."""
 
 
@@ -16,7 +16,7 @@ If None, then there was not enough information to determine fault.
 
 
 @dataclass(kw_only=True)
-class CallException(SmithyException):
+class CallError(SmithyError):
     """Base exception to be used in application-level errors.
 
     Implements :py:class:`.interfaces.retries.ErrorRetryInfo`.
@@ -55,42 +55,42 @@ class CallException(SmithyException):
 
 
 @dataclass(kw_only=True)
-class ModeledException(CallException):
+class ModeledError(CallError):
     """Base exception to be used for modeled errors."""
 
     fault: Fault = "client"
 
 
-class SerializationException(Exception):
+class SerializationError(SmithyError):
     """Base exception type for exceptions raised during serialization."""
 
 
-class SmithyRetryException(SmithyException):
+class RetryError(SmithyError):
     """Base exception type for all exceptions raised in retry strategies."""
 
 
-class ExpectationNotMetException(SmithyException):
+class ExpectationNotMetError(SmithyError):
     """Exception type for exceptions thrown by unmet assertions."""
 
 
-class SmithyIdentityException(SmithyException):
+class SmithyIdentityError(SmithyError):
     """Base exception type for all exceptions raised in identity resolution."""
 
 
-class MissingDependencyException(SmithyException):
+class MissingDependencyError(SmithyError):
     """Exception type raised when a feature that requires a missing optional dependency
     is called."""
 
 
-class AsyncBodyException(SmithyException):
+class AsyncBodyError(SmithyError):
     """Exception indicating that a request with an async body type was created in a sync
     context."""
 
 
-class UnsupportedStreamException(SmithyException):
+class UnsupportedStreamError(SmithyError):
     """Indicates that a serializer or deserializer's stream method was called, but data
     streams are not supported."""
 
 
-class EndpointResolutionError(SmithyException):
+class EndpointResolutionError(SmithyError):
     """Exception type for all exceptions raised by endpoint resolution."""

@@ -5,7 +5,7 @@ from contextlib import AbstractContextManager, contextmanager
 from decimal import Decimal
 from typing import TYPE_CHECKING, Never, Protocol, runtime_checkable
 
-from .exceptions import SmithyException, UnsupportedStreamException
+from .exceptions import SmithyError, UnsupportedStreamError
 
 if TYPE_CHECKING:
     from .aio.interfaces import StreamingBlob as _Stream
@@ -215,7 +215,7 @@ class ShapeSerializer(Protocol):
         """
         if isinstance(value, bytes | bytearray):
             self.write_blob(schema, bytes(value))
-        raise UnsupportedStreamException()
+        raise UnsupportedStreamError()
 
     def flush(self) -> None:
         """Flush the underlying data."""
@@ -357,7 +357,7 @@ class SpecificShapeSerializer(ShapeSerializer):
     ) -> Never:
         if message is None:
             message = f"Unexpected schema type: {schema}"
-        raise SmithyException(message)
+        raise SmithyError(message)
 
     def begin_struct(
         self, schema: "Schema"

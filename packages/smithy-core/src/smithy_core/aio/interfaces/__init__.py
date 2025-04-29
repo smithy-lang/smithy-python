@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from ...documents import TypeRegistry
 from ...endpoints import EndpointResolverParams
-from ...exceptions import UnsupportedStreamException
+from ...exceptions import UnsupportedStreamError
 from ...interfaces import Endpoint, TypedProperties, URI
 from ...interfaces import StreamingBlob as SyncStreamingBlob
 from .eventstream import EventPublisher, EventReceiver
@@ -172,7 +172,7 @@ class ClientProtocol[I: Request, O: Response](Protocol):
         :param event_type: The type of event to publish.
         :param context: A context bag for the request.
         """
-        raise UnsupportedStreamException()
+        raise UnsupportedStreamError()
 
     def create_event_receiver[
         OperationInput: "SerializeableShape",
@@ -197,4 +197,4 @@ class ClientProtocol[I: Request, O: Response](Protocol):
         :param event_deserializer: The deserializer to be used to deserialize events.
         :param context: A context bag for the request.
         """
-        raise UnsupportedStreamException()
+        raise UnsupportedStreamError()

@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 import pytest
 from smithy_core import HostType, URI
-from smithy_core.exceptions import SmithyException
+from smithy_core.exceptions import SmithyError
 
 
 def test_uri_basic() -> None:
@@ -113,5 +113,5 @@ def test_host_type(input_uri: URI, host_type: HostType) -> None:
     "input_host", ["example.com\t", "umlaut-äöü.aws.dev", "foo\nbar.com"]
 )
 def test_uri_init_with_disallowed_characters(input_host: str) -> None:
-    with pytest.raises(SmithyException):
+    with pytest.raises(SmithyError):
         URI(host=input_host)

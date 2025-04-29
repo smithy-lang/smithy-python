@@ -5,7 +5,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 
-from .exceptions import SmithyRetryException
+from .exceptions import RetryError
 from .interfaces import retries as retries_interface
 
 
@@ -227,18 +227,18 @@ class SimpleRetryStrategy(retries_interface.RetryStrategy):
 
         :param token_to_renew: The token used for the previous failed attempt.
         :param error: The error that triggered the need for a retry.
-        :raises SmithyRetryException: If no further retry attempts are allowed.
+        :raises RetryError: If no further retry attempts are allowed.
         """
         if isinstance(error, retries_interface.ErrorRetryInfo) and error.is_retry_safe:
             retry_count = token_to_renew.retry_count + 1
             if retry_count >= self.max_attempts:
-                raise SmithyRetryException(
+                raise RetryError(
                     f"Reached maximum number of allowed attempts: {self.max_attempts}"
                 )
             retry_delay = self.backoff_strategy.compute_next_backoff_delay(retry_count)
             return SimpleRetryToken(retry_count=retry_count, retry_delay=retry_delay)
         else:
-            raise SmithyRetryException(f"Error is not retryable: {error}")
+            raise RetryError(f"Error is not retryable: {error}")
 
     def record_success(self, *, token: retries_interface.RetryToken) -> None:
         """Not used by this retry strategy."""

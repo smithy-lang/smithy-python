@@ -6,10 +6,10 @@ from typing import Protocol, runtime_checkable
 
 @runtime_checkable
 class ErrorRetryInfo(Protocol):
-    """A protocol for exceptions that have retry information embedded."""
+    """A protocol for errors that have retry information embedded."""
 
     is_retry_safe: bool | None = None
-    """Whether the exception is safe to retry.
+    """Whether the error is safe to retry.
 
     A value of True does not mean a retry will occur, but rather that a retry is allowed
     to occur.
@@ -70,7 +70,7 @@ class RetryStrategy(Protocol):
             separate tokens into scopes.
         :returns: A retry token, to be used for determining the retry delay, refreshing
             the token after a failure, and recording success after success.
-        :raises SmithyRetryException: If the retry strategy has no available tokens.
+        :raises RetryError: If the retry strategy has no available tokens.
         """
         ...
 
@@ -83,11 +83,11 @@ class RetryStrategy(Protocol):
         that was previously obtained by calling :py:func:`acquire_initial_retry_token`
         or this method with a new retry token for the next attempt. This method can
         either choose to allow another retry and send a new or updated token, or reject
-        the retry attempt and raise the error as exception.
+        the retry attempt and raise the error.
 
         :param token_to_renew: The token used for the previous failed attempt.
         :param error: The error that triggered the need for a retry.
-        :raises SmithyRetryException: If no further retry attempts are allowed.
+        :raises RetryError: If no further retry attempts are allowed.
         """
         ...
 

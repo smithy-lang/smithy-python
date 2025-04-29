@@ -3,7 +3,7 @@
 import os
 
 from smithy_core.aio.interfaces.identity import IdentityResolver
-from smithy_core.exceptions import SmithyIdentityException
+from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces.identity import IdentityProperties
 
 from ..identity import AWSCredentialsIdentity
@@ -29,7 +29,7 @@ class EnvironmentCredentialsResolver(
         account_id = os.getenv("AWS_ACCOUNT_ID")
 
         if access_key_id is None or secret_access_key is None:
-            raise SmithyIdentityException(
+            raise SmithyIdentityError(
                 "AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are required"
             )
 

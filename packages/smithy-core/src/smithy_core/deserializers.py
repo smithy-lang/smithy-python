@@ -3,7 +3,7 @@ from collections.abc import Callable
 from decimal import Decimal
 from typing import TYPE_CHECKING, Never, Protocol, Self, runtime_checkable
 
-from .exceptions import SmithyException, UnsupportedStreamException
+from .exceptions import SmithyError, UnsupportedStreamError
 
 if TYPE_CHECKING:
     from .aio.interfaces import StreamingBlob as _Stream
@@ -186,7 +186,7 @@ class ShapeDeserializer(Protocol):
         :param schema: The shape's schema.
         :returns: A data stream derived from the underlying data.
         """
-        raise UnsupportedStreamException()
+        raise UnsupportedStreamError()
 
 
 class SpecificShapeDeserializer(ShapeDeserializer):
@@ -198,7 +198,7 @@ class SpecificShapeDeserializer(ShapeDeserializer):
     ) -> Never:
         if message is None:
             message = f"Unexpected schema type: {schema}"
-        raise SmithyException(message)
+        raise SmithyError(message)
 
     def read_struct(
         self,

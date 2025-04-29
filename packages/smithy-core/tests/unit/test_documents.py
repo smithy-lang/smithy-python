@@ -12,7 +12,7 @@ from smithy_core.documents import (
     _DocumentDeserializer,
     _DocumentSerializer,
 )
-from smithy_core.exceptions import ExpectationNotMetException
+from smithy_core.exceptions import ExpectationNotMetError
 from smithy_core.prelude import (
     BIG_DECIMAL,
     BLOB,
@@ -77,7 +77,7 @@ def test_as_blob() -> None:
     ],
 )
 def test_as_blob_invalid(value: DocumentValue) -> None:
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         Document(value).as_blob()
 
 
@@ -100,7 +100,7 @@ def test_as_boolean() -> None:
     ],
 )
 def test_as_boolean_invalid(value: DocumentValue) -> None:
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         Document(value).as_boolean()
 
 
@@ -123,7 +123,7 @@ def test_as_string() -> None:
     ],
 )
 def test_as_string_invalid(value: DocumentValue) -> None:
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         Document(value).as_string()
 
 
@@ -146,7 +146,7 @@ def test_as_timestamp() -> None:
     ],
 )
 def test_as_timestamp_invalid(value: DocumentValue) -> None:
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         Document(value).as_timestamp()
 
 
@@ -169,7 +169,7 @@ def test_as_integer() -> None:
     ],
 )
 def test_as_integer_invalid(value: DocumentValue) -> None:
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         Document(value).as_integer()
 
 
@@ -192,7 +192,7 @@ def test_as_float() -> None:
     ],
 )
 def test_as_float_invalid(value: DocumentValue) -> None:
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         Document(value).as_float()
 
 
@@ -215,7 +215,7 @@ def test_as_decimal() -> None:
     ],
 )
 def test_as_decimal_invalid(value: DocumentValue) -> None:
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         Document(value).as_decimal()
 
 
@@ -239,7 +239,7 @@ def test_as_list() -> None:
     ],
 )
 def test_as_list_invalid(value: DocumentValue) -> None:
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         Document(value).as_list()
 
 
@@ -263,7 +263,7 @@ def test_as_map() -> None:
     ],
 )
 def test_as_map_invalid(value: DocumentValue) -> None:
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         Document(value).as_map()
 
 
@@ -297,7 +297,7 @@ def test_get_from_map() -> None:
     with pytest.raises(KeyError):
         document["baz"]
 
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         document[0]
 
     assert document.get("foo") == Document("bar")
@@ -309,7 +309,7 @@ def test_slice_map() -> None:
     document = Document({"foo": "bar"})
     assert document.as_value() == {"foo": "bar"}
 
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         document[1:]
 
 
@@ -319,10 +319,10 @@ def test_get_from_list() -> None:
     with pytest.raises(IndexError):
         document[1]
 
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         document["foo"]
 
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         document.get(1)  # type: ignore
 
 
@@ -358,7 +358,7 @@ def test_insert_into_map() -> None:
         "eggs": "spam",
     }
 
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         document[0] = "foo"
 
 
@@ -374,7 +374,7 @@ def test_insert_into_list() -> None:
 
     assert document.as_value() == ["foo", "spam", "eggs"]
 
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         document["foo"] = "bar"
 
 

@@ -29,9 +29,9 @@ public final class ServiceErrorGenerator implements Runnable {
         var serviceError = CodegenUtils.getServiceError(settings);
         writers.useFileWriter(serviceError.getDefinitionFile(), serviceError.getNamespace(), writer -> {
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-            writer.addImport("smithy_core.exceptions", "ModeledException");
+            writer.addImport("smithy_core.exceptions", "ModeledError");
             writer.write("""
-                    class $L(ModeledException):
+                    class $L(ModeledError):
                         ""\"Base error for all errors in the service.
 
                         Some exceptions do not extend from this class, including

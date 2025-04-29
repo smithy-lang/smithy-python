@@ -11,7 +11,7 @@ import ijson  # type: ignore
 from ijson.common import ObjectBuilder  # type: ignore
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
-from smithy_core.exceptions import SmithyException
+from smithy_core.exceptions import SmithyError
 from smithy_core.interfaces import BytesReader
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID, ShapeType
@@ -45,7 +45,7 @@ class JSONParseEvent(NamedTuple):
     value: JSONParseEventValue
 
 
-class JSONTokenError(SmithyException):
+class JSONTokenError(SmithyError):
     def __init__(self, expected: str, event: JSONParseEvent) -> None:
         super().__init__(
             f"Error parsing JSON. Expected token of type `{expected}` at path "

@@ -104,7 +104,7 @@ public final class UnionGenerator implements Runnable {
         // realistic implementation.
         var unknownSymbol = symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.UNION_UNKNOWN);
         writer.pushState(new UnionMemberSection(unknownSymbol));
-        writer.addImport("smithy_core.exceptions", "SmithyException");
+        writer.addImport("smithy_core.exceptions", "SerializationError");
         writer.write("""
                 @dataclass
                 class $1L:
@@ -119,10 +119,10 @@ public final class UnionGenerator implements Runnable {
                     tag: str
 
                     def serialize(self, serializer: ShapeSerializer):
-                        raise SmithyException("Unknown union variants may not be serialized.")
+                        raise SerializationError("Unknown union variants may not be serialized.")
 
                     def serialize_members(self, serializer: ShapeSerializer):
-                        raise SmithyException("Unknown union variants may not be serialized.")
+                        raise SerializationError("Unknown union variants may not be serialized.")
 
                     @classmethod
                     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -147,7 +147,7 @@ public final class UnionGenerator implements Runnable {
         writer.addLogger();
         writer.addStdlibImports("typing", Set.of("Self", "Any"));
         writer.addImport("smithy_core.deserializers", "ShapeDeserializer");
-        writer.addImport("smithy_core.exceptions", "SmithyException");
+        writer.addImport("smithy_core.exceptions", "SerializationError");
 
         // TODO: add in unknown handling
 
@@ -164,7 +164,7 @@ public final class UnionGenerator implements Runnable {
                         deserializer.read_struct($3T, self._consumer)
 
                         if self._result is None:
-                            raise SmithyException("Unions must have exactly one value, but found none.")
+                            raise SerializationError("Unions must have exactly one value, but found none.")
 
                         return self._result
 
@@ -176,7 +176,7 @@ public final class UnionGenerator implements Runnable {
 
                     def _set_result(self, value: $2T) -> None:
                         if self._result is not None:
-                            raise SmithyException("Unions must have exactly one value, but found more than one.")
+                            raise SerializationError("Unions must have exactly one value, but found more than one.")
                         self._result = value
                 """,
                 deserializerSymbol.getName(),

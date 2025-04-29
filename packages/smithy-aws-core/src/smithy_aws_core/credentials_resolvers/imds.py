@@ -9,7 +9,7 @@ from typing import Literal
 
 from smithy_core import URI
 from smithy_core.aio.interfaces.identity import IdentityResolver
-from smithy_core.exceptions import SmithyIdentityException
+from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces.identity import IdentityProperties
 from smithy_core.interfaces.retries import RetryStrategy
 from smithy_core.retries import SimpleRetryStrategy
@@ -223,9 +223,7 @@ class IMDSCredentialsResolver(
             expiration = datetime.fromisoformat(expiration).replace(tzinfo=UTC)
 
         if access_key_id is None or secret_access_key is None:
-            raise SmithyIdentityException(
-                "AccessKeyId and SecretAccessKey are required"
-            )
+            raise SmithyIdentityError("AccessKeyId and SecretAccessKey are required")
 
         self._credentials = AWSCredentialsIdentity(
             access_key_id=access_key_id,

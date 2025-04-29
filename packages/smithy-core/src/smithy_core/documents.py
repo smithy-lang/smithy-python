@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import TypeGuard, override
 
 from .deserializers import DeserializeableShape, ShapeDeserializer
-from .exceptions import ExpectationNotMetException, SmithyException
+from .exceptions import ExpectationNotMetError, SmithyError
 from .schemas import Schema
 from .serializers import (
     InterceptingSerializer,
@@ -177,7 +177,7 @@ class Document:
         """
         if isinstance(self._value, int) and not isinstance(self._value, bool):
             return self._value
-        raise ExpectationNotMetException(
+        raise ExpectationNotMetError(
             f"Expected int, found {type(self._value)}: {self._value}"
         )
 
@@ -204,7 +204,7 @@ class Document:
         ):
             self._value = self._wrap_list(self._raw_value)
             return self._value
-        raise ExpectationNotMetException(
+        raise ExpectationNotMetError(
             f"Expected list, found {type(self._value)}: {self._value}"
         )
 
@@ -228,7 +228,7 @@ class Document:
         if self._value is None and isinstance(self._raw_value, Mapping):
             self._value = self._wrap_map(self._raw_value)
             return self._value
-        raise ExpectationNotMetException(
+        raise ExpectationNotMetError(
             f"Expected map, found {type(self._value)}: {self._value}"
         )
 
@@ -317,11 +317,11 @@ class Document:
             case ShapeType.DOCUMENT:
                 # The shape type is only ever document when the value is null,
                 # which is a case we've already handled.
-                raise SmithyException(
+                raise SmithyError(
                     f"Unexpexcted DOCUMENT shape type for document value: {self.as_value()}"
                 )
             case _:
-                raise SmithyException(
+                raise SmithyError(
                     f"Unexpected {self._type} shape type for document value: {self.as_value()}"
                 )
 
@@ -428,7 +428,7 @@ class _DocumentSerializer(ShapeSerializer):
     def expect_result(self) -> Document:
         """Expect a document to have been serialized and return it."""
         if self.result is None:
-            raise ExpectationNotMetException(
+            raise ExpectationNotMetError(
                 "Expected document serializer to have a result, but was None"
             )
         return self.result
@@ -603,7 +603,7 @@ class _DocumentDeserializer(ShapeDeserializer):
     @override
     def read_null(self) -> None:
         if (value := self._value.as_value()) is not None:
-            raise ExpectationNotMetException(
+            raise ExpectationNotMetError(
                 f"Expected document value to be None, but was: {value}"
             )
 

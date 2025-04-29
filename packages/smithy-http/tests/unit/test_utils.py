@@ -1,7 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import pytest
-from smithy_core.exceptions import SmithyException
+from smithy_core.exceptions import SmithyError
 from smithy_http.utils import join_query_params, split_header
 
 
@@ -56,7 +56,7 @@ def test_split_imf_fixdate_header(given: str, expected: list[str]) -> None:
     ],
 )
 def test_split_header_raises(given: str) -> None:
-    with pytest.raises(SmithyException):
+    with pytest.raises(SmithyError):
         split_header(given)
 
 

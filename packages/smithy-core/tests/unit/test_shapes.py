@@ -1,5 +1,5 @@
 import pytest
-from smithy_core.exceptions import ExpectationNotMetException, SmithyException
+from smithy_core.exceptions import ExpectationNotMetError, SmithyError
 from smithy_core.shapes import ShapeID
 
 
@@ -23,13 +23,13 @@ def test_valid_shape_id(id: str, namespace: str, name: str, member: str | None):
     "id", ["foo", "#", "ns.foo#", "#foo", "ns.foo#bar$", "ns.foo#$baz", "#$"]
 )
 def test_invalid_shape_id(id: str):
-    with pytest.raises(SmithyException):
+    with pytest.raises(SmithyError):
         ShapeID(id)
 
 
 def test_expect_member():
     assert ShapeID("ns.foo#bar$baz").expect_member() == "baz"
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         assert ShapeID("ns.foo#bar").expect_member()
 
 

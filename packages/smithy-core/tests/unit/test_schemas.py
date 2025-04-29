@@ -2,7 +2,7 @@ from dataclasses import replace
 from typing import Any
 
 import pytest
-from smithy_core.exceptions import ExpectationNotMetException
+from smithy_core.exceptions import ExpectationNotMetError
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import (
@@ -75,13 +75,13 @@ def test_expect_member_schema():
 
 
 def test_member_expectations_raise_on_non_members():
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         STRING.expect_member_name()
 
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         STRING.expect_member_target()
 
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         STRING.expect_member_index()
 
 
@@ -137,7 +137,7 @@ def test_member_constructor():
 
 
 def test_member_constructor_asserts_id():
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         Schema.member(id=ShapeID("smithy.example#foo"), target=STRING, index=0)
 
 
@@ -145,7 +145,7 @@ def test_member_constructor_asserts_target_is_not_member():
     target = Schema.member(
         id=ShapeID("smithy.example#Spam$eggs"), target=STRING, index=0
     )
-    with pytest.raises(ExpectationNotMetException):
+    with pytest.raises(ExpectationNotMetError):
         Schema.member(id=ShapeID("smithy.example#Foo$bar"), target=target, index=0)
 
 

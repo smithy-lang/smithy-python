@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Self
 
-from .exceptions import ExpectationNotMetException, SmithyException
+from .exceptions import ExpectationNotMetError, SmithyError
 
 
 class ShapeID:
@@ -19,15 +19,15 @@ class ShapeID:
         """
         self._id = id
         if "#" not in id:
-            raise SmithyException(f"Invalid shape id: {id}")
+            raise SmithyError(f"Invalid shape id: {id}")
         self._namespace, self._name = id.split("#", 1)
         if not self.namespace or not self._name:
-            raise SmithyException(f"Invalid shape id: {id}")
+            raise SmithyError(f"Invalid shape id: {id}")
 
         if len(split_name := self._name.split("$", 1)) > 1:
             self._name, self._member = split_name
             if not self._name or not self._member:
-                raise SmithyException(f"Invalid shape id: {id}")
+                raise SmithyError(f"Invalid shape id: {id}")
 
     @property
     def namespace(self) -> str:
@@ -55,7 +55,7 @@ class ShapeID:
         :returns: Returns the member name.
         """
         if self.member is None:
-            raise ExpectationNotMetException("Expected member to be set, but was None.")
+            raise ExpectationNotMetError("Expected member to be set, but was None.")
         return self.member
 
     def with_member(self, member: str) -> "ShapeID":

@@ -11,7 +11,7 @@ from smithy_core.aio.types import (
     AsyncBytesReader,
     SeekableAsyncBytesReader,
 )
-from smithy_core.exceptions import SmithyException
+from smithy_core.exceptions import SmithyError
 
 
 class _AsyncIteratorWrapper:
@@ -379,7 +379,7 @@ async def test_provider_reads_written_data() -> None:
 async def test_close_stops_writes() -> None:
     provider = AsyncBytesProvider()
     await provider.close()
-    with pytest.raises(SmithyException):
+    with pytest.raises(SmithyError):
         await provider.write(b"foo")
 
 
@@ -443,7 +443,7 @@ async def test_close_stops_queued_writes() -> None:
     # Now close the provider. The write task will raise an error.
     await provider.close(flush=False)
 
-    with pytest.raises(SmithyException):
+    with pytest.raises(SmithyError):
         await write_task
 
 
@@ -478,7 +478,7 @@ async def test_close_with_flush() -> None:
     # only see the initial data. The write task will raise an exception as the
     # provider closed before it could write its data.
     assert result == [b"foo"]
-    with pytest.raises(SmithyException):
+    with pytest.raises(SmithyError):
         await write_task
 
 
