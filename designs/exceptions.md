@@ -57,7 +57,7 @@ class ErrorRetryInfo(Protocol):
     Retry strategies MAY choose to wait longer.
     """
 
-    is_throttle: bool = False
+    is_throttling_error: bool = False
     """Whether the error is a throttling error."""
 ```
 
@@ -120,5 +120,5 @@ class ServiceException(ModeledException):
 class ThrottlingException(ServcieException):
     fault: Fault = "client"
     is_retry_safe: bool | None = True
-    is_throttle: bool = True
+    is_throttling_error: bool = True
 ```

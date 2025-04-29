@@ -153,7 +153,7 @@ public final class HttpProtocolGeneratorUtils {
                                 return CallException(
                                     message=f"{code}: {message}",
                                     fault="client" if http_response.status < 500 else "server",
-                                    is_throttle=is_throttle,
+                                    is_throttling_error=is_throttle,
                                     is_retry_safe=is_throttle or None,
                                 )
                     """,

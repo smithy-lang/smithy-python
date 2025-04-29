@@ -1,4 +1,4 @@
 is_retry_safe
 retry_after
-is_throttle
+is_throttling_error
 fault
