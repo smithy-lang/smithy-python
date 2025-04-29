@@ -37,7 +37,6 @@ retryability properties will be standardized as a `Protocol` that exceptions MAY
 implement.
 
 ```python
-@dataclass(kw_only=True)
 @runtime_checkable
 class ErrorRetryInfo(Protocol):
     is_retry_safe: bool | None = None
@@ -64,6 +63,8 @@ If an exception with `ErrorRetryInfo` is received while attempting to send a
 serialized request to the server, the contained information will be used to
 inform the next retry.
 
+See the retry design for more details on how this information is used.
+
 ### Service Errors
 
 Errors returned by the service MUST be a `CallError`. `CallError`s include a
@@ -81,6 +82,10 @@ type Fault = Literal["client", "server"] | None
 
 If None, then there was not enough information to determine fault.
 """
+
+@runtime_checkable
+class HasFault(Protocol):
+    fault: Fault
 
 
 @dataclass(kw_only=True)
