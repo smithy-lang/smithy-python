@@ -152,7 +152,7 @@ public final class StructureGenerator implements Runnable {
                     ${?retryable}
                     is_retry_safe: bool | None = True
                     ${?throttling}
-                    is_throttle: bool = True
+                    is_throttling_error: bool = True
                     ${/throttling}
                     ${/retryable}
 

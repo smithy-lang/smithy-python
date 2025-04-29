@@ -47,7 +47,7 @@ class CallException(SmithyException):
     Retry strategies MAY choose to wait longer.
     """
 
-    is_throttle: bool = False
+    is_throttling_error: bool = False
     """Whether the error is a throttling error."""
 
     def __post_init__(self):
