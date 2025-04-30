@@ -1,12 +1,12 @@
 [versions]
 junit5 = "5.12.2"
-smithy = "1.56.0"
+smithy = "1.57.1"
 test-logger-plugin = "4.0.0"
 spotbugs = "6.0.22"
 spotless = "7.0.3"
 smithy-gradle-plugins = "1.2.0"
-dep-analysis = "2.16.0"
-jsoup = "1.19.1"
+dep-analysis = "2.17.0"
+jsoup = "1.20.1"
 commonmark = "0.17.0"
 
 [libraries]
