@@ -63,38 +63,6 @@ class RetryStrategy(Protocol):
         ...
 ```
 
-A request using a `RetryStrategy` would look something like the following
-example:
-
-```python
-try:
-    retry_token = retry_strategy.acquire_initial_retry_token()
-except RetryError:
-    transpoort_response = transport_client.send(serialized_request)
-    return self._deserialize(transport_response)
-
-while True:
-    await asyncio.sleep(retry_token.retry_delay)
-    try:
-        transpoort_response = transport_client.send(serialized_request)
-        response = self._deserialize(transport_response)
-    except Exception as e:
-        response = e
-
-    if isinstance(response, Exception):
-        try:
-            retry_token = retry_strategy.refresh_retry_token_for_retry(
-                token_to_renew=retry_token,
-                error=e
-            )
-            continue
-        except RetryError retry_error:
-            raise retry_error from e
-
-    retry_strategy.record_success(token=retry_token)
-    return response
-```
-
 ### Error Classification
 
 Different types of exceptions may require different amounts of delay or may not
@@ -168,3 +136,37 @@ example, a `BackoffStrategy` could use a token bucket to limit retries
 client-wide so that the client can limit the amount of load it is placing on the
 server. Decoupling this logic from the straightforward math of delay computation
 allows both components to be evolved separately.
+
+## Example Usage
+
+A request using a `RetryStrategy` would look something like the following
+example:
+
+```python
+try:
+    retry_token = retry_strategy.acquire_initial_retry_token()
+except RetryError:
+    transport_response = transport_client.send(serialized_request)
+    return self._deserialize(transport_response)
+
+while True:
+    await asyncio.sleep(retry_token.retry_delay)
+    try:
+        transport_response = transport_client.send(serialized_request)
+        response = self._deserialize(transport_response)
+    except Exception as e:
+        response = e
+
+    if isinstance(response, Exception):
+        try:
+            retry_token = retry_strategy.refresh_retry_token_for_retry(
+                token_to_renew=retry_token,
+                error=e
+            )
+            continue
+        except RetryError as retry_error:
+            raise retry_error from e
+
+    retry_strategy.record_success(token=retry_token)
+    return response
+```
