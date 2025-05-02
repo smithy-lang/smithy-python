@@ -124,27 +124,29 @@ STRING_MAP = Schema.collection(
 @dataclass
 class _HTTPMapping(Protocol):
     boolean_member: bool | None = None
-    boolean_list_member: list[bool] = field(default_factory=list)
+    boolean_list_member: list[bool] = field(default_factory=list[bool])
     integer_member: int | None = None
-    integer_list_member: list[int] = field(default_factory=list)
+    integer_list_member: list[int] = field(default_factory=list[int])
     float_member: float | None = None
-    float_list_member: list[float] = field(default_factory=list)
+    float_list_member: list[float] = field(default_factory=list[float])
     big_decimal_member: Decimal | None = None
-    big_decimal_list_member: list[Decimal] = field(default_factory=list)
+    big_decimal_list_member: list[Decimal] = field(default_factory=list[Decimal])
     string_member: str | None = None
-    string_list_member: list[str] = field(default_factory=list)
+    string_list_member: list[str] = field(default_factory=list[str])
     default_timestamp_member: datetime.datetime | None = None
     http_date_timestamp_member: datetime.datetime | None = None
     http_date_list_timestamp_member: list[datetime.datetime] = field(
-        default_factory=list
+        default_factory=list[datetime.datetime]
     )
     date_time_timestamp_member: datetime.datetime | None = None
     date_time_list_timestamp_member: list[datetime.datetime] = field(
-        default_factory=list
+        default_factory=list[datetime.datetime]
     )
     epoch_timestamp_member: datetime.datetime | None = None
-    epoch_list_timestamp_member: list[datetime.datetime] = field(default_factory=list)
-    string_map_member: dict[str, str] = field(default_factory=dict)
+    epoch_list_timestamp_member: list[datetime.datetime] = field(
+        default_factory=list[datetime.datetime]
+    )
+    string_map_member: dict[str, str] = field(default_factory=dict[str, str])
 
     ID: ClassVar[ShapeID]
     SCHEMA: ClassVar[Schema]

@@ -20,8 +20,10 @@ class Schema:
 
     id: ShapeID
     shape_type: ShapeType
-    traits: dict[ShapeID, "Trait | DynamicTrait"] = field(default_factory=dict)
-    members: dict[str, "Schema"] = field(default_factory=dict)
+    traits: dict[ShapeID, "Trait | DynamicTrait"] = field(
+        default_factory=dict[ShapeID, "Trait | DynamicTrait"]
+    )
+    members: dict[str, "Schema"] = field(default_factory=dict[str, "Schema"])
     member_target: "Schema | None" = None
     member_index: int | None = None
 

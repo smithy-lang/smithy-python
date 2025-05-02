@@ -10,7 +10,7 @@ from concurrent.futures import Future as ConcurrentFuture
 from copy import deepcopy
 from functools import partial
 from io import BufferedIOBase, BytesIO
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 if TYPE_CHECKING:
     # Both of these are types that essentially are "castable to bytes/memoryview"
@@ -119,7 +119,7 @@ class CRTResponseBody:
         if self._stream is not None:
             raise SmithyHTTPError("Stream already set on AWSCRTHTTPResponse object")
         self._stream = stream
-        concurrent_future: ConcurrentFuture[int] = stream.completion_future
+        concurrent_future = cast(ConcurrentFuture[int], stream.completion_future)
         self._completion_future = asyncio.wrap_future(concurrent_future)
         self._completion_future.add_done_callback(self._on_complete)
         self._stream.activate()
@@ -305,14 +305,15 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         if url.port is not None:
             port = url.port
 
-        connect_future: ConcurrentFuture[crt_http.HttpClientConnection] = (
+        connect_future = cast(
+            ConcurrentFuture[crt_http.HttpClientConnection],
             crt_http.HttpClientConnection.new(
                 bootstrap=self._client_bootstrap,
                 host_name=url.host,
                 port=port,
                 socket_options=self._socket_options,
                 tls_connection_options=tls_connection_options,
-            )
+            ),
         )
         return connect_future
 

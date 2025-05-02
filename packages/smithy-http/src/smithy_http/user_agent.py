@@ -50,17 +50,35 @@ class RawStringUserAgentComponent:
 
 @dataclass(kw_only=True, slots=True)
 class UserAgent:
-    sdk_metadata: list[UserAgentComponent] = field(default_factory=list)
-    internal_metadata: list[UserAgentComponent] = field(default_factory=list)
-    ua_metadata: list[UserAgentComponent] = field(default_factory=list)
-    api_metadata: list[UserAgentComponent] = field(default_factory=list)
-    os_metadata: list[UserAgentComponent] = field(default_factory=list)
-    language_metadata: list[UserAgentComponent] = field(default_factory=list)
-    env_metadata: list[UserAgentComponent] = field(default_factory=list)
-    config_metadata: list[UserAgentComponent] = field(default_factory=list)
-    feat_metadata: list[UserAgentComponent] = field(default_factory=list)
+    sdk_metadata: list[UserAgentComponent] = field(
+        default_factory=list[UserAgentComponent]
+    )
+    internal_metadata: list[UserAgentComponent] = field(
+        default_factory=list[UserAgentComponent]
+    )
+    ua_metadata: list[UserAgentComponent] = field(
+        default_factory=list[UserAgentComponent]
+    )
+    api_metadata: list[UserAgentComponent] = field(
+        default_factory=list[UserAgentComponent]
+    )
+    os_metadata: list[UserAgentComponent] = field(
+        default_factory=list[UserAgentComponent]
+    )
+    language_metadata: list[UserAgentComponent] = field(
+        default_factory=list[UserAgentComponent]
+    )
+    env_metadata: list[UserAgentComponent] = field(
+        default_factory=list[UserAgentComponent]
+    )
+    config_metadata: list[UserAgentComponent] = field(
+        default_factory=list[UserAgentComponent]
+    )
+    feat_metadata: list[UserAgentComponent] = field(
+        default_factory=list[UserAgentComponent]
+    )
     additional_metadata: list[UserAgentComponent | RawStringUserAgentComponent] = field(
-        default_factory=list
+        default_factory=list[UserAgentComponent | RawStringUserAgentComponent]
     )
 
     def __str__(self) -> str:

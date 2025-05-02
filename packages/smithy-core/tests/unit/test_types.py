@@ -3,7 +3,7 @@
 
 # pyright: reportPrivateUsage=false
 from datetime import UTC, datetime
-from typing import Any, assert_type
+from typing import Any, assert_type, cast
 
 import pytest
 from smithy_core.exceptions import ExpectationNotMetError
@@ -323,9 +323,12 @@ def test_properties_typed_pop() -> None:
 
 def test_union_property() -> None:
     properties = TypedProperties()
-    union: PropertyKey[str | int] = PropertyKey(
-        key="union",
-        value_type=str | int,  # type: ignore
+    union = cast(
+        PropertyKey[str | int],
+        PropertyKey(
+            key="union",
+            value_type=str | int,  # type: ignore
+        ),
     )
 
     properties[union] = "foo"
