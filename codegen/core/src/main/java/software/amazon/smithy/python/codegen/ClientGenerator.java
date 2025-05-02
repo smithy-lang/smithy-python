@@ -542,6 +542,7 @@ final class ClientGenerator implements Runnable {
                 """);
 
         writer.pushState(new SignRequestSection());
+        writer.addStdlibImport("typing", "cast");
         if (context.applicationProtocol().isHttpProtocol() && supportsAuth) {
             writer.addStdlibImport("re");
             writer.addStdlibImport("typing", "Any");
@@ -571,9 +572,12 @@ final class ClientGenerator implements Runnable {
                                 signature = re.split("Signature=", auth_value)[-1]  # type: ignore
                                 context.properties["signature"] = signature.encode('utf-8')
 
-                                identity_key: PropertyKey[Identity | None] = PropertyKey(
-                                    key="identity",
-                                    value_type=Identity | None  # type: ignore
+                                identity_key = cast(
+                                    PropertyKey[Identity | None],
+                                    PropertyKey(
+                                        key="identity",
+                                        value_type=Identity | None  # type: ignore
+                                    )
                                 )
                                 sp_key: PropertyKey[dict[str, Any]] = PropertyKey(
                                     key="signer_properties",
@@ -665,12 +669,15 @@ final class ClientGenerator implements Runnable {
                         # Step 7r: Invoke read_after_deserialization
                         interceptor.read_after_deserialization(output_context)
                     except Exception as e:
-                        output_context: OutputContext[Input, Output, $1T, $2T] = OutputContext(
-                            request=context.request,
-                            response=e,  # type: ignore
-                            transport_request=context.transport_request,
-                            transport_response=transport_response,
-                            properties=context.properties
+                        output_context = cast(
+                            OutputContext[Input, Output, $1T, $2T],
+                            OutputContext(
+                                request=context.request,
+                                response=e,  # type: ignore
+                                transport_request=context.transport_request,
+                                transport_response=transport_response,
+                                properties=context.properties
+                            )
                         )
 
                     return await self._finalize_attempt(interceptor, output_context)

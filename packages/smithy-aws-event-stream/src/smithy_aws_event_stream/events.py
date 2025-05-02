@@ -187,7 +187,7 @@ class EventMessage:
       message.
     """
 
-    headers: HEADERS_DICT = field(default_factory=dict)
+    headers: HEADERS_DICT = field(default_factory=dict[str, HEADER_VALUE])
     """The headers present in the event message.
 
     Sized integer values may be indicated for the purpose of serialization

@@ -215,7 +215,7 @@ public final class StructureGenerator implements Runnable {
             if (member.hasTrait(DefaultTrait.class)) {
 
                 defaultValue = getDefaultValue(writer, member);
-                if (target.isDocumentShape() || Set.of("list", "dict").contains(defaultValue)) {
+                if (target.isDocumentShape() || defaultValue.startsWith("list[") || defaultValue.startsWith("dict[")) {
                     writer.addStdlibImport("dataclasses", "field");
                     defaultKey = "default_factory";
                     requiresField = true;
@@ -308,8 +308,7 @@ public final class StructureGenerator implements Runnable {
             case BOOLEAN -> defaultNode.expectBooleanNode().getValue() ? "True" : "False";
             // These will be given to a default_factory in field. They're inherently empty, so no need to
             // worry about any potential values.
-            case ARRAY -> "list";
-            case OBJECT -> "dict";
+            case ARRAY, OBJECT -> symbolProvider.toSymbol(target).getName();
             default -> Node.printJson(defaultNode);
         };
     }
