@@ -18,6 +18,7 @@ dev = [
 ]
 
 [tool.uv]
+required-version = ">=0.7.2"
 package = false
 
 [tool.uv.workspace]
