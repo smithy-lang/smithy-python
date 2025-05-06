@@ -39,16 +39,17 @@ class HTTPResponseDeserializer(SpecificShapeDeserializer):
     # Note: caller will have to read the body if it's async and not streaming
     def __init__(
         self,
+        *,
         payload_codec: Codec,
-        http_trait: HTTPTrait,
         response: HTTPResponse,
+        http_trait: HTTPTrait | None = None,
         body: "SyncStreamingBlob | None" = None,
     ) -> None:
         """Initialize an HTTPResponseDeserializer.
 
         :param payload_codec: The Codec to use to deserialize the payload, if present.
-        :param http_trait: The HTTP trait of the operation being handled.
         :param response: The HTTP response to read from.
+        :param http_trait: The HTTP trait of the operation being handled.
         :param body: The HTTP response body in a synchronously readable form. This is
             necessary for async response bodies when there is no streaming member.
         """

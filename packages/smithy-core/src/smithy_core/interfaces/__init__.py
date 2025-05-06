@@ -79,6 +79,14 @@ def is_bytes_reader(obj: Any) -> TypeGuard[BytesReader]:
     )
 
 
+@runtime_checkable
+class SeekableBytesReader(BytesReader, Protocol):
+    """A synchronous bytes reader with seek and tell methods."""
+
+    def tell(self) -> int: ...
+    def seek(self, offset: int, whence: int = 0, /) -> int: ...
+
+
 # A union of all acceptable streaming blob types. Deserialized payloads will
 # always return a ByteStream, or AsyncByteStream if async is enabled.
 type StreamingBlob = BytesReader | bytes | bytearray

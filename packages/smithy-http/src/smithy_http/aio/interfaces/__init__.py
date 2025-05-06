@@ -1,9 +1,11 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from typing import Protocol
+from typing import Any, Protocol
 
 from smithy_core.aio.interfaces import ClientTransport, Request, Response
 from smithy_core.aio.utils import read_streaming_blob, read_streaming_blob_async
+from smithy_core.schemas import APIOperation
+from smithy_core.shapes import ShapeID
 
 from ...interfaces import (
     Fields,
@@ -83,3 +85,19 @@ class HTTPClient(ClientTransport[HTTPRequest, HTTPResponse], Protocol):
         :param request_config: Configuration specific to this request.
         """
         ...
+
+
+class HTTPErrorIdentifier:
+    """A class that uses HTTP response metadata to identify errors.
+
+    The body of the response SHOULD NOT be touched by this. The payload codec will be
+    used instead to check for an ID in the body.
+    """
+
+    def identify(
+        self,
+        *,
+        operation: APIOperation[Any, Any],
+        response: HTTPResponse,
+    ) -> ShapeID | None:
+        """Idenitfy the ShapeID of an error from an HTTP response."""
