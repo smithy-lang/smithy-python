@@ -10,8 +10,9 @@
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field
 
+from smithy_core.documents import DocumentValue
 from smithy_core.shapes import ShapeID
-from smithy_core.traits import DocumentValue, DynamicTrait, Trait
+from smithy_core.traits import DynamicTrait, Trait
 
 
 @dataclass(init=False, frozen=True)
