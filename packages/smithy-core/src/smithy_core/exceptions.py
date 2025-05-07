@@ -65,6 +65,11 @@ class SerializationError(SmithyError):
     """Base exception type for exceptions raised during serialization."""
 
 
+class DiscriminatorError(SmithyError):
+    """Exception indicating something went wrong when attempting to find the
+    discriminator in a document."""
+
+
 class RetryError(SmithyError):
     """Base exception type for all exceptions raised in retry strategies."""
 
