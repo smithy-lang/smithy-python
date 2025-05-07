@@ -1,8 +1,10 @@
 import pytest
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
 from smithy_core.documents import Document, TypeRegistry
+from smithy_core.prelude import STRING
 from smithy_core.schemas import Schema
-from smithy_core.shapes import ShapeID, ShapeType
+from smithy_core.shapes import ShapeID
+from smithy_core.traits import RequiredTrait
 
 
 def test_get():
@@ -59,11 +61,16 @@ def test_deserialize():
 
 class TestShape(DeserializeableShape):
     __test__ = False
-    schema = Schema(id=ShapeID("com.example#Test"), shape_type=ShapeType.STRING)
+    schema = Schema.collection(
+        id=ShapeID("com.example#Test"),
+        members={"value": {"index": 0, "target": STRING, "traits": [RequiredTrait()]}},
+    )
 
     def __init__(self, value: str):
         self.value = value
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> "TestShape":
-        return TestShape(deserializer.read_string(schema=TestShape.schema))
+        return TestShape(
+            value=deserializer.read_string(schema=cls.schema.members["value"])
+        )

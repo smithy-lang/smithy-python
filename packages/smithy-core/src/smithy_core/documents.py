@@ -5,7 +5,7 @@ from decimal import Decimal
 from typing import TypeGuard, override
 
 from .deserializers import DeserializeableShape, ShapeDeserializer
-from .exceptions import ExpectationNotMetError, SmithyError
+from .exceptions import DiscriminatorError, ExpectationNotMetError, SmithyError
 from .schemas import Schema
 from .serializers import (
     InterceptingSerializer,
@@ -146,7 +146,9 @@ class Document:
     @property
     def discriminator(self) -> ShapeID:
         """The shape ID that corresponds to the contents of the document."""
-        return self._schema.id
+        if self._type is ShapeType.STRUCTURE:
+            return self._schema.id
+        raise DiscriminatorError(f"{self._type} document has no discriminator.")
 
     def is_none(self) -> bool:
         """Indicates whether the document contains a null value."""

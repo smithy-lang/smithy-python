@@ -12,7 +12,7 @@ from smithy_core.documents import (
     _DocumentDeserializer,
     _DocumentSerializer,
 )
-from smithy_core.exceptions import ExpectationNotMetError
+from smithy_core.exceptions import DiscriminatorError, ExpectationNotMetError
 from smithy_core.prelude import (
     BIG_DECIMAL,
     BLOB,
@@ -938,3 +938,13 @@ def test_document_deserializer(given: Document, expected: Any):
             actual = given.as_shape(DocumentSerdeShape)
         case _:
             raise Exception(f"Unexpected type: {type(given)}")
+
+
+def test_document_has_no_discriminator_by_default() -> None:
+    with pytest.raises(DiscriminatorError):
+        Document().discriminator
+
+
+def test_struct_document_has_discriminator() -> None:
+    document = Document({"integerMember": 1}, schema=SCHEMA)
+    assert document.discriminator == SCHEMA.id
