@@ -21,34 +21,23 @@ from smithy_core.serializers import (
 from smithy_core.traits import JSONNameTrait, TimestampFormatTrait
 from smithy_core.types import TimestampFormat
 
-from . import Flushable
+from . import Flushable, JSONSettings
 
 _INF: float = float("inf")
 _NEG_INF: float = float("-inf")
 
 
 class JSONShapeSerializer(ShapeSerializer):
-    _stream: "StreamingJSONEncoder"
-    _use_json_name: bool
-    _use_timestamp_format: bool
-    _default_timestamp_format: TimestampFormat
-
     def __init__(
-        self,
-        sink: BytesWriter,
-        use_json_name: bool = True,
-        use_timestamp_format: bool = True,
-        default_timestamp_format: TimestampFormat = TimestampFormat.DATE_TIME,
+        self, sink: BytesWriter, *, settings: JSONSettings | None = None
     ) -> None:
         self._stream = StreamingJSONEncoder(sink)
-        self._use_json_name = use_json_name
-        self._use_timestamp_format = use_timestamp_format
-        self._default_timestamp_format = default_timestamp_format
+        self._settings = settings or JSONSettings()
 
     def begin_struct(
         self, schema: "Schema"
     ) -> AbstractContextManager["ShapeSerializer"]:
-        return JSONStructSerializer(self._stream, self, self._use_json_name)
+        return JSONStructSerializer(self._stream, self, self._settings.use_json_name)
 
     def begin_list(
         self, schema: "Schema", size: int
@@ -82,8 +71,8 @@ class JSONShapeSerializer(ShapeSerializer):
         self._stream.write_string(b64encode(value).decode("utf-8"))
 
     def write_timestamp(self, schema: "Schema", value: datetime) -> None:
-        format = self._default_timestamp_format
-        if self._use_timestamp_format:
+        format = self._settings.default_timestamp_format
+        if self._settings.use_timestamp_format:
             if format_trait := schema.get_trait(TimestampFormatTrait):
                 format = format_trait.format
 
