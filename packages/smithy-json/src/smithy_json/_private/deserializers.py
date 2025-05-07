@@ -18,6 +18,7 @@ from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import JSONNameTrait, TimestampFormatTrait
 from smithy_core.types import TimestampFormat
 
+from . import JSONSettings
 from .documents import JSONDocument
 
 # TODO: put these type hints in a pyi somewhere. There here because ijson isn't
@@ -89,17 +90,10 @@ class BufferedParser:
 
 class JSONShapeDeserializer(ShapeDeserializer):
     def __init__(
-        self,
-        source: BytesReader,
-        *,
-        use_json_name: bool = True,
-        use_timestamp_format: bool = True,
-        default_timestamp_format: TimestampFormat = TimestampFormat.DATE_TIME,
+        self, source: BytesReader, *, settings: JSONSettings | None = None
     ) -> None:
         self._stream = BufferedParser(ijson.parse(source))
-        self._use_json_name = use_json_name
-        self._use_timestamp_format = use_timestamp_format
-        self._default_timestamp_format = default_timestamp_format
+        self._settings = settings or JSONSettings()
 
         # A mapping of json name to member name for each shape. Since the deserializer
         # is shared and we don't know which shapes will be deserialized, this is
@@ -164,13 +158,7 @@ class JSONShapeDeserializer(ShapeDeserializer):
     def read_document(self, schema: Schema) -> Document:
         start = next(self._stream)
         if start.type not in ("start_map", "start_array"):
-            return JSONDocument(
-                start.value,
-                schema=schema,
-                use_json_name=self._use_json_name,
-                default_timestamp_format=self._default_timestamp_format,
-                use_timestamp_format=self._use_timestamp_format,
-            )
+            return JSONDocument(start.value, schema=schema, settings=self._settings)
 
         end_type = "end_map" if start.type == "start_map" else "end_array"
         builder = cast(TypedObjectBuilder, ObjectBuilder())
@@ -180,17 +168,11 @@ class JSONShapeDeserializer(ShapeDeserializer):
         ).path != start.path or event.type != end_type:
             builder.event(event.type, event.value)
 
-        return JSONDocument(
-            builder.value,
-            schema=schema,
-            use_json_name=self._use_json_name,
-            default_timestamp_format=self._default_timestamp_format,
-            use_timestamp_format=self._use_timestamp_format,
-        )
+        return JSONDocument(builder.value, schema=schema, settings=self._settings)
 
     def read_timestamp(self, schema: Schema) -> datetime.datetime:
-        format = self._default_timestamp_format
-        if self._use_timestamp_format:
+        format = self._settings.default_timestamp_format
+        if self._settings.use_timestamp_format:
             if format_trait := schema.get_trait(TimestampFormatTrait):
                 format = format_trait.format
 
@@ -221,7 +203,7 @@ class JSONShapeDeserializer(ShapeDeserializer):
         next(self._stream)
 
     def _resolve_member(self, schema: Schema, key: str) -> Schema | None:
-        if self._use_json_name:
+        if self._settings.use_json_name:
             if schema.id not in self._json_names:
                 self._cache_json_names(schema=schema)
             if key in self._json_names[schema.id]:
