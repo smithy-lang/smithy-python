@@ -144,7 +144,7 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         context: TypedProperties,
         response: HTTPResponse,
     ) -> bool:
-        return 200 <= response.status <= 299
+        return 200 <= response.status < 300
 
     async def _create_error(
         self,

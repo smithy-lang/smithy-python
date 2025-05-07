@@ -22,7 +22,8 @@ class AWSErrorIdentifier(HTTPErrorIdentifier):
         if self._HEADER_KEY not in response.fields:
             return None
 
-        code = response.fields[self._HEADER_KEY].values[0]
+        error_field = response.fields[self._HEADER_KEY]
+        code = error_field.values[0] if len(error_field.values) > 0 else None
         if not code:
             return None
 
