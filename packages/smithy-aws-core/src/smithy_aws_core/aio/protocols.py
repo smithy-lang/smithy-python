@@ -1,13 +1,15 @@
 from typing import Any, Final
 
 from smithy_core.codecs import Codec
+from smithy_core.exceptions import DiscriminatorError
 from smithy_core.schemas import APIOperation
-from smithy_core.shapes import ShapeID
+from smithy_core.shapes import ShapeID, ShapeType
 from smithy_http.aio.interfaces import HTTPErrorIdentifier, HTTPResponse
 from smithy_http.aio.protocols import HttpBindingClientProtocol
-from smithy_json import JSONCodec
+from smithy_json import JSONCodec, JSONDocument
 
 from ..traits import RestJson1Trait
+from ..utils import parse_document_discriminator, parse_error_code
 
 
 class AWSErrorIdentifier(HTTPErrorIdentifier):
@@ -24,20 +26,29 @@ class AWSErrorIdentifier(HTTPErrorIdentifier):
 
         error_field = response.fields[self._HEADER_KEY]
         code = error_field.values[0] if len(error_field.values) > 0 else None
-        if not code:
-            return None
+        if code is not None:
+            return parse_error_code(code, operation.schema.id.namespace)
+        return None
 
-        code = code.split(":")[0]
-        if "#" in code:
-            return ShapeID(code)
-        return ShapeID.from_parts(name=code, namespace=operation.schema.id.namespace)
+
+class AWSJSONDocument(JSONDocument):
+    @property
+    def discriminator(self) -> ShapeID:
+        if self.shape_type is ShapeType.STRUCTURE:
+            return self._schema.id
+        parsed = parse_document_discriminator(self, self._settings.default_namespace)
+        if parsed is None:
+            raise DiscriminatorError(
+                f"Unable to parse discriminator for {self.shape_type} docuemnt."
+            )
+        return parsed
 
 
 class RestJsonClientProtocol(HttpBindingClientProtocol):
     """An implementation of the aws.protocols#restJson1 protocol."""
 
     _id: Final = RestJson1Trait.id
-    _codec: Final = JSONCodec()
+    _codec: Final = JSONCodec(document_class=AWSJSONDocument)
     _contentType: Final = "application/json"
     _error_identifier: Final = AWSErrorIdentifier()
 
