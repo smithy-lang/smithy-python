@@ -13,23 +13,22 @@ from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import JSONNameTrait, TimestampFormatTrait
 from smithy_core.utils import expect_type
 
-from . import JSONSettings
+from ..settings import JSONSettings
 
 
 class JSONDocument(Document):
-    _schema: Schema
-    _json_names: dict[str, str]
+    _discriminator: ShapeID | None = None
 
     def __init__(
         self,
         value: DocumentValue | dict[str, "Document"] | list["Document"],
+        settings: JSONSettings | None = None,
         *,
         schema: Schema = DOCUMENT,
-        settings: JSONSettings | None = None,
     ) -> None:
         super().__init__(value, schema=schema)
-        self._settings = settings or JSONSettings()
-        self._json_names = {}
+        self._settings = settings or JSONSettings(document_class=type(self))
+        self._json_names: dict[str, str] = {}
 
         if self._settings.use_json_name and schema.shape_type in (
             ShapeType.STRUCTURE,
@@ -38,12 +37,6 @@ class JSONDocument(Document):
             for member_name, member_schema in schema.members.items():
                 if json_name := member_schema.get_trait(JSONNameTrait):
                     self._json_names[json_name.value] = member_name
-
-    @property
-    def discriminator(self) -> ShapeID:
-        if self._type is ShapeType.MAP:
-            return ShapeID(self.as_map()["__type"].as_string())
-        return super().discriminator
 
     def as_blob(self) -> bytes:
         return b64decode(expect_type(str, self._value))

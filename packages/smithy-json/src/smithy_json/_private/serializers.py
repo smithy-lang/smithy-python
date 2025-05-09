@@ -21,18 +21,17 @@ from smithy_core.serializers import (
 from smithy_core.traits import JSONNameTrait, TimestampFormatTrait
 from smithy_core.types import TimestampFormat
 
-from . import Flushable, JSONSettings
+from ..settings import JSONSettings
+from . import Flushable
 
 _INF: float = float("inf")
 _NEG_INF: float = float("-inf")
 
 
 class JSONShapeSerializer(ShapeSerializer):
-    def __init__(
-        self, sink: BytesWriter, *, settings: JSONSettings | None = None
-    ) -> None:
+    def __init__(self, sink: BytesWriter, settings: JSONSettings) -> None:
         self._stream = StreamingJSONEncoder(sink)
-        self._settings = settings or JSONSettings()
+        self._settings = settings
 
     def begin_struct(
         self, schema: "Schema"
