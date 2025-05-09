@@ -18,8 +18,7 @@ from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import JSONNameTrait, TimestampFormatTrait
 from smithy_core.types import TimestampFormat
 
-from . import JSONSettings
-from .documents import JSONDocument
+from ..settings import JSONSettings
 
 # TODO: put these type hints in a pyi somewhere. There here because ijson isn't
 # typed.
@@ -89,11 +88,9 @@ class BufferedParser:
 
 
 class JSONShapeDeserializer(ShapeDeserializer):
-    def __init__(
-        self, source: BytesReader, *, settings: JSONSettings | None = None
-    ) -> None:
+    def __init__(self, source: BytesReader, settings: JSONSettings) -> None:
         self._stream = BufferedParser(ijson.parse(source))
-        self._settings = settings or JSONSettings()
+        self._settings = settings
 
         # A mapping of json name to member name for each shape. Since the deserializer
         # is shared and we don't know which shapes will be deserialized, this is
@@ -158,7 +155,9 @@ class JSONShapeDeserializer(ShapeDeserializer):
     def read_document(self, schema: Schema) -> Document:
         start = next(self._stream)
         if start.type not in ("start_map", "start_array"):
-            return JSONDocument(start.value, schema=schema, settings=self._settings)
+            return self._settings.document_class(
+                value=start.value, schema=schema, settings=self._settings
+            )
 
         end_type = "end_map" if start.type == "start_map" else "end_array"
         builder = cast(TypedObjectBuilder, ObjectBuilder())
@@ -168,7 +167,9 @@ class JSONShapeDeserializer(ShapeDeserializer):
         ).path != start.path or event.type != end_type:
             builder.event(event.type, event.value)
 
-        return JSONDocument(builder.value, schema=schema, settings=self._settings)
+        return self._settings.document_class(
+            value=builder.value, schema=schema, settings=self._settings
+        )
 
     def read_timestamp(self, schema: Schema) -> datetime.datetime:
         format = self._settings.default_timestamp_format

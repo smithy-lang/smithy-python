@@ -9,12 +9,13 @@ from smithy_core.prelude import (
     BIG_DECIMAL,
     BLOB,
     BOOLEAN,
+    DOCUMENT,
     FLOAT,
     INTEGER,
     STRING,
     TIMESTAMP,
 )
-from smithy_json import JSONCodec
+from smithy_json import JSONCodec, JSONDocument
 
 from . import (
     JSON_SERDE_CASES,
@@ -88,3 +89,13 @@ def test_json_deserializer(expected: Any, given: bytes) -> None:
         assert actual_value == expected_value
     else:
         assert actual == expected
+
+
+class CustomDocument(JSONDocument):
+    pass
+
+
+def test_uses_custom_document() -> None:
+    codec = JSONCodec(document_class=CustomDocument)
+    actual = codec.create_deserializer(b'{"foo": "bar"}').read_document(DOCUMENT)
+    assert isinstance(actual, CustomDocument)
