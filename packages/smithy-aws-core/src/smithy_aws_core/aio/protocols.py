@@ -39,7 +39,7 @@ class AWSJSONDocument(JSONDocument):
         parsed = parse_document_discriminator(self, self._settings.default_namespace)
         if parsed is None:
             raise DiscriminatorError(
-                f"Unable to parse discriminator for {self.shape_type} docuemnt."
+                f"Unable to parse discriminator for {self.shape_type} document."
             )
         return parsed
 
