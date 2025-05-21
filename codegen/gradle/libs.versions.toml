@@ -1,6 +1,6 @@
 [versions]
 junit5 = "5.12.2"
-smithy = "1.57.1"
+smithy = "1.58.0"
 test-logger-plugin = "4.0.0"
 spotbugs = "6.0.22"
 spotless = "7.0.3"
