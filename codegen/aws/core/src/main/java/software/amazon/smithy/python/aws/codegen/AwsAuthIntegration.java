@@ -57,6 +57,10 @@ public class AwsAuthIntegration implements PythonIntegration {
                                         .build())
                                 // TODO: Initialize with the provider chain?
                                 .nullable(true)
+                                .initialize(writer -> {
+                                    writer.addImport("smithy_aws_core.credentials_resolvers", "CredentialsResolverChain");
+                                    writer.write("self.aws_credentials_identity_resolver = aws_credentials_identity_resolver or CredentialsResolverChain(config=self)");
+                                })
                                 .build())
                         .addConfigProperty(REGION)
                         .authScheme(new Sigv4AuthScheme())
