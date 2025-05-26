@@ -74,6 +74,15 @@ public final class SmithyPythonDependency {
             false);
 
     /**
+     * Smithy core functionality for AWS.
+     */
+    public static final PythonDependency SMITHY_AWS_CORE = new PythonDependency(
+            "smithy_aws_core",
+            "<0.1.0",
+            Type.DEPENDENCY,
+            false);
+
+    /**
      * testing framework used in generated functional tests.
      */
     public static final PythonDependency PYTEST = new PythonDependency(
