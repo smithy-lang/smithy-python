@@ -184,7 +184,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         writer.write("""
                                 config = $T(
                                     endpoint_uri="https://$L/$L",
-                                    http_client = $T(),
+                                    transport = $T(),
                                     retry_strategy=SimpleRetryStrategy(max_attempts=1),
                                 )
                                 """,
@@ -430,7 +430,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         writer.write("""
                                 config = $T(
                                     endpoint_uri="https://example.com",
-                                    http_client = $T(
+                                    transport = $T(
                                         status=$L,
                                         headers=$J,
                                         body=b$S,
@@ -483,7 +483,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         writer.write("""
                                 config = $T(
                                     endpoint_uri="https://example.com",
-                                    http_client = $T(
+                                    transport = $T(
                                         status=$L,
                                         headers=$J,
                                         body=b$S,

@@ -29,6 +29,7 @@ import software.amazon.smithy.model.shapes.StringShape;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.TimestampShape;
 import software.amazon.smithy.model.shapes.UnionShape;
+import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
@@ -107,7 +108,11 @@ public final class MemberSerializerGenerator extends ShapeVisitor.DataShapeVisit
 
     @Override
     public Void blobShape(BlobShape shape) {
-        writeSerializer(shape);
+        if (shape.hasTrait(StreamingTrait.class)) {
+            writeSerializer("data_stream");
+        } else {
+            writeSerializer(shape);
+        }
         return null;
     }
 
