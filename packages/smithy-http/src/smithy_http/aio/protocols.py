@@ -3,6 +3,7 @@ from collections.abc import AsyncIterable
 from inspect import iscoroutinefunction
 from typing import Any
 
+from smithy_core import URI as _URI
 from smithy_core.aio.interfaces import AsyncByteStream, ClientProtocol
 from smithy_core.aio.interfaces import StreamingBlob as AsyncStreamingBlob
 from smithy_core.codecs import Codec
@@ -37,17 +38,27 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
         endpoint: Endpoint,
     ) -> HTTPRequest:
         uri = endpoint.uri
-        uri_builder = request.destination
+        previous = request.destination
 
-        if uri.scheme:
-            uri_builder.scheme = uri.scheme
-        if uri.host:
-            uri_builder.host = uri.host
-        if uri.port and uri.port > -1:
-            uri_builder.port = uri.port
-        if uri.path:
-            uri_builder.path = os.path.join(uri.path, uri_builder.path or "")
-        # TODO: merge headers from the endpoint properties bag
+        path = previous.path or uri.path
+        if uri.path is not None and previous.path is not None:
+            path = os.path.join(uri.path, previous.path.lstrip("/"))
+
+        query = previous.query or uri.query
+        if uri.query is not None and previous.query is not None:
+            query = f"{uri.query}&{previous.query}"
+
+        request.destination = _URI(
+            scheme=uri.scheme,
+            username=uri.username or previous.username,
+            password=uri.password or previous.password,
+            host=uri.host,
+            port=uri.port or previous.port,
+            path=path,
+            query=query,
+            fragment=uri.fragment or previous.fragment,
+        )
+
         return request
 
 
