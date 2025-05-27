@@ -9,6 +9,7 @@ dependencies = []
 [dependency-groups]
 dev = [
     "freezegun>=1.5.1",
+    "typing_extensions>=4.13.0"
 ]
 
 [build-system]
