@@ -26,14 +26,15 @@ class RestJson1Trait(Trait, id=ShapeID("aws.protocols#restJson1")):
 
     def __init__(self, value: DocumentValue | DynamicTrait = None):
         super().__init__(value)
-        assert isinstance(self.document_value, Mapping)
+        document_value = value or {}
+        assert isinstance(document_value, Mapping)
 
-        http_versions = self.document_value["http"]
+        http_versions = document_value.get("http", ["http/1.1"])
         assert isinstance(http_versions, Sequence)
         for val in http_versions:
             assert isinstance(val, str)
         object.__setattr__(self, "http", tuple(http_versions))
-        event_stream_http_versions = self.document_value.get("eventStreamHttp")
+        event_stream_http_versions = document_value.get("eventStreamHttp")
         if not event_stream_http_versions:
             object.__setattr__(self, "event_stream_http", self.http)
         else:
