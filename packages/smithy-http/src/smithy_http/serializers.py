@@ -593,12 +593,27 @@ class HTTPQueryMapSerializer(MapSerializer):
         :param query_params: The list of query param tuples to append to.
         """
         self._query_params = query_params
-        self._delegate = CapturingSerializer()
 
     def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]):
-        value_writer(self._delegate)
-        assert self._delegate.result is not None  # noqa: S101
-        self._query_params.append((key, urlquote(self._delegate.result, safe="")))
+        value_writer(HTTPQueryMapValueSerializer(key, self._query_params))
+
+
+class HTTPQueryMapValueSerializer(SpecificShapeSerializer):
+    def __init__(self, key: str,  query_params: list[tuple[str, str]]) -> None:
+        """Initialize an HTTPQueryMapValueSerializer.
+
+        :param key: The key of the query parameter.
+        :param query_params: The list of query param tuples to append to.
+        """
+        self._key = key
+        self._query_params = query_params
+
+    def write_string(self, schema: Schema, value: str) -> None:
+        self._query_params.append((self._key, urlquote(value, safe="")))
+
+    @contextmanager
+    def begin_list(self, schema: Schema, size: int) -> Iterator[ShapeSerializer]:
+        yield self
 
 
 class HostPrefixSerializer(SpecificShapeSerializer):
