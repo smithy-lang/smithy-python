@@ -183,6 +183,7 @@ public final class SetupGenerator {
                     reportUnusedVariable = false
                     reportUnnecessaryComparison = false
                     reportUnusedClass = false
+                    enableExperimentalFeatures = true
 
                     [tool.ruff]
                     target-version = "py312"
