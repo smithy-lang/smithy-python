@@ -352,9 +352,6 @@ public final class StructureGenerator implements Runnable {
 
                 """);
 
-        // This removes any http-bound members from the serialization method since it's
-        // not yet supported.
-        // TODO: remove this once serialization of http binding members is added.
         var serializeableMembers = filterMembers();
         writer.write("def serialize_members(self, serializer: ShapeSerializer):").indent();
         if (serializeableMembers.isEmpty()) {
@@ -381,32 +378,12 @@ public final class StructureGenerator implements Runnable {
     }
 
     private List<MemberShape> filterMembers() {
-        var httpIndex = HttpBindingIndex.of(model);
-        var operationIndex = OperationIndex.of(model);
-        if (shape.hasTrait(InputTrait.class)) {
-            var operation = operationIndex.getInputBindings(shape).iterator().next();
-            var bindings = httpIndex.getRequestBindings(operation);
-            return shape.members()
-                    .stream()
-                    .filter(member -> filterMember(member, bindings))
-                    .toList();
-        } else if (shape.hasTrait(OutputTrait.class)) {
-            var operation = operationIndex.getOutputBindings(shape).iterator().next();
-            var bindings = httpIndex.getResponseBindings(operation);
-            return shape.members()
-                    .stream()
-                    .filter(member -> filterMember(member, bindings))
-                    .toList();
-        }
-        return shape.members().stream().toList();
-    }
-
-    private boolean filterMember(MemberShape member, Map<String, HttpBinding> bindings) {
-        if (bindings.containsKey(member.getMemberName())) {
-            var binding = bindings.get(member.getMemberName());
-            return binding.getLocation() == HttpBinding.Location.DOCUMENT;
-        }
-        return true;
+        return shape.members().stream()
+                .filter(member -> {
+                    var target = model.expectShape(member.getTarget());
+                    return !(target.hasTrait(StreamingTrait.class) && target.isUnionShape());
+                })
+                .toList();
     }
 
     private boolean isNullable(MemberShape member) {
