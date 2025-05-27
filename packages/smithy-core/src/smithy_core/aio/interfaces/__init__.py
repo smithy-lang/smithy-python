@@ -11,6 +11,8 @@ from ...interfaces import StreamingBlob as SyncStreamingBlob
 from .eventstream import EventPublisher, EventReceiver
 
 if TYPE_CHECKING:
+    from typing_extensions import TypeForm
+
     from ...deserializers import DeserializeableShape, ShapeDeserializer
     from ...schemas import APIOperation
     from ...serializers import SerializeableShape
@@ -163,7 +165,7 @@ class ClientProtocol[I: Request, O: Response](Protocol):
         *,
         operation: "APIOperation[OperationInput, OperationOutput]",
         request: I,
-        event_type: type[Event],
+        event_type: "TypeForm[Event]",
         context: TypedProperties,
         auth_scheme: "AuthScheme[Any, Any, Any, Any] | None" = None,
     ) -> EventPublisher[Event]:
@@ -187,7 +189,7 @@ class ClientProtocol[I: Request, O: Response](Protocol):
         operation: "APIOperation[OperationInput, OperationOutput]",
         request: I,
         response: O,
-        event_type: type[Event],
+        event_type: "TypeForm[Event]",
         event_deserializer: Callable[["ShapeDeserializer"], Event],
         context: TypedProperties,
     ) -> EventReceiver[Event]:
