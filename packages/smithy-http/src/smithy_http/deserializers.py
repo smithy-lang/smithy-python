@@ -91,9 +91,9 @@ class HTTPResponseDeserializer(SpecificShapeDeserializer):
                 case _:
                     pass
 
-            if binding_matcher.has_body:
-                deserializer = self._create_body_deserializer()
-                deserializer.read_struct(schema, consumer)
+        if binding_matcher.has_body:
+            deserializer = self._create_body_deserializer()
+            deserializer.read_struct(schema, consumer)
 
     def _create_payload_deserializer(self, payload_member: Schema) -> ShapeDeserializer:
         if payload_member.shape_type in (ShapeType.BLOB, ShapeType.STRING):
