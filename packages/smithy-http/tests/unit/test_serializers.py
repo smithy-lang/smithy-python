@@ -1649,6 +1649,20 @@ async def test_serialize_http_request(case: HTTPMessageTestCase) -> None:
         assert type(actual.body) is type(case.request.body)
 
 
+async def test_serialize_request_omitting_empty_payload() -> None:
+    shape = HTTPStringLabel(label="foo/bar")
+    serializer = HTTPRequestSerializer(
+        payload_codec=JSONCodec(),
+        http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/{label}"}),
+        omit_empty_payload=True,
+    )
+    shape.serialize(serializer)
+    actual = serializer.result
+    assert actual is not None
+    actual_body_value = await AsyncBytesReader(actual.body).read()
+    assert actual_body_value == b""
+
+
 RESPONSE_SER_CASES: list[HTTPMessageTestCase] = (
     header_cases() + empty_prefix_header_ser_cases() + payload_cases()
 )
@@ -1675,6 +1689,20 @@ async def test_serialize_http_response(case: HTTPMessageTestCase) -> None:
         expected_body_value = await AsyncBytesReader(case.request.body).read()
         assert actual_body_value == expected_body_value
         assert type(actual.body) is type(case.request.body)
+
+
+async def test_serialize_response_omitting_empty_payload() -> None:
+    shape = HTTPHeaders(boolean_member=True)
+    serializer = HTTPResponseSerializer(
+        payload_codec=JSONCodec(),
+        http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/"}),
+        omit_empty_payload=True,
+    )
+    shape.serialize(serializer)
+    actual = serializer.result
+    assert actual is not None
+    actual_body_value = await AsyncBytesReader(actual.body).read()
+    assert actual_body_value == b""
 
 
 RESPONSE_DESER_CASES: list[HTTPMessageTestCase] = (

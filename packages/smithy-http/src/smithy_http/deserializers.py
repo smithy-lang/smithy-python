@@ -13,9 +13,7 @@ from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeType
 from smithy_core.traits import (
     HTTPHeaderTrait,
-    HTTPPayloadTrait,
     HTTPPrefixHeadersTrait,
-    HTTPResponseCodeTrait,
     HTTPTrait,
     TimestampFormatTrait,
 )
@@ -23,6 +21,7 @@ from smithy_core.types import TimestampFormat
 from smithy_core.utils import ensure_utc, strict_parse_bool, strict_parse_float
 
 from .aio.interfaces import HTTPResponse
+from .bindings import Binding, ResponseBindingMatcher
 from .interfaces import Field, Fields
 
 if TYPE_CHECKING:
@@ -61,47 +60,49 @@ class HTTPResponseDeserializer(SpecificShapeDeserializer):
     def read_struct(
         self, schema: Schema, consumer: Callable[[Schema, ShapeDeserializer], None]
     ) -> None:
-        has_body = False
-        payload_member: Schema | None = None
+        binding_matcher = ResponseBindingMatcher(schema)
 
         for member in schema.members.values():
-            if (trait := member.get_trait(HTTPHeaderTrait)) is not None:
-                header = self._response.fields.entries.get(trait.key.lower())
-                if header is not None:
-                    if member.shape_type is ShapeType.LIST:
-                        consumer(member, HTTPHeaderListDeserializer(header))
-                    else:
-                        consumer(member, HTTPHeaderDeserializer(header.as_string()))
-            elif (trait := member.get_trait(HTTPPrefixHeadersTrait)) is not None:
-                consumer(
-                    member,
-                    HTTPHeaderMapDeserializer(self._response.fields, trait.prefix),
-                )
-            elif HTTPPayloadTrait in member:
-                has_body = True
-                payload_member = member
-            elif HTTPResponseCodeTrait in member:
-                consumer(member, HTTPResponseCodeDeserializer(self._response.status))
-            else:
-                has_body = True
+            match binding_matcher.match(member):
+                case Binding.HEADER:
+                    trait = member.expect_trait(HTTPHeaderTrait)
+                    header = self._response.fields.entries.get(trait.key.lower())
+                    if header is not None:
+                        if member.shape_type is ShapeType.LIST:
+                            consumer(member, HTTPHeaderListDeserializer(header))
+                        else:
+                            consumer(member, HTTPHeaderDeserializer(header.as_string()))
+                case Binding.PREFIX_HEADERS:
+                    trait = member.expect_trait(HTTPPrefixHeadersTrait)
+                    consumer(
+                        member,
+                        HTTPHeaderMapDeserializer(self._response.fields, trait.prefix),
+                    )
+                case Binding.STATUS:
+                    consumer(
+                        member, HTTPResponseCodeDeserializer(self._response.status)
+                    )
+                case Binding.PAYLOAD:
+                    assert binding_matcher.payload_member is not None  # noqa: S101
+                    deserializer = self._create_payload_deserializer(
+                        binding_matcher.payload_member
+                    )
+                    consumer(binding_matcher.payload_member, deserializer)
+                case _:
+                    pass
 
-        if has_body:
-            deserializer = self._create_payload_deserializer(payload_member)
-            if payload_member is not None:
-                consumer(payload_member, deserializer)
-            else:
-                deserializer.read_struct(schema, consumer)
+        if binding_matcher.has_body:
+            deserializer = self._create_body_deserializer()
+            deserializer.read_struct(schema, consumer)
 
-    def _create_payload_deserializer(
-        self, payload_member: Schema | None
-    ) -> ShapeDeserializer:
-        body = self._body if self._body is not None else self._response.body
-        if payload_member is not None and payload_member.shape_type in (
-            ShapeType.BLOB,
-            ShapeType.STRING,
-        ):
+    def _create_payload_deserializer(self, payload_member: Schema) -> ShapeDeserializer:
+        if payload_member.shape_type in (ShapeType.BLOB, ShapeType.STRING):
+            body = self._body if self._body is not None else self._response.body
             return RawPayloadDeserializer(body)
+        return self._create_body_deserializer()
 
+    def _create_body_deserializer(self):
+        body = self._body if self._body is not None else self._response.body
         if not is_streaming_blob(body):
             raise UnsupportedStreamError(
                 "Unable to read async stream. This stream must be buffered prior "
