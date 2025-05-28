@@ -50,7 +50,7 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
             host=uri.host,
             port=uri.port or previous.port,
             path=path,
-            query=uri.path or previous.path,
+            query=uri.query or previous.query,
             fragment=uri.fragment or previous.fragment
         )
 

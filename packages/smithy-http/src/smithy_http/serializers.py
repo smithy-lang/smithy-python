@@ -328,7 +328,7 @@ class HTTPHeaderSerializer(SpecificShapeSerializer):
             :py:class:`HTTPHeaderTrait` will be checked instead. Required when
             collecting list entries.
         :param headers: An optional list of header tuples to append to. If not
-            set, one will be created.
+            set, one will be created. Values appended will not be escaped.
         """
         self.headers: list[tuple[str, str]] = headers if headers is not None else []
         self._key = key
@@ -486,7 +486,7 @@ class HTTPQuerySerializer(SpecificShapeSerializer):
 
     def write_string(self, schema: Schema, value: str) -> None:
         key = self._key or schema.expect_trait(HTTPQueryTrait).key
-        self.query_params.append((key, urlquote(value, safe="")))
+        self.query_params.append((key, value))
 
     def write_timestamp(self, schema: Schema, value: datetime) -> None:
         key = self._key or schema.expect_trait(HTTPQueryTrait).key
@@ -586,7 +586,8 @@ class HTTPQueryMapValueSerializer(SpecificShapeSerializer):
         self._query_params = query_params
 
     def write_string(self, schema: Schema, value: str) -> None:
-        self._query_params.append((self._key, urlquote(value, safe="")))
+        # Note: values are escaped when query params are joined
+        self._query_params.append((self._key, value))
 
     @contextmanager
     def begin_list(self, schema: Schema, size: int) -> Iterator[ShapeSerializer]:
