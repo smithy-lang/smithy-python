@@ -234,11 +234,11 @@ class SimpleRetryStrategy(retries_interface.RetryStrategy):
             if retry_count >= self.max_attempts:
                 raise RetryError(
                     f"Reached maximum number of allowed attempts: {self.max_attempts}"
-                )
+                ) from error
             retry_delay = self.backoff_strategy.compute_next_backoff_delay(retry_count)
             return SimpleRetryToken(retry_count=retry_count, retry_delay=retry_delay)
         else:
-            raise RetryError(f"Error is not retryable: {error}")
+            raise RetryError(f"Error is not retryable: {error}") from error
 
     def record_success(self, *, token: retries_interface.RetryToken) -> None:
         """Not used by this retry strategy."""

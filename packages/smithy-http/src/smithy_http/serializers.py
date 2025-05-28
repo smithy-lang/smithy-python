@@ -19,18 +19,11 @@ from smithy_core.serializers import (
 from smithy_core.shapes import ShapeType
 from smithy_core.traits import (
     EndpointTrait,
-    HostLabelTrait,
-    HTTPErrorTrait,
     HTTPHeaderTrait,
-    HTTPLabelTrait,
-    HTTPPayloadTrait,
     HTTPPrefixHeadersTrait,
-    HTTPQueryParamsTrait,
     HTTPQueryTrait,
-    HTTPResponseCodeTrait,
     HTTPTrait,
     MediaTypeTrait,
-    StreamingTrait,
     TimestampFormatTrait,
 )
 from smithy_core.types import PathPattern, TimestampFormat
@@ -40,6 +33,7 @@ from . import tuples_to_fields
 from .aio import HTTPRequest as _HTTPRequest
 from .aio import HTTPResponse as _HTTPResponse
 from .aio.interfaces import HTTPRequest, HTTPResponse
+from .bindings import Binding, RequestBindingMatcher, ResponseBindingMatcher
 from .utils import join_query_params
 
 if TYPE_CHECKING:
@@ -61,6 +55,7 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
         payload_codec: Codec,
         http_trait: HTTPTrait,
         endpoint_trait: EndpointTrait | None = None,
+        omit_empty_payload: bool = True,
     ) -> None:
         """Initialize an HTTPRequestSerializer.
 
@@ -69,10 +64,12 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
         :param http_trait: The HTTP trait of the operation being handled.
         :param endpoint_trait: The optional endpoint trait of the operation being
             handled.
+        :param omit_empty_payload: Whether an empty payload should be omitted.
         """
         self._http_trait = http_trait
         self._endpoint_trait = endpoint_trait
         self._payload_codec = payload_codec
+        self._omit_empty_payload = omit_empty_payload
         self.result: HTTPRequest | None = None
 
     @contextmanager
@@ -86,7 +83,8 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
 
         content_type = self._payload_codec.media_type
 
-        if (payload_member := self._get_payload_member(schema)) is not None:
+        binding_matcher = RequestBindingMatcher(schema)
+        if (payload_member := binding_matcher.payload_member) is not None:
             if payload_member.shape_type in (ShapeType.BLOB, ShapeType.STRING):
                 content_type = (
                     "application/octet-stream"
@@ -95,7 +93,10 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                 )
                 payload_serializer = RawPayloadSerializer()
                 binding_serializer = HTTPRequestBindingSerializer(
-                    payload_serializer, self._http_trait.path, host_prefix
+                    payload_serializer,
+                    self._http_trait.path,
+                    host_prefix,
+                    binding_matcher,
                 )
                 yield binding_serializer
                 payload = payload_serializer.payload
@@ -105,17 +106,32 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                 payload = BytesIO()
                 payload_serializer = self._payload_codec.create_serializer(payload)
                 binding_serializer = HTTPRequestBindingSerializer(
-                    payload_serializer, self._http_trait.path, host_prefix
+                    payload_serializer,
+                    self._http_trait.path,
+                    host_prefix,
+                    binding_matcher,
                 )
                 yield binding_serializer
         else:
-            if self._get_eventstreaming_member(schema) is not None:
+            if binding_matcher.event_stream_member is not None:
                 content_type = "application/vnd.amazon.eventstream"
             payload = BytesIO()
             payload_serializer = self._payload_codec.create_serializer(payload)
-            with payload_serializer.begin_struct(schema) as body_serializer:
+            if binding_matcher.should_write_body(self._omit_empty_payload):
+                with payload_serializer.begin_struct(schema) as body_serializer:
+                    binding_serializer = HTTPRequestBindingSerializer(
+                        body_serializer,
+                        self._http_trait.path,
+                        host_prefix,
+                        binding_matcher,
+                    )
+                    yield binding_serializer
+            else:
                 binding_serializer = HTTPRequestBindingSerializer(
-                    body_serializer, self._http_trait.path, host_prefix
+                    payload_serializer,
+                    self._http_trait.path,
+                    host_prefix,
+                    binding_matcher,
                 )
                 yield binding_serializer
 
@@ -142,21 +158,6 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
             body=payload,
         )
 
-    def _get_payload_member(self, schema: Schema) -> Schema | None:
-        for member in schema.members.values():
-            if HTTPPayloadTrait in member:
-                return member
-        return None
-
-    def _get_eventstreaming_member(self, schema: Schema) -> Schema | None:
-        for member in schema.members.values():
-            if (
-                member.get_trait(StreamingTrait) is not None
-                and member.shape_type is ShapeType.UNION
-            ):
-                return member
-        return None
-
 
 class HTTPRequestBindingSerializer(InterceptingSerializer):
     """Delegates HTTP request bindings to binding-location-specific serializers."""
@@ -166,6 +167,7 @@ class HTTPRequestBindingSerializer(InterceptingSerializer):
         payload_serializer: ShapeSerializer,
         path_pattern: PathPattern,
         host_prefix_pattern: str,
+        binding_matcher: RequestBindingMatcher,
     ) -> None:
         """Initialize an HTTPRequestBindingSerializer.
 
@@ -181,18 +183,20 @@ class HTTPRequestBindingSerializer(InterceptingSerializer):
         self.host_prefix_serializer = HostPrefixSerializer(
             payload_serializer, host_prefix_pattern
         )
+        self._binding_matcher = binding_matcher
 
     def before(self, schema: Schema) -> ShapeSerializer:
-        if HTTPHeaderTrait in schema or HTTPPrefixHeadersTrait in schema:
-            return self.header_serializer
-        if HTTPQueryTrait in schema or HTTPQueryParamsTrait in schema:
-            return self.query_serializer
-        if HTTPLabelTrait in schema:
-            return self.path_serializer
-        if HostLabelTrait in schema:
-            return self.host_prefix_serializer
-
-        return self._payload_serializer
+        match self._binding_matcher.match(schema):
+            case Binding.HEADER | Binding.PREFIX_HEADERS:
+                return self.header_serializer
+            case Binding.QUERY | Binding.QUERY_PARAMS:
+                return self.query_serializer
+            case Binding.LABEL:
+                return self.path_serializer
+            case Binding.HOST:
+                return self.host_prefix_serializer
+            case _:
+                return self._payload_serializer
 
     def after(self, schema: Schema) -> None:
         pass
@@ -205,38 +209,55 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
         self,
         payload_codec: Codec,
         http_trait: HTTPTrait,
+        omit_empty_payload: bool = True,
     ) -> None:
         """Initialize an HTTPResponseSerializer.
 
         :param payload_codec: The codec to use to serialize the HTTP payload, if one is
             present.
         :param http_trait: The HTTP trait of the operation being handled.
+        :param omit_empty_payload: Whether an empty payload should be omitted.
         """
         self._http_trait = http_trait
         self._payload_codec = payload_codec
         self.result: HTTPResponse | None = None
+        self._omit_empty_payload = omit_empty_payload
 
     @contextmanager
     def begin_struct(self, schema: Schema) -> Iterator[ShapeSerializer]:
         payload: Any
         binding_serializer: HTTPResponseBindingSerializer
 
-        if (payload_member := self._get_payload_member(schema)) is not None:
+        binding_matcher = ResponseBindingMatcher(schema)
+        if (payload_member := binding_matcher.payload_member) is not None:
             if payload_member.shape_type in (ShapeType.BLOB, ShapeType.STRING):
                 payload_serializer = RawPayloadSerializer()
-                binding_serializer = HTTPResponseBindingSerializer(payload_serializer)
+                binding_serializer = HTTPResponseBindingSerializer(
+                    payload_serializer, binding_matcher
+                )
                 yield binding_serializer
                 payload = payload_serializer.payload
             else:
                 payload = BytesIO()
                 payload_serializer = self._payload_codec.create_serializer(payload)
-                binding_serializer = HTTPResponseBindingSerializer(payload_serializer)
+                binding_serializer = HTTPResponseBindingSerializer(
+                    payload_serializer, binding_matcher
+                )
                 yield binding_serializer
         else:
             payload = BytesIO()
             payload_serializer = self._payload_codec.create_serializer(payload)
-            with payload_serializer.begin_struct(schema) as body_serializer:
-                binding_serializer = HTTPResponseBindingSerializer(body_serializer)
+            if binding_matcher.should_write_body(self._omit_empty_payload):
+                with payload_serializer.begin_struct(schema) as body_serializer:
+                    binding_serializer = HTTPResponseBindingSerializer(
+                        body_serializer, binding_matcher
+                    )
+                    yield binding_serializer
+            else:
+                binding_serializer = HTTPResponseBindingSerializer(
+                    payload_serializer,
+                    binding_matcher,
+                )
                 yield binding_serializer
 
         if (
@@ -244,28 +265,22 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
         ) is not None and not iscoroutinefunction(seek):
             seek(0)
 
-        default_code = self._http_trait.code
         explicit_code = binding_serializer.response_code_serializer.response_code
-        if (http_error_trait := schema.get_trait(HTTPErrorTrait)) is not None:
-            default_code = http_error_trait.code
-
         self.result = _HTTPResponse(
             fields=tuples_to_fields(binding_serializer.header_serializer.headers),
             body=payload,
-            status=explicit_code or default_code,
+            status=explicit_code or binding_matcher.response_status,
         )
-
-    def _get_payload_member(self, schema: Schema) -> Schema | None:
-        for member in schema.members.values():
-            if HTTPPayloadTrait in member:
-                return member
-        return None
 
 
 class HTTPResponseBindingSerializer(InterceptingSerializer):
     """Delegates HTTP response bindings to binding-location-specific serializers."""
 
-    def __init__(self, payload_serializer: ShapeSerializer) -> None:
+    def __init__(
+        self,
+        payload_serializer: ShapeSerializer,
+        binding_matcher: ResponseBindingMatcher,
+    ) -> None:
         """Initialize an HTTPResponseBindingSerializer.
 
         :param payload_serializer: The :py:class:`ShapeSerializer` to use to serialize
@@ -274,14 +289,16 @@ class HTTPResponseBindingSerializer(InterceptingSerializer):
         self._payload_serializer = payload_serializer
         self.header_serializer = HTTPHeaderSerializer()
         self.response_code_serializer = HTTPResponseCodeSerializer()
+        self._binding_matcher = binding_matcher
 
     def before(self, schema: Schema) -> ShapeSerializer:
-        if HTTPHeaderTrait in schema or HTTPPrefixHeadersTrait in schema:
-            return self.header_serializer
-        if HTTPResponseCodeTrait in schema:
-            return self.response_code_serializer
-
-        return self._payload_serializer
+        match self._binding_matcher.match(schema):
+            case Binding.HEADER | Binding.PREFIX_HEADERS:
+                return self.header_serializer
+            case Binding.STATUS:
+                return self.response_code_serializer
+            case _:
+                return self._payload_serializer
 
     def after(self, schema: Schema) -> None:
         pass
@@ -576,7 +593,7 @@ class HTTPQueryMapSerializer(MapSerializer):
 
 
 class HTTPQueryMapValueSerializer(SpecificShapeSerializer):
-    def __init__(self, key: str,  query_params: list[tuple[str, str]]) -> None:
+    def __init__(self, key: str, query_params: list[tuple[str, str]]) -> None:
         """Initialize an HTTPQueryMapValueSerializer.
 
         :param key: The key of the query parameter.
