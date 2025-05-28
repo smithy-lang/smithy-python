@@ -140,9 +140,9 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
         ) is not None and not iscoroutinefunction(seek):
             seek(0)
 
-        # TODO: conditional on empty-ness and based on the protocol
         headers = binding_serializer.header_serializer.headers
-        headers.append(("content-type", content_type))
+        if binding_matcher.should_write_body(self._omit_empty_payload):
+            headers.append(("content-type", content_type))
 
         self.result = _HTTPRequest(
             method=self._http_trait.method,
