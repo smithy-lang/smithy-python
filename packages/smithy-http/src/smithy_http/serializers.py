@@ -82,15 +82,20 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
             host_prefix = self._endpoint_trait.host_prefix
 
         content_type = self._payload_codec.media_type
-
         binding_matcher = RequestBindingMatcher(schema)
         if (payload_member := binding_matcher.payload_member) is not None:
-            if payload_member.shape_type in (ShapeType.BLOB, ShapeType.STRING):
-                content_type = (
-                    "application/octet-stream"
-                    if payload_member.shape_type is ShapeType.BLOB
-                    else "text/plain"
-                )
+            if payload_member.shape_type in (
+                ShapeType.BLOB,
+                ShapeType.STRING,
+                ShapeType.ENUM,
+            ):
+                if (media_type := payload_member.get_trait(MediaTypeTrait)) is not None:
+                    content_type = media_type.value
+                elif payload_member.shape_type is ShapeType.BLOB:
+                    content_type = "application/octet-stream"
+                else:
+                    content_type = "text/plain"
+
                 payload_serializer = RawPayloadSerializer()
                 binding_serializer = HTTPRequestBindingSerializer(
                     payload_serializer,
@@ -113,11 +118,11 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                 )
                 yield binding_serializer
         else:
-            if binding_matcher.event_stream_member is not None:
-                content_type = "application/vnd.amazon.eventstream"
             payload = BytesIO()
             payload_serializer = self._payload_codec.create_serializer(payload)
             if binding_matcher.should_write_body(self._omit_empty_payload):
+                if binding_matcher.event_stream_member is not None:
+                    content_type = "application/vnd.amazon.eventstream"
                 with payload_serializer.begin_struct(schema) as body_serializer:
                     binding_serializer = HTTPRequestBindingSerializer(
                         body_serializer,
@@ -127,6 +132,7 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                     )
                     yield binding_serializer
             else:
+                content_type = None
                 binding_serializer = HTTPRequestBindingSerializer(
                     payload_serializer,
                     self._http_trait.path,
@@ -140,9 +146,9 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
         ) is not None and not iscoroutinefunction(seek):
             seek(0)
 
-        # TODO: conditional on empty-ness and based on the protocol
         headers = binding_serializer.header_serializer.headers
-        headers.append(("content-type", content_type))
+        if content_type is not None:
+            headers.append(("content-type", content_type))
 
         self.result = _HTTPRequest(
             method=self._http_trait.method,
@@ -228,9 +234,16 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
         payload: Any
         binding_serializer: HTTPResponseBindingSerializer
 
+        content_type: str | None = self._payload_codec.media_type
         binding_matcher = ResponseBindingMatcher(schema)
         if (payload_member := binding_matcher.payload_member) is not None:
             if payload_member.shape_type in (ShapeType.BLOB, ShapeType.STRING):
+                if (media_type := payload_member.get_trait(MediaTypeTrait)) is not None:
+                    content_type = media_type.value
+                elif payload_member.shape_type is ShapeType.BLOB:
+                    content_type = "application/octet-stream"
+                else:
+                    content_type = "text/plain"
                 payload_serializer = RawPayloadSerializer()
                 binding_serializer = HTTPResponseBindingSerializer(
                     payload_serializer, binding_matcher
@@ -238,6 +251,8 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
                 yield binding_serializer
                 payload = payload_serializer.payload
             else:
+                if (media_type := payload_member.get_trait(MediaTypeTrait)) is not None:
+                    content_type = media_type.value
                 payload = BytesIO()
                 payload_serializer = self._payload_codec.create_serializer(payload)
                 binding_serializer = HTTPResponseBindingSerializer(
@@ -248,12 +263,15 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
             payload = BytesIO()
             payload_serializer = self._payload_codec.create_serializer(payload)
             if binding_matcher.should_write_body(self._omit_empty_payload):
+                if binding_matcher.event_stream_member is not None:
+                    content_type = "application/vnd.amazon.eventstream"
                 with payload_serializer.begin_struct(schema) as body_serializer:
                     binding_serializer = HTTPResponseBindingSerializer(
                         body_serializer, binding_matcher
                     )
                     yield binding_serializer
             else:
+                content_type = None
                 binding_serializer = HTTPResponseBindingSerializer(
                     payload_serializer,
                     binding_matcher,
@@ -264,6 +282,10 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
             seek := getattr(payload, "seek", None)
         ) is not None and not iscoroutinefunction(seek):
             seek(0)
+
+        headers = binding_serializer.header_serializer.headers
+        if content_type is not None:
+            headers.append(("content-type", content_type))
 
         status = binding_serializer.response_code_serializer.response_code
         if status is None:
