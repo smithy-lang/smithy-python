@@ -3,6 +3,7 @@ from inspect import iscoroutinefunction
 from io import BytesIO
 from typing import Any
 
+from smithy_core import URI as _URI
 from smithy_core.aio.interfaces import ClientProtocol
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape
@@ -20,7 +21,6 @@ from smithy_core.prelude import DOCUMENT
 from smithy_core.schemas import APIOperation
 from smithy_core.serializers import SerializeableShape
 from smithy_core.traits import EndpointTrait, HTTPTrait
-from smithy_core import URI as _URI
 
 from ..deserializers import HTTPResponseDeserializer
 from ..serializers import HTTPRequestSerializer
@@ -51,7 +51,7 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
             port=uri.port or previous.port,
             path=path,
             query=uri.query or previous.query,
-            fragment=uri.fragment or previous.fragment
+            fragment=uri.fragment or previous.fragment,
         )
 
         return request
