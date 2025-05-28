@@ -40,7 +40,7 @@ from smithy_core.traits import (
     TimestampFormatTrait,
     Trait,
 )
-from smithy_http import Field, Fields, tuples_to_fields
+from smithy_http import Fields, tuples_to_fields
 from smithy_http.aio import HTTPResponse as _HTTPResponse
 from smithy_http.deserializers import HTTPResponseDeserializer
 from smithy_http.serializers import HTTPRequestSerializer, HTTPResponseSerializer
@@ -1610,7 +1610,9 @@ def host_cases() -> list[HTTPMessageTestCase]:
         HTTPMessageTestCase(
             HostLabel("foo"),
             HTTPMessage(
-                destination=URI(host="foo.", path="/"), body=BytesIO(b'{"label":"foo"}')
+                destination=URI(host="foo.", path="/"),
+                body=BytesIO(b'{"label":"foo"}'),
+                fields=tuples_to_fields([("content-type", "application/json")]),
             ),
             endpoint_trait=EndpointTrait({"hostPrefix": "{label}."}),
         ),
@@ -1627,7 +1629,9 @@ def payload_cases() -> list[HTTPMessageTestCase]:
         HTTPMessageTestCase(
             HTTPImplicitPayload(header="foo", payload_member="bar"),
             HTTPMessage(
-                fields=tuples_to_fields([("header", "foo")]),
+                fields=tuples_to_fields(
+                    [("header", "foo"), ("content-type", "application/json")]
+                ),
                 body=BytesIO(b'{"payload_member":"bar"}'),
             ),
         ),
@@ -1646,7 +1650,10 @@ def payload_cases() -> list[HTTPMessageTestCase]:
         ),
         HTTPMessageTestCase(
             HTTPStructuredPayload(payload=HTTPStringPayload(payload="foo")),
-            HTTPMessage(body=BytesIO(b'{"payload":"foo"}')),
+            HTTPMessage(
+                body=BytesIO(b'{"payload":"foo"}'),
+                fields=tuples_to_fields([("content-type", "application/json")]),
+            ),
         ),
         HTTPMessageTestCase(
             HTTPStructuredPayload(HTTPStringPayload()),
@@ -1720,8 +1727,6 @@ REQUEST_SER_CASES = (
     + async_streaming_payload_cases()
 )
 
-CONTENT_TYPE_FIELD = Field(name="content-type", values=["application/json"])
-
 
 @pytest.mark.parametrize("case", REQUEST_SER_CASES)
 async def test_serialize_http_request(case: HTTPMessageTestCase) -> None:
@@ -1741,10 +1746,6 @@ async def test_serialize_http_request(case: HTTPMessageTestCase) -> None:
     actual_query = actual.destination.query or ""
     expected_query = case.request.destination.query or ""
     assert actual_query == expected_query
-    # set the content-type field here, otherwise cases would have to duplicate it everywhere,
-    # but if the field is already set in the case, don't override it
-    if expected.fields.get(CONTENT_TYPE_FIELD.name) is None:
-        expected.fields.set_field(CONTENT_TYPE_FIELD)
     assert actual.fields == expected.fields
 
     if case.request.body:
@@ -1783,9 +1784,6 @@ async def test_serialize_http_response(case: HTTPMessageTestCase) -> None:
     expected = case.request
 
     assert actual is not None
-    # Remove content-type from expected, we're re-using the request cases for brevity
-    if expected.fields.get(CONTENT_TYPE_FIELD.name) is not None:
-        del expected.fields[CONTENT_TYPE_FIELD.name]
     assert actual.fields == expected.fields
     assert actual.status == expected.status
 
