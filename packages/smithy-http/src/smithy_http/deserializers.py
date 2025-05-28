@@ -128,6 +128,9 @@ class HTTPHeaderDeserializer(SpecificShapeDeserializer):
         """
         self._value = value
 
+    def is_null(self) -> bool:
+        return False
+
     def read_boolean(self, schema: Schema) -> bool:
         return strict_parse_bool(self._value)
 
