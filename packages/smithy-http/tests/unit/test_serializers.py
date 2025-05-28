@@ -1426,6 +1426,20 @@ def query_cases() -> list[HTTPMessageTestCase]:
             ),
         ),
         HTTPMessageTestCase(
+            HTTPQuery(string_member="foo bar"),
+            HTTPMessage(destination=URI(host="", path="/", query="string=foo%20bar")),
+        ),
+        HTTPMessageTestCase(
+            HTTPQuery(string_list_member=["spam eggs", "eggs spam"]),
+            HTTPMessage(
+                destination=URI(
+                    host="",
+                    path="/",
+                    query="stringList=spam%20eggs&stringList=eggs%20spam",
+                )
+            ),
+        ),
+        HTTPMessageTestCase(
             HTTPQuery(
                 default_timestamp_member=datetime.datetime(2025, 1, 1, tzinfo=UTC)
             ),
