@@ -4,10 +4,10 @@
  */
 package software.amazon.smithy.python.codegen.generators;
 
-import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.ApplicationProtocol;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
@@ -41,7 +41,7 @@ public interface ProtocolGenerator {
      */
     ApplicationProtocol getApplicationProtocol(GenerationContext context);
 
-    Symbol getProtocolSymbol(GenerationContext context);
+    void initializeProtocol(GenerationContext context, PythonWriter writer);
 
     /**
      * Generates the code for validating the generated protocol's serializers and deserializers.

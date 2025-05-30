@@ -130,8 +130,8 @@ public final class ConfigGenerator implements Runnable {
                         .build())
                 .documentation("The protocol to serialize and deserialize requests with.")
                 .initialize(w -> {
-                    w.write("self.protocol = protocol or $T()",
-                            context.protocolGenerator().getProtocolSymbol(context));
+                    w.write("self.protocol = protocol or ${C|}",
+                            w.consumer(writer -> context.protocolGenerator().initializeProtocol(context, writer)));
                 });
 
         var transportBuilder = ConfigProperty.builder()
