@@ -9,6 +9,7 @@ from urllib.parse import quote as urlquote
 
 from smithy_core import URI
 from smithy_core.codecs import Codec
+from smithy_core.exceptions import SerializationError
 from smithy_core.schemas import Schema
 from smithy_core.serializers import (
     InterceptingSerializer,
@@ -24,12 +25,13 @@ from smithy_core.traits import (
     HTTPQueryTrait,
     HTTPTrait,
     MediaTypeTrait,
+    RequiresLengthTrait,
     TimestampFormatTrait,
 )
 from smithy_core.types import PathPattern, TimestampFormat
 from smithy_core.utils import serialize_float
 
-from . import tuples_to_fields
+from . import Field, tuples_to_fields
 from .aio import HTTPRequest as _HTTPRequest
 from .aio import HTTPResponse as _HTTPResponse
 from .aio.interfaces import HTTPRequest, HTTPResponse
@@ -43,6 +45,7 @@ if TYPE_CHECKING:
 __all__ = ["HTTPRequestSerializer", "HTTPResponseSerializer"]
 
 
+# TODO: refactor this to share code with response serializer
 class HTTPRequestSerializer(SpecificShapeSerializer):
     """Binds a serializable shape to an HTTP request.
 
@@ -82,8 +85,12 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
             host_prefix = self._endpoint_trait.host_prefix
 
         content_type = self._payload_codec.media_type
+        content_length: int | None = None
+        content_length_required = False
+
         binding_matcher = RequestBindingMatcher(schema)
         if (payload_member := binding_matcher.payload_member) is not None:
+            content_length_required = RequiresLengthTrait in payload_member
             if payload_member.shape_type in (
                 ShapeType.BLOB,
                 ShapeType.STRING,
@@ -105,6 +112,10 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                 )
                 yield binding_serializer
                 payload = payload_serializer.payload
+                try:
+                    content_length = len(payload)
+                except TypeError:
+                    pass
             else:
                 if (media_type := payload_member.get_trait(MediaTypeTrait)) is not None:
                     content_type = media_type.value
@@ -117,6 +128,8 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                     binding_matcher,
                 )
                 yield binding_serializer
+                content_length = payload.tell()
+                payload.seek(0)
         else:
             payload = BytesIO()
             payload_serializer = self._payload_codec.create_serializer(payload)
@@ -131,8 +144,10 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                         binding_matcher,
                     )
                     yield binding_serializer
+                content_length = payload.tell()
             else:
                 content_type = None
+                content_length = 0
                 binding_serializer = HTTPRequestBindingSerializer(
                     payload_serializer,
                     self._http_trait.path,
@@ -140,15 +155,24 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                     binding_matcher,
                 )
                 yield binding_serializer
-
-        if (
-            seek := getattr(payload, "seek", None)
-        ) is not None and not iscoroutinefunction(seek):
-            seek(0)
+            payload.seek(0)
 
         headers = binding_serializer.header_serializer.headers
         if content_type is not None:
             headers.append(("content-type", content_type))
+
+        if content_length is not None:
+            headers.append(("content-length", str(content_length)))
+
+        fields = tuples_to_fields(headers)
+        if content_length_required and "content-length" not in fields:
+            content_length = _compute_content_length(payload)
+            if content_length is None:
+                raise SerializationError(
+                    "This operation requires the the content length of the input "
+                    "stream, but it was not provided and was unable to be computed."
+                )
+            fields.set_field(Field(name="content-length", values=[str(content_length)]))
 
         self.result = _HTTPRequest(
             method=self._http_trait.method,
@@ -160,9 +184,28 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                     prefix=self._http_trait.query or "",
                 ),
             ),
-            fields=tuples_to_fields(headers),
+            fields=fields,
             body=payload,
         )
+
+
+def _compute_content_length(payload: Any) -> int | None:
+    if (tell := getattr(payload, "tell", None)) is not None and not iscoroutinefunction(
+        tell
+    ):
+        start: int = tell()
+        if (end := _seek(payload, 0, 2)) is not None:
+            content_length: int = end - start
+            _seek(payload, start, 0)
+            return content_length
+    return None
+
+
+def _seek(payload: Any, pos: int, whence: int = 0) -> None:
+    if (seek := getattr(payload, "seek", None)) is not None and not iscoroutinefunction(
+        seek
+    ):
+        seek(pos, whence)
 
 
 class HTTPRequestBindingSerializer(InterceptingSerializer):
@@ -235,8 +278,12 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
         binding_serializer: HTTPResponseBindingSerializer
 
         content_type: str | None = self._payload_codec.media_type
+        content_length: int | None = None
+        content_length_required = False
+
         binding_matcher = ResponseBindingMatcher(schema)
         if (payload_member := binding_matcher.payload_member) is not None:
+            content_length_required = RequiresLengthTrait in payload_member
             if payload_member.shape_type in (ShapeType.BLOB, ShapeType.STRING):
                 if (media_type := payload_member.get_trait(MediaTypeTrait)) is not None:
                     content_type = media_type.value
@@ -250,6 +297,10 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
                 )
                 yield binding_serializer
                 payload = payload_serializer.payload
+                try:
+                    content_length = len(payload)
+                except TypeError:
+                    pass
             else:
                 if (media_type := payload_member.get_trait(MediaTypeTrait)) is not None:
                     content_type = media_type.value
@@ -259,6 +310,8 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
                     payload_serializer, binding_matcher
                 )
                 yield binding_serializer
+                content_length = payload.tell()
+                payload.seek(0)
         else:
             payload = BytesIO()
             payload_serializer = self._payload_codec.create_serializer(payload)
@@ -270,22 +323,33 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
                         body_serializer, binding_matcher
                     )
                     yield binding_serializer
+                content_length = payload.tell()
             else:
                 content_type = None
+                content_length = 0
                 binding_serializer = HTTPResponseBindingSerializer(
                     payload_serializer,
                     binding_matcher,
                 )
                 yield binding_serializer
-
-        if (
-            seek := getattr(payload, "seek", None)
-        ) is not None and not iscoroutinefunction(seek):
-            seek(0)
+            payload.seek(0)
 
         headers = binding_serializer.header_serializer.headers
         if content_type is not None:
             headers.append(("content-type", content_type))
+
+        if content_length is not None:
+            headers.append(("content-length", str(content_length)))
+
+        fields = tuples_to_fields(headers)
+        if content_length_required and "content-length" not in fields:
+            content_length = _compute_content_length(payload)
+            if content_length is None:
+                raise SerializationError(
+                    "This operation requires the the content length of the input "
+                    "stream, but it was not provided and was unable to be computed."
+                )
+            fields.set_field(Field(name="content-length", values=[str(content_length)]))
 
         status = binding_serializer.response_code_serializer.response_code
         if status is None:
