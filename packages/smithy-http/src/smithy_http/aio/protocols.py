@@ -43,7 +43,8 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
 
         path = previous.path
         if uri.path is not None:
-            path = os.path.join(uri.path, previous.path or "")
+            previous_path = previous.path.lstrip("/") if previous.path else ""
+            path = os.path.join(uri.path, previous_path)
 
         request.destination = _URI(
             scheme=uri.scheme,
