@@ -6,7 +6,6 @@ package software.amazon.smithy.python.codegen.integrations;
 
 import java.util.Set;
 import software.amazon.smithy.aws.traits.protocols.RestJson1Trait;
-import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.node.ArrayNode;
 import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.model.shapes.ShapeId;
@@ -15,7 +14,9 @@ import software.amazon.smithy.python.codegen.ApplicationProtocol;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.HttpProtocolTestGenerator;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
+import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.generators.ProtocolGenerator;
+import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
 /**
@@ -84,12 +85,12 @@ public class RestJsonProtocolGenerator implements ProtocolGenerator {
     }
 
     @Override
-    public Symbol getProtocolSymbol(GenerationContext context) {
-        return Symbol.builder()
-                .name("RestJsonClientProtocol")
-                .namespace("smithy_aws_core.aio.protocols", ".")
-                .dependencies(SmithyPythonDependency.SMITHY_AWS_CORE)
-                .build();
+    public void initializeProtocol(GenerationContext context, PythonWriter writer) {
+        writer.addDependency(SmithyPythonDependency.SMITHY_AWS_CORE);
+        writer.addImport("smithy_aws_core.aio.protocols", "RestJsonClientProtocol");
+        var serviceSymbol = context.symbolProvider().toSymbol(context.settings().service(context.model()));
+        var serviceSchema = serviceSymbol.expectProperty(SymbolProperties.SCHEMA);
+        writer.write("RestJsonClientProtocol($T)", serviceSchema);
     }
 
     // This is here rather than in HttpBindingProtocolGenerator because eventually

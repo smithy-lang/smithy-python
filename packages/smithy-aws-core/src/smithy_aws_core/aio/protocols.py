@@ -4,8 +4,9 @@ from typing import Any, Final
 
 from smithy_core.codecs import Codec
 from smithy_core.exceptions import DiscriminatorError
-from smithy_core.schemas import APIOperation
+from smithy_core.schemas import APIOperation, Schema
 from smithy_core.shapes import ShapeID, ShapeType
+from smithy_core.types import TimestampFormat
 from smithy_http.aio.interfaces import HTTPErrorIdentifier, HTTPResponse
 from smithy_http.aio.protocols import HttpBindingClientProtocol
 from smithy_json import JSONCodec, JSONDocument
@@ -50,9 +51,19 @@ class RestJsonClientProtocol(HttpBindingClientProtocol):
     """An implementation of the aws.protocols#restJson1 protocol."""
 
     _id: Final = RestJson1Trait.id
-    _codec: Final = JSONCodec(document_class=AWSJSONDocument)
     _contentType: Final = "application/json"
     _error_identifier: Final = AWSErrorIdentifier()
+
+    def __init__(self, service_schema: Schema) -> None:
+        """Initialize a RestJsonClientProtocol.
+
+        :param service: The schema for the service to interact with.
+        """
+        self._codec: Final = JSONCodec(
+            document_class=AWSJSONDocument,
+            default_namespace=service_schema.id.namespace,
+            default_timestamp_format=TimestampFormat.EPOCH_SECONDS,
+        )
 
     @property
     def id(self) -> ShapeID:
