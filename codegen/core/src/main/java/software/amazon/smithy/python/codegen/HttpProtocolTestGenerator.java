@@ -43,6 +43,8 @@ import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.UnionShape;
+import software.amazon.smithy.model.traits.HttpPayloadTrait;
+import software.amazon.smithy.model.traits.OutputTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
 import software.amazon.smithy.protocoltests.traits.AppliesTo;
@@ -399,7 +401,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
         }
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
-        writer.write("actual_body_content = await AsyncBytesReader(actual.body).read()");
+        writer.write("actual_body_content = await AsyncBytesReader(actual.body or b'').read()");
         writer.write("expected_body_content = b$S", testCase.getBody().get());
         compareMediaBlob(testCase, writer);
     }
@@ -779,10 +781,20 @@ public final class HttpProtocolTestGenerator implements Runnable {
         }
 
         private Void structureMemberShapes(StructureShape container, ObjectNode node) {
-            node.getMembers().forEach((keyNode, valueNode) -> {
-                var memberShape = container.getMember(keyNode.getValue())
-                        .orElseThrow(() -> new CodegenException("unknown memberShape: " + keyNode.getValue()));
-                var targetShape = model.expectShape(memberShape.getTarget());
+            for (MemberShape member : container.members()) {
+                var optionalValueNode = node.getMember(member.getMemberName());
+                if (optionalValueNode.isEmpty()) {
+                    if (isStringLikeOutputPayload(container, member)) {
+                        // Massage these outputs to always be present because it will generally be impossible to
+                        // determine the difference between an empty body and a missing body.
+                        optionalValueNode = Optional.of(Node.from(""));
+                    } else {
+                        continue;
+                    }
+                }
+                var valueNode = optionalValueNode.get();
+
+                var targetShape = model.expectShape(member.getTarget());
 
                 var formatString = "$L = $C,";
                 if (targetShape.isDocumentShape()) {
@@ -791,10 +803,19 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 }
 
                 writer.write(formatString,
-                        context.symbolProvider().toMemberName(memberShape),
+                        context.symbolProvider().toMemberName(member),
                         (Runnable) () -> valueNode.accept(new ValueNodeVisitor(targetShape)));
-            });
+
+            }
             return null;
+        }
+
+        private boolean isStringLikeOutputPayload(StructureShape container, MemberShape member) {
+            if (container.hasTrait(OutputTrait.class) && member.hasTrait(HttpPayloadTrait.class)) {
+                var target = model.expectShape(member.getTarget());
+                return target.isBlobShape() || target.isStringShape();
+            }
+            return false;
         }
 
         private Void mapShape(MapShape shape, ObjectNode node) {
