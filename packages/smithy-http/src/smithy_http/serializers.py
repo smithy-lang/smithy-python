@@ -85,7 +85,11 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
 
         binding_matcher = RequestBindingMatcher(schema)
         if (payload_member := binding_matcher.payload_member) is not None:
-            if payload_member.shape_type in (ShapeType.BLOB, ShapeType.STRING):
+            if payload_member.shape_type in (
+                ShapeType.BLOB,
+                ShapeType.STRING,
+                ShapeType.ENUM,
+            ):
                 content_type = (
                     "application/octet-stream"
                     if payload_member.shape_type is ShapeType.BLOB
@@ -113,11 +117,11 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                 )
                 yield binding_serializer
         else:
-            if binding_matcher.event_stream_member is not None:
-                content_type = "application/vnd.amazon.eventstream"
             payload = BytesIO()
             payload_serializer = self._payload_codec.create_serializer(payload)
             if binding_matcher.should_write_body(self._omit_empty_payload):
+                if binding_matcher.event_stream_member is not None:
+                    content_type = "application/vnd.amazon.eventstream"
                 with payload_serializer.begin_struct(schema) as body_serializer:
                     binding_serializer = HTTPRequestBindingSerializer(
                         body_serializer,
@@ -127,6 +131,7 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                     )
                     yield binding_serializer
             else:
+                content_type = None
                 binding_serializer = HTTPRequestBindingSerializer(
                     payload_serializer,
                     self._http_trait.path,
@@ -141,7 +146,7 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
             seek(0)
 
         headers = binding_serializer.header_serializer.headers
-        if binding_matcher.should_write_body(self._omit_empty_payload):
+        if content_type is not None:
             headers.append(("content-type", content_type))
 
         self.result = _HTTPRequest(
