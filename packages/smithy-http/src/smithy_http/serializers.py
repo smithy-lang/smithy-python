@@ -235,7 +235,11 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
 
         binding_matcher = ResponseBindingMatcher(schema)
         if (payload_member := binding_matcher.payload_member) is not None:
-            if payload_member.shape_type in (ShapeType.BLOB, ShapeType.STRING):
+            if payload_member.shape_type in (
+                ShapeType.BLOB,
+                ShapeType.STRING,
+                ShapeType.ENUM,
+            ):
                 payload_serializer = RawPayloadSerializer()
                 binding_serializer = HTTPResponseBindingSerializer(
                     payload_serializer, binding_matcher
