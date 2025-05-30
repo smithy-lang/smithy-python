@@ -155,6 +155,12 @@ class StreamingTrait(Trait, id=ShapeID("smithy.api#streaming")):
 
 
 @dataclass(init=False, frozen=True)
+class RequiresLengthTrait(Trait, id=ShapeID("smithy.api#requiresLength")):
+    def __post_init__(self):
+        assert self.document_value is None
+
+
+@dataclass(init=False, frozen=True)
 class UnitTypeTrait(Trait, id=ShapeID("smithy.api#UnitTypeTrait")):
     def __post_init__(self):
         assert self.document_value is None
