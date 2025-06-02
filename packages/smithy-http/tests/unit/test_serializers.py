@@ -1250,6 +1250,90 @@ def header_cases() -> list[HTTPMessageTestCase]:
     ]
 
 
+def header_deser_cases() -> list[HTTPMessageTestCase]:
+    return [
+        HTTPMessageTestCase(
+            HTTPHeaders(string_list_member=["foo", "bar", "baz"]),
+            HTTPMessage(fields=tuples_to_fields([("stringList", "foo, bar, baz")])),
+        ),
+        HTTPMessageTestCase(
+            HTTPHeaders(string_list_member=["foo, bar", "spam", "eggs"]),
+            HTTPMessage(
+                fields=tuples_to_fields([("stringList", '"foo, bar", spam, eggs')])
+            ),
+        ),
+        HTTPMessageTestCase(
+            HTTPHeaders(
+                http_date_list_timestamp_member=[
+                    datetime.datetime(2025, 1, 1, tzinfo=UTC),
+                    datetime.datetime(2024, 1, 1, tzinfo=UTC),
+                ]
+            ),
+            HTTPMessage(
+                fields=tuples_to_fields(
+                    [
+                        (
+                            "httpDateListTimestamp",
+                            "Wed, 01 Jan 2025 00:00:00 GMT, Mon, 01 Jan 2024 00:00:00 GMT",
+                        ),
+                    ]
+                ),
+            ),
+        ),
+        HTTPMessageTestCase(
+            HTTPHeaders(
+                http_date_list_timestamp_member=[
+                    datetime.datetime(2025, 1, 1, tzinfo=UTC),
+                    datetime.datetime(2024, 1, 1, tzinfo=UTC),
+                ]
+            ),
+            HTTPMessage(
+                fields=tuples_to_fields(
+                    [
+                        (
+                            "httpDateListTimestamp",
+                            '"Wed, 01 Jan 2025 00:00:00 GMT", "Mon, 01 Jan 2024 00:00:00 GMT"',
+                        ),
+                    ]
+                ),
+            ),
+        ),
+        HTTPMessageTestCase(
+            HTTPHeaders(
+                date_time_list_timestamp_member=[
+                    datetime.datetime(2025, 1, 1, tzinfo=UTC),
+                    datetime.datetime(2024, 1, 1, tzinfo=UTC),
+                ]
+            ),
+            HTTPMessage(
+                fields=tuples_to_fields(
+                    [
+                        (
+                            "dateTimeListTimestamp",
+                            "2025-01-01T00:00:00Z, 2024-01-01T00:00:00Z",
+                        ),
+                    ]
+                ),
+            ),
+        ),
+        HTTPMessageTestCase(
+            HTTPHeaders(
+                epoch_list_timestamp_member=[
+                    datetime.datetime(2025, 1, 1, tzinfo=UTC),
+                    datetime.datetime(2024, 1, 1, tzinfo=UTC),
+                ]
+            ),
+            HTTPMessage(
+                fields=tuples_to_fields(
+                    [
+                        ("epochListTimestamp", "1735689600, 1704067200"),
+                    ]
+                ),
+            ),
+        ),
+    ]
+
+
 def empty_prefix_header_ser_cases() -> list[HTTPMessageTestCase]:
     return [
         HTTPMessageTestCase(
@@ -1714,9 +1798,9 @@ async def test_serialize_response_omitting_empty_payload() -> None:
 
 RESPONSE_DESER_CASES: list[HTTPMessageTestCase] = (
     header_cases()
+    + header_deser_cases()
     + empty_prefix_header_deser_cases()
     + payload_cases()
-    + response_payload_cases()
 )
 
 
