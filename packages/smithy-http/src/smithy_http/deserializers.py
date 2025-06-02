@@ -23,6 +23,7 @@ from smithy_core.utils import ensure_utc, strict_parse_bool, strict_parse_float
 from .aio.interfaces import HTTPResponse
 from .bindings import Binding, ResponseBindingMatcher
 from .interfaces import Field, Fields
+from .utils import split_header
 
 if TYPE_CHECKING:
     from smithy_core.aio.interfaces import StreamingBlob as AsyncStreamingBlob
@@ -185,7 +186,17 @@ class HTTPHeaderListDeserializer(SpecificShapeDeserializer):
     def read_list(
         self, schema: Schema, consumer: Callable[["ShapeDeserializer"], None]
     ) -> None:
-        for value in self._field.values:
+        values = self._field.values
+        if len(values) == 1:
+            is_http_date_list = False
+            value_schema = schema.members["member"]
+            if value_schema.shape_type is ShapeType.TIMESTAMP:
+                trait = value_schema.get_trait(TimestampFormatTrait)
+                is_http_date_list = (
+                    trait is None or trait.format is TimestampFormat.HTTP_DATE
+                )
+            values = split_header(values[0], is_http_date_list)
+        for value in values:
             consumer(HTTPHeaderDeserializer(value))
 
 
