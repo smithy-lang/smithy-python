@@ -95,11 +95,13 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                 ShapeType.STRING,
                 ShapeType.ENUM,
             ):
-                content_type = (
-                    "application/octet-stream"
-                    if payload_member.shape_type is ShapeType.BLOB
-                    else "text/plain"
-                )
+                if (media_type := payload_member.get_trait(MediaTypeTrait)) is not None:
+                    content_type = media_type.value
+                elif payload_member.shape_type is ShapeType.BLOB:
+                    content_type = "application/octet-stream"
+                else:
+                    content_type = "text/plain"
+
                 payload_serializer = RawPayloadSerializer()
                 binding_serializer = HTTPRequestBindingSerializer(
                     payload_serializer,
