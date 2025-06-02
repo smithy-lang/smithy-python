@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 from asyncio import iscoroutinefunction
+from base64 import b64encode
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from datetime import datetime
@@ -493,6 +494,8 @@ class HTTPHeaderSerializer(SpecificShapeSerializer):
 
     def write_string(self, schema: Schema, value: str) -> None:
         key = self._key or schema.expect_trait(HTTPHeaderTrait).key
+        if MediaTypeTrait in schema:
+            value = b64encode(value.encode("utf-8")).decode("utf-8")
         self.headers.append((key, value))
 
     def write_timestamp(self, schema: Schema, value: datetime) -> None:

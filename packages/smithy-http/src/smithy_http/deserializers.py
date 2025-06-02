@@ -1,6 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import datetime
+from base64 import b64decode
 from collections.abc import Callable
 from decimal import Decimal
 from typing import TYPE_CHECKING
@@ -15,6 +16,7 @@ from smithy_core.traits import (
     HTTPHeaderTrait,
     HTTPPrefixHeadersTrait,
     HTTPTrait,
+    MediaTypeTrait,
     TimestampFormatTrait,
 )
 from smithy_core.types import TimestampFormat
@@ -191,6 +193,8 @@ class HTTPHeaderDeserializer(SpecificShapeDeserializer):
         return Decimal(self._value).canonical()
 
     def read_string(self, schema: Schema) -> str:
+        if MediaTypeTrait in schema:
+            return b64decode(self._value).decode("utf-8")
         return self._value
 
     def read_timestamp(self, schema: Schema) -> datetime.datetime:
