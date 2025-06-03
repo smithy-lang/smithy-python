@@ -28,6 +28,7 @@ class JSONCodec(Codec):
         default_timestamp_format: TimestampFormat = TimestampFormat.DATE_TIME,
         default_namespace: str | None = None,
         document_class: type[JSONDocument] = JSONDocument,
+        allow_missing_top_level_collections: bool = False,
     ) -> None:
         """Initializes a JSONCodec.
 
@@ -40,6 +41,8 @@ class JSONCodec(Codec):
         :param default_namespace: The default namespace to use when determining a
             document's discriminator.
         :param document_class: The document class to deserialize to.
+        :param allow_missing_top_level_collections: Whether to allow top level
+            collections to be represented as empty bytes.
         """
         self._settings = JSONSettings(
             use_json_name=use_json_name,
@@ -47,6 +50,7 @@ class JSONCodec(Codec):
             default_timestamp_format=default_timestamp_format,
             default_namespace=default_namespace,
             document_class=document_class,
+            allow_missing_top_level_collections=allow_missing_top_level_collections,
         )
 
     @property

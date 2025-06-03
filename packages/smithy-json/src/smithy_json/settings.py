@@ -29,3 +29,6 @@ class JSONSettings:
 
     default_namespace: str | None = None
     """The default namespace to use when determining a document's discriminator."""
+
+    allow_missing_top_level_collections: bool = False
+    """Allow empty top level collections to be represented as empty bytes."""

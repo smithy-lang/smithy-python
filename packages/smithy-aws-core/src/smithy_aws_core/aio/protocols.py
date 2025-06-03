@@ -59,6 +59,7 @@ class RestJsonClientProtocol(HttpBindingClientProtocol):
         self._codec: Final = JSONCodec(
             document_class=AWSJSONDocument,
             default_namespace=service_schema.id.namespace,
+            allow_missing_top_level_collections=True,
         )
 
     @property

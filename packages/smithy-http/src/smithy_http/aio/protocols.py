@@ -1,7 +1,6 @@
 import os
 from collections.abc import AsyncIterable
 from inspect import iscoroutinefunction
-from io import BytesIO
 from typing import Any
 
 from smithy_core import URI as _URI
@@ -144,22 +143,19 @@ class HttpBindingClientProtocol(HttpClientProtocol):
 
         return operation.output.deserialize(deserializer)
 
-    async def _buffer_async_body(
-        self, async_stream: AsyncStreamingBlob
-    ) -> SyncStreamingBlob:
-        match async_stream:
+    async def _buffer_async_body(self, stream: AsyncStreamingBlob) -> SyncStreamingBlob:
+        match stream:
             case AsyncByteStream():
-                if not iscoroutinefunction(async_stream.read):
-                    return async_stream  # type: ignore
-                return await async_stream.read()
+                if not iscoroutinefunction(stream.read):
+                    return stream  # type: ignore
+                return await stream.read()
             case AsyncIterable():
-                full = BytesIO()
-                async for chunk in async_stream:
-                    full.write(chunk)
-                full.seek(0)
+                full = b""
+                async for chunk in stream:
+                    full += chunk
                 return full
             case _:
-                return async_stream
+                return stream
 
     def _is_success(
         self,

@@ -92,9 +92,20 @@ class HTTPResponseDeserializer(SpecificShapeDeserializer):
                 case _:
                     pass
 
-        if binding_matcher.has_body:
+        if binding_matcher.has_body and not self._has_empty_body(
+            self._response, self._body
+        ):
             deserializer = self._create_body_deserializer()
             deserializer.read_struct(schema, consumer)
+
+    def _has_empty_body(
+        self, response: HTTPResponse, body: "SyncStreamingBlob | None"
+    ) -> bool:
+        if "content-length" in response.fields:
+            return int(response.fields["content-length"].as_string()) == 0
+        if isinstance(body, bytes | bytearray):
+            return len(body) == 0
+        return False
 
     def _create_payload_deserializer(self, payload_member: Schema) -> ShapeDeserializer:
         if payload_member.shape_type in (

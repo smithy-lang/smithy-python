@@ -8,7 +8,7 @@ from decimal import Decimal
 from typing import Literal, NamedTuple, Protocol, cast
 
 import ijson  # type: ignore
-from ijson.common import ObjectBuilder  # type: ignore
+from ijson.common import IncompleteJSONError, ObjectBuilder  # type: ignore
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
 from smithy_core.exceptions import SmithyError
@@ -96,6 +96,7 @@ class JSONShapeDeserializer(ShapeDeserializer):
         # is shared and we don't know which shapes will be deserialized, this is
         # populated on an as-needed basis.
         self._json_names: dict[ShapeID, dict[str, str]] = {}
+        self._top_level = settings.allow_missing_top_level_collections
 
     def is_null(self) -> bool:
         return self._stream.peek().type == "null"
@@ -186,7 +187,14 @@ class JSONShapeDeserializer(ShapeDeserializer):
     def read_struct(
         self, schema: Schema, consumer: Callable[[Schema, "ShapeDeserializer"], None]
     ):
-        event = next(self._stream)
+        try:
+            event = next(self._stream)
+        except IncompleteJSONError:
+            if self._top_level:
+                return
+            raise
+
+        self._top_level = False
         if event.type != "start_map":
             raise JSONTokenError("start_map", event)
 
@@ -225,7 +233,14 @@ class JSONShapeDeserializer(ShapeDeserializer):
     def read_list(
         self, schema: Schema, consumer: Callable[["ShapeDeserializer"], None]
     ):
-        event = next(self._stream)
+        try:
+            event = next(self._stream)
+        except IncompleteJSONError:
+            if self._top_level:
+                return
+            raise
+
+        self._top_level = False
         if event.type != "start_array":
             raise JSONTokenError("start_array", event)
 
@@ -239,7 +254,14 @@ class JSONShapeDeserializer(ShapeDeserializer):
         schema: Schema,
         consumer: Callable[[str, "ShapeDeserializer"], None],
     ):
-        event = next(self._stream)
+        try:
+            event = next(self._stream)
+        except IncompleteJSONError:
+            if self._top_level:
+                return
+            raise
+
+        self._top_level = False
         if event.type != "start_map":
             raise JSONTokenError("start_map", event)
 
