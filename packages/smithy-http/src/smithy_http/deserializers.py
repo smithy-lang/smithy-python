@@ -84,16 +84,43 @@ class HTTPResponseDeserializer(SpecificShapeDeserializer):
                     )
                 case Binding.PAYLOAD:
                     assert binding_matcher.payload_member is not None  # noqa: S101
-                    deserializer = self._create_payload_deserializer(
-                        binding_matcher.payload_member
-                    )
-                    consumer(binding_matcher.payload_member, deserializer)
+                    if self._should_read_payload(binding_matcher.payload_member):
+                        deserializer = self._create_payload_deserializer(
+                            binding_matcher.payload_member
+                        )
+                        consumer(binding_matcher.payload_member, deserializer)
                 case _:
                     pass
 
-        if binding_matcher.has_body:
+        if binding_matcher.has_body and not self._has_empty_body(
+            self._response, self._body
+        ):
             deserializer = self._create_body_deserializer()
             deserializer.read_struct(schema, consumer)
+
+    def _should_read_payload(self, schema: Schema) -> bool:
+        if schema.shape_type not in (
+            ShapeType.LIST,
+            ShapeType.MAP,
+            ShapeType.UNION,
+            ShapeType.STRUCTURE,
+        ):
+            return True
+        return not self._has_empty_body(self._response, self._body)
+
+    def _has_empty_body(
+        self, response: HTTPResponse, body: "SyncStreamingBlob | None"
+    ) -> bool:
+        if "content-length" in response.fields:
+            return int(response.fields["content-length"].as_string()) == 0
+        if isinstance(body, bytes | bytearray):
+            return len(body) == 0
+        if (seek := getattr(self._body, "seek", None)) is not None:
+            content_length = seek(0, 2)
+            if content_length == 0:
+                return True
+            seek(0, 0)
+        return False
 
     def _create_payload_deserializer(self, payload_member: Schema) -> ShapeDeserializer:
         if payload_member.shape_type in (ShapeType.BLOB, ShapeType.STRING):
