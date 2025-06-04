@@ -605,7 +605,7 @@ class HTTPImplicitPayload:
 
 @dataclass
 class HTTPStringPayload:
-    payload: str
+    payload: str | None = None
 
     ID: ClassVar[ShapeID] = ShapeID("com.smithy#HTTPStringPayload")
     SCHEMA: ClassVar[Schema] = Schema.collection(
@@ -620,7 +620,8 @@ class HTTPStringPayload:
             self.serialize_members(s)
 
     def serialize_members(self, serializer: ShapeSerializer) -> None:
-        serializer.write_string(self.SCHEMA.members["payload"], self.payload)
+        if self.payload is not None:
+            serializer.write_string(self.SCHEMA.members["payload"], self.payload)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -713,7 +714,7 @@ class HTTPStreamingPayload:
 
 @dataclass
 class HTTPStructuredPayload:
-    payload: HTTPStringPayload
+    payload: HTTPStringPayload | None = None
 
     ID: ClassVar[ShapeID] = ShapeID("com.smithy#HTTPStructuredPayload")
     SCHEMA: ClassVar[Schema] = Schema.collection(
@@ -732,7 +733,8 @@ class HTTPStructuredPayload:
             self.serialize_members(s)
 
     def serialize_members(self, serializer: ShapeSerializer) -> None:
-        serializer.write_struct(self.SCHEMA.members["payload"], self.payload)
+        if self.payload is not None:
+            serializer.write_struct(self.SCHEMA.members["payload"], self.payload)
 
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
@@ -1590,6 +1592,53 @@ def payload_cases() -> list[HTTPMessageTestCase]:
             HTTPStructuredPayload(payload=HTTPStringPayload(payload="foo")),
             HTTPMessage(body=BytesIO(b'{"payload":"foo"}')),
         ),
+        HTTPMessageTestCase(
+            HTTPStructuredPayload(HTTPStringPayload()),
+            HTTPMessage(body=BytesIO(b"{}")),
+        ),
+    ]
+
+
+class NonSeekableBytesReader:
+    def __init__(self, data: bytes) -> None:
+        self._wrapped = BytesIO(data)
+
+    def read(self, size: int = -1, /) -> bytes:
+        return self._wrapped.read(size)
+
+
+def response_payload_cases() -> list[HTTPMessageTestCase]:
+    return [
+        HTTPMessageTestCase(
+            HTTPStructuredPayload(),
+            HTTPMessage(body=b""),
+        ),
+        HTTPMessageTestCase(
+            HTTPStructuredPayload(),
+            HTTPMessage(body=BytesIO(b"")),
+        ),
+        HTTPMessageTestCase(
+            HTTPStructuredPayload(),
+            HTTPMessage(
+                body=NonSeekableBytesReader(b""),
+                fields=tuples_to_fields([("content-length", "0")]),
+            ),
+        ),
+        HTTPMessageTestCase(
+            HTTPImplicitPayload(),
+            HTTPMessage(body=b""),
+        ),
+        HTTPMessageTestCase(
+            HTTPImplicitPayload(),
+            HTTPMessage(body=BytesIO(b"")),
+        ),
+        HTTPMessageTestCase(
+            HTTPImplicitPayload(),
+            HTTPMessage(
+                body=NonSeekableBytesReader(b""),
+                fields=tuples_to_fields([("content-length", "0")]),
+            ),
+        ),
     ]
 
 
@@ -1706,7 +1755,10 @@ async def test_serialize_response_omitting_empty_payload() -> None:
 
 
 RESPONSE_DESER_CASES: list[HTTPMessageTestCase] = (
-    header_cases() + empty_prefix_header_deser_cases() + payload_cases()
+    header_cases()
+    + empty_prefix_header_deser_cases()
+    + payload_cases()
+    + response_payload_cases()
 )
 
 
