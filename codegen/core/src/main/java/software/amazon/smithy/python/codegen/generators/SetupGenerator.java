@@ -190,6 +190,9 @@ public final class SetupGenerator {
                     [tool.ruff.lint]
                     ignore = ["F841"]
 
+                    [tool.ruff.format]
+                    skip-magic-trailing-comma = true
+
                     [tool.pytest.ini_options]
                     python_classes = ["!Test"]
                     asyncio_mode = "auto"
