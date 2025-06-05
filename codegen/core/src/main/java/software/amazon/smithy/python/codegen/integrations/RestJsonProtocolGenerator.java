@@ -360,33 +360,33 @@ public class RestJsonProtocolGenerator extends HttpBindingProtocolGenerator {
 
         var deserializerSymbol = symbolProvider.toSymbol(target);
 
-        writer.write("if body:").indent();
-
         if (target.isUnionShape()) {
             deserializerSymbol = deserializerSymbol.expectProperty(SymbolProperties.DESERIALIZER);
             writer.write("""
-                    codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
-                    deserializer = codec.create_deserializer(body)
-                    kwargs[$S] = $T().deserialize(deserializer)
+                    if body:
+                        codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
+                        deserializer = codec.create_deserializer(body)
+                        kwargs[$S] = $T().deserialize(deserializer)
                     """, memberName, deserializerSymbol);
         } else if (target.isStringShape()) {
-            writer.write("kwargs[$S] = body.decode('utf-8')", memberName);
+            writer.write("kwargs[$S] = body.decode('utf-8') if body else \"\"", memberName);
         } else if (target.isBlobShape()) {
-            writer.write("kwargs[$S] = body", memberName);
+            writer.write("kwargs[$S] = body or b\"\"", memberName);
         } else if (target.isDocumentShape()) {
             var schemaSymbol = deserializerSymbol.expectProperty(SymbolProperties.SCHEMA);
             writer.write("""
-                    codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
-                    deserializer = codec.create_deserializer(body)
-                    kwargs[$S] = deserializer.read_document($T)
+                    if body:
+                        codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
+                        deserializer = codec.create_deserializer(body)
+                        kwargs[$S] = deserializer.read_document($T)
                     """, memberName, schemaSymbol);
         } else {
             writer.write("""
-                    codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
-                    kwargs[$S] = codec.deserialize(body, $T)
+                    if body:
+                        codec = JSONCodec(default_timestamp_format=TimestampFormat.EPOCH_SECONDS)
+                        kwargs[$S] = codec.deserialize(body, $T)
                     """, memberName, deserializerSymbol);
         }
-        writer.dedent();
     }
 
     @Override
