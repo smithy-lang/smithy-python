@@ -162,6 +162,11 @@ public final class SchemaGenerator implements Consumer<Shape> {
             for (MemberShape member : shape.members()) {
                 if (!generatedShapes.contains(member.getTarget()) && !Prelude.isPreludeShape(member.getTarget())) {
                     deferredMembers.put(member, index++);
+                    writer.write("""
+                            # This needs to reference a schema that isn't defined yet.
+                            # It will be populated with a non-null value at the end of the file.
+                            $S: None,
+                            """, member.getMemberName());
                     continue;
                 }
 
@@ -183,7 +188,6 @@ public final class SchemaGenerator implements Consumer<Shape> {
                 writer.write("""
                         $S: {
                             "target": $T,
-                            "index": $L,
                             ${?hasTraits}
                             "traits": [
                                 ${C|}
@@ -193,7 +197,6 @@ public final class SchemaGenerator implements Consumer<Shape> {
                         """,
                         member.getMemberName(),
                         targetSchemaSymbol,
-                        index,
                         writer.consumer(w -> writeTraits(w, traits)));
 
                 index++;

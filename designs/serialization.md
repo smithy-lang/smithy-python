@@ -121,7 +121,6 @@ EXAMPLE_STRUCTURE_SCHEMA = Schema.collection(
     members={
         "member": {
             "target": INTEGER,
-            "index": 0,
             "traits": [
                 DefaultTrait(0),
             ],

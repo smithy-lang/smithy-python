@@ -21,7 +21,7 @@ from smithy_http.bindings import Binding, RequestBindingMatcher, ResponseBinding
 
 PAYLOAD_BINDING = Schema.collection(
     id=ShapeID("com.example#Payload"),
-    members={"payload": {"index": 0, "target": STRING, "traits": [HTTPPayloadTrait()]}},
+    members={"payload": {"target": STRING, "traits": [HTTPPayloadTrait()]}},
 )
 
 EVENT_STREAM_SCHEMA = Schema.collection(
@@ -29,7 +29,6 @@ EVENT_STREAM_SCHEMA = Schema.collection(
     shape_type=ShapeType.UNION,
     members={
         "stream": {
-            "index": 0,
             "target": Schema.collection(id=ShapeID("com.example#Event")),
         }
     },
@@ -37,41 +36,38 @@ EVENT_STREAM_SCHEMA = Schema.collection(
 )
 EVENT_STREAM_BINDING = Schema.collection(
     id=ShapeID("com.example#Events"),
-    members={"stream": {"index": 0, "target": EVENT_STREAM_SCHEMA}},
+    members={"stream": {"target": EVENT_STREAM_SCHEMA}},
 )
 
 STRING_MAP = Schema.collection(
     id=ShapeID("com.example#StringMap"),
     shape_type=ShapeType.MAP,
     members={
-        "key": {"index": 0, "target": STRING},
-        "value": {"index": 0, "target": STRING},
+        "key": {"target": STRING},
+        "value": {"target": STRING},
     },
 )
 
 GENERAL_BINDINGS = Schema.collection(
     id=ShapeID("com.example#BodyBindings"),
     members={
-        "label": {"index": 0, "target": STRING, "traits": [HTTPLabelTrait()]},
-        "query": {"index": 1, "target": STRING, "traits": [HTTPQueryTrait()]},
+        "label": {"target": STRING, "traits": [HTTPLabelTrait()]},
+        "query": {"target": STRING, "traits": [HTTPQueryTrait()]},
         "queryParams": {
-            "index": 2,
             "target": STRING_MAP,
             "traits": [HTTPQueryParamsTrait()],
         },
-        "header": {"index": 3, "target": STRING, "traits": [HTTPHeaderTrait()]},
+        "header": {"target": STRING, "traits": [HTTPHeaderTrait()]},
         "prefixHeaders": {
-            "index": 4,
             "target": STRING_MAP,
             "traits": [HTTPPrefixHeadersTrait("foo")],
         },
-        "hostLabel": {"index": 5, "target": STRING, "traits": [HostLabelTrait()]},
+        "hostLabel": {"target": STRING, "traits": [HostLabelTrait()]},
         "status": {
-            "index": 6,
             "target": INTEGER,
             "traits": [HTTPResponseCodeTrait()],
         },
-        "body": {"index": 7, "target": STRING},
+        "body": {"target": STRING},
     },
 )
 

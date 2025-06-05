@@ -51,39 +51,38 @@ from smithy_json import JSONCodec
 BOOLEAN_LIST = Schema.collection(
     id=ShapeID("com.smithy#BooleanList"),
     shape_type=ShapeType.LIST,
-    members={"member": {"index": 0, "target": BOOLEAN}},
+    members={"member": {"target": BOOLEAN}},
 )
 STRING_LIST = Schema.collection(
     id=ShapeID("com.smithy#StringList"),
     shape_type=ShapeType.LIST,
-    members={"member": {"index": 0, "target": STRING}},
+    members={"member": {"target": STRING}},
 )
 INTEGER_LIST = Schema.collection(
     id=ShapeID("com.smithy#IntegerList"),
     shape_type=ShapeType.LIST,
-    members={"member": {"index": 0, "target": INTEGER}},
+    members={"member": {"target": INTEGER}},
 )
 FLOAT_LIST = Schema.collection(
     id=ShapeID("com.smithy#FloatList"),
     shape_type=ShapeType.LIST,
-    members={"member": {"index": 0, "target": FLOAT}},
+    members={"member": {"target": FLOAT}},
 )
 BIG_DECIMAL_LIST = Schema.collection(
     id=ShapeID("com.smithy#BigDecimalList"),
     shape_type=ShapeType.LIST,
-    members={"member": {"index": 0, "target": BIG_DECIMAL}},
+    members={"member": {"target": BIG_DECIMAL}},
 )
 BARE_TIMESTAMP_LIST = Schema.collection(
     id=ShapeID("com.smithy#BareTimestampList"),
     shape_type=ShapeType.LIST,
-    members={"member": {"index": 0, "target": TIMESTAMP}},
+    members={"member": {"target": TIMESTAMP}},
 )
 HTTP_DATE_TIMESTAMP_LIST = Schema.collection(
     id=ShapeID("com.smithy#HttpDateTimestampList"),
     shape_type=ShapeType.LIST,
     members={
         "member": {
-            "index": 0,
             "target": TIMESTAMP,
             "traits": [TimestampFormatTrait("http-date")],
         }
@@ -94,7 +93,6 @@ DATE_TIME_TIMESTAMP_LIST = Schema.collection(
     shape_type=ShapeType.LIST,
     members={
         "member": {
-            "index": 0,
             "target": TIMESTAMP,
             "traits": [TimestampFormatTrait("date-time")],
         }
@@ -105,7 +103,6 @@ EPOCH_TIMESTAMP_LIST = Schema.collection(
     shape_type=ShapeType.LIST,
     members={
         "member": {
-            "index": 0,
             "target": TIMESTAMP,
             "traits": [TimestampFormatTrait("epoch-seconds")],
         }
@@ -115,8 +112,8 @@ STRING_MAP = Schema.collection(
     id=ShapeID("com.smithy#StringMap"),
     shape_type=ShapeType.MAP,
     members={
-        "key": {"index": 0, "target": STRING},
-        "value": {"index": 1, "target": STRING},
+        "key": {"target": STRING},
+        "value": {"target": STRING},
     },
 )
 
@@ -159,62 +156,50 @@ class _HTTPMapping(Protocol):
             id=id,
             members={
                 "boolean_member": {
-                    "index": 0,
                     "target": BOOLEAN,
                     "traits": [trait("boolean")],
                 },
                 "boolean_list_member": {
-                    "index": 1,
                     "target": BOOLEAN_LIST,
                     "traits": [trait("booleanList")],
                 },
                 "integer_member": {
-                    "index": 2,
                     "target": INTEGER,
                     "traits": [trait("integer")],
                 },
                 "integer_list_member": {
-                    "index": 3,
                     "target": INTEGER_LIST,
                     "traits": [trait("integerList")],
                 },
                 "float_member": {
-                    "index": 4,
                     "target": FLOAT,
                     "traits": [trait("float")],
                 },
                 "float_list_member": {
-                    "index": 5,
                     "target": FLOAT_LIST,
                     "traits": [trait("floatList")],
                 },
                 "big_decimal_member": {
-                    "index": 6,
                     "target": BIG_DECIMAL,
                     "traits": [trait("bigDecimal")],
                 },
                 "big_decimal_list_member": {
-                    "index": 7,
                     "target": BIG_DECIMAL_LIST,
                     "traits": [trait("bigDecimalList")],
                 },
                 "string_member": {
-                    "index": 8,
                     "target": STRING,
                     "traits": [trait("string")],
                 },
                 "string_list_member": {
-                    "index": 9,
                     "target": STRING_LIST,
                     "traits": [trait("stringList")],
                 },
                 "default_timestamp_member": {
-                    "index": 10,
                     "target": TIMESTAMP,
                     "traits": [trait("defaultTimestamp")],
                 },
                 "http_date_timestamp_member": {
-                    "index": 11,
                     "target": TIMESTAMP,
                     "traits": [
                         trait("httpDateTimestamp"),
@@ -222,12 +207,10 @@ class _HTTPMapping(Protocol):
                     ],
                 },
                 "http_date_list_timestamp_member": {
-                    "index": 12,
                     "target": HTTP_DATE_TIMESTAMP_LIST,
                     "traits": [trait("httpDateListTimestamp")],
                 },
                 "date_time_timestamp_member": {
-                    "index": 13,
                     "target": TIMESTAMP,
                     "traits": [
                         trait("dateTimeTimestamp"),
@@ -235,12 +218,10 @@ class _HTTPMapping(Protocol):
                     ],
                 },
                 "date_time_list_timestamp_member": {
-                    "index": 14,
                     "target": DATE_TIME_TIMESTAMP_LIST,
                     "traits": [trait("dateTimeListTimestamp")],
                 },
                 "epoch_timestamp_member": {
-                    "index": 15,
                     "target": TIMESTAMP,
                     "traits": [
                         trait("epochTimestamp"),
@@ -248,12 +229,10 @@ class _HTTPMapping(Protocol):
                     ],
                 },
                 "epoch_list_timestamp_member": {
-                    "index": 16,
                     "target": EPOCH_TIMESTAMP_LIST,
                     "traits": [trait("epochListTimestamp")],
                 },
                 "string_map_member": {
-                    "index": 17,
                     "target": STRING_MAP,
                     "traits": [map_trait],
                 },
@@ -527,9 +506,7 @@ class HTTPResponseCode:
     ID: ClassVar[ShapeID] = ShapeID("com.smithy#HTTPResponseCode")
     SCHEMA: ClassVar[Schema] = Schema.collection(
         id=ID,
-        members={
-            "code": {"index": 0, "target": INTEGER, "traits": [HTTPResponseCodeTrait()]}
-        },
+        members={"code": {"target": INTEGER, "traits": [HTTPResponseCodeTrait()]}},
     )
 
     def serialize(self, serializer: ShapeSerializer) -> None:
@@ -564,11 +541,10 @@ class HTTPImplicitPayload:
         id=ID,
         members={
             "header": {
-                "index": 0,
                 "target": STRING,
                 "traits": [HTTPHeaderTrait("header")],
             },
-            "payload_member": {"index": 1, "target": STRING},
+            "payload_member": {"target": STRING},
         },
     )
 
@@ -610,9 +586,7 @@ class HTTPStringPayload:
     ID: ClassVar[ShapeID] = ShapeID("com.smithy#HTTPStringPayload")
     SCHEMA: ClassVar[Schema] = Schema.collection(
         id=ID,
-        members={
-            "payload": {"index": 0, "target": STRING, "traits": [HTTPPayloadTrait()]}
-        },
+        members={"payload": {"target": STRING, "traits": [HTTPPayloadTrait()]}},
     )
 
     def serialize(self, serializer: ShapeSerializer) -> None:
@@ -644,9 +618,7 @@ class HTTPBlobPayload:
     ID: ClassVar[ShapeID] = ShapeID("com.smithy#HTTPBlobPayload")
     SCHEMA: ClassVar[Schema] = Schema.collection(
         id=ID,
-        members={
-            "payload": {"index": 0, "target": BLOB, "traits": [HTTPPayloadTrait()]}
-        },
+        members={"payload": {"target": BLOB, "traits": [HTTPPayloadTrait()]}},
     )
 
     def serialize(self, serializer: ShapeSerializer) -> None:
@@ -680,7 +652,6 @@ class HTTPStreamingPayload:
         id=ID,
         members={
             "payload": {
-                "index": 0,
                 "target": BLOB,
                 "traits": [HTTPPayloadTrait(), StreamingTrait()],
             }
@@ -720,7 +691,6 @@ class HTTPStructuredPayload:
         id=ID,
         members={
             "payload": {
-                "index": 0,
                 "target": HTTPStringPayload.SCHEMA,
                 "traits": [HTTPPayloadTrait()],
             }
@@ -756,7 +726,7 @@ class HTTPStringLabel:
     ID: ClassVar[ShapeID] = ShapeID("com.smithy#HTTPStringLabel")
     SCHEMA: ClassVar[Schema] = Schema.collection(
         id=ID,
-        members={"label": {"index": 0, "target": STRING, "traits": [HTTPLabelTrait()]}},
+        members={"label": {"target": STRING, "traits": [HTTPLabelTrait()]}},
     )
 
     def serialize(self, serializer: ShapeSerializer) -> None:
@@ -788,9 +758,7 @@ class HTTPIntegerLabel:
     ID: ClassVar[ShapeID] = ShapeID("com.smithy#HTTPIntegerLabel")
     SCHEMA: ClassVar[Schema] = Schema.collection(
         id=ID,
-        members={
-            "label": {"index": 0, "target": INTEGER, "traits": [HTTPLabelTrait()]}
-        },
+        members={"label": {"target": INTEGER, "traits": [HTTPLabelTrait()]}},
     )
 
     def serialize(self, serializer: ShapeSerializer) -> None:
@@ -822,7 +790,7 @@ class HTTPFloatLabel:
     ID: ClassVar[ShapeID] = ShapeID("com.smithy#HTTPFloatLabel")
     SCHEMA: ClassVar[Schema] = Schema.collection(
         id=ID,
-        members={"label": {"index": 0, "target": FLOAT, "traits": [HTTPLabelTrait()]}},
+        members={"label": {"target": FLOAT, "traits": [HTTPLabelTrait()]}},
     )
 
     def serialize(self, serializer: ShapeSerializer) -> None:
@@ -854,9 +822,7 @@ class HTTPBigDecimalLabel:
     ID: ClassVar[ShapeID] = ShapeID("com.smithy#HTTPBigDecimalLabel")
     SCHEMA: ClassVar[Schema] = Schema.collection(
         id=ID,
-        members={
-            "label": {"index": 0, "target": BIG_DECIMAL, "traits": [HTTPLabelTrait()]}
-        },
+        members={"label": {"target": BIG_DECIMAL, "traits": [HTTPLabelTrait()]}},
     )
 
     def serialize(self, serializer: ShapeSerializer) -> None:
@@ -888,9 +854,7 @@ class HTTPBooleanLabel:
     ID: ClassVar[ShapeID] = ShapeID("com.smithy#HTTPBooleanLabel")
     SCHEMA: ClassVar[Schema] = Schema.collection(
         id=ID,
-        members={
-            "label": {"index": 0, "target": BOOLEAN, "traits": [HTTPLabelTrait()]}
-        },
+        members={"label": {"target": BOOLEAN, "traits": [HTTPLabelTrait()]}},
     )
 
     def serialize(self, serializer: ShapeSerializer) -> None:
@@ -922,9 +886,7 @@ class HTTPDefaultTimestampLabel:
     ID: ClassVar[ShapeID] = ShapeID("com.smithy#HTTPDefaultTimestampLabel")
     SCHEMA: ClassVar[Schema] = Schema.collection(
         id=ID,
-        members={
-            "label": {"index": 0, "target": TIMESTAMP, "traits": [HTTPLabelTrait()]}
-        },
+        members={"label": {"target": TIMESTAMP, "traits": [HTTPLabelTrait()]}},
     )
 
     def serialize(self, serializer: ShapeSerializer) -> None:
@@ -958,7 +920,6 @@ class HTTPEpochTimestampLabel:
         id=ID,
         members={
             "label": {
-                "index": 0,
                 "target": TIMESTAMP,
                 "traits": [HTTPLabelTrait(), TimestampFormatTrait("epoch-seconds")],
             }
@@ -996,7 +957,6 @@ class HTTPDateTimestampLabel:
         id=ID,
         members={
             "label": {
-                "index": 0,
                 "target": TIMESTAMP,
                 "traits": [HTTPLabelTrait(), TimestampFormatTrait("http-date")],
             }
@@ -1034,7 +994,6 @@ class HTTPDateTimeTimestampLabel:
         id=ID,
         members={
             "label": {
-                "index": 0,
                 "target": TIMESTAMP,
                 "traits": [HTTPLabelTrait(), TimestampFormatTrait("date-time")],
             }
@@ -1072,7 +1031,6 @@ class HostLabel:
         id=ID,
         members={
             "label": {
-                "index": 0,
                 "target": STRING,
                 "traits": [HostLabelTrait()],
             }

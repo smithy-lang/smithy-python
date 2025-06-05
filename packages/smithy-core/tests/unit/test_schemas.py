@@ -97,7 +97,7 @@ def test_collection_constructor():
     )
     schema = Schema.collection(
         id=ID,
-        members={member_name: {"target": STRING, "index": 0, "traits": [trait_value]}},
+        members={member_name: {"target": STRING, "traits": [trait_value]}},
     )
     assert schema.members == {member_name: member}
 
@@ -109,7 +109,7 @@ def test_member_constructor():
             SensitiveTrait(),
             DynamicTrait(id=ShapeID("smithy.example#foo"), document_value="bar"),
         ],
-        members={"spam": {"target": STRING, "index": 0}},
+        members={"spam": {"target": STRING}},
     )
 
     member_id = ShapeID("smithy.example#Spam$eggs")
@@ -164,7 +164,7 @@ def test_member_constructor_asserts_target_is_not_member():
 def test_contains(item: Any, contains: bool):
     schema = Schema.collection(
         id=ID,
-        members={"baz": {"target": STRING, "index": 0}},
+        members={"baz": {"target": STRING}},
         traits=[SensitiveTrait()],
     )
 
