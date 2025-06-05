@@ -76,13 +76,13 @@ class _BindingMatcher:
         self.response_status = response_status
         found_body = False
         found_payload = False
-        self.bindings = [Binding.BODY] * len(struct.members)
+        self.bindings = []
         self.payload_member = None
         self.event_stream_member = None
 
         for member in struct.members.values():
             binding = self._do_match(member)
-            self.bindings[member.expect_member_index()] = binding
+            self.bindings.append(binding)
             found_body = (
                 found_body or binding is Binding.BODY or binding is Binding.HOST
             )
