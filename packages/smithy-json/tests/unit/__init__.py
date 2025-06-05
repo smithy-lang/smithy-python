@@ -23,67 +23,103 @@ from smithy_core.traits import JSONNameTrait, SparseTrait, TimestampFormatTrait
 STRING_LIST_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringList"),
     shape_type=ShapeType.LIST,
-    members={"member": {"target": STRING, "index": 0}},
+    members={
+        "member": {
+            "target": STRING,
+        }
+    },
 )
 STRING_MAP_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringMap"),
     shape_type=ShapeType.MAP,
     members={
-        "key": {"target": STRING, "index": 0},
-        "value": {"target": STRING, "index": 1},
+        "key": {
+            "target": STRING,
+        },
+        "value": {
+            "target": STRING,
+        },
     },
 )
 SPARSE_STRING_LIST_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringList"),
     shape_type=ShapeType.LIST,
-    members={"member": {"target": STRING, "index": 0}},
+    members={
+        "member": {
+            "target": STRING,
+        }
+    },
     traits=[SparseTrait()],
 )
 SPARSE_STRING_MAP_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringMap"),
     shape_type=ShapeType.MAP,
     members={
-        "key": {"target": STRING, "index": 0},
-        "value": {"target": STRING, "index": 1},
+        "key": {
+            "target": STRING,
+        },
+        "value": {
+            "target": STRING,
+        },
     },
     traits=[SparseTrait()],
 )
 SCHEMA: Schema = Schema.collection(
     id=ShapeID("smithy.example#SerdeShape"),
     members={
-        "booleanMember": {"target": BOOLEAN, "index": 0},
-        "integerMember": {"target": INTEGER, "index": 1},
-        "floatMember": {"target": FLOAT, "index": 2},
-        "bigDecimalMember": {"target": BIG_DECIMAL, "index": 3},
-        "stringMember": {"target": STRING, "index": 4},
+        "booleanMember": {
+            "target": BOOLEAN,
+        },
+        "integerMember": {
+            "target": INTEGER,
+        },
+        "floatMember": {
+            "target": FLOAT,
+        },
+        "bigDecimalMember": {
+            "target": BIG_DECIMAL,
+        },
+        "stringMember": {
+            "target": STRING,
+        },
         "jsonNameMember": {
             "target": STRING,
             "traits": [JSONNameTrait("jsonName")],
-            "index": 5,
         },
-        "blobMember": {"target": BLOB, "index": 6},
-        "timestampMember": {"target": TIMESTAMP, "index": 7},
+        "blobMember": {
+            "target": BLOB,
+        },
+        "timestampMember": {
+            "target": TIMESTAMP,
+        },
         "dateTimeMember": {
             "target": TIMESTAMP,
             "traits": [TimestampFormatTrait("date-time")],
-            "index": 8,
         },
         "httpDateMember": {
             "target": TIMESTAMP,
             "traits": [TimestampFormatTrait("http-date")],
-            "index": 9,
         },
         "epochSecondsMember": {
             "target": TIMESTAMP,
             "traits": [TimestampFormatTrait("epoch-seconds")],
-            "index": 10,
         },
-        "documentMember": {"target": DOCUMENT, "index": 11},
-        "listMember": {"target": STRING_LIST_SCHEMA, "index": 12},
-        "mapMember": {"target": STRING_MAP_SCHEMA, "index": 13},
-        # Index 14 is set below because it's a self-referential member.
-        "sparseListMember": {"target": SPARSE_STRING_LIST_SCHEMA, "index": 15},
-        "sparseMapMember": {"target": SPARSE_STRING_MAP_SCHEMA, "index": 16},
+        "documentMember": {
+            "target": DOCUMENT,
+        },
+        "listMember": {
+            "target": STRING_LIST_SCHEMA,
+        },
+        "mapMember": {
+            "target": STRING_MAP_SCHEMA,
+        },
+        "structMember": None,
+        "sparseListMember": {
+            "target": SPARSE_STRING_LIST_SCHEMA,
+        },
+        "sparseMapMember": {
+            "target": SPARSE_STRING_MAP_SCHEMA,
+        },
     },
 )
 SCHEMA.members["structMember"] = Schema.member(

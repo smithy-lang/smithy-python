@@ -38,19 +38,18 @@ STREAMING_TRAIT = StreamingTrait()
 SCHEMA_MESSAGE_EVENT = Schema.collection(
     id=ShapeID("smithy.example#MessageEvent"),
     members={
-        "boolHeader": {"index": 0, "target": BOOLEAN, "traits": [EVENT_HEADER_TRAIT]},
-        "byteHeader": {"index": 1, "target": BYTE, "traits": [EVENT_HEADER_TRAIT]},
-        "shortHeader": {"index": 2, "target": SHORT, "traits": [EVENT_HEADER_TRAIT]},
-        "intHeader": {"index": 3, "target": INTEGER, "traits": [EVENT_HEADER_TRAIT]},
-        "longHeader": {"index": 4, "target": LONG, "traits": [EVENT_HEADER_TRAIT]},
-        "blobHeader": {"index": 5, "target": BLOB, "traits": [EVENT_HEADER_TRAIT]},
-        "stringHeader": {"index": 6, "target": STRING, "traits": [EVENT_HEADER_TRAIT]},
+        "boolHeader": {"target": BOOLEAN, "traits": [EVENT_HEADER_TRAIT]},
+        "byteHeader": {"target": BYTE, "traits": [EVENT_HEADER_TRAIT]},
+        "shortHeader": {"target": SHORT, "traits": [EVENT_HEADER_TRAIT]},
+        "intHeader": {"target": INTEGER, "traits": [EVENT_HEADER_TRAIT]},
+        "longHeader": {"target": LONG, "traits": [EVENT_HEADER_TRAIT]},
+        "blobHeader": {"target": BLOB, "traits": [EVENT_HEADER_TRAIT]},
+        "stringHeader": {"target": STRING, "traits": [EVENT_HEADER_TRAIT]},
         "timestampHeader": {
-            "index": 7,
             "target": TIMESTAMP,
             "traits": [EVENT_HEADER_TRAIT],
         },
-        "bodyMember": {"index": 8, "target": STRING},
+        "bodyMember": {"target": STRING},
     },
 )
 
@@ -58,12 +57,10 @@ SCHEMA_PAYLOAD_EVENT = Schema.collection(
     id=ShapeID("smithy.example#PayloadEvent"),
     members={
         "header": {
-            "index": 0,
             "target": STRING,
             "traits": [EVENT_HEADER_TRAIT, REQUIRED_TRAIT],
         },
         "payload": {
-            "index": 1,
             "target": STRING,
             "traits": [EVENT_PAYLOAD_TRAIT, REQUIRED_TRAIT],
         },
@@ -74,12 +71,10 @@ SCHEMA_BLOB_PAYLOAD_EVENT = Schema.collection(
     id=ShapeID("smithy.example#BlobPayloadEvent"),
     members={
         "header": {
-            "index": 0,
             "target": STRING,
             "traits": [EVENT_HEADER_TRAIT, REQUIRED_TRAIT],
         },
         "payload": {
-            "index": 1,
             "target": BLOB,
             "traits": [EVENT_PAYLOAD_TRAIT, REQUIRED_TRAIT],
         },
@@ -88,7 +83,7 @@ SCHEMA_BLOB_PAYLOAD_EVENT = Schema.collection(
 
 SCHEMA_ERROR_EVENT = Schema.collection(
     id=ShapeID("smithy.example#ErrorEvent"),
-    members={"message": {"index": 0, "target": STRING, "traits": [REQUIRED_TRAIT]}},
+    members={"message": {"target": STRING, "traits": [REQUIRED_TRAIT]}},
     traits=[ERROR_TRAIT],
 )
 
@@ -97,21 +92,21 @@ SCHEMA_EVENT_STREAM = Schema.collection(
     shape_type=ShapeType.UNION,
     traits=[STREAMING_TRAIT],
     members={
-        "message": {"index": 0, "target": SCHEMA_MESSAGE_EVENT},
-        "payload": {"index": 1, "target": SCHEMA_PAYLOAD_EVENT},
-        "blobPayload": {"index": 2, "target": SCHEMA_BLOB_PAYLOAD_EVENT},
-        "error": {"index": 3, "target": SCHEMA_ERROR_EVENT},
+        "message": {"target": SCHEMA_MESSAGE_EVENT},
+        "payload": {"target": SCHEMA_PAYLOAD_EVENT},
+        "blobPayload": {"target": SCHEMA_BLOB_PAYLOAD_EVENT},
+        "error": {"target": SCHEMA_ERROR_EVENT},
     },
 )
 
 SCHEMA_INITIAL_MESSAGE = Schema.collection(
     id=ShapeID("smithy.example#EventStreamOperationInputOutput"),
     members={
-        "message": {"index": 0, "target": STRING},
+        "message": {"target": STRING},
         # Event stream members will not be part of the operation input / output
         # shape schemas.
         # "stream": {
-        #     "index": 1,
+        #
         #     "target": SCHEMA_EVENT_STREAM
         # },
     },

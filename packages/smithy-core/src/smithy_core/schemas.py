@@ -74,14 +74,13 @@ class Schema:
             traits = {}
         object.__setattr__(self, "traits", traits)
 
-        if members:
-            if isinstance(members, list):
-                m: dict[str, Schema] = {}
-                for member in members:
-                    m[member.expect_member_name()] = member
-                members = m
-        else:
+        if members is None:
             members = {}
+        elif isinstance(members, list):
+            m: dict[str, Schema] = {}
+            for member in sorted(members, key=lambda m: m.expect_member_index()):
+                m[member.expect_member_name()] = member
+            members = m
         object.__setattr__(self, "members", members)
 
         if member_target is not None:
@@ -194,7 +193,7 @@ class Schema:
         id: ShapeID,
         shape_type: ShapeType = ShapeType.STRUCTURE,
         traits: list["Trait | DynamicTrait"] | None = None,
-        members: Mapping[str, "MemberSchema"] | None = None,
+        members: Mapping[str, "MemberSchema | None"] | None = None,
     ) -> Self:
         """Create a schema for a collection shape.
 
@@ -205,15 +204,23 @@ class Schema:
             properties, map keys/values, and union variants. In contrast to the main
             constructor, this is a dict of member names to a simplified dict containing
             only ``traits`` and a ``target``. Member schemas will be generated from this.
+
+            If the value is None, it MUST be populated later. This is to allow a preservation
+            of modeled order without having to explicitly provide it and therefore generate
+            a ton of boilerplate.
         """
         struct_members: dict[str, Schema] = {}
         if members:
-            for k in members.keys():
+            for i, (k, member) in enumerate(members.items()):
+                if member is None:
+                    struct_members[k] = None  # type: ignore
+                    continue
+
                 struct_members[k] = cls.member(
                     id=id.with_member(k),
-                    target=members[k]["target"],
-                    index=members[k]["index"],
-                    member_traits=members[k].get("traits"),
+                    target=member["target"],
+                    index=i,
+                    member_traits=member.get("traits"),
                 )
 
         result = cls(
@@ -268,7 +275,6 @@ class MemberSchema(TypedDict):
     """
 
     target: Required[Schema]
-    index: Required[int]
     traits: NotRequired[list["Trait | DynamicTrait"]]
 
 

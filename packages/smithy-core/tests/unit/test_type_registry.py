@@ -63,7 +63,7 @@ class TestShape(DeserializeableShape):
     __test__ = False
     schema = Schema.collection(
         id=ShapeID("com.example#Test"),
-        members={"value": {"index": 0, "target": STRING, "traits": [RequiredTrait()]}},
+        members={"value": {"target": STRING, "traits": [RequiredTrait()]}},
     )
 
     def __init__(self, value: str):

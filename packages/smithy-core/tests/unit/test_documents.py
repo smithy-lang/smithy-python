@@ -402,7 +402,11 @@ def test_wrap_list_passes_schema_to_member_documents() -> None:
     list_schema = Schema.collection(
         id=id,
         shape_type=ShapeType.LIST,
-        members={"member": {"target": target_schema, "index": 0}},
+        members={
+            "member": {
+                "target": target_schema,
+            }
+        },
     )
     document = Document(["foo"], schema=list_schema)
     actual = document[0]._schema  # pyright: ignore[reportPrivateUsage]
@@ -421,7 +425,11 @@ def test_setitem_on_list_passes_schema_to_member_documents() -> None:
     list_schema = Schema.collection(
         id=id,
         shape_type=ShapeType.LIST,
-        members={"member": {"target": target_schema, "index": 0}},
+        members={
+            "member": {
+                "target": target_schema,
+            }
+        },
     )
     document = Document(["foo"], schema=list_schema)
     document[0] = "bar"
@@ -440,7 +448,11 @@ def test_wrap_structure_passes_schema_to_member_documents() -> None:
     target_schema = Schema(id=ShapeID("smithy.api#String"), shape_type=ShapeType.STRING)
     struct_schema = Schema.collection(
         id=id,
-        members={"stringMember": {"target": target_schema, "index": 0}},
+        members={
+            "stringMember": {
+                "target": target_schema,
+            }
+        },
     )
     document = Document({"stringMember": "foo"}, schema=struct_schema)
     actual = document["stringMember"]._schema  # pyright: ignore[reportPrivateUsage]
@@ -458,7 +470,11 @@ def test_setitem_on_structure_passes_schema_to_member_documents() -> None:
     target_schema = Schema(id=ShapeID("smithy.api#String"), shape_type=ShapeType.STRING)
     struct_schema = Schema.collection(
         id=id,
-        members={"stringMember": {"target": target_schema, "index": 0}},
+        members={
+            "stringMember": {
+                "target": target_schema,
+            }
+        },
     )
     document = Document({"stringMember": "foo"}, schema=struct_schema)
     document["stringMember"] = "spam"
@@ -478,8 +494,12 @@ def test_wrap_map_passes_schema_to_member_documents() -> None:
         id=id,
         shape_type=ShapeType.MAP,
         members={
-            "key": {"target": STRING, "index": 0},
-            "value": {"target": STRING, "index": 1},
+            "key": {
+                "target": STRING,
+            },
+            "value": {
+                "target": STRING,
+            },
         },
     )
     document = Document({"spam": "eggs"}, schema=map_schema)
@@ -496,8 +516,12 @@ def test_setitem_on_map_passes_schema_to_member_documents() -> None:
         id=id,
         shape_type=ShapeType.MAP,
         members={
-            "key": {"target": STRING, "index": 0},
-            "value": {"target": STRING, "index": 1},
+            "key": {
+                "target": STRING,
+            },
+            "value": {
+                "target": STRING,
+            },
         },
     )
     document = Document({"spam": "eggs"}, schema=map_schema)
@@ -517,47 +541,87 @@ def test_is_none():
 STRING_LIST_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringList"),
     shape_type=ShapeType.LIST,
-    members={"member": {"target": STRING, "index": 0}},
+    members={
+        "member": {
+            "target": STRING,
+        }
+    },
 )
 STRING_MAP_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringMap"),
     shape_type=ShapeType.MAP,
     members={
-        "key": {"target": STRING, "index": 0},
-        "value": {"target": STRING, "index": 1},
+        "key": {
+            "target": STRING,
+        },
+        "value": {
+            "target": STRING,
+        },
     },
 )
 SPARSE_STRING_LIST_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringList"),
     shape_type=ShapeType.LIST,
-    members={"member": {"target": STRING, "index": 0}},
+    members={
+        "member": {
+            "target": STRING,
+        }
+    },
     traits=[SparseTrait()],
 )
 SPARSE_STRING_MAP_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#StringMap"),
     shape_type=ShapeType.MAP,
     members={
-        "key": {"target": STRING, "index": 0},
-        "value": {"target": STRING, "index": 1},
+        "key": {
+            "target": STRING,
+        },
+        "value": {
+            "target": STRING,
+        },
     },
     traits=[SparseTrait()],
 )
 SCHEMA: Schema = Schema.collection(
     id=ShapeID("smithy.example#DocumentSerdeShape"),
     members={
-        "booleanMember": {"target": BOOLEAN, "index": 0},
-        "integerMember": {"target": INTEGER, "index": 1},
-        "floatMember": {"target": FLOAT, "index": 2},
-        "bigDecimalMember": {"target": BIG_DECIMAL, "index": 3},
-        "stringMember": {"target": STRING, "index": 4},
-        "blobMember": {"target": BLOB, "index": 5},
-        "timestampMember": {"target": TIMESTAMP, "index": 6},
-        "documentMember": {"target": DOCUMENT, "index": 7},
-        "listMember": {"target": STRING_LIST_SCHEMA, "index": 8},
-        "mapMember": {"target": STRING_MAP_SCHEMA, "index": 9},
-        # Index 10 is set below because it's a self-referential member.
-        "sparseListMember": {"target": SPARSE_STRING_LIST_SCHEMA, "index": 11},
-        "sparseMapMember": {"target": SPARSE_STRING_MAP_SCHEMA, "index": 12},
+        "booleanMember": {
+            "target": BOOLEAN,
+        },
+        "integerMember": {
+            "target": INTEGER,
+        },
+        "floatMember": {
+            "target": FLOAT,
+        },
+        "bigDecimalMember": {
+            "target": BIG_DECIMAL,
+        },
+        "stringMember": {
+            "target": STRING,
+        },
+        "blobMember": {
+            "target": BLOB,
+        },
+        "timestampMember": {
+            "target": TIMESTAMP,
+        },
+        "documentMember": {
+            "target": DOCUMENT,
+        },
+        "listMember": {
+            "target": STRING_LIST_SCHEMA,
+        },
+        "mapMember": {
+            "target": STRING_MAP_SCHEMA,
+        },
+        "structMember": None,
+        "sparseListMember": {
+            "target": SPARSE_STRING_LIST_SCHEMA,
+        },
+        "sparseMapMember": {
+            "target": SPARSE_STRING_MAP_SCHEMA,
+        },
     },
 )
 SCHEMA.members["structMember"] = Schema.member(
