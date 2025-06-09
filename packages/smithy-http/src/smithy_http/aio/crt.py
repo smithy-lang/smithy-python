@@ -117,7 +117,8 @@ class CRTResponseBody:
 
     def set_stream(self, stream: "crt_http.HttpClientStream") -> None:
         if self._stream is not None:
-            raise SmithyHTTPException("Stream already set on AWSCRTHTTPResponse object")
+            raise SmithyHTTPException(
+                "Stream already set on AWSCRTHTTPResponse object")
         self._stream = stream
         concurrent_future: ConcurrentFuture[int] = stream.completion_future
         self._completion_future = asyncio.wrap_future(concurrent_future)
@@ -236,19 +237,45 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         :param request: The request including destination URI, fields, payload.
         :param request_config: Configuration specific to this request.
         """
-        crt_request, crt_body = await self._marshal_request(request)
+        crt_request = await self._marshal_request(request)
         connection = await self._get_connection(request.destination)
         response_body = CRTResponseBody()
         response_factory = CRTResponseFactory(response_body)
+        # TODO: assert the connection is HTTP/2
         crt_stream = connection.request(
             crt_request,
             response_factory.on_response,
             response_body.on_body,
+            True  # allow manual stream write.
         )
         response_factory.set_done_callback(crt_stream)
         response_body.set_stream(crt_stream)
+
+        body = request.body
+        if isinstance(body, bytes | bytearray):
+            # If the body is already directly in memory, wrap in a BytesIO to hand
+            # off to CRT.
+            crt_body = BytesIO(body)
+            crt_stream.write_data(crt_body, True)
+        else:
+            # If the body is async, or potentially very large, start up a task to read
+            # it into the intermediate object that CRT needs. By using
+            # asyncio.create_task we'll start the coroutine without having to
+            # explicitly await it.
+
+            if not isinstance(body, AsyncIterable):
+                body = AsyncBytesReader(body)
+
+            # Start the read task in the background.
+            read_task = asyncio.create_task(
+                self._consume_body_async(body, crt_stream))
+
+            # Keep track of the read task so that it doesn't get garbage colllected,
+            # and stop tracking it once it's done.
+            self._async_reads.add(read_task)
+            read_task.add_done_callback(self._async_reads.discard)
         crt_stream.completion_future.add_done_callback(
-            partial(self._close_input_body, body=crt_body)
+            partial(self._close_input_body, stream=crt_stream)
         )
 
         response = await response_factory.await_response()
@@ -258,10 +285,10 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         return response
 
     def _close_input_body(
-        self, future: ConcurrentFuture[int], *, body: "BufferableByteStream | BytesIO"
+        self, future: ConcurrentFuture[int], *, stream: "crt_http.HttpClientStream"
     ) -> None:
         if future.exception(timeout=0):
-            body.close()
+            stream.write_data(BytesIO(b''), True)
 
     async def _create_connection(
         self, url: core_interfaces.URI
@@ -326,7 +353,8 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         if force_http_2 and connection.version is not crt_http.HttpVersion.Http2:
             connection.close()
             negotiated = crt_http.HttpVersion(connection.version).name
-            raise SmithyHTTPException(f"HTTP/2 could not be negotiated: {negotiated}")
+            raise SmithyHTTPException(
+                f"HTTP/2 could not be negotiated: {negotiated}")
 
     def _render_path(self, url: core_interfaces.URI) -> str:
         path = url.path if url.path is not None else "/"
@@ -357,49 +385,25 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         path = self._render_path(request.destination)
         headers = crt_http.HttpHeaders(headers_list)
 
-        body = request.body
-        if isinstance(body, bytes | bytearray):
-            # If the body is already directly in memory, wrap in a BytesIO to hand
-            # off to CRT.
-            crt_body = BytesIO(body)
-        else:
-            # If the body is async, or potentially very large, start up a task to read
-            # it into the intermediate object that CRT needs. By using
-            # asyncio.create_task we'll start the coroutine without having to
-            # explicitly await it.
-            crt_body = BufferableByteStream()
-
-            if not isinstance(body, AsyncIterable):
-                body = AsyncBytesReader(body)
-
-            # Start the read task in the background.
-            read_task = asyncio.create_task(self._consume_body_async(body, crt_body))
-
-            # Keep track of the read task so that it doesn't get garbage colllected,
-            # and stop tracking it once it's done.
-            self._async_reads.add(read_task)
-            read_task.add_done_callback(self._async_reads.discard)
-
         crt_request = crt_http.HttpRequest(
             method=request.method,
             path=path,
             headers=headers,
-            body_stream=crt_body,
         )
-        return crt_request, crt_body
+        return crt_request
 
     async def _consume_body_async(
-        self, source: AsyncIterable[bytes], dest: "BufferableByteStream"
+        self, source: AsyncIterable[bytes], dest: "crt_http.HttpClientStream"
     ) -> None:
         try:
             async for chunk in source:
-                dest.write(chunk)
+                dest.write_data(BytesIO(chunk), False)
         except Exception:
             dest.close()
             raise
         finally:
             await close(source)
-        dest.end_stream()
+        dest.write_data(BytesIO(b''), True)
 
     def __deepcopy__(self, memo: Any) -> "AWSCRTHTTPClient":
         return AWSCRTHTTPClient(
@@ -468,7 +472,8 @@ class BufferableByteStream(BufferedIOBase):
             )
 
         if self._closed:
-            raise OSError("Stream is completed and doesn't support further writes.")
+            raise OSError(
+                "Stream is completed and doesn't support further writes.")
 
         if buffer:
             self._chunks.append(buffer)

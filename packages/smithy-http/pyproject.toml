@@ -10,7 +10,7 @@ dependencies = [
 
 [project.optional-dependencies]
 awscrt = [
-    "awscrt>=0.23.10",
+    "awscrt>=0.27.2",
 ]
 aiohttp = [
     "aiohttp>=3.11.12, <4.0",
