@@ -256,6 +256,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             # If the body is already directly in memory, wrap in a BytesIO to hand
             # off to CRT.
             crt_body = BytesIO(body)
+            # TODO handle error, and it returns a future for now.
             crt_stream.write_data(crt_body, True)
         else:
             # If the body is async, or potentially very large, start up a task to read
@@ -274,21 +275,10 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             # and stop tracking it once it's done.
             self._async_reads.add(read_task)
             read_task.add_done_callback(self._async_reads.discard)
-        crt_stream.completion_future.add_done_callback(
-            partial(self._close_input_body, stream=crt_stream)
-        )
 
         response = await response_factory.await_response()
-        if response.status != 200 and response.status >= 300:
-            await close(crt_body)
 
         return response
-
-    def _close_input_body(
-        self, future: ConcurrentFuture[int], *, stream: "crt_http.HttpClientStream"
-    ) -> None:
-        if future.exception(timeout=0):
-            stream.write_data(BytesIO(b''), True)
 
     async def _create_connection(
         self, url: core_interfaces.URI
@@ -399,7 +389,6 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             async for chunk in source:
                 dest.write_data(BytesIO(chunk), False)
         except Exception:
-            dest.close()
             raise
         finally:
             await close(source)
