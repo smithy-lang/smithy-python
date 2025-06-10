@@ -259,7 +259,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             # off to CRT.
             crt_body = BytesIO(body)
             # TODO handle error, and it returns a future for now.
-            await crt_stream.write_data(crt_body, True)
+            # await crt_stream.write_data(crt_body, True)
         else:
             # If the body is async, or potentially very large, start up a task to read
             # it into the intermediate object that CRT needs. By using
@@ -384,14 +384,16 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
     async def _consume_body_async(
         self, source: AsyncIterable[bytes], dest: "crt_http.HttpClientStreamAsync"
     ) -> None:
-        try:
-            async for chunk in source:
-                await dest.write_data(BytesIO(chunk), False)
-        except Exception:
-            raise
-        finally:
-            await close(source)
-        await dest.write_data(BytesIO(b''), True)
+        pass
+        # try:
+        #     asyncio.sleep(1)  # Yield control to the event loop
+        #     async for chunk in source:
+        #         await dest.write_data(BytesIO(chunk), False)
+        # except Exception:
+        #     raise
+        # finally:
+        #     await close(source)
+        # await dest.write_data(BytesIO(b''), True)
 
     def __deepcopy__(self, memo: Any) -> "AWSCRTHTTPClient":
         return AWSCRTHTTPClient(
