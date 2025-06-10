@@ -126,27 +126,8 @@ class CRTResponseBody:
         self._completion_future.add_done_callback(self._on_complete)
         self._stream.activate()
 
-    def on_body(self, chunk: bytes, **kwargs: Any) -> None:  # pragma: crt-callback
-        # TODO: update back pressure window once CRT supports it
-        if self._chunk_futures:
-            future = self._chunk_futures.popleft()
-            future.set_result(chunk)
-        else:
-            self._received_chunks.append(chunk)
-
     async def next(self) -> bytes:
-        if self._completion_future is None:
-            raise SmithyHTTPException("Stream not set")
-
-        # TODO: update backpressure window once CRT supports it
-        if self._received_chunks:
-            return self._received_chunks.popleft()
-        elif self._completion_future.done():
-            return b""
-        else:
-            future = ConcurrentFuture[bytes]()
-            self._chunk_futures.append(future)
-            return await asyncio.wrap_future(future)
+        await self._stream.next()
 
     def _on_complete(
         self, completion_future: AsyncFuture[int]
@@ -247,8 +228,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         crt_stream = connection.request(
             crt_request,
             response_factory.on_response,
-            response_body.on_body,
-            True  # allow manual stream write.
+            manual_write=True  # allow manual stream write.
         )
         response_factory.set_done_callback(crt_stream)
         response_body.set_stream(crt_stream)
@@ -259,7 +239,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             # off to CRT.
             crt_body = BytesIO(body)
             # TODO handle error, and it returns a future for now.
-            # await crt_stream.write_data(crt_body, True)
+            await crt_stream.write_data(crt_body, True)
         else:
             # If the body is async, or potentially very large, start up a task to read
             # it into the intermediate object that CRT needs. By using
@@ -324,7 +304,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         if url.port is not None:
             port = url.port
 
-        return crt_http.HttpClientConnectionAsync.new(
+        return crt_http.Http2ClientConnectionAsync.new(
             bootstrap=self._client_bootstrap,
             host_name=url.host,
             port=port,
@@ -385,15 +365,14 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         self, source: AsyncIterable[bytes], dest: "crt_http.HttpClientStreamAsync"
     ) -> None:
         pass
-        # try:
-        #     asyncio.sleep(1)  # Yield control to the event loop
-        #     async for chunk in source:
-        #         await dest.write_data(BytesIO(chunk), False)
-        # except Exception:
-        #     raise
-        # finally:
-        #     await close(source)
-        # await dest.write_data(BytesIO(b''), True)
+        try:
+            async for chunk in source:
+                await dest.write_data(BytesIO(chunk), False)
+        except Exception:
+            raise
+        finally:
+            await close(source)
+        await dest.write_data(BytesIO(b''), True)
 
     def __deepcopy__(self, memo: Any) -> "AWSCRTHTTPClient":
         return AWSCRTHTTPClient(
