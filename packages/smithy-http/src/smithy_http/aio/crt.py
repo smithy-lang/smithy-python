@@ -21,11 +21,13 @@ if TYPE_CHECKING:
     # pyright doesn't like optional imports. This is reasonable because if we use these
     # in type hints then they'd result in runtime errors.
     # TODO: add integ tests that import these without the dependendency installed
-    from awscrt import http as crt_http
+    from awscrt import http_asyncio as crt_http
+    from awscrt import http as crt_http_base
     from awscrt import io as crt_io
 
 try:
-    from awscrt import http as crt_http
+    from awscrt import http_asyncio as crt_http
+    from awscrt import http as crt_http_base
     from awscrt import io as crt_io
 
     HAS_CRT = True
@@ -105,7 +107,7 @@ class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
 
 class CRTResponseBody:
     def __init__(self) -> None:
-        self._stream: crt_http.HttpClientStream | None = None
+        self._stream: crt_http.HttpClientStreamAsync | None = None
         self._completion_future: AsyncFuture[int] | None = None
         self._chunk_futures: deque[ConcurrentFuture[bytes]] = deque()
 
@@ -115,13 +117,12 @@ class CRTResponseBody:
         # an interface that better matches python's async.
         self._received_chunks: deque[bytes] = deque()
 
-    def set_stream(self, stream: "crt_http.HttpClientStream") -> None:
+    def set_stream(self, stream: "crt_http.HttpClientStreamAsync") -> None:
         if self._stream is not None:
             raise SmithyHTTPException(
                 "Stream already set on AWSCRTHTTPResponse object")
         self._stream = stream
-        concurrent_future: ConcurrentFuture[int] = stream.completion_future
-        self._completion_future = asyncio.wrap_future(concurrent_future)
+        self._completion_future = stream._completion_future
         self._completion_future.add_done_callback(self._on_complete)
         self._stream.activate()
 
@@ -185,8 +186,9 @@ class CRTResponseFactory:
     async def await_response(self) -> AWSCRTHTTPResponse:
         return await asyncio.wrap_future(self._response_future)
 
-    def set_done_callback(self, stream: "crt_http.HttpClientStream") -> None:
-        stream.completion_future.add_done_callback(self._cancel)
+    def set_done_callback(self, stream: "crt_http.HttpClientStreamAsync") -> None:
+        print(stream)
+        stream._completion_future.add_done_callback(self._cancel)
 
     def _cancel(self, completion_future: ConcurrentFuture[int | Exception]) -> None:
         if not self._response_future.done():
@@ -237,7 +239,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         :param request: The request including destination URI, fields, payload.
         :param request_config: Configuration specific to this request.
         """
-        crt_request = await self._marshal_request(request)
+        crt_request = self._marshal_request(request)
         connection = await self._get_connection(request.destination)
         response_body = CRTResponseBody()
         response_factory = CRTResponseFactory(response_body)
@@ -257,7 +259,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             # off to CRT.
             crt_body = BytesIO(body)
             # TODO handle error, and it returns a future for now.
-            crt_stream.write_data(crt_body, True)
+            await crt_stream.write_data(crt_body, True)
         else:
             # If the body is async, or potentially very large, start up a task to read
             # it into the intermediate object that CRT needs. By using
@@ -285,7 +287,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
     ) -> "crt_http.HttpClientConnection":
         """Builds and validates connection to ``url``"""
         connect_future = self._build_new_connection(url)
-        connection = await asyncio.wrap_future(connect_future)
+        connection = await connect_future
         self._validate_connection(connection)
         return connection
 
@@ -322,16 +324,13 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         if url.port is not None:
             port = url.port
 
-        connect_future: ConcurrentFuture[crt_http.HttpClientConnection] = (
-            crt_http.HttpClientConnection.new(
-                bootstrap=self._client_bootstrap,
-                host_name=url.host,
-                port=port,
-                socket_options=self._socket_options,
-                tls_connection_options=tls_connection_options,
-            )
+        return crt_http.HttpClientConnectionAsync.new(
+            bootstrap=self._client_bootstrap,
+            host_name=url.host,
+            port=port,
+            socket_options=self._socket_options,
+            tls_connection_options=tls_connection_options,
         )
-        return connect_future
 
     def _validate_connection(self, connection: "crt_http.HttpClientConnection") -> None:
         """Validates an existing connection against the client config.
@@ -351,7 +350,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         query = f"?{url.query}" if url.query is not None else ""
         return f"{path}{query}"
 
-    async def _marshal_request(
+    def _marshal_request(
         self, request: http_aio_interfaces.HTTPRequest
     ) -> tuple["crt_http.HttpRequest", "BufferableByteStream | BytesIO"]:
         """Create :py:class:`awscrt.http.HttpRequest` from
@@ -373,9 +372,9 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
                 headers_list.append((fld.name, val))
 
         path = self._render_path(request.destination)
-        headers = crt_http.HttpHeaders(headers_list)
+        headers = crt_http_base.HttpHeaders(headers_list)
 
-        crt_request = crt_http.HttpRequest(
+        crt_request = crt_http_base.HttpRequest(
             method=request.method,
             path=path,
             headers=headers,
@@ -383,16 +382,16 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         return crt_request
 
     async def _consume_body_async(
-        self, source: AsyncIterable[bytes], dest: "crt_http.HttpClientStream"
+        self, source: AsyncIterable[bytes], dest: "crt_http.HttpClientStreamAsync"
     ) -> None:
         try:
             async for chunk in source:
-                dest.write_data(BytesIO(chunk), False)
+                await dest.write_data(BytesIO(chunk), False)
         except Exception:
             raise
         finally:
             await close(source)
-        dest.write_data(BytesIO(b''), True)
+        await dest.write_data(BytesIO(b''), True)
 
     def __deepcopy__(self, memo: Any) -> "AWSCRTHTTPClient":
         return AWSCRTHTTPClient(
