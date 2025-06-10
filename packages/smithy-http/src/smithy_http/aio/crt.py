@@ -335,9 +335,10 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
     async def _consume_body_async(
         self, source: AsyncIterable[bytes], dest: "crt_http.HttpClientStreamAsync"
     ) -> None:
-        print("###################### AWSCRTHTTPClient._consume_body_async called")
         try:
             async for chunk in source:
+                print(
+                    "###################### AWSCRTHTTPClient._consume_body_async chunk")
                 await dest.write_data(BytesIO(chunk), False)
         except Exception:
             raise
