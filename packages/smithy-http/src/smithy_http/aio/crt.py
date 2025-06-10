@@ -109,42 +109,29 @@ class CRTResponseBody:
     def __init__(self) -> None:
         self._stream: crt_http.HttpClientStreamAsync | None = None
         self._completion_future: AsyncFuture[int] | None = None
-        self._chunk_futures: deque[ConcurrentFuture[bytes]] = deque()
-
-        # deque is thread safe and the crt is only going to be writing
-        # with one thread anyway, so we *shouldn't* need to gate this
-        # behind a lock. In an ideal world, the CRT would expose
-        # an interface that better matches python's async.
-        self._received_chunks: deque[bytes] = deque()
 
     def set_stream(self, stream: "crt_http.HttpClientStreamAsync") -> None:
         if self._stream is not None:
             raise SmithyHTTPException(
                 "Stream already set on AWSCRTHTTPResponse object")
         self._stream = stream
-        self._completion_future = stream._completion_future
-        self._completion_future.add_done_callback(self._on_complete)
         self._stream.activate()
 
     async def next(self) -> bytes:
-        await self._stream.next()
-
-    def _on_complete(
-        self, completion_future: AsyncFuture[int]
-    ) -> None:  # pragma: crt-callback
-        for future in self._chunk_futures:
-            future.set_result(b"")
-        self._chunk_futures.clear()
+        print("CRTResponseBody.next called")
+        return await self._stream.next()
 
 
 class CRTResponseFactory:
-    def __init__(self, body: CRTResponseBody) -> None:
+    def __init__(self, body: CRTResponseBody, stream: "crt_http.HttpClientStreamAsync") -> None:
         self._body = body
-        self._response_future = ConcurrentFuture[AWSCRTHTTPResponse]()
+        self._stream = stream
 
-    def on_response(
-        self, status_code: int, headers: list[tuple[str, str]], **kwargs: Any
-    ) -> None:  # pragma: crt-callback
+    async def await_response(self) -> AWSCRTHTTPResponse:
+        status_code = await self._stream.response_status_code()
+        headers = await self._stream.response_headers()
+        print(f"Response headers: {headers}")
+        print(f"status: {status_code}")
         fields = Fields()
         for header_name, header_val in headers:
             try:
@@ -155,25 +142,11 @@ class CRTResponseFactory:
                     values=[header_val],
                     kind=FieldPosition.HEADER,
                 )
-
-        self._response_future.set_result(
-            AWSCRTHTTPResponse(
-                status=status_code,
-                fields=fields,
-                body=self._body,
-            )
+        return AWSCRTHTTPResponse(
+            status=status_code,
+            fields=fields,
+            body=self._body,
         )
-
-    async def await_response(self) -> AWSCRTHTTPResponse:
-        return await asyncio.wrap_future(self._response_future)
-
-    def set_done_callback(self, stream: "crt_http.HttpClientStreamAsync") -> None:
-        print(stream)
-        stream._completion_future.add_done_callback(self._cancel)
-
-    def _cancel(self, completion_future: ConcurrentFuture[int | Exception]) -> None:
-        if not self._response_future.done():
-            self._response_future.cancel()
 
 
 ConnectionPoolKey = tuple[str, str, int | None]
@@ -223,14 +196,12 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         crt_request = self._marshal_request(request)
         connection = await self._get_connection(request.destination)
         response_body = CRTResponseBody()
-        response_factory = CRTResponseFactory(response_body)
         # TODO: assert the connection is HTTP/2
         crt_stream = connection.request(
             crt_request,
-            response_factory.on_response,
             manual_write=True  # allow manual stream write.
         )
-        response_factory.set_done_callback(crt_stream)
+        response_factory = CRTResponseFactory(response_body, crt_stream)
         response_body.set_stream(crt_stream)
 
         body = request.body
@@ -364,7 +335,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
     async def _consume_body_async(
         self, source: AsyncIterable[bytes], dest: "crt_http.HttpClientStreamAsync"
     ) -> None:
-        pass
+        print("###################### AWSCRTHTTPClient._consume_body_async called")
         try:
             async for chunk in source:
                 await dest.write_data(BytesIO(chunk), False)
@@ -372,6 +343,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             raise
         finally:
             await close(source)
+        print("###################### AWSCRTHTTPClient._consume_body_async done")
         await dest.write_data(BytesIO(b''), True)
 
     def __deepcopy__(self, memo: Any) -> "AWSCRTHTTPClient":
