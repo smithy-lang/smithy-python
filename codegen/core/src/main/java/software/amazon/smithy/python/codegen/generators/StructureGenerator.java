@@ -118,7 +118,7 @@ public final class StructureGenerator implements Runnable {
 
                 """,
                 symbol.getName(),
-                writer.consumer(w -> writeClassDocs(false)),
+                writer.consumer(this::writeClassDocs),
                 writer.consumer(w -> writeProperties()),
                 writer.consumer(w -> generateSerializeMethod()),
                 writer.consumer(w -> generateDeserializeMethod()));
@@ -166,7 +166,7 @@ public final class StructureGenerator implements Runnable {
                 symbol.getName(),
                 baseError,
                 fault,
-                writer.consumer(w -> writeClassDocs(true)),
+                writer.consumer(this::writeClassDocs),
                 writer.consumer(w -> writeProperties()),
                 writer.consumer(w -> generateSerializeMethod()),
                 writer.consumer(w -> generateDeserializeMethod()));
@@ -185,12 +185,18 @@ public final class StructureGenerator implements Runnable {
             } else {
                 writer.putContext("sensitive", false);
             }
+            var docs = member.getMemberTrait(model, DocumentationTrait.class)
+                    .map(DocumentationTrait::getValue)
+                    .map(writer::formatDocs)
+                    .orElse(null);
+            writer.putContext("docs", docs);
 
             var memberName = symbolProvider.toMemberName(member);
             writer.putContext("quote", recursiveShapes.contains(target) ? "'" : "");
             writer.write("""
                     $L: ${quote:L}$T${quote:L}\
                     ${?sensitive} = field(repr=False)${/sensitive}
+                    ${?docs}""\"${docs:L}""\"${/docs}
                     """,
                     memberName,
                     symbolProvider.toSymbol(member));
@@ -227,6 +233,11 @@ public final class StructureGenerator implements Runnable {
             writer.putContext("defaultKey", defaultKey);
             writer.putContext("defaultValue", defaultValue);
             writer.putContext("useField", requiresField);
+            var docs = member.getMemberTrait(model, DocumentationTrait.class)
+                    .map(DocumentationTrait::getValue)
+                    .map(writer::formatDocs)
+                    .orElse(null);
+            writer.putContext("docs", docs);
 
             writer.putContext("quote", recursiveShapes.contains(target) ? "'" : "");
 
@@ -236,31 +247,16 @@ public final class StructureGenerator implements Runnable {
                     = ${^useField}${defaultValue:L}${/useField}\
                     ${?useField}\
                     field(${?sensitive}repr=False, ${/sensitive}${defaultKey:L}=${defaultValue:L})\
-                    ${/useField}""", memberName, symbolProvider.toSymbol(member));
-
+                    ${/useField}
+                    ${?docs}""\"${docs:L}""\"${/docs}""", memberName, symbolProvider.toSymbol(member));
             writer.popState();
         }
     }
 
-    private void writeClassDocs(boolean isError) {
-        if (hasDocs()) {
-            writer.writeDocs(() -> {
-                shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
-                    writer.write(writer.formatDocs(trait.getValue()));
-                });
-
-                if (isError) {
-                    writer.write("\n:param message: A message associated with the " +
-                            "specific error.");
-                }
-
-                if (!shape.members().isEmpty()) {
-                    writer.write("");
-                    requiredMembers.forEach(this::writeMemberDocs);
-                    optionalMembers.forEach(this::writeMemberDocs);
-                }
-            });
-        }
+    private void writeClassDocs(PythonWriter writer) {
+        shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
+            writer.writeDocs(writer.formatDocs(trait.getValue()).trim());
+        });
     }
 
     private List<MemberShape> filterPropertyMembers(List<MemberShape> members) {
