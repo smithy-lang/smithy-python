@@ -3,12 +3,10 @@
 #  pyright: reportMissingTypeStubs=false,reportUnknownMemberType=false
 #  flake8: noqa: F811
 import asyncio
-from asyncio import Future as AsyncFuture
 from collections import deque
 from collections.abc import AsyncGenerator, AsyncIterable
 from concurrent.futures import Future as ConcurrentFuture
 from copy import deepcopy
-from functools import partial
 from io import BufferedIOBase, BytesIO
 from typing import TYPE_CHECKING, Any
 
@@ -108,7 +106,6 @@ class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
 class CRTResponseBody:
     def __init__(self) -> None:
         self._stream: crt_http.HttpClientStreamAsync | None = None
-        self._completion_future: AsyncFuture[int] | None = None
 
     def set_stream(self, stream: "crt_http.HttpClientStreamAsync") -> None:
         if self._stream is not None:
