@@ -3,18 +3,12 @@
 #  pyright: reportMissingTypeStubs=false,reportUnknownMemberType=false
 #  flake8: noqa: F811
 import asyncio
-from collections import deque
 from collections.abc import AsyncGenerator, AsyncIterable
-from concurrent.futures import Future as ConcurrentFuture
 from copy import deepcopy
-from io import BufferedIOBase, BytesIO
+from io import BytesIO
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    # Both of these are types that essentially are "castable to bytes/memoryview"
-    # Unfortunately they're not exposed anywhere so we have to import them from
-    # _typeshed.
-    from _typeshed import ReadableBuffer, WriteableBuffer
 
     # pyright doesn't like optional imports. This is reasonable because if we use these
     # in type hints then they'd result in runtime errors.
@@ -115,7 +109,7 @@ class CRTResponseBody:
         self._stream.activate()
 
     async def next(self) -> bytes:
-        return await self._stream.next()
+        return await self._stream.get_next_response_chunk()
 
 
 class CRTResponseFactory:
@@ -124,10 +118,8 @@ class CRTResponseFactory:
         self._stream = stream
 
     async def await_response(self) -> AWSCRTHTTPResponse:
-        status_code = await self._stream.response_status_code()
-        headers = await self._stream.response_headers()
-        print(f"Response headers: {headers}")
-        print(f"status: {status_code}")
+        status_code = await self._stream.get_response_status_code()
+        headers = await self._stream.get_response_headers()
         fields = Fields()
         for header_name, header_val in headers:
             try:
@@ -192,7 +184,6 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         crt_request = self._marshal_request(request)
         connection = await self._get_connection(request.destination)
         response_body = CRTResponseBody()
-        # TODO: assert the connection is HTTP/2
         crt_stream = connection.request(
             crt_request,
             manual_write=True  # allow manual stream write.
@@ -205,7 +196,6 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             # If the body is already directly in memory, wrap in a BytesIO to hand
             # off to CRT.
             crt_body = BytesIO(body)
-            # TODO handle error, and it returns a future for now.
             await crt_stream.write_data_async(crt_body, True)
         else:
             # If the body is async, or potentially very large, start up a task to read
@@ -217,6 +207,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
                 body = AsyncBytesReader(body)
 
             # Start the read task in the background.
+            # TODO: consider some better way to convert the AsyncBytesReader to use `write_data_async`
             read_task = asyncio.create_task(
                 self._consume_body_async(body, crt_stream))
 
@@ -231,16 +222,15 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
     async def _create_connection(
         self, url: core_interfaces.URI
-    ) -> "crt_http.HttpClientConnection":
+    ) -> "crt_http.Http2ClientConnectionAsync":
         """Builds and validates connection to ``url``"""
-        connect_future = self._build_new_connection(url)
-        connection = await connect_future
+        connection = await self._build_new_connection(url)
         self._validate_connection(connection)
         return connection
 
     async def _get_connection(
         self, url: core_interfaces.URI
-    ) -> "crt_http.HttpClientConnection":
+    ) -> "crt_http.Http2ClientConnectionAsync":
         # TODO: Use CRT connection pooling instead of this basic kind
         connection_key = (url.scheme, url.host, url.port)
         connection = self._connections.get(connection_key)
@@ -252,9 +242,9 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         self._connections[connection_key] = connection
         return connection
 
-    def _build_new_connection(
+    async def _build_new_connection(
         self, url: core_interfaces.URI
-    ) -> ConcurrentFuture["crt_http.HttpClientConnection"]:
+    ) -> "crt_http.Http2ClientConnectionAsync":
         if url.scheme == "http":
             port = self._HTTP_PORT
             tls_connection_options = None
@@ -270,8 +260,8 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             )
         if url.port is not None:
             port = url.port
-
-        return crt_http.Http2ClientConnectionAsync.new(
+        # TODO: support HTTP/1,1 connections
+        return await crt_http.Http2ClientConnectionAsync.new(
             bootstrap=self._client_bootstrap,
             host_name=url.host,
             port=port,
@@ -299,7 +289,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
     def _marshal_request(
         self, request: http_aio_interfaces.HTTPRequest
-    ) -> tuple["crt_http.HttpRequest", "BufferableByteStream | BytesIO"]:
+    ) -> "crt_http_base.HttpRequest":
         """Create :py:class:`awscrt.http.HttpRequest` from
         :py:class:`smithy_http.aio.HTTPRequest`"""
         headers_list = []
@@ -333,103 +323,15 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
     ) -> None:
         try:
             async for chunk in source:
-                # "###################### AWSCRTHTTPClient._consume_body_async chunk")
                 await dest.write_data_async(BytesIO(chunk), False)
         except Exception:
             raise
         finally:
+            await dest.write_data_async(BytesIO(b''), True)
             await close(source)
-        # print("###################### AWSCRTHTTPClient._consume_body_async done")
-        await dest.write_data_async(BytesIO(b''), True)
 
     def __deepcopy__(self, memo: Any) -> "AWSCRTHTTPClient":
         return AWSCRTHTTPClient(
             eventloop=self._eventloop,
             client_config=deepcopy(self._config),
         )
-
-
-# This is adapted from the transcribe streaming sdk
-class BufferableByteStream(BufferedIOBase):
-    """A non-blocking bytes buffer."""
-
-    def __init__(self) -> None:
-        # We're always manipulating the front and back of the buffer, so a deque
-        # will be much more efficient than a list.
-        self._chunks: deque[bytes] = deque()
-        self._closed = False
-        self._done = False
-
-    def read(self, size: int | None = -1) -> bytes:
-        if self._closed:
-            return b""
-
-        if len(self._chunks) == 0:
-            if self._done:
-                self.close()
-                return b""
-            else:
-                # When the CRT recieves this, it'll try again
-                raise BlockingIOError("read")
-
-        # We could compile all the chunks here instead of just returning
-        # the one, BUT the CRT will keep calling read until empty bytes
-        # are returned. So it's actually better to just return one chunk
-        # since combining them would have some potentially bad memory
-        # usage issues.
-        result = self._chunks.popleft()
-        if size is not None and size > 0:
-            remainder = result[size:]
-            result = result[:size]
-            if remainder:
-                self._chunks.appendleft(remainder)
-
-        if self._done and len(self._chunks) == 0:
-            self.close()
-
-        return result
-
-    def read1(self, size: int = -1) -> bytes:
-        return self.read(size)
-
-    def readinto(self, buffer: "WriteableBuffer") -> int:
-        if not isinstance(buffer, memoryview):
-            buffer = memoryview(buffer).cast("B")
-
-        data = self.read(len(buffer))  # type: ignore
-        n = len(data)
-        buffer[:n] = data
-        return n
-
-    def write(self, buffer: "ReadableBuffer") -> int:
-        if not isinstance(buffer, bytes):
-            raise ValueError(
-                f"Unexpected value written to BufferableByteStream. "
-                f"Only bytes are support but {type(buffer)} was provided."
-            )
-
-        if self._closed:
-            raise OSError(
-                "Stream is completed and doesn't support further writes.")
-
-        if buffer:
-            self._chunks.append(buffer)
-        return len(buffer)
-
-    @property
-    def closed(self) -> bool:
-        return self._closed
-
-    def close(self) -> None:
-        self._closed = True
-        self._done = True
-
-        # Clear out the remaining chunks so that they don't sit around in memory.
-        self._chunks.clear()
-
-    def end_stream(self) -> None:
-        """End the stream, letting any remaining chunks be read before it is closed."""
-        if len(self._chunks) == 0:
-            self.close()
-        else:
-            self._done = True
