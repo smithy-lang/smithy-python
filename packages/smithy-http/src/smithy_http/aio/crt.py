@@ -57,11 +57,11 @@ class _AWSCRTEventLoop:
 
 
 class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
-    def __init__(self, *, status: int, fields: Fields, body: "CRTResponseBody") -> None:
+    def __init__(self, *, status: int, fields: Fields, stream: "crt_http.HttpClientStreamAsync") -> None:
         _assert_crt()
         self._status = status
         self._fields = fields
-        self._body = body
+        self._stream = stream
 
     @property
     def status(self) -> int:
@@ -83,7 +83,7 @@ class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
 
     async def chunks(self) -> AsyncGenerator[bytes, None]:
         while True:
-            chunk = await self._body.next()
+            chunk = await self._stream.get_next_response_chunk()
             if chunk:
                 yield chunk
             else:
@@ -94,46 +94,6 @@ class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
             f"AWSCRTHTTPResponse("
             f"status={self.status}, "
             f"fields={self.fields!r}, body=...)"
-        )
-
-
-class CRTResponseBody:
-    def __init__(self) -> None:
-        self._stream: crt_http.HttpClientStreamAsync | None = None
-
-    def set_stream(self, stream: "crt_http.HttpClientStreamAsync") -> None:
-        if self._stream is not None:
-            raise SmithyHTTPException(
-                "Stream already set on AWSCRTHTTPResponse object")
-        self._stream = stream
-        self._stream.activate()
-
-    async def next(self) -> bytes:
-        return await self._stream.get_next_response_chunk()
-
-
-class CRTResponseFactory:
-    def __init__(self, body: CRTResponseBody, stream: "crt_http.HttpClientStreamAsync") -> None:
-        self._body = body
-        self._stream = stream
-
-    async def await_response(self) -> AWSCRTHTTPResponse:
-        status_code = await self._stream.get_response_status_code()
-        headers = await self._stream.get_response_headers()
-        fields = Fields()
-        for header_name, header_val in headers:
-            try:
-                fields[header_name].add(header_val)
-            except KeyError:
-                fields[header_name] = Field(
-                    name=header_name,
-                    values=[header_val],
-                    kind=FieldPosition.HEADER,
-                )
-        return AWSCRTHTTPResponse(
-            status=status_code,
-            fields=fields,
-            body=self._body,
         )
 
 
@@ -183,13 +143,11 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         """
         crt_request = self._marshal_request(request)
         connection = await self._get_connection(request.destination)
-        response_body = CRTResponseBody()
+
         crt_stream = connection.request(
             crt_request,
             manual_write=True  # allow manual stream write.
         )
-        response_factory = CRTResponseFactory(response_body, crt_stream)
-        response_body.set_stream(crt_stream)
 
         body = request.body
         if isinstance(body, bytes | bytearray):
@@ -216,9 +174,28 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             self._async_reads.add(read_task)
             read_task.add_done_callback(self._async_reads.discard)
 
-        response = await response_factory.await_response()
+        return await self.await_response(crt_stream)
 
-        return response
+    async def await_response(
+        self, stream: "crt_http.HttpClientStreamAsync"
+    ) -> AWSCRTHTTPResponse:
+        status_code = await stream.get_response_status_code()
+        headers = await stream.get_response_headers()
+        fields = Fields()
+        for header_name, header_val in headers:
+            try:
+                fields[header_name].add(header_val)
+            except KeyError:
+                fields[header_name] = Field(
+                    name=header_name,
+                    values=[header_val],
+                    kind=FieldPosition.HEADER,
+                )
+        return AWSCRTHTTPResponse(
+            status=status_code,
+            fields=fields,
+            stream=stream,
+        )
 
     async def _create_connection(
         self, url: core_interfaces.URI
