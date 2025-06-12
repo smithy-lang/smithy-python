@@ -165,7 +165,6 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
                 body = AsyncBytesReader(body)
 
             # Start the read task in the background.
-            # TODO: consider some better way to convert the AsyncBytesReader to use `write_data_async`
             read_task = asyncio.create_task(
                 self._consume_body_async(body, crt_stream))
 
@@ -174,9 +173,9 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             self._async_reads.add(read_task)
             read_task.add_done_callback(self._async_reads.discard)
 
-        return await self.await_response(crt_stream)
+        return await self._await_response(crt_stream)
 
-    async def await_response(
+    async def _await_response(
         self, stream: "crt_http.HttpClientStreamAsync"
     ) -> AWSCRTHTTPResponse:
         status_code = await stream.get_response_status_code()
