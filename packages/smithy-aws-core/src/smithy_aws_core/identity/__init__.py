@@ -8,6 +8,18 @@ from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.interfaces.identity import Identity
 from smithy_core.types import PropertyKey
 
+from .container import ContainerCredentialResolver
+from .environment import EnvironmentCredentialsResolver
+from .imds import IMDSCredentialsResolver
+from .static import StaticCredentialsResolver
+
+
+__all__ = (
+    "ContainerCredentialResolver",
+    "EnvironmentCredentialsResolver",
+    "IMDSCredentialsResolver",
+    "StaticCredentialsResolver",
+)
 
 @dataclass(kw_only=True)
 class AWSCredentialsIdentity(Identity):
