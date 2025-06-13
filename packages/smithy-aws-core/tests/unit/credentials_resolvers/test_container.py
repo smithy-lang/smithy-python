@@ -41,6 +41,14 @@ def mock_http_client_response(status: int, body: bytes):
     return http_client
 
 
+def _assert_expected_credentials(
+    creds: dict[str, str], access_key_id: str, secret_key_id: str, token: str
+) -> None:
+    assert creds["AccessKeyId"] == access_key_id
+    assert creds["SecretAccessKey"] == secret_key_id
+    assert creds["Token"] == token
+
+
 @pytest.mark.asyncio
 @pytest.mark.parametrize(
     "host",
@@ -56,9 +64,21 @@ async def test_metadata_client_valid_host(host: str):
     uri = URI(scheme="http", host=host)
 
     creds = await client.get_credentials(uri, Fields())
-    assert creds["AccessKeyId"] == "akid123"
-    assert creds["SecretAccessKey"] == "s3cr3t"
-    assert creds["Token"] == "session_token"
+    _assert_expected_credentials(creds, "akid123", "s3cr3t", "session_token")
+
+
+@pytest.mark.asyncio
+async def test_metadata_client_https_host():
+    resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
+    http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
+    config = ContainerCredentialConfig()
+    client = ContainerMetadataClient(http_client, config)
+
+    # Valid HTTPS Host
+    uri = URI(scheme="https", host="169.254.170.2")
+
+    creds = await client.get_credentials(uri, Fields())
+    _assert_expected_credentials(creds, "akid123", "s3cr3t", "session_token")
 
 
 @pytest.mark.asyncio
