@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import typing
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -24,6 +25,8 @@ DEFAULT_RESPONSE_DATA = {
     "SecretAccessKey": "s3cr3t",
     "Token": "session_token",
 }
+
+ISO8601 = "%Y-%m-%dT%H:%M:%SZ"
 
 
 def test_config_custom_values():
@@ -307,6 +310,48 @@ async def test_resolver_env_token_file_precedence(tmp_path: pathlib.Path):
     assert auth_field.as_string() == "Bearer barfoo"
 
     _assert_expected_identity(identity)
+
+
+@pytest.mark.asyncio
+async def test_resolver_valid_credentials_reused():
+    custom_resp_data = dict(DEFAULT_RESPONSE_DATA)
+    current_time = datetime.now(UTC) + timedelta(minutes=10)
+    custom_resp_data["Expiration"] = current_time.strftime(ISO8601)
+
+    resp_body = json.dumps(custom_resp_data)
+    http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
+
+    with patch.dict(os.environ, {ContainerCredentialResolver.ENV_VAR: "/test"}):
+        resolver = ContainerCredentialResolver(http_client)
+        identity_one = await resolver.get_identity(identity_properties={})
+        identity_two = await resolver.get_identity(identity_properties={})
+
+    _assert_expected_identity(identity_one)
+    # Validate we got the same unexpired identity instance from both calls
+    assert identity_one is identity_two
+
+
+@pytest.mark.asyncio
+async def test_resolver_expired_credentials_refreshed():
+    custom_resp_data = dict(DEFAULT_RESPONSE_DATA)
+    current_time = datetime.now(UTC) - timedelta(minutes=10)
+    custom_resp_data["Expiration"] = current_time.strftime(ISO8601)
+
+    resp_body = json.dumps(custom_resp_data)
+    http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
+
+    with patch.dict(os.environ, {ContainerCredentialResolver.ENV_VAR: "/test"}):
+        resolver = ContainerCredentialResolver(http_client)
+        identity_one = await resolver.get_identity(identity_properties={})
+        identity_two = await resolver.get_identity(identity_properties={})
+
+    _assert_expected_identity(identity_one)
+
+    # Validate we got new credentials after we received an expired instance
+    assert identity_one.access_key_id == identity_two.access_key_id
+    assert identity_one.secret_access_key == identity_two.secret_access_key
+    assert identity_one.session_token == identity_two.session_token
+    assert identity_one is not identity_two
 
 
 @pytest.mark.asyncio

@@ -171,6 +171,13 @@ class ContainerCredentialResolver(
     async def get_identity(
         self, *, identity_properties: IdentityProperties
     ) -> AWSCredentialsIdentity:
+        if (
+            self._credentials is not None
+            and self._credentials.expiration
+            and datetime.now(UTC) < self._credentials.expiration
+        ):
+            return self._credentials
+
         uri = await self._resolve_uri_from_env()
         fields = await self._resolve_fields_from_env()
         creds = await self._client.get_credentials(uri, fields)
