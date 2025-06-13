@@ -6,14 +6,14 @@ import typing
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from smithy_aws_core.identity import AWSCredentialsIdentity
-from smithy_aws_core.identity.container import (
+from smithy_aws_core.credentials_resolvers.container import (
     ContainerCredentialConfig,
     ContainerCredentialResolver,
     ContainerMetadataClient,
 )
+from smithy_aws_core.identity import AWSCredentialsIdentity
 from smithy_core import URI
-from smithy_core.exceptions import SmithyIdentityError
+from smithy_core.exceptions import SmithyIdentityException
 from smithy_http import Fields
 
 if typing.TYPE_CHECKING:
@@ -42,14 +42,18 @@ def mock_http_client_response(status: int, body: bytes):
 
 
 @pytest.mark.asyncio
-async def test_metadata_client_valid_host():
+@pytest.mark.parametrize(
+    "host",
+    ["169.254.170.2", "169.254.170.23", "fd00:ec2::23", "localhost", "127.0.0.2"],
+)
+async def test_metadata_client_valid_host(host: str):
     resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
     http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
     config = ContainerCredentialConfig()
     client = ContainerMetadataClient(http_client, config)
 
     # Valid Host
-    uri = URI(scheme="http", host="169.254.170.2")
+    uri = URI(scheme="http", host=host)
 
     creds = await client.get_credentials(uri, Fields())
     assert creds["AccessKeyId"] == "akid123"
@@ -67,7 +71,7 @@ async def test_metadata_client_invalid_host():
     # Invalid Host
     uri = URI(scheme="http", host="169.254.169.254")
 
-    with pytest.raises(SmithyIdentityError):
+    with pytest.raises(SmithyIdentityException):
         await client.get_credentials(uri, Fields())
 
 
@@ -78,7 +82,7 @@ async def test_metadata_client_non_200_response():
     client = ContainerMetadataClient(http_client, config)
 
     uri = URI(scheme="http", host="169.254.170.2")
-    with pytest.raises(SmithyIdentityError) as e:
+    with pytest.raises(SmithyIdentityException) as e:
         await client.get_credentials(uri, Fields())
 
     # Ensure both the received retry error and underlying error are what we expect.
@@ -95,7 +99,7 @@ async def test_metadata_client_invalid_json():
     client = ContainerMetadataClient(http_client, config)
 
     uri = URI(scheme="http", host="169.254.170.2")
-    with pytest.raises(SmithyIdentityError):
+    with pytest.raises(SmithyIdentityException):
         await client.get_credentials(uri, Fields())
 
 
@@ -113,7 +117,7 @@ async def test_metadata_client_retries():
     uri = URI(scheme="http", host="169.254.170.2", path="/task")
     http_client.send.side_effect = Exception()
 
-    with pytest.raises(SmithyIdentityError):
+    with pytest.raises(SmithyIdentityException):
         await client.get_credentials(uri, Fields())
     assert http_client.send.call_count == 2
 
@@ -125,7 +129,7 @@ async def test_resolver_env_relative():
 
     with patch.dict(os.environ, {ContainerCredentialResolver.ENV_VAR: "/test"}):
         resolver = ContainerCredentialResolver(http_client)
-        identity = await resolver.get_identity(properties={})
+        identity = await resolver.get_identity(identity_properties={})
 
     # Ensure we derive the correct destination
     expected_url = URI(
@@ -149,7 +153,7 @@ async def test_resolver_env_full():
         {ContainerCredentialResolver.ENV_VAR_FULL: "http://169.254.170.23/full"},
     ):
         resolver = ContainerCredentialResolver(http_client)
-        identity = await resolver.get_identity(properties={})
+        identity = await resolver.get_identity(identity_properties={})
 
     # Ensure we derive the correct destination
     expected_url = URI(
@@ -176,7 +180,7 @@ async def test_resolver_env_token():
         },
     ):
         resolver = ContainerCredentialResolver(http_client)
-        identity = await resolver.get_identity(properties={})
+        identity = await resolver.get_identity(identity_properties={})
 
     # Ensure we derive the correct destination and fields
     expected_url = URI(
@@ -210,7 +214,7 @@ async def test_resolver_env_token_file(tmp_path: pathlib.Path):
         },
     ):
         resolver = ContainerCredentialResolver(http_client)
-        identity = await resolver.get_identity(properties={})
+        identity = await resolver.get_identity(identity_properties={})
 
     # Ensure we derive the correct destination and fields
     expected_url = URI(
@@ -226,6 +230,27 @@ async def test_resolver_env_token_file(tmp_path: pathlib.Path):
     assert auth_field.as_string() == "Bearer barfoo"
 
     _assert_expected_identity(identity)
+
+
+@pytest.mark.asyncio
+async def test_resolver_env_token_file_invalid_bytes(tmp_path: pathlib.Path):
+    resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
+    http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
+
+    token_file = tmp_path / "token_file"
+    token_file.write_bytes(b"Bearer bar\xff\xfe\xfafoo")
+
+    with patch.dict(
+        os.environ,
+        {
+            ContainerCredentialResolver.ENV_VAR_FULL: "http://169.254.170.23/full",
+            ContainerCredentialResolver.ENV_VAR_AUTH_TOKEN_FILE: str(token_file),
+        },
+    ):
+        resolver = ContainerCredentialResolver(http_client)
+        with pytest.raises(SmithyIdentityException) as e:
+            await resolver.get_identity(identity_properties={})
+        assert "Unable to read valid utf-8 bytes from " in str(e.value)
 
 
 @pytest.mark.asyncio
@@ -246,7 +271,7 @@ async def test_resolver_env_token_file_precedence(tmp_path: pathlib.Path):
         },
     ):
         resolver = ContainerCredentialResolver(http_client)
-        identity = await resolver.get_identity(properties={})
+        identity = await resolver.get_identity(identity_properties={})
 
     # Ensure we derive the correct destination and fields
     expected_url = URI(
@@ -271,5 +296,5 @@ async def test_resolver_missing_env():
 
     with patch.dict(os.environ, {}):
         resolver = ContainerCredentialResolver(http_client)
-        with pytest.raises(SmithyIdentityError):
-            await resolver.get_identity(properties={})
+        with pytest.raises(SmithyIdentityException):
+            await resolver.get_identity(identity_properties={})

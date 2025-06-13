@@ -10,12 +10,12 @@ from urllib.parse import urlparse
 
 from smithy_core import URI
 from smithy_core.aio.interfaces.identity import IdentityResolver
-from smithy_core.exceptions import SmithyIdentityError
+from smithy_core.exceptions import SmithyIdentityException
 from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest
 from smithy_http.aio.interfaces import HTTPClient, HTTPResponse
 
-from smithy_aws_core.identity import AWSCredentialsIdentity, AWSIdentityProperties
+from smithy_aws_core.identity import AWSCredentialsIdentity, IdentityProperties
 
 _CONTAINER_METADATA_IP = "169.254.170.2"
 _CONTAINER_METADATA_ALLOWED_HOSTS = {
@@ -49,7 +49,7 @@ class ContainerMetadataClient:
             return
 
         if not self._is_allowed_container_metadata_host(uri.host):
-            raise SmithyIdentityError(
+            raise SmithyIdentityException(
                 f"Unsupported host '{uri.host}'. "
                 f"Can only retrieve metadata from a loopback address or "
                 f"one of: {', '.join(_CONTAINER_METADATA_ALLOWED_HOSTS)}"
@@ -71,14 +71,14 @@ class ContainerMetadataClient:
                 response: HTTPResponse = await self._http_client.send(request)
                 body = await response.consume_body_async()
                 if response.status != 200:
-                    raise SmithyIdentityError(
+                    raise SmithyIdentityException(
                         f"Container metadata service returned {response.status}: "
                         f"{body.decode('utf-8')}"
                     )
                 try:
                     return json.loads(body.decode("utf-8"))
                 except Exception as e:
-                    raise SmithyIdentityError(
+                    raise SmithyIdentityException(
                         f"Unable to parse JSON from container metadata: {body.decode('utf-8')}"
                     ) from e
             except Exception as e:
@@ -86,7 +86,7 @@ class ContainerMetadataClient:
                 await asyncio.sleep(_SLEEP_SECONDS)
                 attempts += 1
 
-        raise SmithyIdentityError(
+        raise SmithyIdentityException(
             f"Failed to retrieve container metadata after {self._config.retries} attempt(s)"
         ) from last_exc
 
@@ -101,7 +101,7 @@ class ContainerMetadataClient:
 
 
 class ContainerCredentialResolver(
-    IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
+    IdentityResolver[AWSCredentialsIdentity, IdentityProperties]
 ):
     """Resolves AWS Credentials from container credential sources."""
 
@@ -136,7 +136,7 @@ class ContainerCredentialResolver(
                 path=parsed.path,
             )
         else:
-            raise SmithyIdentityError(
+            raise SmithyIdentityException(
                 f"Neither {self.ENV_VAR} or {self.ENV_VAR_FULL} environment "
                 "variables are set. Unable to resolve credentials."
             )
@@ -148,7 +148,7 @@ class ContainerCredentialResolver(
                 filename = os.environ[self.ENV_VAR_AUTH_TOKEN_FILE]
                 auth_token = await asyncio.to_thread(self._read_file, filename)
             except (FileNotFoundError, PermissionError) as e:
-                raise SmithyIdentityError(
+                raise SmithyIdentityException(
                     f"Unable to open {os.environ[self.ENV_VAR_AUTH_TOKEN_FILE]}."
                 ) from e
 
@@ -161,10 +161,15 @@ class ContainerCredentialResolver(
 
     def _read_file(self, filename: str) -> str:
         with open(filename) as f:
-            return f.read().strip()
+            try:
+                return f.read().strip()
+            except UnicodeDecodeError as e:
+                raise SmithyIdentityException(
+                    f"Unable to read valid utf-8 bytes from {filename}."
+                ) from e
 
     async def get_identity(
-        self, *, properties: AWSIdentityProperties
+        self, *, identity_properties: IdentityProperties
     ) -> AWSCredentialsIdentity:
         uri = await self._resolve_uri_from_env()
         fields = await self._resolve_fields_from_env()
@@ -180,7 +185,7 @@ class ContainerCredentialResolver(
             expiration = datetime.fromisoformat(expiration).replace(tzinfo=UTC)
 
         if access_key_id is None or secret_access_key is None:
-            raise SmithyIdentityError(
+            raise SmithyIdentityException(
                 "AccessKeyId and SecretAccessKey are required for container credentials"
             )
 
