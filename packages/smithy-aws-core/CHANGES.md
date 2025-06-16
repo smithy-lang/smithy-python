@@ -4,6 +4,11 @@
 
 * <Add new items here>
 
+## v0.0.2
+
+### Feature
+* Added support for Container credential resolution, commonly used with ECS/EKS.
+
 ## v0.0.1
 
 ### Feature
