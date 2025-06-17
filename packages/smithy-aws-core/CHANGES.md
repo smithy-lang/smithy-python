@@ -4,6 +4,12 @@
 
 * <Add new items here>
 
+## v0.0.3
+
+### Bugfixes
+* Rename `ContainerCredentialResolver` to `ContainerCredentialsResolver` to
+  match new naming standard.
+
 ## v0.0.2
 
 ### Feature
