@@ -1,0 +1,22 @@
+header:
+  license:
+    spdx-id: Apache-2.0
+    copyright-owner: Amazon.com, Inc. or its affiliates.
+    content: |
+      Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+      SPDX-License-Identifier: Apache-2.0 
+    
+  paths:
+    - '**/*.py'
+
+  paths-ignore:
+    - '**/*.md'
+    - '**/*.java'
+    - 'LICENSE'
+    - 'NOTICE'
+    - '**/smithy_core/rfc3986.py'
+
+  language:
+    Python:
+      extensions:
+        - ".py"
