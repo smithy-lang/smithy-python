@@ -1,3 +1,5 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 """Binary Event Stream support for the application/vnd.amazon.eventstream format."""
 
 from typing import Any
