@@ -1,3 +1,5 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 from io import BytesIO
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
