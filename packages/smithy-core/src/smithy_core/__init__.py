@@ -6,7 +6,8 @@ from enum import Enum
 from functools import cached_property
 from urllib.parse import urlunparse
 
-from . import interfaces, rfc3986
+from . import interfaces
+from ._vendored import rfc3986 as _rfc3986
 from .exceptions import SmithyError
 
 __version__: str = importlib.metadata.version("smithy-core")
@@ -58,7 +59,7 @@ class URI(interfaces.URI):
 
     def __post_init__(self) -> None:
         """Validate host component."""
-        if not rfc3986.HOST_MATCHER.match(self.host) and not rfc3986.IPv6_MATCHER.match(
+        if not _rfc3986.HOST_MATCHER.match(self.host) and not _rfc3986.IPv6_MATCHER.match(
             f"[{self.host}]"
         ):
             raise SmithyError(f"Invalid host: {self.host}")
@@ -102,11 +103,11 @@ class URI(interfaces.URI):
 
     @cached_property
     def _host_type(self) -> HostType:
-        if rfc3986.IPv6_MATCHER.match(f"[{self.host}]"):
+        if _rfc3986.IPv6_MATCHER.match(f"[{self.host}]"):
             return HostType.IPv6
-        if rfc3986.IPv4_MATCHER.match(self.host):
+        if _rfc3986.IPv4_MATCHER.match(self.host):
             return HostType.IPv4
-        if rfc3986.HOST_MATCHER.match(self.host):
+        if _rfc3986.HOST_MATCHER.match(self.host):
             return HostType.DOMAIN
         return HostType.UNKNOWN
 
