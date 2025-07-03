@@ -1,3 +1,5 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 import pytest
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
 from smithy_core.documents import Document, TypeRegistry
