@@ -34,7 +34,14 @@ check-py: ## Runs checks (formatting, lints, type-checking) on the python packag
 
 
 test-py: ## Runs tests for the python packages.
-	uv run pytest packages
+    # NOTE: Due to namespace collisions with identically named test files across packages,
+    # run tests per package: uv run pytest packages/package-name/tests
+	@for pkg in packages/*/; do \
+		if [ -d "$$pkg/tests" ]; then \
+			echo "Running tests for $$pkg"; \
+			uv run pytest "$$pkg/tests" || exit 1; \
+		fi; \
+	done
 
 
 build-py: ## Builds the python packages.
