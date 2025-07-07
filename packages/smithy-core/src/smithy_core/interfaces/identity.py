@@ -14,6 +14,10 @@ class Identity(Protocol):
     If time zone is provided, it is updated to UTC. The value must always be in UTC.
     """
 
+    def __post_init__(self) -> None:
+        if self.expiration is not None:
+            self.expiration = self.expiration.astimezone(UTC)
+
     @property
     def is_expired(self) -> bool:
         """Whether the identity is expired."""
