@@ -3,6 +3,8 @@
 from datetime import UTC, datetime
 from typing import Protocol, runtime_checkable
 
+from ..utils import ensure_utc
+
 
 @runtime_checkable
 class Identity(Protocol):
@@ -16,7 +18,7 @@ class Identity(Protocol):
 
     def __post_init__(self) -> None:
         if self.expiration is not None:
-            self.expiration = self.expiration.astimezone(UTC)
+            self.expiration = ensure_utc(self.expiration)
 
     @property
     def is_expired(self) -> bool:
