@@ -34,8 +34,8 @@ exclude = [
  "tests",
 ]
 
-[project.optional-dependencies]
-test = [
+[dependency-groups]
+dev = [
     "freezegun",
     "pytest",
     "pytest-asyncio",

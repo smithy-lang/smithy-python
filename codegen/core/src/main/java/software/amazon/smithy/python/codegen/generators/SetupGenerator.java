@@ -153,7 +153,7 @@ public final class SetupGenerator {
                             .map(Map::values);
 
             if (testDeps.isPresent() || docsDeps.isPresent()) {
-                writer.write("[project.optional-dependencies]");
+                writer.write("[dependency-groups]");
             }
 
             testDeps.ifPresent(deps -> {

@@ -97,8 +97,8 @@ name = "aws-sdk-signers"
 version = "0.0.3"
 source = { editable = "packages/aws-sdk-signers" }
 
-[package.optional-dependencies]
-test = [
+[package.dev-dependencies]
+dev = [
     { name = "freezegun" },
     { name = "mypy" },
     { name = "pytest" },
@@ -107,14 +107,15 @@ test = [
 ]
 
 [package.metadata]
-requires-dist = [
-    { name = "freezegun", marker = "extra == 'test'" },
-    { name = "mypy", marker = "extra == 'test'" },
-    { name = "pytest", marker = "extra == 'test'" },
-    { name = "pytest-asyncio", marker = "extra == 'test'" },
-    { name = "ruff", marker = "extra == 'test'" },
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "freezegun" },
+    { name = "mypy" },
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+    { name = "ruff" },
 ]
-provides-extras = ["test"]
 
 [[package]]
 name = "awscrt"
