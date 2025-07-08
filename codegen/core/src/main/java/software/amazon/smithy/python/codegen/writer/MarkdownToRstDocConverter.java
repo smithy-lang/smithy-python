@@ -99,7 +99,7 @@ public class MarkdownToRstDocConverter {
                     }
                     // Account for services making a paragraph tag that's empty except
                     // for a newline
-                } else if (node.parent() instanceof Element && ((Element) node.parent()).tagName().equals("p")) {
+                } else if (node.parent() != null && ((Element) node.parent()).tagName().equals("p")) {
                     writer.writeInline(text.replaceAll("[ \\t]+", ""));
                 }
             } else if (node instanceof Element) {
