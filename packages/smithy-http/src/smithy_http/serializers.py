@@ -481,15 +481,15 @@ class HTTPHeaderSerializer(SpecificShapeSerializer):
 
     def write_float(self, schema: Schema, value: float) -> None:
         key = self._key or schema.expect_trait(HTTPHeaderTrait).key
-        self.headers.append((key, str(value)))
+        self.headers.append((key, serialize_float(value)))
 
     def write_double(self, schema: Schema, value: float) -> None:
         key = self._key or schema.expect_trait(HTTPHeaderTrait).key
-        self.headers.append((key, str(value)))
+        self.headers.append((key, serialize_float(value)))
 
     def write_big_decimal(self, schema: Schema, value: Decimal) -> None:
         key = self._key or schema.expect_trait(HTTPHeaderTrait).key
-        self.headers.append((key, str(value.canonical())))
+        self.headers.append((key, serialize_float(value)))
 
     def write_string(self, schema: Schema, value: str) -> None:
         key = self._key or schema.expect_trait(HTTPHeaderTrait).key
