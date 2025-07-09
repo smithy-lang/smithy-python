@@ -412,12 +412,19 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 option, scheme = auth
                 request_context.properties[AUTH_SCHEME] = scheme
                 identity_resolver = scheme.identity_resolver(context=call.context)
+
+                identity_properties = scheme.identity_properties(
+                    context=request_context.properties
+                ).update(option.identity_properties)
                 identity = await identity_resolver.get_identity(
-                    properties=option.identity_properties
+                    properties=identity_properties
                 )
 
+                signer_properties = scheme.signer_properties(
+                    context=request_context.properties
+                ).update(option.identity_properties)
                 _LOGGER.debug("Request to sign: %s", request_context.transport_request)
-                _LOGGER.debug("Signer properties: %s", option.signer_properties)
+                _LOGGER.debug("Signer properties: %s", signer_properties)
 
                 signer = scheme.signer()
                 request_context = replace(
@@ -425,7 +432,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                     transport_request=await signer.sign(
                         request=request_context.transport_request,
                         identity=identity,
-                        properties=option.signer_properties,
+                        properties=signer_properties,
                     ),
                 )
 
