@@ -157,7 +157,7 @@ public final class SetupGenerator {
             }
 
             testDeps.ifPresent(deps -> {
-                writer.openBlock("tests = [", "]\n", () -> writeDependencyList(writer, deps));
+                writer.openBlock("test = [", "]\n", () -> writeDependencyList(writer, deps));
             });
 
             docsDeps.ifPresent(deps -> {
