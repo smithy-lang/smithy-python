@@ -150,7 +150,7 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                 content_length = payload.tell()
             else:
                 content_type = None
-                content_length = 0
+                content_length = None
                 binding_serializer = HTTPRequestBindingSerializer(
                     payload_serializer,
                     self._http_trait.path,
@@ -329,7 +329,7 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
                 content_length = payload.tell()
             else:
                 content_type = None
-                content_length = 0
+                content_length = None
                 binding_serializer = HTTPResponseBindingSerializer(
                     payload_serializer,
                     binding_matcher,
