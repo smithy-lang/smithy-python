@@ -34,14 +34,6 @@ exclude = [
  "tests",
 ]
 
-[project.optional-dependencies]
-test = [
-    "freezegun",
-    "pytest",
-    "pytest-asyncio",
-    "mypy",
-    "ruff",
-]
 
 [tool.pytest.ini_options]
 asyncio_mode = "auto"

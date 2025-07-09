@@ -7,9 +7,8 @@ requires-python = ">=3.12"
 dependencies = []
 
 [dependency-groups]
-dev = [
-    "freezegun>=1.5.1",
-    "typing_extensions>=4.13.0"
+typing = [
+    "typing_extensions>=4.13.0",
 ]
 
 [build-system]
