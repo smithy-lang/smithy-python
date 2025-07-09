@@ -1,9 +1,9 @@
 [versions]
-junit5 = "5.13.2"
-smithy = "1.60.0"
+junit5 = "5.13.3"
+smithy = "1.60.3"
 test-logger-plugin = "4.0.0"
 spotbugs = "6.0.22"
-spotless = "7.0.4"
+spotless = "7.1.0"
 smithy-gradle-plugins = "1.3.0"
 dep-analysis = "2.19.0"
 jsoup = "1.21.1"
