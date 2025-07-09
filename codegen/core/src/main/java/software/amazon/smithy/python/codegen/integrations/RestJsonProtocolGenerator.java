@@ -52,8 +52,9 @@ public class RestJsonProtocolGenerator implements ProtocolGenerator {
             "SDKAppliedContentEncoding_restJson1",
             "SDKAppendedGzipAfterProvidedEncoding_restJson1",
 
-            // TODO: update union deserialization to ignore `__type` for JSON protocols
-            "RestJsonDeserializeIgnoreType",
+            // TODO: These tests require a payload even when the httpPayload member is null. Should it?
+            "RestJsonHttpWithHeadersButNoPayload",
+            "RestJsonHttpWithEmptyStructurePayload",
 
             // These tests do need to be fixed, but they're being disabled right now
             // since the way protocols work is changing.
@@ -62,10 +63,6 @@ public class RestJsonProtocolGenerator implements ProtocolGenerator {
             "RestJsonClientUsesExplicitlyProvidedMemberValuesOverDefaults",
             "RestJsonClientIgnoresNonTopLevelDefaultsOnMembersWithClientOptional",
             "RestJsonClientPopulatesDefaultsValuesWhenMissingInResponse",
-            "RestJsonClientIgnoresDefaultValuesIfMemberValuesArePresentInResponse",
-            "RestJsonClientPopulatesNestedDefaultsWhenMissingInResponseBody",
-            "RestJsonHttpPrefixEmptyHeaders",
-            "RestJsonNullAndEmptyHeaders",
             "HttpPrefixEmptyHeaders");
 
     @Override
