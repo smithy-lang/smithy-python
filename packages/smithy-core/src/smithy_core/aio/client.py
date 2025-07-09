@@ -6,7 +6,7 @@ from asyncio import Future, sleep
 from collections.abc import Awaitable, Callable, Sequence
 from copy import copy
 from dataclasses import dataclass, replace
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from .. import URI
 from ..auth import AuthParams
@@ -38,6 +38,9 @@ from .interfaces import (
 from .interfaces.auth import AuthScheme
 from .interfaces.eventstream import EventReceiver
 from .utils import seek
+
+if TYPE_CHECKING:
+    from typing_extensions import TypeForm
 
 AUTH_SCHEME = PropertyKey(key="auth_scheme", value_type=AuthScheme[Any, Any, Any, Any])
 
@@ -117,7 +120,9 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         I: SerializeableShape,
         O: DeserializeableShape,
         E: SerializeableShape,
-    ](self, call: ClientCall[I, O], event_type: type[E], /) -> InputEventStream[E, O]:
+    ](
+        self, call: ClientCall[I, O], event_type: "TypeForm[E]", /
+    ) -> InputEventStream[E, O]:
         """Invoke an input stream operation asynchronously.
 
         :param call: The operation to invoke and associated context.
@@ -151,7 +156,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
     ](
         self,
         call: ClientCall[I, O],
-        event_type: type[E],
+        event_type: "TypeForm[E]",
         event_deserializer: Callable[[ShapeDeserializer], E],
         /,
     ) -> OutputEventStream[E, O]:
@@ -180,8 +185,8 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
     ](
         self,
         call: ClientCall[I, O],
-        input_event_type: type[IE],
-        output_event_type: type[OE],
+        input_event_type: "TypeForm[IE]",
+        output_event_type: "TypeForm[OE]",
         event_deserializer: Callable[[ShapeDeserializer], OE],
         /,
     ) -> DuplexEventStream[IE, OE, O]:
@@ -220,7 +225,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         self,
         call: ClientCall[I, O],
         execute_task: Awaitable[tuple[O, OutputContext[I, O, TRequest, TResponse]]],
-        output_event_type: type[OE],
+        output_event_type: "TypeForm[OE]",
         event_deserializer: Callable[[ShapeDeserializer], OE],
     ) -> tuple[O, EventReceiver[OE]]:
         output, output_context = await execute_task
