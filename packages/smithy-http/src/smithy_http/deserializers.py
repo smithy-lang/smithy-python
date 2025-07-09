@@ -124,7 +124,11 @@ class HTTPResponseDeserializer(SpecificShapeDeserializer):
         return False
 
     def _create_payload_deserializer(self, payload_member: Schema) -> ShapeDeserializer:
-        if payload_member.shape_type in (ShapeType.BLOB, ShapeType.STRING):
+        if payload_member.shape_type in (
+            ShapeType.BLOB,
+            ShapeType.STRING,
+            ShapeType.ENUM,
+        ):
             body = self._body if self._body is not None else self._response.body
             return RawPayloadDeserializer(body)
         return self._create_body_deserializer()
