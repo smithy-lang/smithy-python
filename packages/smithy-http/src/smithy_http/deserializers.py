@@ -4,8 +4,11 @@ import datetime
 from base64 import b64decode
 from collections.abc import Callable
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from inspect import iscoroutinefunction
+from typing import TYPE_CHECKING, Any, TypeGuard
 
+from smithy_core.aio.interfaces import AsyncByteStream
+from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import ShapeDeserializer, SpecificShapeDeserializer
 from smithy_core.exceptions import UnsupportedStreamError
@@ -295,7 +298,14 @@ class RawPayloadDeserializer(SpecificShapeDeserializer):
         return self._consume_payload()
 
     def read_data_stream(self, schema: Schema) -> "AsyncStreamingBlob":
-        return self._payload
+        if self._is_async_reader(self._payload):
+            return self._payload
+        return AsyncBytesReader(self._payload)
+
+    def _is_async_reader(self, obj: Any) -> TypeGuard[AsyncByteStream]:
+        return isinstance(obj, AsyncByteStream) and iscoroutinefunction(
+            getattr(obj, "read")
+        )
 
     def _consume_payload(self) -> bytes:
         if isinstance(self._payload, bytes):
