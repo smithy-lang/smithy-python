@@ -383,7 +383,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 input=call.input,
                 context=request_context.properties,
             )
-            _LOGGER.debug("Calling endpoint resolver.")
+            _LOGGER.debug("Calling endpoint resolver with params: %s", endpoint_params)
             endpoint: Endpoint = await call.endpoint_resolver.resolve_endpoint(
                 endpoint_params
             )
