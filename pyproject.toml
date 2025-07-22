@@ -45,6 +45,7 @@ enableExperimentalFeatures = true
 [tool.pytest.ini_options]
 asyncio_mode = "auto" # makes pytest run async tests without having to be marked with the @pytest.mark.asyncio decorator
 addopts = [ "--import-mode=importlib", "--cov", "--cov-report=term-missing" ]
+consider_namespace_packages = true
 
 [tool.docformatter]
 recursive = true
