@@ -1,12 +1,38 @@
 [project]
 name = "smithy-aws-event-stream"
 version = "0.0.1"
+requires-python = ">=3.12"
+authors = [
+  {name = "Amazon Web Services"},
+]
 description = "Smithy components for Amazon Event Streams."
 readme = "README.md"
-requires-python = ">=3.12"
+license = {text = "Apache License 2.0"}
+keywords = ["aws", "sdk", "amazon", "smithy", "eventstream"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "Natural Language :: English",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Topic :: Software Development :: Libraries"
+]
 dependencies = [
     "smithy-core",
 ]
+
+[project.urls]
+"Changelog" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-aws-event-stream/CHANGES.md"
+"Code" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-aws-event-stream/"
+"Issue tracker" = "https://github.com/smithy-lang/smithy-python/issues"
 
 [build-system]
 requires = ["hatchling"]
