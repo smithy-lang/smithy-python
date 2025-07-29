@@ -44,9 +44,9 @@ type AWSCredentialsResolver = IdentityResolver[
 
 
 class AWSIdentityConfig(Protocol):
-    access_key_id: str | None
-    secret_access_key: str | None
-    session_token: str | None = None
+    aws_access_key_id: str | None
+    aws_secret_access_key: str | None
+    aws_session_token: str | None = None
 
 
 AWS_IDENTITY_CONFIG = PropertyKey(key="config", value_type=AWSIdentityConfig)
