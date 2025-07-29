@@ -1661,7 +1661,7 @@ def host_cases() -> list[HTTPMessageTestCase]:
             HostLabel("foo"),
             HTTPMessage(
                 destination=URI(host="foo.", path="/"),
-                body=BytesIO(b'{"label":"foo"}'),
+                body=AsyncBytesReader(BytesIO(b'{"label":"foo"}')),
                 fields=tuples_to_fields(
                     [("content-type", "application/json"), ("content-length", "15")]
                 ),
@@ -1690,7 +1690,7 @@ def payload_cases() -> list[HTTPMessageTestCase]:
                         ("content-length", "24"),
                     ]
                 ),
-                body=BytesIO(b'{"payload_member":"bar"}'),
+                body=AsyncBytesReader(BytesIO(b'{"payload_member":"bar"}')),
             ),
         ),
         HTTPMessageTestCase(
@@ -1699,7 +1699,7 @@ def payload_cases() -> list[HTTPMessageTestCase]:
                 fields=tuples_to_fields(
                     [("content-type", "text/plain"), ("content-length", "3")]
                 ),
-                body=b"foo",
+                body=AsyncBytesReader(b"foo"),
             ),
         ),
         HTTPMessageTestCase(
@@ -1711,13 +1711,13 @@ def payload_cases() -> list[HTTPMessageTestCase]:
                         ("content-length", "4"),
                     ]
                 ),
-                body=b"\xde\xad\xbe\xef",
+                body=AsyncBytesReader(b"\xde\xad\xbe\xef"),
             ),
         ),
         HTTPMessageTestCase(
             HTTPStructuredPayload(payload=HTTPStringPayload(payload="foo")),
             HTTPMessage(
-                body=BytesIO(b'{"payload":"foo"}'),
+                body=AsyncBytesReader(BytesIO(b'{"payload":"foo"}')),
                 fields=tuples_to_fields(
                     [("content-type", "application/json"), ("content-length", "17")]
                 ),
@@ -1726,7 +1726,7 @@ def payload_cases() -> list[HTTPMessageTestCase]:
         HTTPMessageTestCase(
             HTTPStructuredPayload(HTTPStringPayload()),
             HTTPMessage(
-                body=BytesIO(b"{}"),
+                body=AsyncBytesReader(BytesIO(b"{}")),
                 fields=tuples_to_fields(
                     [("content-type", "application/json"), ("content-length", "2")]
                 ),
