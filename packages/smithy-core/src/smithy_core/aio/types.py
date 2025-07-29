@@ -10,7 +10,7 @@ from typing import Any, Self, cast
 from ..exceptions import SmithyError
 from ..interfaces import BytesReader
 from .interfaces import AsyncByteStream, StreamingBlob
-from .utils import close
+from .utils import close, seek
 
 # The default chunk size for iterating streams.
 _DEFAULT_CHUNK_SIZE = 1024
@@ -33,11 +33,20 @@ class AsyncBytesReader:
         :param data: The source data to read from.
         """
         self._remainder = b""
+
         # pylint: disable-next=isinstance-second-argument-not-valid-type
         if isinstance(data, bytes | bytearray):
             self._data = BytesIO(data)
         else:
             self._data = data
+
+        if hasattr(self._data, "seek"):
+            if (seekable := getattr(self._data, "seekable", None)) is not None:
+                self._seekable = seekable()
+            else:
+                self._seekable = True
+        else:
+            self._seekable = False
 
     async def read(self, size: int = -1) -> bytes:
         """Read a number of bytes from the stream.
@@ -61,6 +70,33 @@ class AsyncBytesReader:
         return await self._read_from_iterable(
             cast(AsyncIterable[bytes], self._data), size
         )
+
+    async def seek(self, offset: int, whence: int = 0) -> int:
+        """Moves the cursor to a position relatve to the position indicated by whence.
+
+        Whence can have one of three values:
+
+        * 0 => The offset is relative to the start of the stream.
+
+        * 1 => The offset is relative to the current location of the cursor.
+
+        * 2 => The offset is relative to the end of the stream.
+
+        :param offset: The amount of movement to be done relative to whence.
+        :param whence: The location the offset is relative to.
+        :returns: Returns the new position of the cursor.
+        """
+        if not self._seekable:
+            raise NotImplementedError
+
+        return await seek(self._data, offset, whence)  # type: ignore
+
+    def tell(self) -> int:
+        """Returns the position of the cursor."""
+        if self._seekable:
+            if (tell := getattr(self._data, "tell", None)) is not None:
+                return tell()
+        raise NotImplementedError
 
     async def _read_from_iterable(
         self, iterator: AsyncIterable[bytes], size: int
@@ -106,7 +142,7 @@ class AsyncBytesReader:
 
     def seekable(self) -> bool:
         """Returns whether the stream is seekable."""
-        return False
+        return self._seekable
 
     @property
     def closed(self) -> bool:
@@ -120,14 +156,16 @@ class AsyncBytesReader:
         self._data = None
 
 
+# Better named BufferedAsyncBytesReader
+# TODO: remove this or rework it to only buffer if needed
 class SeekableAsyncBytesReader:
-    """A file-like object with async read and seek methods."""
+    """A file-like object with async read and seek methods.
+
+    Data is written into a buffer as it is read to enable seeking non-seekable streams.
+    """
 
     def __init__(self, data: StreamingBlob):
         """Initializes self.
-
-        Data is read from the source on an as-needed basis and buffered internally so
-        that it can be rewound safely.
 
         :param data: The source data to read from.
         """
