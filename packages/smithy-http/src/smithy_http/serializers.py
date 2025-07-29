@@ -32,6 +32,7 @@ from smithy_core.traits import (
     TimestampFormatTrait,
 )
 from smithy_core.types import PathPattern, TimestampFormat
+from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.utils import serialize_float
 
 from . import Field, tuples_to_fields
@@ -188,7 +189,7 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                 ),
             ),
             fields=fields,
-            body=payload,
+            body=AsyncBytesReader(payload),
         )
 
 
@@ -363,7 +364,7 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
 
         self.result = _HTTPResponse(
             fields=tuples_to_fields(binding_serializer.header_serializer.headers),
-            body=payload,
+            body=AsyncBytesReader(payload),
             status=status,
         )
 
