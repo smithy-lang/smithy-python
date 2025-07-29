@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any
 from urllib.parse import quote as urlquote
 
 from smithy_core import URI
+from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.codecs import Codec
 from smithy_core.exceptions import SerializationError
 from smithy_core.schemas import Schema
@@ -32,7 +33,6 @@ from smithy_core.traits import (
     TimestampFormatTrait,
 )
 from smithy_core.types import PathPattern, TimestampFormat
-from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.utils import serialize_float
 
 from . import Field, tuples_to_fields
