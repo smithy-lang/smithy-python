@@ -37,7 +37,7 @@ class AsyncSeekable(Protocol):
 
 
 @runtime_checkable
-class ConditionallySeekable:
+class ConditionallySeekable(Protocol):
     """A file-like object that is conditionally seekable.
 
     This is separate from Seekable and AsyncSeekable as seekable objects may not define
