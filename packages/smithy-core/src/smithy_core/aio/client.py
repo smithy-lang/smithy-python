@@ -5,7 +5,7 @@ import logging
 from asyncio import Future, sleep
 from collections.abc import Awaitable, Callable, Sequence
 from copy import copy
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import TYPE_CHECKING, Any
 
 from .. import URI
@@ -56,7 +56,7 @@ class ClientCall[I: SerializeableShape, O: DeserializeableShape]:
     input: I
     """The input of the operation."""
 
-    operation: APIOperation[I, O]
+    operation: APIOperation[I, O] = field(repr=False)
     """The schema of the operation."""
 
     context: TypedProperties
