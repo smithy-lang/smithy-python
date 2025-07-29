@@ -415,14 +415,17 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
 
                 identity_properties = scheme.identity_properties(
                     context=request_context.properties
-                ).update(option.identity_properties)
+                )
+                identity_properties.update(option.identity_properties)
+
                 identity = await identity_resolver.get_identity(
                     properties=identity_properties
                 )
 
                 signer_properties = scheme.signer_properties(
                     context=request_context.properties
-                ).update(option.identity_properties)
+                )
+                signer_properties.update(option.identity_properties)
                 _LOGGER.debug("Request to sign: %s", request_context.transport_request)
                 _LOGGER.debug("Signer properties: %s", signer_properties)
 
