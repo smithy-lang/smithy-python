@@ -11,14 +11,14 @@ from binascii import hexlify
 from collections.abc import AsyncIterable, Iterable
 from copy import deepcopy
 from hashlib import sha256
-from typing import TYPE_CHECKING, Required, TypedDict
+from typing import TYPE_CHECKING, Required, TypedDict, TypeGuard
 from urllib.parse import parse_qsl, quote
 
 from ._http import AWSRequest, Field, URI
 from ._io import AsyncBytesReader
 from .exceptions import AWSSDKWarning, MissingExpectedParameterException
 from .interfaces.identity import AWSCredentialsIdentity as _AWSCredentialsIdentity
-from .interfaces.io import AsyncSeekable, Seekable
+from .interfaces.io import AsyncSeekable, ConditionallySeekable, Seekable
 
 if TYPE_CHECKING:
     from .interfaces.events import EventHeaderEncoder, EventMessage
@@ -405,10 +405,10 @@ class SigV4Signer:
         )
 
         checksum = sha256()
-        if isinstance(body, Seekable):
+        if self._seekable(body):
             position = body.tell()
-            for chunk in body:
-                checksum.update(chunk)
+            for chunk in body:  # type: ignore
+                checksum.update(chunk)  # type: ignore
             body.seek(position)
         else:
             buffer = io.BytesIO()
@@ -418,6 +418,12 @@ class SigV4Signer:
             buffer.seek(0)
             request.body = buffer
         return checksum.hexdigest()
+
+    def _seekable(self, body: Iterable[bytes]) -> TypeGuard[Seekable]:
+        if isinstance(body, ConditionallySeekable):
+            return body.seekable()
+
+        return isinstance(body, Seekable)
 
 
 class AsyncSigV4Signer:
@@ -784,10 +790,10 @@ class AsyncSigV4Signer:
         )
 
         checksum = sha256()
-        if isinstance(body, AsyncSeekable) and iscoroutinefunction(body.seek):
+        if self._seekable(body):
             position = body.tell()
-            async for chunk in body:
-                checksum.update(chunk)
+            async for chunk in body:  # type: ignore
+                checksum.update(chunk)  # type: ignore
             await body.seek(position)
         else:
             buffer = io.BytesIO()
@@ -797,6 +803,12 @@ class AsyncSigV4Signer:
             buffer.seek(0)
             request.body = AsyncBytesReader(buffer)
         return checksum.hexdigest()
+
+    def _seekable(self, body: AsyncIterable[bytes]) -> TypeGuard[AsyncSeekable]:
+        if isinstance(body, ConditionallySeekable):
+            return body.seekable()
+
+        return isinstance(body, AsyncSeekable) and iscoroutinefunction(body.seek)
 
 
 class AsyncEventSigner:
