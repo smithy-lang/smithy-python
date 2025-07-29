@@ -19,7 +19,7 @@ class AuthParams[I: SerializeableShape, O: DeserializeableShape]:
     protocol_id: ShapeID
     """The ID of the protocol being used for the operation invocation."""
 
-    operation: APIOperation[I, O]
+    operation: APIOperation[I, O] = field(repr=False)
     """The schema and associated information about the operation being invoked."""
 
     context: _TypedProperties
