@@ -6,6 +6,14 @@ from smithy_aws_core.identity.environment import EnvironmentCredentialsResolver
 from smithy_core.exceptions import SmithyIdentityError
 
 
+@pytest.fixture(autouse=True)
+def clear_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.delenv("AWS_ACCOUNT_ID", raising=False)
+    monkeypatch.delenv("AWS_SECRET_ACCESS_KEY", raising=False)
+    monkeypatch.delenv("AWS_ACCESS_KEY_ID", raising=False)
+    monkeypatch.delenv("AWS_SESSION_TOKEN", raising=False)
+
+
 async def test_no_values_set():
     with pytest.raises(SmithyIdentityError):
         await EnvironmentCredentialsResolver().get_identity(properties={})
