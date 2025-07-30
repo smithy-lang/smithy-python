@@ -115,7 +115,7 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
                     binding_matcher,
                 )
                 yield binding_serializer
-                payload = payload_serializer.payload
+                payload = payload_serializer.payload or b""
                 try:
                     content_length = len(payload)
                 except TypeError:
@@ -300,7 +300,7 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
                     payload_serializer, binding_matcher
                 )
                 yield binding_serializer
-                payload = payload_serializer.payload
+                payload = payload_serializer.payload or b""
                 try:
                     content_length = len(payload)
                 except TypeError:
