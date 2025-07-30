@@ -46,8 +46,11 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
         if uri.path is not None and previous.path is not None:
             path = os.path.join(uri.path, previous.path.lstrip("/"))
 
+        if path is not None and not path.startswith("/"):
+            path = "/" + path
+
         query = previous.query or uri.query
-        if uri.query is not None and previous.query is not None:
+        if uri.query and previous.query:
             query = f"{uri.query}&{previous.query}"
 
         request.destination = _URI(
