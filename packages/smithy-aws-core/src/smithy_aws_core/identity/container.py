@@ -161,11 +161,23 @@ class ContainerCredentialResolver(
 
     def _read_file(self, filename: str) -> str:
         with open(filename) as f:
-            return f.read().strip()
+            try:
+                return f.read().strip()
+            except UnicodeDecodeError as e:
+                raise SmithyIdentityError(
+                    f"Unable to read valid utf-8 bytes from {filename}."
+                ) from e
 
     async def get_identity(
         self, *, properties: AWSIdentityProperties
     ) -> AWSCredentialsIdentity:
+        if (
+            self._credentials is not None
+            and self._credentials.expiration
+            and datetime.now(UTC) < self._credentials.expiration
+        ):
+            return self._credentials
+
         uri = await self._resolve_uri_from_env()
         fields = await self._resolve_fields_from_env()
         creds = await self._client.get_credentials(uri, fields)
@@ -174,7 +186,7 @@ class ContainerCredentialResolver(
         secret_access_key = creds.get("SecretAccessKey")
         session_token = creds.get("Token")
         expiration = creds.get("Expiration")
-        account_id = creds.get("AccountId", None)
+        account_id = creds.get("AccountId")
 
         if isinstance(expiration, str):
             expiration = datetime.fromisoformat(expiration).replace(tzinfo=UTC)

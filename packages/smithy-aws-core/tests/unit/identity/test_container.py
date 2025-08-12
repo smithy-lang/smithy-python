@@ -1,8 +1,11 @@
+#  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#  SPDX-License-Identifier: Apache-2.0
 from __future__ import annotations
 
 import json
 import os
 import typing
+from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, patch
 
 import pytest
@@ -25,6 +28,8 @@ DEFAULT_RESPONSE_DATA = {
     "Token": "session_token",
 }
 
+ISO8601 = "%Y-%m-%dT%H:%M:%SZ"
+
 
 def test_config_custom_values():
     config = ContainerCredentialConfig(timeout=10, retries=5)
@@ -41,20 +46,44 @@ def mock_http_client_response(status: int, body: bytes):
     return http_client
 
 
+def _assert_expected_credentials(
+    creds: dict[str, str], access_key_id: str, secret_key_id: str, token: str
+) -> None:
+    assert creds["AccessKeyId"] == access_key_id
+    assert creds["SecretAccessKey"] == secret_key_id
+    assert creds["Token"] == token
+
+
 @pytest.mark.asyncio
-async def test_metadata_client_valid_host():
+@pytest.mark.parametrize(
+    "host",
+    ["169.254.170.2", "169.254.170.23", "fd00:ec2::23", "localhost", "127.0.0.2"],
+)
+async def test_metadata_client_valid_host(host: str):
     resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
     http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
     config = ContainerCredentialConfig()
     client = ContainerMetadataClient(http_client, config)
 
     # Valid Host
-    uri = URI(scheme="http", host="169.254.170.2")
+    uri = URI(scheme="http", host=host)
 
     creds = await client.get_credentials(uri, Fields())
-    assert creds["AccessKeyId"] == "akid123"
-    assert creds["SecretAccessKey"] == "s3cr3t"
-    assert creds["Token"] == "session_token"
+    _assert_expected_credentials(creds, "akid123", "s3cr3t", "session_token")
+
+
+@pytest.mark.asyncio
+async def test_metadata_client_https_host():
+    resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
+    http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
+    config = ContainerCredentialConfig()
+    client = ContainerMetadataClient(http_client, config)
+
+    # Valid HTTPS Host
+    uri = URI(scheme="https", host="169.254.170.2")
+
+    creds = await client.get_credentials(uri, Fields())
+    _assert_expected_credentials(creds, "akid123", "s3cr3t", "session_token")
 
 
 @pytest.mark.asyncio
@@ -229,6 +258,27 @@ async def test_resolver_env_token_file(tmp_path: pathlib.Path):
 
 
 @pytest.mark.asyncio
+async def test_resolver_env_token_file_invalid_bytes(tmp_path: pathlib.Path):
+    resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
+    http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
+
+    token_file = tmp_path / "token_file"
+    token_file.write_bytes(b"Bearer bar\xff\xfe\xfafoo")
+
+    with patch.dict(
+        os.environ,
+        {
+            ContainerCredentialResolver.ENV_VAR_FULL: "http://169.254.170.23/full",
+            ContainerCredentialResolver.ENV_VAR_AUTH_TOKEN_FILE: str(token_file),
+        },
+    ):
+        resolver = ContainerCredentialResolver(http_client)
+        with pytest.raises(SmithyIdentityError) as e:
+            await resolver.get_identity(properties={})
+        assert "Unable to read valid utf-8 bytes from " in str(e.value)
+
+
+@pytest.mark.asyncio
 async def test_resolver_env_token_file_precedence(tmp_path: pathlib.Path):
     """Validate the token file is used over the explicit value if both are set."""
     resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
@@ -262,6 +312,48 @@ async def test_resolver_env_token_file_precedence(tmp_path: pathlib.Path):
     assert auth_field.as_string() == "Bearer barfoo"
 
     _assert_expected_identity(identity)
+
+
+@pytest.mark.asyncio
+async def test_resolver_valid_credentials_reused():
+    custom_resp_data = dict(DEFAULT_RESPONSE_DATA)
+    current_time = datetime.now(UTC) + timedelta(minutes=10)
+    custom_resp_data["Expiration"] = current_time.strftime(ISO8601)
+
+    resp_body = json.dumps(custom_resp_data)
+    http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
+
+    with patch.dict(os.environ, {ContainerCredentialResolver.ENV_VAR: "/test"}):
+        resolver = ContainerCredentialResolver(http_client)
+        identity_one = await resolver.get_identity(properties={})
+        identity_two = await resolver.get_identity(properties={})
+
+    _assert_expected_identity(identity_one)
+    # Validate we got the same unexpired identity instance from both calls
+    assert identity_one is identity_two
+
+
+@pytest.mark.asyncio
+async def test_resolver_expired_credentials_refreshed():
+    custom_resp_data = dict(DEFAULT_RESPONSE_DATA)
+    current_time = datetime.now(UTC) - timedelta(minutes=10)
+    custom_resp_data["Expiration"] = current_time.strftime(ISO8601)
+
+    resp_body = json.dumps(custom_resp_data)
+    http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
+
+    with patch.dict(os.environ, {ContainerCredentialResolver.ENV_VAR: "/test"}):
+        resolver = ContainerCredentialResolver(http_client)
+        identity_one = await resolver.get_identity(properties={})
+        identity_two = await resolver.get_identity(properties={})
+
+    _assert_expected_identity(identity_one)
+
+    # Validate we got new credentials after we received an expired instance
+    assert identity_one.access_key_id == identity_two.access_key_id
+    assert identity_one.secret_access_key == identity_two.secret_access_key
+    assert identity_one.session_token == identity_two.session_token
+    assert identity_one is not identity_two
 
 
 @pytest.mark.asyncio

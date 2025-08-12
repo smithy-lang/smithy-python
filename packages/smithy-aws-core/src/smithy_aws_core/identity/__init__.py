@@ -13,13 +13,13 @@ from .environment import EnvironmentCredentialsResolver
 from .imds import IMDSCredentialsResolver
 from .static import StaticCredentialsResolver
 
-
 __all__ = (
     "ContainerCredentialResolver",
     "EnvironmentCredentialsResolver",
     "IMDSCredentialsResolver",
     "StaticCredentialsResolver",
 )
+
 
 @dataclass(kw_only=True)
 class AWSCredentialsIdentity(Identity):
