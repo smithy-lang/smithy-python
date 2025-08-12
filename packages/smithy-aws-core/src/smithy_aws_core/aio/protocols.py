@@ -148,9 +148,8 @@ class RestJsonClientProtocol(HttpBindingClientProtocol):
                     ),
                 )
 
-        # The HTTP body must be an async writeable. The HTTP client bindings are
-        # responsible for ensuring this is the case. The CRT bindings, for example,
-        # will set the body to an instance of BufferableByteStream.
+        # The HTTP body must be an async writeable. The HTTP serializers are responsible
+        # for ensuring this.
         body = request.body
         if not isinstance(body, AsyncWriter) or not iscoroutinefunction(body.write):
             raise UnsupportedStreamError(
