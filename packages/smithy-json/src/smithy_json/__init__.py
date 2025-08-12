@@ -1,6 +1,5 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-import importlib.metadata
 from io import BytesIO
 
 from smithy_core.codecs import Codec
@@ -14,7 +13,7 @@ from ._private.documents import JSONDocument
 from ._private.serializers import JSONShapeSerializer as _JSONShapeSerializer
 from .settings import JSONSettings
 
-__version__: str = importlib.metadata.version("smithy-json")
+__version__ = "0.0.1"
 __all__ = ("JSONCodec", "JSONDocument", "JSONSettings")
 
 

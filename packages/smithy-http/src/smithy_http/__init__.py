@@ -1,13 +1,12 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-import importlib.metadata
 from collections import Counter, OrderedDict
 from collections.abc import Iterable, Iterator
 
 from . import interfaces
 from .interfaces import FieldPosition
 
-__version__: str = importlib.metadata.version("smithy-http")
+__version__ = "0.0.1"
 
 
 class Field(interfaces.Field):

@@ -1,6 +1,6 @@
 [project]
 name = "smithy-core"
-version = "0.0.2"
+dynamic = ["version"]
 requires-python = ">=3.12"
 authors = [
   {name = "Amazon Web Services"},
@@ -40,6 +40,9 @@ typing = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/smithy_core/__init__.py"
 
 [tool.hatch.build]
 exclude = [

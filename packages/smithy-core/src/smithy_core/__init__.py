@@ -1,6 +1,5 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-import importlib.metadata
 from dataclasses import dataclass
 from enum import Enum
 from functools import cached_property
@@ -9,7 +8,7 @@ from urllib.parse import urlunparse
 from . import interfaces, rfc3986
 from .exceptions import SmithyError
 
-__version__: str = importlib.metadata.version("smithy-core")
+__version__ = "0.0.2"
 
 
 class HostType(Enum):

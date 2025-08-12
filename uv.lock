@@ -1,5 +1,5 @@
 version = 1
-revision = 2
+revision = 3
 requires-python = ">=3.12"
 
 [manifest]
@@ -94,7 +94,6 @@ wheels = [
 
 [[package]]
 name = "aws-sdk-signers"
-version = "0.0.3"
 source = { editable = "packages/aws-sdk-signers" }
 
 [[package]]
@@ -632,7 +631,6 @@ wheels = [
 
 [[package]]
 name = "smithy-aws-core"
-version = "0.0.1"
 source = { editable = "packages/smithy-aws-core" }
 dependencies = [
     { name = "aws-sdk-signers" },
@@ -656,7 +654,6 @@ provides-extras = ["eventstream"]
 
 [[package]]
 name = "smithy-aws-event-stream"
-version = "0.0.1"
 source = { editable = "packages/smithy-aws-event-stream" }
 dependencies = [
     { name = "smithy-core" },
@@ -667,7 +664,6 @@ requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
 
 [[package]]
 name = "smithy-core"
-version = "0.0.2"
 source = { editable = "packages/smithy-core" }
 
 [package.dev-dependencies]
@@ -682,7 +678,6 @@ typing = [{ name = "typing-extensions", specifier = ">=4.13.0" }]
 
 [[package]]
 name = "smithy-http"
-version = "0.0.1"
 source = { editable = "packages/smithy-http" }
 dependencies = [
     { name = "smithy-core" },
@@ -704,11 +699,10 @@ requires-dist = [
     { name = "smithy-core", editable = "packages/smithy-core" },
     { name = "yarl", marker = "extra == 'aiohttp'" },
 ]
-provides-extras = ["awscrt", "aiohttp"]
+provides-extras = ["aiohttp", "awscrt"]
 
 [[package]]
 name = "smithy-json"
-version = "0.0.1"
 source = { editable = "packages/smithy-json" }
 dependencies = [
     { name = "ijson" },
