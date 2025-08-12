@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+* _Add new items here_
+
 ### Breaking Changes
 
 * Updated sigv4 auth resolution and identity providers to the new transport-
@@ -10,6 +12,17 @@
 ### Features
 
 * Added a hand-written implmentation for the `restJson1` protocol.
+
+## v0.0.3
+
+### Bugfixes
+* Rename `ContainerCredentialResolver` to `ContainerCredentialsResolver` to
+  match new naming standard.
+
+## v0.0.2
+
+### Feature
+* Added support for Container credential resolution, commonly used with ECS/EKS.
 
 ## v0.0.1
 
