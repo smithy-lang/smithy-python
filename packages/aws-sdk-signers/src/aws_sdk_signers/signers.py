@@ -36,6 +36,8 @@ DEFAULT_PORTS: dict[str, int] = {"http": 80, "https": 443}
 
 SIGV4_TIMESTAMP_FORMAT: str = "%Y%m%dT%H%M%SZ"
 UNSIGNED_PAYLOAD: str = "UNSIGNED-PAYLOAD"
+EVENT_STREAM_CONTENT_TYPE = "application/vnd.amazon.eventstream"
+EVENT_STREAM_HASH = "STREAMING-AWS4-HMAC-SHA256-EVENTS"
 EMPTY_SHA256_HASH = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
 
@@ -755,6 +757,12 @@ class AsyncSigV4Signer:
         ):
             return request.fields["X-Amz-Content-SHA256"].values[0]
 
+        if self._is_event_stream(request=request):
+            request.fields.set_field(
+                Field(name="X-Amz-Content-SHA256", values=[EVENT_STREAM_HASH])
+            )
+            return EVENT_STREAM_HASH
+
         payload_hash = await self._compute_payload_hash(
             request=request, signing_properties=signing_properties
         )
@@ -803,6 +811,12 @@ class AsyncSigV4Signer:
             buffer.seek(0)
             request.body = AsyncBytesReader(buffer)
         return checksum.hexdigest()
+
+    def _is_event_stream(self, request: AWSRequest) -> bool:
+        if "Content-Type" not in request.fields:
+            return False
+        content_type = request.fields["Content-Type"].as_string()
+        return content_type == EVENT_STREAM_CONTENT_TYPE
 
     def _seekable(self, body: AsyncIterable[bytes]) -> TypeGuard[AsyncSeekable]:
         if isinstance(body, ConditionallySeekable):
