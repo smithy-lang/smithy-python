@@ -5,7 +5,7 @@ import os
 from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
 
-from . import AWSCredentialsIdentity, AWSIdentityProperties
+from .components import AWSCredentialsIdentity, AWSIdentityProperties
 
 
 class EnvironmentCredentialsResolver(

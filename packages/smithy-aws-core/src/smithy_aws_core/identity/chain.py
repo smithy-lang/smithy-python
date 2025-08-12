@@ -3,9 +3,11 @@
 from smithy_core.aio.identity import ChainedIdentityResolver
 from smithy_http.aio.interfaces import HTTPClient
 
-from smithy_aws_core.identity import AWSCredentialsIdentity
-
-from . import AWSCredentialsResolver, AWSIdentityProperties
+from .components import (
+    AWSCredentialsIdentity,
+    AWSCredentialsResolver,
+    AWSIdentityProperties,
+)
 from .environment import EnvironmentCredentialsResolver
 from .imds import IMDSCredentialsResolver
 from .static import StaticCredentialsResolver

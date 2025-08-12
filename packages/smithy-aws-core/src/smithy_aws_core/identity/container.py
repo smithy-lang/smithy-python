@@ -15,7 +15,10 @@ from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest
 from smithy_http.aio.interfaces import HTTPClient, HTTPResponse
 
-from smithy_aws_core.identity import AWSCredentialsIdentity, AWSIdentityProperties
+from smithy_aws_core.identity.components import (
+    AWSCredentialsIdentity,
+    AWSIdentityProperties,
+)
 
 _CONTAINER_METADATA_IP = "169.254.170.2"
 _CONTAINER_METADATA_ALLOWED_HOSTS = {
