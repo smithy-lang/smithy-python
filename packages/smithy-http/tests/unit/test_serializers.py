@@ -722,6 +722,54 @@ class HTTPStructuredPayload:
 
 
 @dataclass
+class HTTPEventStreamPayload:
+    header: str | None = None
+
+    EVENT_SCHEMA: ClassVar[Schema] = Schema.collection(
+        id=ShapeID("com.smithy#Event"), members={"message": {"target": STRING}}
+    )
+    EVENT_STREAM_SCHEMA: ClassVar[Schema] = Schema.collection(
+        id=ShapeID("com.smithy#EventStream"),
+        shape_type=ShapeType.UNION,
+        traits=[StreamingTrait()],
+        members={"messageEvent": {"target": EVENT_SCHEMA}},
+    )
+    ID: ClassVar[ShapeID] = ShapeID("com.smithy#HTTPEventStreamPayload")
+    SCHEMA: ClassVar[Schema] = Schema.collection(
+        id=ID,
+        members={
+            "header": {
+                "target": STRING,
+                "traits": [HTTPHeaderTrait("header")],
+            },
+            "stream": {"target": EVENT_STREAM_SCHEMA, "traits": [HTTPPayloadTrait()]},
+        },
+    )
+
+    def serialize(self, serializer: ShapeSerializer) -> None:
+        with serializer.begin_struct(self.SCHEMA) as s:
+            self.serialize_members(s)
+
+    def serialize_members(self, serializer: ShapeSerializer) -> None:
+        if self.header is not None:
+            serializer.write_string(self.SCHEMA.members["header"], self.header)
+
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+        kwargs: dict[str, Any] = {}
+
+        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
+            match schema.expect_member_index():
+                case 0:
+                    kwargs["header"] = de.read_string(cls.SCHEMA.members["header"])
+                case _:
+                    raise Exception(f"Unexpected schema: {schema}")
+
+        deserializer.read_struct(schema=cls.SCHEMA, consumer=_consumer)
+        return cls(**kwargs)
+
+
+@dataclass
 class HTTPStringLabel:
     label: str
 
@@ -1919,3 +1967,41 @@ async def test_deserialize_http_response_with_async_stream() -> None:
     )
     actual = HTTPStreamingPayload.deserialize(deserializer)
     assert actual == HTTPStreamingPayload(stream)
+
+
+async def test_serialize_request_event_stream_creates_writeable_body() -> None:
+    serializer = HTTPRequestSerializer(
+        payload_codec=JSONCodec(),
+        http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/"}),
+    )
+
+    request = HTTPEventStreamPayload(header="foo")
+    request.serialize(serializer)
+
+    actual = serializer.result
+    assert actual is not None
+
+    body_write = getattr(actual.body, "write", None)
+    assert body_write is not None and iscoroutinefunction(body_write)
+
+    assert "header" in actual.fields
+    assert actual.fields["header"].as_string() == "foo"
+
+
+async def test_serialize_response_event_stream_creates_writeable_body() -> None:
+    serializer = HTTPResponseSerializer(
+        payload_codec=JSONCodec(),
+        http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/"}),
+    )
+
+    response = HTTPEventStreamPayload(header="foo")
+    response.serialize(serializer)
+
+    actual = serializer.result
+    assert actual is not None
+
+    body_write = getattr(actual.body, "write", None)
+    assert body_write is not None and iscoroutinefunction(body_write)
+
+    assert "header" in actual.fields
+    assert actual.fields["header"].as_string() == "foo"
