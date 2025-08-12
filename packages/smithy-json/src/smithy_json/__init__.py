@@ -1,6 +1,5 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-import importlib.metadata
 from io import BytesIO
 
 from smithy_core.codecs import Codec
