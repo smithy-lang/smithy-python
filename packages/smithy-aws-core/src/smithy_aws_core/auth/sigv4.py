@@ -73,9 +73,9 @@ class SigV4AuthScheme(
     ) -> AWSIdentityProperties:
         config = context[AWS_IDENTITY_CONFIG]
         return {
-            "access_key_id": config.access_key_id,
-            "secret_access_key": config.secret_access_key,
-            "session_token": config.session_token,
+            "access_key_id": config.aws_access_key_id,
+            "secret_access_key": config.aws_secret_access_key,
+            "session_token": config.aws_session_token,
         }
 
     def identity_resolver(self, *, context: _TypedProperties) -> AWSCredentialsResolver:

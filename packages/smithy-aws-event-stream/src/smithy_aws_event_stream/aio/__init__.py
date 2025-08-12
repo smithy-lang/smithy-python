@@ -67,7 +67,7 @@ class AWSEventPublisher[E: SerializeableShape](EventPublisher[E]):
                 properties=self._signing_config.identity_properties
             )
             result = await self._signing_config.signer.sign(
-                event=event,
+                event=result,
                 identity=identity,
                 properties=self._signing_config.signing_properties,
             )

@@ -124,13 +124,6 @@ final class DirectedPythonClientCodegen
         if (protocolGenerator == null) {
             return;
         }
-
-        protocolGenerator.generateSharedSerializerComponents(directive.context());
-        protocolGenerator.generateRequestSerializers(directive.context());
-
-        protocolGenerator.generateSharedDeserializerComponents(directive.context());
-        protocolGenerator.generateResponseDeserializers(directive.context());
-
         protocolGenerator.generateProtocolTests(directive.context());
     }
 

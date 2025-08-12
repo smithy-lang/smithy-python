@@ -11,14 +11,14 @@ from binascii import hexlify
 from collections.abc import AsyncIterable, Iterable
 from copy import deepcopy
 from hashlib import sha256
-from typing import TYPE_CHECKING, Required, TypedDict
+from typing import TYPE_CHECKING, Required, TypedDict, TypeGuard
 from urllib.parse import parse_qsl, quote
 
 from ._http import AWSRequest, Field, URI
 from ._io import AsyncBytesReader
 from .exceptions import AWSSDKWarning, MissingExpectedParameterException
 from .interfaces.identity import AWSCredentialsIdentity as _AWSCredentialsIdentity
-from .interfaces.io import AsyncSeekable, Seekable
+from .interfaces.io import AsyncSeekable, ConditionallySeekable, Seekable
 
 if TYPE_CHECKING:
     from .interfaces.events import EventHeaderEncoder, EventMessage
@@ -36,6 +36,8 @@ DEFAULT_PORTS: dict[str, int] = {"http": 80, "https": 443}
 
 SIGV4_TIMESTAMP_FORMAT: str = "%Y%m%dT%H%M%SZ"
 UNSIGNED_PAYLOAD: str = "UNSIGNED-PAYLOAD"
+EVENT_STREAM_CONTENT_TYPE = "application/vnd.amazon.eventstream"
+EVENT_STREAM_HASH = "STREAMING-AWS4-HMAC-SHA256-EVENTS"
 EMPTY_SHA256_HASH = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
 
@@ -405,10 +407,10 @@ class SigV4Signer:
         )
 
         checksum = sha256()
-        if isinstance(body, Seekable):
+        if self._seekable(body):
             position = body.tell()
-            for chunk in body:
-                checksum.update(chunk)
+            for chunk in body:  # type: ignore
+                checksum.update(chunk)  # type: ignore
             body.seek(position)
         else:
             buffer = io.BytesIO()
@@ -418,6 +420,12 @@ class SigV4Signer:
             buffer.seek(0)
             request.body = buffer
         return checksum.hexdigest()
+
+    def _seekable(self, body: Iterable[bytes]) -> TypeGuard[Seekable]:
+        if isinstance(body, ConditionallySeekable):
+            return body.seekable()
+
+        return isinstance(body, Seekable)
 
 
 class AsyncSigV4Signer:
@@ -749,6 +757,12 @@ class AsyncSigV4Signer:
         ):
             return request.fields["X-Amz-Content-SHA256"].values[0]
 
+        if self._is_event_stream(request=request):
+            request.fields.set_field(
+                Field(name="X-Amz-Content-SHA256", values=[EVENT_STREAM_HASH])
+            )
+            return EVENT_STREAM_HASH
+
         payload_hash = await self._compute_payload_hash(
             request=request, signing_properties=signing_properties
         )
@@ -784,10 +798,10 @@ class AsyncSigV4Signer:
         )
 
         checksum = sha256()
-        if isinstance(body, AsyncSeekable) and iscoroutinefunction(body.seek):
+        if self._seekable(body):
             position = body.tell()
-            async for chunk in body:
-                checksum.update(chunk)
+            async for chunk in body:  # type: ignore
+                checksum.update(chunk)  # type: ignore
             await body.seek(position)
         else:
             buffer = io.BytesIO()
@@ -797,6 +811,18 @@ class AsyncSigV4Signer:
             buffer.seek(0)
             request.body = AsyncBytesReader(buffer)
         return checksum.hexdigest()
+
+    def _is_event_stream(self, request: AWSRequest) -> bool:
+        if "Content-Type" not in request.fields:
+            return False
+        content_type = request.fields["Content-Type"].as_string()
+        return content_type == EVENT_STREAM_CONTENT_TYPE
+
+    def _seekable(self, body: AsyncIterable[bytes]) -> TypeGuard[AsyncSeekable]:
+        if isinstance(body, ConditionallySeekable):
+            return body.seekable()
+
+        return isinstance(body, AsyncSeekable) and iscoroutinefunction(body.seek)
 
 
 class AsyncEventSigner:

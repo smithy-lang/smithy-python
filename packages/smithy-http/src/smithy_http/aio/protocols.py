@@ -46,8 +46,11 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
         if uri.path is not None and previous.path is not None:
             path = os.path.join(uri.path, previous.path.lstrip("/"))
 
+        if path is not None and not path.startswith("/"):
+            path = "/" + path
+
         query = previous.query or uri.query
-        if uri.query is not None and previous.query is not None:
+        if uri.query and previous.query:
             query = f"{uri.query}&{previous.query}"
 
         request.destination = _URI(
@@ -183,7 +186,7 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             operation=operation, response=response
         )
 
-        if error_id is None:
+        if error_id is None and self._matches_content_type(response):
             if isinstance(response_body, bytearray):
                 response_body = bytes(response_body)
             deserializer = self.payload_codec.create_deserializer(source=response_body)
@@ -227,3 +230,8 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             is_throttling_error=is_throttle,
             is_retry_safe=is_throttle or None,
         )
+
+    def _matches_content_type(self, response: HTTPResponse) -> bool:
+        if "content-type" not in response.fields:
+            return False
+        return response.fields["content-type"].as_string() == self.content_type

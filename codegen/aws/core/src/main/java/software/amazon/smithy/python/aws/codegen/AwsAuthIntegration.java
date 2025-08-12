@@ -32,6 +32,9 @@ public class AwsAuthIntegration implements PythonIntegration {
 
     @Override
     public List<RuntimeClientPlugin> getClientPlugins(GenerationContext context) {
+        if (!hasSigV4Auth(context)) {
+            return List.of();
+        }
         return List.of(
                 RuntimeClientPlugin.builder()
                         .servicePredicate((model, service) -> service.hasTrait(SigV4Trait.class))
@@ -61,6 +64,24 @@ public class AwsAuthIntegration implements PythonIntegration {
                                 .nullable(true)
                                 .build())
                         .addConfigProperty(REGION)
+                        .addConfigProperty(ConfigProperty.builder()
+                                .name("aws_access_key_id")
+                                .type(Symbol.builder().name("str").build())
+                                .documentation("The identifier for a secret access key.")
+                                .nullable(true)
+                                .build())
+                        .addConfigProperty(ConfigProperty.builder()
+                                .name("aws_secret_access_key")
+                                .type(Symbol.builder().name("str").build())
+                                .nullable(true)
+                                .documentation("A secret access key that can be used to sign requests.")
+                                .build())
+                        .addConfigProperty(ConfigProperty.builder()
+                                .name("aws_session_token")
+                                .type(Symbol.builder().name("str").build())
+                                .documentation("An access key ID that identifies temporary security credentials.")
+                                .nullable(true)
+                                .build())
                         .authScheme(new Sigv4AuthScheme())
                         .build());
     }
@@ -70,7 +91,6 @@ public class AwsAuthIntegration implements PythonIntegration {
         if (!hasSigV4Auth(context)) {
             return;
         }
-        var trait = context.settings().service(context.model()).expectTrait(SigV4Trait.class);
         var resolver = CodegenUtils.getHttpAuthSchemeResolverSymbol(context.settings());
 
         // Add a function that generates the http auth option for api key auth.
@@ -91,8 +111,7 @@ public class AwsAuthIntegration implements PythonIntegration {
                         )
                     """,
                     SIGV4_OPTION_GENERATOR_NAME,
-                    SigV4Trait.ID.toString(),
-                    trait.getName());
+                    SigV4Trait.ID.toString());
             writer.popState();
         });
     }

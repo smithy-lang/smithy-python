@@ -33,7 +33,7 @@ class Endpoint(_Endpoint):
 class EndpointResolverParams[I: SerializeableShape]:
     """Parameters passed into an Endpoint Resolver's resolve_endpoint method."""
 
-    operation: APIOperation[I, Any]
+    operation: APIOperation[I, Any] = field(repr=False)
     """The operation to resolve an endpoint for."""
 
     input: I

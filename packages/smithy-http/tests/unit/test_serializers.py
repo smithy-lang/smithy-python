@@ -722,6 +722,54 @@ class HTTPStructuredPayload:
 
 
 @dataclass
+class HTTPEventStreamPayload:
+    header: str | None = None
+
+    EVENT_SCHEMA: ClassVar[Schema] = Schema.collection(
+        id=ShapeID("com.smithy#Event"), members={"message": {"target": STRING}}
+    )
+    EVENT_STREAM_SCHEMA: ClassVar[Schema] = Schema.collection(
+        id=ShapeID("com.smithy#EventStream"),
+        shape_type=ShapeType.UNION,
+        traits=[StreamingTrait()],
+        members={"messageEvent": {"target": EVENT_SCHEMA}},
+    )
+    ID: ClassVar[ShapeID] = ShapeID("com.smithy#HTTPEventStreamPayload")
+    SCHEMA: ClassVar[Schema] = Schema.collection(
+        id=ID,
+        members={
+            "header": {
+                "target": STRING,
+                "traits": [HTTPHeaderTrait("header")],
+            },
+            "stream": {"target": EVENT_STREAM_SCHEMA, "traits": [HTTPPayloadTrait()]},
+        },
+    )
+
+    def serialize(self, serializer: ShapeSerializer) -> None:
+        with serializer.begin_struct(self.SCHEMA) as s:
+            self.serialize_members(s)
+
+    def serialize_members(self, serializer: ShapeSerializer) -> None:
+        if self.header is not None:
+            serializer.write_string(self.SCHEMA.members["header"], self.header)
+
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+        kwargs: dict[str, Any] = {}
+
+        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
+            match schema.expect_member_index():
+                case 0:
+                    kwargs["header"] = de.read_string(cls.SCHEMA.members["header"])
+                case _:
+                    raise Exception(f"Unexpected schema: {schema}")
+
+        deserializer.read_struct(schema=cls.SCHEMA, consumer=_consumer)
+        return cls(**kwargs)
+
+
+@dataclass
 class HTTPStringLabel:
     label: str
 
@@ -1092,7 +1140,7 @@ def header_cases() -> list[HTTPMessageTestCase]:
         HTTPMessageTestCase(
             HTTPHeaders(boolean_member=True),
             HTTPMessage(
-                fields=tuples_to_fields([("boolean", "true"), ("content-length", "0")]),
+                fields=tuples_to_fields([("boolean", "true")]),
             ),
         ),
         HTTPMessageTestCase(
@@ -1102,7 +1150,6 @@ def header_cases() -> list[HTTPMessageTestCase]:
                     [
                         ("booleanList", "true"),
                         ("booleanList", "false"),
-                        ("content-length", "0"),
                     ]
                 ),
             ),
@@ -1110,7 +1157,7 @@ def header_cases() -> list[HTTPMessageTestCase]:
         HTTPMessageTestCase(
             HTTPHeaders(integer_member=1),
             HTTPMessage(
-                fields=tuples_to_fields([("integer", "1"), ("content-length", "0")]),
+                fields=tuples_to_fields([("integer", "1")]),
             ),
         ),
         HTTPMessageTestCase(
@@ -1120,7 +1167,6 @@ def header_cases() -> list[HTTPMessageTestCase]:
                     [
                         ("integerList", "1"),
                         ("integerList", "2"),
-                        ("content-length", "0"),
                     ]
                 ),
             ),
@@ -1128,56 +1174,40 @@ def header_cases() -> list[HTTPMessageTestCase]:
         HTTPMessageTestCase(
             HTTPHeaders(float_member=1.1),
             HTTPMessage(
-                fields=tuples_to_fields([("float", "1.1"), ("content-length", "0")]),
+                fields=tuples_to_fields([("float", "1.1")]),
             ),
         ),
         HTTPMessageTestCase(
             HTTPHeaders(float_list_member=[1.1, 2.2]),
             HTTPMessage(
-                fields=tuples_to_fields(
-                    [
-                        ("floatList", "1.1"),
-                        ("floatList", "2.2"),
-                        ("content-length", "0"),
-                    ]
-                ),
+                fields=tuples_to_fields([("floatList", "1.1"), ("floatList", "2.2")]),
             ),
         ),
         HTTPMessageTestCase(
             HTTPHeaders(big_decimal_member=Decimal("1.1")),
             HTTPMessage(
-                fields=tuples_to_fields(
-                    [("bigDecimal", "1.1"), ("content-length", "0")]
-                ),
+                fields=tuples_to_fields([("bigDecimal", "1.1")]),
             ),
         ),
         HTTPMessageTestCase(
             HTTPHeaders(big_decimal_list_member=[Decimal("1.1"), Decimal("2.2")]),
             HTTPMessage(
                 fields=tuples_to_fields(
-                    [
-                        ("bigDecimalList", "1.1"),
-                        ("bigDecimalList", "2.2"),
-                        ("content-length", "0"),
-                    ]
+                    [("bigDecimalList", "1.1"), ("bigDecimalList", "2.2")]
                 ),
             ),
         ),
         HTTPMessageTestCase(
             HTTPHeaders(string_member="foo"),
             HTTPMessage(
-                fields=tuples_to_fields([("string", "foo"), ("content-length", "0")]),
+                fields=tuples_to_fields([("string", "foo")]),
             ),
         ),
         HTTPMessageTestCase(
             HTTPHeaders(string_list_member=["spam", "eggs"]),
             HTTPMessage(
                 fields=tuples_to_fields(
-                    [
-                        ("stringList", "spam"),
-                        ("stringList", "eggs"),
-                        ("content-length", "0"),
-                    ]
+                    [("stringList", "spam"), ("stringList", "eggs")]
                 ),
             ),
         ),
@@ -1187,10 +1217,7 @@ def header_cases() -> list[HTTPMessageTestCase]:
             ),
             HTTPMessage(
                 fields=tuples_to_fields(
-                    [
-                        ("defaultTimestamp", "Wed, 01 Jan 2025 00:00:00 GMT"),
-                        ("content-length", "0"),
-                    ]
+                    [("defaultTimestamp", "Wed, 01 Jan 2025 00:00:00 GMT")]
                 ),
             ),
         ),
@@ -1200,10 +1227,7 @@ def header_cases() -> list[HTTPMessageTestCase]:
             ),
             HTTPMessage(
                 fields=tuples_to_fields(
-                    [
-                        ("httpDateTimestamp", "Wed, 01 Jan 2025 00:00:00 GMT"),
-                        ("content-length", "0"),
-                    ]
+                    [("httpDateTimestamp", "Wed, 01 Jan 2025 00:00:00 GMT")]
                 ),
             ),
         ),
@@ -1219,7 +1243,6 @@ def header_cases() -> list[HTTPMessageTestCase]:
                     [
                         ("httpDateListTimestamp", "Wed, 01 Jan 2025 00:00:00 GMT"),
                         ("httpDateListTimestamp", "Mon, 01 Jan 2024 00:00:00 GMT"),
-                        ("content-length", "0"),
                     ]
                 ),
             ),
@@ -1230,10 +1253,7 @@ def header_cases() -> list[HTTPMessageTestCase]:
             ),
             HTTPMessage(
                 fields=tuples_to_fields(
-                    [
-                        ("dateTimeTimestamp", "2025-01-01T00:00:00Z"),
-                        ("content-length", "0"),
-                    ]
+                    [("dateTimeTimestamp", "2025-01-01T00:00:00Z")]
                 ),
             ),
         ),
@@ -1249,7 +1269,6 @@ def header_cases() -> list[HTTPMessageTestCase]:
                     [
                         ("dateTimeListTimestamp", "2025-01-01T00:00:00Z"),
                         ("dateTimeListTimestamp", "2024-01-01T00:00:00Z"),
-                        ("content-length", "0"),
                     ]
                 ),
             ),
@@ -1259,9 +1278,7 @@ def header_cases() -> list[HTTPMessageTestCase]:
                 epoch_timestamp_member=datetime.datetime(2025, 1, 1, tzinfo=UTC)
             ),
             HTTPMessage(
-                fields=tuples_to_fields(
-                    [("epochTimestamp", "1735689600"), ("content-length", "0")]
-                ),
+                fields=tuples_to_fields([("epochTimestamp", "1735689600")]),
             ),
         ),
         HTTPMessageTestCase(
@@ -1276,7 +1293,6 @@ def header_cases() -> list[HTTPMessageTestCase]:
                     [
                         ("epochListTimestamp", "1735689600"),
                         ("epochListTimestamp", "1704067200"),
-                        ("content-length", "0"),
                     ]
                 ),
             ),
@@ -1284,9 +1300,7 @@ def header_cases() -> list[HTTPMessageTestCase]:
         HTTPMessageTestCase(
             HTTPHeaders(string_map_member={"foo": "bar", "baz": "bam"}),
             HTTPMessage(
-                fields=tuples_to_fields(
-                    [("x-foo", "bar"), ("x-baz", "bam"), ("content-length", "0")]
-                ),
+                fields=tuples_to_fields([("x-foo", "bar"), ("x-baz", "bam")]),
             ),
         ),
     ]
@@ -1388,7 +1402,6 @@ def empty_prefix_header_ser_cases() -> list[HTTPMessageTestCase]:
                         ("foo", "bar"),
                         ("baz", "bam"),
                         ("string", "string"),
-                        ("content-length", "0"),
                     ]
                 ),
             ),
@@ -1405,7 +1418,6 @@ def empty_prefix_header_deser_cases() -> list[HTTPMessageTestCase]:
                     "foo": "bar",
                     "baz": "bam",
                     "string": "string",
-                    "content-length": "0",
                 },
             ),
             HTTPMessage(
@@ -1414,7 +1426,6 @@ def empty_prefix_header_deser_cases() -> list[HTTPMessageTestCase]:
                         ("foo", "bar"),
                         ("baz", "bam"),
                         ("string", "string"),
-                        ("content-length", "0"),
                     ]
                 ),
             ),
@@ -1428,7 +1439,6 @@ def query_cases() -> list[HTTPMessageTestCase]:
             HTTPQuery(boolean_member=True),
             HTTPMessage(
                 destination=URI(host="", path="/", query="boolean=true"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
@@ -1437,42 +1447,36 @@ def query_cases() -> list[HTTPMessageTestCase]:
                 destination=URI(
                     host="", path="/", query="booleanList=true&booleanList=false"
                 ),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
             HTTPQuery(integer_member=1),
             HTTPMessage(
                 destination=URI(host="", path="/", query="integer=1"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
             HTTPQuery(integer_list_member=[1, 2]),
             HTTPMessage(
                 destination=URI(host="", path="/", query="integerList=1&integerList=2"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
             HTTPQuery(float_member=1.1),
             HTTPMessage(
                 destination=URI(host="", path="/", query="float=1.1"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
             HTTPQuery(float_list_member=[1.1, 2.2]),
             HTTPMessage(
                 destination=URI(host="", path="/", query="floatList=1.1&floatList=2.2"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
             HTTPQuery(big_decimal_member=Decimal("1.1")),
             HTTPMessage(
                 destination=URI(host="", path="/", query="bigDecimal=1.1"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
@@ -1481,14 +1485,12 @@ def query_cases() -> list[HTTPMessageTestCase]:
                 destination=URI(
                     host="", path="/", query="bigDecimalList=1.1&bigDecimalList=2.2"
                 ),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
             HTTPQuery(string_member="foo"),
             HTTPMessage(
                 destination=URI(host="", path="/", query="string=foo"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
@@ -1497,14 +1499,12 @@ def query_cases() -> list[HTTPMessageTestCase]:
                 destination=URI(
                     host="", path="/", query="stringList=spam&stringList=eggs"
                 ),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
             HTTPQuery(string_member="foo bar"),
             HTTPMessage(
                 destination=URI(host="", path="/", query="string=foo%20bar"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
@@ -1515,7 +1515,6 @@ def query_cases() -> list[HTTPMessageTestCase]:
                     path="/",
                     query="stringList=spam%20eggs&stringList=eggs%20spam",
                 ),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
@@ -1528,7 +1527,6 @@ def query_cases() -> list[HTTPMessageTestCase]:
                     path="/",
                     query="defaultTimestamp=2025-01-01T00%3A00%3A00Z",
                 ),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
@@ -1541,7 +1539,6 @@ def query_cases() -> list[HTTPMessageTestCase]:
                     path="/",
                     query="httpDateTimestamp=Wed%2C%2001%20Jan%202025%2000%3A00%3A00%20GMT",
                 ),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
@@ -1560,7 +1557,6 @@ def query_cases() -> list[HTTPMessageTestCase]:
                         "&httpDateListTimestamp=Mon%2C%2001%20Jan%202024%2000%3A00%3A00%20GMT"
                     ),
                 ),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
@@ -1573,7 +1569,6 @@ def query_cases() -> list[HTTPMessageTestCase]:
                     path="/",
                     query="dateTimeTimestamp=2025-01-01T00%3A00%3A00Z",
                 ),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
@@ -1592,14 +1587,12 @@ def query_cases() -> list[HTTPMessageTestCase]:
                         "&dateTimeListTimestamp=2024-01-01T00%3A00%3A00Z"
                     ),
                 ),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
             HTTPQuery(epoch_timestamp_member=datetime.datetime(2025, 1, 1, tzinfo=UTC)),
             HTTPMessage(
                 destination=URI(host="", path="/", query="epochTimestamp=1735689600"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
@@ -1615,21 +1608,18 @@ def query_cases() -> list[HTTPMessageTestCase]:
                     path="/",
                     query="epochListTimestamp=1735689600&epochListTimestamp=1704067200",
                 ),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
             HTTPQuery(string_map_member={"foo": "bar", "baz": "bam"}),
             HTTPMessage(
                 destination=URI(host="", path="/", query="foo=bar&baz=bam"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
         ),
         HTTPMessageTestCase(
             HTTPQuery(string_member="foo"),
             HTTPMessage(
                 destination=URI(host="", path="/", query="spam=eggs&string=foo"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
             http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/?spam=eggs"}),
         ),
@@ -1637,7 +1627,6 @@ def query_cases() -> list[HTTPMessageTestCase]:
             HTTPQuery(string_member="foo"),
             HTTPMessage(
                 destination=URI(host="", path="/", query="spam&string=foo"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
             http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/?spam"}),
         ),
@@ -1650,7 +1639,6 @@ def label_cases() -> list[HTTPMessageTestCase]:
             HTTPStringLabel(label="foo/bar"),
             HTTPMessage(
                 destination=URI(host="", path="/foo%2Fbar"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
             http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/{label}"}),
         ),
@@ -1658,7 +1646,6 @@ def label_cases() -> list[HTTPMessageTestCase]:
             HTTPStringLabel(label="foo/bar"),
             HTTPMessage(
                 destination=URI(host="", path="/foo/bar"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
             http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/{label+}"}),
         ),
@@ -1666,7 +1653,6 @@ def label_cases() -> list[HTTPMessageTestCase]:
             HTTPFloatLabel(label=1.1),
             HTTPMessage(
                 destination=URI(host="", path="/1.1"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
             http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/{label}"}),
         ),
@@ -1674,7 +1660,6 @@ def label_cases() -> list[HTTPMessageTestCase]:
             HTTPBigDecimalLabel(label=Decimal("1.1")),
             HTTPMessage(
                 destination=URI(host="", path="/1.1"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
             http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/{label}"}),
         ),
@@ -1682,7 +1667,6 @@ def label_cases() -> list[HTTPMessageTestCase]:
             HTTPBooleanLabel(label=True),
             HTTPMessage(
                 destination=URI(host="", path="/true"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
             http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/{label}"}),
         ),
@@ -1690,7 +1674,6 @@ def label_cases() -> list[HTTPMessageTestCase]:
             HTTPDefaultTimestampLabel(label=datetime.datetime(2025, 1, 1, tzinfo=UTC)),
             HTTPMessage(
                 destination=URI(host="", path="/2025-01-01T00%3A00%3A00Z"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
             http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/{label}"}),
         ),
@@ -1698,7 +1681,6 @@ def label_cases() -> list[HTTPMessageTestCase]:
             HTTPEpochTimestampLabel(label=datetime.datetime(2025, 1, 1, tzinfo=UTC)),
             HTTPMessage(
                 destination=URI(host="", path="/1735689600"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
             http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/{label}"}),
         ),
@@ -1706,7 +1688,6 @@ def label_cases() -> list[HTTPMessageTestCase]:
             HTTPDateTimeTimestampLabel(label=datetime.datetime(2025, 1, 1, tzinfo=UTC)),
             HTTPMessage(
                 destination=URI(host="", path="/2025-01-01T00%3A00%3A00Z"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
             http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/{label}"}),
         ),
@@ -1716,7 +1697,6 @@ def label_cases() -> list[HTTPMessageTestCase]:
                 destination=URI(
                     host="", path="/Wed%2C%2001%20Jan%202025%2000%3A00%3A00%20GMT"
                 ),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
             http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/{label}"}),
         ),
@@ -1729,7 +1709,7 @@ def host_cases() -> list[HTTPMessageTestCase]:
             HostLabel("foo"),
             HTTPMessage(
                 destination=URI(host="foo.", path="/"),
-                body=BytesIO(b'{"label":"foo"}'),
+                body=AsyncBytesReader(BytesIO(b'{"label":"foo"}')),
                 fields=tuples_to_fields(
                     [("content-type", "application/json"), ("content-length", "15")]
                 ),
@@ -1740,7 +1720,6 @@ def host_cases() -> list[HTTPMessageTestCase]:
             HTTPHeaders(),
             HTTPMessage(
                 destination=URI(host="foo.", path="/"),
-                fields=tuples_to_fields([("content-length", "0")]),
             ),
             endpoint_trait=EndpointTrait({"hostPrefix": "foo."}),
         ),
@@ -1759,7 +1738,7 @@ def payload_cases() -> list[HTTPMessageTestCase]:
                         ("content-length", "24"),
                     ]
                 ),
-                body=BytesIO(b'{"payload_member":"bar"}'),
+                body=AsyncBytesReader(BytesIO(b'{"payload_member":"bar"}')),
             ),
         ),
         HTTPMessageTestCase(
@@ -1768,7 +1747,7 @@ def payload_cases() -> list[HTTPMessageTestCase]:
                 fields=tuples_to_fields(
                     [("content-type", "text/plain"), ("content-length", "3")]
                 ),
-                body=b"foo",
+                body=AsyncBytesReader(b"foo"),
             ),
         ),
         HTTPMessageTestCase(
@@ -1780,13 +1759,13 @@ def payload_cases() -> list[HTTPMessageTestCase]:
                         ("content-length", "4"),
                     ]
                 ),
-                body=b"\xde\xad\xbe\xef",
+                body=AsyncBytesReader(b"\xde\xad\xbe\xef"),
             ),
         ),
         HTTPMessageTestCase(
             HTTPStructuredPayload(payload=HTTPStringPayload(payload="foo")),
             HTTPMessage(
-                body=BytesIO(b'{"payload":"foo"}'),
+                body=AsyncBytesReader(BytesIO(b'{"payload":"foo"}')),
                 fields=tuples_to_fields(
                     [("content-type", "application/json"), ("content-length", "17")]
                 ),
@@ -1795,7 +1774,7 @@ def payload_cases() -> list[HTTPMessageTestCase]:
         HTTPMessageTestCase(
             HTTPStructuredPayload(HTTPStringPayload()),
             HTTPMessage(
-                body=BytesIO(b"{}"),
+                body=AsyncBytesReader(BytesIO(b"{}")),
                 fields=tuples_to_fields(
                     [("content-type", "application/json"), ("content-length", "2")]
                 ),
@@ -1988,3 +1967,41 @@ async def test_deserialize_http_response_with_async_stream() -> None:
     )
     actual = HTTPStreamingPayload.deserialize(deserializer)
     assert actual == HTTPStreamingPayload(stream)
+
+
+async def test_serialize_request_event_stream_creates_writeable_body() -> None:
+    serializer = HTTPRequestSerializer(
+        payload_codec=JSONCodec(),
+        http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/"}),
+    )
+
+    request = HTTPEventStreamPayload(header="foo")
+    request.serialize(serializer)
+
+    actual = serializer.result
+    assert actual is not None
+
+    body_write = getattr(actual.body, "write", None)
+    assert body_write is not None and iscoroutinefunction(body_write)
+
+    assert "header" in actual.fields
+    assert actual.fields["header"].as_string() == "foo"
+
+
+async def test_serialize_response_event_stream_creates_writeable_body() -> None:
+    serializer = HTTPResponseSerializer(
+        payload_codec=JSONCodec(),
+        http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/"}),
+    )
+
+    response = HTTPEventStreamPayload(header="foo")
+    response.serialize(serializer)
+
+    actual = serializer.result
+    assert actual is not None
+
+    body_write = getattr(actual.body, "write", None)
+    assert body_write is not None and iscoroutinefunction(body_write)
+
+    assert "header" in actual.fields
+    assert actual.fields["header"].as_string() == "foo"

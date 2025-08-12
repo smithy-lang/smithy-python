@@ -34,3 +34,14 @@ class AsyncSeekable(Protocol):
     async def seek(self, offset: int, whence: int = 0, /) -> int: ...
 
     def tell(self) -> int: ...
+
+
+@runtime_checkable
+class ConditionallySeekable(Protocol):
+    """A file-like object that is conditionally seekable.
+
+    This is separate from Seekable and AsyncSeekable as seekable objects may not define
+    this method.
+    """
+
+    def seekable(self) -> bool: ...

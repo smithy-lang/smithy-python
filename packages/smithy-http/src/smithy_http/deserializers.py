@@ -1,10 +1,14 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import datetime
+from base64 import b64decode
 from collections.abc import Callable
 from decimal import Decimal
-from typing import TYPE_CHECKING
+from inspect import iscoroutinefunction
+from typing import TYPE_CHECKING, Any, TypeGuard
 
+from smithy_core.aio.interfaces import AsyncByteStream
+from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import ShapeDeserializer, SpecificShapeDeserializer
 from smithy_core.exceptions import UnsupportedStreamError
@@ -15,6 +19,7 @@ from smithy_core.traits import (
     HTTPHeaderTrait,
     HTTPPrefixHeadersTrait,
     HTTPTrait,
+    MediaTypeTrait,
     TimestampFormatTrait,
 )
 from smithy_core.types import TimestampFormat
@@ -84,12 +89,13 @@ class HTTPResponseDeserializer(SpecificShapeDeserializer):
                         member, HTTPResponseCodeDeserializer(self._response.status)
                     )
                 case Binding.PAYLOAD:
-                    assert binding_matcher.payload_member is not None  # noqa: S101
-                    if self._should_read_payload(binding_matcher.payload_member):
-                        deserializer = self._create_payload_deserializer(
-                            binding_matcher.payload_member
-                        )
-                        consumer(binding_matcher.payload_member, deserializer)
+                    if binding_matcher.event_stream_member is None:
+                        assert binding_matcher.payload_member is not None  # noqa: S101
+                        if self._should_read_payload(binding_matcher.payload_member):
+                            deserializer = self._create_payload_deserializer(
+                                binding_matcher.payload_member
+                            )
+                            consumer(binding_matcher.payload_member, deserializer)
                 case _:
                     pass
 
@@ -124,7 +130,11 @@ class HTTPResponseDeserializer(SpecificShapeDeserializer):
         return False
 
     def _create_payload_deserializer(self, payload_member: Schema) -> ShapeDeserializer:
-        if payload_member.shape_type in (ShapeType.BLOB, ShapeType.STRING):
+        if payload_member.shape_type in (
+            ShapeType.BLOB,
+            ShapeType.STRING,
+            ShapeType.ENUM,
+        ):
             body = self._body if self._body is not None else self._response.body
             return RawPayloadDeserializer(body)
         return self._create_body_deserializer()
@@ -156,6 +166,9 @@ class HTTPHeaderDeserializer(SpecificShapeDeserializer):
         """
         self._value = value
 
+    def is_null(self) -> bool:
+        return False
+
     def read_boolean(self, schema: Schema) -> bool:
         return strict_parse_bool(self._value)
 
@@ -184,6 +197,8 @@ class HTTPHeaderDeserializer(SpecificShapeDeserializer):
         return Decimal(self._value).canonical()
 
     def read_string(self, schema: Schema) -> str:
+        if MediaTypeTrait in schema:
+            return b64decode(self._value).decode("utf-8")
         return self._value
 
     def read_timestamp(self, schema: Schema) -> datetime.datetime:
@@ -284,7 +299,14 @@ class RawPayloadDeserializer(SpecificShapeDeserializer):
         return self._consume_payload()
 
     def read_data_stream(self, schema: Schema) -> "AsyncStreamingBlob":
-        return self._payload
+        if self._is_async_reader(self._payload):
+            return self._payload
+        return AsyncBytesReader(self._payload)
+
+    def _is_async_reader(self, obj: Any) -> TypeGuard[AsyncByteStream]:
+        return isinstance(obj, AsyncByteStream) and iscoroutinefunction(
+            getattr(obj, "read")
+        )
 
     def _consume_payload(self) -> bytes:
         if isinstance(self._payload, bytes):

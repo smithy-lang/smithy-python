@@ -31,10 +31,13 @@ class _AsyncIteratorWrapper:
 
 async def test_read_bytes() -> None:
     reader = AsyncBytesReader(b"foo")
+    assert reader.seekable()
+    assert reader.tell() == 0
     assert await reader.read() == b"foo"
+    assert reader.tell() == 3
 
 
-async def test_seekable_read_byes() -> None:
+async def test_buffered_seekable_read_byes() -> None:
     reader = SeekableAsyncBytesReader(b"foo")
     assert reader.tell() == 0
     assert await reader.read() == b"foo"
@@ -43,10 +46,13 @@ async def test_seekable_read_byes() -> None:
 
 async def test_read_bytearray() -> None:
     reader = AsyncBytesReader(bytearray(b"foo"))
+    assert reader.seekable()
+    assert reader.tell() == 0
     assert await reader.read() == b"foo"
+    assert reader.tell() == 3
 
 
-async def test_seekable_read_bytearray() -> None:
+async def test_buffered_seekable_read_bytearray() -> None:
     reader = SeekableAsyncBytesReader(bytearray(b"foo"))
     assert reader.tell() == 0
     assert await reader.read() == b"foo"
@@ -56,12 +62,13 @@ async def test_seekable_read_bytearray() -> None:
 async def test_read_byte_stream() -> None:
     source = BytesIO(b"foo")
     reader = AsyncBytesReader(source)
-    assert source.tell() == 0
+    assert reader.seekable()
+    assert reader.tell() == 0 == source.tell()
     assert await reader.read() == b"foo"
-    assert source.tell() == 3
+    assert reader.tell() == 3 == source.tell()
 
 
-async def test_seekable_read_byte_stream() -> None:
+async def test_buffered_seekable_read_byte_stream() -> None:
     source = BytesIO(b"foo")
     reader = SeekableAsyncBytesReader(source)
     assert reader.tell() == 0
@@ -74,12 +81,13 @@ async def test_seekable_read_byte_stream() -> None:
 async def test_read_async_byte_stream() -> None:
     source = BytesIO(b"foo")
     reader = AsyncBytesReader(AsyncBytesReader(source))
-    assert source.tell() == 0
+    assert reader.seekable()
+    assert reader.tell() == 0 == source.tell()
     assert await reader.read() == b"foo"
-    assert source.tell() == 3
+    assert reader.tell() == 3 == source.tell()
 
 
-async def test_seekable_read_async_byte_stream() -> None:
+async def test_buffered_seekable_read_async_byte_stream() -> None:
     source = BytesIO(b"foo")
     reader = SeekableAsyncBytesReader(AsyncBytesReader(source))
     assert reader.tell() == 0
@@ -92,6 +100,7 @@ async def test_seekable_read_async_byte_stream() -> None:
 async def test_read_async_iterator() -> None:
     source = BytesIO(b"foo")
     reader = AsyncBytesReader(_AsyncIteratorWrapper(source))
+    assert not reader.seekable()
     assert source.tell() == 0
     assert await reader.read() == b"foo"
     assert source.tell() == 3
@@ -111,7 +120,19 @@ async def test_read_async_iterator() -> None:
     assert source.tell() == 12
 
 
-async def test_seekable_read_async_iterator() -> None:
+async def test_seek_unseekable_raises_notimplemented() -> None:
+    source = BytesIO(b"foo")
+    reader = AsyncBytesReader(_AsyncIteratorWrapper(source))
+    assert not reader.seekable()
+
+    with pytest.raises(NotImplementedError):
+        reader.tell()
+
+    with pytest.raises(NotImplementedError):
+        await reader.seek(0)
+
+
+async def test_buffered_seekable_read_async_iterator() -> None:
     source = BytesIO(b"foo")
     reader = SeekableAsyncBytesReader(_AsyncIteratorWrapper(source))
     assert reader.tell() == 0
@@ -199,7 +220,7 @@ async def test_seekable_close_closeable_source() -> None:
         reader.tell()
 
 
-async def test_seekable_close_async_closeable_source() -> None:
+async def test_buffered_seekable_close_async_closeable_source() -> None:
     source = AsyncBytesReader(BytesIO(b"foo"))
     reader = SeekableAsyncBytesReader(source)
 
@@ -236,6 +257,37 @@ async def test_seekable_close_non_closeable_source() -> None:
 
 
 async def test_seek() -> None:
+    source = BytesIO(b"foo")
+    reader = AsyncBytesReader(source)
+
+    assert source.tell() == 0
+    assert reader.tell() == 0
+
+    assert await reader.seek(2, 0) == 2
+
+    assert source.tell() == 2
+    assert reader.tell() == 2
+
+    assert await reader.seek(1, 1) == 3
+
+    assert source.tell() == 3
+    assert reader.tell() == 3
+
+    assert await reader.seek(0, 0) == 0
+
+    assert source.tell() == 0
+    assert reader.tell() == 0
+
+    source = BytesIO(b"foo")
+    reader = AsyncBytesReader(source)
+
+    assert await reader.seek(-3, 2) == 0
+
+    assert source.tell() == 0
+    assert reader.tell() == 0
+
+
+async def test_buffered_seek() -> None:
     source = BytesIO(b"foo")
     reader = SeekableAsyncBytesReader(source)
 
@@ -277,7 +329,7 @@ async def test_read_as_iterator() -> None:
     assert result == b"foo"
 
 
-async def test_seekable_read_as_iterator() -> None:
+async def test_buffered_seekable_read_as_iterator() -> None:
     source = BytesIO(b"foo")
     reader = SeekableAsyncBytesReader(source)
 
@@ -303,7 +355,7 @@ async def test_iter_chunks() -> None:
     assert result == b"foo"
 
 
-async def test_seekable_iter_chunks() -> None:
+async def test_buffered_seekable_iter_chunks() -> None:
     source = BytesIO(b"foo")
     reader = SeekableAsyncBytesReader(source)
 

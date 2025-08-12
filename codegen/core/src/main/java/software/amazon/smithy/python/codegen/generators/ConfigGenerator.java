@@ -117,38 +117,58 @@ public final class ConfigGenerator implements Runnable {
         this.settings = settings;
     }
 
-    private static List<ConfigProperty> getHttpProperties(GenerationContext context) {
-        var properties = new ArrayList<ConfigProperty>(HTTP_PROPERTIES.size() + 2);
-        var clientBuilder = ConfigProperty.builder()
-                .name("http_client")
+    private static List<ConfigProperty> getProtocolProperties(GenerationContext context) {
+        var properties = new ArrayList<ConfigProperty>();
+        var protocolBuilder = ConfigProperty.builder()
+                .name("protocol")
                 .type(Symbol.builder()
-                        .name("HTTPClient")
-                        .namespace("smithy_http.aio.interfaces", ".")
-                        .addDependency(SmithyPythonDependency.SMITHY_HTTP)
+                        .name("ClientProtocol[Any, Any]")
+                        .addReference(Symbol.builder()
+                                .name("ClientProtocol")
+                                .namespace("smithy_core.aio.interfaces", ".")
+                                .build())
                         .build())
-                .documentation("The HTTP client used to make requests.")
-                .nullable(false);
+                .documentation("The protocol to serialize and deserialize requests with.")
+                .initialize(w -> {
+                    w.write("self.protocol = protocol or ${C|}",
+                            w.consumer(writer -> context.protocolGenerator().initializeProtocol(context, writer)));
+                });
 
-        if (usesHttp2(context)) {
-            clientBuilder
-                    .initialize(writer -> {
-                        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("awscrt"));
-                        writer.addImport("smithy_http.aio.crt", "AWSCRTHTTPClient");
-                        writer.write("self.http_client = http_client or AWSCRTHTTPClient()");
-                    });
+        var transportBuilder = ConfigProperty.builder()
+                .name("transport")
+                .type(Symbol.builder()
+                        .name("ClientTransport[Any, Any]")
+                        .addReference(Symbol.builder()
+                                .name("ClientTransport")
+                                .namespace("smithy_core.aio.interfaces", ".")
+                                .build())
+                        .build())
+                .documentation("The transport to use to send requests (e.g. an HTTP client).");
 
-        } else {
-            clientBuilder
-                    .initialize(writer -> {
-                        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("aiohttp"));
-                        writer.addImport("smithy_http.aio.aiohttp", "AIOHTTPClient");
-                        writer.write("self.http_client = http_client or AIOHTTPClient()");
-                    });
+        if (context.applicationProtocol().isHttpProtocol()) {
+            properties.addAll(HTTP_PROPERTIES);
+            if (usesHttp2(context)) {
+                transportBuilder
+                        .initialize(writer -> {
+                            writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("awscrt"));
+                            writer.addImport("smithy_http.aio.crt", "AWSCRTHTTPClient");
+                            writer.write("self.transport = transport or AWSCRTHTTPClient()");
+                        });
+
+            } else {
+                transportBuilder
+                        .initialize(writer -> {
+                            writer.addDependency(
+                                    SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("aiohttp"));
+                            writer.addImport("smithy_http.aio.aiohttp", "AIOHTTPClient");
+                            writer.write("self.transport = transport or AIOHTTPClient()");
+                        });
+            }
         }
-        properties.add(clientBuilder.build());
 
-        properties.addAll(HTTP_PROPERTIES);
-        return List.copyOf(properties);
+        properties.add(protocolBuilder.build());
+        properties.add(transportBuilder.build());
+        return properties;
     }
 
     private static boolean usesHttp2(GenerationContext context) {
@@ -289,19 +309,13 @@ public final class ConfigGenerator implements Runnable {
         // Initialize a set of config properties with our base properties.
         var properties = new TreeSet<>(Comparator.comparing(ConfigProperty::name));
         properties.addAll(BASE_PROPERTIES);
+        properties.addAll(getProtocolProperties(context));
 
         // Add in auth configuration if the service supports auth.
         var serviceIndex = ServiceIndex.of(context.model());
         if (!serviceIndex.getAuthSchemes(settings.service()).isEmpty()) {
             properties.addAll(getAuthProperties(context));
             writer.onSection(new AddAuthHelper());
-        }
-
-        // Smithy is transport agnostic, so we don't add http-related properties by default.
-        // Nevertheless, HTTP is the most common use case so we standardize those settings
-        // and add them in if the protocol is going to need them.
-        if (context.applicationProtocol().isHttpProtocol()) {
-            properties.addAll(getHttpProperties(context));
         }
 
         var model = context.model();

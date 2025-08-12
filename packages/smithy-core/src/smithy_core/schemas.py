@@ -288,13 +288,13 @@ class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
     output: type[O]
     """The output type of the operation."""
 
-    schema: Schema
+    schema: Schema = field(repr=False)
     """The schema of the operation."""
 
-    input_schema: Schema
+    input_schema: Schema = field(repr=False)
     """The schema of the operation's input shape."""
 
-    output_schema: Schema
+    output_schema: Schema = field(repr=False)
     """The schema of the operation's output shape."""
 
     error_registry: "TypeRegistry"
