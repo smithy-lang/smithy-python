@@ -89,12 +89,13 @@ class HTTPResponseDeserializer(SpecificShapeDeserializer):
                         member, HTTPResponseCodeDeserializer(self._response.status)
                     )
                 case Binding.PAYLOAD:
-                    assert binding_matcher.payload_member is not None  # noqa: S101
-                    if self._should_read_payload(binding_matcher.payload_member):
-                        deserializer = self._create_payload_deserializer(
-                            binding_matcher.payload_member
-                        )
-                        consumer(binding_matcher.payload_member, deserializer)
+                    if binding_matcher.event_stream_member is None:
+                        assert binding_matcher.payload_member is not None  # noqa: S101
+                        if self._should_read_payload(binding_matcher.payload_member):
+                            deserializer = self._create_payload_deserializer(
+                                binding_matcher.payload_member
+                            )
+                            consumer(binding_matcher.payload_member, deserializer)
                 case _:
                     pass
 
