@@ -12,6 +12,7 @@ from aws_sdk_signers import (
     AsyncSigV4Signer,
     AWSCredentialIdentity,
     AWSRequest,
+    Field,
     Fields,
     SigV4Signer,
     SigV4SigningProperties,
@@ -125,6 +126,14 @@ class TestSigV4Signer:
             )
 
 
+class UnreadableAsyncStream:
+    def __aiter__(self) -> typing.Self:
+        return self
+
+    async def __anext__(self) -> bytes:
+        raise Exception("Read should not have been called!")
+
+
 class TestAsyncSigV4Signer:
     SIGV4_ASYNC_SIGNER = AsyncSigV4Signer()
 
@@ -191,3 +200,34 @@ class TestAsyncSigV4Signer:
                 request=aws_request,
                 identity=identity,
             )
+
+    async def test_sign_event_stream(
+        self,
+        aws_identity: AWSCredentialIdentity,
+    ) -> None:
+        headers = Fields()
+        headers.set_field(
+            Field(name="Content-Type", values=["application/vnd.amazon.eventstream"])
+        )
+        request = AWSRequest(
+            destination=URI(
+                scheme="https",
+                host="127.0.0.1",
+                port=8000,
+            ),
+            method="GET",
+            body=UnreadableAsyncStream(),
+            fields=headers,
+        )
+        signed = await self.SIGV4_ASYNC_SIGNER.sign(
+            properties=SigV4SigningProperties(
+                region="us-west-2",
+                service="ec2",
+                date="0",
+            ),
+            request=request,
+            identity=aws_identity,
+        )
+        assert "X-Amz-Content-SHA256" in signed.fields
+        payload_hash = signed.fields["X-Amz-Content-SHA256"].as_string()
+        assert payload_hash == "STREAMING-AWS4-HMAC-SHA256-EVENTS"
