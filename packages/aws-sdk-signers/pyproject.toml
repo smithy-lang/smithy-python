@@ -1,6 +1,6 @@
 [project]
 name = "aws-sdk-signers"
-version = "0.0.3"
+dynamic = ["version"]
 requires-python = ">=3.12"
 authors = [
   {name = "Amazon Web Services"},
@@ -34,6 +34,9 @@ classifiers = [
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/aws_sdk_signers/__init__.py"
 
 [tool.hatch.build]
 exclude = [

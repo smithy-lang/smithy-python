@@ -7,7 +7,7 @@ from collections.abc import Iterable, Iterator
 from . import interfaces
 from .interfaces import FieldPosition
 
-__version__: str = importlib.metadata.version("smithy-http")
+__version__ = "0.0.1"
 
 
 class Field(interfaces.Field):
