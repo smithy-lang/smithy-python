@@ -100,12 +100,13 @@ public class AwsAuthIntegration implements PythonIntegration {
             writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
             writer.addImport("smithy_core.interfaces.auth", "AuthOption", "AuthOptionProtocol");
             writer.addImports("smithy_core.auth", Set.of("AuthOption", "AuthParams"));
+            writer.addImport("smithy_core.shapes", "ShapeID");
             writer.pushState();
 
             writer.write("""
                     def $1L(auth_params: AuthParams[Any, Any]) -> AuthOptionProtocol | None:
                         return AuthOption(
-                            scheme_id=$2S,
+                            scheme_id=ShapeID($2S),
                             identity_properties={},  # type: ignore
                             signer_properties={}  # type: ignore
                         )
