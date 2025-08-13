@@ -3,7 +3,7 @@
 from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
 
-from smithy_aws_core.identity import AWSCredentialsIdentity, AWSIdentityProperties
+from .components import AWSCredentialsIdentity, AWSIdentityProperties
 
 
 class StaticCredentialsResolver(

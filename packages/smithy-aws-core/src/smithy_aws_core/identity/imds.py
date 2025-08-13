@@ -17,7 +17,7 @@ from smithy_http.aio import HTTPRequest
 from smithy_http.aio.interfaces import HTTPClient
 
 from .. import __version__
-from ..identity import AWSCredentialsIdentity, AWSIdentityProperties
+from .components import AWSCredentialsIdentity, AWSIdentityProperties
 
 _USER_AGENT_FIELD = Field(
     name="User-Agent",
