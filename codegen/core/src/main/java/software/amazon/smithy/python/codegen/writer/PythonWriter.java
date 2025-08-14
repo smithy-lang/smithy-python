@@ -92,7 +92,7 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
             String commentStart = "#";
             // Markdown doesn't have comments, so there's no non-intrusive way to
             // add the warning.
-            if (filename.endsWith(".md")) {
+            if (filename.endsWith(".md") || filename.equals("LICENSE") || filename.equals("NOTICE")) {
                 commentStart = "";
             } else if (filename.endsWith(".rst")) {
                 commentStart = "..\n    ";
