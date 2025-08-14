@@ -15,7 +15,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13", "3.14-dev"]
+        python-version: ["3.12", "3.13", "3.14"]
 
     steps:
       - name: Checkout Repository
@@ -40,6 +40,7 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           activate-environment: true
+          python-version: ${{ matrix.python-version }}
 
       - name: Setup workspace
         run: |
