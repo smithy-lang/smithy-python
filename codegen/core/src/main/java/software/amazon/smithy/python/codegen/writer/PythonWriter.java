@@ -40,6 +40,9 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
 
     private static final Logger LOGGER = Logger.getLogger(PythonWriter.class.getName());
     private static final MarkdownToRstDocConverter DOC_CONVERTER = MarkdownToRstDocConverter.getInstance();
+    private static final Set<String> FILES_WITHOUT_COMMENTS = Set.of(
+            "LICENSE",
+            "NOTICE");
 
     private final String fullPackageName;
     private final String commentStart;
@@ -92,7 +95,7 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
             String commentStart = "#";
             // Markdown doesn't have comments, so there's no non-intrusive way to
             // add the warning.
-            if (filename.endsWith(".md") || filename.equals("LICENSE") || filename.equals("NOTICE")) {
+            if (filename.endsWith(".md") || FILES_WITHOUT_COMMENTS.contains(filename)) {
                 commentStart = "";
             } else if (filename.endsWith(".rst")) {
                 commentStart = "..\n    ";
