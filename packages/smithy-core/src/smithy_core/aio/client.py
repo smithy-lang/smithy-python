@@ -310,7 +310,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 transport_request=interceptor.modify_before_retry_loop(request_context),
             )
 
-            return await self._retry(call, request_context, request_future)
+            return await self._retry(call, request_context, request_future)  # type: ignore[return-value]
         except Exception as e:
             return OutputContext(
                 request=request_context.request,
@@ -325,7 +325,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         call: ClientCall[I, O],
         request_context: RequestContext[I, TRequest],
         request_future: Future[RequestContext[I, TRequest]] | None,
-    ) -> OutputContext[I, O, TRequest | None, TResponse | None]:
+    ) -> OutputContext[I, O, TRequest, TResponse | None]:
         if not call.retryable():
             return await self._handle_attempt(call, request_context, request_future)
 
