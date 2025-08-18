@@ -9,17 +9,23 @@ on:
         branches:
           - develop
 
+env:
+  UV_SYSTEM_PYTHON: true
+
 jobs:
   ci:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13", "3.14"]
+        python-version: ["3.12", "3.13", "3.14-dev"]
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v5
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -34,7 +40,6 @@ jobs:
         uses: astral-sh/setup-uv@v6
         with:
           activate-environment: true
-          python-version: ${{ matrix.python-version }}
 
       - name: Setup workspace
         run: |
