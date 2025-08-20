@@ -152,7 +152,9 @@ async def test_resolver_env_relative():
     resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
     http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
 
-    with patch.dict(os.environ, {ContainerCredentialResolver.ENV_VAR: "/test"}):
+    with patch.dict(
+        os.environ, {ContainerCredentialResolver.ENV_VAR: "/test"}, clear=True
+    ):
         resolver = ContainerCredentialResolver(http_client)
         identity = await resolver.get_identity(properties={})
 
@@ -176,6 +178,7 @@ async def test_resolver_env_full():
     with patch.dict(
         os.environ,
         {ContainerCredentialResolver.ENV_VAR_FULL: "http://169.254.170.23/full"},
+        clear=True,
     ):
         resolver = ContainerCredentialResolver(http_client)
         identity = await resolver.get_identity(properties={})
@@ -203,6 +206,7 @@ async def test_resolver_env_token():
             ContainerCredentialResolver.ENV_VAR_FULL: "http://169.254.170.23/full",
             ContainerCredentialResolver.ENV_VAR_AUTH_TOKEN: "Bearer foobar",
         },
+        clear=True,
     ):
         resolver = ContainerCredentialResolver(http_client)
         identity = await resolver.get_identity(properties={})
@@ -237,6 +241,7 @@ async def test_resolver_env_token_file(tmp_path: pathlib.Path):
             ContainerCredentialResolver.ENV_VAR_FULL: "http://169.254.170.23/full",
             ContainerCredentialResolver.ENV_VAR_AUTH_TOKEN_FILE: str(token_file),
         },
+        clear=True,
     ):
         resolver = ContainerCredentialResolver(http_client)
         identity = await resolver.get_identity(properties={})
@@ -271,6 +276,7 @@ async def test_resolver_env_token_file_invalid_bytes(tmp_path: pathlib.Path):
             ContainerCredentialResolver.ENV_VAR_FULL: "http://169.254.170.23/full",
             ContainerCredentialResolver.ENV_VAR_AUTH_TOKEN_FILE: str(token_file),
         },
+        clear=True,
     ):
         resolver = ContainerCredentialResolver(http_client)
         with pytest.raises(SmithyIdentityError) as e:
@@ -294,6 +300,7 @@ async def test_resolver_env_token_file_precedence(tmp_path: pathlib.Path):
             ContainerCredentialResolver.ENV_VAR_AUTH_TOKEN_FILE: str(token_file),
             ContainerCredentialResolver.ENV_VAR_AUTH_TOKEN: "Bearer foobar",
         },
+        clear=True,
     ):
         resolver = ContainerCredentialResolver(http_client)
         identity = await resolver.get_identity(properties={})
@@ -323,7 +330,9 @@ async def test_resolver_valid_credentials_reused():
     resp_body = json.dumps(custom_resp_data)
     http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
 
-    with patch.dict(os.environ, {ContainerCredentialResolver.ENV_VAR: "/test"}):
+    with patch.dict(
+        os.environ, {ContainerCredentialResolver.ENV_VAR: "/test"}, clear=True
+    ):
         resolver = ContainerCredentialResolver(http_client)
         identity_one = await resolver.get_identity(properties={})
         identity_two = await resolver.get_identity(properties={})
@@ -342,7 +351,9 @@ async def test_resolver_expired_credentials_refreshed():
     resp_body = json.dumps(custom_resp_data)
     http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
 
-    with patch.dict(os.environ, {ContainerCredentialResolver.ENV_VAR: "/test"}):
+    with patch.dict(
+        os.environ, {ContainerCredentialResolver.ENV_VAR: "/test"}, clear=True
+    ):
         resolver = ContainerCredentialResolver(http_client)
         identity_one = await resolver.get_identity(properties={})
         identity_two = await resolver.get_identity(properties={})
@@ -361,7 +372,7 @@ async def test_resolver_missing_env():
     resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
     http_client = mock_http_client_response(200, resp_body.encode("utf-8"))
 
-    with patch.dict(os.environ, {}):
+    with patch.dict(os.environ, {}, clear=True):
         resolver = ContainerCredentialResolver(http_client)
         with pytest.raises(SmithyIdentityError):
             await resolver.get_identity(properties={})
