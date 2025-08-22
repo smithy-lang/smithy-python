@@ -12,6 +12,7 @@
 ### Features
 
 * Added a hand-written implmentation for the `restJson1` protocol.
+* Added a new retry mode `standard` and made it the default retry strategy.
 
 ## v0.0.3
 
