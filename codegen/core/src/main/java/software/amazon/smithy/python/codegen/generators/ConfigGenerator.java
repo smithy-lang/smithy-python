@@ -62,8 +62,8 @@ public final class ConfigGenerator implements Runnable {
                     .nullable(false)
                     .initialize(writer -> {
                         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-                        writer.addImport("smithy_core.retries", "SimpleRetryStrategy");
-                        writer.write("self.retry_strategy = retry_strategy or SimpleRetryStrategy()");
+                        writer.addImport("smithy_core.retries", "StandardRetryStrategy");
+                        writer.write("self.retry_strategy = retry_strategy or StandardRetryStrategy()");
                     })
                     .build(),
             ConfigProperty.builder()
