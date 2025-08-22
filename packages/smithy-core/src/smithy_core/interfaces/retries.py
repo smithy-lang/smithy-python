@@ -61,7 +61,7 @@ class RetryStrategy(Protocol):
     max_attempts: int
     """Upper limit on total attempt count (initial attempt plus retries)."""
 
-    def acquire_initial_retry_token(
+    async def acquire_initial_retry_token(
         self, *, token_scope: str | None = None
     ) -> RetryToken:
         """Called before any retries (for the first attempt at the operation).
@@ -74,7 +74,7 @@ class RetryStrategy(Protocol):
         """
         ...
 
-    def refresh_retry_token_for_retry(
+    async def refresh_retry_token_for_retry(
         self, *, token_to_renew: RetryToken, error: Exception
     ) -> RetryToken:
         """Replace an existing retry token from a failed attempt with a new token.
@@ -91,7 +91,7 @@ class RetryStrategy(Protocol):
         """
         ...
 
-    def record_success(self, *, token: RetryToken) -> None:
+    async def record_success(self, *, token: RetryToken) -> None:
         """Return token after successful completion of an operation.
 
         Upon successful completion of the operation, a user calls this function to
