@@ -6,7 +6,7 @@ spotbugs = "6.0.22"
 spotless = "7.2.1"
 smithy-gradle-plugins = "1.3.0"
 dep-analysis = "2.19.0"
-jsoup = "1.21.1"
+jsoup = "1.21.2"
 commonmark = "0.17.0"
 
 [libraries]
