@@ -93,7 +93,7 @@ public final class OperationGenerator implements Runnable {
         }
 
         for (var authSchemeId : authSchemes.keySet()) {
-            writer.write("ShapeID($S)", authSchemeId);
+            writer.write("ShapeID($S),", authSchemeId);
         }
 
     }
