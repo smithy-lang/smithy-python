@@ -28,7 +28,7 @@ classifiers = [
 dependencies = []
 
 [project.urls]
-"Changelog" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-core/CHANGES.md"
+"Changelog" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-core/CHANGELOG.md"
 "Code" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-core/"
 "Issue tracker" = "https://github.com/smithy-lang/smithy-python/issues"
 
