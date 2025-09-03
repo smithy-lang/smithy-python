@@ -33,7 +33,7 @@ _SLEEP_SECONDS = 1
 
 
 @dataclass
-class ContainerCredentialConfig:
+class ContainerCredentialsConfig:
     """Configuration for container credential retrieval operations."""
 
     timeout: int = _DEFAULT_TIMEOUT
@@ -43,7 +43,7 @@ class ContainerCredentialConfig:
 class ContainerMetadataClient:
     """Client for remote credential retrieval in Container environments like ECS/EKS."""
 
-    def __init__(self, http_client: HTTPClient, config: ContainerCredentialConfig):
+    def __init__(self, http_client: HTTPClient, config: ContainerCredentialsConfig):
         self._http_client = http_client
         self._config = config
 
@@ -103,7 +103,7 @@ class ContainerMetadataClient:
         return hostname in _CONTAINER_METADATA_ALLOWED_HOSTS
 
 
-class ContainerCredentialResolver(
+class ContainerCredentialsResolver(
     IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
 ):
     """Resolves AWS Credentials from container credential sources."""
@@ -116,10 +116,10 @@ class ContainerCredentialResolver(
     def __init__(
         self,
         http_client: HTTPClient,
-        config: ContainerCredentialConfig | None = None,
+        config: ContainerCredentialsConfig | None = None,
     ):
         self._http_client = http_client
-        self._config = config or ContainerCredentialConfig()
+        self._config = config or ContainerCredentialsConfig()
         self._client = ContainerMetadataClient(http_client, self._config)
         self._credentials = None
 

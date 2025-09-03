@@ -8,7 +8,7 @@ from .components import (
     AWSIdentityConfig,
     AWSIdentityProperties,
 )
-from .container import ContainerCredentialResolver
+from .container import ContainerCredentialsResolver
 from .environment import EnvironmentCredentialsResolver
 from .imds import IMDSCredentialsResolver
 from .static import StaticCredentialsResolver
@@ -17,7 +17,7 @@ __all__ = (
     "AWSCredentialsIdentity",
     "AWSCredentialsResolver",
     "AWSIdentityProperties",
-    "ContainerCredentialResolver",
+    "ContainerCredentialsResolver",
     "EnvironmentCredentialsResolver",
     "IMDSCredentialsResolver",
     "StaticCredentialsResolver",
