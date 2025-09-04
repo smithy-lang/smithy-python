@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Updated schema members to preserve their ordering from the model using dict ordering, which significantly cuts back the amount of code that must be generated."
+}
