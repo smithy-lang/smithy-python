@@ -1,0 +1,20 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Added support for Instance Metadata Service (IMDS) credential resolution."
+    },
+    {
+      "type": "feature",
+      "description": "Added basic endpoint support."
+    },
+    {
+      "type": "feature",
+      "description": "Added basic User Agent support."
+    },
+    {
+      "type": "feature",
+      "description": "Added basic AWS specific protocol support for RestJson1 and HTTP bindings."
+    }
+  ]
+}
