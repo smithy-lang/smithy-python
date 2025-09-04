@@ -1,9 +1,5 @@
 # Changelog
 
-## Unreleased
-
-* <Add new items here>
-
 ## v0.0.1
 
 ### Features
