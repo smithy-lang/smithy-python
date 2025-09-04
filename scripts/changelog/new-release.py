@@ -42,7 +42,10 @@ def collect_next_release_changes(next_release_dir: Path) -> list[dict[str, Any]]
 
 
 def create_version_file(
-    changes_dir: Path, version: str, changes: list[dict[str, Any]], summary: str | None = None
+    changes_dir: Path,
+    version: str,
+    changes: list[dict[str, Any]],
+    summary: str | None = None,
 ) -> Path:
     version_file = changes_dir / f"{version}.json"
 
