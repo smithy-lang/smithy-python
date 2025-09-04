@@ -1,0 +1,157 @@
+#!/usr/bin/env python3
+"""
+Create a new release by consolidating changelog entries from next-release directory
+into a version JSON file (x.y.z.json).
+"""
+
+import argparse
+import json
+import sys
+from pathlib import Path
+from typing import Any
+
+PROJECT_ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+
+
+def collect_next_release_changes(next_release_dir: Path) -> list[dict[str, Any]]:
+    changes: list[dict[str, Any]] = []
+
+    if not next_release_dir.exists():
+        return changes
+
+    for entry_file in next_release_dir.iterdir():
+        if entry_file.is_file() and entry_file.suffix == ".json":
+            try:
+                with open(entry_file) as f:
+                    change_data = json.load(f)
+                    changes.append(change_data)
+            except (OSError, json.JSONDecodeError) as e:
+                print(f"Warning: Could not process {entry_file}: {e}", file=sys.stderr)
+                continue
+
+    # Sort changes by type for consistent ordering
+    type_order = {"breaking": 0, "feature": 1, "enhancement": 2, "bugfix": 3}
+    changes.sort(
+        key=lambda c: (
+            type_order.get(c.get("type", "enhancement"), 4),
+            c.get("description", ""),
+        )
+    )
+
+    return changes
+
+
+def create_version_file(
+    changes_dir: Path, version: str, changes: list[dict[str, Any]], summary: str | None = None
+) -> Path:
+    version_file = changes_dir / f"{version}.json"
+
+    if version_file.exists():
+        print(f"Error: Version file {version_file} already exists!")
+        sys.exit(1)
+
+    version_data: dict[str, Any] = {"changes": changes}
+
+    if summary:
+        version_data["summary"] = summary
+
+    with open(version_file, "w") as f:
+        json.dump(version_data, f, indent=2)
+
+    return version_file
+
+
+def cleanup_next_release_dir(next_release_dir: Path) -> int:
+    removed_count = 0
+
+    for entry_file in next_release_dir.iterdir():
+        if entry_file.is_file() and entry_file.suffix == ".json":
+            try:
+                entry_file.unlink()
+                removed_count += 1
+            except OSError as e:
+                print(f"Warning: Could not remove {entry_file}: {e}", file=sys.stderr)
+
+    return removed_count
+
+
+def create_new_release(
+    package_name: str, version: str, summary: str | None = None, dry_run: bool = False
+) -> int:
+    # Get package directories
+    changes_dir = PROJECT_ROOT_DIR / "packages" / package_name / ".changes"
+    next_release_dir = changes_dir / "next-release"
+
+    if not changes_dir.exists():
+        print(f"Error: No .changes directory found for package: {package_name}")
+        return 1
+
+    # Collect changes from next-release
+    changes = collect_next_release_changes(next_release_dir)
+
+    if not changes:
+        print(
+            f"No changelog entries found in {next_release_dir}.\n"
+            "Use 'python scripts/changelog/new-entry.py' to create entries first"
+        )
+        return 1
+
+    print(f"Found {len(changes)} changelog entries for {package_name} v{version}:")
+    for change in changes:
+        change_type = change.get("type", "unknown").upper()
+        description = change.get("description", "No description")
+        print(f"  {change_type}: {description}")
+
+    if dry_run:
+        print("\n[DRY RUN] Would create version file and remove next-release entries")
+        return 0
+
+    # Create version file
+    try:
+        version_file = create_version_file(changes_dir, version, changes, summary)
+        print(f"\nCreated version file: {version_file}")
+    except Exception as e:
+        print(f"Error creating version file: {e}")
+        return 1
+
+    # Clean up next-release directory
+    removed_count = cleanup_next_release_dir(next_release_dir)
+    print(f"Removed {removed_count} changelog entries from next-release")
+    print(f"✅ Successfully created release {version} for {package_name}")
+
+    return 0
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(
+        description="Create a new release by consolidating changelog entries"
+    )
+    parser.add_argument("-p", "--package", required=True, help="Package name")
+    parser.add_argument(
+        "-v", "--version", required=True, help="Release version (e.g., 1.0.0)"
+    )
+    parser.add_argument("-s", "--summary", help="Optional release summary")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be done without making changes",
+    )
+
+    args = parser.parse_args()
+
+    # Basic version format validation
+    version_parts = args.version.split(".")
+    if len(version_parts) != 3 or not all(part.isdigit() for part in version_parts):
+        print("Error: Version must be in format x.y.z (e.g., 1.2.3)")
+        return 1
+
+    return create_new_release(
+        package_name=args.package,
+        version=args.version,
+        summary=args.summary,
+        dry_run=args.dry_run,
+    )
+
+
+if __name__ == "__main__":
+    exit(main())
