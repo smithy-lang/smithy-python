@@ -1,0 +1,8 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Added support for json primitives in Smithy clients."
+    }
+  ]
+}
