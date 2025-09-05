@@ -335,10 +335,13 @@ class HTTPAPIKeyAuthTrait(Trait, id=ShapeID("smithy.api#httpApiKeyAuth")):
 
     def __init__(self, value: "DocumentValue | DynamicTrait" = None):
         super().__init__(value)
-        object.__setattr__(self, "location", APIKeyLocation(value))
         assert isinstance(self.document_value, Mapping)
+        assert isinstance(self.document_value["in"], str)
         assert isinstance(self.document_value["name"], str)
         assert isinstance(self.document_value.get("scheme"), str | None)
+
+        location = self.document_value["in"]
+        object.__setattr__(self, "location", APIKeyLocation(location))
 
     @property
     def name(self) -> str:
