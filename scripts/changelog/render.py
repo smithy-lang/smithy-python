@@ -55,7 +55,6 @@ def load_package_releases(changes_dir: Path) -> dict[str, dict[str, Any]]:
             ]
 
             releases[version_number] = {
-                "summary": data.get("summary", ""),
                 "changes": formatted_changes,
             }
         except (OSError, json.JSONDecodeError) as e:

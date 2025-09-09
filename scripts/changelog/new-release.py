@@ -47,7 +47,6 @@ def create_version_file(
     changes_dir: Path,
     version: str,
     changes: list[dict[str, Any]],
-    summary: str | None = None,
 ) -> Path:
     version_file = changes_dir / f"{version}.json"
 
@@ -56,9 +55,6 @@ def create_version_file(
         sys.exit(1)
 
     version_data: dict[str, Any] = {"changes": changes}
-
-    if summary:
-        version_data["summary"] = summary
 
     with open(version_file, "w") as f:
         json.dump(version_data, f, indent=2)
@@ -80,9 +76,7 @@ def cleanup_next_release_dir(next_release_dir: Path) -> int:
     return removed_count
 
 
-def create_new_release(
-    package_name: str, version: str, summary: str | None = None, dry_run: bool = False
-) -> int:
+def create_new_release(package_name: str, version: str, dry_run: bool = False) -> int:
     # Get package directories
     changes_dir = PROJECT_ROOT_DIR / "packages" / package_name / ".changes"
     next_release_dir = changes_dir / "next-release"
@@ -113,7 +107,7 @@ def create_new_release(
 
     # Create version file
     try:
-        version_file = create_version_file(changes_dir, version, changes, summary)
+        version_file = create_version_file(changes_dir, version, changes)
         print(f"\nCreated version file: {version_file}")
     except Exception as e:
         print(f"Error creating version file: {e}")
@@ -135,7 +129,6 @@ def main() -> int:
     parser.add_argument(
         "-v", "--version", required=True, help="Release version (e.g., 1.0.0)"
     )
-    parser.add_argument("-s", "--summary", help="Optional release summary")
     parser.add_argument(
         "--dry-run",
         action="store_true",
@@ -153,7 +146,6 @@ def main() -> int:
     return create_new_release(
         package_name=args.package,
         version=args.version,
-        summary=args.summary,
         dry_run=args.dry_run,
     )
 
