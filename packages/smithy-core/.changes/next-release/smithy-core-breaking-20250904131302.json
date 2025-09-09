@@ -1,4 +1,4 @@
 {
   "type": "breaking",
-  "description": "Replaced  suffix with  to follow PEP8 conventions."
+  "description": "Replaced `Exception` suffix with `Error` to follow PEP8 conventions."
 }
