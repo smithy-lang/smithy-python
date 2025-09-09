@@ -8,11 +8,13 @@ into a version JSON file (x.y.z.json).
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Any
 
 PROJECT_ROOT_DIR = Path(__file__).resolve().parent.parent.parent
+VERSION_PATTERN = r"^\d+\.\d+\.\d+$"
 
 
 def collect_next_release_changes(next_release_dir: Path) -> list[dict[str, Any]]:
@@ -138,8 +140,7 @@ def main() -> int:
     args = parser.parse_args()
 
     # Basic version format validation
-    version_parts = args.version.split(".")
-    if len(version_parts) != 3 or not all(part.isdigit() for part in version_parts):
+    if not bool(re.match(VERSION_PATTERN, args.version)):
         print("Error: Version must be in format x.y.z (e.g., 1.2.3)")
         return 1
 

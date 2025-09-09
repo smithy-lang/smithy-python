@@ -18,12 +18,12 @@ PROJECT_ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 
 TEMPLATES_DIR = PROJECT_ROOT_DIR / "scripts" / "changelog" / "templates"
 DEFAULT_TEMPLATE_NAME = "PACKAGE"
-VERSION_PATTERN = r"^\d+\.\d+\.\d+\.json$"
+VERSION_FILE_PATTERN = r"^\d+\.\d+\.\d+\.json$"
 
 
 def get_sorted_versions(changes_dir: Path) -> list[str]:
     """Get sorted list of version numbers from .changes directory."""
-    version_pattern = re.compile(VERSION_PATTERN)
+    version_pattern = re.compile(VERSION_FILE_PATTERN)
     versions: list[str] = []
 
     for file in changes_dir.iterdir():
