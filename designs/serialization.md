@@ -45,7 +45,7 @@ class ImplicitImplementation:
         return f"Good day to you {name}."
 ```
 
-Since this is *structural* subtyping, it isn't required that implmentations
+Since this is *structural* subtyping, it isn't required that implementations
 actual inheret from the `Protocol` or otherwise declare that they're
 implementing it. But they *can* to make it more explicit or to inherit a default
 implementation. The `Protocol` class itself cannot be instantiated, however.
