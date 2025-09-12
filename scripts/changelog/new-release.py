@@ -15,6 +15,23 @@ from typing import Any
 
 PROJECT_ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 VERSION_PATTERN = r"^\d+\.\d+\.\d+$"
+CHANGE_TYPES_ORDER = {"breaking": 0, "feature": 1, "enhancement": 2, "bugfix": 3}
+CHANGE_TYPES = tuple(CHANGE_TYPES_ORDER.keys())
+
+
+def validate_change_entry(change_data: dict[str, Any], entry_file: Path) -> bool:
+    if "type" not in change_data or change_data["type"] not in CHANGE_TYPES:
+        print(
+            f"Error: Missing or invalid 'type' field in {entry_file}\n"
+            f"Type must be one of: {CHANGE_TYPES}"
+        )
+        return False
+
+    if "description" not in change_data or not change_data["description"]:
+        print(f"Error: Missing or empty 'description' field in {entry_file}")
+        return False
+
+    return True
 
 
 def collect_next_release_changes(next_release_dir: Path) -> list[dict[str, Any]]:
@@ -28,19 +45,18 @@ def collect_next_release_changes(next_release_dir: Path) -> list[dict[str, Any]]
             try:
                 with open(entry_file) as f:
                     change_data = json.load(f)
+
+                    # Validate required fields
+                    if not validate_change_entry(change_data, entry_file):
+                        sys.exit(1)
+
                     changes.append(change_data)
             except (OSError, json.JSONDecodeError) as e:
-                print(f"Warning: Could not process {entry_file}: {e}", file=sys.stderr)
-                continue
+                print(f"Error: Could not process {entry_file}: {e}", file=sys.stderr)
+                sys.exit(1)
 
     # Sort changes by type for consistent ordering
-    type_order = {"breaking": 0, "feature": 1, "enhancement": 2, "bugfix": 3}
-    changes.sort(
-        key=lambda c: (
-            type_order.get(c.get("type", "enhancement"), 4),
-            c.get("description", ""),
-        )
-    )
+    changes.sort(key=lambda c: (CHANGE_TYPES_ORDER[c["type"]]))
 
     return changes
 
