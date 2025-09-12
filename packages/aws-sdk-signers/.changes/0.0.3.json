@@ -1,0 +1,20 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Added `AsyncEventSigner` for Amazon Event Stream event signing."
+    },
+    {
+      "type": "feature",
+      "description": "Added new `uri_encode_path` parameter to `SigV4SigningProperties`. This boolean can be toggled to double encode the URI path."
+    },
+    {
+      "type": "bugfix",
+      "description": "Fixed bug with async seekable payloads on requests."
+    },
+    {
+      "type": "bugfix",
+      "description": "Fixed bug where paths were not being properly double-encoded."
+    }
+  ]
+}

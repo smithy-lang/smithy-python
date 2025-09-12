@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Introduced transport-agnostic interfaces for identity and auth, replacing the existing interfaces that were coupled to HTTP requests and responses."
+}

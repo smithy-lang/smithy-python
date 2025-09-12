@@ -21,11 +21,14 @@ lint = [
 typing = [
     "pyright>=1.1.400",
 ]
+changelog = [
+    "jinja2>=3.1.6"
+]
 
 [tool.uv]
 required-version = ">=0.7.2"
 package = false
-default-groups = ["test", "lint", "typing"]
+default-groups = ["test", "lint", "typing", "changelog"]
 
 [tool.uv.workspace]
 members = ["packages/*"]

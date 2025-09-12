@@ -1,0 +1,24 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Added `SigV4Signer` to sign arbitrary requests synchronously."
+    },
+    {
+      "type": "feature",
+      "description": "Added `AsyncSigV4Signer` to sign arbitrary requests asynchronously."
+    },
+    {
+      "type": "feature",
+      "description": "Added example `SigV4Auth` for integrating directly with Requests' `auth` parameter."
+    },
+    {
+      "type": "feature",
+      "description": "Added `SigV4Signer` for integrating with the AIOHTTP request workflow."
+    },
+    {
+      "type": "feature",
+      "description": "Added `SigV4Curl` for generating signed curl commands."
+    }
+  ]
+}

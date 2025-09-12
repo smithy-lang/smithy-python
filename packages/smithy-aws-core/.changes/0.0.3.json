@@ -1,0 +1,8 @@
+{
+  "changes": [
+    {
+      "type": "bugfix",
+      "description": "Rename `ContainerCredentialResolver` to `ContainerCredentialsResolver` to match new naming standard."
+    }
+  ]
+}

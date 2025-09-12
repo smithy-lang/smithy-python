@@ -1,0 +1,24 @@
+# Changelog
+{% for release, changes in releases %}
+## v{{ release }}
+{%- for type_name in ['breaking', 'feature', 'enhancement', 'bugfix'] %}
+{%- for change in changes.changes if change.type == type_name %}
+{%- if loop.first %}
+{%- if type_name == 'breaking' %}
+
+### Breaking Changes
+{%- elif type_name == 'feature' %}
+
+### Features
+{%- elif type_name == 'enhancement' %}
+
+### Enhancements
+{%- elif type_name == 'bugfix' %}
+
+### Bug fixes
+{%- endif %}
+{%- endif %}
+* {{ change.description }}
+{%- endfor %}
+{%- endfor %}
+{% endfor %}

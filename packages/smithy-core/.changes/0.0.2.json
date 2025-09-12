@@ -1,0 +1,8 @@
+{
+  "changes": [
+    {
+      "type": "bugfix",
+      "description": "Fixed incorrect interceptors for `modify_before_signing` and `modify_before_transmit`."
+    }
+  ]
+}

@@ -27,7 +27,7 @@ classifiers = [
 ]
 
 [project.urls]
-"Changelog" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/aws-sdk-signers/CHANGES.md"
+"Changelog" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/aws-sdk-signers/CHANGELOG.md"
 "Code" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/aws-sdk-signers/"
 "Issue tracker" = "https://github.com/smithy-lang/smithy-python/issues"
 

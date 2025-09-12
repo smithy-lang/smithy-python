@@ -1,0 +1,8 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Added support for Container credential resolution, commonly used with ECS/EKS."
+    }
+  ]
+}

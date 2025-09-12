@@ -1,0 +1,12 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Added support for aiohttp and AWSCRT http clients."
+    },
+    {
+      "type": "feature",
+      "description": "Added basic HTTP primitives and interfaces for Smithy clients."
+    }
+  ]
+}
