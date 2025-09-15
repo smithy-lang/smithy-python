@@ -84,6 +84,7 @@ public class RestJsonProtocolGenerator implements ProtocolGenerator {
     @Override
     public void initializeProtocol(GenerationContext context, PythonWriter writer) {
         writer.addDependency(SmithyPythonDependency.SMITHY_AWS_CORE);
+        writer.addDependency(SmithyPythonDependency.SMITHY_JSON);
         writer.addImport("smithy_aws_core.aio.protocols", "RestJsonClientProtocol");
         var serviceSymbol = context.symbolProvider().toSymbol(context.settings().service(context.model()));
         var serviceSchema = serviceSymbol.expectProperty(SymbolProperties.SCHEMA);
