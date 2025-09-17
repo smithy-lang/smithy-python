@@ -222,6 +222,7 @@ final class ClientGenerator implements Runnable {
     private void generateEventStreamOperation(PythonWriter writer, OperationShape operation) {
         writer.pushState(new OperationSection(service, operation));
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addDependency(SmithyPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("eventstream"));
         var operationSymbol = symbolProvider.toSymbol(operation);
         writer.putContext("operation", operationSymbol);
         var operationMethodSymbol = operationSymbol.expectProperty(OPERATION_METHOD);

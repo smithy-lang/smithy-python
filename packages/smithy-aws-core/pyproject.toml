@@ -47,6 +47,9 @@ path = "src/smithy_aws_core/__init__.py"
 eventstream = [
     "smithy-aws-event-stream"
 ]
+json = [
+    "smithy-json"
+]
 
 [tool.hatch.build]
 exclude = [

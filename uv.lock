@@ -692,6 +692,9 @@ dependencies = [
 eventstream = [
     { name = "smithy-aws-event-stream" },
 ]
+json = [
+    { name = "smithy-json" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -699,8 +702,9 @@ requires-dist = [
     { name = "smithy-aws-event-stream", marker = "extra == 'eventstream'", editable = "packages/smithy-aws-event-stream" },
     { name = "smithy-core", editable = "packages/smithy-core" },
     { name = "smithy-http", editable = "packages/smithy-http" },
+    { name = "smithy-json", marker = "extra == 'json'", editable = "packages/smithy-json" },
 ]
-provides-extras = ["eventstream"]
+provides-extras = ["eventstream", "json"]
 
 [[package]]
 name = "smithy-aws-event-stream"
