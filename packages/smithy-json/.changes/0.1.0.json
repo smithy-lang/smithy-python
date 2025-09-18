@@ -1,0 +1,16 @@
+{
+  "changes": [
+    {
+      "type": "enhancement",
+      "description": "Use shared settings for JSON codec"
+    },
+    {
+      "type": "enhancement",
+      "description": "Pass JSON document class through settings"
+    },
+    {
+      "type": "enhancement",
+      "description": "Use natural dict ordering for member index"
+    }
+  ]
+}
