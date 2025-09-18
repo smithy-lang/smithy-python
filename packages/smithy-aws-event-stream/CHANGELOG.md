@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.0
+
+### Breaking Changes
+* Update `AWSEventPublisher` to use `SigningConfig` instead of `EventSigner` so identity can be fetched at signing time.
+
 ## v0.0.1
 
 ### Features
