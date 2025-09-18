@@ -1,0 +1,12 @@
+{
+  "changes": [
+    {
+      "type": "breaking",
+      "description": "Updated sigv4 auth resolution and identity providers to the new transport-agnostic interfaces."
+    },
+    {
+      "type": "feature",
+      "description": "Added a hand-written implementation for the `restJson1` protocol."
+    }
+  ]
+}
