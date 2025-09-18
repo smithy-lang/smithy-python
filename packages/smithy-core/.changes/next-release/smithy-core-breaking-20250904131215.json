@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Updated retry interfaces to pull information from exceptions instead of requiring a separate classification step."
-}

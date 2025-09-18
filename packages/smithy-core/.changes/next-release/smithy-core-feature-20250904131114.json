@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Introduced the `ClientProtocol` interface to allow for hand-written protocol implementations and protocol swapping at runtime."
-}
