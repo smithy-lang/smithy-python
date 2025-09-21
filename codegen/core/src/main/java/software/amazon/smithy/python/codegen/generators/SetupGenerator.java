@@ -471,7 +471,7 @@ public final class SetupGenerator {
                     following:
 
                     ```
-                    $$ uv pip install ".[docs]"
+                    $$ uv pip install --group docs .
                     $$ cd docs
                     $$ make html
                     ```
