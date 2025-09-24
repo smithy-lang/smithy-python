@@ -2,7 +2,7 @@ name: docs
 on:
   push:
     branches:
-      - smithy-python-docs
+      - main
 permissions:
   contents: write
 jobs:
