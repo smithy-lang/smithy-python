@@ -34,3 +34,6 @@ htmlcov
 *.egg-info
 dist
 .venv
+
+# mkdocs documentation
+docs/site
