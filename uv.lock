@@ -1076,7 +1076,7 @@ typing = [
 changelog = [{ name = "jinja2", specifier = ">=3.1.6" }]
 docs = [
     { name = "mkdocs-material", specifier = "~=9.6.20" },
-    { name = "mkdocstrings-python" },
+    { name = "mkdocstrings-python", specifier = "~=1.18.2" },
 ]
 lint = [
     { name = "black", specifier = ">=25.1.0" },
