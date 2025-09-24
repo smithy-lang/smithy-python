@@ -43,6 +43,7 @@ theme:
 
 # Plugins
 plugins:
+- search
 - mkdocstrings:
     handlers:
       python:
