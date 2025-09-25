@@ -6,8 +6,7 @@
 * Changed the `signing_properties` and `http_request` args to `properties` and `request` for the `sign` methods in `SigV4Signer` and `AsyncSigV4Signer`.
 
 ### Enhancements
-* Update the async signer to use the special payload hash
-for event stream operations.
+* Update the async signer to use the special payload hash for event stream operations.
 * Check seekable in aws signers
 
 ## v0.0.3

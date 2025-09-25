@@ -6,7 +6,7 @@
     },
     {
       "type": "enhancement",
-      "description": "Update the async signer to use the special payload hash\nfor event stream operations."
+      "description": "Update the async signer to use the special payload hash for event stream operations."
     },
     {
       "type": "enhancement",
