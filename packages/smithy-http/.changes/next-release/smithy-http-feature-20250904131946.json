@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Introduced schema-based serializers and deserializers for HTTP binding protocols."
-}

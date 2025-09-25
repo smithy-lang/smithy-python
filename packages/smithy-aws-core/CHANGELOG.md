@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.1.0
+
+### Breaking Changes
+* Updated sigv4 auth resolution and identity providers to the new transport-agnostic interfaces.
+
+### Features
+* Added a hand-written implementation for the `restJson1` protocol.
+
 ## v0.0.3
 
 ### Bug fixes

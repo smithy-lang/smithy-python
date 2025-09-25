@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Introduced a hand-written request pipeline to replace the one that was code-generated in Java."
-}

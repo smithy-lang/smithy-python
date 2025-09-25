@@ -13,7 +13,7 @@ from ._private.documents import JSONDocument
 from ._private.serializers import JSONShapeSerializer as _JSONShapeSerializer
 from .settings import JSONSettings
 
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 __all__ = ("JSONCodec", "JSONDocument", "JSONSettings")
 
 

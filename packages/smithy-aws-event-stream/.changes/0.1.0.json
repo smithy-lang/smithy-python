@@ -1,0 +1,8 @@
+{
+  "changes": [
+    {
+      "type": "breaking",
+      "description": "Update `AWSEventPublisher` to use `SigningConfig` instead of `EventSigner` so identity can be fetched at signing time."
+    }
+  ]
+}

@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Removed identity and auth interfaces in favor of the transport-agnostic interfaces introduced in `smithy-core`."
-}

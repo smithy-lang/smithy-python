@@ -1,0 +1,16 @@
+{
+  "changes": [
+    {
+      "type": "breaking",
+      "description": "Changed the `signing_properties` and `http_request` args to `properties` and `request` for the `sign` methods in `SigV4Signer` and `AsyncSigV4Signer`."
+    },
+    {
+      "type": "enhancement",
+      "description": "Update the async signer to use the special payload hash for event stream operations."
+    },
+    {
+      "type": "enhancement",
+      "description": "Check seekable in aws signers"
+    }
+  ]
+}

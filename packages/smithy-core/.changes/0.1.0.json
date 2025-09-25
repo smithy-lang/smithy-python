@@ -1,0 +1,40 @@
+{
+  "changes": [
+    {
+      "type": "breaking",
+      "description": "Introduced transport-agnostic interfaces for identity and auth, replacing the existing interfaces that were coupled to HTTP requests and responses."
+    },
+    {
+      "type": "breaking",
+      "description": "Updated retry interfaces to pull information from exceptions instead of requiring a separate classification step."
+    },
+    {
+      "type": "breaking",
+      "description": "Replaced `Exception` suffix with `Error` to follow PEP8 conventions."
+    },
+    {
+      "type": "feature",
+      "description": "Updated schema members to preserve their ordering from the model using dict ordering, which significantly cuts back the amount of code that must be generated."
+    },
+    {
+      "type": "feature",
+      "description": "Introduced the `ClientProtocol` interface to allow for hand-written protocol implementations and protocol swapping at runtime."
+    },
+    {
+      "type": "feature",
+      "description": "Introduced a hand-written request pipeline to replace the one that was code-generated in Java."
+    },
+    {
+      "type": "feature",
+      "description": "Updated exceptions to embed retryablity information."
+    },
+    {
+      "type": "enhancement",
+      "description": "Added usages of `TypeForm` from PEP747 via `typing_extensions` to better support typing for event streams and typed properties."
+    },
+    {
+      "type": "bugfix",
+      "description": "Fix broken initializer for `HTTPAPIKeyAuthTrait`. ([#533](https://github.com/smithy-lang/smithy-python/pull/553))"
+    }
+  ]
+}

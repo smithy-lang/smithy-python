@@ -6,7 +6,7 @@ from collections.abc import Iterable, Iterator
 from . import interfaces
 from .interfaces import FieldPosition
 
-__version__ = "0.0.1"
+__version__ = "0.1.0"
 
 
 class Field(interfaces.Field):

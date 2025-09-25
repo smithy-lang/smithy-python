@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Updated exceptions to embed retryablity information."
-}
