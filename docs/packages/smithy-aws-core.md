@@ -1,0 +1,1 @@
+::: smithy_aws_core
