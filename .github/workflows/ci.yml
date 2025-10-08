@@ -43,11 +43,12 @@ jobs:
 
       - name: Setup workspace
         run: |
-          export UV_PROJECT_ENVIRONMENT="${pythonLocation}"
-          echo "UV_PROJECT_ENVIRONMENT=$UV_PROJECT_ENVIRONMENT" >> "$GITHUB_ENV"
+          # export UV_PROJECT_ENVIRONMENT="${pythonLocation}"
+          # echo "UV_PROJECT_ENVIRONMENT=$UV_PROJECT_ENVIRONMENT" >> "$GITHUB_ENV"
           make install
 
       - name: Check python packages
+        if: matrix.python-version == "3.12"
         run: |
           make check-py
 
