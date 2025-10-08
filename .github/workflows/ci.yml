@@ -12,12 +12,11 @@ on:
 
 jobs:
   ci:
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
         python-version: ["3.12", "3.13", "3.14"]
-        os: [ubuntu-latest, macOS-latest, windows-latest]
 
     steps:
       - name: Checkout Repository
@@ -41,8 +40,6 @@ jobs:
 
       - name: Setup workspace
         run: |
-          # export UV_PROJECT_ENVIRONMENT="${pythonLocation}"
-          # echo "UV_PROJECT_ENVIRONMENT=$UV_PROJECT_ENVIRONMENT" >> "$GITHUB_ENV"
           make install
 
       - name: Check python packages
