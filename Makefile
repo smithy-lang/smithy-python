@@ -27,7 +27,6 @@ lint-py: ## Runs linters and formatters on the python packages.
 
 
 check-py: ## Runs checks (formatting, lints, type-checking) on the python packages.
-	uv run docformatter packages
 	uv run ruff check packages --config pyproject.toml
 	uv run ruff format --check --config pyproject.toml
 	uv run pyright packages
