@@ -4,6 +4,7 @@ on:
     push:
         branches:
           - develop
+          - master
 
     pull_request:
         branches:
@@ -18,14 +19,11 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13", "3.14-dev"]
+        python-version: ["3.12", "3.13", "3.14"]
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v5
-
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v6
 
       - name: Set up JDK 17
         uses: actions/setup-java@v5
@@ -36,10 +34,12 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-      - name: Install uv
+      - name: Install uv and set the Python version
         uses: astral-sh/setup-uv@v7
         with:
+          python-version: ${{ matrix.python-version }}
           activate-environment: true
+          enable-cache: true
 
       - name: Setup workspace
         run: |
