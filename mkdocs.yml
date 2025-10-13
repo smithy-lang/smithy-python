@@ -1,0 +1,93 @@
+# Project Information
+site_name: Smithy Python
+watch: [README.md]
+
+# Copyright
+copyright: Copyright &copy; 2025, Amazon Web Services, Inc
+
+# Repository
+repo_name: smithy-lang/smithy-python
+repo_url: https://github.com/smithy-lang/smithy-python
+
+# Theme
+theme:
+  name: material
+  logo: assets/smithy-anvil.svg
+  palette:
+    # Palette toggle for automatic mode
+    - media: "(prefers-color-scheme)"
+      toggle:
+        icon: material/brightness-auto
+        name: Switch to light mode
+
+    # Palette toggle for light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+      primary: black
+
+    # Palette toggle for dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/brightness-4
+        name: Switch to system preference
+      primary: black
+  features:
+    - navigation.path
+    - navigation.top
+    - navigation.footer
+    - content.code.copy
+
+# Plugins
+plugins:
+- search
+- mkdocstrings:
+    handlers:
+      python:
+        paths: [packages/*/src]
+        options:
+          show_submodules: true
+          show_symbol_type_heading: true
+          show_symbol_type_toc: true
+
+# Navigation
+nav:
+  - index.md
+  - Packages:
+    - smithy-core: packages/smithy-core.md
+    - smithy-http: packages/smithy-http.md
+    - smithy-json: packages/smithy-json.md
+    - smithy-aws-core: packages/smithy-aws-core.md
+    - smithy-aws-event-stream: packages/smithy-aws-event-stream.md
+    - aws-sdk-signers: packages/aws-sdk-signers.md
+  - Designs:
+      - Auth: designs/auth.md
+      - Documents: designs/documents.md
+      - "Event Streams": designs/event-streams.md
+      - Exceptions: designs/exceptions.md
+      - "HTTP Interfaces": designs/http-interfaces.md
+      - Retries: designs/retries.md
+      - Serialization: designs/serialization.md
+      - Shapes: designs/shapes.md
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - toc:
+      permalink: true
+
+# Extras
+extra:
+  social:
+  - icon: fontawesome/brands/github
+    link: https://github.com/smithy-lang/smithy-python

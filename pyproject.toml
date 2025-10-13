@@ -24,6 +24,10 @@ typing = [
 changelog = [
     "jinja2>=3.1.6"
 ]
+docs = [
+    "mkdocs-material~=9.6.20",
+    "mkdocstrings-python~=1.18.2"
+]
 
 [tool.uv]
 required-version = ">=0.7.2"

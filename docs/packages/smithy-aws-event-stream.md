@@ -1,0 +1,1 @@
+::: smithy_aws_event_stream
