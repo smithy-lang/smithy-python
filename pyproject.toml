@@ -14,9 +14,7 @@ test = [
     "freezegun>=1.5.1",
 ]
 lint = [
-    "black>=25.1.0",
     "ruff>=0.9.7",
-    "docformatter>=1.7.5",
 ]
 typing = [
     "pyright>=1.1.400",
@@ -49,10 +47,6 @@ enableExperimentalFeatures = true
 asyncio_mode = "auto" # makes pytest run async tests without having to be marked with the @pytest.mark.asyncio decorator
 addopts = [ "--import-mode=importlib", "--cov", "--cov-report=term-missing" ]
 consider_namespace_packages = true
-
-[tool.docformatter]
-recursive = true
-black = true
 
 [tool.ruff]
 target-version = "py312"
