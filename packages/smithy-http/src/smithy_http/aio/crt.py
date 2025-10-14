@@ -14,20 +14,16 @@ if TYPE_CHECKING:
     from awscrt import http as crt_http_base
     from awscrt import io as crt_io
     from awscrt.aio.http import (
-        AIOHttp2ClientConnection,
-        AIOHttp2ClientStream,
         AIOHttpClientConnectionUnified,
-        AIOHttpClientStream,
+        AIOHttpClientStreamUnified,
     )
 
 try:
     from awscrt import http as crt_http_base
     from awscrt import io as crt_io
     from awscrt.aio.http import (
-        AIOHttp2ClientConnection,
-        AIOHttp2ClientStream,
         AIOHttpClientConnectionUnified,
-        AIOHttpClientStream,
+        AIOHttpClientStreamUnified,
     )
 
     HAS_CRT = True
@@ -70,7 +66,7 @@ class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
         *,
         status: int,
         fields: Fields,
-        stream: "AIOHttpClientStream | AIOHttp2ClientStream",
+        stream: "AIOHttpClientStreamUnified",
     ) -> None:
         _assert_crt()
         self._status = status
@@ -112,7 +108,7 @@ class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
 
 
 ConnectionPoolKey = tuple[str, str, int | None]
-ConnectionPoolDict = dict[ConnectionPoolKey, "AIOHttp2ClientConnection"]
+ConnectionPoolDict = dict[ConnectionPoolKey, "AIOHttpClientConnectionUnified"]
 
 
 class AWSCRTHTTPClientConfig(http_interfaces.HTTPClientConfiguration):
@@ -168,7 +164,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         return await self._await_response(crt_stream)
 
     async def _await_response(
-        self, stream: "AIOHttpClientStream | AIOHttp2ClientStream"
+        self, stream: "AIOHttpClientStreamUnified"
     ) -> AWSCRTHTTPResponse:
         status_code = await stream.get_response_status_code()
         headers = await stream.get_response_headers()
@@ -190,7 +186,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
     async def _create_connection(
         self, url: core_interfaces.URI
-    ) -> "AIOHttp2ClientConnection":
+    ) -> "AIOHttpClientConnectionUnified":
         """Builds and validates connection to ``url``"""
         connection = await self._build_new_connection(url)
         await self._validate_connection(connection)
@@ -198,7 +194,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
     async def _get_connection(
         self, url: core_interfaces.URI
-    ) -> "AIOHttp2ClientConnection":
+    ) -> "AIOHttpClientConnectionUnified":
         # TODO: Use CRT connection pooling instead of this basic kind
         connection_key = (url.scheme, url.host, url.port)
         connection = self._connections.get(connection_key)
@@ -212,7 +208,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
     async def _build_new_connection(
         self, url: core_interfaces.URI
-    ) -> "AIOHttp2ClientConnection":
+    ) -> "AIOHttpClientConnectionUnified":
         if url.scheme == "http":
             port = self._HTTP_PORT
             tls_connection_options = None
@@ -229,7 +225,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         if url.port is not None:
             port = url.port
 
-        return await AIOHttp2ClientConnection.new(
+        return await AIOHttpClientConnectionUnified.new(
             bootstrap=self._client_bootstrap,
             host_name=url.host,
             port=port,
@@ -297,11 +293,19 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         elif isinstance(body, bytearray):
             # Convert bytearray to bytes
             yield bytes(body)
+        elif isinstance(body, AsyncIterable):
+            # Already async iterable, just yield from it.
+            # Check this before AsyncByteStream since AsyncBytesReader implements both.
+            async for chunk in body:
+                if isinstance(chunk, bytearray):
+                    yield bytes(chunk)
+                else:
+                    yield chunk
         elif iscoroutinefunction(getattr(body, "read", None)) and isinstance(
             body,  # type: ignore[reportGeneralTypeIssues]
             core_aio_interfaces.AsyncByteStream,  # type: ignore[reportGeneralTypeIssues]
         ):
-            # AsyncByteStream has async read method
+            # AsyncByteStream has async read method but is not iterable
             while True:
                 chunk = await body.read(65536)  # Read in 64KB chunks
                 if not chunk:
@@ -310,15 +314,8 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
                     yield bytes(chunk)
                 else:
                     yield chunk
-        elif isinstance(body, AsyncIterable):
-            # Already async iterable, just yield from it
-            async for chunk in body:
-                if isinstance(chunk, bytearray):
-                    yield bytes(chunk)
-                else:
-                    yield chunk
         else:
-            # Assume it's a BytesReader, wrap it in AsyncBytesReader
+            # Assume it's a sync BytesReader, wrap it in AsyncBytesReader
             async_reader = AsyncBytesReader(body)
             async for chunk in async_reader:
                 if isinstance(chunk, bytearray):
