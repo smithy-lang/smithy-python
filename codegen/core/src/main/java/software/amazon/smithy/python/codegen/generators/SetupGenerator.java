@@ -136,7 +136,8 @@ public final class SetupGenerator {
                         "Programming Language :: Python :: 3",
                         "Programming Language :: Python :: 3 :: Only",
                         "Programming Language :: Python :: 3.12",
-                        "Programming Language :: Python :: 3.13"
+                        "Programming Language :: Python :: 3.13",
+                        "Programming Language :: Python :: 3.14"
                     ]
                     """, settings.moduleName(), settings.moduleVersion(), settings.moduleDescription());
 
