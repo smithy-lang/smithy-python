@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     # pyright doesn't like optional imports. This is reasonable because if we use these
     # in type hints then they'd result in runtime errors.
     # TODO: add integ tests that import these without the dependendency installed
-    from awscrt import http as crt_http_base
+    from awscrt import http as crt_http
     from awscrt import io as crt_io
     from awscrt.aio.http import (
         AIOHttpClientConnectionUnified,
@@ -19,7 +19,7 @@ if TYPE_CHECKING:
     )
 
 try:
-    from awscrt import http as crt_http_base
+    from awscrt import http as crt_http
     from awscrt import io as crt_io
     from awscrt.aio.http import (
         AIOHttpClientConnectionUnified,
@@ -242,9 +242,9 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         * If ``force_http_2`` is enabled: Is the connection HTTP/2?
         """
         force_http_2 = self._config.force_http_2
-        if force_http_2 and connection.version is not crt_http_base.HttpVersion.Http2:
+        if force_http_2 and connection.version is not crt_http.HttpVersion.Http2:
             await connection.close()
-            negotiated = crt_http_base.HttpVersion(connection.version).name
+            negotiated = crt_http.HttpVersion(connection.version).name
             raise SmithyHTTPError(f"HTTP/2 could not be negotiated: {negotiated}")
 
     def _render_path(self, url: core_interfaces.URI) -> str:
@@ -254,7 +254,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
     def _marshal_request(
         self, request: http_aio_interfaces.HTTPRequest
-    ) -> "crt_http_base.HttpRequest":
+    ) -> "crt_http.HttpRequest":
         """Create :py:class:`awscrt.http.HttpRequest` from
         :py:class:`smithy_http.aio.HTTPRequest`"""
         headers_list: list[tuple[str, str]] = []
@@ -274,9 +274,9 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
                 headers_list.append((fld.name, val))
 
         path = self._render_path(request.destination)
-        headers = crt_http_base.HttpHeaders(headers_list)
+        headers = crt_http.HttpHeaders(headers_list)
 
-        crt_request = crt_http_base.HttpRequest(
+        crt_request = crt_http.HttpRequest(
             method=request.method,
             path=path,
             headers=headers,
