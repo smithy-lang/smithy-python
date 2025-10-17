@@ -99,6 +99,10 @@ class SigV4Signer:
         )
 
         signing_fields = self._normalize_signing_fields(request=new_request)
+        #If any headers have been added, make sure those are reflected in the new request
+        for field_name, field_value in signing_fields.items():
+            if field_name not in request.fields:
+                new_request.fields.set_field(Field(name=field_name, values=[field_value]))
         credential_scope = self._scope(signing_properties=new_signing_properties)
         credential = f"{identity.access_key_id}/{credential_scope}"
         authorization = self.generate_authorization_field(
@@ -476,6 +480,10 @@ class AsyncSigV4Signer:
         )
 
         signing_fields = await self._normalize_signing_fields(request=new_request)
+        #If any headers have been added, make sure those are reflected in the new request
+        for field_name, field_value in signing_fields.items():
+            if field_name not in request.fields:
+                new_request.fields.set_field(Field(name=field_name, values=[field_value]))
         credential_scope = await self._scope(signing_properties=new_signing_properties)
         credential = f"{identity.access_key_id}/{credential_scope}"
         authorization = await self.generate_authorization_field(
