@@ -55,7 +55,7 @@ def main():
         "-t",
         "--type",
         # TODO: Remove the 'breaking' option once this project is stable.
-        choices=("feature", "enhancement", "bugfix", "breaking"),
+        choices=("feature", "enhancement", "bugfix", "breaking", "dependency"),
         required=True,
         help="Type of change",
     )

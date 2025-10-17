@@ -15,7 +15,7 @@ from typing import Any
 
 PROJECT_ROOT_DIR = Path(__file__).resolve().parent.parent.parent
 VERSION_PATTERN = r"^\d+\.\d+\.\d+$"
-CHANGE_TYPES_ORDER = {"breaking": 0, "feature": 1, "enhancement": 2, "bugfix": 3}
+CHANGE_TYPES_ORDER = {"breaking": 0, "feature": 1, "enhancement": 2, "bugfix": 3, "dependency": 4}
 CHANGE_TYPES = tuple(CHANGE_TYPES_ORDER.keys())
 
 
