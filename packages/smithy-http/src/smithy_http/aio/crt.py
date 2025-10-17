@@ -272,7 +272,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         :py:class:`smithy_http.aio.HTTPRequest`"""
         headers_list: list[tuple[str, str]] = []
         if "host" not in request.fields:
-            host_header = request.destination.hostname
+            host_header = request.destination.host
             if port := request.destination.port:
                 host_header += f":{port}"
             request.fields.set_field(Field(name="host", values=[host_header]))

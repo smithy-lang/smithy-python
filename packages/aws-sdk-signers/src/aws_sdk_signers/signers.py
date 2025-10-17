@@ -17,7 +17,6 @@ from urllib.parse import parse_qsl, quote
 from ._http import AWSRequest, Field, URI
 from ._io import AsyncBytesReader
 from .exceptions import AWSSDKWarning, MissingExpectedParameterException
-from .interfaces.http import URI as InterfaceURI
 from .interfaces.identity import AWSCredentialsIdentity as _AWSCredentialsIdentity
 from .interfaces.io import AsyncSeekable, ConditionallySeekable, Seekable
 
@@ -346,7 +345,7 @@ class SigV4Signer:
             return False
         return True
 
-    def _normalize_host_field(self, *, uri: InterfaceURI) -> str:
+    def _normalize_host_field(self, *, uri: URI) -> str:
         if uri.port is not None and DEFAULT_PORTS.get(uri.scheme) == uri.port:
             uri_dict = uri.to_dict()
             uri_dict.update({"port": None})
@@ -734,7 +733,7 @@ class AsyncSigV4Signer:
             return False
         return True
 
-    async def _normalize_host_field(self, *, uri: InterfaceURI) -> str:
+    async def _normalize_host_field(self, *, uri: URI) -> str:
         if uri.port is not None and DEFAULT_PORTS.get(uri.scheme) == uri.port:
             uri_dict = uri.to_dict()
             uri_dict.update({"port": None})
