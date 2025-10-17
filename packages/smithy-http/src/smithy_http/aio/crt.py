@@ -307,7 +307,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         ):
             # AsyncByteStream has async read method but is not iterable
             while True:
-                chunk = await body.read(65536)  # Read in 64KB chunks
+                chunk = await body.read()
                 if not chunk:
                     break
                 if isinstance(chunk, bytearray):
