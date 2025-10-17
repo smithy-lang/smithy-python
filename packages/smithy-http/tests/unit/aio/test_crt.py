@@ -44,6 +44,19 @@ def test_client_marshal_request() -> None:
     assert crt_request.method == "GET"
     assert crt_request.path == "/path?key1=value1&key2=value2"
 
+async def test_port_included_in_host_header() -> None:
+    client = AWSCRTHTTPClient()
+    request = HTTPRequest(
+        method="GET",
+        destination=URI(
+            host="example.com", path="/path", query="key1=value1&key2=value2", port=8443
+        ),
+        body=BytesIO(),
+        fields=Fields(),
+    )
+    crt_request, _ = await client._marshal_request(request)  # type: ignore
+    assert crt_request.headers.get("host") == "example.com:8443"  # type: ignore
+
 
 async def test_body_generator_bytes() -> None:
     """Test body generator with bytes input."""
