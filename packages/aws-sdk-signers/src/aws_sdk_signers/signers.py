@@ -99,12 +99,6 @@ class SigV4Signer:
         )
 
         signing_fields = self._normalize_signing_fields(request=new_request)
-        # If any headers have been added, make sure those are reflected in the new request
-        for field_name, field_value in signing_fields.items():
-            if field_name not in request.fields:
-                new_request.fields.set_field(
-                    Field(name=field_name, values=[field_value])
-                )
         credential_scope = self._scope(signing_properties=new_signing_properties)
         credential = f"{identity.access_key_id}/{credential_scope}"
         authorization = self.generate_authorization_field(
@@ -219,7 +213,7 @@ class SigV4Signer:
                 Field(name="X-Amz-Security-Token", values=[identity.session_token])
             )
         if "host" not in request.fields:
-            host = self._normalize_host_field(uri=request.destination)
+            host = self._normalize_host_field(uri=request.destination)  # type: ignore - TODO(pyright)
             request.fields.set_field(Field(name="host", values=[host]))
 
     def canonical_request(
@@ -483,12 +477,6 @@ class AsyncSigV4Signer:
         )
 
         signing_fields = await self._normalize_signing_fields(request=new_request)
-        # If any headers have been added, make sure those are reflected in the new request
-        for field_name, field_value in signing_fields.items():
-            if field_name not in request.fields:
-                new_request.fields.set_field(
-                    Field(name=field_name, values=[field_value])
-                )
         credential_scope = await self._scope(signing_properties=new_signing_properties)
         credential = f"{identity.access_key_id}/{credential_scope}"
         authorization = await self.generate_authorization_field(
@@ -603,7 +591,7 @@ class AsyncSigV4Signer:
                 Field(name="X-Amz-Security-Token", values=[identity.session_token])
             )
         if "host" not in request.fields:
-            host = await self._normalize_host_field(uri=request.destination)
+            host = await self._normalize_host_field(uri=request.destination)  # type: ignore - TODO(pyright)
             request.fields.set_field(Field(name="host", values=[host]))
 
     async def canonical_request(
