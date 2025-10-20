@@ -4,6 +4,7 @@
 #  flake8: noqa: F811
 from collections.abc import AsyncGenerator, AsyncIterable
 from copy import deepcopy
+from dataclasses import dataclass
 from inspect import iscoroutinefunction
 from typing import TYPE_CHECKING, Any
 
@@ -40,6 +41,9 @@ from .. import interfaces as http_interfaces
 from ..exceptions import SmithyHTTPError
 from ..interfaces import FieldPosition
 from . import interfaces as http_aio_interfaces
+
+# Default buffer size for reading from streams (8 KB)
+DEFAULT_READ_BUFFER_SIZE = 8192
 
 
 def _assert_crt() -> None:
@@ -111,7 +115,16 @@ ConnectionPoolKey = tuple[str, str, int | None]
 ConnectionPoolDict = dict[ConnectionPoolKey, "AIOHttpClientConnectionUnified"]
 
 
+@dataclass(kw_only=True)
 class AWSCRTHTTPClientConfig(http_interfaces.HTTPClientConfiguration):
+    """AWS CRT HTTP client configuration.
+
+    :param read_buffer_size: The buffer size in bytes to use when reading from streams.
+        Defaults to 8192 (8 KB).
+    """
+
+    read_buffer_size: int = DEFAULT_READ_BUFFER_SIZE
+
     def __post_init__(self) -> None:
         _assert_crt()
 
@@ -307,7 +320,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         ):
             # AsyncByteStream has async read method but is not iterable
             while True:
-                chunk = await body.read()
+                chunk = await body.read(self._config.read_buffer_size)
                 if not chunk:
                     break
                 if isinstance(chunk, bytearray):
