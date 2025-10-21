@@ -2,39 +2,38 @@
 #  SPDX-License-Identifier: Apache-2.0
 #  pyright: reportMissingTypeStubs=false,reportUnknownMemberType=false
 #  flake8: noqa: F811
-import asyncio
-from asyncio import Future as AsyncFuture
-from collections import deque
 from collections.abc import AsyncGenerator, AsyncIterable
-from concurrent.futures import Future as ConcurrentFuture
 from copy import deepcopy
-from functools import partial
-from io import BufferedIOBase, BytesIO
-from typing import TYPE_CHECKING, Any, cast
+from dataclasses import dataclass
+from inspect import iscoroutinefunction
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
-    # Both of these are types that essentially are "castable to bytes/memoryview"
-    # Unfortunately they're not exposed anywhere so we have to import them from
-    # _typeshed.
-    from _typeshed import ReadableBuffer, WriteableBuffer
-
     # pyright doesn't like optional imports. This is reasonable because if we use these
     # in type hints then they'd result in runtime errors.
     # TODO: add integ tests that import these without the dependendency installed
     from awscrt import http as crt_http
     from awscrt import io as crt_io
+    from awscrt.aio.http import (
+        AIOHttpClientConnectionUnified,
+        AIOHttpClientStreamUnified,
+    )
 
 try:
     from awscrt import http as crt_http
     from awscrt import io as crt_io
+    from awscrt.aio.http import (
+        AIOHttpClientConnectionUnified,
+        AIOHttpClientStreamUnified,
+    )
 
     HAS_CRT = True
 except ImportError:
     HAS_CRT = False  # type: ignore
 
 from smithy_core import interfaces as core_interfaces
+from smithy_core.aio import interfaces as core_aio_interfaces
 from smithy_core.aio.types import AsyncBytesReader
-from smithy_core.aio.utils import close
 from smithy_core.exceptions import MissingDependencyError
 
 from .. import Field, Fields
@@ -42,6 +41,9 @@ from .. import interfaces as http_interfaces
 from ..exceptions import SmithyHTTPError
 from ..interfaces import FieldPosition
 from . import interfaces as http_aio_interfaces
+
+# Default buffer size for reading from streams (8 KB)
+DEFAULT_READ_BUFFER_SIZE = 8192
 
 
 def _assert_crt() -> None:
@@ -63,11 +65,17 @@ class _AWSCRTEventLoop:
 
 
 class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
-    def __init__(self, *, status: int, fields: Fields, body: "CRTResponseBody") -> None:
+    def __init__(
+        self,
+        *,
+        status: int,
+        fields: Fields,
+        stream: "AIOHttpClientStreamUnified",
+    ) -> None:
         _assert_crt()
         self._status = status
         self._fields = fields
-        self._body = body
+        self._stream = stream
 
     @property
     def status(self) -> int:
@@ -89,7 +97,7 @@ class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
 
     async def chunks(self) -> AsyncGenerator[bytes, None]:
         while True:
-            chunk = await self._body.next()
+            chunk = await self._stream.get_next_response_chunk()
             if chunk:
                 yield chunk
             else:
@@ -103,100 +111,20 @@ class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
         )
 
 
-class CRTResponseBody:
-    def __init__(self) -> None:
-        self._stream: crt_http.HttpClientStream | None = None
-        self._completion_future: AsyncFuture[int] | None = None
-        self._chunk_futures: deque[ConcurrentFuture[bytes]] = deque()
-
-        # deque is thread safe and the crt is only going to be writing
-        # with one thread anyway, so we *shouldn't* need to gate this
-        # behind a lock. In an ideal world, the CRT would expose
-        # an interface that better matches python's async.
-        self._received_chunks: deque[bytes] = deque()
-
-    def set_stream(self, stream: "crt_http.HttpClientStream") -> None:
-        if self._stream is not None:
-            raise SmithyHTTPError("Stream already set on AWSCRTHTTPResponse object")
-        self._stream = stream
-        concurrent_future = cast(ConcurrentFuture[int], stream.completion_future)
-        self._completion_future = asyncio.wrap_future(concurrent_future)
-        self._completion_future.add_done_callback(self._on_complete)
-        self._stream.activate()
-
-    def on_body(self, chunk: bytes, **kwargs: Any) -> None:  # pragma: crt-callback
-        # TODO: update back pressure window once CRT supports it
-        if self._chunk_futures:
-            future = self._chunk_futures.popleft()
-            future.set_result(chunk)
-        else:
-            self._received_chunks.append(chunk)
-
-    async def next(self) -> bytes:
-        if self._completion_future is None:
-            raise SmithyHTTPError("Stream not set")
-
-        # TODO: update backpressure window once CRT supports it
-        if self._received_chunks:
-            return self._received_chunks.popleft()
-        elif self._completion_future.done():
-            return b""
-        else:
-            future = ConcurrentFuture[bytes]()
-            self._chunk_futures.append(future)
-            return await asyncio.wrap_future(future)
-
-    def _on_complete(
-        self, completion_future: AsyncFuture[int]
-    ) -> None:  # pragma: crt-callback
-        for future in self._chunk_futures:
-            future.set_result(b"")
-        self._chunk_futures.clear()
-
-
-class CRTResponseFactory:
-    def __init__(self, body: CRTResponseBody) -> None:
-        self._body = body
-        self._response_future = ConcurrentFuture[AWSCRTHTTPResponse]()
-
-    def on_response(
-        self, status_code: int, headers: list[tuple[str, str]], **kwargs: Any
-    ) -> None:  # pragma: crt-callback
-        fields = Fields()
-        for header_name, header_val in headers:
-            try:
-                fields[header_name].add(header_val)
-            except KeyError:
-                fields[header_name] = Field(
-                    name=header_name,
-                    values=[header_val],
-                    kind=FieldPosition.HEADER,
-                )
-
-        self._response_future.set_result(
-            AWSCRTHTTPResponse(
-                status=status_code,
-                fields=fields,
-                body=self._body,
-            )
-        )
-
-    async def await_response(self) -> AWSCRTHTTPResponse:
-        return await asyncio.wrap_future(self._response_future)
-
-    def set_done_callback(self, stream: "crt_http.HttpClientStream") -> None:
-        stream.completion_future.add_done_callback(self._cancel)
-
-    def _cancel(self, completion_future: ConcurrentFuture[int | Exception]) -> None:
-        if not self._response_future.done():
-            self._response_future.cancel()
-
-
 ConnectionPoolKey = tuple[str, str, int | None]
-ConnectionPoolDict = dict[ConnectionPoolKey, "crt_http.HttpClientConnection"]
+ConnectionPoolDict = dict[ConnectionPoolKey, "AIOHttpClientConnectionUnified"]
 
 
+@dataclass(kw_only=True)
 class AWSCRTHTTPClientConfig(http_interfaces.HTTPClientConfiguration):
+    """AWS CRT HTTP client configuration.
+
+    :param read_buffer_size: The buffer size in bytes to use when reading from streams.
+        Defaults to 8192 (8 KB).
+    """
+
+    read_buffer_size: int = DEFAULT_READ_BUFFER_SIZE
+
     def __post_init__(self) -> None:
         _assert_crt()
 
@@ -223,7 +151,6 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         self._tls_ctx = crt_io.ClientTlsContext(crt_io.TlsContextOptions())
         self._socket_options = crt_io.SocketOptions()
         self._connections: ConnectionPoolDict = {}
-        self._async_reads: set[asyncio.Task[Any]] = set()
 
     async def send(
         self,
@@ -236,45 +163,51 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         :param request: The request including destination URI, fields, payload.
         :param request_config: Configuration specific to this request.
         """
-        crt_request, crt_body = await self._marshal_request(request)
+        crt_request = self._marshal_request(request)
         connection = await self._get_connection(request.destination)
-        response_body = CRTResponseBody()
-        response_factory = CRTResponseFactory(response_body)
+
+        # Convert body to async iterator for request_body_generator
+        body_generator = self._create_body_generator(request.body)
+
         crt_stream = connection.request(
             crt_request,
-            response_factory.on_response,
-            response_body.on_body,
-        )
-        response_factory.set_done_callback(crt_stream)
-        response_body.set_stream(crt_stream)
-        crt_stream.completion_future.add_done_callback(
-            partial(self._close_input_body, body=crt_body)
+            request_body_generator=body_generator,
         )
 
-        response = await response_factory.await_response()
-        if response.status != 200 and response.status >= 300:
-            await close(crt_body)
+        return await self._await_response(crt_stream)
 
-        return response
-
-    def _close_input_body(
-        self, future: ConcurrentFuture[int], *, body: "BufferableByteStream | BytesIO"
-    ) -> None:
-        if future.exception(timeout=0):
-            body.close()
+    async def _await_response(
+        self, stream: "AIOHttpClientStreamUnified"
+    ) -> AWSCRTHTTPResponse:
+        status_code = await stream.get_response_status_code()
+        headers = await stream.get_response_headers()
+        fields = Fields()
+        for header_name, header_val in headers:
+            try:
+                fields[header_name].add(header_val)
+            except KeyError:
+                fields[header_name] = Field(
+                    name=header_name,
+                    values=[header_val],
+                    kind=FieldPosition.HEADER,
+                )
+        return AWSCRTHTTPResponse(
+            status=status_code,
+            fields=fields,
+            stream=stream,
+        )
 
     async def _create_connection(
         self, url: core_interfaces.URI
-    ) -> "crt_http.HttpClientConnection":
+    ) -> "AIOHttpClientConnectionUnified":
         """Builds and validates connection to ``url``"""
-        connect_future = self._build_new_connection(url)
-        connection = await asyncio.wrap_future(connect_future)
-        self._validate_connection(connection)
+        connection = await self._build_new_connection(url)
+        await self._validate_connection(connection)
         return connection
 
     async def _get_connection(
         self, url: core_interfaces.URI
-    ) -> "crt_http.HttpClientConnection":
+    ) -> "AIOHttpClientConnectionUnified":
         # TODO: Use CRT connection pooling instead of this basic kind
         connection_key = (url.scheme, url.host, url.port)
         connection = self._connections.get(connection_key)
@@ -286,9 +219,9 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         self._connections[connection_key] = connection
         return connection
 
-    def _build_new_connection(
+    async def _build_new_connection(
         self, url: core_interfaces.URI
-    ) -> ConcurrentFuture["crt_http.HttpClientConnection"]:
+    ) -> "AIOHttpClientConnectionUnified":
         if url.scheme == "http":
             port = self._HTTP_PORT
             tls_connection_options = None
@@ -305,19 +238,17 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         if url.port is not None:
             port = url.port
 
-        connect_future = cast(
-            ConcurrentFuture[crt_http.HttpClientConnection],
-            crt_http.HttpClientConnection.new(
-                bootstrap=self._client_bootstrap,
-                host_name=url.host,
-                port=port,
-                socket_options=self._socket_options,
-                tls_connection_options=tls_connection_options,
-            ),
+        return await AIOHttpClientConnectionUnified.new(
+            bootstrap=self._client_bootstrap,
+            host_name=url.host,
+            port=port,
+            socket_options=self._socket_options,
+            tls_connection_options=tls_connection_options,
         )
-        return connect_future
 
-    def _validate_connection(self, connection: "crt_http.HttpClientConnection") -> None:
+    async def _validate_connection(
+        self, connection: "AIOHttpClientConnectionUnified"
+    ) -> None:
         """Validates an existing connection against the client config.
 
         Checks performed:
@@ -325,7 +256,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         """
         force_http_2 = self._config.force_http_2
         if force_http_2 and connection.version is not crt_http.HttpVersion.Http2:
-            connection.close()
+            await connection.close()
             negotiated = crt_http.HttpVersion(connection.version).name
             raise SmithyHTTPError(f"HTTP/2 could not be negotiated: {negotiated}")
 
@@ -334,12 +265,12 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         query = f"?{url.query}" if url.query is not None else ""
         return f"{path}{query}"
 
-    async def _marshal_request(
+    def _marshal_request(
         self, request: http_aio_interfaces.HTTPRequest
-    ) -> tuple["crt_http.HttpRequest", "BufferableByteStream | BytesIO"]:
+    ) -> "crt_http.HttpRequest":
         """Create :py:class:`awscrt.http.HttpRequest` from
         :py:class:`smithy_http.aio.HTTPRequest`"""
-        headers_list = []
+        headers_list: list[tuple[str, str]] = []
         if "host" not in request.fields:
             request.fields.set_field(
                 Field(name="host", values=[request.destination.host])
@@ -358,137 +289,55 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         path = self._render_path(request.destination)
         headers = crt_http.HttpHeaders(headers_list)
 
-        body = request.body
-        if isinstance(body, bytes | bytearray):
-            # If the body is already directly in memory, wrap in a BytesIO to hand
-            # off to CRT.
-            crt_body = BytesIO(body)
-        else:
-            # If the body is async, or potentially very large, start up a task to read
-            # it into the intermediate object that CRT needs. By using
-            # asyncio.create_task we'll start the coroutine without having to
-            # explicitly await it.
-            crt_body = BufferableByteStream()
-
-            if not isinstance(body, AsyncIterable):
-                body = AsyncBytesReader(body)
-
-            # Start the read task in the background.
-            read_task = asyncio.create_task(self._consume_body_async(body, crt_body))
-
-            # Keep track of the read task so that it doesn't get garbage colllected,
-            # and stop tracking it once it's done.
-            self._async_reads.add(read_task)
-            read_task.add_done_callback(self._async_reads.discard)
-
         crt_request = crt_http.HttpRequest(
             method=request.method,
             path=path,
             headers=headers,
-            body_stream=crt_body,
         )
-        return crt_request, crt_body
+        return crt_request
 
-    async def _consume_body_async(
-        self, source: AsyncIterable[bytes], dest: "BufferableByteStream"
-    ) -> None:
-        try:
-            async for chunk in source:
-                dest.write(chunk)
-        except Exception:
-            dest.close()
-            raise
-        finally:
-            await close(source)
-        dest.end_stream()
+    async def _create_body_generator(
+        self, body: core_aio_interfaces.StreamingBlob
+    ) -> AsyncGenerator[bytes, None]:
+        """Convert various body types to async generator for request_body_generator."""
+        if isinstance(body, bytes):
+            # Yield the entire body as a single chunk
+            yield body
+        elif isinstance(body, bytearray):
+            # Convert bytearray to bytes
+            yield bytes(body)
+        elif isinstance(body, AsyncIterable):
+            # Already async iterable, just yield from it.
+            # Check this before AsyncByteStream since AsyncBytesReader implements both.
+            async for chunk in body:
+                if isinstance(chunk, bytearray):
+                    yield bytes(chunk)
+                else:
+                    yield chunk
+        elif iscoroutinefunction(getattr(body, "read", None)) and isinstance(
+            body,  # type: ignore[reportGeneralTypeIssues]
+            core_aio_interfaces.AsyncByteStream,  # type: ignore[reportGeneralTypeIssues]
+        ):
+            # AsyncByteStream has async read method but is not iterable
+            while True:
+                chunk = await body.read(self._config.read_buffer_size)
+                if not chunk:
+                    break
+                if isinstance(chunk, bytearray):
+                    yield bytes(chunk)
+                else:
+                    yield chunk
+        else:
+            # Assume it's a sync BytesReader, wrap it in AsyncBytesReader
+            async_reader = AsyncBytesReader(body)
+            async for chunk in async_reader:
+                if isinstance(chunk, bytearray):
+                    yield bytes(chunk)
+                else:
+                    yield chunk
 
     def __deepcopy__(self, memo: Any) -> "AWSCRTHTTPClient":
         return AWSCRTHTTPClient(
             eventloop=self._eventloop,
             client_config=deepcopy(self._config),
         )
-
-
-# This is adapted from the transcribe streaming sdk
-class BufferableByteStream(BufferedIOBase):
-    """A non-blocking bytes buffer."""
-
-    def __init__(self) -> None:
-        # We're always manipulating the front and back of the buffer, so a deque
-        # will be much more efficient than a list.
-        self._chunks: deque[bytes] = deque()
-        self._closed = False
-        self._done = False
-
-    def read(self, size: int | None = -1) -> bytes:
-        if self._closed:
-            return b""
-
-        if len(self._chunks) == 0:
-            if self._done:
-                self.close()
-                return b""
-            else:
-                # When the CRT recieves this, it'll try again
-                raise BlockingIOError("read")
-
-        # We could compile all the chunks here instead of just returning
-        # the one, BUT the CRT will keep calling read until empty bytes
-        # are returned. So it's actually better to just return one chunk
-        # since combining them would have some potentially bad memory
-        # usage issues.
-        result = self._chunks.popleft()
-        if size is not None and size > 0:
-            remainder = result[size:]
-            result = result[:size]
-            if remainder:
-                self._chunks.appendleft(remainder)
-
-        if self._done and len(self._chunks) == 0:
-            self.close()
-
-        return result
-
-    def read1(self, size: int = -1) -> bytes:
-        return self.read(size)
-
-    def readinto(self, buffer: "WriteableBuffer") -> int:
-        if not isinstance(buffer, memoryview):
-            buffer = memoryview(buffer).cast("B")
-
-        data = self.read(len(buffer))  # type: ignore
-        n = len(data)
-        buffer[:n] = data
-        return n
-
-    def write(self, buffer: "ReadableBuffer") -> int:
-        if not isinstance(buffer, bytes):
-            raise ValueError(
-                f"Unexpected value written to BufferableByteStream. "
-                f"Only bytes are support but {type(buffer)} was provided."
-            )
-
-        if self._closed:
-            raise OSError("Stream is completed and doesn't support further writes.")
-
-        if buffer:
-            self._chunks.append(buffer)
-        return len(buffer)
-
-    @property
-    def closed(self) -> bool:
-        return self._closed
-
-    def close(self) -> None:
-        self._closed = True
-        self._done = True
-
-        # Clear out the remaining chunks so that they don't sit around in memory.
-        self._chunks.clear()
-
-    def end_stream(self) -> None:
-        """End the stream, letting any remaining chunks be read before it is closed."""
-        if len(self._chunks) == 0:
-            self.close()
-        else:
-            self._done = True
