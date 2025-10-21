@@ -27,7 +27,7 @@ classifiers = [
 ]
 dependencies = [
     "smithy-core~=0.1.0",
-    "smithy-http~=0.1.0",
+    "smithy-http~=0.2.0",
     "aws-sdk-signers~=0.1.0"
 ]
 
