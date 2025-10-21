@@ -38,6 +38,7 @@ smithy_json = { workspace = true }
 smithy_aws_core = { workspace = true }
 smithy_aws_event_stream = { workspace = true }
 aws_sdk_signers = {workspace = true }
+smithy_testing = { workspace = true }
 
 [tool.pyright]
 typeCheckingMode = "strict"
