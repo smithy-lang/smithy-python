@@ -3,7 +3,7 @@
 ## v0.2.0
 
 ### Breaking Changes
-* Update `AWSCRTHTTPClient` to integrate with the new AWS CRT async interfaces. ([#573](https://github.com/smithy-lang/smithy-python/pull/573))
+* Update `AWSCRTHTTPClient` to integrate with the new AWS CRT async interfaces. ([#573](https://github.com/smithy-lang/smithy-python/pull/573)). The `AWSCRTHTTPResponse` constructor now accepts a `stream` argument of type `awscrt.aio.http.AIOHttpClientStreamUnified`. Additionally, the following classes were removed: `CRTResponseBody`, `CRTResponseFactory`, and `BufferableByteStream`.
 
 ## v0.1.0
 
