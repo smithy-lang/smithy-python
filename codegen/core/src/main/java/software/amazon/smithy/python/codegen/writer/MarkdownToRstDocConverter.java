@@ -78,7 +78,7 @@ public class MarkdownToRstDocConverter {
                 if (!text.trim().isEmpty()) {
                     if (text.startsWith(":param ")) {
                         int secondColonIndex = text.indexOf(':', 1);
-                        writer.write(text.substring(0, secondColonIndex + 1));
+                        writer.write("$L", text.substring(0, secondColonIndex + 1));
                         //TODO right now the code generator gives us a mixture of
                         // RST and HTML (for instance :param xyz: <p> docs
                         // </p>).  Since we standardize to html above, that <p> tag
@@ -91,16 +91,16 @@ public class MarkdownToRstDocConverter {
                         } else {
                             writer.ensureNewline();
                             writer.indent();
-                            writer.write(text.substring(secondColonIndex + 1));
+                            writer.write("$L", text.substring(secondColonIndex + 1));
                             writer.dedent();
                         }
                     } else {
-                        writer.writeInline(text);
+                        writer.writeInline("$L", text);
                     }
                     // Account for services making a paragraph tag that's empty except
                     // for a newline
                 } else if (node.parent() != null && ((Element) node.parent()).tagName().equals("p")) {
-                    writer.writeInline(text.replaceAll("[ \\t]+", ""));
+                    writer.writeInline("$L", text.replaceAll("[ \\t]+", ""));
                 }
             } else if (node instanceof Element) {
                 Element element = (Element) node;
@@ -158,7 +158,7 @@ public class MarkdownToRstDocConverter {
                     case "a":
                         String href = element.attr("href");
                         if (!href.isEmpty()) {
-                            writer.writeInline(" <").writeInline(href).writeInline(">`_");
+                            writer.writeInline(" <").writeInline("$L", href).writeInline(">`_");
                         } else {
                             writer.writeInline("`");
                         }
@@ -196,7 +196,7 @@ public class MarkdownToRstDocConverter {
                         break;
                     case "h1":
                         String title = element.text();
-                        writer.ensureNewline().writeInline("=".repeat(title.length())).ensureNewline();
+                        writer.ensureNewline().writeInline("$L", "=".repeat(title.length())).ensureNewline();
                         break;
                     default:
                         break;
