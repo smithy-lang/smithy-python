@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.0
+
+### Breaking Changes
+* Update `AWSCRTHTTPClient` to integrate with the new AWS CRT async interfaces. ([#573](https://github.com/smithy-lang/smithy-python/pull/573))
+
 ## v0.1.0
 
 ### Breaking Changes
