@@ -212,9 +212,6 @@ class SigV4Signer:
             request.fields.set_field(
                 Field(name="X-Amz-Security-Token", values=[identity.session_token])
             )
-        if "host" not in request.fields:
-            host = self._normalize_host_field(uri=request.destination)  # type: ignore - TODO(pyright)
-            request.fields.set_field(Field(name="host", values=[host]))
 
     def canonical_request(
         self, *, signing_properties: SigV4SigningProperties, request: AWSRequest
@@ -332,6 +329,11 @@ class SigV4Signer:
             for field in request.fields
             if self._is_signable_header(field.name.lower())
         }
+        if "host" not in normalized_fields:
+            normalized_fields["host"] = self._normalize_host_field(
+                uri=request.destination  # type: ignore - TODO(pyright)
+            )
+
         return dict(sorted(normalized_fields.items()))
 
     def _is_signable_header(self, field_name: str):
@@ -344,10 +346,7 @@ class SigV4Signer:
             uri_dict = uri.to_dict()
             uri_dict.update({"port": None})
             uri = URI(**uri_dict)
-        host_header = uri.host
-        if port := uri.port:
-            host_header += f":{port}"
-        return host_header
+        return uri.netloc
 
     def _format_canonical_fields(self, *, fields: dict[str, str]) -> str:
         return "".join(
@@ -590,9 +589,6 @@ class AsyncSigV4Signer:
             request.fields.set_field(
                 Field(name="X-Amz-Security-Token", values=[identity.session_token])
             )
-        if "host" not in request.fields:
-            host = await self._normalize_host_field(uri=request.destination)  # type: ignore - TODO(pyright)
-            request.fields.set_field(Field(name="host", values=[host]))
 
     async def canonical_request(
         self, *, signing_properties: SigV4SigningProperties, request: AWSRequest
@@ -713,6 +709,10 @@ class AsyncSigV4Signer:
             for field in request.fields
             if self._is_signable_header(field.name.lower())
         }
+        if "host" not in normalized_fields:
+            normalized_fields["host"] = await self._normalize_host_field(
+                uri=request.destination  # type: ignore - TODO(pyright)
+            )
 
         return dict(sorted(normalized_fields.items()))
 
@@ -726,10 +726,7 @@ class AsyncSigV4Signer:
             uri_dict = uri.to_dict()
             uri_dict.update({"port": None})
             uri = URI(**uri_dict)
-        host_header = uri.host
-        if port := uri.port:
-            host_header += f":{port}"
-        return host_header
+        return uri.netloc
 
     async def _format_canonical_fields(self, *, fields: dict[str, str]) -> str:
         return "".join(

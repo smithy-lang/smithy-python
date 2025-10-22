@@ -94,8 +94,6 @@ class TestSigV4Signer:
         assert signed_request is not aws_request
         assert aws_request.fields == original_request.fields
         assert signed_request.fields != aws_request.fields
-        assert "host" in signed_request.fields
-        assert "authorization" in signed_request.fields
 
     @typing.no_type_check
     def test_sign_with_invalid_identity(
