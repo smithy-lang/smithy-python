@@ -106,4 +106,13 @@ public class MarkdownToRstDocConverterTest {
         String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
         assertEquals(expected, result.trim());
     }
+
+    @Test
+    public void testConvertCommonmarkToRstWithFormatSpecifierCharacters() {
+        // Test that Smithy format specifier characters ($) are properly escaped and treated as literal text
+        String html = "<html><body><p>Testing $placeholder_one and $placeholder_two</p></body></html>";
+        String expected = "Testing $placeholder_one and $placeholder_two";
+        String result = markdownToRstDocConverter.convertCommonmarkToRst(html);
+        assertEquals(expected, result.trim());
+    }
 }
