@@ -62,7 +62,7 @@ async def test_port_included_in_host_header(host: str, expected: str) -> None:
         body=BytesIO(),
         fields=Fields(),
     )
-    crt_request, _ = await client._marshal_request(request)  # type: ignore
+    crt_request = client._marshal_request(request)  # type: ignore
     assert crt_request.headers.get("host") == expected  # type: ignore
 
 
