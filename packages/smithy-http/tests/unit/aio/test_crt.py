@@ -45,6 +45,27 @@ def test_client_marshal_request() -> None:
     assert crt_request.path == "/path?key1=value1&key2=value2"
 
 
+@pytest.mark.parametrize(
+    "host,expected",
+    [
+        ("example.com", "example.com:8443"),
+        ("2001:db8::1", "[2001:db8::1]:8443"),
+    ],
+)
+async def test_port_included_in_host_header(host: str, expected: str) -> None:
+    client = AWSCRTHTTPClient()
+    request = HTTPRequest(
+        method="GET",
+        destination=URI(
+            host=host, path="/path", query="key1=value1&key2=value2", port=8443
+        ),
+        body=BytesIO(),
+        fields=Fields(),
+    )
+    crt_request = client._marshal_request(request)  # type: ignore
+    assert crt_request.headers.get("host") == expected  # type: ignore
+
+
 async def test_body_generator_bytes() -> None:
     """Test body generator with bytes input."""
     client = AWSCRTHTTPClient()
