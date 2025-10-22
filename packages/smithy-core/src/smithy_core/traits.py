@@ -179,7 +179,7 @@ class MediaTypeTrait(Trait, id=ShapeID("smithy.api#mediaType")):
 
 
 @dataclass(init=False, frozen=True)
-class EventHeaderTrait(Trait, id=ShapeID("smithy.api#eventheader")):
+class EventHeaderTrait(Trait, id=ShapeID("smithy.api#eventHeader")):
     def __post_init__(self):
         assert self.document_value is None
 
