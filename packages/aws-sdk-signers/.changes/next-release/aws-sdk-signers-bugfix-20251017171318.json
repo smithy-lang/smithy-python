@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "fix host header port mismatch in signing"
-}
