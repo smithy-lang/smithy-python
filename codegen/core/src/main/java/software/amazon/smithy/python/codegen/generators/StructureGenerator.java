@@ -425,6 +425,7 @@ public final class StructureGenerator implements Runnable {
         for (MemberShape member : members) {
             var target = model.expectShape(member.getTarget());
             if (target.hasTrait(StreamingTrait.class) && target.isUnionShape()) {
+                index++;
                 continue;
             }
             writer.write("""
