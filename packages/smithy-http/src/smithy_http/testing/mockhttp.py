@@ -5,6 +5,7 @@ from collections import deque
 from copy import copy
 
 from smithy_core.aio.utils import async_list
+
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPResponse
 from smithy_http.aio.interfaces import HTTPClient, HTTPRequest

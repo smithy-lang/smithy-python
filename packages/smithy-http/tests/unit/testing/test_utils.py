@@ -1,7 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 
-from smithy_testing import create_test_request
+from smithy_http.testing import create_test_request
 
 
 def test_create_test_request_defaults():

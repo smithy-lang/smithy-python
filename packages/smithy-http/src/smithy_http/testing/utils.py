@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 from smithy_core import URI
+
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPRequest
 
