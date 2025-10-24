@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 import pytest
-from smithy_testing import MockHTTPClient, MockHTTPClientError, create_test_request
+from smithy_http.testing import MockHTTPClient, MockHTTPClientError, create_test_request
 
 
 async def test_default_response():
