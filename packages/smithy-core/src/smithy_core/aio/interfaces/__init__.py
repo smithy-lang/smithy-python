@@ -1,7 +1,8 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import AsyncIterable, Callable
-from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Literal, Protocol, runtime_checkable
 
 from ...documents import TypeRegistry
 from ...endpoints import EndpointResolverParams
@@ -9,6 +10,18 @@ from ...exceptions import UnsupportedStreamError
 from ...interfaces import Endpoint, TypedProperties, URI
 from ...interfaces import StreamingBlob as SyncStreamingBlob
 from .eventstream import EventPublisher, EventReceiver
+
+
+@dataclass(frozen=True)
+class ErrorInfo:
+    """Information about an error from a transport."""
+
+    is_timeout_error: bool
+    """Whether this error represents a timeout condition."""
+
+    fault: Literal["client", "server"] = "client"
+    """Whether the client or server is at fault."""
+
 
 if TYPE_CHECKING:
     from typing_extensions import TypeForm
@@ -86,7 +99,23 @@ class EndpointResolver(Protocol):
 
 
 class ClientTransport[I: Request, O: Response](Protocol):
-    """Protocol-agnostic representation of a client tranport (e.g. an HTTP client)."""
+    """Protocol-agnostic representation of a client transport (e.g. an HTTP client).
+
+    Transport implementations must define the get_error_info method to determine which
+    exceptions represent timeout conditions for that transport.
+    """
+
+    def get_error_info(self, exception: Exception, **kwargs) -> ErrorInfo:
+        """Get information about an exception.
+
+        Args:
+            exception: The exception to analyze
+            **kwargs: Additional context for analysis
+
+        Returns:
+            ErrorInfo with timeout and fault information.
+        """
+        ...
 
     async def send(self, request: I) -> O:
         """Send a request over the transport and receive the response."""

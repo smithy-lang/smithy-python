@@ -50,6 +50,9 @@ class CallError(SmithyError):
     is_throttling_error: bool = False
     """Whether the error is a throttling error."""
 
+    is_timeout_error: bool = False
+    """Whether the error represents a timeout condition."""
+
     def __post_init__(self):
         super().__init__(self.message)
 
@@ -59,6 +62,20 @@ class ModeledError(CallError):
     """Base exception to be used for modeled errors."""
 
     fault: Fault = "client"
+
+
+@dataclass(kw_only=True)
+class ClientTimeoutError(CallError):
+    """Exception raised when a client-side timeout occurs.
+
+    This error indicates that the client transport layer encountered a timeout while
+    attempting to communicate with the server. This typically occurs when network
+    requests take longer than the configured timeout period.
+    """
+
+    fault: Fault = "client"
+    is_timeout_error: bool = True
+    is_retry_safe: bool = True
 
 
 class SerializationError(SmithyError):
