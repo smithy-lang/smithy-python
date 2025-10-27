@@ -131,7 +131,6 @@ final class ClientGenerator implements Runnable {
         var outputSymbol = symbolProvider.toSymbol(output);
 
         writer.pushState(new OperationSection(service, operation));
-        writer.addStdlibImport("copy", "deepcopy");
         writer.putContext("input", inputSymbol);
         writer.putContext("output", outputSymbol);
         writer.putContext("plugin", pluginSymbol);
@@ -189,6 +188,7 @@ final class ClientGenerator implements Runnable {
         writer.addImport("smithy_core.types", "TypedProperties");
         writer.addImport("smithy_core.aio.client", "RequestPipeline");
         writer.addImport("smithy_core.exceptions", "ExpectationNotMetError");
+        writer.addStdlibImport("copy", "deepcopy");
 
         writer.write("""
                 operation_plugins: list[Plugin] = [
