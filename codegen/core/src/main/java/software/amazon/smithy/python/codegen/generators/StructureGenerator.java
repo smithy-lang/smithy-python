@@ -421,8 +421,9 @@ public final class StructureGenerator implements Runnable {
     }
 
     private void deserializeMembers(Collection<MemberShape> members) {
-        int index = 0;
+        int index = -1;
         for (MemberShape member : members) {
+            index++;
             var target = model.expectShape(member.getTarget());
             if (target.hasTrait(StreamingTrait.class) && target.isUnionShape()) {
                 continue;
@@ -431,7 +432,7 @@ public final class StructureGenerator implements Runnable {
                     case $L:
                         kwargs[$S] = ${C|}
                     """,
-                    index++,
+                    index,
                     symbolProvider.toMemberName(member),
                     writer.consumer(
                             w -> target.accept(new MemberDeserializerGenerator(context, writer, member, "de"))));
