@@ -52,7 +52,7 @@ class AIOHTTPClientConfig(HTTPClientConfiguration):
 class AIOHTTPClient(HTTPClient):
     """Implementation of :py:class:`.interfaces.HTTPClient` using aiohttp."""
 
-    def get_error_info(self, exception: Exception, **kwargs) -> ErrorInfo:
+    def get_error_info(self, exception: Exception, **kwargs: Any) -> ErrorInfo:
         """Get information about aiohttp errors."""
 
         if isinstance(exception, TimeoutError):

@@ -147,7 +147,7 @@ async def test_http_408_creates_timeout_error() -> None:
 
     response = HTTPResponse(status=408, fields=Fields())
 
-    error = await HttpBindingClientProtocol._create_error(
+    error = await HttpBindingClientProtocol._create_error(  # type: ignore[reportPrivateUsage]
         protocol,
         operation=Mock(),
         request=HTTPRequest(

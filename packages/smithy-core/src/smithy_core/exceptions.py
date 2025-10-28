@@ -75,7 +75,7 @@ class ClientTimeoutError(CallError):
 
     fault: Fault = "client"
     is_timeout_error: bool = True
-    is_retry_safe: bool = True
+    is_retry_safe: bool | None = True
 
 
 class SerializationError(SmithyError):

@@ -136,7 +136,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
     _HTTP_PORT = 80
     _HTTPS_PORT = 443
 
-    def get_error_info(self, exception: Exception, **kwargs) -> ErrorInfo:
+    def get_error_info(self, exception: Exception, **kwargs: Any) -> ErrorInfo:
         """Get information about CRT errors."""
 
         timeout_indicators = (
