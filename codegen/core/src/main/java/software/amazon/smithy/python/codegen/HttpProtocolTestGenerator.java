@@ -619,6 +619,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
         writer.addImport("smithy_http", "tuples_to_fields");
         writer.addImport("smithy_http.aio", "HTTPResponse", "_HTTPResponse");
         writer.addImport("smithy_core.aio.utils", "async_list");
+        writer.addImport("smithy_core.aio.interfaces", "ErrorInfo");
+        writer.addStdlibImport("typing", "Any");
 
         writer.write("""
                 class $1L($2T):
@@ -633,6 +635,10 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
                     def __init__(self, *, client_config: HTTPClientConfiguration | None = None):
                         self._client_config = client_config
+
+                    def get_error_info(self, exception: Exception, **kwargs: Any) -> ErrorInfo:
+                        \"\"\"Get information about an exception.\"\"\"
+                        return ErrorInfo(is_timeout_error=False, fault="client")
 
                     async def send(
                         self, request: HTTPRequest, *, request_config: HTTPRequestConfiguration | None = None
@@ -656,6 +662,10 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         self.status = status
                         self.fields = tuples_to_fields(headers or [])
                         self.body = body
+
+                    def get_error_info(self, exception: Exception, **kwargs: Any) -> ErrorInfo:
+                        \"\"\"Get information about an exception.\"\"\"
+                        return ErrorInfo(is_timeout_error=False, fault="client")
 
                     async def send(
                         self, request: HTTPRequest, *, request_config: HTTPRequestConfiguration | None = None
