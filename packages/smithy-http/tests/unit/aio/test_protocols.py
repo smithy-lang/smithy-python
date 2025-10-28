@@ -8,10 +8,11 @@ import pytest
 from smithy_core import URI
 from smithy_core.documents import TypeRegistry
 from smithy_core.endpoints import Endpoint
+from smithy_core.interfaces import TypedProperties
 from smithy_core.interfaces import URI as URIInterface
 from smithy_core.schemas import APIOperation
 from smithy_core.shapes import ShapeID
-from smithy_core.types import TypedProperties
+from smithy_core.types import TypedProperties as ConcreteTypedProperties
 from smithy_http import Fields
 from smithy_http.aio import HTTPRequest, HTTPResponse
 from smithy_http.aio.interfaces import HTTPRequest as HTTPRequestInterface
@@ -156,7 +157,7 @@ async def test_http_408_creates_timeout_error() -> None:
         response=response,
         response_body=b"",
         error_registry=TypeRegistry({}),
-        context=TypedProperties(),
+        context=ConcreteTypedProperties(),
     )
 
     assert error.is_timeout_error is True
