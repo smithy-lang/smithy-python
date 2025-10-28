@@ -105,7 +105,7 @@ class ClientTransport[I: Request, O: Response](Protocol):
     exceptions represent timeout conditions for that transport.
     """
 
-    def get_error_info(self, exception: Exception, **kwargs) -> ErrorInfo:
+    def get_error_info(self, exception: Exception, **kwargs: Any) -> ErrorInfo:
         """Get information about an exception.
 
         Args:
