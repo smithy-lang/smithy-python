@@ -40,7 +40,7 @@ public final class SetupGenerator {
             PythonSettings settings,
             GenerationContext context
     ) {
-        writeDocsSkeleton(settings, context);
+        setupDocs(settings, context);
         var dependencies = gatherDependencies(context.writerDelegator().getDependencies().stream());
         writePyproject(settings, context.writerDelegator(), dependencies);
         writeReadme(settings, context);
@@ -269,191 +269,126 @@ public final class SetupGenerator {
                         ### Documentation
 
                         $L
-                        """, documentation);
+                        """, writer.formatDocs(documentation, context));
             });
             writer.popState();
         });
     }
 
     /**
-     * Write the files required for sphinx doc generation
+     * Setup files and dependencies for MkDocs documentation generation.
+     *
+     * MkDocs documentation is only generated for AWS services. Generic clients
+     * receive docstrings but are free to choose their own documentation approach.
      */
-    private static void writeDocsSkeleton(
+    private static void setupDocs(
             PythonSettings settings,
             GenerationContext context
     ) {
-        //TODO Add a configurable flag to disable the generation of the sphinx files
-        //TODO Add a configuration that will allow users to select a sphinx theme
+        // Skip generic services
+        if (!CodegenUtils.isAwsService(context)) {
+            return;
+        }
+
         context.writerDelegator().useFileWriter("pyproject.toml", "", writer -> {
-            writer.addDependency(SmithyPythonDependency.SPHINX);
-            writer.addDependency(SmithyPythonDependency.SPHINX_PYDATA_THEME);
+            writer.addDependency(SmithyPythonDependency.MKDOCS);
+            writer.addDependency(SmithyPythonDependency.MKDOCSTRINGS);
+            writer.addDependency(SmithyPythonDependency.MKDOCS_MATERIAL);
         });
+
         var service = context.model().expectShape(settings.service());
-        String projectName = service.getTrait(TitleTrait.class)
-                .map(StringTrait::getValue)
-                .orElseGet(() -> service.getTrait(ServiceTrait.class)
-                        .map(ServiceTrait::getSdkId)
+        String projectName = service.getTrait(ServiceTrait.class)
+                .map(ServiceTrait::getSdkId)
+                .orElseGet(() -> service.getTrait(TitleTrait.class)
+                        .map(StringTrait::getValue)
                         .orElse(context.settings().service().getName()));
-        writeConf(settings, context, projectName);
-        writeIndexes(context, projectName);
+        writeMkDocsConfig(context, projectName);
         writeDocsReadme(context);
-        writeMakeBat(context);
-        writeMakeFile(context);
     }
 
     /**
-     * Write a conf.py file.
-     * A conf.py file is a configuration file used by Sphinx, a documentation
-     * generation tool for Python projects. This file contains settings and
-     * configurations that control the behavior and appearance of the generated
-     * documentation.
+     * Write mkdocs.yml configuration file.
+     * This file configures MkDocs, a static site generator for project documentation.
      */
-    private static void writeConf(
-            PythonSettings settings,
+    private static void writeMkDocsConfig(
             GenerationContext context,
             String projectName
     ) {
-        String version = settings.moduleVersion();
-        context.writerDelegator().useFileWriter("docs/conf.py", "", writer -> {
+        context.writerDelegator().useFileWriter("mkdocs.yml", "", writer -> {
             writer.write("""
-                    import os
-                    import sys
-                    sys.path.insert(0, os.path.abspath('..'))
+                    site_name: AWS $1L
+                    site_description: Documentation for $1L Client
 
-                    project = '$L'
-                    author = 'Amazon Web Services'
-                    release = '$L'
+                    copyright: Copyright &copy; 2025, Amazon Web Services, Inc
+                    repo_name: awslabs/aws-sdk-python
+                    repo_url: https://github.com/awslabs/aws-sdk-python
 
-                    extensions = [
-                        'sphinx.ext.autodoc',
-                        'sphinx.ext.viewcode',
-                    ]
+                    theme:
+                      name: material
+                      palette:
+                        - scheme: default
+                          primary: white
+                          accent: light blue
+                          toggle:
+                            icon: material/brightness-7
+                            name: Switch to dark mode
+                        - scheme: slate
+                          primary: black
+                          accent: light blue
+                          toggle:
+                            icon: material/brightness-4
+                            name: Switch to light mode
+                      features:
+                        - navigation.top
+                        - search.suggest
+                        - search.highlight
+                        - content.code.copy
 
-                    templates_path = ['_templates']
-                    exclude_patterns = []
+                    plugins:
+                      - search
+                      - mkdocstrings:
+                          handlers:
+                            python:
+                              options:
+                                show_source: true
+                                show_signature: true
+                                show_signature_annotations: true
+                                show_root_heading: true
+                                show_root_full_path: false
+                                show_object_full_path: false
+                                show_symbol_type_heading: true
+                                show_symbol_type_toc: true
+                                show_category_heading: true
+                                group_by_category: true
+                                separate_signature: true
+                                signature_crossrefs: true
+                                filters:
+                                - "!^_"
+                                - "!^deserialize"
+                                - "!^serialize"
 
-                    autodoc_default_options = {
-                        'exclude-members': 'deserialize,deserialize_kwargs,serialize,serialize_members'
-                    }
+                    markdown_extensions:
+                      - pymdownx.highlight
+                      - pymdownx.inlinehilite
+                      - pymdownx.snippets
+                      - pymdownx.superfences
+                      - admonition
+                      - def_list
+                      - toc:
+                          permalink: true
+                          toc_depth: 3
 
-                    html_theme = 'pydata_sphinx_theme'
-                    html_theme_options = {
-                        "logo": {
-                            "text": "$L",
-                        }
-                    }
+                    nav:
+                      - $1L: index.md
 
-                    autodoc_typehints = 'description'
-                                """, projectName, version, projectName);
+                    extra:
+                        social:
+                        - icon: fontawesome/brands/github
+                          link: https://github.com/awslabs/aws-sdk-python
+                    extra_css:
+                        - stylesheets/extra.css
+                    """, projectName);
         });
-    }
-
-    /**
-     * Write a make.bat file.
-     * A make.bat file is a batch script used on Windows to build Sphinx documentation.
-     * This script sets up the environment and runs the Sphinx build commands.
-     *
-     * @param context The generation context containing the writer delegator.
-     */
-    private static void writeMakeBat(
-            GenerationContext context
-    ) {
-        context.writerDelegator().useFileWriter("docs/make.bat", "", writer -> {
-            writer.write("""
-                    @ECHO OFF
-
-                    pushd %~dp0
-
-                    REM Command file for Sphinx documentation
-
-                    if "%SPHINXBUILD%" == "" (
-                        set SPHINXBUILD=sphinx-build
-                    )
-                    set BUILDDIR=build
-                    set SERVICESDIR=source/reference/services
-                    set SPHINXOPTS=-j auto
-                    set ALLSPHINXOPTS=-d %BUILDDIR%/doctrees %SPHINXOPTS% .
-
-                    if "%1" == "" goto help
-
-                    if "%1" == "clean" (
-                        rmdir /S /Q %BUILDDIR%
-                        goto end
-                    )
-
-                    if "%1" == "html" (
-                        %SPHINXBUILD% -b html %ALLSPHINXOPTS% %BUILDDIR%/html
-                        echo.
-                        echo "Build finished. The HTML pages are in %BUILDDIR%/html."
-                        goto end
-                    )
-
-                    :help
-                    %SPHINXBUILD% -M help %SOURCEDIR% %BUILDDIR% %SPHINXOPTS% %O%
-
-                    :end
-                    popd
-                            """);
-        });
-    }
-
-    /**
-     * Write a Makefile.
-     * A Makefile is used on Unix-based systems to build Sphinx documentation.
-     * This file contains rules for cleaning the build directory and generating HTML documentation.
-     *
-     * @param context The generation context containing the writer delegator.
-     */
-    private static void writeMakeFile(
-            GenerationContext context
-    ) {
-        context.writerDelegator().useFileWriter("docs/Makefile", "", writer -> {
-            writer.write("""
-                    SPHINXBUILD   = sphinx-build
-                    BUILDDIR      = build
-                    SERVICESDIR   = source/reference/services
-                    SPHINXOPTS    = -j auto
-                    ALLSPHINXOPTS   = -d $$(BUILDDIR)/doctrees $$(SPHINXOPTS) .
-
-                    clean:
-                    \t-rm -rf $$(BUILDDIR)/*
-
-                    html:
-                    \t$$(SPHINXBUILD) -b html $$(ALLSPHINXOPTS) $$(BUILDDIR)/html
-                    \t@echo
-                    \t@echo "Build finished. The HTML pages are in $$(BUILDDIR)/html."
-                        """);
-        });
-    }
-
-    /**
-     * Write the main index files for the documentation.
-     * This method creates the main index.rst file and additional index files for
-     * the client and models sections.
-     *
-     * @param context The generation context containing the writer delegator.
-     */
-    private static void writeIndexes(GenerationContext context, String projectName) {
-        // Write the main index file for the documentation
-        context.writerDelegator().useFileWriter("docs/index.rst", "", writer -> {
-            writer.write("""
-                    $L
-                    $L
-
-                    ..  toctree::
-                        :maxdepth: 2
-                        :titlesonly:
-                        :glob:
-
-                        */index
-                                """, projectName, "=".repeat(projectName.length()));
-        });
-
-        // Write the index file for the client section
-        writeIndexFile(context, "docs/client/index.rst", "Client");
-
-        // Write the index file for the models section
-        writeIndexFile(context, "docs/models/index.rst", "Models");
     }
 
     /**
@@ -468,38 +403,20 @@ public final class SetupGenerator {
             writer.write("""
                     ## Generating Documentation
 
-                    Sphinx is used for documentation. You can generate HTML locally with the
+                    Material for MkDocs is used for documentation. You can generate HTML locally with the
                     following:
 
-                    ```
-                    $$ uv pip install --group docs .
-                    $$ cd docs
-                    $$ make html
-                    ```
-                        """);
-        });
-    }
+                    ```bash
+                    # Install documentation dependencies
+                    uv pip install --group docs
 
-    /**
-     * Helper method to write an index file with the given title.
-     * This method creates an index file at the specified file path with the provided title.
-     *
-     * @param context  The generation context.
-     * @param filePath The file path of the index file.
-     * @param title    The title of the index file.
-     */
-    private static void writeIndexFile(GenerationContext context, String filePath, String title) {
-        context.writerDelegator().useFileWriter(filePath, "", writer -> {
-            writer.write("""
-                    $L
-                    =======
-                    .. toctree::
-                       :maxdepth: 1
-                       :titlesonly:
-                       :glob:
+                    # Serve documentation locally
+                    mkdocs serve
 
-                       *
-                                """, title);
+                    # OR build static HTML documentation
+                    mkdocs build
+                    ```
+                    """);
         });
     }
 

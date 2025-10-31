@@ -101,20 +101,29 @@ public final class SmithyPythonDependency {
             false);
 
     /**
-     * library used for documentation generation
+     * MkDocs documentation generator
      */
-    public static final PythonDependency SPHINX = new PythonDependency(
-            "sphinx",
-            ">=8.2.3",
+    public static final PythonDependency MKDOCS = new PythonDependency(
+            "mkdocs",
+            "~=1.6.1",
             Type.DOCS_DEPENDENCY,
             false);
 
     /**
-     * sphinx theme
+     * mkdocstrings plugin for auto-generating documentation from docstrings
      */
-    public static final PythonDependency SPHINX_PYDATA_THEME = new PythonDependency(
-            "pydata-sphinx-theme",
-            ">=0.16.1",
+    public static final PythonDependency MKDOCSTRINGS = new PythonDependency(
+            "mkdocstrings[python]",
+            "~=0.30.1",
+            Type.DOCS_DEPENDENCY,
+            false);
+
+    /**
+     * Material theme for MkDocs
+     */
+    public static final PythonDependency MKDOCS_MATERIAL = new PythonDependency(
+            "mkdocs-material",
+            "~=9.6.22",
             Type.DOCS_DEPENDENCY,
             false);
 

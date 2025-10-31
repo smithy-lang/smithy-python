@@ -339,10 +339,11 @@ public final class ConfigGenerator implements Runnable {
                 .orElse(context.settings().service().getName());
         writer.pushState(new ConfigSection(finalProperties));
         writer.addStdlibImport("dataclasses", "dataclass");
+        var clientSymbol = context.symbolProvider().toSymbol(service);
         writer.write("""
                 @dataclass(init=False)
                 class $L:
-                    \"""Configuration for $L.\"""
+                    \"""Configuration settings for $L.\"""
 
                     ${C|}
 
@@ -358,7 +359,6 @@ public final class ConfigGenerator implements Runnable {
                 serviceId,
                 writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
                 writer.consumer(w -> writeInitParams(w, finalProperties)),
-                writer.consumer(w -> documentProperties(w, finalProperties)),
                 writer.consumer(w -> initializeProperties(w, finalProperties)));
         writer.popState();
     }
@@ -369,6 +369,8 @@ public final class ConfigGenerator implements Runnable {
                     ? "$L: $T | None"
                     : "$L: $T";
             writer.write(formatString, property.name(), property.type());
+            writer.writeDocs(property.documentation(), context);
+            writer.write("");
         }
     }
 
@@ -423,7 +425,9 @@ public final class ConfigGenerator implements Runnable {
 
                             Using this method ensures the correct key is used.
 
-                            :param scheme: The auth scheme to add.
+                            Args:
+                                scheme:
+                                    The auth scheme to add.
                             \"""
                             self.auth_schemes[scheme.scheme_id] = scheme
                     """);
