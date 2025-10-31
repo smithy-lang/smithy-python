@@ -5,11 +5,12 @@
 package software.amazon.smithy.python.codegen.sections;
 
 import software.amazon.smithy.codegen.core.Symbol;
+import software.amazon.smithy.model.shapes.EnumShape;
 import software.amazon.smithy.utils.CodeSection;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
 /**
- * A section that controls writing a union member.
+ * A section that controls writing an enum.
  */
 @SmithyInternalApi
-public record UnionMemberSection(Symbol memberSymbol) implements CodeSection {}
+public record EnumSection(EnumShape enumShape, Symbol enumSymbol) implements CodeSection {}

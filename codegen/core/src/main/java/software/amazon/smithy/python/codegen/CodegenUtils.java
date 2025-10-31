@@ -281,6 +281,20 @@ public final class CodegenUtils {
     }
 
     /**
+     * Determines whether the service being generated is an AWS service.
+     *
+     * AWS services are identified by the presence of the AWS ServiceTrait which
+     * contains AWS-specific metadata like SDK ID and endpoint prefix.
+     *
+     * @param context The generation context.
+     * @return Returns true if the service is an AWS service, false otherwise.
+     */
+    public static boolean isAwsService(GenerationContext context) {
+        var service = context.model().expectShape(context.settings().service());
+        return service.hasTrait(software.amazon.smithy.aws.traits.ServiceTrait.class);
+    }
+
+    /**
      * Writes an accessor for a structure member, handling defaultedness and nullability.
      *
      * @param context The generation context.
