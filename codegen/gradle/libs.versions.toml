@@ -1,5 +1,6 @@
 [versions]
 junit5 = "6.0.0"
+mockito = "5.20.0"
 smithy = "1.63.0"
 test-logger-plugin = "4.0.0"
 spotbugs = "6.0.22"
@@ -23,6 +24,7 @@ junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.re
 junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit5" }
 junit-jupiter-params = { module = "org.junit.jupiter:junit-jupiter-params", version.ref = "junit5" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }
+mockito-core = { module = "org.mockito:mockito-core", version.ref = "mockito" }
 
 # plugin artifacts for buildsrc plugins
 test-logger-plugin = { module = "com.adarshr:gradle-test-logger-plugin", version.ref = "test-logger-plugin" }

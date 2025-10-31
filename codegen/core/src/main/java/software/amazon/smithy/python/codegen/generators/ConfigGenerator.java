@@ -333,10 +333,11 @@ public final class ConfigGenerator implements Runnable {
         var finalProperties = List.copyOf(properties);
         writer.pushState(new ConfigSection(finalProperties));
         writer.addStdlibImport("dataclasses", "dataclass");
+        var clientSymbol = context.symbolProvider().toSymbol(service);
         writer.write("""
                 @dataclass(init=False)
                 class $L:
-                    \"""Configuration for $L.\"""
+                    \"""Configuration settings for $L.\"""
 
                     ${C|}
 
@@ -345,17 +346,12 @@ public final class ConfigGenerator implements Runnable {
                         *,
                         ${C|}
                     ):
-                        \"""Constructor.
-
-                        ${C|}
-                        \"""
                         ${C|}
                 """,
                 configSymbol.getName(),
-                context.settings().service().getName(),
+                clientSymbol.getName(),
                 writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
                 writer.consumer(w -> writeInitParams(w, finalProperties)),
-                writer.consumer(w -> documentProperties(w, finalProperties)),
                 writer.consumer(w -> initializeProperties(w, finalProperties)));
         writer.popState();
     }
@@ -366,26 +362,14 @@ public final class ConfigGenerator implements Runnable {
                     ? "$L: $T | None"
                     : "$L: $T";
             writer.write(formatString, property.name(), property.type());
+            writer.writeDocs(property.documentation(), context);
+            writer.write("");
         }
     }
 
     private void writeInitParams(PythonWriter writer, Collection<ConfigProperty> properties) {
         for (ConfigProperty property : properties) {
             writer.write("$L: $T | None = None,", property.name(), property.type());
-        }
-    }
-
-    private void documentProperties(PythonWriter writer, Collection<ConfigProperty> properties) {
-        var iter = properties.iterator();
-        while (iter.hasNext()) {
-            var property = iter.next();
-            var docs = writer.formatDocs(String.format(":param %s: %s", property.name(), property.documentation()));
-
-            if (iter.hasNext()) {
-                docs += "\n";
-            }
-
-            writer.write(docs);
         }
     }
 
@@ -417,7 +401,9 @@ public final class ConfigGenerator implements Runnable {
 
                             Using this method ensures the correct key is used.
 
-                            :param scheme: The auth scheme to add.
+                            Args:
+                                scheme:
+                                    The auth scheme to add.
                             \"""
                             self.auth_schemes[scheme.scheme_id] = scheme
                     """);
