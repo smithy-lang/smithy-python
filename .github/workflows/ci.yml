@@ -38,6 +38,11 @@ jobs:
           activate-environment: true
           enable-cache: true
 
+      - name: Install pandoc
+        uses: pandoc/actions/setup@v1
+        with:
+          version: 3.8.2
+
       - name: Setup workspace
         run: |
           make install
