@@ -171,10 +171,11 @@ public final class SetupGenerator {
                     requires = ["hatchling"]
                     build-backend = "hatchling.build"
 
-                    [tool.hatch.build.targets.bdist]
+                    [tool.hatch.build]
                     exclude = [
                       "tests",
                       "docs",
+                      "mkdocs.yml",
                     ]
 
                     [tool.pyright]
