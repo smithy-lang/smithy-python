@@ -3,7 +3,7 @@
 ## v0.2.1
 
 ### Bug fixes
-* add port to CRT HTTP client's host header
+* Add port to CRT HTTP client's host header
 
 ## v0.2.0
 
