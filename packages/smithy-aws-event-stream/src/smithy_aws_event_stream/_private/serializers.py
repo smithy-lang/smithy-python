@@ -59,10 +59,8 @@ class EventSerializer(SpecificShapeSerializer):
         # Note that if we're serializing an operation input or output, it won't be a
         # union at all, so this won't get triggered. Thankfully, that's what we want.
         if schema.shape_type is ShapeType.UNION:
-            try:
-                yield self
-            finally:
-                return
+            yield self
+            return
 
         headers: dict[str, HEADER_VALUE] = {}
 
