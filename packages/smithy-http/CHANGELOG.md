@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.1
+
+### Bug fixes
+* Add port to CRT HTTP client's host header.
+
 ## v0.2.0
 
 ### Breaking Changes

@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.1.1
+
+### Bug fixes
+* Fix incorrect header casing for the shape id of eventHeaders.
+
 ## v0.1.0
 
 ### Breaking Changes
