@@ -1,0 +1,8 @@
+{
+  "changes": [
+    {
+      "type": "bugfix",
+      "description": "add port to CRT HTTP client's host header"
+    }
+  ]
+}

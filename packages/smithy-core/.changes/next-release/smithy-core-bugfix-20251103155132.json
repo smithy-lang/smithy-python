@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Fix incorrect header casing for the shape id of eventHeaders"
-}
