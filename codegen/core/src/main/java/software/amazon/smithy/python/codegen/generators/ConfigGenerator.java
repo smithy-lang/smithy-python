@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.TreeSet;
+import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.knowledge.EventStreamIndex;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
@@ -331,6 +332,11 @@ public final class ConfigGenerator implements Runnable {
         }
 
         var finalProperties = List.copyOf(properties);
+        final String serviceId = context.settings()
+                .service(context.model())
+                .getTrait(ServiceTrait.class)
+                .map(ServiceTrait::getSdkId)
+                .orElse(context.settings().service().getName());
         writer.pushState(new ConfigSection(finalProperties));
         writer.addStdlibImport("dataclasses", "dataclass");
         writer.write("""
@@ -352,7 +358,7 @@ public final class ConfigGenerator implements Runnable {
                         ${C|}
                 """,
                 configSymbol.getName(),
-                context.settings().service().getName(),
+                serviceId,
                 writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
                 writer.consumer(w -> writeInitParams(w, finalProperties)),
                 writer.consumer(w -> documentProperties(w, finalProperties)),
