@@ -6,6 +6,7 @@ package software.amazon.smithy.python.codegen.generators;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 import java.util.stream.Collectors;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.utils.SmithyInternalApi;
@@ -15,6 +16,8 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  */
 @SmithyInternalApi
 public final class InitGenerator implements Runnable {
+    // Set of directories that need __init__.py files
+    private static final Set<String> PACKAGE_DIRECTORIES = Set.of("src", "tests");
 
     private final GenerationContext context;
 
@@ -31,6 +34,7 @@ public final class InitGenerator implements Runnable {
                 .stream()
                 .map(Paths::get)
                 .filter(path -> !path.getParent().equals(context.fileManifest().getBaseDir()))
+                .filter(path -> PACKAGE_DIRECTORIES.contains(path.getName(0).toString()))
                 .collect(Collectors.groupingBy(Path::getParent, Collectors.toSet()));
         for (var entry : directories.entrySet()) {
             var initPath = entry.getKey().resolve("__init__.py");
