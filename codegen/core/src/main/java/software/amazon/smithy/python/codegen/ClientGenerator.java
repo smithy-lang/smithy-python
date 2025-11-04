@@ -168,8 +168,7 @@ final class ClientGenerator implements Runnable {
             writer.write("""
                     :param plugins: A list of callables that modify the configuration dynamically.
                         Changes made by these plugins only apply for the duration of the operation
-                        execution and will not affect any other operation invocations.
-                        """);
+                        execution and will not affect any other operation invocations.""");
 
         });
 
