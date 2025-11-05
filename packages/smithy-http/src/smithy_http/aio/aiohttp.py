@@ -20,7 +20,7 @@ try:
 except ImportError:
     HAS_AIOHTTP = False  # type: ignore
 
-from smithy_core.aio.interfaces import ErrorInfo, StreamingBlob
+from smithy_core.aio.interfaces import ClientErrorInfo, StreamingBlob
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.aio.utils import async_list
 from smithy_core.exceptions import MissingDependencyError
@@ -52,13 +52,13 @@ class AIOHTTPClientConfig(HTTPClientConfiguration):
 class AIOHTTPClient(HTTPClient):
     """Implementation of :py:class:`.interfaces.HTTPClient` using aiohttp."""
 
-    def get_error_info(self, exception: Exception, **kwargs: Any) -> ErrorInfo:
+    def get_error_info(self, exception: Exception, **kwargs: Any) -> ClientErrorInfo:
         """Get information about aiohttp errors."""
 
         if isinstance(exception, TimeoutError):
-            return ErrorInfo(is_timeout_error=True)
+            return ClientErrorInfo(is_timeout_error=True)
 
-        return ErrorInfo(is_timeout_error=False)
+        return ClientErrorInfo(is_timeout_error=False)
 
     def __init__(
         self,

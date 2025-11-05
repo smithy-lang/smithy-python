@@ -35,7 +35,7 @@ except ImportError:
 
 from smithy_core import interfaces as core_interfaces
 from smithy_core.aio import interfaces as core_aio_interfaces
-from smithy_core.aio.interfaces import ErrorInfo
+from smithy_core.aio.interfaces import ClientErrorInfo
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.exceptions import MissingDependencyError
 
@@ -136,20 +136,17 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
     _HTTP_PORT = 80
     _HTTPS_PORT = 443
 
-    def get_error_info(self, exception: Exception, **kwargs: Any) -> ErrorInfo:
+    def get_error_info(self, exception: Exception, **kwargs: Any) -> ClientErrorInfo:
         """Get information about CRT errors."""
 
         timeout_indicators = (
             "AWS_IO_SOCKET_TIMEOUT",
             "AWS_IO_SOCKET_CLOSED",
         )
-        if isinstance(exception, TimeoutError):
-            return ErrorInfo(is_timeout_error=True, fault="client")
-
         if isinstance(exception, AwsCrtError) and exception.name in timeout_indicators:
-            return ErrorInfo(is_timeout_error=True, fault="client")
+            return ClientErrorInfo(is_timeout_error=True)
 
-        return ErrorInfo(is_timeout_error=False)
+        return ClientErrorInfo(is_timeout_error=False)
 
     def __init__(
         self,

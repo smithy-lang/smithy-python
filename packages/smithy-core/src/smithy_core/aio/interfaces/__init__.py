@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import AsyncIterable, Callable
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Literal, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from ...documents import TypeRegistry
 from ...endpoints import EndpointResolverParams
@@ -13,14 +13,11 @@ from .eventstream import EventPublisher, EventReceiver
 
 
 @dataclass(frozen=True)
-class ErrorInfo:
+class ClientErrorInfo:
     """Information about an error from a transport."""
 
     is_timeout_error: bool
     """Whether this error represents a timeout condition."""
-
-    fault: Literal["client", "server"] = "client"
-    """Whether the client or server is at fault."""
 
 
 if TYPE_CHECKING:
@@ -105,7 +102,7 @@ class ClientTransport[I: Request, O: Response](Protocol):
     exceptions represent timeout conditions for that transport.
     """
 
-    def get_error_info(self, exception: Exception, **kwargs: Any) -> ErrorInfo:
+    def get_error_info(self, exception: Exception, **kwargs: Any) -> ClientErrorInfo:
         """Get information about an exception.
 
         Args:
@@ -113,7 +110,7 @@ class ClientTransport[I: Request, O: Response](Protocol):
             **kwargs: Additional context for analysis
 
         Returns:
-            ErrorInfo with timeout and fault information.
+            ClientErrorInfo with timeout information.
         """
         ...
 
