@@ -141,8 +141,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
         timeout_indicators = (
             "AWS_IO_SOCKET_TIMEOUT",
-            "AWS_IO_CHANNEL_ERROR_SOCKET_TIMEOUT",
-            "AWS_ERROR_HTTP_REQUEST_TIMEOUT",
+            "AWS_IO_SOCKET_CLOSED",
         )
         if isinstance(exception, TimeoutError):
             return ErrorInfo(is_timeout_error=True, fault="client")

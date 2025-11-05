@@ -161,4 +161,4 @@ async def test_http_408_creates_timeout_error() -> None:
     )
 
     assert error.is_timeout_error is True
-    assert error.fault == "server"
+    assert error.fault == "client"
