@@ -619,7 +619,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
         writer.addImport("smithy_http", "tuples_to_fields");
         writer.addImport("smithy_http.aio", "HTTPResponse", "_HTTPResponse");
         writer.addImport("smithy_core.aio.utils", "async_list");
-        writer.addImport("smithy_core.aio.interfaces", "ErrorInfo");
+        writer.addImport("smithy_core.aio.interfaces", "ClientErrorInfo");
         writer.addStdlibImport("typing", "Any");
 
         writer.write("""
@@ -636,9 +636,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     def __init__(self, *, client_config: HTTPClientConfiguration | None = None):
                         self._client_config = client_config
 
-                    def get_error_info(self, exception: Exception, **kwargs: Any) -> ErrorInfo:
+                    def get_error_info(self, exception: Exception, **kwargs: Any) -> ClientErrorInfo:
                         \"\"\"Get information about an exception.\"\"\"
-                        return ErrorInfo(is_timeout_error=False, fault="client")
+                        return ClientErrorInfo(is_timeout_error=False)
 
                     async def send(
                         self, request: HTTPRequest, *, request_config: HTTPRequestConfiguration | None = None
@@ -663,9 +663,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         self.fields = tuples_to_fields(headers or [])
                         self.body = body
 
-                    def get_error_info(self, exception: Exception, **kwargs: Any) -> ErrorInfo:
+                    def get_error_info(self, exception: Exception, **kwargs: Any) -> ClientErrorInfo:
                         \"\"\"Get information about an exception.\"\"\"
-                        return ErrorInfo(is_timeout_error=False, fault="client")
+                        return ClientErrorInfo(is_timeout_error=False)
 
                     async def send(
                         self, request: HTTPRequest, *, request_config: HTTPRequestConfiguration | None = None
