@@ -224,14 +224,9 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         if response.reason is not None:
             message += f" - reason: {response.status}"
 
-        if response.status == 408:
-            is_timeout = True
-            fault = "server"
-        else:
-            is_timeout = False
-            fault = "client" if response.status < 500 else "server"
-
+        is_timeout = response.status == 408
         is_throttle = response.status == 429
+        fault = "client" if response.status < 500 else "server"
 
         return CallError(
             message=message,
