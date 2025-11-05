@@ -53,7 +53,6 @@ class AIOHTTPClient(HTTPClient):
     """Implementation of :py:class:`.interfaces.HTTPClient` using aiohttp."""
 
     def get_error_info(self, exception: Exception, **kwargs: Any) -> ClientErrorInfo:
-
         if isinstance(exception, TimeoutError):
             return ClientErrorInfo(is_timeout_error=True)
 

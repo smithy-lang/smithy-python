@@ -18,8 +18,8 @@ except ImportError:
     has_aiohttp = False
 
 try:
+    from awscrt.exceptions import AwsCrtError  # type: ignore
     from smithy_http.aio.crt import AWSCRTHTTPClient
-    from awscrt.exceptions import AwsCrtError
 
     has_crt = True
 except ImportError:
@@ -65,12 +65,16 @@ class TestAWSCRTTimeoutErrorHandling:
             ("AWS_IO_SOCKET_CONNECTION_REFUSED", False),
         ],
     )
-    def test_crt_error_detection(self, client: "AWSCRTHTTPClient", error_name: str, expected_timeout: bool) -> None:
+    def test_crt_error_detection(
+        self, client: "AWSCRTHTTPClient", error_name: str, expected_timeout: bool
+    ) -> None:
         """Test CRT error detection for various error types."""
         if not has_crt:
             pytest.skip("AWS CRT not available")
-        
-        crt_err = AwsCrtError(code=0, name=error_name, message=f"CRT error: {error_name}")
+
+        crt_err = AwsCrtError(  # type: ignore
+            code=0, name=error_name, message=f"CRT error: {error_name}"
+        )
         result = client.get_error_info(crt_err)
         assert result == ClientErrorInfo(is_timeout_error=expected_timeout)
 

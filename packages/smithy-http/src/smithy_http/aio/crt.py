@@ -137,7 +137,6 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
     _HTTPS_PORT = 443
 
     def get_error_info(self, exception: Exception, **kwargs: Any) -> ClientErrorInfo:
-
         timeout_indicators = (
             "AWS_IO_SOCKET_TIMEOUT",
             "AWS_IO_SOCKET_CLOSED",
