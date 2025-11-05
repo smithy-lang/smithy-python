@@ -471,7 +471,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 error_info = self.transport.get_error_info(e)
                 if error_info.is_timeout_error:
                     raise ClientTimeoutError(
-                        message=f"Client timeout occurred: {e}", fault=error_info.fault
+                        message=f"Client timeout occurred: {e}"
                     ) from e
                 raise
 
