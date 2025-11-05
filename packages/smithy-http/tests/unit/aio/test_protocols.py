@@ -141,7 +141,6 @@ def test_http_protocol_joins_uris(
 
 @pytest.mark.asyncio
 async def test_http_408_creates_timeout_error() -> None:
-    """Test that HTTP 408 creates a timeout error with server fault."""
     protocol = Mock(spec=HttpBindingClientProtocol)
     protocol.error_identifier = Mock()
     protocol.error_identifier.identify.return_value = None
