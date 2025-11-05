@@ -4,12 +4,6 @@
  */
 package software.amazon.smithy.python.codegen.generators;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.time.LocalDate;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -28,8 +22,6 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.model.traits.TitleTrait;
 import software.amazon.smithy.python.codegen.*;
-import software.amazon.smithy.python.codegen.sections.LicenseSection;
-import software.amazon.smithy.python.codegen.sections.NoticeSection;
 import software.amazon.smithy.python.codegen.sections.PyprojectSection;
 import software.amazon.smithy.python.codegen.sections.ReadmeSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
@@ -52,8 +44,6 @@ public final class SetupGenerator {
         var dependencies = gatherDependencies(context.writerDelegator().getDependencies().stream());
         writePyproject(settings, context.writerDelegator(), dependencies);
         writeReadme(settings, context);
-        writeLicense(context);
-        writeNotice(context);
     }
 
     /**
@@ -283,38 +273,6 @@ public final class SetupGenerator {
             });
             writer.popState();
         });
-    }
-
-    private static void writeLicense(
-            GenerationContext context
-    ) {
-        context.writerDelegator().useFileWriter("LICENSE", writer -> {
-            writer.pushState(new LicenseSection());
-            writer.write(loadResourceAsString("/software/amazon/smithy/python/codegen/apache-2.0-license.txt"));
-            writer.popState();
-        });
-    }
-
-    private static void writeNotice(
-            GenerationContext context
-    ) {
-        context.writerDelegator().useFileWriter("NOTICE", writer -> {
-            writer.pushState(new NoticeSection());
-            var currentYear = LocalDate.now().getYear();
-            writer.write("Copyright " + currentYear + " Amazon.com, Inc. or its affiliates. All Rights Reserved.");
-            writer.popState();
-        });
-
-    }
-
-    private static String loadResourceAsString(String resourcePath) {
-        try (InputStream inputStream = SetupGenerator.class.getResourceAsStream(resourcePath);
-                BufferedReader reader =
-                        new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
-            return reader.lines().collect(Collectors.joining("\n"));
-        } catch (IOException e) {
-            throw new CodegenException("Failed to load resource: " + resourcePath, e);
-        }
     }
 
     /**

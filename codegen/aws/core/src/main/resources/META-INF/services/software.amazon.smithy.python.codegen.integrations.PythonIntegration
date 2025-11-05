@@ -9,3 +9,4 @@ software.amazon.smithy.python.aws.codegen.AwsServiceIdIntegration
 software.amazon.smithy.python.aws.codegen.AwsUserAgentIntegration
 software.amazon.smithy.python.aws.codegen.AwsStandardRegionalEndpointsIntegration
 software.amazon.smithy.python.aws.codegen.AwsRstDocFileGenerator
+software.amazon.smithy.python.aws.codegen.AwsLicenseAndNoticeIntegration
