@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added `SmithyKitchenSink` and `AwsKitchenSink` test clients for functional testing of smithy-python features."
+}
