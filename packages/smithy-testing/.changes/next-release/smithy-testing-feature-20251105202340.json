@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Introduced pre-generated test clients (`SmithyKitchenSink`, `AwsKitchenSink`) and pytest fixtures for functional testing of smithy-python features."
+}

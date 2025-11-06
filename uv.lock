@@ -11,6 +11,7 @@ members = [
     "smithy-http",
     "smithy-json",
     "smithy-python",
+    "smithy-testing",
 ]
 
 [[package]]
@@ -729,6 +730,22 @@ test = [
     { name = "pytest-cov", specifier = ">=6.0.0" },
 ]
 typing = [{ name = "pyright", specifier = ">=1.1.400" }]
+
+[[package]]
+name = "smithy-testing"
+source = { editable = "packages/smithy-testing" }
+dependencies = [
+    { name = "smithy-aws-core" },
+    { name = "smithy-core" },
+    { name = "smithy-http" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "smithy-aws-core", editable = "packages/smithy-aws-core" },
+    { name = "smithy-core", editable = "packages/smithy-core" },
+    { name = "smithy-http", editable = "packages/smithy-http" },
+]
 
 [[package]]
 name = "typing-extensions"

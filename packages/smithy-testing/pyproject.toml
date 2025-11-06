@@ -1,0 +1,52 @@
+[project]
+name = "smithy-testing"
+dynamic = ["version"]
+requires-python = ">=3.12"
+authors = [
+  {name = "Amazon Web Services"},
+]
+description = "Testing utilities and mock clients for smithy-python tests."
+readme = "README.md"
+license = {text = "Apache License 2.0"}
+keywords = ["smithy", "sdk", "testing"]
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Intended Audience :: Developers",
+  "Intended Audience :: System Administrators",
+  "Natural Language :: English",
+  "License :: OSI Approved :: Apache Software License",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Topic :: Software Development :: Libraries"
+]
+dependencies = [
+    "smithy-core~=0.1.0",
+    "smithy-http~=0.2.0",
+    "smithy-aws-core~=0.1.0",
+]
+
+[project.urls]
+"Changelog" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-testing/CHANGELOG.md"
+"Code" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-testing/"
+"Issue tracker" = "https://github.com/smithy-lang/smithy-python/issues"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.version]
+path = "src/smithy_testing/__init__.py"
+
+[tool.hatch.build]
+exclude = [
+  "tests",
+]
+
+[tool.ruff]
+src = ["src"]

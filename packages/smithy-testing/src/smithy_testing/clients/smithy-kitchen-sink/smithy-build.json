@@ -1,0 +1,22 @@
+{
+    "version": "1.0",
+    "sources": ["model"],
+    "maven": {
+        "dependencies": [
+            "software.amazon.smithy:smithy-model:[1.54.0,2.0)",
+            "software.amazon.smithy:smithy-aws-traits:[1.54.0,2.0)",
+            "software.amazon.smithy.python.codegen:core:0.0.1"
+        ]
+    },
+    "projections": {
+        "client": {
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "smithy.python.test#SmithyKitchenSink",
+                    "module": "smithy_kitchen_sink",
+                    "moduleVersion": "0.0.1"
+                }
+            }
+        }
+    }
+}
