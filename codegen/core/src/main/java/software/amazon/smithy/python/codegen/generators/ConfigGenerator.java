@@ -351,10 +351,7 @@ public final class ConfigGenerator implements Runnable {
                         *,
                         ${C|}
                     ):
-                        \"""Constructor.
-
                         ${C|}
-                        \"""
                         ${C|}
                 """,
                 configSymbol.getName(),
@@ -382,17 +379,20 @@ public final class ConfigGenerator implements Runnable {
     }
 
     private void documentProperties(PythonWriter writer, Collection<ConfigProperty> properties) {
-        var iter = properties.iterator();
-        while (iter.hasNext()) {
-            var property = iter.next();
-            var docs = writer.formatDocs(String.format(":param %s: %s", property.name(), property.documentation()));
+        writer.writeDocs(() ->{
+            var iter = properties.iterator();
+            writer.write("\nConstructor.\n");
+            while (iter.hasNext()) {
+                var property = iter.next();
+                var docs = writer.formatDocs(String.format(":param %s: %s", property.name(), property.documentation()));
 
-            if (iter.hasNext()) {
-                docs += "\n";
+                if (iter.hasNext()) {
+                    docs += "\n";
+                }
+
+                writer.write(docs);
             }
-
-            writer.write(docs);
-        }
+        });
     }
 
     private void initializeProperties(PythonWriter writer, Collection<ConfigProperty> properties) {

@@ -242,7 +242,8 @@ public final class StructureGenerator implements Runnable {
                     ${?useField}\
                     field(${?sensitive}repr=False, ${/sensitive}${defaultKey:L}=${defaultValue:L})\
                     ${/useField}
-                    ${?docs}""\"${docs:L}""\"${/docs}""", memberName, symbolProvider.toSymbol(member));
+                    ${?docs}""\"${docs:L}""\"${/docs}
+                    """, memberName, symbolProvider.toSymbol(member));
             writer.popState();
         }
     }
