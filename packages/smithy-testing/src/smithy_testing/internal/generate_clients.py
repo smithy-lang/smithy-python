@@ -1,3 +1,6 @@
+#  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#  SPDX-License-Identifier: Apache-2.0
+
 """Internal script for generating test clients.
 
 This module is used internally by the smithy-testing package to generate
