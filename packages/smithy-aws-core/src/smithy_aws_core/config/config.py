@@ -50,7 +50,7 @@ class AWSClientConfig:
     value (...) is Python's Ellipsis object, which allows us to distinguish
     between "not provided" vs "explicitly set to None".
 
-    HOW TO ADD A NEW CONFIG FIELD:
+    How to add a new config field:
 
     1. Add the parameter to the __init__ method with sentinel default:
        my_field: str | None = ...,  # type: ignore[assignment]
