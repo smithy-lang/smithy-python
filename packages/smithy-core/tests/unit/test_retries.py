@@ -1,7 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import pytest
 from smithy_core.aio.client import CLIENT_ID
@@ -22,7 +22,7 @@ from smithy_core.types import TypedProperties
 class MockConfig:
     """Mock config for testing retry resolver."""
 
-    retry_options: RetryStrategyOptions = RetryStrategyOptions()
+    retry_options: RetryStrategyOptions = field(default_factory=RetryStrategyOptions)
 
 
 @pytest.mark.parametrize(
@@ -123,7 +123,9 @@ def test_simple_retry_does_not_retry_unsafe() -> None:
 @pytest.mark.asyncio
 async def test_caching_retry_strategy_default_resolution() -> None:
     resolver = CachingRetryStrategyResolver()
-    properties = TypedProperties({CLIENT_ID.key: "test-client-1", "config": MockConfig()})
+    properties = TypedProperties(
+        {CLIENT_ID.key: "test-client-1", "config": MockConfig()}
+    )
 
     strategy = await resolver.resolve_retry_strategy(properties=properties)
 
@@ -148,7 +150,9 @@ async def test_caching_retry_strategy_resolver_caches_per_client() -> None:
 @pytest.mark.asyncio
 async def test_caching_retry_strategy_resolver_concurrent_access() -> None:
     resolver = CachingRetryStrategyResolver()
-    properties = TypedProperties({CLIENT_ID.key: "test-caller-concurrent", "config": MockConfig()})
+    properties = TypedProperties(
+        {CLIENT_ID.key: "test-caller-concurrent", "config": MockConfig()}
+    )
 
     strategies = await asyncio.gather(
         resolver.resolve_retry_strategy(properties=properties),
@@ -163,16 +167,16 @@ async def test_caching_retry_strategy_resolver_concurrent_access() -> None:
 @pytest.mark.asyncio
 async def test_caching_retry_strategy_resolver_caches_by_options() -> None:
     resolver = CachingRetryStrategyResolver()
-    
+
     config1 = MockConfig(retry_options=RetryStrategyOptions(max_attempts=3))
     config2 = MockConfig(retry_options=RetryStrategyOptions(max_attempts=5))
-    
+
     properties1 = TypedProperties({CLIENT_ID.key: "test-client", "config": config1})
     properties2 = TypedProperties({CLIENT_ID.key: "test-client", "config": config2})
-    
+
     strategy1 = await resolver.resolve_retry_strategy(properties=properties1)
     strategy2 = await resolver.resolve_retry_strategy(properties=properties2)
-    
+
     assert strategy1 is not strategy2
     assert strategy1.max_attempts == 3
     assert strategy2.max_attempts == 5

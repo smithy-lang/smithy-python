@@ -17,8 +17,7 @@ from .types import PropertyKey
 
 @dataclass(kw_only=True, frozen=True)
 class RetryStrategyOptions:
-    """Options for configuring retry behavior.
-    """
+    """Options for configuring retry behavior."""
 
     retry_mode: RetryStrategyType = "simple"
     """The retry mode to use."""
@@ -51,8 +50,7 @@ class CachingRetryStrategyResolver(RetryStrategyResolver[RetryStrategy]):
         self._main_lock = asyncio.Lock()
 
     def __deepcopy__(self, memo: dict[int, Any]) -> "CachingRetryStrategyResolver":
-        """Return self to preserve cache across operation-level config copies.
-        """
+        """Return self to preserve cache across operation-level config copies."""
         return self
 
     @lru_cache(maxsize=50)
