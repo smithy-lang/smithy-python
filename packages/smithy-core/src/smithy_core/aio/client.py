@@ -46,10 +46,6 @@ AUTH_SCHEME = PropertyKey(key="auth_scheme", value_type=AuthScheme[Any, Any, Any
 
 CLIENT_ID = PropertyKey(key="client_id", value_type=str)
 """A unique identifier for the client instance.
-
-This property key is used to identify a specific client instance across operations.
-It enables per-client caching and state management in resolvers and other components.
-The value is typically the string representation of the client's object ID.
 """
 
 _UNRESOLVED = URI(host="", path="/")

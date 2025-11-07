@@ -55,7 +55,7 @@ public final class ConfigGenerator implements Runnable {
             ConfigProperty.builder()
                     .name("retry_strategy_resolver")
                     .type(Symbol.builder()
-                            .name("RetryStrategyResolver[RetryStrategy, Mapping[str, Any]]")
+                            .name("RetryStrategyResolver[RetryStrategy]")
                             .addReference(Symbol.builder()
                                     .name("RetryStrategyResolver")
                                     .namespace("smithy_core.interfaces.retries", ".")
@@ -66,11 +66,6 @@ public final class ConfigGenerator implements Runnable {
                                     .namespace("smithy_core.interfaces.retries", ".")
                                     .addDependency(SmithyPythonDependency.SMITHY_CORE)
                                     .build())
-                            .addReference(Symbol.builder()
-                                    .name("Mapping")
-                                    .namespace("collections.abc", ".")
-                                    .putProperty(SymbolProperties.STDLIB, true)
-                                    .build())
                             .build())
                     .documentation("The retry strategy resolver for resolving retry strategies per client.")
                     .nullable(false)
@@ -78,6 +73,24 @@ public final class ConfigGenerator implements Runnable {
                         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
                         writer.addImport("smithy_core.retries", "CachingRetryStrategyResolver");
                         writer.write("self.retry_strategy_resolver = retry_strategy_resolver or CachingRetryStrategyResolver()");
+                    })
+                    .build(),
+            ConfigProperty.builder()
+                    .name("retry_options")
+                    .type(Symbol.builder()
+                            .name("RetryStrategyOptions")
+                            .addReference(Symbol.builder()
+                                    .name("RetryStrategyOptions")
+                                    .namespace("smithy_core.retries", ".")
+                                    .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                                    .build())
+                            .build())
+                    .documentation("Options for configuring retry behavior.")
+                    .nullable(false)
+                    .initialize(writer -> {
+                        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+                        writer.addImport("smithy_core.retries", "RetryStrategyOptions");
+                        writer.write("self.retry_options = retry_options or RetryStrategyOptions()");
                     })
                     .build(),
             ConfigProperty.builder()

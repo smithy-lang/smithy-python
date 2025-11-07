@@ -6,12 +6,34 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
 from functools import lru_cache
-from typing import Any
+from typing import Any, Protocol
 
 from .aio.client import CLIENT_ID
 from .exceptions import RetryError
 from .interfaces import retries as retries_interface
 from .interfaces.retries import RetryStrategy, RetryStrategyResolver, RetryStrategyType
+from .types import PropertyKey
+
+
+@dataclass(kw_only=True, frozen=True)
+class RetryStrategyOptions:
+    """Options for configuring retry behavior.
+    """
+
+    retry_mode: RetryStrategyType = "simple"
+    """The retry mode to use."""
+
+    max_attempts: int = 3
+    """Maximum number of attempts (initial attempt plus retries)."""
+
+
+class RetryConfig(Protocol):
+    """Protocol for config objects that support retry configuration."""
+
+    retry_options: RetryStrategyOptions
+
+
+RETRY_CONFIG = PropertyKey(key="config", value_type=RetryConfig)
 
 
 class CachingRetryStrategyResolver(RetryStrategyResolver[RetryStrategy]):
@@ -22,8 +44,6 @@ class CachingRetryStrategyResolver(RetryStrategyResolver[RetryStrategy]):
     a single retry strategy instance, which is important for strategies that maintain
     state across retries (e.g., token buckets, rate limiters).
 
-    The resolver uses async locks to ensure thread-safe creation of strategies when
-    multiple concurrent requests arrive for the same caller.
     """
 
     def __init__(self) -> None:
@@ -31,19 +51,15 @@ class CachingRetryStrategyResolver(RetryStrategyResolver[RetryStrategy]):
         self._main_lock = asyncio.Lock()
 
     def __deepcopy__(self, memo: dict[int, Any]) -> "CachingRetryStrategyResolver":
-        """Return self to preserve cache across config copies.
-
-        The resolver is designed to be shared across operations from the same client,
-        so it should not be deep copied when the config is copied per-operation.
-        This ensures the cache and locks are preserved.
+        """Return self to preserve cache across operation-level config copies.
         """
         return self
 
     @lru_cache(maxsize=50)
     def _create_retry_strategy_cached(
-        self, retry_id: str, retry_strategy: RetryStrategyType
+        self, retry_id: str, retry_mode: RetryStrategyType, max_attempts: int
     ) -> RetryStrategy:
-        return self._create_retry_strategy(retry_strategy)
+        return self._create_retry_strategy(retry_mode, max_attempts)
 
     async def resolve_retry_strategy(
         self, *, properties: retries_interface.TypedProperties
@@ -51,9 +67,9 @@ class CachingRetryStrategyResolver(RetryStrategyResolver[RetryStrategy]):
         """Get or create a retry strategy for the caller.
 
         :param properties: Properties map that must contain the CLIENT_ID property key
-            with a unique identifier for the caller. This ID is used to cache and retrieve
-            the appropriate retry strategy instance. Optionally may contain a
-            "retry_strategy" key to specify the strategy type (defaults to "simple").
+            with a unique identifier for the caller, and a "config" key with a
+            retry_strategy attribute (RetryStrategyOptions) specifying the strategy
+            configuration. Strategies are cached per client and options combination.
         :raises ValueError: If CLIENT_ID is not present in properties.
         """
         retry_id = properties.get(CLIENT_ID.key)
@@ -62,7 +78,9 @@ class CachingRetryStrategyResolver(RetryStrategyResolver[RetryStrategy]):
                 f"Properties must contain '{CLIENT_ID.key}' key with a unique identifier for the caller"
             )
 
-        retry_strategy = properties.get("retry_strategy", "simple")
+        # Get retry options from config
+        config = properties[RETRY_CONFIG]
+        options = config.retry_options
 
         async with self._main_lock:
             if retry_id not in self._locks:
@@ -70,16 +88,18 @@ class CachingRetryStrategyResolver(RetryStrategyResolver[RetryStrategy]):
             lock = self._locks[retry_id]
 
         async with lock:
-            return self._create_retry_strategy_cached(retry_id, retry_strategy)
+            return self._create_retry_strategy_cached(
+                retry_id, options.retry_mode, options.max_attempts
+            )
 
     def _create_retry_strategy(
-        self, retry_strategy: RetryStrategyType
+        self, retry_mode: RetryStrategyType, max_attempts: int
     ) -> RetryStrategy:
-        match retry_strategy:
+        match retry_mode:
             case "simple":
-                return SimpleRetryStrategy()
+                return SimpleRetryStrategy(max_attempts=max_attempts)
             case _:
-                raise ValueError(f"Unknown retry strategy: {retry_strategy}")
+                raise ValueError(f"Unknown retry mode: {retry_mode}")
 
 
 class ExponentialBackoffJitterType(Enum):
