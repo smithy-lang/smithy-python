@@ -207,12 +207,12 @@ final class ClientGenerator implements Runnable {
                 call = ClientCall(
                     input=input,
                     operation=${operation:T},
-                    context=TypedProperties({"config": config}),
+                    context=TypedProperties({"config": config, "client_object_id": str(id(self))}),
                     interceptor=InterceptorChain(config.interceptors),
                     auth_scheme_resolver=config.auth_scheme_resolver,
                     supported_auth_schemes=config.auth_schemes,
                     endpoint_resolver=config.endpoint_resolver,
-                    retry_strategy=config.retry_strategy,
+                    retry_strategy_resolver=config.retry_strategy_resolver,
                 )
                 """, writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)));
 

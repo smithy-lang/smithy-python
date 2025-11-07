@@ -1,7 +1,8 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Protocol, runtime_checkable
+from typing import Any, Literal, Protocol, runtime_checkable
 
 
 @runtime_checkable
@@ -52,6 +53,9 @@ class RetryToken(Protocol):
     """Delay in seconds to wait before the retry attempt."""
 
 
+RetryStrategyType = Literal["simple"]
+
+
 class RetryStrategy(Protocol):
     """Issuer of :py:class:`RetryToken`s."""
 
@@ -98,5 +102,16 @@ class RetryStrategy(Protocol):
         record that the operation was successful.
 
         :param token: The token used for the previous successful attempt.
+        """
+        ...
+
+
+class RetryStrategyResolver[RS: RetryStrategy, P: Mapping[str, Any]](Protocol):
+    """Used to resolve a RetryStrategy for a given caller."""
+
+    async def get_retry_strategy(self, *, properties: P) -> RS:
+        """Get the retry strategy for the caller.
+
+        :param properties: Properties including caller identification.
         """
         ...

@@ -22,7 +22,7 @@ from ..interceptors import (
 )
 from ..interfaces import Endpoint, TypedProperties
 from ..interfaces.auth import AuthOption, AuthSchemeResolver
-from ..interfaces.retries import RetryStrategy
+from ..interfaces.retries import RetryStrategyResolver
 from ..schemas import APIOperation
 from ..serializers import SerializeableShape
 from ..shapes import ShapeID
@@ -77,7 +77,7 @@ class ClientCall[I: SerializeableShape, O: DeserializeableShape]:
     endpoint_resolver: EndpointResolver
     """The endpoint resolver for the operation."""
 
-    retry_strategy: RetryStrategy
+    retry_strategy_resolver: RetryStrategyResolver
     """The retry strategy to use for the operation."""
 
     retry_scope: str | None = None
@@ -329,7 +329,9 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         if not call.retryable():
             return await self._handle_attempt(call, request_context, request_future)
 
-        retry_strategy = call.retry_strategy
+        retry_strategy = await call.retry_strategy_resolver.get_retry_strategy(
+            properties=request_context.properties
+        )
         retry_token = retry_strategy.acquire_initial_retry_token(
             token_scope=call.retry_scope
         )

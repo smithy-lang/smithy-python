@@ -1,12 +1,49 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import asyncio
 import random
-from collections.abc import Callable
+from collections.abc import Callable, Mapping
 from dataclasses import dataclass
 from enum import Enum
+from functools import lru_cache
+from typing import Any
 
 from .exceptions import RetryError
 from .interfaces import retries as retries_interface
+from .interfaces.retries import RetryStrategy, RetryStrategyResolver, RetryStrategyType
+
+
+class CachingRetryStrategyResolver[RS: RetryStrategy, P: Mapping[str, Any]](
+    RetryStrategyResolver[RS, P]
+):
+    def __init__(self) -> None:
+        self._locks: dict[str, asyncio.Lock] = {}
+        self._main_lock = asyncio.Lock()
+
+    @lru_cache(maxsize=50)
+    def _create_retry_strategy_cached(
+        self, caller_id: str, retry_strategy: RetryStrategyType
+    ) -> RS:
+        return self._create_retry_strategy(retry_strategy)
+
+    async def get_retry_strategy(self, *, properties: P) -> RS:
+        caller_id = properties["client_object_id"]
+        retry_strategy = properties.get("retry_strategy", "simple")
+
+        async with self._main_lock:
+            if caller_id not in self._locks:
+                self._locks[caller_id] = asyncio.Lock()
+            lock = self._locks[caller_id]
+
+        async with lock:
+            return self._create_retry_strategy_cached(caller_id, retry_strategy)
+
+    def _create_retry_strategy(self, retry_strategy: RetryStrategyType) -> RS:
+        match retry_strategy:
+            case "simple":
+                return SimpleRetryStrategy()
+            case _:
+                raise ValueError(f"Unknown retry strategy: {retry_strategy}")
 
 
 class ExponentialBackoffJitterType(Enum):
