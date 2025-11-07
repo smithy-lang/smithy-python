@@ -1,8 +1,9 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Literal, Protocol, runtime_checkable
+from typing import Literal, Protocol, runtime_checkable
+
+from . import TypedProperties
 
 
 @runtime_checkable
@@ -106,12 +107,12 @@ class RetryStrategy(Protocol):
         ...
 
 
-class RetryStrategyResolver[RS: RetryStrategy, P: Mapping[str, Any]](Protocol):
+class RetryStrategyResolver[RS: RetryStrategy](Protocol):
     """Used to resolve a RetryStrategy for a given caller."""
 
-    async def get_retry_strategy(self, *, properties: P) -> RS:
-        """Get the retry strategy for the caller.
+    async def resolve_retry_strategy(self, *, properties: TypedProperties) -> RS:
+        """Resolve the retry strategy for the caller.
 
-        :param properties: Properties including caller identification.
+        :param properties: Properties including caller identification and config.
         """
         ...

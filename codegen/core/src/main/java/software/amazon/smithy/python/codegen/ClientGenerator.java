@@ -183,6 +183,7 @@ final class ClientGenerator implements Runnable {
 
         writer.putContext("operation", symbolProvider.toSymbol(operation));
         writer.addImport("smithy_core.aio.client", "ClientCall");
+        writer.addImport("smithy_core.aio.client", "CLIENT_ID");
         writer.addImport("smithy_core.interceptors", "InterceptorChain");
         writer.addImport("smithy_core.types", "TypedProperties");
         writer.addImport("smithy_core.aio.client", "RequestPipeline");
@@ -207,7 +208,7 @@ final class ClientGenerator implements Runnable {
                 call = ClientCall(
                     input=input,
                     operation=${operation:T},
-                    context=TypedProperties({"config": config, "client_object_id": str(id(self))}),
+                    context=TypedProperties({"config": config, CLIENT_ID: str(id(self))}),
                     interceptor=InterceptorChain(config.interceptors),
                     auth_scheme_resolver=config.auth_scheme_resolver,
                     supported_auth_schemes=config.auth_schemes,

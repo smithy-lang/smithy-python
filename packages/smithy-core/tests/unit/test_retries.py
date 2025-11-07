@@ -1,10 +1,19 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import asyncio
 
 import pytest
+from smithy_core.aio.client import CLIENT_ID
 from smithy_core.exceptions import CallError, RetryError
-from smithy_core.retries import ExponentialBackoffJitterType as EBJT
-from smithy_core.retries import ExponentialRetryBackoffStrategy, SimpleRetryStrategy
+from smithy_core.retries import (
+    CachingRetryStrategyResolver,
+    ExponentialRetryBackoffStrategy,
+    SimpleRetryStrategy,
+)
+from smithy_core.retries import (
+    ExponentialBackoffJitterType as EBJT,
+)
+from smithy_core.types import TypedProperties
 
 
 @pytest.mark.parametrize(
@@ -100,3 +109,60 @@ def test_simple_retry_does_not_retry_unsafe() -> None:
     token = strategy.acquire_initial_retry_token()
     with pytest.raises(RetryError):
         strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
+
+
+@pytest.mark.asyncio
+async def test_caching_retry_strategy_default_resolution() -> None:
+    resolver = CachingRetryStrategyResolver()
+    properties = TypedProperties({CLIENT_ID.key: "test-client-1"})
+
+    strategy = await resolver.resolve_retry_strategy(properties=properties)
+
+    assert isinstance(strategy, SimpleRetryStrategy)
+
+
+@pytest.mark.asyncio
+async def test_caching_retry_strategy_resolver_caches_per_client() -> None:
+    resolver = CachingRetryStrategyResolver()
+    properties1 = TypedProperties({CLIENT_ID.key: "test-caller-1"})
+    properties2 = TypedProperties({CLIENT_ID.key: "test-caller-2"})
+
+    strategy1a = await resolver.resolve_retry_strategy(properties=properties1)
+    strategy1b = await resolver.resolve_retry_strategy(properties=properties1)
+    strategy2 = await resolver.resolve_retry_strategy(properties=properties2)
+
+    assert strategy1a is strategy1b
+    assert strategy1a is not strategy2
+
+
+@pytest.mark.asyncio
+async def test_caching_retry_strategy_resolver_concurrent_access() -> None:
+    resolver = CachingRetryStrategyResolver()
+    properties = TypedProperties({CLIENT_ID.key: "test-caller-concurrent"})
+
+    strategies = await asyncio.gather(
+        resolver.resolve_retry_strategy(properties=properties),
+        resolver.resolve_retry_strategy(properties=properties),
+        resolver.resolve_retry_strategy(properties=properties),
+    )
+
+    assert strategies[0] is strategies[1]
+    assert strategies[1] is strategies[2]
+
+
+@pytest.mark.asyncio
+async def test_caching_retry_strategy_resolver_requires_client_id() -> None:
+    resolver = CachingRetryStrategyResolver()
+    properties = TypedProperties({})
+
+    with pytest.raises(ValueError, match=CLIENT_ID.key):
+        await resolver.resolve_retry_strategy(properties=properties)
+
+
+def test_caching_retry_strategy_resolver_survives_deepcopy() -> None:
+    from copy import deepcopy
+
+    resolver = CachingRetryStrategyResolver()
+    resolver_copy = deepcopy(resolver)
+
+    assert resolver is resolver_copy
