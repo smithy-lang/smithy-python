@@ -268,8 +268,14 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
         :param max_attempts: Upper limit on total number of attempts made, including
             initial attempt and retries.
         """
+        if max_attempts < 1:
+            raise ValueError(
+                f"max_attempts must be a positive integer, got {max_attempts}"
+            )
+
         self.backoff_strategy = ExponentialRetryBackoffStrategy(
             backoff_scale_value=1,
+            max_backoff=20,
             jitter_type=ExponentialBackoffJitterType.FULL,
         )
         self.max_attempts = max_attempts
@@ -288,7 +294,7 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
     async def refresh_retry_token_for_retry(
         self,
         *,
-        token_to_renew: StandardRetryToken,
+        token_to_renew: retries_interface.RetryToken,
         error: Exception,
     ) -> StandardRetryToken:
         """Replace an existing retry token from a failed attempt with a new token.
@@ -300,6 +306,11 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
         :param error: The error that triggered the need for a retry.
         :raises RetryError: If no further retry attempts are allowed.
         """
+        if not isinstance(token_to_renew, StandardRetryToken):
+            raise TypeError(
+                f"StandardRetryStrategy requires StandardRetryToken, got {type(token_to_renew).__name__}"
+            )
+
         if isinstance(error, retries_interface.ErrorRetryInfo) and error.is_retry_safe:
             retry_count = token_to_renew.retry_count + 1
             if retry_count >= self.max_attempts:
@@ -310,7 +321,7 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
             # Acquire additional quota for this retry attempt
             # (may raise a RetryError if none is available)
             quota_acquired = await self._retry_quota.acquire(error=error)
-            total_quota = token_to_renew.quota_consumed + quota_acquired
+            total_quota: int = token_to_renew.quota_consumed + quota_acquired
 
             if error.retry_after is not None:
                 retry_delay = error.retry_after
@@ -328,7 +339,7 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
         else:
             raise RetryError(f"Error is not retryable: {error}") from error
 
-    async def record_success(self, *, token: StandardRetryToken) -> None:
+    async def record_success(self, *, token: retries_interface.RetryToken) -> None:
         """Return token after successful completion of an operation.
 
         Releases retry tokens back to the retry quota based on the previous amount
@@ -336,16 +347,20 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
 
         :param token: The token used for the previous successful attempt.
         """
+        if not isinstance(token, StandardRetryToken):
+            raise TypeError(
+                f"StandardRetryStrategy requires StandardRetryToken, got {type(token).__name__}"
+            )
         await self._retry_quota.release(release_amount=token.last_quota_acquired)
 
 
 class StandardRetryQuota:
     """Retry quota used by :py:class:`StandardRetryStrategy`."""
 
-    INITIAL_RETRY_TOKENS = 500
-    RETRY_COST = 5
-    NO_RETRY_INCREMENT = 1
-    TIMEOUT_RETRY_COST = 10
+    INITIAL_RETRY_TOKENS: int = 500
+    RETRY_COST: int = 5
+    NO_RETRY_INCREMENT: int = 1
+    TIMEOUT_RETRY_COST: int = 10
 
     def __init__(self):
         self._max_capacity = self.INITIAL_RETRY_TOKENS
@@ -383,6 +398,11 @@ class StandardRetryQuota:
             self._available_capacity = min(
                 self._available_capacity + increment, self._max_capacity
             )
+
+    @property
+    def available_capacity(self) -> int:
+        """Return the amount of capacity available."""
+        return self._available_capacity
 
 
 class RetryStrategyMode(Enum):

@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Added standard retry mode as the default retry strategy for AWS clients."
+}
