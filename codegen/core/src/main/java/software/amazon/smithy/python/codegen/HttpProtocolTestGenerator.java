@@ -181,13 +181,13 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     } else {
                         path = "";
                     }
-                    writer.addImport("smithy_core.retries", "SimpleRetryStrategy");
+                    writer.addImport("smithy_core.retries", "RetryStrategyOptions");
                     writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
                         writer.write("""
                                 config = $T(
                                     endpoint_uri="https://$L/$L",
                                     transport = $T(),
-                                    retry_strategy=SimpleRetryStrategy(max_attempts=1),
+                                    retry_options=RetryStrategyOptions(max_attempts=1),
                                 )
                                 """,
                                 CodegenUtils.getConfigSymbol(context.settings()),

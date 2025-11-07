@@ -72,7 +72,8 @@ public final class ConfigGenerator implements Runnable {
                     .initialize(writer -> {
                         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
                         writer.addImport("smithy_core.retries", "CachingRetryStrategyResolver");
-                        writer.write("self.retry_strategy_resolver = retry_strategy_resolver or CachingRetryStrategyResolver()");
+                        writer.write(
+                                "self.retry_strategy_resolver = retry_strategy_resolver or CachingRetryStrategyResolver()");
                     })
                     .build(),
             ConfigProperty.builder()
@@ -405,7 +406,7 @@ public final class ConfigGenerator implements Runnable {
     }
 
     private void documentProperties(PythonWriter writer, Collection<ConfigProperty> properties) {
-        writer.writeDocs(() ->{
+        writer.writeDocs(() -> {
             var iter = properties.iterator();
             writer.write("\nConstructor.\n");
             while (iter.hasNext()) {
