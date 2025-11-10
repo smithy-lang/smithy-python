@@ -18,6 +18,7 @@ from .components import (
 from .container import ContainerCredentialsResolver
 from .environment import EnvironmentCredentialsResolver
 from .imds import IMDSCredentialsResolver
+from .process import ProcessCredentialsConfig, ProcessCredentialsResolver
 from .static import StaticCredentialsResolver
 
 __all__ = (
@@ -32,6 +33,8 @@ __all__ = (
     "IdentityChainError",
     "ProfileSessionCredentialsProvider",
     "ProfileStaticCredentialsProvider",
+    "ProcessCredentialsConfig",
+    "ProcessCredentialsResolver",
     "SharedConfigProvider",
     "StaticCredentialsResolver",
     "UnclaimedSource",
