@@ -6,7 +6,7 @@ from asyncio import Future, sleep
 from collections.abc import Awaitable, Callable, Sequence
 from copy import copy
 from dataclasses import dataclass, field, replace
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 from .. import URI
 from ..auth import AuthParams
@@ -32,6 +32,7 @@ from .interfaces import (
     ClientProtocol,
     ClientTransport,
     EndpointResolver,
+    ErrorClassifyingTransport,
     Request,
     Response,
 )
@@ -468,11 +469,15 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                         request=request_context.transport_request
                     )
             except Exception as e:
-                error_info = self.transport.get_error_info(e)
-                if error_info.is_timeout_error:
-                    raise ClientTimeoutError(
-                        message=f"Client timeout occurred: {e}"
-                    ) from e
+                if hasattr(self.transport, "get_error_info"):
+                    classifying_transport = cast(
+                        ErrorClassifyingTransport[TRequest, TResponse], self.transport
+                    )
+                    error_info = classifying_transport.get_error_info(e)
+                    if error_info.is_timeout_error:
+                        raise ClientTimeoutError(
+                            message=f"Client timeout occurred: {e}"
+                        ) from e
                 raise
 
             _LOGGER.debug("Received response: %s", transport_response)
