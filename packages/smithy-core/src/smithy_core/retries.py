@@ -370,7 +370,7 @@ class StandardRetryQuota:
     async def acquire(self, *, error: Exception) -> int:
         """Attempt to acquire a certain amount of capacity.
 
-        If there's no sufficient amount of capacity available, raise an exception.
+        If there's insufficient capacity available, raise an exception.
         Otherwise, we return the amount of capacity successfully allocated.
         """
         # TODO: update `is_timeout` when `is_timeout_error` is implemented
