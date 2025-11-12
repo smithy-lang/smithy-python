@@ -96,10 +96,20 @@ class EndpointResolver(Protocol):
 
 
 class ClientTransport[I: Request, O: Response](Protocol):
-    """Protocol-agnostic representation of a client transport (e.g. an HTTP client).
+    """Protocol-agnostic representation of a client transport (e.g. an HTTP client)."""
 
-    Transport implementations must define the get_error_info method to determine which
-    exceptions represent timeout conditions for that transport.
+    async def send(self, request: I) -> O:
+        """Send a request over the transport and receive the response."""
+        ...
+
+
+class ErrorClassifyingTransport[I: Request, O: Response](
+    ClientTransport[I, O], Protocol
+):
+    """A client transport that can classify errors for retry and timeout detection.
+
+    Transport implementations should implement this protocol if they can determine
+    which exceptions represent timeout conditions or other classifiable error types.
     """
 
     def get_error_info(self, exception: Exception, **kwargs: Any) -> ClientErrorInfo:
@@ -110,12 +120,8 @@ class ClientTransport[I: Request, O: Response](Protocol):
             **kwargs: Additional context for analysis
 
         Returns:
-            ClientErrorInfo with timeout information.
+            ClientErrorInfo with error classification details.
         """
-        ...
-
-    async def send(self, request: I) -> O:
-        """Send a request over the transport and receive the response."""
         ...
 
 

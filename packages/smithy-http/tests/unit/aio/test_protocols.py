@@ -139,7 +139,6 @@ def test_http_protocol_joins_uris(
     assert actual == expected
 
 
-@pytest.mark.asyncio
 async def test_http_408_creates_timeout_error() -> None:
     protocol = Mock(spec=HttpBindingClientProtocol)
     protocol.error_identifier = Mock()
