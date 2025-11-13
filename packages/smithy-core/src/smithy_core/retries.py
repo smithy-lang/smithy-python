@@ -261,19 +261,27 @@ class StandardRetryToken:
 
 
 class StandardRetryStrategy(retries_interface.RetryStrategy):
-    def __init__(self, *, max_attempts: int = 3):
+    def __init__(
+        self,
+        *,
+        backoff_strategy: retries_interface.RetryBackoffStrategy | None = None,
+        max_attempts: int = 3,
+    ):
         """Standard retry strategy using truncated binary exponential backoff with full
         jitter.
+
+        :param backoff_strategy: The backoff strategy used by returned tokens to compute
+        the retry delay. Defaults to :py:class:`ExponentialRetryBackoffStrategy`.
 
         :param max_attempts: Upper limit on total number of attempts made, including
             initial attempt and retries.
         """
-        if max_attempts < 1:
+        if max_attempts < 0:
             raise ValueError(
-                f"max_attempts must be a positive integer, got {max_attempts}"
+                f"max_attempts must be a non-negative integer, got {max_attempts}"
             )
 
-        self.backoff_strategy = ExponentialRetryBackoffStrategy(
+        self.backoff_strategy = backoff_strategy or ExponentialRetryBackoffStrategy(
             backoff_scale_value=1,
             max_backoff=20,
             jitter_type=ExponentialBackoffJitterType.FULL,
