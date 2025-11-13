@@ -283,9 +283,6 @@ public final class CodegenUtils {
     /**
      * Determines whether the service being generated is an AWS service.
      *
-     * AWS services are identified by the presence of the AWS ServiceTrait which
-     * contains AWS-specific metadata like SDK ID and endpoint prefix.
-     *
      * @param context The generation context.
      * @return Returns true if the service is an AWS service, false otherwise.
      */

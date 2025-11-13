@@ -339,11 +339,10 @@ public final class ConfigGenerator implements Runnable {
                 .orElse(context.settings().service().getName());
         writer.pushState(new ConfigSection(finalProperties));
         writer.addStdlibImport("dataclasses", "dataclass");
-        var clientSymbol = context.symbolProvider().toSymbol(service);
         writer.write("""
                 @dataclass(init=False)
                 class $L:
-                    \"""Configuration settings for $L.\"""
+                    \"""Configuration for $L.\"""
 
                     ${C|}
 
@@ -352,7 +351,6 @@ public final class ConfigGenerator implements Runnable {
                         *,
                         ${C|}
                     ):
-                        ${C|}
                         ${C|}
                 """,
                 configSymbol.getName(),
@@ -380,23 +378,6 @@ public final class ConfigGenerator implements Runnable {
         }
     }
 
-    private void documentProperties(PythonWriter writer, Collection<ConfigProperty> properties) {
-        writer.writeDocs(() ->{
-            var iter = properties.iterator();
-            writer.write("\nConstructor.\n");
-            while (iter.hasNext()) {
-                var property = iter.next();
-                var docs = writer.formatDocs(String.format(":param %s: %s", property.name(), property.documentation()));
-
-                if (iter.hasNext()) {
-                    docs += "\n";
-                }
-
-                writer.write(docs);
-            }
-        });
-    }
-
     private void initializeProperties(PythonWriter writer, Collection<ConfigProperty> properties) {
         for (ConfigProperty property : properties) {
             property.initialize(writer);
@@ -421,7 +402,8 @@ public final class ConfigGenerator implements Runnable {
             writer.write("""
 
                         def set_auth_scheme(self, scheme: AuthScheme[Any, Any, Any, Any]) -> None:
-                            \"""Sets the implementation of an auth scheme.
+                            \"""
+                            Sets the implementation of an auth scheme.
 
                             Using this method ensures the correct key is used.
 

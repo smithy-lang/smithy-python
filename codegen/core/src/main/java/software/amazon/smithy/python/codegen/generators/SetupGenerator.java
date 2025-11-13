@@ -14,7 +14,6 @@ import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.SymbolDependency;
 import software.amazon.smithy.codegen.core.WriterDelegator;
@@ -40,7 +39,6 @@ public final class SetupGenerator {
             PythonSettings settings,
             GenerationContext context
     ) {
-        setupDocs(settings, context);
         var dependencies = gatherDependencies(context.writerDelegator().getDependencies().stream());
         writePyproject(settings, context.writerDelegator(), dependencies);
         writeReadme(settings, context);
@@ -149,20 +147,12 @@ public final class SetupGenerator {
                     Optional.ofNullable(dependencies.get(PythonDependency.Type.TEST_DEPENDENCY.getType()))
                             .map(Map::values);
 
-            Optional<Collection<SymbolDependency>> docsDeps =
-                    Optional.ofNullable(dependencies.get(PythonDependency.Type.DOCS_DEPENDENCY.getType()))
-                            .map(Map::values);
-
-            if (testDeps.isPresent() || docsDeps.isPresent()) {
+            if (testDeps.isPresent()) {
                 writer.write("[dependency-groups]");
             }
 
             testDeps.ifPresent(deps -> {
                 writer.openBlock("test = [", "]\n", () -> writeDependencyList(writer, deps));
-            });
-
-            docsDeps.ifPresent(deps -> {
-                writer.openBlock("docs = [", "]\n", () -> writeDependencyList(writer, deps));
             });
 
             // TODO: remove the pyright global suppressions after the serde redo is done
@@ -174,8 +164,6 @@ public final class SetupGenerator {
                     [tool.hatch.build]
                     exclude = [
                       "tests",
-                      "docs",
-                      "mkdocs.yml",
                     ]
 
                     [tool.pyright]
@@ -275,150 +263,4 @@ public final class SetupGenerator {
             writer.popState();
         });
     }
-
-    /**
-     * Setup files and dependencies for MkDocs documentation generation.
-     *
-     * MkDocs documentation is only generated for AWS services. Generic clients
-     * receive docstrings but are free to choose their own documentation approach.
-     */
-    private static void setupDocs(
-            PythonSettings settings,
-            GenerationContext context
-    ) {
-        // Skip generic services
-        if (!CodegenUtils.isAwsService(context)) {
-            return;
-        }
-
-        context.writerDelegator().useFileWriter("pyproject.toml", "", writer -> {
-            writer.addDependency(SmithyPythonDependency.MKDOCS);
-            writer.addDependency(SmithyPythonDependency.MKDOCSTRINGS);
-            writer.addDependency(SmithyPythonDependency.MKDOCS_MATERIAL);
-        });
-
-        var service = context.model().expectShape(settings.service());
-        String projectName = service.getTrait(ServiceTrait.class)
-                .map(ServiceTrait::getSdkId)
-                .orElseGet(() -> service.getTrait(TitleTrait.class)
-                        .map(StringTrait::getValue)
-                        .orElse(context.settings().service().getName()));
-        writeMkDocsConfig(context, projectName);
-        writeDocsReadme(context);
-    }
-
-    /**
-     * Write mkdocs.yml configuration file.
-     * This file configures MkDocs, a static site generator for project documentation.
-     */
-    private static void writeMkDocsConfig(
-            GenerationContext context,
-            String projectName
-    ) {
-        context.writerDelegator().useFileWriter("mkdocs.yml", "", writer -> {
-            writer.write("""
-                    site_name: AWS $1L
-                    site_description: Documentation for $1L Client
-
-                    copyright: Copyright &copy; 2025, Amazon Web Services, Inc
-                    repo_name: awslabs/aws-sdk-python
-                    repo_url: https://github.com/awslabs/aws-sdk-python
-
-                    theme:
-                      name: material
-                      palette:
-                        - scheme: default
-                          primary: white
-                          accent: light blue
-                          toggle:
-                            icon: material/brightness-7
-                            name: Switch to dark mode
-                        - scheme: slate
-                          primary: black
-                          accent: light blue
-                          toggle:
-                            icon: material/brightness-4
-                            name: Switch to light mode
-                      features:
-                        - navigation.top
-                        - search.suggest
-                        - search.highlight
-                        - content.code.copy
-
-                    plugins:
-                      - search
-                      - mkdocstrings:
-                          handlers:
-                            python:
-                              options:
-                                show_source: true
-                                show_signature: true
-                                show_signature_annotations: true
-                                show_root_heading: true
-                                show_root_full_path: false
-                                show_object_full_path: false
-                                show_symbol_type_heading: true
-                                show_symbol_type_toc: true
-                                show_category_heading: true
-                                group_by_category: true
-                                separate_signature: true
-                                signature_crossrefs: true
-                                filters:
-                                - "!^_"
-                                - "!^deserialize"
-                                - "!^serialize"
-
-                    markdown_extensions:
-                      - pymdownx.highlight
-                      - pymdownx.inlinehilite
-                      - pymdownx.snippets
-                      - pymdownx.superfences
-                      - admonition
-                      - def_list
-                      - toc:
-                          permalink: true
-                          toc_depth: 3
-
-                    nav:
-                      - $1L: index.md
-
-                    extra:
-                        social:
-                        - icon: fontawesome/brands/github
-                          link: https://github.com/awslabs/aws-sdk-python
-                    extra_css:
-                        - stylesheets/extra.css
-                    """, projectName);
-        });
-    }
-
-    /**
-     * Write the readme in the docs folder describing instructions for generation
-     *
-     * @param context The generation context containing the writer delegator.
-     */
-    private static void writeDocsReadme(
-            GenerationContext context
-    ) {
-        context.writerDelegator().useFileWriter("docs/README.md", writer -> {
-            writer.write("""
-                    ## Generating Documentation
-
-                    Material for MkDocs is used for documentation. You can generate HTML locally with the
-                    following:
-
-                    ```bash
-                    # Install documentation dependencies
-                    uv pip install --group docs
-
-                    # Serve documentation locally
-                    mkdocs serve
-
-                    # OR build static HTML documentation
-                    mkdocs build
-                    ```
-                    """);
-        });
-    }
-
 }

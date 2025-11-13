@@ -4,9 +4,6 @@
  */
 package software.amazon.smithy.python.codegen.test;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
-
-import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -17,8 +14,8 @@ import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.python.codegen.PythonClientCodegenPlugin;
 
 /**
- * Simple test that executes the Python client codegen plugin for a non-AWS service
- * and validates that MkDocs documentation files are NOT generated.
+ * Simple test that executes the Python client codegen plugin. Currently, this is about as much "testing" as
+ * we can do, aside from the protocol tests. JUnit will set up and tear down a tempdir to house the codegen artifacts.
  */
 public class PythonCodegenTest {
 
@@ -41,9 +38,5 @@ public class PythonCodegenTest {
                 .model(model)
                 .build();
         plugin.execute(context);
-
-        // Verify MkDocs files are NOT generated for non-AWS services
-        Path docsDir = tempDir.resolve("docs");
-        assertFalse(Files.exists(docsDir), "docs directory should NOT be created for non-AWS services");
     }
 }

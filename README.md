@@ -172,9 +172,13 @@ if __name__ == "__main__":
 
 #### pandoc CLI
 
-The code generator uses [pandoc](https://pandoc.org/) to convert documentation from Smithy models
-into Markdown format for Python docstrings, which can then be used to generate 
-documentation with [Material for MkDocs](https://squidfunk.github.io/mkdocs-material/getting-started/).
+Smithy [documentation traits](https://smithy.io/2.0/spec/documentation-traits.html#documentation-trait) are modeled in one of two formats:
+
+- **Raw HTML** for AWS services  
+- **CommonMark** for all other Smithy-based services (may include embedded HTML)
+
+The code generator uses [pandoc](https://pandoc.org/) to normalize and convert this 
+content into Markdown suitable for Google-style Python docstrings.
 
 #### Is Java really required?
 
