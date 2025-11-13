@@ -120,24 +120,21 @@ def test_standard_retry_strategy(max_attempts: int) -> None:
         strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
 
 
-def test_standard_retry_does_not_retry_unclassified() -> None:
+@pytest.mark.parametrize(
+    "error",
+    [
+        Exception(),
+        CallError(is_retry_safe=None),
+        CallError(fault="client", is_retry_safe=False),
+    ],
+    ids=[
+        "unclassified_error",
+        "safety_unknown_error",
+        "unsafe_error",
+    ],
+)
+def test_standard_retry_does_not_retry(error: Exception | CallError) -> None:
     strategy = StandardRetryStrategy()
-    token = strategy.acquire_initial_retry_token()
-    with pytest.raises(RetryError):
-        strategy.refresh_retry_token_for_retry(token_to_renew=token, error=Exception())
-
-
-def test_standard_retry_does_not_retry_when_safety_unknown() -> None:
-    strategy = StandardRetryStrategy()
-    error = CallError(is_retry_safe=None)
-    token = strategy.acquire_initial_retry_token()
-    with pytest.raises(RetryError):
-        strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
-
-
-def test_standard_retry_does_not_retry_unsafe() -> None:
-    strategy = StandardRetryStrategy()
-    error = CallError(fault="client", is_retry_safe=False)
     token = strategy.acquire_initial_retry_token()
     with pytest.raises(RetryError):
         strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
