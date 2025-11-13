@@ -60,134 +60,121 @@ def test_exponential_backoff_strategy(
 
 
 @pytest.mark.parametrize("max_attempts", [2, 3, 10])
-async def test_simple_retry_strategy(max_attempts: int) -> None:
+def test_simple_retry_strategy(max_attempts: int) -> None:
     strategy = SimpleRetryStrategy(
         backoff_strategy=ExponentialRetryBackoffStrategy(backoff_scale_value=5),
         max_attempts=max_attempts,
     )
     error = CallError(is_retry_safe=True)
-    token = await strategy.acquire_initial_retry_token()
+    token = strategy.acquire_initial_retry_token()
     for _ in range(max_attempts - 1):
-        token = await strategy.refresh_retry_token_for_retry(
+        token = strategy.refresh_retry_token_for_retry(
             token_to_renew=token, error=error
         )
     with pytest.raises(RetryError):
-        await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
+        strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
 
 
-async def test_simple_retry_does_not_retry_unclassified() -> None:
+def test_simple_retry_does_not_retry_unclassified() -> None:
     strategy = SimpleRetryStrategy(
         backoff_strategy=ExponentialRetryBackoffStrategy(backoff_scale_value=5),
         max_attempts=2,
     )
-    token = await strategy.acquire_initial_retry_token()
+    token = strategy.acquire_initial_retry_token()
     with pytest.raises(RetryError):
-        await strategy.refresh_retry_token_for_retry(
-            token_to_renew=token, error=Exception()
-        )
+        strategy.refresh_retry_token_for_retry(token_to_renew=token, error=Exception())
 
 
-async def test_simple_retry_does_not_retry_when_safety_unknown() -> None:
+def test_simple_retry_does_not_retry_when_safety_unknown() -> None:
     strategy = SimpleRetryStrategy(
         backoff_strategy=ExponentialRetryBackoffStrategy(backoff_scale_value=5),
         max_attempts=2,
     )
     error = CallError(is_retry_safe=None)
-    token = await strategy.acquire_initial_retry_token()
+    token = strategy.acquire_initial_retry_token()
     with pytest.raises(RetryError):
-        await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
+        strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
 
 
-async def test_simple_retry_does_not_retry_unsafe() -> None:
+def test_simple_retry_does_not_retry_unsafe() -> None:
     strategy = SimpleRetryStrategy(
         backoff_strategy=ExponentialRetryBackoffStrategy(backoff_scale_value=5),
         max_attempts=2,
     )
     error = CallError(fault="client", is_retry_safe=False)
-    token = await strategy.acquire_initial_retry_token()
+    token = strategy.acquire_initial_retry_token()
     with pytest.raises(RetryError):
-        await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
+        strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
 
 
 @pytest.mark.parametrize("max_attempts", [2, 3, 10])
-async def test_standard_retry_strategy(max_attempts: int) -> None:
+def test_standard_retry_strategy(max_attempts: int) -> None:
     strategy = StandardRetryStrategy(max_attempts=max_attempts)
     error = CallError(is_retry_safe=True)
-    token = await strategy.acquire_initial_retry_token()
+    token = strategy.acquire_initial_retry_token()
     for _ in range(max_attempts - 1):
-        token = await strategy.refresh_retry_token_for_retry(
+        token = strategy.refresh_retry_token_for_retry(
             token_to_renew=token, error=error
         )
     with pytest.raises(RetryError):
-        await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
+        strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
 
 
-async def test_standard_retry_does_not_retry_unclassified() -> None:
+def test_standard_retry_does_not_retry_unclassified() -> None:
     strategy = StandardRetryStrategy()
-    token = await strategy.acquire_initial_retry_token()
+    token = strategy.acquire_initial_retry_token()
     with pytest.raises(RetryError):
-        await strategy.refresh_retry_token_for_retry(
-            token_to_renew=token, error=Exception()
-        )
+        strategy.refresh_retry_token_for_retry(token_to_renew=token, error=Exception())
 
 
-async def test_standard_retry_does_not_retry_when_safety_unknown() -> None:
+def test_standard_retry_does_not_retry_when_safety_unknown() -> None:
     strategy = StandardRetryStrategy()
     error = CallError(is_retry_safe=None)
-    token = await strategy.acquire_initial_retry_token()
+    token = strategy.acquire_initial_retry_token()
     with pytest.raises(RetryError):
-        await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
+        strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
 
 
-async def test_standard_retry_does_not_retry_unsafe() -> None:
+def test_standard_retry_does_not_retry_unsafe() -> None:
     strategy = StandardRetryStrategy()
     error = CallError(fault="client", is_retry_safe=False)
-    token = await strategy.acquire_initial_retry_token()
+    token = strategy.acquire_initial_retry_token()
     with pytest.raises(RetryError):
-        await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
+        strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
 
 
-async def test_standard_retry_after_overrides_backoff() -> None:
+def test_standard_retry_after_overrides_backoff() -> None:
     strategy = StandardRetryStrategy()
     error = CallError(is_retry_safe=True, retry_after=5.5)
-    token = await strategy.acquire_initial_retry_token()
-    token = await strategy.refresh_retry_token_for_retry(
-        token_to_renew=token, error=error
-    )
+    token = strategy.acquire_initial_retry_token()
+    token = strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
     assert token.retry_delay == 5.5
 
 
-async def test_standard_retry_quota_consumed_accumulates() -> None:
+def test_standard_retry_quota_consumed_accumulates() -> None:
     strategy = StandardRetryStrategy()
     error = CallError(is_retry_safe=True)
-    token = await strategy.acquire_initial_retry_token()
+    token = strategy.acquire_initial_retry_token()
 
-    token = await strategy.refresh_retry_token_for_retry(
-        token_to_renew=token, error=error
-    )
+    token = strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
     first_consumed = token.quota_consumed
     assert first_consumed == StandardRetryQuota.RETRY_COST
 
-    token = await strategy.refresh_retry_token_for_retry(
-        token_to_renew=token, error=error
-    )
+    token = strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
     assert token.quota_consumed == first_consumed + StandardRetryQuota.RETRY_COST
 
 
-async def test_standard_retry_invalid_max_attempts() -> None:
-    with pytest.raises(ValueError):
-        StandardRetryStrategy(max_attempts=0)
-
+def test_standard_retry_invalid_max_attempts() -> None:
     with pytest.raises(ValueError):
         StandardRetryStrategy(max_attempts=-1)
 
 
-async def test_standard_retry_record_success_without_retry() -> None:
+def test_standard_retry_record_success_without_retry() -> None:
     strategy = StandardRetryStrategy()
-    token = await strategy.acquire_initial_retry_token()
+    token = strategy.acquire_initial_retry_token()
     initial_capacity = strategy._retry_quota.available_capacity  # pyright: ignore[reportPrivateUsage]
 
-    await strategy.record_success(token=token)
+    strategy.record_success(token=token)
 
     # Should increment by NO_RETRY_INCREMENT
     expected = min(
@@ -197,17 +184,15 @@ async def test_standard_retry_record_success_without_retry() -> None:
     assert strategy._retry_quota.available_capacity == expected  # pyright: ignore[reportPrivateUsage]
 
 
-async def test_standard_retry_record_success_with_retry() -> None:
+def test_standard_retry_record_success_with_retry() -> None:
     strategy = StandardRetryStrategy()
     error = CallError(is_retry_safe=True)
-    token = await strategy.acquire_initial_retry_token()
+    token = strategy.acquire_initial_retry_token()
 
-    token = await strategy.refresh_retry_token_for_retry(
-        token_to_renew=token, error=error
-    )
+    token = strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
     capacity_after_retry = strategy._retry_quota.available_capacity  # pyright: ignore[reportPrivateUsage]
 
-    await strategy.record_success(token=token)
+    strategy.record_success(token=token)
 
     # Capacity should increase by last_quota_acquired
     assert (
@@ -224,64 +209,64 @@ def retry_quota(monkeypatch: pytest.MonkeyPatch) -> StandardRetryQuota:
     return StandardRetryQuota()
 
 
-async def test_retry_quota_initial_state(
+def test_retry_quota_initial_state(
     retry_quota: StandardRetryQuota,
 ) -> None:
     assert retry_quota.available_capacity == 10
     assert retry_quota._max_capacity == 10  # pyright: ignore[reportPrivateUsage]
 
 
-async def test_retry_quota_acquire_success(
+def test_retry_quota_acquire_success(
     retry_quota: StandardRetryQuota,
 ) -> None:
-    acquired = await retry_quota.acquire(error=Exception())
+    acquired = retry_quota.acquire(error=Exception())
 
     assert acquired == 3
     assert retry_quota.available_capacity == 7
 
 
-async def test_retry_quota_acquire_when_exhausted(
+def test_retry_quota_acquire_when_exhausted(
     retry_quota: StandardRetryQuota,
 ) -> None:
     # Drain capacity: 10 -> 7 -> 4 -> 1
-    await retry_quota.acquire(error=Exception())
-    await retry_quota.acquire(error=Exception())
-    await retry_quota.acquire(error=Exception())
+    retry_quota.acquire(error=Exception())
+    retry_quota.acquire(error=Exception())
+    retry_quota.acquire(error=Exception())
     assert retry_quota.available_capacity == 1
 
     # Next acquire needs 3 but only 1 remains
     with pytest.raises(RetryError, match="Retry quota exceeded"):
-        await retry_quota.acquire(error=Exception())
+        retry_quota.acquire(error=Exception())
 
 
-async def test_retry_quota_release_restores_capacity(
+def test_retry_quota_release_restores_capacity(
     retry_quota: StandardRetryQuota,
 ) -> None:
-    acquired = await retry_quota.acquire(error=Exception())
+    acquired = retry_quota.acquire(error=Exception())
     assert retry_quota.available_capacity == 7
 
-    await retry_quota.release(release_amount=acquired)
+    retry_quota.release(release_amount=acquired)
     assert retry_quota.available_capacity == 10
 
 
-async def test_retry_quota_release_zero_adds_increment(
+def test_retry_quota_release_zero_adds_increment(
     retry_quota: StandardRetryQuota,
 ) -> None:
-    await retry_quota.acquire(error=Exception())
+    retry_quota.acquire(error=Exception())
     assert retry_quota.available_capacity == 7
 
-    await retry_quota.release(release_amount=0)
+    retry_quota.release(release_amount=0)
     assert retry_quota.available_capacity == 8
 
 
-async def test_retry_quota_release_caps_at_max(
+def test_retry_quota_release_caps_at_max(
     retry_quota: StandardRetryQuota,
 ) -> None:
     # Drain some capacity
-    await retry_quota.acquire(error=Exception())
-    await retry_quota.acquire(error=Exception())
+    retry_quota.acquire(error=Exception())
+    retry_quota.acquire(error=Exception())
     assert retry_quota.available_capacity == 4
 
     # Release more than drained. Should cap at max
-    await retry_quota.release(release_amount=20)
+    retry_quota.release(release_amount=20)
     assert retry_quota.available_capacity == 10

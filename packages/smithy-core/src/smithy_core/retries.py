@@ -1,7 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-import asyncio
 import random
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
@@ -205,7 +205,7 @@ class SimpleRetryStrategy(retries_interface.RetryStrategy):
         self.backoff_strategy = backoff_strategy or ExponentialRetryBackoffStrategy()
         self.max_attempts = max_attempts
 
-    async def acquire_initial_retry_token(
+    def acquire_initial_retry_token(
         self, *, token_scope: str | None = None
     ) -> SimpleRetryToken:
         """Create a base retry token for the start of a request.
@@ -215,7 +215,7 @@ class SimpleRetryStrategy(retries_interface.RetryStrategy):
         retry_delay = self.backoff_strategy.compute_next_backoff_delay(0)
         return SimpleRetryToken(retry_count=0, retry_delay=retry_delay)
 
-    async def refresh_retry_token_for_retry(
+    def refresh_retry_token_for_retry(
         self,
         *,
         token_to_renew: retries_interface.RetryToken,
@@ -241,7 +241,7 @@ class SimpleRetryStrategy(retries_interface.RetryStrategy):
         else:
             raise RetryError(f"Error is not retryable: {error}") from error
 
-    async def record_success(self, *, token: retries_interface.RetryToken) -> None:
+    def record_success(self, *, token: retries_interface.RetryToken) -> None:
         """Not used by this retry strategy."""
 
 
@@ -289,7 +289,7 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
         self.max_attempts = max_attempts
         self._retry_quota = StandardRetryQuota()
 
-    async def acquire_initial_retry_token(
+    def acquire_initial_retry_token(
         self, *, token_scope: str | None = None
     ) -> StandardRetryToken:
         """Create a base retry token for the start of a request.
@@ -299,7 +299,7 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
         retry_delay = self.backoff_strategy.compute_next_backoff_delay(0)
         return StandardRetryToken(retry_count=0, retry_delay=retry_delay)
 
-    async def refresh_retry_token_for_retry(
+    def refresh_retry_token_for_retry(
         self,
         *,
         token_to_renew: retries_interface.RetryToken,
@@ -328,7 +328,7 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
 
             # Acquire additional quota for this retry attempt
             # (may raise a RetryError if none is available)
-            quota_acquired = await self._retry_quota.acquire(error=error)
+            quota_acquired = self._retry_quota.acquire(error=error)
             total_quota: int = token_to_renew.quota_consumed + quota_acquired
 
             if error.retry_after is not None:
@@ -347,7 +347,7 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
         else:
             raise RetryError(f"Error is not retryable: {error}") from error
 
-    async def record_success(self, *, token: retries_interface.RetryToken) -> None:
+    def record_success(self, *, token: retries_interface.RetryToken) -> None:
         """Release retry quota back based on the amount consumed by the last retry.
 
         :param token: The token used for the previous successful attempt.
@@ -356,7 +356,7 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
             raise TypeError(
                 f"StandardRetryStrategy requires StandardRetryToken, got {type(token).__name__}"
             )
-        await self._retry_quota.release(release_amount=token.last_quota_acquired)
+        self._retry_quota.release(release_amount=token.last_quota_acquired)
 
 
 class StandardRetryQuota:
@@ -370,9 +370,9 @@ class StandardRetryQuota:
     def __init__(self):
         self._max_capacity = self.INITIAL_RETRY_TOKENS
         self._available_capacity = self.INITIAL_RETRY_TOKENS
-        self._lock = asyncio.Lock()
+        self._lock = threading.Lock()
 
-    async def acquire(self, *, error: Exception) -> int:
+    def acquire(self, *, error: Exception) -> int:
         """Attempt to acquire a certain amount of capacity.
 
         If there's insufficient capacity available, raise an exception.
@@ -382,13 +382,13 @@ class StandardRetryQuota:
         is_timeout = False
         capacity_amount = self.TIMEOUT_RETRY_COST if is_timeout else self.RETRY_COST
 
-        async with self._lock:
+        with self._lock:
             if capacity_amount > self._available_capacity:
                 raise RetryError("Retry quota exceeded")
             self._available_capacity -= capacity_amount
             return capacity_amount
 
-    async def release(self, *, release_amount: int) -> None:
+    def release(self, *, release_amount: int) -> None:
         """Release capacity back to the retry quota.
 
         The capacity being released will be truncated if necessary to ensure the max
@@ -399,7 +399,7 @@ class StandardRetryQuota:
         if self._available_capacity == self._max_capacity:
             return
 
-        async with self._lock:
+        with self._lock:
             self._available_capacity = min(
                 self._available_capacity + increment, self._max_capacity
             )
