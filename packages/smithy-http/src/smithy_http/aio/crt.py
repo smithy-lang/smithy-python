@@ -35,7 +35,6 @@ except ImportError:
 
 from smithy_core import interfaces as core_interfaces
 from smithy_core.aio import interfaces as core_aio_interfaces
-from smithy_core.aio.interfaces import ClientErrorInfo
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.exceptions import MissingDependencyError
 
@@ -132,19 +131,16 @@ class AWSCRTHTTPClientConfig(http_interfaces.HTTPClientConfiguration):
         _assert_crt()
 
 
+class _CRTTimeoutError(Exception):
+    """Internal wrapper for CRT timeout errors."""
+
+
 class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
     _HTTP_PORT = 80
     _HTTPS_PORT = 443
+    _TIMEOUT_ERROR_NAMES = frozenset(["AWS_IO_SOCKET_TIMEOUT", "AWS_IO_SOCKET_CLOSED"])
 
-    def get_error_info(self, exception: Exception, **kwargs: Any) -> ClientErrorInfo:
-        timeout_indicators = (
-            "AWS_IO_SOCKET_TIMEOUT",
-            "AWS_IO_SOCKET_CLOSED",
-        )
-        if isinstance(exception, AwsCrtError) and exception.name in timeout_indicators:
-            return ClientErrorInfo(is_timeout_error=True)
-
-        return ClientErrorInfo(is_timeout_error=False)
+    TIMEOUT_EXCEPTIONS = (_CRTTimeoutError,)
 
     def __init__(
         self,
@@ -176,18 +172,23 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         :param request: The request including destination URI, fields, payload.
         :param request_config: Configuration specific to this request.
         """
-        crt_request = self._marshal_request(request)
-        connection = await self._get_connection(request.destination)
+        try:
+            crt_request = self._marshal_request(request)
+            connection = await self._get_connection(request.destination)
 
-        # Convert body to async iterator for request_body_generator
-        body_generator = self._create_body_generator(request.body)
+            # Convert body to async iterator for request_body_generator
+            body_generator = self._create_body_generator(request.body)
 
-        crt_stream = connection.request(
-            crt_request,
-            request_body_generator=body_generator,
-        )
+            crt_stream = connection.request(
+                crt_request,
+                request_body_generator=body_generator,
+            )
 
-        return await self._await_response(crt_stream)
+            return await self._await_response(crt_stream)
+        except AwsCrtError as e:
+            if e.name in self._TIMEOUT_ERROR_NAMES:
+                raise _CRTTimeoutError() from e
+            raise
 
     async def _await_response(
         self, stream: "AIOHttpClientStreamUnified"

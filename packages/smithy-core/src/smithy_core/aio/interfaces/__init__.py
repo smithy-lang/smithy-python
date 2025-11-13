@@ -1,7 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import AsyncIterable, Callable
-from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
 
 from ...documents import TypeRegistry
@@ -10,15 +9,6 @@ from ...exceptions import UnsupportedStreamError
 from ...interfaces import Endpoint, TypedProperties, URI
 from ...interfaces import StreamingBlob as SyncStreamingBlob
 from .eventstream import EventPublisher, EventReceiver
-
-
-@dataclass(frozen=True)
-class ClientErrorInfo:
-    """Information about an error from a transport."""
-
-    is_timeout_error: bool
-    """Whether this error represents a timeout condition."""
-
 
 if TYPE_CHECKING:
     from typing_extensions import TypeForm
@@ -96,32 +86,16 @@ class EndpointResolver(Protocol):
 
 
 class ClientTransport[I: Request, O: Response](Protocol):
-    """Protocol-agnostic representation of a client transport (e.g. an HTTP client)."""
+    """Protocol-agnostic representation of a client transport (e.g. an HTTP client).
+
+    Transports must define TIMEOUT_EXCEPTIONS as a tuple of exception types that
+    are raised when a timeout occurs.
+    """
+
+    TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...]
 
     async def send(self, request: I) -> O:
         """Send a request over the transport and receive the response."""
-        ...
-
-
-class ErrorClassifyingTransport[I: Request, O: Response](
-    ClientTransport[I, O], Protocol
-):
-    """A client transport that can classify errors for retry and timeout detection.
-
-    Transport implementations should implement this protocol if they can determine
-    which exceptions represent timeout conditions or other classifiable error types.
-    """
-
-    def get_error_info(self, exception: Exception, **kwargs: Any) -> ClientErrorInfo:
-        """Get information about an exception.
-
-        Args:
-            exception: The exception to analyze
-            **kwargs: Additional context for analysis
-
-        Returns:
-            ClientErrorInfo with error classification details.
-        """
         ...
 
 
