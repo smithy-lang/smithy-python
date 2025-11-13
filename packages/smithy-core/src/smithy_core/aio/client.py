@@ -349,7 +349,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
 
             if isinstance(output_context.response, Exception):
                 try:
-                    retry_strategy.refresh_retry_token_for_retry(
+                    retry_token = retry_strategy.refresh_retry_token_for_retry(
                         token_to_renew=retry_token,
                         error=output_context.response,
                     )

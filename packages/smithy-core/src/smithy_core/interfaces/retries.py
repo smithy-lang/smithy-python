@@ -64,7 +64,7 @@ class RetryStrategy(Protocol):
     def acquire_initial_retry_token(
         self, *, token_scope: str | None = None
     ) -> RetryToken:
-        """Called before any retries (for the first attempt at the operation).
+        """Create a base retry token for the start of a request.
 
         :param token_scope: An arbitrary string accepted by the retry strategy to
             separate tokens into scopes.
