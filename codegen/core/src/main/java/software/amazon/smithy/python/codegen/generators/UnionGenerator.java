@@ -15,7 +15,6 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.SymbolProperties;
-import software.amazon.smithy.python.codegen.sections.UnionSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -104,7 +103,8 @@ public final class UnionGenerator implements Runnable {
         writer.write("""
                 @dataclass
                 class $1L:
-                    \"""Represents an unknown variant.
+                    \"""
+                    Represents an unknown variant.
 
                     If you receive this value, you will need to update your library to receive the
                     parsed value.
@@ -127,12 +127,12 @@ public final class UnionGenerator implements Runnable {
                 """, unknownSymbol.getName());
         memberNames.add(unknownSymbol.getName());
 
-        writer.pushState(new UnionSection(shape, parentName, memberNames));
         // We need to use the old union syntax until we either migrate away from
         // Sphinx or Sphinx fixes the issue upstream: https://github.com/sphinx-doc/sphinx/issues/10785
         writer.write("$L = Union[$L]", parentName, String.join(" | ", memberNames));
-        shape.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeDocs(trait.getValue(), context));
-        writer.popState();
+        shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
+            writer.writeDocs(trait.getValue(), context);
+        });
 
         generateDeserializer();
         writer.popState();

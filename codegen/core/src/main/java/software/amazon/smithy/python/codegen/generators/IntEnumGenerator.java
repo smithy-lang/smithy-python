@@ -11,7 +11,6 @@ import software.amazon.smithy.model.traits.EnumValueTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.python.codegen.SymbolProperties;
-import software.amazon.smithy.python.codegen.sections.IntEnumSection;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
 @SmithyInternalApi
@@ -26,23 +25,22 @@ public final class IntEnumGenerator implements Runnable {
     @Override
     public void run() {
         var enumSymbol = directive.symbol().expectProperty(SymbolProperties.ENUM_SYMBOL);
-        var intEnumShape = directive.shape().asIntEnumShape().get();
         directive.context().writerDelegator().useShapeWriter(directive.shape(), writer -> {
             writer.addStdlibImport("enum", "IntEnum");
-            writer.pushState(new IntEnumSection(intEnumShape, enumSymbol));
             writer.openBlock("class $L(IntEnum):", "", enumSymbol.getName(), () -> {
                 directive.shape().getTrait(DocumentationTrait.class).ifPresent(trait -> {
                     writer.writeDocs(trait.getValue(), directive.context());
                 });
 
                 for (MemberShape member : directive.shape().members()) {
-                    member.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeComment(trait.getValue()));
                     var name = directive.symbolProvider().toMemberName(member);
                     var value = member.expectTrait(EnumValueTrait.class).expectIntValue();
                     writer.write("$L = $L\n", name, value);
+                    member.getTrait(DocumentationTrait.class).ifPresent(trait -> {
+                        writer.writeDocs(trait.getValue(), directive.context());
+                    });
                 }
             });
-            writer.popState();
         });
     }
 }
