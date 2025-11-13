@@ -408,16 +408,3 @@ class StandardRetryQuota:
     def available_capacity(self) -> int:
         """Return the amount of capacity available."""
         return self._available_capacity
-
-
-class RetryStrategyMode(Enum):
-    """Enumeration of available retry strategies."""
-
-    SIMPLE = "simple"
-    STANDARD = "standard"
-
-
-RETRY_MODE_MAP = {
-    RetryStrategyMode.SIMPLE: SimpleRetryStrategy,
-    RetryStrategyMode.STANDARD: StandardRetryStrategy,
-}
