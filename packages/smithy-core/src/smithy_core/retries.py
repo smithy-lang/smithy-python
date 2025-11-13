@@ -208,7 +208,7 @@ class SimpleRetryStrategy(retries_interface.RetryStrategy):
     async def acquire_initial_retry_token(
         self, *, token_scope: str | None = None
     ) -> SimpleRetryToken:
-        """Called before any retries (for the first attempt at the operation).
+        """Create a base retry token for the start of a request.
 
         :param token_scope: This argument is ignored by this retry strategy.
         """
@@ -284,7 +284,7 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
     async def acquire_initial_retry_token(
         self, *, token_scope: str | None = None
     ) -> StandardRetryToken:
-        """Called before any retries (for the first attempt at the operation).
+        """Create a base retry token for the start of a request.
 
         :param token_scope: This argument is ignored by this retry strategy.
         """
@@ -340,10 +340,7 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
             raise RetryError(f"Error is not retryable: {error}") from error
 
     async def record_success(self, *, token: retries_interface.RetryToken) -> None:
-        """Return token after successful completion of an operation.
-
-        Releases retry tokens back to the retry quota based on the previous amount
-        consumed.
+        """Release retry quota back based on the amount consumed by the last retry.
 
         :param token: The token used for the previous successful attempt.
         """
