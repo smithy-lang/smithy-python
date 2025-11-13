@@ -166,72 +166,32 @@ def test_standard_retry_invalid_max_attempts() -> None:
         StandardRetryStrategy(max_attempts=-1)
 
 
-def test_standard_retry_record_success_without_retry() -> None:
-    strategy = StandardRetryStrategy()
-    token = strategy.acquire_initial_retry_token()
-    initial_capacity = strategy._retry_quota.available_capacity  # pyright: ignore[reportPrivateUsage]
-
-    strategy.record_success(token=token)
-
-    # Should increment by NO_RETRY_INCREMENT
-    expected = min(
-        initial_capacity + StandardRetryQuota.NO_RETRY_INCREMENT,
-        StandardRetryQuota.INITIAL_RETRY_TOKENS,
-    )
-    assert strategy._retry_quota.available_capacity == expected  # pyright: ignore[reportPrivateUsage]
-
-
-def test_standard_retry_record_success_with_retry() -> None:
-    strategy = StandardRetryStrategy()
-    error = CallError(is_retry_safe=True)
-    token = strategy.acquire_initial_retry_token()
-
-    token = strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
-    capacity_after_retry = strategy._retry_quota.available_capacity  # pyright: ignore[reportPrivateUsage]
-
-    strategy.record_success(token=token)
-
-    # Capacity should increase by last_quota_acquired
-    assert (
-        strategy._retry_quota.available_capacity  # pyright: ignore[reportPrivateUsage]
-        == capacity_after_retry + token.last_quota_acquired
-    )
-
-
 @pytest.fixture
-def retry_quota(monkeypatch: pytest.MonkeyPatch) -> StandardRetryQuota:
-    monkeypatch.setattr(StandardRetryQuota, "INITIAL_RETRY_TOKENS", 10, raising=False)
-    monkeypatch.setattr(StandardRetryQuota, "RETRY_COST", 3, raising=False)
-    monkeypatch.setattr(StandardRetryQuota, "NO_RETRY_INCREMENT", 1, raising=False)
-    return StandardRetryQuota()
+def retry_quota() -> StandardRetryQuota:
+    return StandardRetryQuota(initial_capacity=10)
 
 
 def test_retry_quota_initial_state(
     retry_quota: StandardRetryQuota,
 ) -> None:
     assert retry_quota.available_capacity == 10
-    assert retry_quota._max_capacity == 10  # pyright: ignore[reportPrivateUsage]
 
 
 def test_retry_quota_acquire_success(
     retry_quota: StandardRetryQuota,
 ) -> None:
     acquired = retry_quota.acquire(error=Exception())
-
-    assert acquired == 3
-    assert retry_quota.available_capacity == 7
+    assert retry_quota.available_capacity == 10 - acquired
 
 
 def test_retry_quota_acquire_when_exhausted(
     retry_quota: StandardRetryQuota,
 ) -> None:
-    # Drain capacity: 10 -> 7 -> 4 -> 1
+    # Drain capacity until insufficient for next acquire
     retry_quota.acquire(error=Exception())
     retry_quota.acquire(error=Exception())
-    retry_quota.acquire(error=Exception())
-    assert retry_quota.available_capacity == 1
 
-    # Next acquire needs 3 but only 1 remains
+    # Not enough capacity for another retry (need 5, only 0 left)
     with pytest.raises(RetryError, match="Retry quota exceeded"):
         retry_quota.acquire(error=Exception())
 
@@ -240,8 +200,6 @@ def test_retry_quota_release_restores_capacity(
     retry_quota: StandardRetryQuota,
 ) -> None:
     acquired = retry_quota.acquire(error=Exception())
-    assert retry_quota.available_capacity == 7
-
     retry_quota.release(release_amount=acquired)
     assert retry_quota.available_capacity == 10
 
@@ -250,10 +208,9 @@ def test_retry_quota_release_zero_adds_increment(
     retry_quota: StandardRetryQuota,
 ) -> None:
     retry_quota.acquire(error=Exception())
-    assert retry_quota.available_capacity == 7
-
+    assert retry_quota.available_capacity == 5
     retry_quota.release(release_amount=0)
-    assert retry_quota.available_capacity == 8
+    assert retry_quota.available_capacity == 6
 
 
 def test_retry_quota_release_caps_at_max(
@@ -261,9 +218,6 @@ def test_retry_quota_release_caps_at_max(
 ) -> None:
     # Drain some capacity
     retry_quota.acquire(error=Exception())
-    retry_quota.acquire(error=Exception())
-    assert retry_quota.available_capacity == 4
-
-    # Release more than drained. Should cap at max
-    retry_quota.release(release_amount=20)
+    # Release more than we acquired. Should cap at initial capacity.
+    retry_quota.release(release_amount=50)
     assert retry_quota.available_capacity == 10

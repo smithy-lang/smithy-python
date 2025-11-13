@@ -245,6 +245,59 @@ class SimpleRetryStrategy(retries_interface.RetryStrategy):
         """Not used by this retry strategy."""
 
 
+class StandardRetryQuota:
+    """Retry quota used by :py:class:`StandardRetryStrategy`."""
+
+    INITIAL_RETRY_TOKENS: int = 500
+    RETRY_COST: int = 5
+    NO_RETRY_INCREMENT: int = 1
+    TIMEOUT_RETRY_COST: int = 10
+
+    def __init__(self, initial_capacity: int = INITIAL_RETRY_TOKENS):
+        """Initialize retry quota with configurable capacity.
+
+        :param initial_capacity: The initial and maximum capacity for the retry quota.
+        """
+        self._max_capacity = initial_capacity
+        self._available_capacity = initial_capacity
+        self._lock = threading.Lock()
+
+    def acquire(self, *, error: Exception) -> int:
+        """Attempt to acquire capacity for a retry attempt.
+
+        If there's insufficient capacity available, raise an exception.
+        Otherwise, return the amount of capacity successfully allocated.
+        """
+        capacity_amount = self.RETRY_COST
+
+        with self._lock:
+            if capacity_amount > self._available_capacity:
+                raise RetryError("Retry quota exceeded")
+            self._available_capacity -= capacity_amount
+            return capacity_amount
+
+    def release(self, *, release_amount: int) -> None:
+        """Release capacity back to the retry quota.
+
+        The capacity being released will be truncated if necessary to ensure the max
+        capacity is never exceeded.
+        """
+        increment = self.NO_RETRY_INCREMENT if release_amount == 0 else release_amount
+
+        if self._available_capacity == self._max_capacity:
+            return
+
+        with self._lock:
+            self._available_capacity = min(
+                self._available_capacity + increment, self._max_capacity
+            )
+
+    @property
+    def available_capacity(self) -> int:
+        """Return the amount of capacity available."""
+        return self._available_capacity
+
+
 @dataclass(kw_only=True)
 class StandardRetryToken:
     retry_count: int
@@ -266,6 +319,7 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
         *,
         backoff_strategy: retries_interface.RetryBackoffStrategy | None = None,
         max_attempts: int = 3,
+        retry_quota: StandardRetryQuota | None = None,
     ):
         """Standard retry strategy using truncated binary exponential backoff with full
         jitter.
@@ -275,6 +329,9 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
 
         :param max_attempts: Upper limit on total number of attempts made, including
             initial attempt and retries.
+
+        :param retry_quota: The retry quota to use for managing retry capacity. Defaults
+            to a new :py:class:`StandardRetryQuota` instance.
         """
         if max_attempts < 0:
             raise ValueError(
@@ -287,7 +344,7 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
             jitter_type=ExponentialBackoffJitterType.FULL,
         )
         self.max_attempts = max_attempts
-        self._retry_quota = StandardRetryQuota()
+        self._retry_quota = retry_quota or StandardRetryQuota()
 
     def acquire_initial_retry_token(
         self, *, token_scope: str | None = None
@@ -357,54 +414,3 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
                 f"StandardRetryStrategy requires StandardRetryToken, got {type(token).__name__}"
             )
         self._retry_quota.release(release_amount=token.last_quota_acquired)
-
-
-class StandardRetryQuota:
-    """Retry quota used by :py:class:`StandardRetryStrategy`."""
-
-    INITIAL_RETRY_TOKENS: int = 500
-    RETRY_COST: int = 5
-    NO_RETRY_INCREMENT: int = 1
-    TIMEOUT_RETRY_COST: int = 10
-
-    def __init__(self):
-        self._max_capacity = self.INITIAL_RETRY_TOKENS
-        self._available_capacity = self.INITIAL_RETRY_TOKENS
-        self._lock = threading.Lock()
-
-    def acquire(self, *, error: Exception) -> int:
-        """Attempt to acquire a certain amount of capacity.
-
-        If there's insufficient capacity available, raise an exception.
-        Otherwise, we return the amount of capacity successfully allocated.
-        """
-        # TODO: update `is_timeout` when `is_timeout_error` is implemented
-        is_timeout = False
-        capacity_amount = self.TIMEOUT_RETRY_COST if is_timeout else self.RETRY_COST
-
-        with self._lock:
-            if capacity_amount > self._available_capacity:
-                raise RetryError("Retry quota exceeded")
-            self._available_capacity -= capacity_amount
-            return capacity_amount
-
-    def release(self, *, release_amount: int) -> None:
-        """Release capacity back to the retry quota.
-
-        The capacity being released will be truncated if necessary to ensure the max
-        capacity is never exceeded.
-        """
-        increment = self.NO_RETRY_INCREMENT if release_amount == 0 else release_amount
-
-        if self._available_capacity == self._max_capacity:
-            return
-
-        with self._lock:
-            self._available_capacity = min(
-                self._available_capacity + increment, self._max_capacity
-            )
-
-    @property
-    def available_capacity(self) -> int:
-        """Return the amount of capacity available."""
-        return self._available_capacity
