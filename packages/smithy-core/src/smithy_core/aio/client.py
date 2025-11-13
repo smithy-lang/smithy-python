@@ -22,7 +22,7 @@ from ..interceptors import (
 )
 from ..interfaces import Endpoint, TypedProperties
 from ..interfaces.auth import AuthOption, AuthSchemeResolver
-from ..interfaces.retries import RetryStrategy, RetryStrategyResolver
+from ..interfaces.retries import RetryStrategy
 from ..schemas import APIOperation
 from ..serializers import SerializeableShape
 from ..shapes import ShapeID
@@ -43,10 +43,6 @@ if TYPE_CHECKING:
     from typing_extensions import TypeForm
 
 AUTH_SCHEME = PropertyKey(key="auth_scheme", value_type=AuthScheme[Any, Any, Any, Any])
-
-CLIENT_ID = PropertyKey(key="client_id", value_type=str)
-"""A unique identifier for the client instance.
-"""
 
 _UNRESOLVED = URI(host="", path="/")
 _LOGGER = logging.getLogger(__name__)
@@ -81,8 +77,8 @@ class ClientCall[I: SerializeableShape, O: DeserializeableShape]:
     endpoint_resolver: EndpointResolver
     """The endpoint resolver for the operation."""
 
-    retry_strategy_resolver: RetryStrategyResolver[RetryStrategy]
-    """The retry strategy resolver for the operation."""
+    retry_strategy: RetryStrategy
+    """The retry strategy to use for the operation."""
 
     retry_scope: str | None = None
     """The retry scope for the operation."""
@@ -333,9 +329,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         if not call.retryable():
             return await self._handle_attempt(call, request_context, request_future)
 
-        retry_strategy = await call.retry_strategy_resolver.resolve_retry_strategy(
-            properties=request_context.properties
-        )
+        retry_strategy = call.retry_strategy
         retry_token = retry_strategy.acquire_initial_retry_token(
             token_scope=call.retry_scope
         )

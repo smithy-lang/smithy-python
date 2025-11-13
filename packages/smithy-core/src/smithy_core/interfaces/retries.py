@@ -1,9 +1,12 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from dataclasses import dataclass
-from typing import Literal, Protocol, runtime_checkable
+from __future__ import annotations
 
-from . import TypedProperties
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
+
+if TYPE_CHECKING:
+    from smithy_core.retries import RetryStrategyOptions
 
 
 @runtime_checkable
@@ -57,6 +60,7 @@ class RetryToken(Protocol):
 RetryStrategyType = Literal["simple"]
 
 
+@runtime_checkable
 class RetryStrategy(Protocol):
     """Issuer of :py:class:`RetryToken`s."""
 
@@ -108,11 +112,11 @@ class RetryStrategy(Protocol):
 
 
 class RetryStrategyResolver[RS: RetryStrategy](Protocol):
-    """Used to resolve a RetryStrategy for a given caller."""
+    """Used to resolve a RetryStrategy from retry options."""
 
-    async def resolve_retry_strategy(self, *, properties: TypedProperties) -> RS:
-        """Resolve the retry strategy for the caller.
+    async def resolve_retry_strategy(self, *, options: RetryStrategyOptions) -> RS:
+        """Resolve the retry strategy from the provided options.
 
-        :param properties: Properties including caller identification and config.
+        :param options: The retry strategy options to use for creating the strategy.
         """
         ...
