@@ -634,6 +634,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     def __init__(self, *, client_config: HTTPClientConfiguration | None = None):
                         self._client_config = client_config
 
+                    TIMEOUT_EXCEPTIONS = ()
+
                     async def send(
                         self, request: HTTPRequest, *, request_config: HTTPRequestConfiguration | None = None
                     ) -> HTTPResponse:
@@ -656,6 +658,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         self.status = status
                         self.fields = tuples_to_fields(headers or [])
                         self.body = body
+
+                    TIMEOUT_EXCEPTIONS = ()
 
                     async def send(
                         self, request: HTTPRequest, *, request_config: HTTPRequestConfiguration | None = None
