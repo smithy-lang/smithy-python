@@ -187,7 +187,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 config = $T(
                                     endpoint_uri="https://$L/$L",
                                     transport = $T(),
-                                    retry_options=RetryStrategyOptions(max_attempts=1),
+                                    retry_strategy=RetryStrategyOptions(max_attempts=1),
                                 )
                                 """,
                                 CodegenUtils.getConfigSymbol(context.settings()),
