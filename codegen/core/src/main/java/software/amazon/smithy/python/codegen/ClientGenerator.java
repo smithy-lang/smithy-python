@@ -22,10 +22,8 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
-import software.amazon.smithy.python.codegen.sections.*;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
-import software.amazon.smithy.utils.StringUtils;
 
 /**
  * Generates the actual client and implements operations.
@@ -59,7 +57,7 @@ final class ClientGenerator implements Runnable {
         writer.openBlock("class $L:", "", serviceSymbol.getName(), () -> {
             var docs = service.getTrait(DocumentationTrait.class)
                     .map(StringTrait::getValue)
-                    .orElse("Client for " + serviceSymbol.getName());
+                    .orElse("Client for " + service.getId().getName());
             writer.writeDocs(docs, context);
 
             var defaultPlugins = new LinkedHashSet<SymbolReference>();
@@ -114,12 +112,9 @@ final class ClientGenerator implements Runnable {
         }
     }
 
-    /**
-     * Generates docstring for client constructor.
-     */
     private void writeConstructorDocs(PythonWriter writer, String clientName) {
-        writer.writeDocs(() -> {
-            writer.writeInline("""
+        writer.writeMultiLineDocs(() -> {
+            writer.write("""
                     Constructor for `$L`.
 
                     Args:
@@ -147,7 +142,6 @@ final class ClientGenerator implements Runnable {
         var output = model.expectShape(operation.getOutputShape());
         var outputSymbol = symbolProvider.toSymbol(output);
 
-        writer.pushState(new OperationSection(service, operation));
         writer.putContext("input", inputSymbol);
         writer.putContext("output", outputSymbol);
         writer.putContext("plugin", pluginSymbol);
@@ -162,7 +156,6 @@ final class ClientGenerator implements Runnable {
                     return await pipeline(call)
                 """,
                 writer.consumer(w -> writeSharedOperationInit(w, operation, input, output)));
-        writer.popState();
     }
 
     private void writeSharedOperationInit(PythonWriter writer, OperationShape operation, Shape input, Shape output) {
@@ -174,23 +167,22 @@ final class ClientGenerator implements Runnable {
             OperationShape operation,
             Shape input,
             Shape output,
-            String customReturnDocs
+            String eventStreamOutputDocs
     ) {
-        writer.writeDocs(() -> {
-            var inputSymbolName = symbolProvider.toSymbol(input).getName();
-            var outputSymbolName = symbolProvider.toSymbol(output).getName();
-
+        writer.writeMultiLineDocs(() -> {
             var operationDocs = writer.formatDocs(operation.getTrait(DocumentationTrait.class)
                     .map(StringTrait::getValue)
                     .orElse(String.format("Invokes the %s operation.",
                             operation.getId().getName())),
                     context);
 
+            var inputSymbolName = symbolProvider.toSymbol(input).getName();
+            var outputSymbolName = symbolProvider.toSymbol(output).getName();
             var inputDocs = String.format("An instance of `%s`.", inputSymbolName);
-            var outputDocs = customReturnDocs != null ? customReturnDocs
+            var outputDocs = eventStreamOutputDocs != null ? eventStreamOutputDocs
                     : String.format("An instance of `%s`.", outputSymbolName);
 
-            writer.writeInline("""
+            writer.write("""
                     $L
 
                     Args:
@@ -261,7 +253,6 @@ final class ClientGenerator implements Runnable {
     }
 
     private void generateEventStreamOperation(PythonWriter writer, OperationShape operation) {
-        writer.pushState(new OperationSection(service, operation));
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addDependency(SmithyPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("eventstream"));
         var operationSymbol = symbolProvider.toSymbol(operation);
@@ -301,11 +292,7 @@ final class ClientGenerator implements Runnable {
         if (inputStreamSymbol.isPresent()) {
             if (outputStreamSymbol.isPresent()) {
                 writer.addImport("smithy_core.aio.eventstream", "DuplexEventStream");
-                var returnDocs = generateEventStreamReturnDocs(
-                        "DuplexEventStream",
-                        inputStreamSymbol.get().getName(),
-                        outputStreamSymbol.get().getName(),
-                        outputSymbol.getName());
+                var outputDocs = "A `DuplexEventStream` for bidirectional streaming.";
                 writer.write("""
                         async def ${operationName:L}(
                             self,
@@ -320,14 +307,10 @@ final class ClientGenerator implements Runnable {
                                 ${outputStreamDeserializer:T}().deserialize
                             )
                         """,
-                        writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, returnDocs)));
+                        writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, outputDocs)));
             } else {
                 writer.addImport("smithy_core.aio.eventstream", "InputEventStream");
-                var returnDocs = generateEventStreamReturnDocs(
-                        "InputEventStream",
-                        inputStreamSymbol.get().getName(),
-                        null,
-                        outputSymbol.getName());
+                var outputDocs = "An `InputEventStream` for client-to-server streaming.";
                 writer.write("""
                         async def ${operationName:L}(
                             self,
@@ -339,15 +322,12 @@ final class ClientGenerator implements Runnable {
                                 call,
                                 ${inputStream:T}
                             )
-                        """, writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, returnDocs)));
+                        """,
+                        writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, outputDocs)));
             }
         } else {
             writer.addImport("smithy_core.aio.eventstream", "OutputEventStream");
-            var returnDocs = generateEventStreamReturnDocs(
-                    "OutputEventStream",
-                    null,
-                    outputStreamSymbol.get().getName(),
-                    outputSymbol.getName());
+            var outputDocs = "An `OutputEventStream` for server-to-client streaming.";
             writer.write("""
                     async def ${operationName:L}(
                         self,
@@ -361,42 +341,7 @@ final class ClientGenerator implements Runnable {
                             ${outputStreamDeserializer:T}().deserialize
                         )
                     """,
-                    writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, returnDocs)));
+                    writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, outputDocs)));
         }
-
-        writer.popState();
-    }
-
-    /**
-     * Generates documentation for event stream return types.
-     */
-    private String generateEventStreamReturnDocs(
-            String containerType,
-            String inputStreamName,
-            String outputStreamName,
-            String outputName
-    ) {
-        String docs = switch (containerType) {
-            case "DuplexEventStream" -> String.format(
-                    "A `DuplexEventStream` for bidirectional streaming of `%s` and `%s` events with initial `%s` response.",
-                    inputStreamName,
-                    outputStreamName,
-                    outputName);
-            case "InputEventStream" -> String.format(
-                    "An `InputEventStream` for client-to-server streaming of `%s` events with final `%s` response.",
-                    inputStreamName,
-                    outputName);
-            case "OutputEventStream" -> String.format(
-                    "An `OutputEventStream` for server-to-client streaming of `%s` events with initial `%s` response.",
-                    outputStreamName,
-                    outputName);
-            default -> throw new IllegalArgumentException("Unknown event stream type: " + containerType);
-        };
-        // Subtract 12 chars for 3 indentation (4 spaces each)
-        String wrapped = StringUtils.wrap(
-                docs,
-                CodegenUtils.MAX_PREFERRED_LINE_LENGTH - 12);
-        // Add additional indentation (4 spaces) to continuation lines for proper Google-style formatting
-        return wrapped.replace("\n", "\n    ");
     }
 }

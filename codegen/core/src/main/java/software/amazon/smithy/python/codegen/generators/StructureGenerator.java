@@ -30,8 +30,6 @@ import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.python.codegen.SymbolProperties;
-import software.amazon.smithy.python.codegen.sections.ErrorSection;
-import software.amazon.smithy.python.codegen.sections.StructureSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -95,8 +93,6 @@ public final class StructureGenerator implements Runnable {
     private void renderStructure() {
         writer.addStdlibImport("dataclasses", "dataclass");
         var symbol = symbolProvider.toSymbol(shape);
-        writer.pushState(new StructureSection(shape));
-
         writer.write("""
                 @dataclass(kw_only=True)
                 class $L:
@@ -114,8 +110,6 @@ public final class StructureGenerator implements Runnable {
                 writer.consumer(w -> writeProperties()),
                 writer.consumer(w -> generateSerializeMethod()),
                 writer.consumer(w -> generateDeserializeMethod()));
-
-        writer.popState();
     }
 
     private void renderError() {
@@ -126,7 +120,6 @@ public final class StructureGenerator implements Runnable {
         var fault = errorTrait.getValue();
         var symbol = symbolProvider.toSymbol(shape);
         var baseError = CodegenUtils.getServiceError(settings);
-        writer.pushState(new ErrorSection(symbol));
         writer.putContext("retryable", false);
         writer.putContext("throttling", false);
 
@@ -162,8 +155,6 @@ public final class StructureGenerator implements Runnable {
                 writer.consumer(w -> writeProperties()),
                 writer.consumer(w -> generateSerializeMethod()),
                 writer.consumer(w -> generateDeserializeMethod()));
-        writer.popState();
-
     }
 
     private void writeClassDocs() {

@@ -17,28 +17,6 @@ import software.amazon.smithy.python.codegen.PythonSettings;
 
 public class MarkdownConverterTest {
 
-    private GenerationContext createMockContext(boolean isAwsService) {
-        GenerationContext context = mock(GenerationContext.class);
-        Model model = mock(Model.class);
-        PythonSettings settings = mock(PythonSettings.class);
-
-        ShapeId serviceId = ShapeId.from("test.service#TestService");
-        ServiceShape serviceShape = mock(ServiceShape.class);
-
-        when(context.model()).thenReturn(model);
-        when(context.settings()).thenReturn(settings);
-        when(settings.service()).thenReturn(serviceId);
-        when(model.expectShape(serviceId)).thenReturn(serviceShape);
-
-        if (isAwsService) {
-            when(serviceShape.hasTrait(software.amazon.smithy.aws.traits.ServiceTrait.class)).thenReturn(true);
-        } else {
-            when(serviceShape.hasTrait(software.amazon.smithy.aws.traits.ServiceTrait.class)).thenReturn(false);
-        }
-
-        return context;
-    }
-
     @Test
     public void testConvertHtmlToMarkdownWithTitleAndParagraph() {
         String html = "<html><body><h1>Title</h1><p>Paragraph</p></body></html>";
@@ -218,5 +196,27 @@ public class MarkdownConverterTest {
                     This is a very long line that exceeds seventy-two characters and should
                     wrap into two lines.""";
         assertEquals(expected, result.trim());
+    }
+
+    private GenerationContext createMockContext(boolean isAwsService) {
+        GenerationContext context = mock(GenerationContext.class);
+        Model model = mock(Model.class);
+        PythonSettings settings = mock(PythonSettings.class);
+
+        ShapeId serviceId = ShapeId.from("test.service#TestService");
+        ServiceShape serviceShape = mock(ServiceShape.class);
+
+        when(context.model()).thenReturn(model);
+        when(context.settings()).thenReturn(settings);
+        when(settings.service()).thenReturn(serviceId);
+        when(model.expectShape(serviceId)).thenReturn(serviceShape);
+
+        if (isAwsService) {
+            when(serviceShape.hasTrait(software.amazon.smithy.aws.traits.ServiceTrait.class)).thenReturn(true);
+        } else {
+            when(serviceShape.hasTrait(software.amazon.smithy.aws.traits.ServiceTrait.class)).thenReturn(false);
+        }
+
+        return context;
     }
 }

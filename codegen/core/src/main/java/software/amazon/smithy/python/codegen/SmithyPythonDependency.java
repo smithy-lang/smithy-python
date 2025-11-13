@@ -100,33 +100,6 @@ public final class SmithyPythonDependency {
             Type.TEST_DEPENDENCY,
             false);
 
-    /**
-     * MkDocs documentation generator
-     */
-    public static final PythonDependency MKDOCS = new PythonDependency(
-            "mkdocs",
-            "~=1.6.1",
-            Type.DOCS_DEPENDENCY,
-            false);
-
-    /**
-     * mkdocstrings plugin for auto-generating documentation from docstrings
-     */
-    public static final PythonDependency MKDOCSTRINGS = new PythonDependency(
-            "mkdocstrings[python]",
-            "~=0.30.1",
-            Type.DOCS_DEPENDENCY,
-            false);
-
-    /**
-     * Material theme for MkDocs
-     */
-    public static final PythonDependency MKDOCS_MATERIAL = new PythonDependency(
-            "mkdocs-material",
-            "~=9.6.22",
-            Type.DOCS_DEPENDENCY,
-            false);
-
     private SmithyPythonDependency() {}
 
     /**
