@@ -1,6 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import random
+import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
@@ -22,20 +23,29 @@ class RetryStrategyOptions:
 
 
 class CachingRetryStrategyResolver(RetryStrategyResolver[RetryStrategy]):
-    """Retry strategy resolver that creates retry strategies based on configuration options.
+    """Retry strategy resolver that caches retry strategies based on configuration options.
 
-    This resolver creates a new retry strategy instance for each resolution request
-    based on the retry options provided.
+    This resolver caches retry strategy instances based on their configuration to reuse existing
+    instances of RetryStrategy with the same settings.
     """
+
+    def __init__(self) -> None:
+        self._cache: dict[RetryStrategyOptions, RetryStrategy] = {}
+        self._lock = threading.Lock()
 
     async def resolve_retry_strategy(
         self, *, options: RetryStrategyOptions
     ) -> RetryStrategy:
-        """Create a retry strategy based on the provided options.
+        """Resolve a retry strategy from the provided options, using cache when possible.
 
         :param options: The retry strategy options to use for creating the strategy.
         """
-        return self._create_retry_strategy(options.retry_mode, options.max_attempts)
+        with self._lock:
+            if options not in self._cache:
+                self._cache[options] = self._create_retry_strategy(
+                    options.retry_mode, options.max_attempts
+                )
+            return self._cache[options]
 
     def _create_retry_strategy(
         self, retry_mode: RetryStrategyType, max_attempts: int

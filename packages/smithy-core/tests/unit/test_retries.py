@@ -129,3 +129,13 @@ async def test_caching_retry_strategy_resolver_creates_strategies_by_options() -
 
     assert strategy1.max_attempts == 3
     assert strategy2.max_attempts == 5
+
+
+async def test_caching_retry_strategy_resolver_caches_strategies() -> None:
+    resolver = CachingRetryStrategyResolver()
+
+    options = RetryStrategyOptions(max_attempts=5)
+    strategy1 = await resolver.resolve_retry_strategy(options=options)
+    strategy2 = await resolver.resolve_retry_strategy(options=options)
+
+    assert strategy1 is strategy2
