@@ -3,13 +3,13 @@
 import pytest
 from smithy_core.exceptions import CallError, RetryError
 from smithy_core.retries import (
-    RetryStrategyResolver,
-    ExponentialRetryBackoffStrategy,
-    RetryStrategyOptions,
-    SimpleRetryStrategy,
+    ExponentialBackoffJitterType as EBJT,
 )
 from smithy_core.retries import (
-    ExponentialBackoffJitterType as EBJT,
+    ExponentialRetryBackoffStrategy,
+    RetryStrategyOptions,
+    RetryStrategyResolver,
+    SimpleRetryStrategy,
 )
 
 
