@@ -3,7 +3,7 @@
 import pytest
 from smithy_core.exceptions import CallError, RetryError
 from smithy_core.retries import (
-    CachingRetryStrategyResolver,
+    RetryStrategyResolver,
     ExponentialRetryBackoffStrategy,
     RetryStrategyOptions,
     SimpleRetryStrategy,
@@ -109,7 +109,7 @@ def test_simple_retry_does_not_retry_unsafe() -> None:
 
 
 async def test_caching_retry_strategy_default_resolution() -> None:
-    resolver = CachingRetryStrategyResolver()
+    resolver = RetryStrategyResolver()
     options = RetryStrategyOptions()
 
     strategy = await resolver.resolve_retry_strategy(options=options)
@@ -119,7 +119,7 @@ async def test_caching_retry_strategy_default_resolution() -> None:
 
 
 async def test_caching_retry_strategy_resolver_creates_strategies_by_options() -> None:
-    resolver = CachingRetryStrategyResolver()
+    resolver = RetryStrategyResolver()
 
     options1 = RetryStrategyOptions(max_attempts=3)
     options2 = RetryStrategyOptions(max_attempts=5)
@@ -132,7 +132,7 @@ async def test_caching_retry_strategy_resolver_creates_strategies_by_options() -
 
 
 async def test_caching_retry_strategy_resolver_caches_strategies() -> None:
-    resolver = CachingRetryStrategyResolver()
+    resolver = RetryStrategyResolver()
 
     options = RetryStrategyOptions(max_attempts=5)
     strategy1 = await resolver.resolve_retry_strategy(options=options)

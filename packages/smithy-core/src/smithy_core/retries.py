@@ -1,14 +1,17 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import random
-import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
+from functools import lru_cache
+from typing import Literal
 
 from .exceptions import RetryError
 from .interfaces import retries as retries_interface
-from .interfaces.retries import RetryStrategy, RetryStrategyResolver, RetryStrategyType
+from .interfaces.retries import RetryStrategy
+
+RetryStrategyType = Literal["simple"]
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -22,16 +25,12 @@ class RetryStrategyOptions:
     """Maximum number of attempts (initial attempt plus retries)."""
 
 
-class CachingRetryStrategyResolver(RetryStrategyResolver[RetryStrategy]):
+class RetryStrategyResolver:
     """Retry strategy resolver that caches retry strategies based on configuration options.
 
     This resolver caches retry strategy instances based on their configuration to reuse existing
-    instances of RetryStrategy with the same settings.
+    instances of RetryStrategy with the same settings. Uses LRU cache for thread-safe caching.
     """
-
-    def __init__(self) -> None:
-        self._cache: dict[RetryStrategyOptions, RetryStrategy] = {}
-        self._lock = threading.Lock()
 
     async def resolve_retry_strategy(
         self, *, options: RetryStrategyOptions
@@ -40,15 +39,12 @@ class CachingRetryStrategyResolver(RetryStrategyResolver[RetryStrategy]):
 
         :param options: The retry strategy options to use for creating the strategy.
         """
-        with self._lock:
-            if options not in self._cache:
-                self._cache[options] = self._create_retry_strategy(
-                    options.retry_mode, options.max_attempts
-                )
-            return self._cache[options]
+        return self._create_retry_strategy(options.retry_mode, options.max_attempts)
 
+    @staticmethod
+    @lru_cache
     def _create_retry_strategy(
-        self, retry_mode: RetryStrategyType, max_attempts: int
+        retry_mode: RetryStrategyType, max_attempts: int
     ) -> RetryStrategy:
         match retry_mode:
             case "simple":

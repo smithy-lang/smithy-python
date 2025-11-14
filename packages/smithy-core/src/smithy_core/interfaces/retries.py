@@ -1,12 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from __future__ import annotations
-
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Literal, Protocol, runtime_checkable
-
-if TYPE_CHECKING:
-    from smithy_core.retries import RetryStrategyOptions
+from typing import Protocol, runtime_checkable
 
 
 @runtime_checkable
@@ -57,9 +52,6 @@ class RetryToken(Protocol):
     """Delay in seconds to wait before the retry attempt."""
 
 
-RetryStrategyType = Literal["simple"]
-
-
 @runtime_checkable
 class RetryStrategy(Protocol):
     """Issuer of :py:class:`RetryToken`s."""
@@ -107,16 +99,5 @@ class RetryStrategy(Protocol):
         record that the operation was successful.
 
         :param token: The token used for the previous successful attempt.
-        """
-        ...
-
-
-class RetryStrategyResolver[RS: RetryStrategy](Protocol):
-    """Used to resolve a RetryStrategy from retry options."""
-
-    async def resolve_retry_strategy(self, *, options: RetryStrategyOptions) -> RS:
-        """Resolve the retry strategy from the provided options.
-
-        :param options: The retry strategy options to use for creating the strategy.
         """
         ...

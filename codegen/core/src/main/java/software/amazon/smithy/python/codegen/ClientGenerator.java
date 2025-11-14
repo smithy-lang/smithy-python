@@ -84,7 +84,7 @@ final class ClientGenerator implements Runnable {
             }
 
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-            writer.addImport("smithy_core.retries", "CachingRetryStrategyResolver");
+            writer.addImport("smithy_core.retries", "RetryStrategyResolver");
             writer.write("""
                     def __init__(self, config: $1T | None = None, plugins: list[$2T] | None = None):
                         self._config = config or $1T()
@@ -98,7 +98,7 @@ final class ClientGenerator implements Runnable {
                         for plugin in client_plugins:
                             plugin(self._config)
 
-                        self._retry_strategy_resolver = CachingRetryStrategyResolver()
+                        self._retry_strategy_resolver = RetryStrategyResolver()
                     """, configSymbol, pluginSymbol, writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)));
 
             var topDownIndex = TopDownIndex.of(model);
