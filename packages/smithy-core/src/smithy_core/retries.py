@@ -41,10 +41,9 @@ class RetryStrategyResolver:
         """
         return self._create_retry_strategy(options.retry_mode, options.max_attempts)
 
-    @staticmethod
     @lru_cache
     def _create_retry_strategy(
-        retry_mode: RetryStrategyType, max_attempts: int
+        self, retry_mode: RetryStrategyType, max_attempts: int
     ) -> RetryStrategy:
         match retry_mode:
             case "simple":
