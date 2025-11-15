@@ -4,9 +4,52 @@ import random
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
+from functools import lru_cache
+from typing import Literal
 
 from .exceptions import RetryError
 from .interfaces import retries as retries_interface
+from .interfaces.retries import RetryStrategy
+
+RetryStrategyType = Literal["simple"]
+
+
+@dataclass(kw_only=True, frozen=True)
+class RetryStrategyOptions:
+    """Options for configuring retry behavior."""
+
+    retry_mode: RetryStrategyType = "simple"
+    """The retry mode to use."""
+
+    max_attempts: int = 3
+    """Maximum number of attempts (initial attempt plus retries)."""
+
+
+class RetryStrategyResolver:
+    """Retry strategy resolver that caches retry strategies based on configuration options.
+
+    This resolver caches retry strategy instances based on their configuration to reuse existing
+    instances of RetryStrategy with the same settings. Uses LRU cache for thread-safe caching.
+    """
+
+    async def resolve_retry_strategy(
+        self, *, options: RetryStrategyOptions
+    ) -> RetryStrategy:
+        """Resolve a retry strategy from the provided options, using cache when possible.
+
+        :param options: The retry strategy options to use for creating the strategy.
+        """
+        return self._create_retry_strategy(options.retry_mode, options.max_attempts)
+
+    @lru_cache
+    def _create_retry_strategy(
+        self, retry_mode: RetryStrategyType, max_attempts: int
+    ) -> RetryStrategy:
+        match retry_mode:
+            case "simple":
+                return SimpleRetryStrategy(max_attempts=max_attempts)
+            case _:
+                raise ValueError(f"Unknown retry mode: {retry_mode}")
 
 
 class ExponentialBackoffJitterType(Enum):
