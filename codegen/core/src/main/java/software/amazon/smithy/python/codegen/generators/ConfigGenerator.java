@@ -67,8 +67,10 @@ public final class ConfigGenerator implements Runnable {
                                     .addDependency(SmithyPythonDependency.SMITHY_CORE)
                                     .build())
                             .build())
-                    .documentation(
-                            "The retry strategy or options for configuring retry behavior. Can be either a fully configured RetryStrategy or RetryStrategyOptions to create one.")
+                    .documentation("""
+                            Retry strategy configuration. Pass a RetryStrategy to use directly or \
+                            RetryStrategyOptions to configure one. Optional - a default retry strategy will be \
+                            used if not provided.""")
                     .build(),
             ConfigProperty.builder()
                     .name("endpoint_uri")
