@@ -306,11 +306,8 @@ class StandardRetryToken:
     retry_delay: float
     """Delay in seconds to wait before the retry attempt."""
 
-    quota_consumed: int = 0
-    """The total amount of quota consumed."""
-
-    last_quota_acquired: int = 0
-    """The amount of last quota acquired."""
+    quota_acquired: int = 0
+    """The amount of quota acquired for this retry attempt."""
 
 
 class StandardRetryStrategy(retries_interface.RetryStrategy):
@@ -386,7 +383,6 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
             # Acquire additional quota for this retry attempt
             # (may raise a RetryError if none is available)
             quota_acquired = self._retry_quota.acquire(error=error)
-            total_quota: int = token_to_renew.quota_consumed + quota_acquired
 
             if error.retry_after is not None:
                 retry_delay = error.retry_after
@@ -398,8 +394,7 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
             return StandardRetryToken(
                 retry_count=retry_count,
                 retry_delay=retry_delay,
-                quota_consumed=total_quota,
-                last_quota_acquired=quota_acquired,
+                quota_acquired=quota_acquired,
             )
         else:
             raise RetryError(f"Error is not retryable: {error}") from error
@@ -413,4 +408,4 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
             raise TypeError(
                 f"StandardRetryStrategy requires StandardRetryToken, got {type(token).__name__}"
             )
-        self._retry_quota.release(release_amount=token.last_quota_acquired)
+        self._retry_quota.release(release_amount=token.quota_acquired)

@@ -148,19 +148,6 @@ def test_standard_retry_after_overrides_backoff() -> None:
     assert token.retry_delay == 5.5
 
 
-def test_standard_retry_quota_consumed_accumulates() -> None:
-    strategy = StandardRetryStrategy()
-    error = CallError(is_retry_safe=True)
-    token = strategy.acquire_initial_retry_token()
-
-    token = strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
-    first_consumed = token.quota_consumed
-    assert first_consumed == StandardRetryQuota.RETRY_COST
-
-    token = strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
-    assert token.quota_consumed == first_consumed + StandardRetryQuota.RETRY_COST
-
-
 def test_standard_retry_invalid_max_attempts() -> None:
     with pytest.raises(ValueError):
         StandardRetryStrategy(max_attempts=-1)
