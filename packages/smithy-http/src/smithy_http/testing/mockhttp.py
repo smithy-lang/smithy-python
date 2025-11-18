@@ -16,8 +16,8 @@ from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfigura
 class MockHTTPClient(HTTPClient):
     """Implementation of :py:class:`.interfaces.HTTPClient` solely for testing purposes.
 
-    Simulates HTTP request/response behavior.
-    Responses are queued in FIFO order and requests are captured for inspection.
+    Simulates HTTP request/response behavior. Responses are queued in FIFO order and
+    requests are captured for inspection.
     """
 
     def __init__(
@@ -41,9 +41,9 @@ class MockHTTPClient(HTTPClient):
     ) -> None:
         """Queue a response for the next request.
 
-        :param status: HTTP status code
-        :param headers: HTTP response headers as list of (name, value) tuples
-        :param body: Response body as bytes
+        :param status: HTTP status code.
+        :param headers: HTTP response headers as list of (name, value) tuples.
+        :param body: Response body as bytes.
         """
         self._response_queue.append(
             {

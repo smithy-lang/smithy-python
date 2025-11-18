@@ -1,7 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-"""Shared utilities for smithy-python functional tests."""
+"""Shared utilities for testing smithy-python clients with an HTTP transport."""
 
 from .mockhttp import MockHTTPClient, MockHTTPClientError
 from .utils import create_test_request
