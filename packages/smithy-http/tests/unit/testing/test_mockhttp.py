@@ -33,7 +33,7 @@ async def test_queued_responses_fifo():
     assert mock_client.call_count == 2
 
 
-async def test_captures_requests():
+async def test_captured_requests():
     # Test all requests are captured for inspection
     mock_client = MockHTTPClient()
     mock_client.add_response()
@@ -76,6 +76,7 @@ async def test_response_headers():
     assert response.status == 201
     assert "Content-Type" in response.fields
     assert response.fields["Content-Type"].as_string() == "application/json"
+    assert "X-Amz-Custom" in response.fields
     assert response.fields["X-Amz-Custom"].as_string() == "test"
 
 

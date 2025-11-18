@@ -3,6 +3,7 @@
 
 from collections import deque
 from copy import copy
+from typing import Any
 
 from smithy_core.aio.utils import async_list
 
@@ -29,7 +30,7 @@ class MockHTTPClient(HTTPClient):
         client.
         """
         self._client_config = client_config
-        self._response_queue: deque[HTTPResponse] = deque()
+        self._response_queue: deque[dict[str, Any]] = deque()
         self._captured_requests: list[HTTPRequest] = []
 
     def add_response(
@@ -40,17 +41,17 @@ class MockHTTPClient(HTTPClient):
     ) -> None:
         """Queue a response for the next request.
 
-        :param status: HTTP status code (200, 404, 500, etc.)
+        :param status: HTTP status code
         :param headers: HTTP response headers as list of (name, value) tuples
         :param body: Response body as bytes
         """
-        response = HTTPResponse(
-            status=status,
-            fields=tuples_to_fields(headers or []),
-            body=async_list([body]),
-            reason=None,
+        self._response_queue.append(
+            {
+                "status": status,
+                "headers": headers or [],
+                "body": body,
+            }
         )
-        self._response_queue.append(response)
 
     async def send(
         self,
@@ -69,7 +70,13 @@ class MockHTTPClient(HTTPClient):
 
         # Return next queued response or raise error
         if self._response_queue:
-            return self._response_queue.popleft()
+            response_data = self._response_queue.popleft()
+            return HTTPResponse(
+                status=response_data["status"],
+                fields=tuples_to_fields(response_data["headers"]),
+                body=async_list([response_data["body"]]),
+                reason=None,
+            )
         else:
             raise MockHTTPClientError(
                 "No responses queued in MockHTTPClient. Use add_response() to queue responses."
@@ -84,6 +91,9 @@ class MockHTTPClient(HTTPClient):
     def captured_requests(self) -> list[HTTPRequest]:
         """The list of all requests captured by this client."""
         return self._captured_requests.copy()
+
+    def __deepcopy__(self, memo: Any) -> "MockHTTPClient":
+        return self
 
 
 class MockHTTPClientError(Exception):

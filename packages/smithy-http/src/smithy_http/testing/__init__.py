@@ -6,8 +6,6 @@
 from .mockhttp import MockHTTPClient, MockHTTPClientError
 from .utils import create_test_request
 
-__version__ = "0.0.0"
-
 __all__ = (
     "MockHTTPClient",
     "MockHTTPClientError",
