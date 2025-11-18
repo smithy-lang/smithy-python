@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added `MockHTTPClient` for testing SDK clients without making real HTTP requests."
+}
