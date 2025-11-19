@@ -2,8 +2,6 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 import pytest
-
-from smithy_core import SmithyError
 from smithy_core.exceptions import CallError, RetryError
 from smithy_core.retries import ExponentialBackoffJitterType as EBJT
 from smithy_core.retries import (
@@ -215,7 +213,6 @@ def test_retry_quota_release_caps_at_max(
 def test_retry_quota_acquire_timeout_error(
     retry_quota: StandardRetryQuota,
 ) -> None:
-
     timeout_error = CallError(is_timeout_error=True, is_retry_safe=True)
     acquired = retry_quota.acquire(error=timeout_error)
     assert acquired == StandardRetryQuota.TIMEOUT_RETRY_COST

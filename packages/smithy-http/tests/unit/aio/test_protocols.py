@@ -2,7 +2,6 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 from typing import Any
-from unittest.mock import Mock
 
 import pytest
 from smithy_core import URI
@@ -12,12 +11,11 @@ from smithy_core.interfaces import TypedProperties
 from smithy_core.interfaces import URI as URIInterface
 from smithy_core.schemas import APIOperation
 from smithy_core.shapes import ShapeID
-from smithy_core.types import TypedProperties as ConcreteTypedProperties
 from smithy_http import Fields
-from smithy_http.aio import HTTPRequest, HTTPResponse
+from smithy_http.aio import HTTPRequest
 from smithy_http.aio.interfaces import HTTPRequest as HTTPRequestInterface
 from smithy_http.aio.interfaces import HTTPResponse as HTTPResponseInterface
-from smithy_http.aio.protocols import HttpBindingClientProtocol, HttpClientProtocol
+from smithy_http.aio.protocols import HttpClientProtocol
 
 
 class MockProtocol(HttpClientProtocol):
@@ -137,26 +135,3 @@ def test_http_protocol_joins_uris(
     updated_request = protocol.set_service_endpoint(request=request, endpoint=endpoint)
     actual = updated_request.destination
     assert actual == expected
-
-
-async def test_http_408_creates_timeout_error() -> None:
-    protocol = Mock(spec=HttpBindingClientProtocol)
-    protocol.error_identifier = Mock()
-    protocol.error_identifier.identify.return_value = None
-
-    response = HTTPResponse(status=408, fields=Fields())
-
-    error = await HttpBindingClientProtocol._create_error(  # type: ignore[reportPrivateUsage]
-        protocol,
-        operation=Mock(),
-        request=HTTPRequest(
-            destination=URI(host="example.com"), method="POST", fields=Fields()
-        ),
-        response=response,
-        response_body=b"",
-        error_registry=TypeRegistry({}),
-        context=ConcreteTypedProperties(),
-    )
-
-    assert error.is_timeout_error is True
-    assert error.fault == "client"

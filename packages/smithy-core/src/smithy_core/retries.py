@@ -269,7 +269,10 @@ class StandardRetryQuota:
         Otherwise, return the amount of capacity successfully allocated.
         """
 
-        is_timeout = isinstance(error, retries_interface.ErrorRetryInfo) and error.is_timeout_error
+        is_timeout = (
+            isinstance(error, retries_interface.ErrorRetryInfo)
+            and error.is_timeout_error
+        )
         capacity_amount = self.TIMEOUT_RETRY_COST if is_timeout else self.RETRY_COST
 
         with self._lock:

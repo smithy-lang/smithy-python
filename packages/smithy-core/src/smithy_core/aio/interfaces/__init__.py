@@ -86,11 +86,7 @@ class EndpointResolver(Protocol):
 
 
 class ClientTransport[I: Request, O: Response](Protocol):
-    """Protocol-agnostic representation of a client transport (e.g. an HTTP client).
-
-    Transports must define TIMEOUT_EXCEPTIONS as a tuple of exception types that
-    are raised when a timeout occurs.
-    """
+    """Protocol-agnostic representation of a client transport (e.g. an HTTP client)."""
 
     TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...]
 
