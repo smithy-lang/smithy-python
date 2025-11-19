@@ -20,6 +20,8 @@ class MockHTTPClient(HTTPClient):
     requests are captured for inspection.
     """
 
+    TIMEOUT_EXCEPTIONS = (TimeoutError,)
+
     def __init__(
         self,
         *,
