@@ -27,6 +27,9 @@ class ErrorRetryInfo(Protocol):
     is_throttling_error: bool = False
     """Whether the error is a throttling error."""
 
+    is_timeout_error: bool = False
+    """Whether the error is a timeout error."""
+
 
 class RetryBackoffStrategy(Protocol):
     """Stateless strategy for computing retry delays based on retry attempt account."""

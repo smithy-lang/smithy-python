@@ -12,7 +12,7 @@ from .. import URI
 from ..auth import AuthParams
 from ..deserializers import DeserializeableShape, ShapeDeserializer
 from ..endpoints import EndpointResolverParams
-from ..exceptions import RetryError, SmithyError
+from ..exceptions import ClientTimeoutError, RetryError, SmithyError
 from ..interceptors import (
     InputContext,
     Interceptor,
@@ -448,24 +448,31 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
 
             _LOGGER.debug("Sending request %s", request_context.transport_request)
 
-            if request_future is not None:
-                # If we have an input event stream (or duplex event stream) then we
-                # need to let the client return ASAP so that it can start sending
-                # events. So here we start the transport send in a background task
-                # then set the result of the request future. It's important to sequence
-                # it just like that so that the client gets a stream that's ready
-                # to send.
-                transport_task = asyncio.create_task(
-                    self.transport.send(request=request_context.transport_request)
-                )
-                request_future.set_result(request_context)
-                transport_response = await transport_task
-            else:
-                # If we don't have an input stream, there's no point in creating a
-                # task, so we just immediately await the coroutine.
-                transport_response = await self.transport.send(
-                    request=request_context.transport_request
-                )
+            try:
+                if request_future is not None:
+                    # If we have an input event stream (or duplex event stream) then we
+                    # need to let the client return ASAP so that it can start sending
+                    # events. So here we start the transport send in a background task
+                    # then set the result of the request future. It's important to sequence
+                    # it just like that so that the client gets a stream that's ready
+                    # to send.
+                    transport_task = asyncio.create_task(
+                        self.transport.send(request=request_context.transport_request)
+                    )
+                    request_future.set_result(request_context)
+                    transport_response = await transport_task
+                else:
+                    # If we don't have an input stream, there's no point in creating a
+                    # task, so we just immediately await the coroutine.
+                    transport_response = await self.transport.send(
+                        request=request_context.transport_request
+                    )
+            except Exception as e:
+                if isinstance(e, self.transport.TIMEOUT_EXCEPTIONS):
+                    raise ClientTimeoutError(
+                        message=f"Client timeout occurred: {e}"
+                    ) from e
+                raise
 
             _LOGGER.debug("Received response: %s", transport_response)
 

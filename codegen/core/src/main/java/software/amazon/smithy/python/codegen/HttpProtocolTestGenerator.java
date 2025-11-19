@@ -631,6 +631,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 class $3L:
                     ""\"An asynchronous HTTP client solely for testing purposes.""\"
 
+                    TIMEOUT_EXCEPTIONS = ()
+
                     def __init__(self, *, client_config: HTTPClientConfiguration | None = None):
                         self._client_config = client_config
 
@@ -643,6 +645,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
                 class $4L:
                     ""\"An asynchronous HTTP client solely for testing purposes.""\"
+
+                    TIMEOUT_EXCEPTIONS = ()
 
                     def __init__(
                         self,

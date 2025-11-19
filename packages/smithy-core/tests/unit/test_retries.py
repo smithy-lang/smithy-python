@@ -208,3 +208,12 @@ def test_retry_quota_release_caps_at_max(
     # Release more than we acquired. Should cap at initial capacity.
     retry_quota.release(release_amount=50)
     assert retry_quota.available_capacity == 10
+
+
+def test_retry_quota_acquire_timeout_error(
+    retry_quota: StandardRetryQuota,
+) -> None:
+    timeout_error = CallError(is_timeout_error=True, is_retry_safe=True)
+    acquired = retry_quota.acquire(error=timeout_error)
+    assert acquired == StandardRetryQuota.TIMEOUT_RETRY_COST
+    assert retry_quota.available_capacity == 0

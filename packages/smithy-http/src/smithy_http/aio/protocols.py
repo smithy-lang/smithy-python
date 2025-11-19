@@ -215,7 +215,6 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             )
             return error_shape.deserialize(deserializer)
 
-        is_throttle = response.status == 429
         message = (
             f"Unknown error for operation {operation.schema.id} "
             f"- status: {response.status}"
@@ -224,11 +223,17 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             message += f" - id: {error_id}"
         if response.reason is not None:
             message += f" - reason: {response.status}"
+
+        is_timeout = response.status == 408
+        is_throttle = response.status == 429
+        fault = "client" if response.status < 500 else "server"
+
         return CallError(
             message=message,
-            fault="client" if response.status < 500 else "server",
+            fault=fault,
             is_throttling_error=is_throttle,
-            is_retry_safe=is_throttle or None,
+            is_timeout_error=is_timeout,
+            is_retry_safe=is_throttle or is_timeout or None,
         )
 
     def _matches_content_type(self, response: HTTPResponse) -> bool:
