@@ -122,7 +122,7 @@ def test_retry_quota_recovers_after_successful_responses() -> None:
     assert retry_quota.available_capacity == 10
 
 
-async def test_retry_quota_shared_correctly_across_multiple_operations() -> None:
+def test_retry_quota_shared_correctly_across_multiple_operations() -> None:
     retry_quota = StandardRetryQuota()
     strategy = StandardRetryStrategy(max_attempts=5, retry_quota=retry_quota)
     error = CallError(is_retry_safe=True)
