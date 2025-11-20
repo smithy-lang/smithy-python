@@ -19,7 +19,7 @@ public class MarkdownConverterTest {
 
     @Test
     public void testConvertHtmlToMarkdownWithTitleAndParagraph() {
-        String html = "<html><body><h1>Title</h1><p>Paragraph</p></body></html>";
+        String html = "<h1>Title</h1><p>Paragraph</p>";
         String result = MarkdownConverter.convert(html, createMockContext(true));
         // Should contain markdown heading and paragraph
         String expected = """
@@ -31,7 +31,7 @@ public class MarkdownConverterTest {
 
     @Test
     public void testConvertHtmlToMarkdownWithList() {
-        String html = "<html><body><ul><li>Item 1</li><li>Item 2</li></ul></body></html>";
+        String html = "<ul><li>Item 1</li><li>Item 2</li></ul>";
         String result = MarkdownConverter.convert(html, createMockContext(true));
         // Should contain markdown list
         String expected = """
@@ -42,35 +42,35 @@ public class MarkdownConverterTest {
 
     @Test
     public void testConvertHtmlToMarkdownWithBoldTag() {
-        String html = "<html><body><b>Bold text</b></body></html>";
+        String html = "<b>Bold text</b>";
         String result = MarkdownConverter.convert(html, createMockContext(true));
         assertEquals("**Bold text**", result);
     }
 
     @Test
     public void testConvertHtmlToMarkdownWithItalicTag() {
-        String html = "<html><body><i>Italic text</i></body></html>";
+        String html = "<i>Italic text</i>";
         String result = MarkdownConverter.convert(html, createMockContext(true));
         assertEquals("*Italic text*", result);
     }
 
     @Test
     public void testConvertHtmlToMarkdownWithCodeTag() {
-        String html = "<html><body><code>code snippet</code></body></html>";
+        String html = "<code>code snippet</code>";
         String result = MarkdownConverter.convert(html, createMockContext(true));
         assertEquals("`code snippet`", result);
     }
 
     @Test
     public void testConvertHtmlToMarkdownWithAnchorTag() {
-        String html = "<html><body><a href='https://example.com'>Link</a></body></html>";
+        String html = "<a href=\"https://example.com\">Link</a>";
         String result = MarkdownConverter.convert(html, createMockContext(true));
         assertEquals("[Link](https://example.com)", result);
     }
 
     @Test
     public void testConvertHtmlToMarkdownWithNestedList() {
-        String html = "<html><body><ul><li>Item 1<ul><li>Subitem 1</li></ul></li><li>Item 2</li></ul></body></html>";
+        String html = "<ul><li>Item 1<ul><li>Subitem 1</li></ul></li><li>Item 2</li></ul>";
         String result = MarkdownConverter.convert(html, createMockContext(true));
         // Should contain nested markdown list with proper indentation
         String expected = """
@@ -83,7 +83,7 @@ public class MarkdownConverterTest {
     @Test
     public void testConvertHtmlToMarkdownWithFormatSpecifierCharacters() {
         // Test that Smithy format specifier characters ($) are properly escaped
-        String html = "<html><body><p>Testing $placeholderOne and $placeholderTwo</p></body></html>";
+        String html = "<p>Testing $placeholderOne and $placeholderTwo</p>";
         String result = MarkdownConverter.convert(html, createMockContext(true));
         // $ should be escaped to $$
         assertEquals("Testing $$placeholderOne and $$placeholderTwo", result);
@@ -122,7 +122,7 @@ public class MarkdownConverterTest {
     @Test
     public void testConvertRemovesUnnecessaryBackslashEscapes() {
         // Pandoc adds escapes for these characters but they're not needed in Python docstrings
-        String html = "<html><body><p>Text with [brackets] and {braces} and (parens)</p></body></html>";
+        String html = "<p>Text with [brackets] and {braces} and (parens)</p>";
         String result = MarkdownConverter.convert(html, createMockContext(true));
         // Should not have backslash escapes for these characters
         assertEquals("Text with [brackets] and {braces} and (parens)", result.trim());
@@ -130,7 +130,7 @@ public class MarkdownConverterTest {
 
     @Test
     public void testConvertMixedElements() {
-        String html = "<html><body><h1>Title</h1><p>Paragraph</p><ul><li>Item 1</li><li>Item 2</li></ul></body></html>";
+        String html = "<h1>Title</h1><p>Paragraph</p><ul><li>Item 1</li><li>Item 2</li></ul>";
         String result = MarkdownConverter.convert(html, createMockContext(true));
         String expected = "# Title\n\nParagraph\n\n- Item 1\n- Item 2";
         assertEquals(expected, result.trim());
@@ -138,7 +138,7 @@ public class MarkdownConverterTest {
 
     @Test
     public void testConvertNestedElements() {
-        String html = "<html><body><h1>Title</h1><p>Paragraph with <strong>bold</strong> text</p></body></html>";
+        String html = "<h1>Title</h1><p>Paragraph with <strong>bold</strong> text</p>";
         String result = MarkdownConverter.convert(html, createMockContext(true));
         String expected = """
                 # Title
@@ -149,10 +149,9 @@ public class MarkdownConverterTest {
 
     @Test
     public void testConvertMultilineText() {
-        // Create a note with content > 72 chars to trigger wrapping
-        String longLine =
+        // Create a string with content > 72 chars to trigger wrapping
+        String html =
                 "This is a very long line that exceeds seventy-two characters and should wrap into two lines.";
-        String html = "<html><body>" + longLine + "</body></html>";
         String result = MarkdownConverter.convert(html, createMockContext(true));
         String expected = """
                 This is a very long line that exceeds seventy-two characters and should
@@ -162,7 +161,7 @@ public class MarkdownConverterTest {
 
     @Test
     public void testConvertHtmlToMarkdownWithNoteTag() {
-        String html = "<html><body><note>Note text</note></body></html>";
+        String html = "<note>Note text</note>";
         String result = MarkdownConverter.convert(html, createMockContext(true));
         // Should convert to admonition format
         String expected = """
@@ -173,7 +172,7 @@ public class MarkdownConverterTest {
 
     @Test
     public void testConvertHtmlToMarkdownWithImportantTag() {
-        String html = "<html><body><important>Important text</important></body></html>";
+        String html = "<important>Important text</important>";
         String result = MarkdownConverter.convert(html, createMockContext(true));
         // Should convert to warning admonition
         String expected = """
@@ -187,7 +186,7 @@ public class MarkdownConverterTest {
         // Create a note with content > 72 chars to trigger wrapping
         String longLine =
                 "This is a very long line that exceeds seventy-two characters and should wrap into two lines.";
-        String html = "<html><body><note>" + longLine + "</note></body></html>";
+        String html = "<note>" + longLine + "</note>";
         String result = MarkdownConverter.convert(html, createMockContext(true));
 
         // Expected: first line up to 72 chars, rest on second line, both indented
@@ -196,6 +195,60 @@ public class MarkdownConverterTest {
                     This is a very long line that exceeds seventy-two characters and should
                     wrap into two lines.""";
         assertEquals(expected, result.trim());
+    }
+
+    @Test
+    public void testConvertExcludesFullnameTag() {
+        String html = "<p>Some text</p><fullname>AWS Service Name</fullname><p>More text</p>";
+        String result = MarkdownConverter.convert(html, createMockContext(true));
+        String expected = """
+                Some text
+
+                More text""";
+        assertEquals(expected, result);
+    }
+
+    @Test
+    public void testConvertBoldWithNestedFormatting() {
+        String html = "<b><code>Test</code> test <a href=\"https://testing.com\">Link</a></b>";
+        String result = MarkdownConverter.convert(html, createMockContext(true));
+        assertEquals("**`Test` test [Link](https://testing.com)**", result);
+    }
+
+    @Test
+    public void testConvertHrefWithSpaces() {
+        String html = "<p><a href=\"  https://testing.com  \">Link</a></p>";
+        String result = MarkdownConverter.convert(html, createMockContext(true));
+        // Leading and trailing spaces must be trimmed
+        assertEquals("[Link](https://testing.com)", result);
+    }
+
+    @Test
+    public void testConvertLinkWithNestedCode() {
+        String html = "<a href=\"https://testing.com\"><code>Link</code></a>";
+        String result = MarkdownConverter.convert(html, createMockContext(true));
+        assertEquals("[`Link`](https://testing.com)", result);
+    }
+
+    @Test
+    public void testConvertCodeWithNestedLinkSpaces() {
+        String html = "<code> <a href=\"https://testing.com\">Link</a> </code>";
+        String result = MarkdownConverter.convert(html, createMockContext(true));
+        assertEquals("` `[`Link`](https://testing.com)` `", result);
+    }
+
+    @Test
+    public void testConvertCodeWithNestedLinkNoSpaces() {
+        String html = "<code><a href=\"https://testing.com\">Link</a></code>";
+        String result = MarkdownConverter.convert(html, createMockContext(true));
+        assertEquals("[`Link`](https://testing.com)", result);
+    }
+
+    @Test
+    public void testConvertCodeWithNestedEmptyLink() {
+        String html = "<code><a>Link</a></code>";
+        String result = MarkdownConverter.convert(html, createMockContext(true));
+        assertEquals("`Link`", result);
     }
 
     private GenerationContext createMockContext(boolean isAwsService) {

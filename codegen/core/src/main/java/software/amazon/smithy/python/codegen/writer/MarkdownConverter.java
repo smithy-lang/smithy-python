@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -27,7 +28,11 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 @SmithyInternalApi
 public final class MarkdownConverter {
 
+    private static final int PANDOC_WRAP_COLUMNS = 72;
     private static final int TIMEOUT_SECONDS = 10;
+
+    // List of HTML tags to exclude from documentation (including their content).
+    private static final List<String> EXCLUDED_TAGS = List.of("fullname");
 
     // Private constructor to prevent instantiation
     private MarkdownConverter() {}
@@ -49,6 +54,8 @@ public final class MarkdownConverter {
         }
 
         try {
+            input = preProcessPandocInput(input);
+
             if (!CodegenUtils.isAwsService(context)) {
                 // Commonmark may include embedded HTML so we first normalize the input to HTML format
                 input = convertWithPandoc(input, "commonmark", "html");
@@ -62,6 +69,39 @@ public final class MarkdownConverter {
         } catch (IOException | InterruptedException e) {
             throw new CodegenException("Failed to convert documentation using pandoc: " + e.getMessage(), e);
         }
+    }
+
+    /**
+     * Pre-processes input before passing to pandoc.
+     *
+     * @param input The raw input text
+     * @return Pre-processed input ready for pandoc conversion
+     */
+    private static String preProcessPandocInput(String input) {
+        // Trim leading and trailing spaces in hrefs i.e href=" https://example.com "
+        Pattern p = Pattern.compile("href\\s*=\\s*\"([^\"]*)\"");
+        input = p.matcher(input).replaceAll(match -> "href=\"" + match.group(1).trim() + "\"");
+
+        // Remove excluded HTML tags and their content
+        for (String tagName : EXCLUDED_TAGS) {
+            input = removeHtmlTag(input, tagName);
+        }
+
+        return input;
+    }
+
+    /**
+     * Removes HTML tags and their content from the input string
+     *
+     * @param text The text to process
+     * @param tagName The tag name to remove (e.g., "fullname")
+     * @return Text with tags and their content removed
+     */
+    private static String removeHtmlTag(String text, String tagName) {
+        // Remove <tag>content</tag> completely
+        Pattern p = Pattern.compile(
+                "<" + Pattern.quote(tagName) + ">[\\s\\S]*?</" + Pattern.quote(tagName) + ">");
+        return p.matcher(text).replaceAll("");
     }
 
     /**
@@ -81,7 +121,7 @@ public final class MarkdownConverter {
                 "--from=" + fromFormat,
                 "--to=" + toFormat,
                 "--wrap=auto",
-                "--columns=72");
+                "--columns=" + PANDOC_WRAP_COLUMNS);
         processBuilder.redirectErrorStream(true);
 
         Process process = processBuilder.start();
@@ -118,6 +158,12 @@ public final class MarkdownConverter {
         return output.toString();
     }
 
+    /**
+     * Post-processes pandoc output for Python docstrings.
+     *
+     * @param output The raw output from pandoc
+     * @return Post-processed Markdown suitable for Python docstrings
+     */
     private static String postProcessPandocOutput(String output) {
         // Remove empty lines at the start and end
         output = output.trim();
