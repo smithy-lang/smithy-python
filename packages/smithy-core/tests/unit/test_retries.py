@@ -1,11 +1,12 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-
 import pytest
 from smithy_core.exceptions import CallError, RetryError
 from smithy_core.retries import ExponentialBackoffJitterType as EBJT
 from smithy_core.retries import (
     ExponentialRetryBackoffStrategy,
+    RetryStrategyOptions,
+    RetryStrategyResolver,
     SimpleRetryStrategy,
     StandardRetryQuota,
     StandardRetryStrategy,
@@ -217,3 +218,36 @@ def test_retry_quota_acquire_timeout_error(
     acquired = retry_quota.acquire(error=timeout_error)
     assert acquired == StandardRetryQuota.TIMEOUT_RETRY_COST
     assert retry_quota.available_capacity == 0
+
+
+async def test_caching_retry_strategy_default_resolution() -> None:
+    resolver = RetryStrategyResolver()
+    options = RetryStrategyOptions()
+
+    strategy = await resolver.resolve_retry_strategy(options=options)
+
+    assert isinstance(strategy, StandardRetryStrategy)
+    assert strategy.max_attempts == 3
+
+
+async def test_caching_retry_strategy_resolver_creates_strategies_by_options() -> None:
+    resolver = RetryStrategyResolver()
+
+    options1 = RetryStrategyOptions(max_attempts=3)
+    options2 = RetryStrategyOptions(max_attempts=5)
+
+    strategy1 = await resolver.resolve_retry_strategy(options=options1)
+    strategy2 = await resolver.resolve_retry_strategy(options=options2)
+
+    assert strategy1.max_attempts == 3
+    assert strategy2.max_attempts == 5
+
+
+async def test_caching_retry_strategy_resolver_caches_strategies() -> None:
+    resolver = RetryStrategyResolver()
+
+    options = RetryStrategyOptions(max_attempts=5)
+    strategy1 = await resolver.resolve_retry_strategy(options=options)
+    strategy2 = await resolver.resolve_retry_strategy(options=options)
+
+    assert strategy1 is strategy2
