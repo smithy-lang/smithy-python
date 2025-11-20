@@ -46,17 +46,14 @@ class RetryStrategyResolver:
     def _create_retry_strategy(
         self, retry_mode: RetryStrategyType, max_attempts: int | None
     ) -> RetryStrategy:
+        kwargs: dict[str, Any] = (
+            {} if max_attempts is None else {"max_attempts": max_attempts}
+        )
         match retry_mode:
             case "simple":
-                if max_attempts is None:
-                    return SimpleRetryStrategy()
-                else:
-                    return SimpleRetryStrategy(max_attempts=max_attempts)
+                return SimpleRetryStrategy(**kwargs)
             case "standard":
-                if max_attempts is None:
-                    return StandardRetryStrategy()
-                else:
-                    return StandardRetryStrategy(max_attempts=max_attempts)
+                return StandardRetryStrategy(**kwargs)
             case _:
                 raise ValueError(f"Unknown retry mode: {retry_mode}")
 
