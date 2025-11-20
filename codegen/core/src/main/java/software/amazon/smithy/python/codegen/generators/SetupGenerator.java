@@ -161,11 +161,6 @@ public final class SetupGenerator {
                     requires = ["hatchling"]
                     build-backend = "hatchling.build"
 
-                    [tool.hatch.build]
-                    exclude = [
-                      "tests",
-                    ]
-
                     [tool.pyright]
                     typeCheckingMode = "strict"
                     reportPrivateUsage = false
