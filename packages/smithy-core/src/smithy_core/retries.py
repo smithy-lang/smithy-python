@@ -5,9 +5,60 @@ import threading
 from collections.abc import Callable
 from dataclasses import dataclass
 from enum import Enum
+from functools import lru_cache
+from typing import Any, Literal
 
 from .exceptions import RetryError
 from .interfaces import retries as retries_interface
+from .interfaces.retries import RetryStrategy
+
+RetryStrategyType = Literal["simple", "standard"]
+
+
+@dataclass(kw_only=True, frozen=True)
+class RetryStrategyOptions:
+    """Options for configuring retry behavior."""
+
+    retry_mode: RetryStrategyType = "standard"
+    """The retry mode to use."""
+
+    max_attempts: int | None = None
+    """Maximum number of attempts (initial attempt plus retries). If None, uses the strategy's default."""
+
+
+class RetryStrategyResolver:
+    """Retry strategy resolver that caches retry strategies based on configuration options.
+
+    This resolver caches retry strategy instances based on their configuration to reuse existing
+    instances of RetryStrategy with the same settings. Uses LRU cache for thread-safe caching.
+    """
+
+    async def resolve_retry_strategy(
+        self, *, options: RetryStrategyOptions
+    ) -> RetryStrategy:
+        """Resolve a retry strategy from the provided options, using cache when possible.
+
+        :param options: The retry strategy options to use for creating the strategy.
+        """
+        return self._create_retry_strategy(options.retry_mode, options.max_attempts)
+
+    @lru_cache
+    def _create_retry_strategy(
+        self, retry_mode: RetryStrategyType, max_attempts: int | None
+    ) -> RetryStrategy:
+        match retry_mode:
+            case "simple":
+                if max_attempts is None:
+                    return SimpleRetryStrategy()
+                else:
+                    return SimpleRetryStrategy(max_attempts=max_attempts)
+            case "standard":
+                if max_attempts is None:
+                    return StandardRetryStrategy()
+                else:
+                    return StandardRetryStrategy(max_attempts=max_attempts)
+            case _:
+                raise ValueError(f"Unknown retry mode: {retry_mode}")
 
 
 class ExponentialBackoffJitterType(Enum):
@@ -244,6 +295,9 @@ class SimpleRetryStrategy(retries_interface.RetryStrategy):
     def record_success(self, *, token: retries_interface.RetryToken) -> None:
         """Not used by this retry strategy."""
 
+    def __deepcopy__(self, memo: Any) -> "SimpleRetryStrategy":
+        return self
+
 
 class StandardRetryQuota:
     """Retry quota used by :py:class:`StandardRetryStrategy`."""
@@ -414,3 +468,6 @@ class StandardRetryStrategy(retries_interface.RetryStrategy):
                 f"StandardRetryStrategy requires StandardRetryToken, got {type(token).__name__}"
             )
         self._retry_quota.release(release_amount=token.quota_acquired)
+
+    def __deepcopy__(self, memo: Any) -> "StandardRetryStrategy":
+        return self

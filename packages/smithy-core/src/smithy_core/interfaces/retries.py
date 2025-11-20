@@ -55,6 +55,7 @@ class RetryToken(Protocol):
     """Delay in seconds to wait before the retry attempt."""
 
 
+@runtime_checkable
 class RetryStrategy(Protocol):
     """Issuer of :py:class:`RetryToken`s."""
 

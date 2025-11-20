@@ -55,17 +55,20 @@ public final class ConfigGenerator implements Runnable {
             ConfigProperty.builder()
                     .name("retry_strategy")
                     .type(Symbol.builder()
-                            .name("RetryStrategy")
-                            .namespace("smithy_core.interfaces.retries", ".")
-                            .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                            .name("RetryStrategy | RetryStrategyOptions")
+                            .addReference(Symbol.builder()
+                                    .name("RetryStrategy")
+                                    .namespace("smithy_core.interfaces.retries", ".")
+                                    .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                                    .build())
+                            .addReference(Symbol.builder()
+                                    .name("RetryStrategyOptions")
+                                    .namespace("smithy_core.retries", ".")
+                                    .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                                    .build())
                             .build())
-                    .documentation("The retry strategy for issuing retry tokens and computing retry delays.")
-                    .nullable(false)
-                    .initialize(writer -> {
-                        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-                        writer.addImport("smithy_core.retries", "SimpleRetryStrategy");
-                        writer.write("self.retry_strategy = retry_strategy or SimpleRetryStrategy()");
-                    })
+                    .documentation(
+                            "The retry strategy or options for configuring retry behavior. Can be either a configured RetryStrategy or RetryStrategyOptions to create one.")
                     .build(),
             ConfigProperty.builder()
                     .name("endpoint_uri")
@@ -379,7 +382,7 @@ public final class ConfigGenerator implements Runnable {
     }
 
     private void documentProperties(PythonWriter writer, Collection<ConfigProperty> properties) {
-        writer.writeDocs(() ->{
+        writer.writeDocs(() -> {
             var iter = properties.iterator();
             writer.write("\nConstructor.\n");
             while (iter.hasNext()) {
