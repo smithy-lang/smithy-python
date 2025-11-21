@@ -26,9 +26,9 @@ classifiers = [
   "Topic :: Software Development :: Libraries"
 ]
 dependencies = [
-    "smithy-core~=0.1.0",
-    "smithy-http~=0.2.0",
-    "aws-sdk-signers~=0.1.0"
+    "smithy-core~=0.2.0",
+    "smithy-http~=0.3.0",
+    "aws-sdk-signers~=0.2.0"
 ]
 
 [project.urls]
@@ -45,10 +45,10 @@ path = "src/smithy_aws_core/__init__.py"
 
 [project.optional-dependencies]
 eventstream = [
-    "smithy-aws-event-stream~=0.1.0"
+    "smithy-aws-event-stream~=0.2.0"
 ]
 json = [
-    "smithy-json~=0.1.0"
+    "smithy-json~=0.2.0"
 ]
 
 [tool.hatch.build]

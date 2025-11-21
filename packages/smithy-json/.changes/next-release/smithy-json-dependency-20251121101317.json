@@ -1,0 +1,4 @@
+{
+  "type": "dependency",
+  "description": "Bump dependency on smithy-core for minor release"
+}

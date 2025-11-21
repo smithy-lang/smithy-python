@@ -1,0 +1,4 @@
+{
+  "type": "dependency",
+  "description": "Bump dependencies on smithy-core, smithy-http, and aws-sdk-signers for minor release"
+}
