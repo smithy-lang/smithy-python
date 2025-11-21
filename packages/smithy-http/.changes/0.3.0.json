@@ -1,0 +1,16 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Added `MockHTTPClient` for testing SDK clients without making real HTTP requests."
+    },
+    {
+      "type": "enhancement",
+      "description": "Added timeout error detection for HTTP clients"
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-core` from `~=0.1.0` to `~=0.2.0`."
+    }
+  ]
+}
