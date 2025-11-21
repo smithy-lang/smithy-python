@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2.0
+
+### Dependencies
+* Bump `smithy-json` from `~=0.1.0` to `~=0.2.0`.
+* Bump `smithy-core` from `~=0.1.0` to `~=0.2.0`.
+* Bump `smithy-aws-event-stream` from `~=0.1.0` to `~=0.2.0`.
+* Bump `smithy-http` from `~=0.2.0` to `~=0.3.0`.
+
 ## v0.1.1
 
 ### Dependencies

@@ -1,0 +1,20 @@
+{
+  "changes": [
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-json` from `~=0.1.0` to `~=0.2.0`."
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-core` from `~=0.1.0` to `~=0.2.0`."
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-aws-event-stream` from `~=0.1.0` to `~=0.2.0`."
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-http` from `~=0.2.0` to `~=0.3.0`."
+    }
+  ]
+}

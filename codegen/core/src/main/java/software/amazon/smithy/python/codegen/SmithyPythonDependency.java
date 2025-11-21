@@ -22,7 +22,7 @@ public final class SmithyPythonDependency {
      */
     public static final PythonDependency SMITHY_CORE = new PythonDependency(
             "smithy_core",
-            "~=0.1.0",
+            "~=0.2.0",
             Type.DEPENDENCY,
             false);
 
@@ -33,7 +33,7 @@ public final class SmithyPythonDependency {
      */
     public static final PythonDependency SMITHY_HTTP = new PythonDependency(
             "smithy_http",
-            "~=0.2.0",
+            "~=0.3.0",
             Type.DEPENDENCY,
             false);
 
@@ -60,7 +60,7 @@ public final class SmithyPythonDependency {
      */
     public static final PythonDependency SMITHY_JSON = new PythonDependency(
             "smithy_json",
-            "~=0.1.0",
+            "~=0.2.0",
             Type.DEPENDENCY,
             false);
 
@@ -69,7 +69,7 @@ public final class SmithyPythonDependency {
      */
     public static final PythonDependency SMITHY_AWS_EVENT_STREAM = new PythonDependency(
             "smithy_aws_event_stream",
-            "~=0.1.0",
+            "~=0.2.0",
             Type.DEPENDENCY,
             false);
 
@@ -78,7 +78,7 @@ public final class SmithyPythonDependency {
      */
     public static final PythonDependency SMITHY_AWS_CORE = new PythonDependency(
             "smithy_aws_core",
-            "~=0.1.0",
+            "~=0.2.0",
             Type.DEPENDENCY,
             false);
 

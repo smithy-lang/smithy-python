@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.3.0
+
+### Features
+* Added `MockHTTPClient` for testing SDK clients without making real HTTP requests.
+
+### Enhancements
+* Added timeout error detection for HTTP clients
+
+### Dependencies
+* Bump `smithy-core` from `~=0.1.0` to `~=0.2.0`.
+
 ## v0.2.1
 
 ### Bug fixes
