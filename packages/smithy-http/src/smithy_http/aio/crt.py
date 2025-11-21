@@ -8,6 +8,8 @@ from dataclasses import dataclass
 from inspect import iscoroutinefunction
 from typing import TYPE_CHECKING, Any
 
+from awscrt.exceptions import AwsCrtError
+
 if TYPE_CHECKING:
     # pyright doesn't like optional imports. This is reasonable because if we use these
     # in type hints then they'd result in runtime errors.
@@ -129,9 +131,16 @@ class AWSCRTHTTPClientConfig(http_interfaces.HTTPClientConfiguration):
         _assert_crt()
 
 
+class _CRTTimeoutError(Exception):
+    """Internal wrapper for CRT timeout errors."""
+
+
 class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
     _HTTP_PORT = 80
     _HTTPS_PORT = 443
+    _TIMEOUT_ERROR_NAMES = frozenset(["AWS_IO_SOCKET_TIMEOUT", "AWS_IO_SOCKET_CLOSED"])
+
+    TIMEOUT_EXCEPTIONS = (_CRTTimeoutError,)
 
     def __init__(
         self,
@@ -163,18 +172,23 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         :param request: The request including destination URI, fields, payload.
         :param request_config: Configuration specific to this request.
         """
-        crt_request = self._marshal_request(request)
-        connection = await self._get_connection(request.destination)
+        try:
+            crt_request = self._marshal_request(request)
+            connection = await self._get_connection(request.destination)
 
-        # Convert body to async iterator for request_body_generator
-        body_generator = self._create_body_generator(request.body)
+            # Convert body to async iterator for request_body_generator
+            body_generator = self._create_body_generator(request.body)
 
-        crt_stream = connection.request(
-            crt_request,
-            request_body_generator=body_generator,
-        )
+            crt_stream = connection.request(
+                crt_request,
+                request_body_generator=body_generator,
+            )
 
-        return await self._await_response(crt_stream)
+            return await self._await_response(crt_stream)
+        except AwsCrtError as e:
+            if e.name in self._TIMEOUT_ERROR_NAMES:
+                raise _CRTTimeoutError() from e
+            raise
 
     async def _await_response(
         self, stream: "AIOHttpClientStreamUnified"

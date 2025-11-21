@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.0
+
+### Features
+* Added support for `standard` retry mode.
+
 ## v0.1.1
 
 ### Bug fixes

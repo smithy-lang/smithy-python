@@ -127,6 +127,8 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         pushState();
         writeInline("\"\"\"");
         runnable.run();
+        trimTrailingWhitespaces();
+        ensureNewline();
         write("\"\"\"");
         popState();
         return this;
@@ -140,6 +142,35 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
      */
     public PythonWriter writeDocs(String docs) {
         writeDocs(() -> write(formatDocs(docs)));
+        return this;
+    }
+
+    /**
+     * Trims all trailing whitespace from the writer buffer.
+     *
+     * @return Returns the writer.
+     */
+    public PythonWriter trimTrailingWhitespaces() {
+        // Disable the writer formatting config to ensure toString()
+        // returns the unmodified state of the underlying StringBuilder
+        trimBlankLines(-1);
+        trimTrailingSpaces(false);
+
+        String current = super.toString();
+        int end = current.length() - 1;
+        while (end >= 0 && Character.isWhitespace(current.charAt(end))) {
+            end--;
+        }
+
+        String trailing = current.substring(end + 1);
+        if (!trailing.isEmpty()) {
+            unwrite(trailing);
+        }
+
+        // Re-enable the formatting config
+        trimBlankLines();
+        trimTrailingSpaces(true);
+
         return this;
     }
 

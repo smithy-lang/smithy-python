@@ -83,6 +83,8 @@ final class ClientGenerator implements Runnable {
                 }
             }
 
+            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+            writer.addImport("smithy_core.retries", "RetryStrategyResolver");
             writer.write("""
                     def __init__(self, config: $1T | None = None, plugins: list[$2T] | None = None):
                         self._config = config or $1T()
@@ -95,6 +97,8 @@ final class ClientGenerator implements Runnable {
 
                         for plugin in client_plugins:
                             plugin(self._config)
+
+                        self._retry_strategy_resolver = RetryStrategyResolver()
                     """, configSymbol, pluginSymbol, writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)));
 
             var topDownIndex = TopDownIndex.of(model);
@@ -168,8 +172,7 @@ final class ClientGenerator implements Runnable {
             writer.write("""
                     :param plugins: A list of callables that modify the configuration dynamically.
                         Changes made by these plugins only apply for the duration of the operation
-                        execution and will not affect any other operation invocations.
-                        """);
+                        execution and will not affect any other operation invocations.""");
 
         });
 
@@ -188,6 +191,8 @@ final class ClientGenerator implements Runnable {
         writer.addImport("smithy_core.types", "TypedProperties");
         writer.addImport("smithy_core.aio.client", "RequestPipeline");
         writer.addImport("smithy_core.exceptions", "ExpectationNotMetError");
+        writer.addImport("smithy_core.retries", "RetryStrategyOptions");
+        writer.addImport("smithy_core.interfaces.retries", "RetryStrategy");
         writer.addStdlibImport("copy", "deepcopy");
 
         writer.write("""
@@ -201,6 +206,24 @@ final class ClientGenerator implements Runnable {
                     plugin(config)
                 if config.protocol is None or config.transport is None:
                     raise ExpectationNotMetError("protocol and transport MUST be set on the config to make calls.")
+
+                # Resolve retry strategy from config
+                if isinstance(config.retry_strategy, RetryStrategy):
+                    retry_strategy = config.retry_strategy
+                elif isinstance(config.retry_strategy, RetryStrategyOptions):
+                    retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+                        options=config.retry_strategy
+                    )
+                elif config.retry_strategy is None:
+                    retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+                        options=RetryStrategyOptions()
+                    )
+                else:
+                    raise TypeError(
+                        f"retry_strategy must be RetryStrategy, RetryStrategyOptions, or None, "
+                        f"got {type(config.retry_strategy).__name__}"
+                    )
+
                 pipeline = RequestPipeline(
                     protocol=config.protocol,
                     transport=config.transport
@@ -213,7 +236,7 @@ final class ClientGenerator implements Runnable {
                     auth_scheme_resolver=config.auth_scheme_resolver,
                     supported_auth_schemes=config.auth_schemes,
                     endpoint_resolver=config.endpoint_resolver,
-                    retry_strategy=config.retry_strategy,
+                    retry_strategy=retry_strategy,
                 )
                 """, writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)));
 

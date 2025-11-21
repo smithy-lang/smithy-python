@@ -52,6 +52,8 @@ class AIOHTTPClientConfig(HTTPClientConfiguration):
 class AIOHTTPClient(HTTPClient):
     """Implementation of :py:class:`.interfaces.HTTPClient` using aiohttp."""
 
+    TIMEOUT_EXCEPTIONS = (TimeoutError,)
+
     def __init__(
         self,
         *,

@@ -86,7 +86,9 @@ class EndpointResolver(Protocol):
 
 
 class ClientTransport[I: Request, O: Response](Protocol):
-    """Protocol-agnostic representation of a client tranport (e.g. an HTTP client)."""
+    """Protocol-agnostic representation of a client transport (e.g. an HTTP client)."""
+
+    TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...]
 
     async def send(self, request: I) -> O:
         """Send a request over the transport and receive the response."""

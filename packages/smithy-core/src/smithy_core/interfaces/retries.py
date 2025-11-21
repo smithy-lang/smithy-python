@@ -27,6 +27,9 @@ class ErrorRetryInfo(Protocol):
     is_throttling_error: bool = False
     """Whether the error is a throttling error."""
 
+    is_timeout_error: bool = False
+    """Whether the error is a timeout error."""
+
 
 class RetryBackoffStrategy(Protocol):
     """Stateless strategy for computing retry delays based on retry attempt account."""
@@ -52,6 +55,7 @@ class RetryToken(Protocol):
     """Delay in seconds to wait before the retry attempt."""
 
 
+@runtime_checkable
 class RetryStrategy(Protocol):
     """Issuer of :py:class:`RetryToken`s."""
 
@@ -64,7 +68,7 @@ class RetryStrategy(Protocol):
     def acquire_initial_retry_token(
         self, *, token_scope: str | None = None
     ) -> RetryToken:
-        """Called before any retries (for the first attempt at the operation).
+        """Create a base retry token for the start of a request.
 
         :param token_scope: An arbitrary string accepted by the retry strategy to
             separate tokens into scopes.

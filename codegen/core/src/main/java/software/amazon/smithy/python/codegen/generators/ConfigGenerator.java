@@ -10,6 +10,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.TreeSet;
+import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.knowledge.EventStreamIndex;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
@@ -54,17 +55,20 @@ public final class ConfigGenerator implements Runnable {
             ConfigProperty.builder()
                     .name("retry_strategy")
                     .type(Symbol.builder()
-                            .name("RetryStrategy")
-                            .namespace("smithy_core.interfaces.retries", ".")
-                            .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                            .name("RetryStrategy | RetryStrategyOptions")
+                            .addReference(Symbol.builder()
+                                    .name("RetryStrategy")
+                                    .namespace("smithy_core.interfaces.retries", ".")
+                                    .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                                    .build())
+                            .addReference(Symbol.builder()
+                                    .name("RetryStrategyOptions")
+                                    .namespace("smithy_core.retries", ".")
+                                    .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                                    .build())
                             .build())
-                    .documentation("The retry strategy for issuing retry tokens and computing retry delays.")
-                    .nullable(false)
-                    .initialize(writer -> {
-                        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-                        writer.addImport("smithy_core.retries", "SimpleRetryStrategy");
-                        writer.write("self.retry_strategy = retry_strategy or SimpleRetryStrategy()");
-                    })
+                    .documentation(
+                            "The retry strategy or options for configuring retry behavior. Can be either a configured RetryStrategy or RetryStrategyOptions to create one.")
                     .build(),
             ConfigProperty.builder()
                     .name("endpoint_uri")
@@ -331,6 +335,11 @@ public final class ConfigGenerator implements Runnable {
         }
 
         var finalProperties = List.copyOf(properties);
+        final String serviceId = context.settings()
+                .service(context.model())
+                .getTrait(ServiceTrait.class)
+                .map(ServiceTrait::getSdkId)
+                .orElse(context.settings().service().getName());
         writer.pushState(new ConfigSection(finalProperties));
         writer.addStdlibImport("dataclasses", "dataclass");
         writer.write("""
@@ -345,14 +354,11 @@ public final class ConfigGenerator implements Runnable {
                         *,
                         ${C|}
                     ):
-                        \"""Constructor.
-
                         ${C|}
-                        \"""
                         ${C|}
                 """,
                 configSymbol.getName(),
-                context.settings().service().getName(),
+                serviceId,
                 writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
                 writer.consumer(w -> writeInitParams(w, finalProperties)),
                 writer.consumer(w -> documentProperties(w, finalProperties)),
@@ -376,17 +382,20 @@ public final class ConfigGenerator implements Runnable {
     }
 
     private void documentProperties(PythonWriter writer, Collection<ConfigProperty> properties) {
-        var iter = properties.iterator();
-        while (iter.hasNext()) {
-            var property = iter.next();
-            var docs = writer.formatDocs(String.format(":param %s: %s", property.name(), property.documentation()));
+        writer.writeDocs(() -> {
+            var iter = properties.iterator();
+            writer.write("\nConstructor.\n");
+            while (iter.hasNext()) {
+                var property = iter.next();
+                var docs = writer.formatDocs(String.format(":param %s: %s", property.name(), property.documentation()));
 
-            if (iter.hasNext()) {
-                docs += "\n";
+                if (iter.hasNext()) {
+                    docs += "\n";
+                }
+
+                writer.write(docs);
             }
-
-            writer.write(docs);
-        }
+        });
     }
 
     private void initializeProperties(PythonWriter writer, Collection<ConfigProperty> properties) {

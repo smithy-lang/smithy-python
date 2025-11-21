@@ -27,7 +27,7 @@ classifiers = [
 ]
 dependencies = [
     "ijson>=3.3.0",
-    "smithy-core~=0.1.0",
+    "smithy-core~=0.2.0",
 ]
 
 [project.urls]
