@@ -1,4 +1,4 @@
 {
   "type": "dependency",
-  "description": "Bump dependency on smithy-core for minor release"
+  "description": "Bump `smithy-core` from `~=0.1.0` to `~=0.2.0`."
 }
