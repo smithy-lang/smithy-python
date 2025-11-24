@@ -274,8 +274,8 @@ public final class ConfigGenerator implements Runnable {
         context.writerDelegator().useFileWriter(plugin.getDefinitionFile(), plugin.getNamespace(), writer -> {
             writer.addStdlibImport("typing", "Callable");
             writer.addStdlibImport("typing", "TypeAlias");
-            writer.writeComment("A callable that allows customizing the config object on each request.");
             writer.write("$L: TypeAlias = Callable[[$T], None]", plugin.getName(), config);
+            writer.writeDocs("A callable that allows customizing the config object on each request.", context);
         });
     }
 
