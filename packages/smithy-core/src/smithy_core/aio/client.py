@@ -469,8 +469,9 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                     )
             except Exception as e:
                 if isinstance(e, self.transport.TIMEOUT_EXCEPTIONS):
+                    error_msg = str(e) or type(e).__name__
                     raise ClientTimeoutError(
-                        message=f"Client timeout occurred: {e}"
+                        message=f"Client timeout occurred: {error_msg}"
                     ) from e
                 raise
 
