@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Improved default error message for instances of ClientTimeoutError cought in client.py"
+}
