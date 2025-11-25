@@ -274,8 +274,8 @@ public final class ConfigGenerator implements Runnable {
         context.writerDelegator().useFileWriter(plugin.getDefinitionFile(), plugin.getNamespace(), writer -> {
             writer.addStdlibImport("typing", "Callable");
             writer.addStdlibImport("typing", "TypeAlias");
-            writer.writeComment("A callable that allows customizing the config object on each request.");
             writer.write("$L: TypeAlias = Callable[[$T], None]", plugin.getName(), config);
+            writer.writeDocs("A callable that allows customizing the config object on each request.", context);
         });
     }
 
@@ -355,13 +355,11 @@ public final class ConfigGenerator implements Runnable {
                         ${C|}
                     ):
                         ${C|}
-                        ${C|}
                 """,
                 configSymbol.getName(),
                 serviceId,
                 writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
                 writer.consumer(w -> writeInitParams(w, finalProperties)),
-                writer.consumer(w -> documentProperties(w, finalProperties)),
                 writer.consumer(w -> initializeProperties(w, finalProperties)));
         writer.popState();
     }
@@ -372,6 +370,8 @@ public final class ConfigGenerator implements Runnable {
                     ? "$L: $T | None"
                     : "$L: $T";
             writer.write(formatString, property.name(), property.type());
+            writer.writeDocs(property.documentation(), context);
+            writer.write("");
         }
     }
 
@@ -379,23 +379,6 @@ public final class ConfigGenerator implements Runnable {
         for (ConfigProperty property : properties) {
             writer.write("$L: $T | None = None,", property.name(), property.type());
         }
-    }
-
-    private void documentProperties(PythonWriter writer, Collection<ConfigProperty> properties) {
-        writer.writeDocs(() -> {
-            var iter = properties.iterator();
-            writer.write("\nConstructor.\n");
-            while (iter.hasNext()) {
-                var property = iter.next();
-                var docs = writer.formatDocs(String.format(":param %s: %s", property.name(), property.documentation()));
-
-                if (iter.hasNext()) {
-                    docs += "\n";
-                }
-
-                writer.write(docs);
-            }
-        });
     }
 
     private void initializeProperties(PythonWriter writer, Collection<ConfigProperty> properties) {
@@ -422,11 +405,14 @@ public final class ConfigGenerator implements Runnable {
             writer.write("""
 
                         def set_auth_scheme(self, scheme: AuthScheme[Any, Any, Any, Any]) -> None:
-                            \"""Sets the implementation of an auth scheme.
+                            \"""
+                            Sets the implementation of an auth scheme.
 
                             Using this method ensures the correct key is used.
 
-                            :param scheme: The auth scheme to add.
+                            Args:
+                                scheme:
+                                    The auth scheme to add.
                             \"""
                             self.auth_schemes[scheme.scheme_id] = scheme
                     """);
