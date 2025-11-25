@@ -4,7 +4,7 @@
 from asyncio import gather, sleep
 
 import pytest
-from smithy_core.exceptions import CallError, RetryError
+from smithy_core.exceptions import CallError, ClientTimeoutError, RetryError
 from smithy_core.interfaces import retries as retries_interface
 from smithy_core.retries import (
     ExponentialBackoffJitterType,
@@ -14,29 +14,35 @@ from smithy_core.retries import (
 )
 
 
+# TODO: Refactor this to use a smithy-testing generated client
 async def retry_operation(
     strategy: retries_interface.RetryStrategy,
-    status_codes: list[int],
+    responses: list[int | Exception],
 ) -> tuple[str, int]:
     token = strategy.acquire_initial_retry_token()
-    responses = iter(status_codes)
+    response_iter = iter(responses)
 
     while True:
         if token.retry_delay:
             await sleep(token.retry_delay)
 
-        status_code = next(responses)
+        response = next(response_iter)
         attempt = token.retry_count + 1
 
-        if status_code == 200:
+        # Success case
+        if response == 200:
             strategy.record_success(token=token)
             return "success", attempt
 
-        error = CallError(
-            fault="server" if status_code >= 500 else "client",
-            message=f"HTTP {status_code}",
-            is_retry_safe=status_code >= 500,
-        )
+        # Error case - either status code or exception
+        if isinstance(response, Exception):
+            error = response
+        else:
+            error = CallError(
+                fault="server" if response >= 500 else "client",
+                message=f"HTTP {response}",
+                is_retry_safe=response >= 500,
+            )
 
         try:
             token = strategy.refresh_retry_token_for_retry(
@@ -131,3 +137,17 @@ async def test_retry_quota_shared_across_concurrent_operations():
     assert result1 == ("success", 3)
     assert result2 == ("success", 2)
     assert quota.available_capacity == 495
+
+
+async def test_retry_quota_handles_timeout_errors():
+    quota = StandardRetryQuota(initial_capacity=500)
+    strategy = StandardRetryStrategy(max_attempts=3, retry_quota=quota)
+
+    timeout1 = ClientTimeoutError()
+    timeout2 = ClientTimeoutError()
+
+    result, attempts = await retry_operation(strategy, [timeout1, timeout2, 200])
+
+    assert result == "success"
+    assert attempts == 3
+    assert quota.available_capacity == 490
