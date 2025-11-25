@@ -1,7 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-from asyncio import iscoroutinefunction
 from collections.abc import ItemsView, Iterator, KeysView, ValuesView
+from inspect import iscoroutinefunction
 from typing import TYPE_CHECKING, Any, Protocol, TypeGuard, overload, runtime_checkable
 
 if TYPE_CHECKING:
