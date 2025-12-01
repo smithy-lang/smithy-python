@@ -87,7 +87,7 @@ public final class SmithyPythonDependency {
      */
     public static final PythonDependency PYTEST = new PythonDependency(
             "pytest",
-            ">=7.2.0,<8.0.0",
+            ">=9.0.1,<10.0.0",
             Type.TEST_DEPENDENCY,
             false);
 
@@ -96,7 +96,7 @@ public final class SmithyPythonDependency {
      */
     public static final PythonDependency PYTEST_ASYNCIO = new PythonDependency(
             "pytest-asyncio",
-            ">=0.20.3,<0.21.0",
+            ">=1.3.0,<1.4.0",
             Type.TEST_DEPENDENCY,
             false);
 
