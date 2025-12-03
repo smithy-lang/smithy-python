@@ -187,7 +187,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             return await self._await_response(crt_stream)
         except AwsCrtError as e:
             if e.name in self._TIMEOUT_ERROR_NAMES:
-                raise _CRTTimeoutError(f"CRT {e.name}: {e.message}")
+                raise _CRTTimeoutError(f"CRT {e.name}: {e.message}") from e
             raise
 
     async def _await_response(
