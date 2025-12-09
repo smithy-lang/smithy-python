@@ -101,27 +101,6 @@ final class ClientGenerator implements Runnable {
                         self._retry_strategy_resolver = RetryStrategyResolver()
                     """, configSymbol, pluginSymbol, writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)));
 
-            writer.addImport("smithy_core.retries", "RetryStrategyOptions");
-            writer.addImport("smithy_core.interfaces.retries", "RetryStrategy");
-            writer.write("""
-                    async def _resolve_retry_strategy(self, retry_strategy: RetryStrategy | RetryStrategyOptions | None) -> RetryStrategy:
-                        if isinstance(retry_strategy, RetryStrategy):
-                            return retry_strategy
-                        elif isinstance(retry_strategy, RetryStrategyOptions):
-                            return await self._retry_strategy_resolver.resolve_retry_strategy(
-                                options=retry_strategy
-                            )
-                        elif retry_strategy is None:
-                            return await self._retry_strategy_resolver.resolve_retry_strategy(
-                                options=RetryStrategyOptions()
-                            )
-                        else:
-                            raise TypeError(
-                                f"retry_strategy must be RetryStrategy, RetryStrategyOptions, or None, "
-                                f"got {type(retry_strategy).__name__}"
-                            )
-                    """);
-
             var topDownIndex = TopDownIndex.of(model);
             var eventStreamIndex = EventStreamIndex.of(model);
             for (OperationShape operation : topDownIndex.getContainedOperations(service)) {
@@ -228,7 +207,9 @@ final class ClientGenerator implements Runnable {
                 if config.protocol is None or config.transport is None:
                     raise ExpectationNotMetError("protocol and transport MUST be set on the config to make calls.")
 
-                retry_strategy = await self._resolve_retry_strategy(config.retry_strategy)
+                retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+                    retry_strategy=config.retry_strategy
+                )
 
                 pipeline = RequestPipeline(
                     protocol=config.protocol,
