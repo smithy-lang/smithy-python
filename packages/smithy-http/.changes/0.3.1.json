@@ -1,0 +1,12 @@
+{
+  "changes": [
+    {
+      "type": "bugfix",
+      "description": "Fixed empty error messaging for CRT-based timeout errors."
+    },
+    {
+      "type": "dependency",
+      "description": "Removed strict pinning on `smithy-core` in favor of client managed versions."
+    }
+  ]
+}

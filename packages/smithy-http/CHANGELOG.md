@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.1
+
+### Bug fixes
+* Fixed empty error messaging for CRT-based timeout errors.
+
+### Dependencies
+* Removed strict pinning on `smithy-core` in favor of client managed versions.
+
 ## v0.3.0
 
 ### Features
