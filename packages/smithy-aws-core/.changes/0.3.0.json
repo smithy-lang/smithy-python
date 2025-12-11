@@ -1,0 +1,8 @@
+{
+  "changes": [
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-core` from `~=0.2.0` to `~=0.3.0`."
+    }
+  ]
+}
