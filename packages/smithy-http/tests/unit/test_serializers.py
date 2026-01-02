@@ -1,10 +1,10 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import datetime
-from asyncio import iscoroutinefunction
 from dataclasses import dataclass, field
 from datetime import UTC
 from decimal import Decimal
+from inspect import iscoroutinefunction
 from io import BytesIO
 from typing import Any, ClassVar, Protocol, Self
 

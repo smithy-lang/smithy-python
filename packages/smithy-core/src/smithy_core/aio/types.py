@@ -1,9 +1,9 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
-from asyncio import iscoroutinefunction
 from collections import deque
 from collections.abc import AsyncIterable, AsyncIterator, Awaitable, Callable
+from inspect import iscoroutinefunction
 from io import BytesIO
 from typing import Any, Self, cast
 

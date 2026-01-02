@@ -6,11 +6,11 @@ import datetime
 import hmac
 import io
 import warnings
-from asyncio import iscoroutinefunction
 from binascii import hexlify
 from collections.abc import AsyncIterable, Iterable
 from copy import deepcopy
 from hashlib import sha256
+from inspect import iscoroutinefunction
 from typing import TYPE_CHECKING, Required, TypedDict, TypeGuard
 from urllib.parse import parse_qsl, quote
 

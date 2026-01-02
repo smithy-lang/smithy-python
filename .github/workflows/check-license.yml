@@ -2,19 +2,20 @@ name: License Header Check
 
 on:
   pull_request:
-    branches:
-      - develop
   push:
     branches:
       - develop
+
+permissions:
+  contents: read
 
 jobs:
   check-license-header: 
     name: Check License Header
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
 
-      - uses: apache/skywalking-eyes/header@main
+      - uses: apache/skywalking-eyes/header@55373684d1b70e5f8fd9fc8ec114a89ad11a56a3
         with:
           mode: check 

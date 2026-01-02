@@ -7,14 +7,21 @@ on:
     # Run at midnight (UTC) every wednesday
     - cron: "0 0 * * 3"
 
+permissions:
+  contents: read
+
 jobs:
   update-gradle-wrapper:
     runs-on: ubuntu-latest
 
+    permissions:
+        # allow job to open a pull request with changes
+        pull-requests: write
+
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
 
       - name: Update Gradle Wrapper
-        uses: gradle-update/update-gradle-wrapper-action@v2
+        uses: gradle-update/update-gradle-wrapper-action@512b1875f3b6270828abfe77b247d5895a2da1e5
         with:
           paths: codegen/**

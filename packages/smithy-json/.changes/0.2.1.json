@@ -1,0 +1,8 @@
+{
+  "changes": [
+    {
+      "type": "dependency",
+      "description": "Removed strict pinning on `smithy-core` in favor of client managed versions."
+    }
+  ]
+}

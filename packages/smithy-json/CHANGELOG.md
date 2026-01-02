@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.1
+
+### Dependencies
+* Removed strict pinning on `smithy-core` in favor of client managed versions.
+
 ## v0.2.0
 
 ### Dependencies

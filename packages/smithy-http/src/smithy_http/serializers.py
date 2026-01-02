@@ -1,11 +1,11 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-from asyncio import iscoroutinefunction
 from base64 import b64encode
 from collections.abc import Callable, Iterator, Sized
 from contextlib import contextmanager
 from datetime import datetime
 from decimal import Decimal
+from inspect import iscoroutinefunction
 from io import BytesIO
 from typing import TYPE_CHECKING
 from urllib.parse import quote as urlquote

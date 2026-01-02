@@ -220,34 +220,58 @@ def test_retry_quota_acquire_timeout_error(
     assert retry_quota.available_capacity == 0
 
 
-async def test_caching_retry_strategy_default_resolution() -> None:
+async def test_retry_strategy_resolver_none_returns_default() -> None:
     resolver = RetryStrategyResolver()
-    options = RetryStrategyOptions()
 
-    strategy = await resolver.resolve_retry_strategy(options=options)
+    strategy = await resolver.resolve_retry_strategy(retry_strategy=None)
 
     assert isinstance(strategy, StandardRetryStrategy)
     assert strategy.max_attempts == 3
 
 
-async def test_caching_retry_strategy_resolver_creates_strategies_by_options() -> None:
+async def test_retry_strategy_resolver_creates_different_strategies() -> None:
     resolver = RetryStrategyResolver()
 
     options1 = RetryStrategyOptions(max_attempts=3)
     options2 = RetryStrategyOptions(max_attempts=5)
 
-    strategy1 = await resolver.resolve_retry_strategy(options=options1)
-    strategy2 = await resolver.resolve_retry_strategy(options=options2)
+    strategy1 = await resolver.resolve_retry_strategy(retry_strategy=options1)
+    strategy2 = await resolver.resolve_retry_strategy(retry_strategy=options2)
 
     assert strategy1.max_attempts == 3
     assert strategy2.max_attempts == 5
+    assert strategy1 is not strategy2
 
 
-async def test_caching_retry_strategy_resolver_caches_strategies() -> None:
+async def test_retry_strategy_resolver_caches_strategies() -> None:
     resolver = RetryStrategyResolver()
 
+    strategy1 = await resolver.resolve_retry_strategy(retry_strategy=None)
+    strategy2 = await resolver.resolve_retry_strategy(retry_strategy=None)
     options = RetryStrategyOptions(max_attempts=5)
-    strategy1 = await resolver.resolve_retry_strategy(options=options)
-    strategy2 = await resolver.resolve_retry_strategy(options=options)
+    strategy3 = await resolver.resolve_retry_strategy(retry_strategy=options)
+    strategy4 = await resolver.resolve_retry_strategy(retry_strategy=options)
 
     assert strategy1 is strategy2
+    assert strategy3 is strategy4
+    assert strategy1 is not strategy3
+
+
+async def test_retry_strategy_resolver_returns_existing_strategy() -> None:
+    resolver = RetryStrategyResolver()
+    provided_strategy = SimpleRetryStrategy(max_attempts=7)
+
+    strategy = await resolver.resolve_retry_strategy(retry_strategy=provided_strategy)
+
+    assert strategy is provided_strategy
+    assert strategy.max_attempts == 7
+
+
+async def test_retry_strategy_resolver_rejects_invalid_type() -> None:
+    resolver = RetryStrategyResolver()
+
+    with pytest.raises(
+        TypeError,
+        match="retry_strategy must be RetryStrategy, RetryStrategyOptions, or None",
+    ):
+        await resolver.resolve_retry_strategy(retry_strategy="invalid")  # type: ignore

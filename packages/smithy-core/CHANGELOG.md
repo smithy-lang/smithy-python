@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.3.0
+
+### Breaking Changes
+* Refactored `resolve_retry_strategy` to avoid code duplication per operation.
+
+### Enhancements
+* Improved default error message for instances of ClientTimeoutError.
+
 ## v0.2.0
 
 ### Features

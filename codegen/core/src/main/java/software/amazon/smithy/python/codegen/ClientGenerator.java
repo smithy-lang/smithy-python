@@ -207,22 +207,9 @@ final class ClientGenerator implements Runnable {
                 if config.protocol is None or config.transport is None:
                     raise ExpectationNotMetError("protocol and transport MUST be set on the config to make calls.")
 
-                # Resolve retry strategy from config
-                if isinstance(config.retry_strategy, RetryStrategy):
-                    retry_strategy = config.retry_strategy
-                elif isinstance(config.retry_strategy, RetryStrategyOptions):
-                    retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
-                        options=config.retry_strategy
-                    )
-                elif config.retry_strategy is None:
-                    retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
-                        options=RetryStrategyOptions()
-                    )
-                else:
-                    raise TypeError(
-                        f"retry_strategy must be RetryStrategy, RetryStrategyOptions, or None, "
-                        f"got {type(config.retry_strategy).__name__}"
-                    )
+                retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+                    retry_strategy=config.retry_strategy
+                )
 
                 pipeline = RequestPipeline(
                     protocol=config.protocol,

@@ -34,13 +34,24 @@ class RetryStrategyResolver:
     """
 
     async def resolve_retry_strategy(
-        self, *, options: RetryStrategyOptions
+        self, *, retry_strategy: RetryStrategy | RetryStrategyOptions | None
     ) -> RetryStrategy:
         """Resolve a retry strategy from the provided options, using cache when possible.
 
-        :param options: The retry strategy options to use for creating the strategy.
+        :param retry_strategy: An explicitly configured retry strategy or options for creating one.
         """
-        return self._create_retry_strategy(options.retry_mode, options.max_attempts)
+        if isinstance(retry_strategy, RetryStrategy):
+            return retry_strategy
+        elif retry_strategy is None:
+            retry_strategy = RetryStrategyOptions()
+        elif not isinstance(retry_strategy, RetryStrategyOptions):  # type: ignore[reportUnnecessaryIsInstance]
+            raise TypeError(
+                f"retry_strategy must be RetryStrategy, RetryStrategyOptions, or None, "
+                f"got {type(retry_strategy).__name__}"
+            )
+        return self._create_retry_strategy(
+            retry_strategy.retry_mode, retry_strategy.max_attempts
+        )
 
     @lru_cache
     def _create_retry_strategy(
