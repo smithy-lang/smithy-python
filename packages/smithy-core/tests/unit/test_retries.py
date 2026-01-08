@@ -1,5 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+from unittest.mock import patch
+
 import pytest
 from smithy_core.exceptions import CallError, RetryError
 from smithy_core.retries import ExponentialBackoffJitterType as EBJT
@@ -10,6 +12,7 @@ from smithy_core.retries import (
     SimpleRetryStrategy,
     StandardRetryQuota,
     StandardRetryStrategy,
+    TokenBucket,
 )
 
 
@@ -275,3 +278,86 @@ async def test_retry_strategy_resolver_rejects_invalid_type() -> None:
         match="retry_strategy must be RetryStrategy, RetryStrategyOptions, or None",
     ):
         await resolver.resolve_retry_strategy(retry_strategy="invalid")  # type: ignore
+
+
+class TestTokenBucket:
+    @pytest.mark.asyncio
+    async def test_initial_state(self):
+        token_bucket = TokenBucket()
+        assert token_bucket.current_capacity == token_bucket.MIN_CAPACITY
+        assert token_bucket.max_capacity == token_bucket.MIN_CAPACITY
+        assert token_bucket.fill_rate == token_bucket.MIN_FILL_RATE
+
+    @pytest.mark.asyncio
+    async def test_acquire_succeeds_immediately_within_capacity(self):
+        token_bucket = TokenBucket()
+
+        with patch("asyncio.sleep") as mock_sleep:
+            await token_bucket.acquire(1)
+            mock_sleep.assert_not_called()
+
+        assert token_bucket.current_capacity == 0
+
+    @pytest.mark.asyncio
+    async def test_acquire_waits_when_capacity_insufficient(self):
+        token_bucket = TokenBucket(fill_rate=1.0)
+        await token_bucket.acquire(1)
+
+        with patch("asyncio.sleep") as mock_sleep:
+            await token_bucket.acquire(1)
+            mock_sleep.assert_called()
+
+        assert token_bucket.current_capacity == 0.0
+
+    @pytest.mark.asyncio
+    async def test_update_bucket_updates_rate(self):
+        token_bucket = TokenBucket()
+
+        await token_bucket.update_rate(5.0)
+        assert token_bucket.fill_rate == 5.0
+        assert token_bucket.max_capacity == 5.0
+        assert token_bucket.current_capacity == 1.0
+
+    @pytest.mark.asyncio
+    async def test_rate_can_never_be_zero(self):
+        token_bucket = TokenBucket()
+        await token_bucket.update_rate(0.0)
+
+        assert token_bucket.fill_rate != 0.0
+
+    @pytest.mark.asyncio
+    async def test_refill_caps_at_max_capacity(self):
+        token_bucket = TokenBucket()
+        # Max and current capacity of the bucket is set to 1.0 initially
+        await token_bucket.update_rate(10.0)
+
+        async with token_bucket._lock:  # type: ignore
+            token_bucket._refill()  # type: ignore
+
+        assert round(token_bucket.current_capacity, 1) == 1.0
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "actions,expected_capacity",
+        [
+            ([("acquire", 1)], 0.0),
+            ([("acquire", 1), ("update", 4)], 1.0),
+            ([("acquire", 1), ("update", 4), ("acquire", 1)], 3.0),
+            ([("acquire", 1), ("update", 4), ("acquire", 1), ("acquire", 1)], 3.0),
+        ],
+    )
+    async def test_multiple_refills_over_time(
+        self, actions: list[tuple[str, int]], expected_capacity: float
+    ):
+        time_values = [0.0, 1.0, 1.0, 1.5, 1.5, 4.0, 4.0, 5.0]
+
+        with patch("time.monotonic", side_effect=time_values):
+            token_bucket = TokenBucket(curr_capacity=0, fill_rate=2.0)
+
+            for action, value in actions:
+                if action == "acquire":
+                    await token_bucket.acquire(value)
+                elif action == "update":
+                    await token_bucket.update_rate(value)
+
+            assert token_bucket.current_capacity == expected_capacity
