@@ -39,6 +39,7 @@ dependencies {
     testRuntimeOnly(libs.junit.jupiter.engine)
     testRuntimeOnly(libs.junit.platform.launcher)
     testImplementation(libs.junit.jupiter.params)
+    testImplementation(libs.mockito.core)
     compileOnly("com.github.spotbugs:spotbugs-annotations:${spotbugs.toolVersion.get()}")
     testCompileOnly("com.github.spotbugs:spotbugs-annotations:${spotbugs.toolVersion.get()}")
 }
