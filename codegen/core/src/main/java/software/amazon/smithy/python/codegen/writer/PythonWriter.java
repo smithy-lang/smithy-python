@@ -23,7 +23,7 @@ import software.amazon.smithy.model.node.NullNode;
 import software.amazon.smithy.model.node.NumberNode;
 import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.model.node.StringNode;
-import software.amazon.smithy.python.codegen.CodegenUtils;
+import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 import software.amazon.smithy.utils.StringUtils;
@@ -39,10 +39,8 @@ import software.amazon.smithy.utils.StringUtils;
 public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclarations> {
 
     private static final Logger LOGGER = Logger.getLogger(PythonWriter.class.getName());
-    private static final MarkdownToRstDocConverter DOC_CONVERTER = MarkdownToRstDocConverter.getInstance();
 
     private final String fullPackageName;
-    private final String commentStart;
     private boolean addLogger = false;
 
     /**
@@ -52,24 +50,12 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
      * @param fullPackageName The fully-qualified name of the package.
      */
     public PythonWriter(PythonSettings settings, String fullPackageName) {
-        this(settings, fullPackageName, "#");
-    }
-
-    /**
-     * Constructs a PythonWriter.
-     *
-     * @param settings The python plugin settings.
-     * @param fullPackageName The fully-qualified name of the package.
-     * @param commentStart The string that starts a comment in the given file format
-     */
-    public PythonWriter(PythonSettings settings, String fullPackageName, String commentStart) {
         super(new ImportDeclarations(settings, fullPackageName));
         this.fullPackageName = fullPackageName;
         trimBlankLines();
         trimTrailingSpaces();
         putFormatter('T', new PythonSymbolFormatter());
         putFormatter('N', new PythonNodeFormatter(this));
-        this.commentStart = commentStart;
     }
 
     /**
@@ -88,19 +74,7 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
 
         @Override
         public PythonWriter apply(String filename, String namespace) {
-            //Default is #
-            String commentStart = "#";
-            // Markdown doesn't have comments, so there's no non-intrusive way to
-            // add the warning.
-            if (filename.endsWith(".md")) {
-                commentStart = "";
-            } else if (filename.endsWith(".rst")) {
-                commentStart = "..\n    ";
-            } else if (filename.endsWith(".bat")) {
-                commentStart = "REM";
-            }
-
-            return new PythonWriter(settings, namespace, commentStart);
+            return new PythonWriter(settings, namespace);
         }
     }
 
@@ -118,14 +92,30 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
     }
 
     /**
-     * Writes documentation comments from a runnable.
+     * Writes single-line documentation comments from a runnable.
      *
-     * @param runnable A runnable that writes docs.
+     * @param runnable A runnable that writes single-line docs.
      * @return Returns the writer.
      */
-    public PythonWriter writeDocs(Runnable runnable) {
+    public PythonWriter writeSingleLineDocs(Runnable runnable) {
         pushState();
         writeInline("\"\"\"");
+        runnable.run();
+        trimTrailingWhitespaces();
+        write("\"\"\"");
+        popState();
+        return this;
+    }
+
+    /**
+     * Writes multi-line documentation comments from a runnable.
+     *
+     * @param runnable A runnable that writes multi-line docs.
+     * @return Returns the writer.
+     */
+    public PythonWriter writeMultiLineDocs(Runnable runnable) {
+        pushState();
+        write("\"\"\"");
         runnable.run();
         trimTrailingWhitespaces();
         ensureNewline();
@@ -138,10 +128,16 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
      * Writes documentation comments from a string.
      *
      * @param docs Documentation to write.
+     * @param context The generation context used to determine service type and formatting.
      * @return Returns the writer.
      */
-    public PythonWriter writeDocs(String docs) {
-        writeDocs(() -> write(formatDocs(docs)));
+    public PythonWriter writeDocs(String docs, GenerationContext context) {
+        String formatted = formatDocs(docs, context);
+        if (formatted.contains("\n")) {
+            writeMultiLineDocs(() -> write(formatted));
+        } else {
+            writeSingleLineDocs(() -> write(formatted));
+        }
         return this;
     }
 
@@ -174,92 +170,17 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         return this;
     }
 
-    private static final int MAX_LINE_LENGTH = CodegenUtils.MAX_PREFERRED_LINE_LENGTH - 8;
-
     /**
-     * Formats a given Commonmark string and wraps it for use in a doc
-     * comment.
+     * Formats documentation from CommonMark or HTML to Google-style Markdown for Python docstrings.
+     *
+     * <p>For AWS services, expects HTML input. For generic clients, expects CommonMark input.
      *
      * @param docs Documentation to format.
+     * @param context The generation context used to determine service type and formatting.
      * @return Formatted documentation.
      */
-    public String formatDocs(String docs) {
-        String rstDocs = DOC_CONVERTER.convertCommonmarkToRst(docs);
-        return wrapRST(rstDocs).toString().replace("$", "$$");
-    }
-
-    public static String wrapRST(String text) {
-        StringBuilder wrappedText = new StringBuilder();
-        String[] lines = text.split("\n");
-        for (String line : lines) {
-            wrapLine(line, wrappedText);
-        }
-        return wrappedText.toString();
-    }
-
-    private static void wrapLine(String line, StringBuilder wrappedText) {
-        int indent = getIndentationLevel(line);
-        String indentStr = " ".repeat(indent);
-        line = line.trim();
-
-        while (line.length() > MAX_LINE_LENGTH) {
-            int wrapAt = findWrapPosition(line, MAX_LINE_LENGTH);
-            wrappedText.append(indentStr).append(line, 0, wrapAt).append("\n");
-            if (line.startsWith("* ")) {
-                indentStr += "  ";
-            }
-            line = line.substring(wrapAt).trim();
-            if (line.isEmpty()) {
-                return;
-            }
-        }
-        wrappedText.append(indentStr).append(line).append("\n");
-    }
-
-    private static int findWrapPosition(String line, int maxLineLength) {
-        // Find the last space before maxLineLength
-        int wrapAt = line.lastIndexOf(' ', maxLineLength);
-        if (wrapAt == -1) {
-            // If no space found, don't wrap
-            wrapAt = line.length();
-        } else {
-            // Ensure we don't break a link
-            //TODO account for earlier backticks on the same line as a link
-            int linkStart = line.lastIndexOf("`", wrapAt);
-            int linkEnd = line.indexOf("`_", wrapAt);
-            if (linkStart != -1 && (linkEnd != -1 && linkEnd > linkStart)) {
-                linkEnd = line.indexOf("`_", linkStart);
-                if (linkEnd != -1) {
-                    wrapAt = linkEnd + 2;
-                } else {
-                    // No matching `_` found, keep the original wrap position
-                    wrapAt = line.lastIndexOf(' ', maxLineLength);
-                    if (wrapAt == -1) {
-                        wrapAt = maxLineLength;
-                    }
-                }
-            }
-        }
-        // Include trailing punctuation before a space in the previous line
-        int nextSpace = line.indexOf(' ', wrapAt);
-        if (nextSpace != -1) {
-            int i = wrapAt;
-            while (i < nextSpace && !Character.isLetterOrDigit(line.charAt(i))) {
-                i++;
-            }
-            if (i == nextSpace) {
-                wrapAt = nextSpace;
-            }
-        }
-        return wrapAt;
-    }
-
-    private static int getIndentationLevel(String line) {
-        int indent = 0;
-        while (indent < line.length() && Character.isWhitespace(line.charAt(indent))) {
-            indent++;
-        }
-        return indent;
+    public String formatDocs(String docs, GenerationContext context) {
+        return MarkdownConverter.convert(docs, context);
     }
 
     /**
@@ -284,7 +205,7 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
      * @return Returns the writer.
      */
     public PythonWriter writeComment(String comment) {
-        return openComment(() -> write(formatDocs(comment.replace("\n", " "))));
+        return openComment(() -> write(comment.replace("\n", " ")));
     }
 
     /**
@@ -397,18 +318,12 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
 
     @Override
     public String toString() {
-        String contents = getImportContainer().toString();
+        String header = "# Code generated by smithy-python-codegen DO NOT EDIT.\n\n";
+        String imports = getImportContainer().toString();
+        String logger = addLogger ? "\nlogger = logging.getLogger(__name__)\n\n" : "";
+        String mainContent = super.toString();
 
-        if (addLogger) {
-            contents += "\nlogger = logging.getLogger(__name__)\n\n";
-        }
-
-        contents += super.toString();
-        if (!commentStart.equals("")) {
-            String header = String.format("%s Code generated by smithy-python-codegen DO NOT EDIT.%n%n", commentStart);
-            contents = header + contents;
-        }
-        return contents;
+        return header + imports + logger + mainContent;
     }
 
     /**

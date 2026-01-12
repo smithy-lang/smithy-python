@@ -32,14 +32,16 @@ public final class EnumGenerator implements Runnable {
             writer.addStdlibImport("enum", "StrEnum");
             writer.openBlock("class $L(StrEnum):", "", enumSymbol.getName(), () -> {
                 shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
-                    writer.writeDocs(writer.formatDocs(trait.getValue()));
+                    writer.writeDocs(trait.getValue(), context);
                 });
 
                 for (MemberShape member : shape.members()) {
                     var name = context.symbolProvider().toMemberName(member);
                     var value = member.expectTrait(EnumValueTrait.class).expectStringValue();
                     writer.write("$L = $S", name, value);
-                    member.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeDocs(trait.getValue()));
+                    member.getTrait(DocumentationTrait.class).ifPresent(trait -> {
+                        writer.writeDocs(trait.getValue(), context);
+                    });
                 }
             });
         });

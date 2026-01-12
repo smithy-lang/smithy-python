@@ -29,14 +29,16 @@ public final class IntEnumGenerator implements Runnable {
             writer.addStdlibImport("enum", "IntEnum");
             writer.openBlock("class $L(IntEnum):", "", enumSymbol.getName(), () -> {
                 directive.shape().getTrait(DocumentationTrait.class).ifPresent(trait -> {
-                    writer.writeDocs(writer.formatDocs(trait.getValue()));
+                    writer.writeDocs(trait.getValue(), directive.context());
                 });
 
                 for (MemberShape member : directive.shape().members()) {
-                    member.getTrait(DocumentationTrait.class).ifPresent(trait -> writer.writeComment(trait.getValue()));
                     var name = directive.symbolProvider().toMemberName(member);
                     var value = member.expectTrait(EnumValueTrait.class).expectIntValue();
                     writer.write("$L = $L\n", name, value);
+                    member.getTrait(DocumentationTrait.class).ifPresent(trait -> {
+                        writer.writeDocs(trait.getValue(), directive.context());
+                    });
                 }
             });
         });

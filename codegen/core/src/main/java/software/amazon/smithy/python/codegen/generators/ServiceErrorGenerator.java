@@ -32,7 +32,8 @@ public final class ServiceErrorGenerator implements Runnable {
             writer.addImport("smithy_core.exceptions", "ModeledError");
             writer.write("""
                     class $L(ModeledError):
-                        ""\"Base error for all errors in the service.
+                        ""\"
+                        Base error for all errors in the service.
 
                         Some exceptions do not extend from this class, including
                         synthetic, implicit, and shared exception types.

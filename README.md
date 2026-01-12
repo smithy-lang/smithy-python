@@ -112,12 +112,13 @@ With both files your project directory should look like this:
 
 The code generator libraries have not been published yet, so
 you'll need to build it yourself. To build and run the generator, you will need
-the following prerequisites:
+the following prerequisites installed in your environment:
 
 * [uv](https://docs.astral.sh/uv/)
 * The [Smithy CLI](https://smithy.io/2.0/guides/smithy-cli/cli_installation.html)
 * JDK 17 or newer
 * make
+* [pandoc](https://pandoc.org/installing.html) CLI
 
 This project uses [uv](https://docs.astral.sh/uv/) for managing all things python.
 Once you have it installed, run the following command to check that it's ready to use:
@@ -168,6 +169,16 @@ async def main() -> None:
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+#### pandoc CLI
+
+Smithy [documentation traits](https://smithy.io/2.0/spec/documentation-traits.html#documentation-trait) are modeled in one of two formats:
+
+- **Raw HTML** for AWS services  
+- **CommonMark** for all other Smithy-based services (may include embedded HTML)
+
+The code generator uses [pandoc](https://pandoc.org/) to normalize and convert this 
+content into Markdown suitable for Google-style Python docstrings.
 
 #### Is Java really required?
 

@@ -20,11 +20,9 @@ import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.StructureShape;
-import software.amazon.smithy.model.traits.ClientOptionalTrait;
 import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
-import software.amazon.smithy.model.traits.RequiredTrait;
 import software.amazon.smithy.model.traits.RetryableTrait;
 import software.amazon.smithy.model.traits.SensitiveTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
@@ -32,8 +30,6 @@ import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.python.codegen.SymbolProperties;
-import software.amazon.smithy.python.codegen.sections.ErrorSection;
-import software.amazon.smithy.python.codegen.sections.StructureSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -97,8 +93,6 @@ public final class StructureGenerator implements Runnable {
     private void renderStructure() {
         writer.addStdlibImport("dataclasses", "dataclass");
         var symbol = symbolProvider.toSymbol(shape);
-        writer.pushState(new StructureSection(shape));
-
         writer.write("""
                 @dataclass(kw_only=True)
                 class $L:
@@ -112,12 +106,10 @@ public final class StructureGenerator implements Runnable {
 
                 """,
                 symbol.getName(),
-                writer.consumer(this::writeClassDocs),
+                writer.consumer(w -> writeClassDocs()),
                 writer.consumer(w -> writeProperties()),
                 writer.consumer(w -> generateSerializeMethod()),
                 writer.consumer(w -> generateDeserializeMethod()));
-
-        writer.popState();
     }
 
     private void renderError() {
@@ -128,7 +120,6 @@ public final class StructureGenerator implements Runnable {
         var fault = errorTrait.getValue();
         var symbol = symbolProvider.toSymbol(shape);
         var baseError = CodegenUtils.getServiceError(settings);
-        writer.pushState(new ErrorSection(symbol));
         writer.putContext("retryable", false);
         writer.putContext("throttling", false);
 
@@ -160,12 +151,17 @@ public final class StructureGenerator implements Runnable {
                 symbol.getName(),
                 baseError,
                 fault,
-                writer.consumer(this::writeClassDocs),
+                writer.consumer(w -> writeClassDocs()),
                 writer.consumer(w -> writeProperties()),
                 writer.consumer(w -> generateSerializeMethod()),
                 writer.consumer(w -> generateDeserializeMethod()));
-        writer.popState();
+    }
 
+    private void writeClassDocs() {
+        var docs = shape.getTrait(DocumentationTrait.class)
+                .map(DocumentationTrait::getValue)
+                .orElse("Dataclass for " + shape.getId().getName() + " structure.");
+        writer.writeDocs(docs, context);
     }
 
     private void writeProperties() {
@@ -179,21 +175,17 @@ public final class StructureGenerator implements Runnable {
             } else {
                 writer.putContext("sensitive", false);
             }
-            var docs = member.getMemberTrait(model, DocumentationTrait.class)
-                    .map(DocumentationTrait::getValue)
-                    .map(writer::formatDocs)
-                    .orElse(null);
-            writer.putContext("docs", docs);
 
             var memberName = symbolProvider.toMemberName(member);
             writer.putContext("quote", recursiveShapes.contains(target) ? "'" : "");
             writer.write("""
                     $L: ${quote:L}$T${quote:L}\
                     ${?sensitive} = field(repr=False)${/sensitive}
-                    ${?docs}""\"${docs:L}""\"${/docs}
+                    $C
                     """,
                     memberName,
-                    symbolProvider.toSymbol(member));
+                    symbolProvider.toSymbol(member),
+                    writer.consumer(w -> writeMemberDocs(member)));
             writer.popState();
         }
 
@@ -227,11 +219,6 @@ public final class StructureGenerator implements Runnable {
             writer.putContext("defaultKey", defaultKey);
             writer.putContext("defaultValue", defaultValue);
             writer.putContext("useField", requiresField);
-            var docs = member.getMemberTrait(model, DocumentationTrait.class)
-                    .map(DocumentationTrait::getValue)
-                    .map(writer::formatDocs)
-                    .orElse(null);
-            writer.putContext("docs", docs);
 
             writer.putContext("quote", recursiveShapes.contains(target) ? "'" : "");
 
@@ -242,15 +229,18 @@ public final class StructureGenerator implements Runnable {
                     ${?useField}\
                     field(${?sensitive}repr=False, ${/sensitive}${defaultKey:L}=${defaultValue:L})\
                     ${/useField}
-                    ${?docs}""\"${docs:L}""\"${/docs}
-                    """, memberName, symbolProvider.toSymbol(member));
+                    $C
+                    """,
+                    memberName,
+                    symbolProvider.toSymbol(member),
+                    writer.consumer(w -> writeMemberDocs(member)));
             writer.popState();
         }
     }
 
-    private void writeClassDocs(PythonWriter writer) {
-        shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
-            writer.writeDocs(writer.formatDocs(trait.getValue()).trim());
+    private void writeMemberDocs(MemberShape member) {
+        member.getMemberTrait(model, DocumentationTrait.class).ifPresent(trait -> {
+            writer.writeDocs(trait.getValue(), context);
         });
     }
 
@@ -302,34 +292,6 @@ public final class StructureGenerator implements Runnable {
             case ARRAY, OBJECT -> symbolProvider.toSymbol(target).getName();
             default -> Node.printJson(defaultNode);
         };
-    }
-
-    private boolean hasDocs() {
-        if (shape.hasTrait(DocumentationTrait.class)) {
-            return true;
-        }
-        for (MemberShape member : shape.members()) {
-            if (member.getMemberTrait(model, DocumentationTrait.class).isPresent()) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private void writeMemberDocs(MemberShape member) {
-        member.getMemberTrait(model, DocumentationTrait.class).ifPresent(trait -> {
-            String descriptionPrefix = "";
-            if (member.hasTrait(RequiredTrait.class) && !member.hasTrait(ClientOptionalTrait.class)) {
-                descriptionPrefix = "**[Required]** - ";
-            }
-
-            String memberName = symbolProvider.toMemberName(member);
-            String docs = writer.formatDocs(String.format(":param %s: %s%s",
-                    memberName,
-                    descriptionPrefix,
-                    trait.getValue()));
-            writer.write(docs);
-        });
     }
 
     private void generateSerializeMethod() {
