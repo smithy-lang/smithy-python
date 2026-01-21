@@ -16,6 +16,6 @@ jobs:
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
 
-      - uses: apache/skywalking-eyes/header@02a7f6d40de257c3e8ef8079a9a96499ec9e0929
+      - uses: apache/skywalking-eyes/header@0630b017b4e34f27f0d8719c873d703fb31ec8de
         with:
           mode: check 
