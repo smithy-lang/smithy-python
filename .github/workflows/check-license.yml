@@ -15,6 +15,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8
+        with:
+          persist-credentials: false
 
       - uses: apache/skywalking-eyes/header@0630b017b4e34f27f0d8719c873d703fb31ec8de
         with:
