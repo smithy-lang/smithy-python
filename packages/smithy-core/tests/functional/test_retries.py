@@ -2,15 +2,21 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from asyncio import gather, sleep
+from unittest.mock import patch
 
 import pytest
 from smithy_core.exceptions import CallError, ClientTimeoutError, RetryError
 from smithy_core.interfaces import retries as retries_interface
 from smithy_core.retries import (
+    AdaptiveRetryStrategy,
+    ClientRateLimiter,
+    CubicCalculator,
     ExponentialBackoffJitterType,
     ExponentialRetryBackoffStrategy,
+    RequestRateTracker,
     StandardRetryQuota,
     StandardRetryStrategy,
+    TokenBucket,
 )
 
 
@@ -151,3 +157,136 @@ async def test_retry_quota_handles_timeout_errors():
     assert result == "success"
     assert attempts == 3
     assert quota.available_capacity == 490
+
+
+class TestAdaptiveRetryStrategy:
+    async def retry_operation_with_rate_limiting(
+        self,
+        strategy: AdaptiveRetryStrategy,
+        responses: list[int | Exception],
+    ) -> tuple[str, int]:
+        token = strategy.acquire_initial_retry_token()
+        response_iter = iter(responses)
+
+        while True:
+            if token.retry_delay:
+                await sleep(token.retry_delay)
+
+            try:
+                # Rate limiting step - acquire token from bucket (can raise TimeoutError)
+                await strategy.acquire_from_token_bucket()
+            except TimeoutError as timeout_error:
+                error = CallError(
+                    fault="client",
+                    message=str(timeout_error),
+                    is_retry_safe=True,  # Make it retryable
+                )
+                # Timeout should be treated as a retryable error
+                try:
+                    token = strategy.refresh_retry_token_for_retry(
+                        token_to_renew=token, error=error
+                    )
+                    continue  # Retry without consuming a response
+                except RetryError:
+                    raise timeout_error
+
+            response = next(response_iter)
+            attempt = token.retry_count + 1
+
+            # Success case
+            if response == 200:
+                await strategy.rate_limiter.after_receiving_response(
+                    throttling_error=False
+                )
+                strategy.record_success(token=token)
+                return "success", attempt
+
+            # Error case - we got a response (even if it's an error)
+            if isinstance(response, Exception):
+                error = response
+                is_throttling = False
+            else:
+                error = CallError(
+                    fault="server" if response >= 500 else "client",
+                    message=f"HTTP {response}",
+                    is_retry_safe=response >= 500,
+                )
+                is_throttling = response == 429
+            # Update rate limiter after error response
+            await strategy.rate_limiter.after_receiving_response(
+                throttling_error=is_throttling
+            )
+
+            try:
+                token = strategy.refresh_retry_token_for_retry(
+                    token_to_renew=token, error=error
+                )
+            except RetryError:
+                raise error
+
+    async def test_adaptive_retry_eventually_succeeds(self):
+        quota = StandardRetryQuota(initial_capacity=500)
+        strategy = AdaptiveRetryStrategy(max_attempts=3, retry_quota=quota)
+
+        result, attempts = await retry_operation(strategy, [500, 500, 200])
+
+        assert result == "success"
+        assert attempts == 3
+        assert quota.available_capacity == 495
+
+    async def test_adaptive_retry_fails_due_to_max_attempts(self):
+        quota = StandardRetryQuota(initial_capacity=500)
+        strategy = AdaptiveRetryStrategy(max_attempts=3, retry_quota=quota)
+
+        with pytest.raises(CallError, match="502"):
+            await retry_operation(strategy, [502, 502, 502])
+
+        assert quota.available_capacity == 490
+
+    async def test_adaptive_retry_timeout_counts_as_attempt_main1(self):
+        """Test that token acquisition timeout counts as a retry attempt and continues retrying."""
+        quota = StandardRetryQuota(initial_capacity=500)
+
+        time_counter = [0.0]
+
+        def mock_monotonic():
+            # Mock time progression to trigger timeout on first attempt:
+            # Time values: [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 31, 31.1...]
+            # First attempt: start_time=0.6, timeout_check=31.0
+            # Elapsed time: 31.0 - 0.6 = 30.4 seconds > 30s timeout threshold
+            # Result: TimeoutError raised, counted as attempt 1, then retries continue
+
+            current = time_counter[0]
+            # Jump to timeout on specific call (e.g., 8th call)
+            if time_counter[0] == 0.6:  # After initial setup
+                time_counter[0] = 31.0  # Jump to timeout
+            else:
+                time_counter[0] += 0.1
+            return current
+
+        with (
+            patch("time.monotonic", side_effect=mock_monotonic),
+            patch("asyncio.sleep"),
+        ):  # mock asyncio.sleep while acquiring token
+            token_bucket = TokenBucket()
+            rate_limiter = ClientRateLimiter(
+                token_bucket=token_bucket,
+                cubic_calculator=CubicCalculator(),
+                rate_tracker=RequestRateTracker(),
+                rate_limiter_enabled=True,
+            )
+
+            # Drain the initial token
+            await rate_limiter.before_sending_request()
+
+            strategy = AdaptiveRetryStrategy(
+                max_attempts=3, retry_quota=quota, rate_limiter=rate_limiter
+            )
+
+            result, attempts = await self.retry_operation_with_rate_limiting(
+                strategy, [500, 200]
+            )
+
+            assert result == "success"
+            assert attempts == 3
+            assert quota.available_capacity == 495

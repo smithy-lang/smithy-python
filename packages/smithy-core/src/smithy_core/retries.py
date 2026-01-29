@@ -15,7 +15,7 @@ from .exceptions import RetryError
 from .interfaces import retries as retries_interface
 from .interfaces.retries import RetryStrategy
 
-RetryStrategyType = Literal["simple", "standard"]
+RetryStrategyType = Literal["simple", "standard", "adaptive"]
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -69,6 +69,8 @@ class RetryStrategyResolver:
                 return SimpleRetryStrategy(**filtered_kwargs)
             case "standard":
                 return StandardRetryStrategy(**filtered_kwargs)
+            case "adaptive":
+                return AdaptiveRetryStrategy(**filtered_kwargs)
             case _:
                 raise ValueError(f"Unknown retry mode: {retry_mode}")
 
@@ -820,3 +822,54 @@ class ClientRateLimiter:
     @property
     def rate_limit_enabled(self) -> bool:
         return self._rate_limiter_enabled
+
+
+class AdaptiveRetryStrategy(StandardRetryStrategy):
+    """Adaptive retry strategy with client-side rate limiting using CUBIC algorithm.
+
+    Builds on top of StandardRetryStrategy by adding token bucket rate limiting and
+    CUBIC congestion control. Rate limiting is enabled after the first throttling
+    response and dynamically adjusts sending rates based on the response type.
+    """
+
+    STARTING_MAX_RATE = 0.5
+
+    def __init__(self, *, rate_limiter: ClientRateLimiter | None = None, **kwargs):  # type: ignore
+        """Initialize AdaptiveRetryStrategy.
+
+        :param rate_limiter: Optional pre-configured rate limiter. If None, creates
+            default components with rate limiting initially disabled.
+        """
+        super().__init__(**kwargs)  # type: ignore
+
+        if rate_limiter is None:
+            # Create default rate limiting components
+            token_bucket = TokenBucket()
+            cubic_calculator = CubicCalculator(
+                starting_max_rate=self.STARTING_MAX_RATE, start_time=time.monotonic()
+            )
+            rate_tracker = RequestRateTracker()
+            self._rate_limiter = ClientRateLimiter(
+                token_bucket=token_bucket,
+                cubic_calculator=cubic_calculator,
+                rate_tracker=rate_tracker,
+                rate_limiter_enabled=False,  # Disabled until first throttle
+            )
+        else:
+            self._rate_limiter = rate_limiter
+
+    @property
+    def rate_limiter(self) -> ClientRateLimiter:
+        """Get the rate limiter for integration with request pipeline."""
+        return self._rate_limiter
+
+    def is_throttling_error(self, error: Exception) -> bool:
+        """Check if error is a throttling error using existing ErrorRetryInfo."""
+        if isinstance(error, retries_interface.ErrorRetryInfo):
+            # Check if ErrorRetryInfo has throttling detection
+            return getattr(error, "is_throttling_error", False)
+        return False
+
+    async def acquire_from_token_bucket(self):
+        if self._rate_limiter.rate_limit_enabled:
+            await self._rate_limiter.before_sending_request()
