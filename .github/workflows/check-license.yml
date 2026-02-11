@@ -18,6 +18,6 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: apache/skywalking-eyes/header@0630b017b4e34f27f0d8719c873d703fb31ec8de
+      - uses: apache/skywalking-eyes/header@1a2a5024a0d5937db21af5dbc57cf73f0ac1de8f
         with:
           mode: check 
