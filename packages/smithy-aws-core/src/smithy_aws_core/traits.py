@@ -15,6 +15,33 @@ from smithy_core.shapes import ShapeID
 from smithy_core.traits import DynamicTrait, Trait
 
 
+def _parse_http_protocol_values(
+    value: DocumentValue | DynamicTrait | None,
+) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    document_value = value or {}
+    assert isinstance(document_value, Mapping)
+
+    http_versions_raw = document_value.get("http", ["http/1.1"])
+    assert isinstance(http_versions_raw, Sequence)
+    http_versions_list: list[str] = []
+    for entry in http_versions_raw:
+        assert isinstance(entry, str)
+        http_versions_list.append(entry)
+    http_versions = tuple(http_versions_list)
+
+    event_stream_http_versions_raw = document_value.get("eventStreamHttp")
+    if not event_stream_http_versions_raw:
+        return http_versions, http_versions
+
+    assert isinstance(event_stream_http_versions_raw, Sequence)
+    event_stream_http_versions_list: list[str] = []
+    for entry in event_stream_http_versions_raw:
+        assert isinstance(entry, str)
+        event_stream_http_versions_list.append(entry)
+
+    return http_versions, tuple(event_stream_http_versions_list)
+
+
 @dataclass(init=False, frozen=True)
 class RestJson1Trait(Trait, id=ShapeID("aws.protocols#restJson1")):
     http: Sequence[str] = field(
@@ -26,24 +53,41 @@ class RestJson1Trait(Trait, id=ShapeID("aws.protocols#restJson1")):
 
     def __init__(self, value: DocumentValue | DynamicTrait = None):
         super().__init__(value)
-        document_value = value or {}
-        assert isinstance(document_value, Mapping)
+        http, event_stream_http = _parse_http_protocol_values(value)
+        object.__setattr__(self, "http", http)
+        object.__setattr__(self, "event_stream_http", event_stream_http)
 
-        http_versions = document_value.get("http", ["http/1.1"])
-        assert isinstance(http_versions, Sequence)
-        for val in http_versions:
-            assert isinstance(val, str)
-        object.__setattr__(self, "http", tuple(http_versions))
-        event_stream_http_versions = document_value.get("eventStreamHttp")
-        if not event_stream_http_versions:
-            object.__setattr__(self, "event_stream_http", self.http)
-        else:
-            assert isinstance(event_stream_http_versions, Sequence)
-            for val in event_stream_http_versions:
-                assert isinstance(val, str)
-            object.__setattr__(
-                self, "event_stream_http", tuple(event_stream_http_versions)
-            )
+
+@dataclass(init=False, frozen=True)
+class AwsJson1_0Trait(Trait, id=ShapeID("aws.protocols#awsJson1_0")):
+    http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+    event_stream_http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+
+    def __init__(self, value: DocumentValue | DynamicTrait = None):
+        super().__init__(value)
+        http, event_stream_http = _parse_http_protocol_values(value)
+        object.__setattr__(self, "http", http)
+        object.__setattr__(self, "event_stream_http", event_stream_http)
+
+
+@dataclass(init=False, frozen=True)
+class AwsJson1_1Trait(Trait, id=ShapeID("aws.protocols#awsJson1_1")):
+    http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+    event_stream_http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+
+    def __init__(self, value: DocumentValue | DynamicTrait = None):
+        super().__init__(value)
+        http, event_stream_http = _parse_http_protocol_values(value)
+        object.__setattr__(self, "http", http)
+        object.__setattr__(self, "event_stream_http", event_stream_http)
 
 
 @dataclass(init=False, frozen=True)
