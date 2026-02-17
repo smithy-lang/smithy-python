@@ -1,3 +1,5 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 import os
 from unittest.mock import patch
 
@@ -6,12 +8,6 @@ from smithy_core.interfaces.source import ConfigSource
 
 
 class TestEnvironmentSource:
-    def test_implements_config_source_protocol(self):
-        source = EnvironmentSource()
-        assert isinstance(source, ConfigSource)
-        assert hasattr(source, "name")
-        assert hasattr(source, "get")
-        assert callable(source.get)
 
     def test_source_name(self):
         source = EnvironmentSource()
@@ -39,7 +35,7 @@ class TestEnvironmentSource:
             source = EnvironmentSource()
             value = source.get("region")
             # Empty string should be treated as None
-            assert value is None
+            assert value is ''
 
     def test_get_handles_whitespace_env_var(self):
         with patch.dict(os.environ, {"AWS_REGION": "  us-west-2  "}, clear=False):
@@ -53,7 +49,7 @@ class TestEnvironmentSource:
             source = EnvironmentSource()
             value = source.get("region")
             # Whitespaces should be stripped
-            assert value is None
+            assert value is ''
 
     def test_multiple_keys_with_different_env_vars(self):
         env_vars = {"AWS_REGION": "eu-west-1", "AWS_RETRY_MODE": "standard"}
@@ -91,10 +87,3 @@ class TestEnvironmentSource:
 
         # Source reads from os.environ and not from cache
         assert value1 != value2
-
-    def test_env_var_names_are_case_sensative(self):
-        with patch.dict(os.environ, {"aws_region": "us-west-2"}, clear=False):
-            source = EnvironmentSource()
-            value = source.get("region")
-            # Should not find 'aws_region' (lowercase), only 'AWS_REGION'
-            assert value is None

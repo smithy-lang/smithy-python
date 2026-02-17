@@ -1,3 +1,5 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
 import os
 from typing import Any
 
@@ -30,5 +32,4 @@ class EnvironmentSource:
         config_value = os.environ.get(env_var)
         if config_value is None:
             return None
-        stripped = config_value.strip()
-        return stripped if stripped else None
+        return config_value.strip()
