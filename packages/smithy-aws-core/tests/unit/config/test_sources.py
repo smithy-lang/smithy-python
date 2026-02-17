@@ -4,11 +4,9 @@ import os
 from unittest.mock import patch
 
 from smithy_aws_core.config.sources import EnvironmentSource
-from smithy_core.interfaces.source import ConfigSource
 
 
 class TestEnvironmentSource:
-
     def test_source_name(self):
         source = EnvironmentSource()
         assert source.name == "environment"
@@ -35,7 +33,7 @@ class TestEnvironmentSource:
             source = EnvironmentSource()
             value = source.get("region")
             # Empty string should be treated as None
-            assert value is ''
+            assert value == ""
 
     def test_get_handles_whitespace_env_var(self):
         with patch.dict(os.environ, {"AWS_REGION": "  us-west-2  "}, clear=False):
@@ -49,7 +47,7 @@ class TestEnvironmentSource:
             source = EnvironmentSource()
             value = source.get("region")
             # Whitespaces should be stripped
-            assert value is ''
+            assert value == ""
 
     def test_multiple_keys_with_different_env_vars(self):
         env_vars = {"AWS_REGION": "eu-west-1", "AWS_RETRY_MODE": "standard"}
