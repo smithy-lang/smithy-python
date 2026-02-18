@@ -12,7 +12,7 @@ class TestEnvironmentSource:
         assert source.name == "environment"
 
     def test_get_region_from_aws_region(self):
-        with patch.dict(os.environ, {"AWS_REGION": "us-west-2"}, clear=False):
+        with patch.dict(os.environ, {"AWS_REGION": "us-west-2"}, clear=True):
             source = EnvironmentSource()
             value = source.get("region")
             assert value == "us-west-2"
@@ -29,21 +29,20 @@ class TestEnvironmentSource:
         assert value is None
 
     def test_get_handles_empty_string_env_var(self):
-        with patch.dict(os.environ, {"AWS_REGION": ""}, clear=False):
+        with patch.dict(os.environ, {"AWS_REGION": ""}, clear=True):
             source = EnvironmentSource()
             value = source.get("region")
-            # Empty string should be treated as None
             assert value == ""
 
     def test_get_handles_whitespace_env_var(self):
-        with patch.dict(os.environ, {"AWS_REGION": "  us-west-2  "}, clear=False):
+        with patch.dict(os.environ, {"AWS_REGION": "  us-west-2  "}, clear=True):
             source = EnvironmentSource()
             value = source.get("region")
             # Whitespaces should be stripped
             assert value == "us-west-2"
 
     def test_get_handles_whole_whitespace_env_var(self):
-        with patch.dict(os.environ, {"AWS_REGION": "  "}, clear=False):
+        with patch.dict(os.environ, {"AWS_REGION": "  "}, clear=True):
             source = EnvironmentSource()
             value = source.get("region")
             # Whitespaces should be stripped
@@ -51,7 +50,7 @@ class TestEnvironmentSource:
 
     def test_multiple_keys_with_different_env_vars(self):
         env_vars = {"AWS_REGION": "eu-west-1", "AWS_RETRY_MODE": "standard"}
-        with patch.dict(os.environ, env_vars, clear=False):
+        with patch.dict(os.environ, env_vars, clear=True):
             source = EnvironmentSource()
 
             region = source.get("region")
@@ -61,7 +60,7 @@ class TestEnvironmentSource:
             assert retry_mode == "standard"
 
     def test_get_is_idempotent(self):
-        with patch.dict(os.environ, {"AWS_REGION": "ap-south-1"}, clear=False):
+        with patch.dict(os.environ, {"AWS_REGION": "ap-south-1"}, clear=True):
             source = EnvironmentSource()
             # Calling get on source multiple times should return the same value
             value1 = source.get("region")
@@ -74,7 +73,7 @@ class TestEnvironmentSource:
         source = EnvironmentSource()
 
         # First read
-        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=False):
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
             value1 = source.get("region")
             assert value1 == "us-east-1"
 

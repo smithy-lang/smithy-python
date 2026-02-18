@@ -1,13 +1,10 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 import os
-from typing import Any
 
 
 class EnvironmentSource:
     """Configuration from environment variables."""
-
-    SOURCE = "environment"
 
     def __init__(self, prefix: str = "AWS_"):
         """Initialize the EnvironmentSource with environment variable prefix.
@@ -19,14 +16,17 @@ class EnvironmentSource:
     @property
     def name(self) -> str:
         """Returns the source name."""
-        return self.SOURCE
+        return "environment"
 
-    def get(self, key: str) -> Any | None:
+    def get(self, key: str) -> str | None:
         """Returns a configuration value from environment variables.
+
+        The key is transformed to uppercase and prefixed (e.g., 'region' → 'AWS_REGION').
 
         :param key: The standard configuration key (e.g., 'region', 'retry_mode').
 
-        :returns: The value from the corresponding environment variable, or None if not set or empty.
+        :returns: The value from the environment variable (or empty string if set to empty),
+              or None if the variable is not set.
         """
         env_var = f"{self._prefix}{key.upper()}"
         config_value = os.environ.get(env_var)
