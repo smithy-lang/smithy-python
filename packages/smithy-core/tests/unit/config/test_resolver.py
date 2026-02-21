@@ -33,20 +33,20 @@ class TestConfigResolver:
 
         assert result == ("us-west-2", "environment")
 
-    def test_returns_unresolved_when_source_has_no_value(self):
+    def test_returns_None_when_source_has_no_value(self):
         source = StubSource("environment", {})
         resolver = ConfigResolver(sources=[source])
 
         result = resolver.get("region")
 
-        assert result == (None, "unresolved")
+        assert result == (None, None)
 
-    def test_returns_unresolved_with_empty_source_list(self):
+    def test_returns_None_with_empty_source_list(self):
         resolver = ConfigResolver(sources=[])
 
         result = resolver.get("region")
 
-        assert result == (None, "unresolved")
+        assert result == (None, None)
 
     def test_first_source_takes_precedence(self):
         first_priority_source = StubSource("source_one", {"region": "us-east-1"})
@@ -67,16 +67,6 @@ class TestConfigResolver:
         result = resolver.get("region")
 
         assert result == ("ap-south-1", "source_two")
-
-    def test_stops_at_first_non_none_value(self):
-        first_source = StubSource("source_one", {"region": "us-west-2"})
-        second_source = StubSource("source_two", {"region": "eu-west-1"})
-        third_source = StubSource("source_three", {"region": "us-east-1"})
-        resolver = ConfigResolver(sources=[first_source, second_source, third_source])
-
-        result = resolver.get("region")
-
-        assert result == ("us-west-2", "source_one")
 
     def test_resolves_different_keys_from_different_sources(self):
         instance = StubSource("source_one", {"region": "us-west-2"})
@@ -120,3 +110,18 @@ class TestConfigResolver:
 
         assert value == ""
         assert source_name == "test"
+
+    def test_external_list_modifications_do_not_affect_resolver(self):
+        source1 = StubSource("environment", {"region": "us-west-2"})
+        source2 = StubSource("config", {"region": "eu-west-1"})
+        sources = [source1]
+
+        resolver = ConfigResolver(sources=sources)
+
+        # Modify the original list after resolver construction
+        sources.append(source2)
+        sources.clear()
+
+        # Resolver should use the original source
+        result = resolver.get("region")
+        assert result == ("us-west-2", "environment")
