@@ -110,18 +110,3 @@ class TestConfigResolver:
 
         assert value == ""
         assert source_name == "test"
-
-    def test_external_list_modifications_do_not_affect_resolver(self):
-        source1 = StubSource("environment", {"region": "us-west-2"})
-        source2 = StubSource("config", {"region": "eu-west-1"})
-        sources = [source1]
-
-        resolver = ConfigResolver(sources=sources)
-
-        # Modify the original list after resolver construction
-        sources.append(source2)
-        sources.clear()
-
-        # Resolver should use the original source
-        result = resolver.get("region")
-        assert result == ("us-west-2", "environment")

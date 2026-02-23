@@ -17,12 +17,11 @@ class ConfigResolver:
         """Initialize the resolver with sources in precedence order.
 
         :param sources: List of configuration sources in precedence order. The first
-            source in the list has the highest priority. The list is copied to
-            prevent external modification.
+            source in the list has the highest priority.
         """
-        self._sources = list(sources)
+        self._sources = sources
 
-    def get(self, key: str) -> tuple[Any, Any]:
+    def get(self, key: str) -> tuple[Any, str | None]:
         """Resolve a configuration value from sources by iterating through them in precedence order.
 
         :param key: The configuration key to resolve (e.g., 'retry_mode')
