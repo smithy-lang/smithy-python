@@ -22,8 +22,6 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
-import software.amazon.smithy.python.codegen.sections.*;
-import software.amazon.smithy.python.codegen.writer.MarkdownToRstDocConverter;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -59,19 +57,8 @@ final class ClientGenerator implements Runnable {
         writer.openBlock("class $L:", "", serviceSymbol.getName(), () -> {
             var docs = service.getTrait(DocumentationTrait.class)
                     .map(StringTrait::getValue)
-                    .orElse("Client for " + serviceSymbol.getName());
-            String rstDocs =
-                    MarkdownToRstDocConverter.getInstance().convertCommonmarkToRst(docs);
-            writer.writeDocs(() -> {
-                writer.write("""
-                        $L
-
-                        :param config: Optional configuration for the client. Here you can set things like the
-                            endpoint for HTTP services or auth credentials.
-
-                        :param plugins: A list of callables that modify the configuration dynamically. These
-                            can be used to set defaults, for example.""", rstDocs);
-            });
+                    .orElse("Client for " + service.getId().getName());
+            writer.writeDocs(docs, context);
 
             var defaultPlugins = new LinkedHashSet<SymbolReference>();
 
@@ -87,10 +74,11 @@ final class ClientGenerator implements Runnable {
             writer.addImport("smithy_core.retries", "RetryStrategyResolver");
             writer.write("""
                     def __init__(self, config: $1T | None = None, plugins: list[$2T] | None = None):
+                        $3C
                         self._config = config or $1T()
 
                         client_plugins: list[$2T] = [
-                            $3C
+                            $4C
                         ]
                         if plugins:
                             client_plugins.extend(plugins)
@@ -99,7 +87,11 @@ final class ClientGenerator implements Runnable {
                             plugin(self._config)
 
                         self._retry_strategy_resolver = RetryStrategyResolver()
-                    """, configSymbol, pluginSymbol, writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)));
+                    """,
+                    configSymbol,
+                    pluginSymbol,
+                    writer.consumer(w -> writeConstructorDocs(w, serviceSymbol.getName())),
+                    writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)));
 
             var topDownIndex = TopDownIndex.of(model);
             var eventStreamIndex = EventStreamIndex.of(model);
@@ -120,6 +112,22 @@ final class ClientGenerator implements Runnable {
         }
     }
 
+    private void writeConstructorDocs(PythonWriter writer, String clientName) {
+        writer.writeMultiLineDocs(() -> {
+            writer.write("""
+                    Constructor for `$L`.
+
+                    Args:
+                        config:
+                            Optional configuration for the client. Here you can set things like
+                            the endpoint for HTTP services or auth credentials.
+                        plugins:
+                            A list of callables that modify the configuration dynamically. These
+                            can be used to set defaults, for example.
+                    """, clientName);
+        });
+    }
+
     /**
      * Generates the function for a single operation.
      */
@@ -134,7 +142,6 @@ final class ClientGenerator implements Runnable {
         var output = model.expectShape(operation.getOutputShape());
         var outputSymbol = symbolProvider.toSymbol(output);
 
-        writer.pushState(new OperationSection(service, operation));
         writer.putContext("input", inputSymbol);
         writer.putContext("output", outputSymbol);
         writer.putContext("plugin", pluginSymbol);
@@ -148,32 +155,48 @@ final class ClientGenerator implements Runnable {
                     ${C|}
                     return await pipeline(call)
                 """,
-                writer.consumer(w -> writeSharedOperationInit(w, operation, input)));
-        writer.popState();
+                writer.consumer(w -> writeSharedOperationInit(w, operation, input, output)));
     }
 
-    private void writeSharedOperationInit(PythonWriter writer, OperationShape operation, Shape input) {
-        writer.writeDocs(() -> {
-            var docs = writer.formatDocs(operation.getTrait(DocumentationTrait.class)
+    private void writeSharedOperationInit(PythonWriter writer, OperationShape operation, Shape input, Shape output) {
+        writeSharedOperationInit(writer, operation, input, output, null);
+    }
+
+    private void writeSharedOperationInit(
+            PythonWriter writer,
+            OperationShape operation,
+            Shape input,
+            Shape output,
+            String eventStreamOutputDocs
+    ) {
+        writer.writeMultiLineDocs(() -> {
+            var operationDocs = writer.formatDocs(operation.getTrait(DocumentationTrait.class)
                     .map(StringTrait::getValue)
                     .orElse(String.format("Invokes the %s operation.",
-                            operation.getId().getName())));
+                            operation.getId().getName())),
+                    context);
 
-            var inputDocs = input.getTrait(DocumentationTrait.class)
-                    .map(StringTrait::getValue)
-                    .orElse("The operation's input.");
+            var inputSymbolName = symbolProvider.toSymbol(input).getName();
+            var outputSymbolName = symbolProvider.toSymbol(output).getName();
+            var inputDocs = String.format("An instance of `%s`.", inputSymbolName);
+            var outputDocs = eventStreamOutputDocs != null ? eventStreamOutputDocs
+                    : String.format("An instance of `%s`.", outputSymbolName);
 
             writer.write("""
                     $L
-                    """, docs);
-            writer.write("");
-            writer.write(":param input: $L", inputDocs);
-            writer.write("");
-            writer.write("""
-                    :param plugins: A list of callables that modify the configuration dynamically.
-                        Changes made by these plugins only apply for the duration of the operation
-                        execution and will not affect any other operation invocations.""");
 
+                    Args:
+                        input:
+                            $L
+                        plugins:
+                            A list of callables that modify the configuration dynamically.
+                            Changes made by these plugins only apply for the duration of the
+                            operation execution and will not affect any other operation
+                            invocations.
+
+                    Returns:
+                        ${L|}
+                    """, operationDocs, inputDocs, outputDocs);
         });
 
         var defaultPlugins = new LinkedHashSet<SymbolReference>();
@@ -230,7 +253,6 @@ final class ClientGenerator implements Runnable {
     }
 
     private void generateEventStreamOperation(PythonWriter writer, OperationShape operation) {
-        writer.pushState(new OperationSection(service, operation));
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addDependency(SmithyPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("eventstream"));
         var operationSymbol = symbolProvider.toSymbol(operation);
@@ -270,6 +292,7 @@ final class ClientGenerator implements Runnable {
         if (inputStreamSymbol.isPresent()) {
             if (outputStreamSymbol.isPresent()) {
                 writer.addImport("smithy_core.aio.eventstream", "DuplexEventStream");
+                var outputDocs = "A `DuplexEventStream` for bidirectional streaming.";
                 writer.write("""
                         async def ${operationName:L}(
                             self,
@@ -284,9 +307,10 @@ final class ClientGenerator implements Runnable {
                                 ${outputStreamDeserializer:T}().deserialize
                             )
                         """,
-                        writer.consumer(w -> writeSharedOperationInit(w, operation, input)));
+                        writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, outputDocs)));
             } else {
                 writer.addImport("smithy_core.aio.eventstream", "InputEventStream");
+                var outputDocs = "An `InputEventStream` for client-to-server streaming.";
                 writer.write("""
                         async def ${operationName:L}(
                             self,
@@ -298,10 +322,12 @@ final class ClientGenerator implements Runnable {
                                 call,
                                 ${inputStream:T}
                             )
-                        """, writer.consumer(w -> writeSharedOperationInit(w, operation, input)));
+                        """,
+                        writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, outputDocs)));
             }
         } else {
             writer.addImport("smithy_core.aio.eventstream", "OutputEventStream");
+            var outputDocs = "An `OutputEventStream` for server-to-client streaming.";
             writer.write("""
                     async def ${operationName:L}(
                         self,
@@ -315,9 +341,7 @@ final class ClientGenerator implements Runnable {
                             ${outputStreamDeserializer:T}().deserialize
                         )
                     """,
-                    writer.consumer(w -> writeSharedOperationInit(w, operation, input)));
+                    writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, outputDocs)));
         }
-
-        writer.popState();
     }
 }

@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.4.0
+
+### Enhancements
+* Aligned with service client minor version
+
 ## v0.3.0
 
 ### Dependencies

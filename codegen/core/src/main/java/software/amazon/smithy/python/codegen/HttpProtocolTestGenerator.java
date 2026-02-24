@@ -587,7 +587,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
             writer.write("@mark.xfail()");
         }
         writer.openBlock("async def test_$L() -> None:", "", CaseUtils.toSnakeCase(testName), () -> {
-            testCase.getDocumentation().ifPresent(writer::writeDocs);
+            testCase.getDocumentation().ifPresent(docs -> writer.writeDocs(docs, context));
             f.run();
         });
     }

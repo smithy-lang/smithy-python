@@ -78,7 +78,7 @@ public final class SmithyPythonDependency {
      */
     public static final PythonDependency SMITHY_AWS_CORE = new PythonDependency(
             "smithy_aws_core",
-            "~=0.3.0",
+            "~=0.4.0",
             Type.DEPENDENCY,
             false);
 
@@ -98,24 +98,6 @@ public final class SmithyPythonDependency {
             "pytest-asyncio",
             ">=1.3.0,<1.4.0",
             Type.TEST_DEPENDENCY,
-            false);
-
-    /**
-     * library used for documentation generation
-     */
-    public static final PythonDependency SPHINX = new PythonDependency(
-            "sphinx",
-            ">=8.2.3",
-            Type.DOCS_DEPENDENCY,
-            false);
-
-    /**
-     * sphinx theme
-     */
-    public static final PythonDependency SPHINX_PYDATA_THEME = new PythonDependency(
-            "pydata-sphinx-theme",
-            ">=0.16.1",
-            Type.DOCS_DEPENDENCY,
             false);
 
     private SmithyPythonDependency() {}
