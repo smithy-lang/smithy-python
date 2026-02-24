@@ -2,34 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import re
-from collections.abc import Callable
-from functools import wraps
-from typing import Any, TypeVar
+from typing import Any, get_args
 
 from smithy_core.interfaces.retries import RetryStrategy
-from smithy_core.retries import RetryStrategyOptions
-
-T = TypeVar("T")
-
-
-def allow_none(validator: Callable[[Any, str | None], T]) -> Callable[..., T | None]:
-    """Decorator that allows None values to pass through validators.
-
-    If the value is None, returns None without calling the validator.
-    Otherwise, calls the validator with the value.
-
-    :param validator: The validation function to wrap
-
-    :returns: Wrapped validator that allows None values
-    """
-
-    @wraps(validator)
-    def wrapper(value: Any, source: str | None = None) -> T | None:
-        if value is None:
-            return None
-        return validator(value, source)
-
-    return wrapper
+from smithy_core.retries import RetryStrategyOptions, RetryStrategyType
 
 
 class ConfigValidationError(ValueError):
@@ -47,77 +23,73 @@ class ConfigValidationError(ValueError):
         super().__init__(msg)
 
 
-@allow_none
-def validate_region(value: Any, source: str | None = None) -> str | None:
+def validate_region(region_name: Any, source: str | None = None) -> str | None:
     """Validate AWS region format.
 
     Valid formats:
     - us-east-1, us-west-2, eu-west-1, etc.
     - Pattern: {partition}-{region}-{number}
 
-    :param value: The region value to validate
+    :param region_name: The region value to validate
     :param source: The config source that provided this value
 
     :returns: The validated region string, or None if value is None
 
     :raises ConfigValidationError: If the region format is invalid
     """
-    if not isinstance(value, str):
+    if not isinstance(region_name, str):
         raise ConfigValidationError(
             "region",
-            value,
-            f"Region must be a string, got {type(value).__name__}",
+            region_name,
+            f"Region must be a string, got {type(region_name).__name__}",
             source,
         )
 
-    # AWS region pattern: partition-region-number
-    pattern = r"^[a-z]{2}-[a-z]+-\d+$"
+    pattern = r"^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{,63}(?<!-)$"
 
-    if not re.match(pattern, value):
+    if not re.match(pattern, region_name):
         raise ConfigValidationError(
             "region",
-            value,
-            "Region must match pattern '{partition}-{region}-{number}' (e.g., 'us-west-2', 'eu-central-1')",
+            region_name,
+            "Region doesn't match the pattern (e.g., 'us-west-2', 'eu-central-1')",
             source,
         )
-    return value
+    return region_name
 
 
-@allow_none
-def validate_retry_mode(value: Any, source: str | None = None) -> str | None:
+def validate_retry_mode(retry_mode: Any, source: str | None = None) -> str | None:
     """Validate retry mode.
 
     Valid values: 'standard', 'simple'
 
-    :param value: The retry mode value to validate
+    :param retry_mode: The retry mode value to validate
     :param source: The source that provided this value
 
     :returns: The validated retry mode string, or None if value is None
 
     :raises: ConfigValidationError: If the retry mode is invalid
     """
-    if not isinstance(value, str):
+    if not isinstance(retry_mode, str):
         raise ConfigValidationError(
             "retry_mode",
-            value,
-            f"Retry mode must be a string, got {type(value).__name__}",
+            retry_mode,
+            f"Retry mode must be a string, got {type(retry_mode).__name__}",
             source,
         )
 
-    valid_modes = {"standard", "simple"}
+    valid_modes = set(get_args(RetryStrategyType))
 
-    if value not in valid_modes:
+    if retry_mode not in valid_modes:
         raise ConfigValidationError(
             "retry_mode",
-            value,
-            f"Retry mode must be one of {valid_modes}, got {value!r}",
+            retry_mode,
+            f"Retry mode must be one of {RetryStrategyType}, got {retry_mode}",
             source,
         )
 
-    return value
+    return retry_mode
 
 
-@allow_none
 def validate_retry_strategy(value: Any, source: str | None = None) -> Any:
     """Validate retry strategy configuration.
 

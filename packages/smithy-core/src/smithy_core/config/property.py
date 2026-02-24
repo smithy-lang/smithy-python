@@ -72,7 +72,7 @@ class ConfigProperty:
         else:
             value, source = obj._resolver.get(self.key)
 
-        if self.validator:
+        if self.validator and value is not None:
             value = self.validator(value, source)
 
         obj.__dict__[self.cache_attr] = (value, source)
