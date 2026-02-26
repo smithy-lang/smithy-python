@@ -53,11 +53,18 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
         if uri.query and previous.query:
             query = f"{uri.query}&{previous.query}"
 
+        has_host_prefix = bool(previous.host) and previous.host != "."
+        host = uri.host
+        if has_host_prefix and uri.host and previous.host.endswith("."):
+            host = f"{previous.host}{uri.host}"
+        elif has_host_prefix:
+            host = previous.host
+
         request.destination = _URI(
             scheme=uri.scheme,
             username=uri.username or previous.username,
             password=uri.password or previous.password,
-            host=uri.host,
+            host=host,
             port=uri.port or previous.port,
             path=path,
             query=query,
