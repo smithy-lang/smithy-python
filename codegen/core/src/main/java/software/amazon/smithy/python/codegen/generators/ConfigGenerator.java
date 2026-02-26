@@ -69,6 +69,17 @@ public final class ConfigGenerator implements Runnable {
                             .build())
                     .documentation(
                             "The retry strategy or options for configuring retry behavior. Can be either a configured RetryStrategy or RetryStrategyOptions to create one.")
+                    .nullable(false)
+                    .useDescriptor(true)
+                    .validator(Symbol.builder()
+                            .name("validate_retry_strategy")
+                            .namespace("smithy_aws_core.config.validators", ".")
+                            .build())
+                    .customResolver(Symbol.builder()
+                            .name("resolve_retry_strategy")
+                            .namespace("smithy_aws_core.config.custom_resolvers", ".")
+                            .build())
+                    .defaultValue("RetryStrategyOptions(retry_mode=\"standard\", max_attempts=3)")
                     .build(),
             ConfigProperty.builder()
                     .name("endpoint_uri")
@@ -322,6 +333,8 @@ public final class ConfigGenerator implements Runnable {
             writer.onSection(new AddAuthHelper());
         }
 
+        writer.onSection(new AddGetSourceHelper());
+
         var model = context.model();
         var service = context.settings().service(model);
 
@@ -335,6 +348,37 @@ public final class ConfigGenerator implements Runnable {
         }
 
         var finalProperties = List.copyOf(properties);
+
+        // Add imports for config resolution
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addImport("smithy_core.config.property", "ConfigProperty");
+        writer.addImport("smithy_core.config.resolver", "ConfigResolver");
+        writer.addImport("smithy_aws_core.config.sources", "EnvironmentSource");
+
+        // Add validator and resolver imports for properties that use descriptors
+        // Also add imports for types used in default values
+        for (ConfigProperty property : finalProperties) {
+            if (property.useDescriptor()) {
+                if (property.validator().isPresent()) {
+                    var validatorSymbol = property.validator().get();
+                    writer.addImport(validatorSymbol.getNamespace(), validatorSymbol.getName());
+                }
+                if (property.customResolver().isPresent()) {
+                    var resolverSymbol = property.customResolver().get();
+                    writer.addImport(resolverSymbol.getNamespace(), resolverSymbol.getName());
+                }
+                // Add imports for types referenced in default values
+                if (property.defaultValue().isPresent()) {
+                    var defaultValue = property.defaultValue().get();
+                    // Check if default value uses RetryStrategyOptions
+                    if (defaultValue.contains("RetryStrategyOptions")) {
+                        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+                        writer.addImport("smithy_core.retries", "RetryStrategyOptions");
+                    }
+                }
+            }
+        }
+
         final String serviceId = context.settings()
                 .service(context.model())
                 .getTrait(ServiceTrait.class)
@@ -349,6 +393,8 @@ public final class ConfigGenerator implements Runnable {
 
                     ${C|}
 
+                    ${C|}
+
                     def __init__(
                         self,
                         *,
@@ -358,14 +404,53 @@ public final class ConfigGenerator implements Runnable {
                 """,
                 configSymbol.getName(),
                 serviceId,
+                writer.consumer(w -> writeDescriptorDeclarations(w, finalProperties)),
                 writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
                 writer.consumer(w -> writeInitParams(w, finalProperties)),
                 writer.consumer(w -> initializeProperties(w, finalProperties)));
         writer.popState();
     }
 
+    // Write descriptor declarations for properties using ConfigProperty descriptor
+    private void writeDescriptorDeclarations(PythonWriter writer, Collection<ConfigProperty> properties) {
+        boolean hasDescriptors = properties.stream().anyMatch(ConfigProperty::useDescriptor);
+
+        if (!hasDescriptors) {
+            return;
+        }
+
+        writer.write("# Config properties using descriptors (lazy resolution with caching)");
+        for (ConfigProperty property : properties) {
+            if (property.useDescriptor()) {
+                writer.writeInline("$L = ConfigProperty('$L'",
+                        property.name(),
+                        property.name());
+
+                if (property.validator().isPresent()) {
+                    writer.writeInline(", validator=$L", property.validator().get().getName());
+                }
+
+                if (property.customResolver().isPresent()) {
+                    writer.writeInline(", resolver_func=$L", property.customResolver().get().getName());
+                }
+
+                if (property.defaultValue().isPresent()) {
+                    writer.writeInline(", default_value=$L", property.defaultValue().get());
+                }
+
+                writer.write(")");
+            }
+        }
+        writer.write("");
+    }
+
     private void writePropertyDeclarations(PythonWriter writer, Collection<ConfigProperty> properties) {
         for (ConfigProperty property : properties) {
+            // Skip descriptor properties - they're declared above
+            if (property.useDescriptor()) {
+                continue;
+            }
+
             var formatString = property.isNullable()
                     ? "$L: $T | None"
                     : "$L: $T";
@@ -373,6 +458,11 @@ public final class ConfigGenerator implements Runnable {
             writer.writeDocs(property.documentation(), context);
             writer.write("");
         }
+
+        // Add _resolver declaration
+        writer.write("_resolver: ConfigResolver");
+        writer.writeDocs("Shared resolver for all Config instances.", context);
+        writer.write("");
     }
 
     private void writeInitParams(PythonWriter writer, Collection<ConfigProperty> properties) {
@@ -381,9 +471,48 @@ public final class ConfigGenerator implements Runnable {
         }
     }
 
+    // Handle descriptor properties efficiently with a loop
     private void initializeProperties(PythonWriter writer, Collection<ConfigProperty> properties) {
+        // First, initialize the resolver
+        writer.write("# Create resolver with environment source");
+        writer.write("self._resolver = ConfigResolver(sources=[EnvironmentSource()])");
+        writer.write("");
+
+        // Then, handle descriptor properties efficiently with a loop
+        var descriptorProperties = properties.stream()
+                .filter(ConfigProperty::useDescriptor)
+                .map(ConfigProperty::name)
+                .toList();
+
+        if (!descriptorProperties.isEmpty()) {
+            writer.write("# Set instance values for descriptor properties");
+
+            // Generate the list of descriptor property names
+            writer.writeInline("descriptor_keys = [");
+            var iter = descriptorProperties.iterator();
+            while (iter.hasNext()) {
+                writer.writeInline("'$L'", iter.next());
+                if (iter.hasNext()) {
+                    writer.writeInline(", ");
+                }
+            }
+            writer.write("]");
+            writer.write("for key in descriptor_keys:");
+            writer.indent();
+            writer.write("value = locals().get(key)");
+            writer.write("if value is not None:");
+            writer.indent();
+            writer.write("setattr(self, key, value)");
+            writer.dedent();
+            writer.dedent();
+            writer.write("");
+        }
+
+        // Finally, initialize non-descriptor properties normally
         for (ConfigProperty property : properties) {
-            property.initialize(writer);
+            if (!property.useDescriptor()) {
+                property.initialize(writer);
+            }
         }
     }
 
@@ -415,6 +544,48 @@ public final class ConfigGenerator implements Runnable {
                                     The auth scheme to add.
                             \"""
                             self.auth_schemes[scheme.scheme_id] = scheme
+                    """);
+        }
+    }
+
+    // Helper to add get_source method for descriptor properties
+    private static final class AddGetSourceHelper implements CodeInterceptor<ConfigSection, PythonWriter> {
+        @Override
+        public Class<ConfigSection> sectionType() {
+            return ConfigSection.class;
+        }
+
+        @Override
+        public void write(PythonWriter writer, String previousText, ConfigSection section) {
+            // Check if there are any descriptor properties
+            boolean hasDescriptors = section.properties()
+                    .stream()
+                    .anyMatch(ConfigProperty::useDescriptor);
+
+            if (!hasDescriptors) {
+                // No descriptor properties, just write previous text
+                writer.write(previousText);
+                return;
+            }
+
+            // First write the previous text
+            writer.write(previousText);
+
+            // Add the get_source helper method
+            writer.write("""
+
+                        def get_source(self, key: str) -> str | None:
+                            \"""Get the source that provided a configuration value.
+
+                            Args:
+                                key: The configuration key (e.g., 'region', 'retry_strategy')
+
+                            Returns:
+                                The source name ('instance', 'environment', etc.),
+                                or None if the key hasn't been resolved yet.
+                            \"""
+                            cached = self.__dict__.get(f'_cache_{key}')
+                            return cached[1] if cached else None
                     """);
         }
     }

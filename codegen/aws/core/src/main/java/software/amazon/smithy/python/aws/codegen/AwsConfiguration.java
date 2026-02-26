@@ -20,5 +20,13 @@ public final class AwsConfiguration {
             .type(Symbol.builder().name("str").build())
             .documentation(" The AWS region to connect to. The configured region is used to "
                     + "determine the service endpoint.")
+            .nullable(false)
+            .useDescriptor(true)
+            .validator(Symbol.builder()
+                    .name("validate_host")
+                    .namespace("smithy_aws_core.config.validators", ".")
+                    .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                    .build())
+            .defaultValue("'us-east-1'")
             .build();
 }
