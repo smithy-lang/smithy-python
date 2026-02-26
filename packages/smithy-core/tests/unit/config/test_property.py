@@ -55,33 +55,24 @@ class TestConfigPropertyDescriptor:
         result2 = config.region
 
         assert result1 == result2 == "us-west-2"
-        # Verify it's cached in __dict__ of config object
-        assert "_cache_region" in config.__dict__
+        # Verify it's cached
+        assert hasattr(config, "_cache_region")
 
-    def test_returns_none_when_value_unresolved(self) -> None:
+    def test_uses_default_value_when_unresolved(self) -> None:
+        class ConfigWithDefault:
+            region = ConfigProperty("region", default_value="us-east-1")
+
+            def __init__(self, resolver: ConfigResolver) -> None:
+                self._resolver = resolver
+
         source = StubSource("environment", {})
         resolver = ConfigResolver(sources=[source])
-        config = StubConfig(resolver)
+        config = ConfigWithDefault(resolver)
 
         result = config.region
 
-        assert result is None
-
-    def test_caches_none_for_unresolved_values(self) -> None:
-        source = StubSource("environment", {})
-        resolver = ConfigResolver(sources=[source])
-        config = StubConfig(resolver)
-
-        # First access
-        result1 = config.region
-        # Second access
-        result2 = config.region
-
-        assert result1 is None
-        assert result2 is None
-        # Verify it's cached
-        assert "_cache_region" in config.__dict__
-        assert config.__dict__["_cache_region"] == (None, None)
+        assert result == "us-east-1"
+        assert getattr(config, "_cache_region") == ("us-east-1", "default")
 
     def test_different_properties_resolve_independently(self) -> None:
         source = StubSource(
@@ -176,7 +167,7 @@ class TestConfigPropertySetter:
         config.region = "eu-west-1"
 
         # Check the cached tuple
-        assert config.__dict__["_cache_region"] == ("eu-west-1", "instance")
+        assert getattr(config, "_cache_region") == ("eu-west-1", "instance")
 
     def test_value_set_after_resolution_marks_source_as_plugin(self) -> None:
         source = StubSource("environment", {"region": "us-west-2"})
@@ -191,9 +182,9 @@ class TestConfigPropertySetter:
 
         # Verify the new value is returned
         assert config.region == "eu-west-1"
-        # Verify source is marked as 'plugin'
-        # Any config value modified after initialization will have 'plugin' for source
-        assert config.__dict__["_cache_region"] == ("eu-west-1", "plugin")
+        # Verify source is marked as 'in-code'
+        # Any config value modified after initialization will have 'in-code' for source
+        assert getattr(config, "_cache_region") == ("eu-west-1", "in-code")
 
     def test_validator_is_called_when_setting_values(self) -> None:
         call_log: list[tuple[Any, str | None]] = []
@@ -259,7 +250,7 @@ class TestConfigPropertyCaching:
 
         _ = config.region
 
-        cached: Any = config.__dict__["_cache_region"]
+        cached: Any = getattr(config, "_cache_region")
         assert cached == ("us-west-2", "environment")
 
     def test_cache_key_is_unique_per_property(self) -> None:
@@ -272,6 +263,29 @@ class TestConfigPropertyCaching:
         _ = config.region
         _ = config.retry_mode
 
-        assert "_cache_region" in config.__dict__
-        assert "_cache_retry_mode" in config.__dict__
-        assert config.__dict__["_cache_region"] != config.__dict__["_cache_retry_mode"]
+        assert hasattr(config, "_cache_retry_mode")
+        assert hasattr(config, "_cache_region")
+        assert getattr(config, "_cache_region") != getattr(config, "_cache_retry_mode")
+
+    def test_validator_called_on_default_value(self) -> None:
+        call_log: list[tuple[Any, str | None]] = []
+
+        def mock_validator(value: Any, source: str | None) -> Any:
+            call_log.append((value, source))
+            return value
+
+        class ConfigWithDefault:
+            region = ConfigProperty(
+                "region", default_value="us-default-1", validator=mock_validator
+            )
+
+            def __init__(self, resolver: ConfigResolver) -> None:
+                self._resolver = resolver
+
+        source = StubSource("environment", {})
+        resolver = ConfigResolver(sources=[source])
+        config = ConfigWithDefault(resolver)
+
+        _ = config.region
+
+        assert call_log == [("us-default-1", "default")]

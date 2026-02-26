@@ -29,6 +29,7 @@ class ConfigProperty:
         key: str,
         validator: Callable[[Any, str | None], Any] | None = None,
         resolver_func: Callable[[ConfigResolver], tuple[Any, str | None]] | None = None,
+        default_value: Any = None,
     ):
         """Initialize config property descriptor.
 
@@ -43,23 +44,26 @@ class ConfigProperty:
         self.resolver_func = resolver_func
         # Cache attribute name in instance __dict__ (e.g., "_cache_region")
         self.cache_attr = f"_cache_{key}"
+        self.default_value = default_value
 
     def __get__(self, obj: Any, objtype: type | None = None) -> Any:
         """Get the config value with lazy resolution and caching.
 
         On first access, the property checks if the value is already cached. If not, it resolves
-        the value from sources using resolver via either a resolver function or obj._resolver.
-        When a validator is provided, the resolved value is validated before use. Finally, the
-        property caches the (value, source) tuple in obj.__dict__. On subsequent accesses, it
-        returns cached value from obj.__dict__.
+        the value from sources using resolver. When a validator is provided, the resolved value
+        is validated before use. Finally, the property caches the (value, source) tuple. On
+        subsequent accesses, it returns the cached value.
 
         :param obj: The Config instance
         :param objtype: The Config class
 
         :returns: The resolved and validated config value
         """
+        # If accessed on class instead of instance, return descriptor itself
+        if obj is None:
+            return self
 
-        cached = obj.__dict__.get(self.cache_attr)
+        cached = getattr(obj, self.cache_attr, None)
         if cached is not None:
             return cached[
                 0
@@ -72,10 +76,14 @@ class ConfigProperty:
         else:
             value, source = obj._resolver.get(self.key)
 
-        if self.validator and value is not None:
+        if value is None:
+            value = self.default_value
+            source = "default"
+
+        if self.validator:
             value = self.validator(value, source)
 
-        obj.__dict__[self.cache_attr] = (value, source)
+        setattr(obj, self.cache_attr, (value, source))
         return value
 
     def __set__(self, obj: Any, value: Any) -> None:
@@ -83,17 +91,16 @@ class ConfigProperty:
 
         When a config value is set, the property validates the new value if a validator is provided, then
         updates the cached (value, source) tuple. The source is marked as 'instance' if the value
-        is set during __init__, or 'plugin' if set later.
+        is set during __init__, or 'in-code' if set later.
 
         :param obj: The Config instance
         :param value: The new value to set
         """
         # Determine source based on when the value was set
         # If cache already exists, it means it was not set during initialization
-        # In that case source will be set to plugin
-        source = "plugin" if self.cache_attr in obj.__dict__ else "instance"
-
+        # In that case source will be set to in-code
+        source = "in-code" if hasattr(obj, self.cache_attr) else "instance"
         if self.validator:
             value = self.validator(value, source)
 
-        obj.__dict__[self.cache_attr] = (value, source)
+        setattr(obj, self.cache_attr, (value, source))

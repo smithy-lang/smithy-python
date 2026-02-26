@@ -23,41 +23,37 @@ class ConfigValidationError(ValueError):
         super().__init__(msg)
 
 
-def validate_region(region_name: Any, source: str | None = None) -> str | None:
-    """Validate AWS region format.
+def validate_host(host_name: Any, source: str | None = None) -> str:
+    """Validate host name format.
 
-    Valid formats:
-    - us-east-1, us-west-2, eu-west-1, etc.
-    - Pattern: {partition}-{region}-{number}
-
-    :param region_name: The region value to validate
+    :param host_name: The value to validate
     :param source: The config source that provided this value
 
-    :returns: The validated region string, or None if value is None
+    :returns: The validated value
 
-    :raises ConfigValidationError: If the region format is invalid
+    :raises ConfigValidationError: If the value format is invalid
     """
-    if not isinstance(region_name, str):
+    if not isinstance(host_name, str):
         raise ConfigValidationError(
-            "region",
-            region_name,
-            f"Region must be a string, got {type(region_name).__name__}",
+            "host",
+            host_name,
+            f"Host must be a string, got {type(host_name).__name__}",
             source,
         )
 
     pattern = r"^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{,63}(?<!-)$"
 
-    if not re.match(pattern, region_name):
+    if not re.match(pattern, host_name):
         raise ConfigValidationError(
-            "region",
-            region_name,
-            "Region doesn't match the pattern (e.g., 'us-west-2', 'eu-central-1')",
+            "host",
+            host_name,
+            "Host doesn't match the pattern.",
             source,
         )
-    return region_name
+    return host_name
 
 
-def validate_retry_mode(retry_mode: Any, source: str | None = None) -> str | None:
+def validate_retry_mode(retry_mode: Any, source: str | None = None) -> str:
     """Validate retry mode.
 
     Valid values: 'standard', 'simple'
@@ -65,7 +61,7 @@ def validate_retry_mode(retry_mode: Any, source: str | None = None) -> str | Non
     :param retry_mode: The retry mode value to validate
     :param source: The source that provided this value
 
-    :returns: The validated retry mode string, or None if value is None
+    :returns: The validated retry mode string
 
     :raises: ConfigValidationError: If the retry mode is invalid
     """
@@ -77,40 +73,59 @@ def validate_retry_mode(retry_mode: Any, source: str | None = None) -> str | Non
             source,
         )
 
-    valid_modes = set(get_args(RetryStrategyType))
+    valid_modes = get_args(RetryStrategyType)
 
     if retry_mode not in valid_modes:
         raise ConfigValidationError(
             "retry_mode",
             retry_mode,
-            f"Retry mode must be one of {RetryStrategyType}, got {retry_mode}",
+            f"Retry mode must be one of {valid_modes}, got {retry_mode}",
             source,
         )
 
     return retry_mode
 
 
-def validate_retry_strategy(value: Any, source: str | None = None) -> Any:
+def validate_max_attempts(max_attempts: str | int, source: str | None = None) -> int:
+    """Validate and convert max_attempts to integer.
+
+    :param max_attempts: The max attempts value (string or int)
+    :param source: The source that provided this value
+
+    :returns: The validated max_attempts as an integer
+
+    :raises ConfigValidationError: If the value cannot be converted to an integer
+    """
+    try:
+        return int(max_attempts)
+    except (ValueError, TypeError):
+        raise ConfigValidationError(
+            "max_attempts",
+            max_attempts,
+            f"max_attempts must be a number, got {type(max_attempts).__name__}",
+            source,
+        )
+
+
+def validate_retry_strategy(
+    value: Any, source: str | None = None
+) -> RetryStrategy | RetryStrategyOptions:
     """Validate retry strategy configuration.
 
-    :param value: The retry strategy value to validate (None is allowed and returns None)
-    :param source: The source that provided this value (for error messages)
+    :param value: The retry strategy value to validate
+    :param source: The source that provided this value
 
     :returns: The validated retry strategy (RetryStrategy or RetryStrategyOptions)
 
     :raises: ConfigValidationError: If the value is not a valid retry strategy type
     """
-    # Allow RetryStrategy instances
-    if isinstance(value, RetryStrategy):
-        return value
 
-    # Allow RetryStrategyOptions instances
-    if isinstance(value, RetryStrategyOptions):
+    if isinstance(value, RetryStrategy | RetryStrategyOptions):
         return value
 
     raise ConfigValidationError(
         "retry_strategy",
         value,
-        f"Retry strategy must be a RetryStrategy or RetryStrategyOptions got {type(value).__name__}",
+        f"retry_strategy must be RetryStrategy or RetryStrategyOptions, got {type(value).__name__}",
         source,
     )

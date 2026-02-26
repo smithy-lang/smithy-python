@@ -5,7 +5,7 @@ from typing import cast
 from smithy_core.config.resolver import ConfigResolver
 from smithy_core.retries import RetryStrategyOptions, RetryStrategyType
 
-from smithy_aws_core.config.validators import validate_retry_mode
+from smithy_aws_core.config.validators import validate_max_attempts, validate_retry_mode
 
 
 def resolve_retry_strategy(
@@ -20,10 +20,10 @@ def resolve_retry_strategy(
 
     :param resolver: The config resolver to use for resolution
 
-    :returns: Tuple of (RetryStrategyOptions or None, source_name or None).
-        Returns (None, None) if neither retry_mode nor max_attempts is set.
+    :returns: Tuple of (RetryStrategyOptions, source_name) if both retry_mode and max_attempts
+        are resolved. Returns (None, None) if either value is missing.
 
-        For mixed sources, the source string includes both component sources:
+        For mixed sources, the source name includes both component sources:
         "retry_mode=environment, max_attempts=config_file"
     """
     # Get retry_mode
@@ -32,21 +32,20 @@ def resolve_retry_strategy(
     # Get max_attempts
     max_attempts, attempts_source = resolver.get("max_attempts")
 
-    # If neither is set, return None
-    if retry_mode is None and max_attempts is None:
-        return (None, None)
+    if retry_mode is None or max_attempts is None:
+        return None, None
 
-    if retry_mode is not None:
-        retry_mode = validate_retry_mode(retry_mode, mode_source)
-        retry_mode = cast(RetryStrategyType, retry_mode)
+    retry_mode = validate_retry_mode(retry_mode, mode_source)
+    retry_mode = cast(RetryStrategyType, retry_mode)
 
-    # Construct options with defaults
+    max_attempts = validate_max_attempts(max_attempts, attempts_source)
+
     options = RetryStrategyOptions(
-        retry_mode=retry_mode or "standard",
-        max_attempts=int(max_attempts) if max_attempts else None,
+        retry_mode=retry_mode,
+        max_attempts=max_attempts,
     )
 
     # Construct mixed source string showing where each component came from
-    source = f"retry_mode={mode_source or 'unresolved'}, max_attempts={attempts_source or 'unresolved'}"
+    source = f"retry_mode={mode_source}, max_attempts={attempts_source}"
 
     return (options, source)
