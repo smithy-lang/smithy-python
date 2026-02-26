@@ -169,7 +169,7 @@ class TestConfigPropertySetter:
         # Check the cached tuple
         assert getattr(config, "_cache_region") == ("eu-west-1", "instance")
 
-    def test_value_set_after_resolution_marks_source_as_plugin(self) -> None:
+    def test_value_set_after_resolution_marks_source_as_in_code(self) -> None:
         source = StubSource("environment", {"region": "us-west-2"})
         resolver = ConfigResolver(sources=[source])
         config = StubConfig(resolver)

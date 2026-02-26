@@ -23,7 +23,7 @@ class ConfigValidationError(ValueError):
         super().__init__(msg)
 
 
-def validate_host(host_name: Any, source: str | None = None) -> str:
+def validate_host_label(host_label: Any, source: str | None = None) -> str:
     """Validate host name format.
 
     :param host_name: The value to validate
@@ -33,24 +33,24 @@ def validate_host(host_name: Any, source: str | None = None) -> str:
 
     :raises ConfigValidationError: If the value format is invalid
     """
-    if not isinstance(host_name, str):
+    if not isinstance(host_label, str):
         raise ConfigValidationError(
-            "host",
-            host_name,
-            f"Host must be a string, got {type(host_name).__name__}",
+            "host_label",
+            host_label,
+            f"host_label must be a string, got {type(host_label).__name__}",
             source,
         )
 
-    pattern = r"^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{,63}(?<!-)$"
+    pattern = r"^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{1,63}(?<!-)$"
 
-    if not re.match(pattern, host_name):
+    if not re.match(pattern, host_label):
         raise ConfigValidationError(
             "host",
-            host_name,
-            "Host doesn't match the pattern.",
+            host_label,
+            "host_label doesn't match the pattern.",
             source,
         )
-    return host_name
+    return host_label
 
 
 def validate_retry_mode(retry_mode: Any, source: str | None = None) -> str:

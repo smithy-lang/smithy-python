@@ -1,11 +1,9 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Unit tests for AWS configuration validators."""
-
 import pytest
 from smithy_aws_core.config.validators import (
     ConfigValidationError,
-    validate_host,
+    validate_host_label,
     validate_max_attempts,
     validate_retry_mode,
 )
@@ -14,12 +12,12 @@ from smithy_aws_core.config.validators import (
 class TestValidators:
     @pytest.mark.parametrize("region", ["us-east-1", "eu-west-1", "ap-south-1"])
     def test_validate_region_accepts_valid_values(self, region: str) -> None:
-        assert validate_host(region) == region
+        assert validate_host_label(region) == region
 
-    @pytest.mark.parametrize("invalid", ["-invalid", "-east", "12345", 1234])
+    @pytest.mark.parametrize("invalid", ["-invalid", "-east", "12345", "", 1234])
     def test_validate_region_rejects_invalid_values(self, invalid: str) -> None:
         with pytest.raises(ConfigValidationError):
-            validate_host(invalid)
+            validate_host_label(invalid)
 
     @pytest.mark.parametrize("mode", ["standard", "simple"])
     def test_validate_retry_mode_accepts_valid_values(self, mode: str) -> None:
