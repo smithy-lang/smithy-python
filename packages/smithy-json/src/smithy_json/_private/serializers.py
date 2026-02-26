@@ -288,7 +288,7 @@ class StreamingJSONEncoder:
 
     def _write_non_numeric_float(self, value: float | Decimal) -> bool:
         if value != value:
-            self._sink.write(b"NaN")
+            self._sink.write(b'"NaN"')
             return True
 
         if value == _INF:
