@@ -1,9 +1,8 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-from typing import cast
 
 from smithy_core.config.resolver import ConfigResolver
-from smithy_core.retries import RetryStrategyOptions, RetryStrategyType
+from smithy_core.retries import RetryStrategyOptions
 
 from smithy_aws_core.config.validators import validate_max_attempts, validate_retry_mode
 
@@ -21,31 +20,31 @@ def resolve_retry_strategy(
     :param resolver: The config resolver to use for resolution
 
     :returns: Tuple of (RetryStrategyOptions, source_name) if both retry_mode and max_attempts
-        are resolved. Returns (None, None) if either value is missing.
+        are resolved. Returns (None, None) if both values are missing.
 
         For mixed sources, the source name includes both component sources:
         "retry_mode=environment, max_attempts=config_file"
     """
-    # Get retry_mode
+
     retry_mode, mode_source = resolver.get("retry_mode")
 
-    # Get max_attempts
     max_attempts, attempts_source = resolver.get("max_attempts")
 
-    if retry_mode is None or max_attempts is None:
+    if retry_mode is None and max_attempts is None:
         return None, None
 
-    retry_mode = validate_retry_mode(retry_mode, mode_source)
-    retry_mode = cast(RetryStrategyType, retry_mode)
+    if retry_mode is not None:
+        retry_mode = validate_retry_mode(retry_mode, mode_source)
 
-    max_attempts = validate_max_attempts(max_attempts, attempts_source)
+    if max_attempts is not None:
+        max_attempts = validate_max_attempts(max_attempts, attempts_source)
 
     options = RetryStrategyOptions(
-        retry_mode=retry_mode,
-        max_attempts=max_attempts,
+        retry_mode=retry_mode or "standard",  # type: ignore
+        max_attempts=max_attempts,  # Can be None because strategy will use its default
     )
 
     # Construct mixed source string showing where each component came from
-    source = f"retry_mode={mode_source}, max_attempts={attempts_source}"
+    source = f"retry_mode={mode_source or 'default'}, max_attempts={attempts_source or 'default'}"
 
     return (options, source)

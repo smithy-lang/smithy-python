@@ -94,10 +94,10 @@ def validate_max_attempts(max_attempts: str | int, source: str | None = None) ->
 
     :returns: The validated max_attempts as an integer
 
-    :raises ConfigValidationError: If the value cannot be converted to an integer
+    :raises ConfigValidationError: If the value is less than 1 or cannot be converted to an integer
     """
     try:
-        return int(max_attempts)
+        max_attempts = int(max_attempts)
     except (ValueError, TypeError):
         raise ConfigValidationError(
             "max_attempts",
@@ -105,6 +105,16 @@ def validate_max_attempts(max_attempts: str | int, source: str | None = None) ->
             f"max_attempts must be a number, got {type(max_attempts).__name__}",
             source,
         )
+
+    if max_attempts < 1:
+        raise ConfigValidationError(
+            "max_attempts",
+            max_attempts,
+            f"max_attempts must be a positive integer, got {max_attempts}",
+            source,
+        )
+
+    return max_attempts
 
 
 def validate_retry_strategy(
