@@ -1,5 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+from typing import Any
+
 import pytest
 from smithy_aws_core.config.validators import (
     ConfigValidationError,
@@ -30,11 +32,15 @@ class TestValidators:
         with pytest.raises(ConfigValidationError):
             validate_retry_mode(invalid_mode)
 
-    def test_validate_invalid_max_attempts_raises_error(self) -> None:
+    @pytest.mark.parametrize("invalid_max_attempts", ["abcd", 0, -1])
+    def test_validate_invalid_max_attempts_raises_error(
+        self, invalid_max_attempts: Any
+    ) -> None:
         with pytest.raises(
-            ConfigValidationError, match="max_attempts must be a number"
+            ConfigValidationError,
+            match=r"(max_attempts must be a number|max_attempts must be a positive integer)",
         ):
-            validate_max_attempts("abcd")
+            validate_max_attempts(invalid_max_attempts)
 
     def test_invalid_retry_mode_error_message(self) -> None:
         with pytest.raises(ConfigValidationError) as exc_info:

@@ -65,23 +65,27 @@ class TestResolveCustomResolverRetryStrategy:
         assert result.max_attempts == 10
         assert isinstance(result.max_attempts, int)
 
-    def test_returns_none_when_only_retry_mode_set(self) -> None:
+    def test_returns_strategy_when_only_retry_mode_set(self) -> None:
         source = StubSource("environment", {"retry_mode": "standard"})
         resolver = ConfigResolver(sources=[source])
 
         result, source_name = resolve_retry_strategy(resolver)
 
-        assert result is None
-        assert source_name is None
+        assert isinstance(result, RetryStrategyOptions)
+        assert result.retry_mode == "standard"
+        assert result.max_attempts is None
+        assert source_name == "retry_mode=environment, max_attempts=default"
 
-    def test_returns_none_when_only_max_attempts_set(self) -> None:
+    def test_returns_strategy_when_only_max_attempts_set(self) -> None:
         source = StubSource("environment", {"max_attempts": "5"})
         resolver = ConfigResolver(sources=[source])
 
         result, source_name = resolve_retry_strategy(resolver)
 
-        assert result is None
-        assert source_name is None
+        assert isinstance(result, RetryStrategyOptions)
+        assert result.retry_mode == "standard"
+        assert result.max_attempts == 5
+        assert source_name == "retry_mode=default, max_attempts=environment"
 
     def test_returns_none_when_both_values_missing(self) -> None:
         source = StubSource("environment", {})
