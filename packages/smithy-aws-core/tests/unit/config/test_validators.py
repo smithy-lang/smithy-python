@@ -5,8 +5,8 @@ from typing import Any
 import pytest
 from smithy_aws_core.config.validators import (
     ConfigValidationError,
-    validate_host_label,
     validate_max_attempts,
+    validate_region,
     validate_retry_mode,
 )
 
@@ -14,12 +14,12 @@ from smithy_aws_core.config.validators import (
 class TestValidators:
     @pytest.mark.parametrize("region", ["us-east-1", "eu-west-1", "ap-south-1"])
     def test_validate_region_accepts_valid_values(self, region: str) -> None:
-        assert validate_host_label(region) == region
+        assert validate_region(region) == region
 
-    @pytest.mark.parametrize("invalid", ["-invalid", "-east", "12345", "", 1234])
+    @pytest.mark.parametrize("invalid", ["-invalid", "-east", "12345", ""])
     def test_validate_region_rejects_invalid_values(self, invalid: str) -> None:
         with pytest.raises(ConfigValidationError):
-            validate_host_label(invalid)
+            validate_region(invalid)
 
     @pytest.mark.parametrize("mode", ["standard", "simple"])
     def test_validate_retry_mode_accepts_valid_values(self, mode: str) -> None:
@@ -46,6 +46,6 @@ class TestValidators:
         with pytest.raises(ConfigValidationError) as exc_info:
             validate_retry_mode("random_mode")
         assert (
-            "Invalid value for 'retry_mode': 'random_mode'. Retry mode must be one "
+            "Invalid value for 'retry_mode': 'random_mode'. retry_mode must be one "
             "of ('simple', 'standard'), got random_mode" in str(exc_info.value)
         )

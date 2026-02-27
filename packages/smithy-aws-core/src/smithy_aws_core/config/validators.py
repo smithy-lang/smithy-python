@@ -23,37 +23,29 @@ class ConfigValidationError(ValueError):
         super().__init__(msg)
 
 
-def validate_host_label(host_label: Any, source: str | None = None) -> str:
-    """Validate host name format.
+def validate_region(region: str, source: str | None = None) -> str:
+    """Validate region name format.
 
-    :param host_name: The value to validate
+    :param region: The value to validate
     :param source: The config source that provided this value
 
     :returns: The validated value
 
     :raises ConfigValidationError: If the value format is invalid
     """
-    if not isinstance(host_label, str):
-        raise ConfigValidationError(
-            "host_label",
-            host_label,
-            f"host_label must be a string, got {type(host_label).__name__}",
-            source,
-        )
-
     pattern = r"^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{1,63}(?<!-)$"
 
-    if not re.match(pattern, host_label):
+    if not re.match(pattern, region):
         raise ConfigValidationError(
-            "host",
-            host_label,
-            "host_label doesn't match the pattern.",
+            "region",
+            region,
+            "region doesn't match the pattern.",
             source,
         )
-    return host_label
+    return region
 
 
-def validate_retry_mode(retry_mode: Any, source: str | None = None) -> str:
+def validate_retry_mode(retry_mode: str, source: str | None = None) -> str:
     """Validate retry mode.
 
     Valid values: 'standard', 'simple'
@@ -65,13 +57,6 @@ def validate_retry_mode(retry_mode: Any, source: str | None = None) -> str:
 
     :raises: ConfigValidationError: If the retry mode is invalid
     """
-    if not isinstance(retry_mode, str):
-        raise ConfigValidationError(
-            "retry_mode",
-            retry_mode,
-            f"Retry mode must be a string, got {type(retry_mode).__name__}",
-            source,
-        )
 
     valid_modes = get_args(RetryStrategyType)
 
@@ -79,7 +64,7 @@ def validate_retry_mode(retry_mode: Any, source: str | None = None) -> str:
         raise ConfigValidationError(
             "retry_mode",
             retry_mode,
-            f"Retry mode must be one of {valid_modes}, got {retry_mode}",
+            f"retry_mode must be one of {valid_modes}, got {retry_mode}",
             source,
         )
 

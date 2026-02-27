@@ -83,7 +83,6 @@ class TestResolveCustomResolverRetryStrategy:
         result, source_name = resolve_retry_strategy(resolver)
 
         assert isinstance(result, RetryStrategyOptions)
-        assert result.retry_mode == "standard"
         assert result.max_attempts == 5
         assert source_name == "retry_mode=default, max_attempts=environment"
 

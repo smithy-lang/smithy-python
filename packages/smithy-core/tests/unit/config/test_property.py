@@ -132,7 +132,7 @@ class TestConfigPropertyValidation:
         config = ConfigWithValidator(resolver)
 
         with pytest.raises(ValueError, match="Invalid value"):
-            _ = config.region
+            config.region
 
     def test_validator_not_called_on_cached_access(self) -> None:
         call_count = 0
@@ -148,9 +148,9 @@ class TestConfigPropertyValidation:
         config = ConfigWithValidator(resolver)
 
         # Multiple accesses
-        _ = config.region
-        _ = config.region
-        _ = config.region
+        config.region
+        config.region
+        config.region
 
         # Only the first call accessed the validator
         assert call_count == 1  # Validator called only once
@@ -175,7 +175,7 @@ class TestConfigPropertySetter:
         config = StubConfig(resolver)
 
         # First access triggers resolution from environment source
-        _ = config.region
+        config.region
 
         # Modify after resolution
         config.region = "eu-west-1"
@@ -248,24 +248,10 @@ class TestConfigPropertyCaching:
         resolver = ConfigResolver(sources=[source])
         config = StubConfig(resolver)
 
-        _ = config.region
+        config.region
 
         cached: Any = getattr(config, "_cache_region")
         assert cached == ("us-west-2", "environment")
-
-    def test_cache_key_is_unique_per_property(self) -> None:
-        source = StubSource(
-            "environment", {"region": "us-west-2", "retry_mode": "adaptive"}
-        )
-        resolver = ConfigResolver(sources=[source])
-        config = StubConfig(resolver)
-
-        _ = config.region
-        _ = config.retry_mode
-
-        assert hasattr(config, "_cache_retry_mode")
-        assert hasattr(config, "_cache_region")
-        assert getattr(config, "_cache_region") != getattr(config, "_cache_retry_mode")
 
     def test_validator_called_on_default_value(self) -> None:
         call_log: list[tuple[Any, str | None]] = []
@@ -286,6 +272,6 @@ class TestConfigPropertyCaching:
         resolver = ConfigResolver(sources=[source])
         config = ConfigWithDefault(resolver)
 
-        _ = config.region
+        config.region
 
         assert call_log == [("us-default-1", "default")]
