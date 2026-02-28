@@ -5,6 +5,7 @@
 package software.amazon.smithy.python.aws.codegen;
 
 import static software.amazon.smithy.python.aws.codegen.AwsConfiguration.REGION;
+import static software.amazon.smithy.python.aws.codegen.AwsConfiguration.RETRY_STRATEGY;
 
 import java.util.List;
 import java.util.Set;
@@ -64,6 +65,7 @@ public class AwsAuthIntegration implements PythonIntegration {
                                 .nullable(true)
                                 .build())
                         .addConfigProperty(REGION)
+                        .addConfigProperty(RETRY_STRATEGY)
                         .addConfigProperty(ConfigProperty.builder()
                                 .name("aws_access_key_id")
                                 .type(Symbol.builder().name("str").build())

@@ -53,35 +53,6 @@ public final class ConfigGenerator implements Runnable {
                     .initialize(writer -> writer.write("self.interceptors = interceptors or []"))
                     .build(),
             ConfigProperty.builder()
-                    .name("retry_strategy")
-                    .type(Symbol.builder()
-                            .name("RetryStrategy | RetryStrategyOptions")
-                            .addReference(Symbol.builder()
-                                    .name("RetryStrategy")
-                                    .namespace("smithy_core.interfaces.retries", ".")
-                                    .addDependency(SmithyPythonDependency.SMITHY_CORE)
-                                    .build())
-                            .addReference(Symbol.builder()
-                                    .name("RetryStrategyOptions")
-                                    .namespace("smithy_core.retries", ".")
-                                    .addDependency(SmithyPythonDependency.SMITHY_CORE)
-                                    .build())
-                            .build())
-                    .documentation(
-                            "The retry strategy or options for configuring retry behavior. Can be either a configured RetryStrategy or RetryStrategyOptions to create one.")
-                    .nullable(false)
-                    .useDescriptor(true)
-                    .validator(Symbol.builder()
-                            .name("validate_retry_strategy")
-                            .namespace("smithy_aws_core.config.validators", ".")
-                            .build())
-                    .customResolver(Symbol.builder()
-                            .name("resolve_retry_strategy")
-                            .namespace("smithy_aws_core.config.custom_resolvers", ".")
-                            .build())
-                    .defaultValue("RetryStrategyOptions(retry_mode=\"standard\", max_attempts=3)")
-                    .build(),
-            ConfigProperty.builder()
                     .name("endpoint_uri")
                     .type(Symbol.builder()
                             .name("str | URI")
@@ -349,14 +320,12 @@ public final class ConfigGenerator implements Runnable {
 
         var finalProperties = List.copyOf(properties);
 
-        // Add imports for config resolution
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addImport("smithy_core.config.property", "ConfigProperty");
         writer.addImport("smithy_core.config.resolver", "ConfigResolver");
         writer.addImport("smithy_aws_core.config.sources", "EnvironmentSource");
 
         // Add validator and resolver imports for properties that use descriptors
-        // Also add imports for types used in default values
         for (ConfigProperty property : finalProperties) {
             if (property.useDescriptor()) {
                 if (property.validator().isPresent()) {
@@ -422,6 +391,7 @@ public final class ConfigGenerator implements Runnable {
         writer.write("# Config properties using descriptors (lazy resolution with caching)");
         for (ConfigProperty property : properties) {
             if (property.useDescriptor()) {
+                // Write descriptor assignment
                 writer.writeInline("$L = ConfigProperty('$L'",
                         property.name(),
                         property.name());
@@ -461,6 +431,7 @@ public final class ConfigGenerator implements Runnable {
 
         // Add _resolver declaration
         writer.write("_resolver: ConfigResolver");
+        writer.writeDocs("Resolver for iterating through config sources to retrieve keys.", context);
         writer.writeDocs("Shared resolver for all Config instances.", context);
         writer.write("");
     }
@@ -471,14 +442,13 @@ public final class ConfigGenerator implements Runnable {
         }
     }
 
-    // Handle descriptor properties efficiently with a loop
     private void initializeProperties(PythonWriter writer, Collection<ConfigProperty> properties) {
-        // First, initialize the resolver
+        // Initialize the resolver
         writer.write("# Create resolver with environment source");
         writer.write("self._resolver = ConfigResolver(sources=[EnvironmentSource()])");
         writer.write("");
 
-        // Then, handle descriptor properties efficiently with a loop
+        // handle descriptor properties efficiently with a loop
         var descriptorProperties = properties.stream()
                 .filter(ConfigProperty::useDescriptor)
                 .map(ConfigProperty::name)
@@ -486,6 +456,7 @@ public final class ConfigGenerator implements Runnable {
 
         if (!descriptorProperties.isEmpty()) {
             writer.write("# Set instance values for descriptor properties");
+            writer.write("# Only set if provided (not None) to allow resolution from sources");
 
             // Generate the list of descriptor property names
             writer.writeInline("descriptor_keys = [");
@@ -568,10 +539,8 @@ public final class ConfigGenerator implements Runnable {
                 return;
             }
 
-            // First write the previous text
             writer.write(previousText);
 
-            // Add the get_source helper method
             writer.write("""
 
                         def get_source(self, key: str) -> str | None:
