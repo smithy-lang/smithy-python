@@ -80,6 +80,18 @@ public final class ConfigGenerator implements Runnable {
                         writer.write("self.endpoint_resolver = endpoint_resolver or StaticEndpointResolver()");
                         writer.popState();
                     })
+                    .build(),
+            ConfigProperty.builder()
+                    .name("retry_strategy")
+                    .type(Symbol.builder()
+                            .name("RetryStrategy")
+                            .addReference(Symbol.builder()
+                                    .name("RetryStrategy")
+                                    .namespace("smithy_core.interfaces.retries", ".")
+                                    .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                                    .build())
+                            .build())
+                    .documentation("The retry strategy for the client.")
                     .build());
 
     // This list contains any properties that must be added to any http-based
@@ -292,8 +304,20 @@ public final class ConfigGenerator implements Runnable {
     private void generateConfig(GenerationContext context, PythonWriter writer) {
         var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
 
-        // Initialize a set of config properties with our base properties.
+        // Initialize a set of config properties.
         var properties = new TreeSet<>(Comparator.comparing(ConfigProperty::name));
+
+        var model = context.model();
+        var service = context.settings().service(model);
+
+        for (PythonIntegration integration : context.integrations()) {
+            for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
+                if (plugin.matchesService(model, service)) {
+                    properties.addAll(plugin.getConfigProperties());
+                }
+            }
+        }
+
         properties.addAll(BASE_PROPERTIES);
         properties.addAll(getProtocolProperties(context));
 
@@ -306,43 +330,37 @@ public final class ConfigGenerator implements Runnable {
 
         writer.onSection(new AddGetSourceHelper());
 
-        var model = context.model();
-        var service = context.settings().service(model);
-
-        // Add any relevant config properties from plugins.
-        for (PythonIntegration integration : context.integrations()) {
-            for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
-                if (plugin.matchesService(model, service)) {
-                    properties.addAll(plugin.getConfigProperties());
-                }
-            }
-        }
-
         var finalProperties = List.copyOf(properties);
 
-        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-        writer.addImport("smithy_core.config.property", "ConfigProperty");
-        writer.addImport("smithy_core.config.resolver", "ConfigResolver");
-        writer.addImport("smithy_aws_core.config.sources", "EnvironmentSource");
+        // Check if any properties use descriptors
+        boolean hasDescriptors = finalProperties.stream().anyMatch(ConfigProperty::useDescriptor);
 
-        // Add validator and resolver imports for properties that use descriptors
-        for (ConfigProperty property : finalProperties) {
-            if (property.useDescriptor()) {
-                if (property.validator().isPresent()) {
-                    var validatorSymbol = property.validator().get();
-                    writer.addImport(validatorSymbol.getNamespace(), validatorSymbol.getName());
-                }
-                if (property.customResolver().isPresent()) {
-                    var resolverSymbol = property.customResolver().get();
-                    writer.addImport(resolverSymbol.getNamespace(), resolverSymbol.getName());
-                }
-                // Add imports for types referenced in default values
-                if (property.defaultValue().isPresent()) {
-                    var defaultValue = property.defaultValue().get();
-                    // Check if default value uses RetryStrategyOptions
-                    if (defaultValue.contains("RetryStrategyOptions")) {
-                        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-                        writer.addImport("smithy_core.retries", "RetryStrategyOptions");
+        // Add config resolution imports only if there are descriptor properties
+        // So not for generic clients
+        if (hasDescriptors) {
+            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+            writer.addImport("smithy_core.config.property", "ConfigProperty");
+            writer.addImport("smithy_core.config.resolver", "ConfigResolver");
+            writer.addImport("smithy_aws_core.config.sources", "EnvironmentSource");
+
+            // Add validator and resolver imports for properties that use descriptors
+            for (ConfigProperty property : finalProperties) {
+                if (property.useDescriptor()) {
+                    if (property.validator().isPresent()) {
+                        var validatorSymbol = property.validator().get();
+                        writer.addImport(validatorSymbol.getNamespace(), validatorSymbol.getName());
+                    }
+                    if (property.customResolver().isPresent()) {
+                        var resolverSymbol = property.customResolver().get();
+                        writer.addImport(resolverSymbol.getNamespace(), resolverSymbol.getName());
+                    }
+                    // Add imports for types referenced in default values
+                    if (property.defaultValue().isPresent()) {
+                        var defaultValue = property.defaultValue().get();
+                        if (defaultValue.contains("RetryStrategyOptions")) {
+                            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+                            writer.addImport("smithy_core.retries", "RetryStrategyOptions");
+                        }
                     }
                 }
             }
@@ -389,10 +407,13 @@ public final class ConfigGenerator implements Runnable {
         }
 
         writer.write("# Config properties using descriptors (lazy resolution with caching)");
+        writer.write("# Dictionary approach avoids duplicating property names");
+        writer.write("_descriptors = {");
+        writer.indent();
+
         for (ConfigProperty property : properties) {
             if (property.useDescriptor()) {
-                // Write descriptor assignment
-                writer.writeInline("$L = ConfigProperty('$L'",
+                writer.writeInline("'$L': ConfigProperty('$L'",
                         property.name(),
                         property.name());
 
@@ -408,7 +429,23 @@ public final class ConfigGenerator implements Runnable {
                     writer.writeInline(", default_value=$L", property.defaultValue().get());
                 }
 
-                writer.write(")");
+                writer.write("),");
+            }
+        }
+
+        writer.dedent();
+        writer.write("}");
+        writer.write("");
+
+        for (ConfigProperty property : properties) {
+            if (property.useDescriptor()) {
+                var typeHint = property.isNullable()
+                        ? "$T | None"
+                        : "$T";
+                writer.write("$L: " + typeHint + " = _descriptors['$L']  # type: ignore[assignment]",
+                        property.name(),
+                        property.type(),
+                        property.name());
             }
         }
         writer.write("");
@@ -431,8 +468,6 @@ public final class ConfigGenerator implements Runnable {
 
         // Add _resolver declaration
         writer.write("_resolver: ConfigResolver");
-        writer.writeDocs("Resolver for iterating through config sources to retrieve keys.", context);
-        writer.writeDocs("Shared resolver for all Config instances.", context);
         writer.write("");
     }
 
@@ -448,27 +483,14 @@ public final class ConfigGenerator implements Runnable {
         writer.write("self._resolver = ConfigResolver(sources=[EnvironmentSource()])");
         writer.write("");
 
-        // handle descriptor properties efficiently with a loop
         var descriptorProperties = properties.stream()
                 .filter(ConfigProperty::useDescriptor)
-                .map(ConfigProperty::name)
                 .toList();
 
         if (!descriptorProperties.isEmpty()) {
             writer.write("# Set instance values for descriptor properties");
             writer.write("# Only set if provided (not None) to allow resolution from sources");
-
-            // Generate the list of descriptor property names
-            writer.writeInline("descriptor_keys = [");
-            var iter = descriptorProperties.iterator();
-            while (iter.hasNext()) {
-                writer.writeInline("'$L'", iter.next());
-                if (iter.hasNext()) {
-                    writer.writeInline(", ");
-                }
-            }
-            writer.write("]");
-            writer.write("for key in descriptor_keys:");
+            writer.write("for key in self.__class__._descriptors.keys():");
             writer.indent();
             writer.write("value = locals().get(key)");
             writer.write("if value is not None:");
