@@ -84,14 +84,19 @@ public final class ConfigGenerator implements Runnable {
             ConfigProperty.builder()
                     .name("retry_strategy")
                     .type(Symbol.builder()
-                            .name("RetryStrategy")
+                            .name("RetryStrategy | RetryStrategyOptions | None")
                             .addReference(Symbol.builder()
                                     .name("RetryStrategy")
                                     .namespace("smithy_core.interfaces.retries", ".")
                                     .addDependency(SmithyPythonDependency.SMITHY_CORE)
                                     .build())
+                            .addReference(Symbol.builder()
+                                    .name("RetryStrategyOptions")
+                                    .namespace("smithy_core.retries", ".")
+                                    .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                                    .build())
                             .build())
-                    .documentation("The retry strategy for the client.")
+                    .documentation("The retry strategy or options for configuring retry behavior. Can be either a configured RetryStrategy or RetryStrategyOptions to create one.")
                     .build());
 
     // This list contains any properties that must be added to any http-based
@@ -310,6 +315,7 @@ public final class ConfigGenerator implements Runnable {
         var model = context.model();
         var service = context.settings().service(model);
 
+        // Add plugin properties first so they can override base properties with same name.
         for (PythonIntegration integration : context.integrations()) {
             for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
                 if (plugin.matchesService(model, service)) {
@@ -335,8 +341,7 @@ public final class ConfigGenerator implements Runnable {
         // Check if any properties use descriptors
         boolean hasDescriptors = finalProperties.stream().anyMatch(ConfigProperty::useDescriptor);
 
-        // Add config resolution imports only if there are descriptor properties
-        // So not for generic clients
+        // Only add config resolution imports if there are descriptor properties
         if (hasDescriptors) {
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
             writer.addImport("smithy_core.config.property", "ConfigProperty");
@@ -391,23 +396,22 @@ public final class ConfigGenerator implements Runnable {
                 """,
                 configSymbol.getName(),
                 serviceId,
-                writer.consumer(w -> writeDescriptorDeclarations(w, finalProperties)),
                 writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
+                writer.consumer(w -> writeDescriptorDeclarations(w, finalProperties, context)),
                 writer.consumer(w -> writeInitParams(w, finalProperties)),
                 writer.consumer(w -> initializeProperties(w, finalProperties)));
         writer.popState();
     }
 
     // Write descriptor declarations for properties using ConfigProperty descriptor
-    private void writeDescriptorDeclarations(PythonWriter writer, Collection<ConfigProperty> properties) {
+    private void writeDescriptorDeclarations(PythonWriter writer, Collection<ConfigProperty> properties, GenerationContext context) {
         boolean hasDescriptors = properties.stream().anyMatch(ConfigProperty::useDescriptor);
 
         if (!hasDescriptors) {
             return;
         }
 
-        writer.write("# Config properties using descriptors (lazy resolution with caching)");
-        writer.write("# Dictionary approach avoids duplicating property names");
+        writer.write("# Config properties using descriptors");
         writer.write("_descriptors = {");
         writer.indent();
 
@@ -446,6 +450,11 @@ public final class ConfigGenerator implements Runnable {
                         property.name(),
                         property.type(),
                         property.name());
+
+                if (!property.documentation().isEmpty()) {
+                    writer.writeDocs(property.documentation(), context);
+                }
+                writer.write("");
             }
         }
         writer.write("");
@@ -458,37 +467,47 @@ public final class ConfigGenerator implements Runnable {
                 continue;
             }
 
-            var formatString = property.isNullable()
-                    ? "$L: $T | None"
-                    : "$L: $T";
+            String typeName = property.type().getName();
+            String formatString;
+            if (property.isNullable() && !typeName.endsWith("| None")) {
+                formatString = "$L: $T | None";
+            } else {
+                formatString = "$L: $T";
+            }
             writer.write(formatString, property.name(), property.type());
             writer.writeDocs(property.documentation(), context);
             writer.write("");
         }
 
-        // Add _resolver declaration
-        writer.write("_resolver: ConfigResolver");
-        writer.write("");
+        // Add _resolver declaration only if there are descriptor properties
+        boolean hasDescriptors = properties.stream().anyMatch(ConfigProperty::useDescriptor);
+        if (hasDescriptors) {
+            writer.write("_resolver: ConfigResolver");
+            writer.write("");
+        }
     }
 
     private void writeInitParams(PythonWriter writer, Collection<ConfigProperty> properties) {
         for (ConfigProperty property : properties) {
-            writer.write("$L: $T | None = None,", property.name(), property.type());
+            String typeName = property.type().getName();
+            if (typeName.endsWith("| None")) {
+                writer.write("$L: $T = None,", property.name(), property.type());
+            } else {
+                writer.write("$L: $T | None = None,", property.name(), property.type());
+            }
         }
     }
 
     private void initializeProperties(PythonWriter writer, Collection<ConfigProperty> properties) {
-        // Initialize the resolver
-        writer.write("# Create resolver with environment source");
-        writer.write("self._resolver = ConfigResolver(sources=[EnvironmentSource()])");
-        writer.write("");
-
         var descriptorProperties = properties.stream()
                 .filter(ConfigProperty::useDescriptor)
                 .toList();
 
         if (!descriptorProperties.isEmpty()) {
             writer.write("# Set instance values for descriptor properties");
+            writer.write("self._resolver = ConfigResolver(sources=[EnvironmentSource()])");
+            writer.write("");
+
             writer.write("# Only set if provided (not None) to allow resolution from sources");
             writer.write("for key in self.__class__._descriptors.keys():");
             writer.indent();
@@ -541,7 +560,6 @@ public final class ConfigGenerator implements Runnable {
         }
     }
 
-    // Helper to add get_source method for descriptor properties
     private static final class AddGetSourceHelper implements CodeInterceptor<ConfigSection, PythonWriter> {
         @Override
         public Class<ConfigSection> sectionType() {

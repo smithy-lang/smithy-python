@@ -17,7 +17,7 @@ public final class AwsConfiguration {
 
     public static final ConfigProperty REGION = ConfigProperty.builder()
             .name("region")
-            .type(Symbol.builder().name("str").build())
+            .type(Symbol.builder().name("str | None").build())
             .documentation(" The AWS region to connect to. The configured region is used to "
                     + "determine the service endpoint.")
             .nullable(false)
@@ -27,13 +27,12 @@ public final class AwsConfiguration {
                     .namespace("smithy_aws_core.config.validators", ".")
                     .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                     .build())
-            .defaultValue("'us-east-1'")
             .build();
 
     public static final ConfigProperty RETRY_STRATEGY = ConfigProperty.builder()
             .name("retry_strategy")
             .type(Symbol.builder()
-                    .name("RetryStrategy | RetryStrategyOptions")
+                    .name("RetryStrategy | RetryStrategyOptions | None")
                     .addReference(Symbol.builder()
                             .name("RetryStrategy")
                             .namespace("smithy_core.interfaces.retries", ".")
