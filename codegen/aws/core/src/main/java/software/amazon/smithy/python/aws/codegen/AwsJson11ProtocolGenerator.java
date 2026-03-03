@@ -52,12 +52,13 @@ public final class AwsJson11ProtocolGenerator implements ProtocolGenerator {
 
     @Override
     public void generateProtocolTests(GenerationContext context) {
-        context.writerDelegator().useFileWriter("./tests/test_protocol.py", "tests.test_protocol", writer -> {
-            new HttpProtocolTestGenerator(
-                    context,
-                    getProtocol(),
-                    writer,
-                    (shape, testCase) -> TESTS_TO_SKIP.contains(testCase.getId())).run();
-        });
+        context.writerDelegator()
+                .useFileWriter("./tests/test_awsjson11_protocol.py", "tests.test_awsjson11_protocol", writer -> {
+                    new HttpProtocolTestGenerator(
+                            context,
+                            getProtocol(),
+                            writer,
+                            (shape, testCase) -> TESTS_TO_SKIP.contains(testCase.getId())).run();
+                });
     }
 }

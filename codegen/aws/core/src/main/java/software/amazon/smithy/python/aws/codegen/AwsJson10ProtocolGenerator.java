@@ -65,12 +65,13 @@ public final class AwsJson10ProtocolGenerator implements ProtocolGenerator {
 
     @Override
     public void generateProtocolTests(GenerationContext context) {
-        context.writerDelegator().useFileWriter("./tests/test_protocol.py", "tests.test_protocol", writer -> {
-            new HttpProtocolTestGenerator(
-                    context,
-                    getProtocol(),
-                    writer,
-                    (shape, testCase) -> TESTS_TO_SKIP.contains(testCase.getId())).run();
-        });
+        context.writerDelegator()
+                .useFileWriter("./tests/test_awsjson10_protocol.py", "tests.test_awsjson10_protocol", writer -> {
+                    new HttpProtocolTestGenerator(
+                            context,
+                            getProtocol(),
+                            writer,
+                            (shape, testCase) -> TESTS_TO_SKIP.contains(testCase.getId())).run();
+                });
     }
 }
