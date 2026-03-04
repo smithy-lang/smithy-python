@@ -23,7 +23,7 @@ class ConfigValidationError(ValueError):
         super().__init__(msg)
 
 
-def validate_region(region: str, source: str | None = None) -> str:
+def validate_region(region: str | None, source: str | None = None) -> str:
     """Validate region name format.
 
     :param region: The value to validate
@@ -33,6 +33,14 @@ def validate_region(region: str, source: str | None = None) -> str:
 
     :raises ConfigValidationError: If the value format is invalid
     """
+    if region is None:
+        raise ConfigValidationError(
+            "region",
+            region,
+            "region not found. It is required and must be explicitly set.",
+            source,
+        )
+
     pattern = r"^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{1,63}(?<!-)$"
 
     if not re.match(pattern, region):
