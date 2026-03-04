@@ -18,6 +18,13 @@ from smithy_core.traits import DynamicTrait, Trait
 def _parse_http_protocol_values(
     value: DocumentValue | DynamicTrait | None,
 ) -> tuple[tuple[str, ...], tuple[str, ...]]:
+    """Parse aws.protocols HTTP settings from a trait document.
+
+    The input is expected to be shaped like {"http": [...], "eventStreamHttp": [...]}
+    and returns (http_versions, event_stream_http_versions). If "eventStreamHttp"
+    is absent, event streams use the same versions as "http". If "http" is absent,
+    it defaults to ("http/1.1",).
+    """
     document_value = value or {}
     assert isinstance(document_value, Mapping)
 
