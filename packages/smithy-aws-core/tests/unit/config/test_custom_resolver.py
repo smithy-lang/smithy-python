@@ -73,7 +73,7 @@ class TestResolveCustomResolverRetryStrategy:
 
         assert isinstance(result, RetryStrategyOptions)
         assert result.retry_mode == "standard"
-        assert result.max_attempts == 3
+        assert result.max_attempts is None
         assert source_name == "retry_mode=environment, max_attempts=default"
 
     def test_returns_strategy_when_only_max_attempts_set(self) -> None:

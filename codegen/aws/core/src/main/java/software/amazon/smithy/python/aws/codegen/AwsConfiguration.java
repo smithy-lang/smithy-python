@@ -58,6 +58,6 @@ public final class AwsConfiguration {
                     .namespace("smithy_aws_core.config.custom_resolvers", ".")
                     .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                     .build())
-            .defaultValue("RetryStrategyOptions(retry_mode=\"standard\", max_attempts=3)")
+            .defaultValue("RetryStrategyOptions(retry_mode=\"standard\")")
             .build();
 }

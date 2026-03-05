@@ -56,7 +56,7 @@ def validate_region(region: str | None, source: str | None = None) -> str:
 def validate_retry_mode(retry_mode: str, source: str | None = None) -> str:
     """Validate retry mode.
 
-    Valid values: 'standard', 'simple'
+    Valid values: 'standard'
 
     :param retry_mode: The retry mode value to validate
     :param source: The source that provided this value
@@ -65,8 +65,14 @@ def validate_retry_mode(retry_mode: str, source: str | None = None) -> str:
 
     :raises: ConfigValidationError: If the retry mode is invalid
     """
-
-    valid_modes = get_args(RetryStrategyType)
+    # TODO: Remove this block once 'simple' is removed from RetryStrategyType
+    # RetryStrategyType currently supports 'standard' and 'simple' modes. Since 'simple'
+    # will be deprecated soon, we're restricting config to only support 'standard' for now.
+    # This code block will be removed once 'simple' is deprecated and 'adaptive' mode is added.
+    all_modes = list(get_args(RetryStrategyType))
+    if "simple" in all_modes:
+        all_modes.remove("simple")
+    valid_modes = tuple(all_modes)
 
     if retry_mode not in valid_modes:
         raise ConfigValidationError(
