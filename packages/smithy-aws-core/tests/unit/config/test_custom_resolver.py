@@ -73,6 +73,8 @@ class TestResolveCustomResolverRetryStrategy:
 
         assert isinstance(result, RetryStrategyOptions)
         assert result.retry_mode == "standard"
+        # None for max_attempts means the RetryStrategy will use its
+        # own default max_attempts value for the set retry_mode
         assert result.max_attempts is None
         assert source_name == "retry_mode=environment, max_attempts=default"
 
@@ -84,6 +86,7 @@ class TestResolveCustomResolverRetryStrategy:
 
         assert isinstance(result, RetryStrategyOptions)
         assert result.max_attempts == 5
+        assert result.retry_mode == "standard"
         assert source_name == "retry_mode=default, max_attempts=environment"
 
     def test_returns_none_when_both_values_missing(self) -> None:

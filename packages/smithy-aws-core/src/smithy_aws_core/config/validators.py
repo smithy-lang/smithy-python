@@ -23,7 +23,7 @@ class ConfigValidationError(ValueError):
         super().__init__(msg)
 
 
-def validate_region(region: str, source: str | None = None) -> str:
+def validate_region(region: str | None, source: str | None = None) -> str:
     """Validate region name format.
 
     :param region: The value to validate
@@ -33,6 +33,14 @@ def validate_region(region: str, source: str | None = None) -> str:
 
     :raises ConfigValidationError: If the value format is invalid
     """
+    if region is None:
+        raise ConfigValidationError(
+            "region",
+            region,
+            "region not found. It is required and must be explicitly set.",
+            source,
+        )
+
     pattern = r"^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{1,63}(?<!-)$"
 
     if not re.match(pattern, region):
@@ -48,7 +56,7 @@ def validate_region(region: str, source: str | None = None) -> str:
 def validate_retry_mode(retry_mode: str, source: str | None = None) -> str:
     """Validate retry mode.
 
-    Valid values: 'standard', 'simple'
+    Valid values: 'standard'
 
     :param retry_mode: The retry mode value to validate
     :param source: The source that provided this value
@@ -57,8 +65,14 @@ def validate_retry_mode(retry_mode: str, source: str | None = None) -> str:
 
     :raises: ConfigValidationError: If the retry mode is invalid
     """
-
-    valid_modes = get_args(RetryStrategyType)
+    # NOTE: RetryStrategyType supports 'simple' as a direct config value, but the valid
+    # string modes here are restricted to align with the standard AWS retry modes:
+    # 'standard' and 'adaptive'. 'legacy' is intentionally excluded as it is not
+    # recommended. A simple retry strategy can still be provided directly via the config.
+    all_modes = list(get_args(RetryStrategyType))
+    if "simple" in all_modes:
+        all_modes.remove("simple")
+    valid_modes = tuple(all_modes)
 
     if retry_mode not in valid_modes:
         raise ConfigValidationError(

@@ -21,7 +21,7 @@ class TestValidators:
         with pytest.raises(ConfigValidationError):
             validate_region(invalid)
 
-    @pytest.mark.parametrize("mode", ["standard", "simple"])
+    @pytest.mark.parametrize("mode", ["standard"])
     def test_validate_retry_mode_accepts_valid_values(self, mode: str) -> None:
         assert validate_retry_mode(mode) == mode
 
@@ -47,5 +47,5 @@ class TestValidators:
             validate_retry_mode("random_mode")
         assert (
             "Invalid value for 'retry_mode': 'random_mode'. retry_mode must be one "
-            "of ('simple', 'standard'), got random_mode" in str(exc_info.value)
+            "of ('standard',), got random_mode" in str(exc_info.value)
         )
