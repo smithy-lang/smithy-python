@@ -65,10 +65,10 @@ def validate_retry_mode(retry_mode: str, source: str | None = None) -> str:
 
     :raises: ConfigValidationError: If the retry mode is invalid
     """
-    # TODO: Remove this block once 'simple' is removed from RetryStrategyType
-    # RetryStrategyType currently supports 'standard' and 'simple' modes. Since 'simple'
-    # will be deprecated soon, we're restricting config to only support 'standard' for now.
-    # This code block will be removed once 'simple' is deprecated and 'adaptive' mode is added.
+    # NOTE: RetryStrategyType supports 'simple' as a direct config value, but the valid
+    # string modes here are restricted to align with the standard AWS retry modes:
+    # 'standard' and 'adaptive'. 'legacy' is intentionally excluded as it is not
+    # recommended. A simple retry strategy can still be provided directly via the config.
     all_modes = list(get_args(RetryStrategyType))
     if "simple" in all_modes:
         all_modes.remove("simple")
