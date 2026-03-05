@@ -40,8 +40,8 @@ def resolve_retry_strategy(
         max_attempts = validate_max_attempts(max_attempts, attempts_source)
 
     options = RetryStrategyOptions(
-        retry_mode=retry_mode,  # type: ignore
-        max_attempts=max_attempts,  # Can be None because strategy will use its default
+        retry_mode=retry_mode or "standard",  # type: ignore
+        max_attempts=max_attempts,
     )
 
     # Construct mixed source string showing where each component came from
