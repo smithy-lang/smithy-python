@@ -10,6 +10,7 @@ from smithy_aws_core.config.sources import EnvironmentSource
 from smithy_aws_core.config.validators import (
     ConfigValidationError,
     validate_max_attempts,
+    validate_region,
     validate_retry_mode,
 )
 from smithy_core.config.property import ConfigProperty
@@ -33,7 +34,7 @@ class BaseTestConfig:
         return cached[1] if cached else None
 
 
-def make_config_class(properties: dict[str, ConfigProperty]) -> type[BaseTestConfig]:
+def make_config_class(properties: dict[str, ConfigProperty]) -> Any:
     """Factory function to create a config class with specified properties.
 
     :param properties: Dict mapping property names to ConfigProperty instances
@@ -49,7 +50,7 @@ def make_config_class(properties: dict[str, ConfigProperty]) -> type[BaseTestCon
     return type("TestConfig", (BaseTestConfig,), class_dict)
 
 
-class TestConfigResolutionEndToEnd:
+class TestConfigResolution:
     """Functional tests for complete config resolution flow."""
 
     def test_environment_var_resolution(self, monkeypatch: MonkeyPatch) -> None:
@@ -60,7 +61,7 @@ class TestConfigResolutionEndToEnd:
 
         config = TestConfig()
 
-        assert config.region == "eu-west-1"  # type: ignore
+        assert config.region == "eu-west-1"
         assert config.get_source("region") == "environment"
 
     def test_instance_overrides_environment(self, monkeypatch: MonkeyPatch) -> None:
@@ -69,11 +70,11 @@ class TestConfigResolutionEndToEnd:
         )
 
         config = TestConfig()
-        config.region = "us-west-2"  # type: ignore
+        config.region = "us-west-2"
 
         monkeypatch.setenv("AWS_REGION", "eu-west-1")
 
-        assert config.region == "us-west-2"  # type: ignore
+        assert config.region == "us-west-2"
         assert config.get_source("region") == "instance"
 
     def test_complex_resolution_with_custom_resolver(
@@ -84,9 +85,7 @@ class TestConfigResolutionEndToEnd:
                 "retry_strategy": ConfigProperty(
                     "retry_strategy",
                     resolver_func=resolve_retry_strategy,
-                    default_value=RetryStrategyOptions(
-                        retry_mode="standard", max_attempts=3
-                    ),
+                    default_value=RetryStrategyOptions(retry_mode="standard"),
                 )
             }
         )
@@ -96,7 +95,7 @@ class TestConfigResolutionEndToEnd:
 
         config = TestConfig()
 
-        retry_strategy = config.retry_strategy  # type: ignore
+        retry_strategy = config.retry_strategy
         assert isinstance(retry_strategy, RetryStrategyOptions)
         assert retry_strategy.retry_mode == "standard"
         assert retry_strategy.max_attempts == 5
@@ -113,13 +112,104 @@ class TestConfigResolutionEndToEnd:
 
         config = TestConfig()
 
-        region1 = config.region  # type: ignore
+        region1 = config.region
 
         monkeypatch.setenv("AWS_REGION", "eu-central-1")
 
-        region2 = config.region  # type: ignore
+        region2 = config.region
         # The first value for region which is cached is returned
         assert region1 == region2 == "ap-south-1"
+
+    @pytest.mark.parametrize(
+        "property_name,property_config,expected_value",
+        [
+            (
+                "region",
+                ConfigProperty("region", default_value="us-east-1"),
+                "us-east-1",
+            ),
+            (
+                "retry_mode",
+                ConfigProperty(
+                    "retry_mode",
+                    validator=validate_retry_mode,
+                    default_value="standard",
+                ),
+                "standard",
+            ),
+        ],
+    )
+    def test_uses_default_when_no_sources(
+        self, property_name: str, property_config: ConfigProperty, expected_value: str
+    ) -> None:
+        TestConfig = make_config_class({property_name: property_config})
+        config = TestConfig(sources=[])
+
+        assert getattr(config, property_name) == expected_value
+        assert config.get_source(property_name) == "default"
+
+    def test_default_value_for_complex_resolution(
+        self, monkeypatch: MonkeyPatch
+    ) -> None:
+        TestConfig = make_config_class(
+            {
+                "retry_strategy": ConfigProperty(
+                    "retry_strategy",
+                    resolver_func=resolve_retry_strategy,
+                    default_value=RetryStrategyOptions(retry_mode="standard"),
+                )
+            }
+        )
+
+        config = TestConfig()
+
+        retry_strategy = config.retry_strategy
+        assert isinstance(retry_strategy, RetryStrategyOptions)
+        assert retry_strategy.retry_mode == "standard"
+        # None for max_attempts means the RetryStrategy will use its
+        # own default max_attempts value for the set retry_mode
+        assert retry_strategy.max_attempts is None
+        source = config.get_source("retry_strategy")
+        assert source == "default"
+
+    def test_retry_strategy_combines_multiple_sources(
+        self, monkeypatch: MonkeyPatch
+    ) -> None:
+        TestConfig = make_config_class(
+            {
+                "retry_strategy": ConfigProperty(
+                    "retry_strategy",
+                    resolver_func=resolve_retry_strategy,
+                    default_value=RetryStrategyOptions(retry_mode="standard"),
+                )
+            }
+        )
+
+        monkeypatch.setenv("AWS_MAX_ATTEMPTS", "10")
+        config = TestConfig()
+
+        retry_strategy = config.retry_strategy
+        assert retry_strategy.retry_mode == "standard"
+        assert retry_strategy.max_attempts == 10
+        assert (
+            config.get_source("retry_strategy")
+            == "retry_mode=default, max_attempts=environment"
+        )
+
+    def test_validation_error_when_value_assigned(self) -> None:
+        TestConfig = make_config_class(
+            {
+                "retry_mode": ConfigProperty(
+                    "retry_mode",
+                    validator=validate_retry_mode,
+                    default_value="standard",
+                )
+            }
+        )
+        config = TestConfig(sources=[])
+
+        with pytest.raises(ConfigValidationError, match="retry_mode must be one of"):
+            config.retry_mode = "invalid_mode"
 
     def test_validation_error_during_resolution(self, monkeypatch: MonkeyPatch) -> None:
         TestConfig = make_config_class(
@@ -137,46 +227,13 @@ class TestConfigResolutionEndToEnd:
         with pytest.raises(
             ConfigValidationError, match="max_attempts must be a number"
         ):
-            config.max_attempts  # type: ignore
+            config.max_attempts
 
-    def test_returns_default_region_when_source_empty(self) -> None:
+    def test_region_validation_fails_when_none(self) -> None:
         TestConfig = make_config_class(
-            {
-                "region": ConfigProperty("region", default_value="us-east-1"),
-                "max_attempts": ConfigProperty("max_attempts", default_value=3),
-            }
-        )
-
-        config = TestConfig(sources=[])
-
-        assert config.region == "us-east-1"  # type: ignore
-        assert config.max_attempts == 3  # type: ignore
-
-    def test_returns_default_retry_mode_when_source_empty(self) -> None:
-        TestConfig = make_config_class(
-            {
-                "retry_mode": ConfigProperty(
-                    "retry_mode",
-                    validator=validate_retry_mode,
-                    default_value="standard",
-                )
-            }
-        )
-
-        config = TestConfig(sources=[])
-        assert config.retry_mode == "standard"  # type: ignore
-
-    def test_validation_error_when_value_assigned(self) -> None:
-        TestConfig = make_config_class(
-            {
-                "retry_mode": ConfigProperty(
-                    "retry_mode",
-                    validator=validate_retry_mode,
-                    default_value="standard",
-                )
-            }
+            {"region": ConfigProperty("region", validator=validate_region)}
         )
         config = TestConfig(sources=[])
 
-        with pytest.raises(ConfigValidationError, match="retry_mode must be one of"):
-            config.retry_mode = "invalid_mode"  # type: ignore
+        with pytest.raises(ConfigValidationError, match="region not found"):
+            config.region

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from typing import Any
 
+import pytest
 from smithy_core.config.resolver import ConfigResolver
 
 
@@ -110,3 +111,28 @@ class TestConfigResolver:
 
         assert value == ""
         assert source_name == "test"
+
+
+class TestInvalidSourceHandling:
+    """Tests for handling invalid or malformed config sources."""
+
+    def test_invalid_source_missing_get_method(self):
+        class InvalidSource:
+            name = "invalid"
+            # Missing get() method
+
+        resolver = ConfigResolver(sources=[InvalidSource()])  # type: ignore
+
+        with pytest.raises(AttributeError):
+            resolver.get("region")
+
+    def test_invalid_source_missing_name_property(self):
+        class InvalidSource:
+            # Missing source name property
+            def get(self, key: str):
+                return "value"
+
+        resolver = ConfigResolver(sources=[InvalidSource()])  # type: ignore
+
+        with pytest.raises(AttributeError):
+            resolver.get("region")
