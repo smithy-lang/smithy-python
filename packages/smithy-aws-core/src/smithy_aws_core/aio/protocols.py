@@ -51,7 +51,6 @@ from ..traits import (
 from ..utils import (
     parse_document_discriminator,
     parse_error_code,
-    parse_header_error_code,
 )
 
 try:
@@ -64,8 +63,6 @@ try:
     _HAS_EVENT_STREAM = True
 except ImportError:
     _HAS_EVENT_STREAM = False  # type: ignore
-
-_AWS_ERROR_HEADER_KEY: Final = "x-amzn-errortype"
 
 if TYPE_CHECKING:
     from smithy_aws_event_stream.aio import (
@@ -84,17 +81,8 @@ def _assert_event_stream_capable() -> None:
         )
 
 
-def _first_field_value(response: HTTPResponse, field_name: str) -> str | None:
-    if field_name not in response.fields:
-        return None
-    values = response.fields[field_name].values
-    return values[0] if values else None
-
-
 class AWSErrorIdentifier(HTTPErrorIdentifier):
-    _error_code_parser: Callable[[str, str | None], ShapeID | None] = staticmethod(
-        parse_error_code
-    )
+    _HEADER_KEY: Final = "x-amzn-errortype"
 
     def identify(
         self,
@@ -102,14 +90,14 @@ class AWSErrorIdentifier(HTTPErrorIdentifier):
         operation: APIOperation[Any, Any],
         response: HTTPResponse,
     ) -> ShapeID | None:
-        code = _first_field_value(response=response, field_name=_AWS_ERROR_HEADER_KEY)
-        if code is None:
+        if self._HEADER_KEY not in response.fields:
             return None
-        return self._error_code_parser(code, operation.schema.id.namespace)
 
-
-class AWSJSONErrorIdentifier(AWSErrorIdentifier):
-    _error_code_parser = staticmethod(parse_header_error_code)
+        error_field = response.fields[self._HEADER_KEY]
+        code = error_field.values[0] if len(error_field.values) > 0 else None
+        if code is not None:
+            return parse_error_code(code, operation.schema.id.namespace)
+        return None
 
 
 class AWSJSONDocument(JSONDocument):
@@ -123,29 +111,6 @@ class AWSJSONDocument(JSONDocument):
                 f"Unable to parse discriminator for {self.shape_type} document."
             )
         return parsed
-
-
-class AWSJSON11Document(JSONDocument):
-    @property
-    def discriminator(self) -> ShapeID:
-        if self.shape_type is ShapeType.STRUCTURE:
-            return self._schema.id
-
-        if self.shape_type is ShapeType.MAP:
-            map_document = self.as_map()
-            code = map_document.get("__type")
-            if code is None:
-                code = map_document.get("code")
-            if code is not None and code.shape_type is ShapeType.STRING:
-                parsed = parse_header_error_code(
-                    code.as_string(), self._settings.default_namespace
-                )
-                if parsed is not None:
-                    return parsed
-
-        raise DiscriminatorError(
-            f"Unable to parse discriminator for {self.shape_type} document."
-        )
 
 
 class _EventStreamClientProtocolMixin:
@@ -227,8 +192,45 @@ class _EventStreamClientProtocolMixin:
         )
 
 
+class RestJsonClientProtocol(
+    _EventStreamClientProtocolMixin, HttpBindingClientProtocol
+):
+    """An implementation of the aws.protocols#restJson1 protocol."""
+
+    _id: Final = RestJson1Trait.id
+    _content_type: Final = "application/json"
+    _error_identifier: Final = AWSErrorIdentifier()
+
+    def __init__(self, service_schema: Schema) -> None:
+        """Initialize a RestJsonClientProtocol.
+
+        :param service: The schema for the service to interact with.
+        """
+        self._codec: Final = JSONCodec(
+            document_class=AWSJSONDocument,
+            default_namespace=service_schema.id.namespace,
+            default_timestamp_format=TimestampFormat.EPOCH_SECONDS,
+        )
+
+    @property
+    def id(self) -> ShapeID:
+        return self._id
+
+    @property
+    def payload_codec(self) -> Codec:
+        return self._codec
+
+    @property
+    def content_type(self) -> str:
+        return self._content_type
+
+    @property
+    def error_identifier(self) -> HTTPErrorIdentifier:
+        return self._error_identifier
+
+
 class _AWSJSONClientProtocol(_EventStreamClientProtocolMixin, HttpClientProtocol):
-    _error_identifier: Final = AWSJSONErrorIdentifier()
+    _error_identifier: Final = AWSErrorIdentifier()
     _http_trait: Final = HTTPTrait({"method": "POST", "uri": "/"})
 
     _id: ShapeID
@@ -455,43 +457,16 @@ class _AWSJSONClientProtocol(_EventStreamClientProtocolMixin, HttpClientProtocol
             operation=operation, response=response
         )
 
-        if error_id is not None and error_id not in error_registry:
-            raw_code = self._raw_header_error_code(response)
-            if raw_code is not None:
-                legacy_error_id = parse_error_code(
-                    raw_code, operation.schema.id.namespace
-                )
-                if legacy_error_id in error_registry:
-                    error_id = legacy_error_id
-
-        if (
-            (error_id is None or error_id not in error_registry)
-            and self._matches_content_type(response)
-            and not self._is_empty_body(response=response, body=response_body)
-        ):
+        if error_id is None and self._matches_content_type(response):
             if isinstance(response_body, bytearray):
                 response_body = bytes(response_body)
             deserializer = self.payload_codec.create_deserializer(source=response_body)
             document = deserializer.read_document(schema=DOCUMENT)
 
-            body_error_id: ShapeID | None = None
-            try:
-                body_error_id = document.discriminator
-            except DiscriminatorError:
-                body_error_id = None
-
-            if body_error_id in error_registry:
-                error_id = body_error_id
+            if document.discriminator in error_registry:
+                error_id = document.discriminator
                 if isinstance(response_body, SeekableBytesReader):
                     response_body.seek(0)
-            else:
-                legacy_error_id = parse_document_discriminator(
-                    document, operation.schema.id.namespace
-                )
-                if legacy_error_id in error_registry:
-                    error_id = legacy_error_id
-                    if isinstance(response_body, SeekableBytesReader):
-                        response_body.seek(0)
 
         if error_id is not None and error_id in error_registry:
             error_shape = error_registry.get(error_id)
@@ -528,9 +503,6 @@ class _AWSJSONClientProtocol(_EventStreamClientProtocolMixin, HttpClientProtocol
             is_retry_safe=is_throttle or is_timeout or None,
         )
 
-    def _raw_header_error_code(self, response: HTTPResponse) -> str | None:
-        return _first_field_value(response=response, field_name=_AWS_ERROR_HEADER_KEY)
-
     def _matches_content_type(self, response: HTTPResponse) -> bool:
         if "content-type" not in response.fields:
             return False
@@ -550,41 +522,3 @@ class AwsJson11ClientProtocol(_AWSJSONClientProtocol):
 
     _id: ShapeID = AwsJson1_1Trait.id
     _content_type: str = "application/x-amz-json-1.1"
-    _document_class: type[JSONDocument] = AWSJSON11Document
-
-
-class RestJsonClientProtocol(
-    _EventStreamClientProtocolMixin, HttpBindingClientProtocol
-):
-    """An implementation of the aws.protocols#restJson1 protocol."""
-
-    _id: Final = RestJson1Trait.id
-    _content_type: Final = "application/json"
-    _error_identifier: Final = AWSErrorIdentifier()
-
-    def __init__(self, service_schema: Schema) -> None:
-        """Initialize a RestJsonClientProtocol.
-
-        :param service: The schema for the service to interact with.
-        """
-        self._codec: Final = JSONCodec(
-            document_class=AWSJSONDocument,
-            default_namespace=service_schema.id.namespace,
-            default_timestamp_format=TimestampFormat.EPOCH_SECONDS,
-        )
-
-    @property
-    def id(self) -> ShapeID:
-        return self._id
-
-    @property
-    def payload_codec(self) -> Codec:
-        return self._codec
-
-    @property
-    def content_type(self) -> str:
-        return self._content_type
-
-    @property
-    def error_identifier(self) -> HTTPErrorIdentifier:
-        return self._error_identifier

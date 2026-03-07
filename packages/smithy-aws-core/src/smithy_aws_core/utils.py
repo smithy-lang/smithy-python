@@ -30,20 +30,3 @@ def parse_error_code(code: str, default_namespace: str | None) -> ShapeID | None
         return None
 
     return ShapeID.from_parts(name=code, namespace=default_namespace)
-
-
-def parse_header_error_code(code: str, default_namespace: str | None) -> ShapeID | None:
-    if not code:
-        return None
-
-    code = code.split(":")[0]
-    if "#" in code:
-        _, _, name = code.partition("#")
-        if name and default_namespace:
-            return ShapeID.from_parts(name=name, namespace=default_namespace)
-        return ShapeID(code)
-
-    if not code or not default_namespace:
-        return None
-
-    return ShapeID.from_parts(name=code, namespace=default_namespace)

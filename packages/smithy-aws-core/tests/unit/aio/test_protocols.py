@@ -15,7 +15,7 @@ from smithy_aws_core.aio.protocols import (
 from smithy_core import URI
 from smithy_core.aio.interfaces import AsyncWriter
 from smithy_core.documents import TypeRegistry
-from smithy_core.exceptions import CallError, DiscriminatorError, ModeledError
+from smithy_core.exceptions import DiscriminatorError, ModeledError
 from smithy_core.prelude import STRING
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
@@ -274,63 +274,6 @@ def test_aws_json_matches_content_type_with_parameters() -> None:
     assert getattr(protocol, "_matches_content_type")(response)
 
 
-@pytest.mark.asyncio
-async def test_aws_json11_unknown_json_error_returns_call_error() -> None:
-    protocol = AwsJson11ClientProtocol(
-        Schema(id=ShapeID("com.test#JsonService"), shape_type=ShapeType.SERVICE)
-    )
-    operation = _mock_operation(_operation_schema("FailingOperation"))
-    response = HTTPResponse(
-        status=400,
-        reason="Bad Request",
-        fields=tuples_to_fields([("content-type", "application/x-amz-json-1.1")]),
-        body=b'{"message":"no discriminator"}',
-    )
-
-    error = await getattr(protocol, "_create_error")(
-        operation=operation,
-        request=Mock(),
-        response=response,
-        response_body=response.body,
-        error_registry=TypeRegistry({}),
-        context=TypedProperties(),
-    )
-
-    assert isinstance(error, CallError)
-    assert "reason: Bad Request" in error.message
-
-
-@pytest.mark.asyncio
-async def test_aws_json11_empty_json_error_body_returns_call_error() -> None:
-    protocol = AwsJson11ClientProtocol(
-        Schema(id=ShapeID("com.test#JsonService"), shape_type=ShapeType.SERVICE)
-    )
-    operation = _mock_operation(_operation_schema("FailingOperation"))
-    response = HTTPResponse(
-        status=400,
-        reason="Bad Request",
-        fields=tuples_to_fields(
-            [
-                ("content-type", "application/x-amz-json-1.1"),
-                ("content-length", "0"),
-            ]
-        ),
-        body=b"",
-    )
-
-    error = await getattr(protocol, "_create_error")(
-        operation=operation,
-        request=Mock(),
-        response=response,
-        response_body=response.body,
-        error_registry=TypeRegistry({}),
-        context=TypedProperties(),
-    )
-
-    assert isinstance(error, CallError)
-    assert "reason: Bad Request" in error.message
-
-
 class _OtherNamespaceModeledError(ModeledError):
     @classmethod
     def deserialize(cls, deserializer: Any) -> "_OtherNamespaceModeledError":
@@ -338,7 +281,7 @@ class _OtherNamespaceModeledError(ModeledError):
 
 
 @pytest.mark.asyncio
-async def test_aws_json11_resolves_modeled_error_when_header_is_sanitized() -> None:
+async def test_aws_json11_resolves_modeled_error_from_header_other_namespace() -> None:
     protocol = AwsJson11ClientProtocol(
         Schema(id=ShapeID("com.test#JsonService"), shape_type=ShapeType.SERVICE)
     )

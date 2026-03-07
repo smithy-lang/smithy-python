@@ -2,11 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 import pytest
-from smithy_aws_core.utils import (
-    parse_document_discriminator,
-    parse_error_code,
-    parse_header_error_code,
-)
+from smithy_aws_core.utils import parse_document_discriminator, parse_error_code
 from smithy_core.documents import Document
 from smithy_core.shapes import ShapeID
 
@@ -85,20 +81,3 @@ def test_parse_error_code(code: str, expected: ShapeID | None) -> None:
 def test_parse_error_code_without_default_namespace() -> None:
     actual = parse_error_code("FooError", None)
     assert actual is None
-
-
-@pytest.mark.parametrize(
-    "code, expected",
-    [
-        ("FooError", "com.test#FooError"),
-        (
-            "com.other#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate",
-            "com.test#FooError",
-        ),
-        ("", None),
-        (":", None),
-    ],
-)
-def test_parse_header_error_code(code: str, expected: ShapeID | None) -> None:
-    actual = parse_header_error_code(code, "com.test")
-    assert actual == expected
