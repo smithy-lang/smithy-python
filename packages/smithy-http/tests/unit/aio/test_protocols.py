@@ -123,7 +123,7 @@ class MockProtocol(HttpClientProtocol):
         (
             URI(host="foo."),
             URI(host="com.example"),
-            URI(host="foo.com.example"),
+            URI(host="com.example"),
         ),
         (
             URI(host="."),
