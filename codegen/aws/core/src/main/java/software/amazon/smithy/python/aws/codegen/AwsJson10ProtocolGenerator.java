@@ -33,6 +33,10 @@ public final class AwsJson10ProtocolGenerator implements ProtocolGenerator {
             "AwsJson10ClientIgnoresNonTopLevelDefaultsOnMembersWithClientOptional",
             "AwsJson10ClientIgnoresDefaultValuesIfMemberValuesArePresentInResponse",
 
+            // TODO: support of the endpoint trait
+            "AwsJson10EndpointTraitWithHostLabel",
+            "AwsJson10EndpointTrait",
+
             // TODO: support client error-correction behavior when the server
             // omits required values in modeled error responses.
             "AwsJson10ClientErrorCorrectsWhenServerFailsToSerializeRequiredValues",
