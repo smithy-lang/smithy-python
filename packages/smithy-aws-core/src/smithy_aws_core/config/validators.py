@@ -4,6 +4,7 @@
 import re
 from typing import Any, get_args
 
+from smithy_core.config.source_info import SourceInfo
 from smithy_core.interfaces.retries import RetryStrategy
 from smithy_core.retries import RetryStrategyOptions, RetryStrategyType
 
@@ -11,7 +12,9 @@ from smithy_core.retries import RetryStrategyOptions, RetryStrategyType
 class ConfigValidationError(ValueError):
     """Raised when a configuration value fails validation."""
 
-    def __init__(self, key: str, value: Any, reason: str, source: str | None = None):
+    def __init__(
+        self, key: str, value: Any, reason: str, source: SourceInfo | None = None
+    ):
         self.key = key
         self.value = value
         self.reason = reason
@@ -23,7 +26,7 @@ class ConfigValidationError(ValueError):
         super().__init__(msg)
 
 
-def validate_region(region: str | None, source: str | None = None) -> str:
+def validate_region(region: str | None, source: SourceInfo | None = None) -> str:
     """Validate region name format.
 
     :param region: The value to validate
@@ -53,7 +56,7 @@ def validate_region(region: str | None, source: str | None = None) -> str:
     return region
 
 
-def validate_retry_mode(retry_mode: str, source: str | None = None) -> str:
+def validate_retry_mode(retry_mode: str, source: SourceInfo | None = None) -> str:
     """Validate retry mode.
 
     Valid values: 'standard'
@@ -85,7 +88,9 @@ def validate_retry_mode(retry_mode: str, source: str | None = None) -> str:
     return retry_mode
 
 
-def validate_max_attempts(max_attempts: str | int, source: str | None = None) -> int:
+def validate_max_attempts(
+    max_attempts: str | int, source: SourceInfo | None = None
+) -> int:
     """Validate and convert max_attempts to integer.
 
     :param max_attempts: The max attempts value (string or int)
@@ -117,7 +122,7 @@ def validate_max_attempts(max_attempts: str | int, source: str | None = None) ->
 
 
 def validate_retry_strategy(
-    value: Any, source: str | None = None
+    value: Any, source: SourceInfo | None = None
 ) -> RetryStrategy | RetryStrategyOptions:
     """Validate retry strategy configuration.
 

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from smithy_core.config.resolver import ConfigResolver
+from smithy_core.config.source_info import ComplexSource
 from smithy_core.retries import RetryStrategyOptions
 
 from smithy_aws_core.config.validators import validate_max_attempts, validate_retry_mode
@@ -9,7 +10,7 @@ from smithy_aws_core.config.validators import validate_max_attempts, validate_re
 
 def resolve_retry_strategy(
     resolver: ConfigResolver,
-) -> tuple[RetryStrategyOptions | None, str | None]:
+) -> tuple[RetryStrategyOptions | None, ComplexSource | None]:
     """Resolve retry strategy from multiple config keys.
 
     Resolves both retry_mode and max_attempts from sources and constructs
@@ -45,6 +46,11 @@ def resolve_retry_strategy(
     )
 
     # Construct mixed source string showing where each component came from
-    source = f"retry_mode={mode_source or 'default'}, max_attempts={attempts_source or 'default'}"
+    source = ComplexSource(
+        {
+            "retry_mode": mode_source.name if mode_source else "default",
+            "max_attempts": attempts_source.name if attempts_source else "default",
+        }
+    )
 
     return (options, source)
