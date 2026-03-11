@@ -23,6 +23,7 @@ from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
 from smithy_core.prelude import DOCUMENT
 from smithy_core.schemas import APIOperation
 from smithy_core.serializers import SerializeableShape
+from smithy_core.shapes import ShapeID
 from smithy_core.traits import EndpointTrait, HTTPTrait
 
 from ..deserializers import HTTPResponseDeserializer
@@ -65,6 +66,36 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
         )
 
         return request
+
+    def _resolve_error_id(
+        self,
+        *,
+        operation: APIOperation[Any, Any],
+        error_id: ShapeID,
+        error_registry: TypeRegistry,
+    ) -> ShapeID | None:
+        """Resolve a wire error ID against the modeled error registry.
+
+        Error registries are keyed by modeled ShapeIDs. If a fully-qualified wire error
+        ID misses due to a namespace mismatch, retry with the operation's namespace and
+        the same shape name.
+        """
+        if error_id in error_registry:
+            return error_id
+
+        default_namespace = operation.schema.id.namespace
+        if error_id.namespace == default_namespace:
+            return None
+
+        fallback_error_id = ShapeID.from_parts(
+            namespace=default_namespace,
+            name=error_id.name,
+            member=error_id.member,
+        )
+        if fallback_error_id in error_registry:
+            return fallback_error_id
+
+        return None
 
 
 class HttpBindingClientProtocol(HttpClientProtocol):
@@ -192,12 +223,24 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             deserializer = self.payload_codec.create_deserializer(source=response_body)
             document = deserializer.read_document(schema=DOCUMENT)
 
-            if document.discriminator in error_registry:
-                error_id = document.discriminator
+            resolved_error_id = self._resolve_error_id(
+                operation=operation,
+                error_id=document.discriminator,
+                error_registry=error_registry,
+            )
+            if resolved_error_id is not None:
+                error_id = resolved_error_id
                 if isinstance(response_body, SeekableBytesReader):
                     response_body.seek(0)
 
-        if error_id is not None and error_id in error_registry:
+        if error_id is not None:
+            error_id = self._resolve_error_id(
+                operation=operation,
+                error_id=error_id,
+                error_registry=error_registry,
+            )
+
+        if error_id is not None:
             error_shape = error_registry.get(error_id)
 
             # make sure the error shape is derived from modeled exception

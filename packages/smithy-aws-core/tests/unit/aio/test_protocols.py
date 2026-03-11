@@ -340,6 +340,69 @@ async def test_aws_json11_resolves_modeled_error_from_header_only_shapeid() -> N
 
 
 @pytest.mark.asyncio
+async def test_aws_json11_resolves_modeled_error_from_header_default_namespace_fallback() -> (
+    None
+):
+    protocol = AwsJson11ClientProtocol(
+        Schema(id=ShapeID("com.test#JsonService"), shape_type=ShapeType.SERVICE)
+    )
+    operation = _mock_operation(_operation_schema("FailingOperation"))
+    response = HTTPResponse(
+        status=400,
+        reason="Bad Request",
+        fields=tuples_to_fields(
+            [
+                ("x-amzn-errortype", "com.wire#OtherNsError"),
+                ("content-type", "application/x-amz-json-1.1"),
+            ]
+        ),
+        body=b'{"__type":"com.wire#OtherNsError"}',
+    )
+
+    error = await getattr(protocol, "_create_error")(
+        operation=operation,
+        request=Mock(),
+        response=response,
+        response_body=response.body,
+        error_registry=TypeRegistry(
+            {ShapeID("com.test#OtherNsError"): _OtherNamespaceModeledError}
+        ),
+        context=TypedProperties(),
+    )
+
+    assert isinstance(error, _OtherNamespaceModeledError)
+
+
+@pytest.mark.asyncio
+async def test_aws_json11_resolves_modeled_error_from_body_default_namespace_fallback() -> (
+    None
+):
+    protocol = AwsJson11ClientProtocol(
+        Schema(id=ShapeID("com.test#JsonService"), shape_type=ShapeType.SERVICE)
+    )
+    operation = _mock_operation(_operation_schema("FailingOperation"))
+    response = HTTPResponse(
+        status=400,
+        reason="Bad Request",
+        fields=tuples_to_fields([("content-type", "application/x-amz-json-1.1")]),
+        body=b'{"__type":"com.wire#OtherNsError"}',
+    )
+
+    error = await getattr(protocol, "_create_error")(
+        operation=operation,
+        request=Mock(),
+        response=response,
+        response_body=response.body,
+        error_registry=TypeRegistry(
+            {ShapeID("com.test#OtherNsError"): _OtherNamespaceModeledError}
+        ),
+        context=TypedProperties(),
+    )
+
+    assert isinstance(error, _OtherNamespaceModeledError)
+
+
+@pytest.mark.asyncio
 async def test_rest_json_resolves_modeled_error_from_header_only_shapeid() -> None:
     protocol = RestJsonClientProtocol(
         Schema(id=ShapeID("com.test#JsonService"), shape_type=ShapeType.SERVICE)
@@ -359,6 +422,69 @@ async def test_rest_json_resolves_modeled_error_from_header_only_shapeid() -> No
         response_body=response.body,
         error_registry=TypeRegistry(
             {ShapeID("com.other#OtherNsError"): _OtherNamespaceModeledError}
+        ),
+        context=TypedProperties(),
+    )
+
+    assert isinstance(error, _OtherNamespaceModeledError)
+
+
+@pytest.mark.asyncio
+async def test_rest_json_resolves_modeled_error_from_header_default_namespace_fallback() -> (
+    None
+):
+    protocol = RestJsonClientProtocol(
+        Schema(id=ShapeID("com.test#JsonService"), shape_type=ShapeType.SERVICE)
+    )
+    operation = _mock_operation(_http_operation_schema("FailingOperation"))
+    response = HTTPResponse(
+        status=400,
+        reason="Bad Request",
+        fields=tuples_to_fields(
+            [
+                ("x-amzn-errortype", "com.wire#OtherNsError"),
+                ("content-type", "application/json"),
+            ]
+        ),
+        body=b'{"__type":"com.wire#OtherNsError"}',
+    )
+
+    error = await getattr(protocol, "_create_error")(
+        operation=operation,
+        request=Mock(),
+        response=response,
+        response_body=response.body,
+        error_registry=TypeRegistry(
+            {ShapeID("com.test#OtherNsError"): _OtherNamespaceModeledError}
+        ),
+        context=TypedProperties(),
+    )
+
+    assert isinstance(error, _OtherNamespaceModeledError)
+
+
+@pytest.mark.asyncio
+async def test_rest_json_resolves_modeled_error_from_body_default_namespace_fallback() -> (
+    None
+):
+    protocol = RestJsonClientProtocol(
+        Schema(id=ShapeID("com.test#JsonService"), shape_type=ShapeType.SERVICE)
+    )
+    operation = _mock_operation(_http_operation_schema("FailingOperation"))
+    response = HTTPResponse(
+        status=400,
+        reason="Bad Request",
+        fields=tuples_to_fields([("content-type", "application/json")]),
+        body=b'{"__type":"com.wire#OtherNsError"}',
+    )
+
+    error = await getattr(protocol, "_create_error")(
+        operation=operation,
+        request=Mock(),
+        response=response,
+        response_body=response.body,
+        error_registry=TypeRegistry(
+            {ShapeID("com.test#OtherNsError"): _OtherNamespaceModeledError}
         ),
         context=TypedProperties(),
     )

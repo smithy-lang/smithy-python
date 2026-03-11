@@ -463,12 +463,24 @@ class _AWSJSONClientProtocol(_EventStreamClientProtocolMixin, HttpClientProtocol
             deserializer = self.payload_codec.create_deserializer(source=response_body)
             document = deserializer.read_document(schema=DOCUMENT)
 
-            if document.discriminator in error_registry:
-                error_id = document.discriminator
+            resolved_error_id = self._resolve_error_id(
+                operation=operation,
+                error_id=document.discriminator,
+                error_registry=error_registry,
+            )
+            if resolved_error_id is not None:
+                error_id = resolved_error_id
                 if isinstance(response_body, SeekableBytesReader):
                     response_body.seek(0)
 
-        if error_id is not None and error_id in error_registry:
+        if error_id is not None:
+            error_id = self._resolve_error_id(
+                operation=operation,
+                error_id=error_id,
+                error_registry=error_registry,
+            )
+
+        if error_id is not None:
             error_shape = error_registry.get(error_id)
 
             # make sure the error shape is derived from modeled exception
