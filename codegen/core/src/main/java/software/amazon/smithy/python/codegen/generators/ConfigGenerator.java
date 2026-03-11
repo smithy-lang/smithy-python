@@ -97,6 +97,22 @@ public final class ConfigGenerator implements Runnable {
                                     .build())
                             .build())
                     .documentation("The retry strategy or options for configuring retry behavior. Can be either a configured RetryStrategy or RetryStrategyOptions to create one.")
+                    .build(),
+            ConfigProperty.builder()
+                    .name("user_agent_extra")
+                    .type(Symbol.builder().name("str").build())
+                    .documentation("Additional suffix to be appended to the User-Agent header.")
+                    .build(),
+            ConfigProperty.builder()
+                    .name("sdk_ua_app_id")
+                    .type(Symbol.builder().name("str").build())
+                    .documentation("A unique and opaque application ID that is appended to the User-Agent header.")
+                    .build(),
+            ConfigProperty.builder()
+                    .name("endpoint_url")
+                    .type(Symbol.builder().name("str").build())
+                    .documentation("The endpoint URL to use for requests. If not set, the standard endpoint for the service and region will be used.")
+                    .nullable(true)
                     .build());
 
     // This list contains any properties that must be added to any http-based

@@ -96,6 +96,47 @@ class TestConfigPropertyDescriptor:
         assert region == "us-west-2"
         assert retry_mode == "adaptive"
 
+    def test_unresolved_ua_extra_defaults_to_empty_string(self) -> None:
+        class ConfigWithEmptyDefault:
+            user_agent_extra = ConfigProperty(
+                "user_agent_extra",
+                default_value="",
+            )
+
+            def __init__(self, resolver: ConfigResolver) -> None:
+                self._resolver = resolver
+
+        source = StubSource("environment", {})
+        resolver = ConfigResolver(sources=[source])
+        config = ConfigWithEmptyDefault(resolver)
+
+        result = config.user_agent_extra
+
+        assert result == ""
+        assert getattr(config, "_cache_user_agent_extra") == (
+            "",
+            SimpleSource("default"),
+        )
+
+    def test_endpoint_url_defaults_to_none(self) -> None:
+        class ConfigWithNoDefault:
+            endpoint_url = ConfigProperty("endpoint_url")
+
+            def __init__(self, resolver: ConfigResolver) -> None:
+                self._resolver = resolver
+
+        source = StubSource("environment", {})
+        resolver = ConfigResolver(sources=[source])
+        config = ConfigWithNoDefault(resolver)
+
+        result = config.endpoint_url
+
+        assert result is None
+        assert getattr(config, "_cache_endpoint_url") == (
+            None,
+            SimpleSource("default"),
+        )
+
 
 class TestConfigPropertyValidation:
     """Test suite for ConfigProperty validation behavior."""

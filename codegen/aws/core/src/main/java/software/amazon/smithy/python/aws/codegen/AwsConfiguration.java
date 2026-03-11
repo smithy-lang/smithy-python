@@ -60,4 +60,30 @@ public final class AwsConfiguration {
                     .build())
             .defaultValue("RetryStrategyOptions(retry_mode=\"standard\")")
             .build();
+
+    public static final ConfigProperty USER_AGENT_EXTRA = ConfigProperty.builder()
+            .name("user_agent_extra")
+            .type(Symbol.builder().name("str").build())
+            .documentation("Additional suffix to be appended to the User-Agent header.")
+            .nullable(false)
+            .useDescriptor(true)
+            .defaultValue("''")
+            .build();
+
+    public static final ConfigProperty SDK_UA_APP_ID = ConfigProperty.builder()
+            .name("sdk_ua_app_id")
+            .type(Symbol.builder().name("str").build())
+            .documentation("A unique and opaque application ID that is appended to the User-Agent header.")
+            .nullable(false)
+            .useDescriptor(true)
+            .defaultValue("''")
+            .build();
+
+    public static final ConfigProperty ENDPOINT_URL = ConfigProperty.builder()
+            .name("endpoint_url")
+            .type(Symbol.builder().name("str").build())
+            .documentation("The endpoint URL to use for requests. If not set, the standard endpoint for the service and region will be used.")
+            .nullable(true)
+            .useDescriptor(true)
+            .build();
 }
