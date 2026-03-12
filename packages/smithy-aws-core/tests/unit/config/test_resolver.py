@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from typing import Any
 
-from smithy_core.config.resolver import ConfigResolver
-from smithy_core.config.source_info import SimpleSource
+from smithy_aws_core.config.resolver import ConfigResolver
+from smithy_aws_core.config.source_info import SimpleSource
 
 
 class StubSource:

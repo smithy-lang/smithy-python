@@ -4,8 +4,8 @@
 from typing import Any
 
 from smithy_aws_core.config.custom_resolvers import resolve_retry_strategy
-from smithy_core.config.resolver import ConfigResolver
-from smithy_core.config.source_info import ComplexSource
+from smithy_aws_core.config.resolver import ConfigResolver
+from smithy_aws_core.config.source_info import ComplexSource
 from smithy_core.retries import RetryStrategyOptions
 
 

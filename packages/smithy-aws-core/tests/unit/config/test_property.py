@@ -5,9 +5,9 @@ from collections.abc import Callable
 from typing import Any, NoReturn
 
 import pytest
-from smithy_core.config.property import ConfigProperty
-from smithy_core.config.resolver import ConfigResolver
-from smithy_core.config.source_info import SimpleSource, SourceInfo
+from smithy_aws_core.config.property import ConfigProperty
+from smithy_aws_core.config.resolver import ConfigResolver
+from smithy_aws_core.config.source_info import SimpleSource, SourceInfo
 from smithy_core.retries import RetryStrategyOptions
 
 

@@ -2,6 +2,19 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from dataclasses import dataclass
+from enum import StrEnum
+
+
+class SourceName(StrEnum):
+    """Known source names for config value provenance tracking."""
+
+    INSTANCE = "instance"  # value provided via Config constructor
+
+    IN_CODE = "in-code"  # value set via setter after Config construction
+
+    ENVIRONMENT = "environment"  # value resolved from environment variable
+
+    DEFAULT = "default"  # value fall back to default
 
 
 @dataclass(frozen=True)

@@ -3,8 +3,8 @@
 from collections.abc import Callable
 from typing import Any
 
-from smithy_core.config.resolver import ConfigResolver
-from smithy_core.config.source_info import SimpleSource, SourceInfo
+from smithy_aws_core.config.resolver import ConfigResolver
+from smithy_aws_core.config.source_info import SimpleSource, SourceInfo, SourceName
 
 
 class ConfigProperty:
@@ -80,7 +80,7 @@ class ConfigProperty:
 
         if value is None:
             value = self.default_value
-            source = SimpleSource("default")
+            source = SimpleSource(SourceName.DEFAULT)
 
         if self.validator:
             value = self.validator(value, source)
@@ -102,9 +102,9 @@ class ConfigProperty:
         # If cache already exists, it means it was not set during initialization
         # In that case source will be set to in-code
         source = (
-            SimpleSource("in-code")
+            SimpleSource(SourceName.IN_CODE)
             if hasattr(obj, self.cache_attr)
-            else SimpleSource("instance")
+            else SimpleSource(SourceName.INSTANCE)
         )
         if self.validator:
             value = self.validator(value, source)

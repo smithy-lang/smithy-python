@@ -344,8 +344,8 @@ public final class ConfigGenerator implements Runnable {
         // Only add config resolution imports if there are descriptor properties
         if (hasDescriptors) {
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-            writer.addImport("smithy_core.config.property", "ConfigProperty");
-            writer.addImport("smithy_core.config.resolver", "ConfigResolver");
+            writer.addImport("smithy_aws_core.config.property", "ConfigProperty");
+            writer.addImport("smithy_aws_core.config.resolver", "ConfigResolver");
             writer.addImport("smithy_aws_core.config.sources", "EnvironmentSource");
 
             // Add validator and resolver imports for properties that use descriptors

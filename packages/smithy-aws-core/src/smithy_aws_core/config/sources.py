@@ -2,6 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 import os
 
+from smithy_aws_core.config.source_info import SourceName
+
 
 class EnvironmentSource:
     """Configuration from environment variables."""
@@ -16,7 +18,7 @@ class EnvironmentSource:
     @property
     def name(self) -> str:
         """Returns the source name."""
-        return "environment"
+        return SourceName.ENVIRONMENT
 
     def get(self, key: str) -> str | None:
         """Returns a configuration value from environment variables.

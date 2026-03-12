@@ -4,9 +4,10 @@
 import re
 from typing import Any, get_args
 
-from smithy_core.config.source_info import SourceInfo
 from smithy_core.interfaces.retries import RetryStrategy
 from smithy_core.retries import RetryStrategyOptions, RetryStrategyType
+
+from smithy_aws_core.config.source_info import SourceInfo
 
 
 class ConfigValidationError(ValueError):

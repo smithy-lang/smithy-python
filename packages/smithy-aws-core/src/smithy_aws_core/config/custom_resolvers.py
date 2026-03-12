@@ -1,10 +1,10 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-from smithy_core.config.resolver import ConfigResolver
-from smithy_core.config.source_info import ComplexSource
 from smithy_core.retries import RetryStrategyOptions
 
+from smithy_aws_core.config.resolver import ConfigResolver
+from smithy_aws_core.config.source_info import ComplexSource, SourceName
 from smithy_aws_core.config.validators import validate_max_attempts, validate_retry_mode
 
 
@@ -24,7 +24,7 @@ def resolve_retry_strategy(
         are resolved. Returns (None, None) if both values are missing.
 
         For mixed sources, the source name includes both component sources:
-        "retry_mode=environment, max_attempts=config_file"
+        {"retry_mode": "environment", "max_attempts": "default"}
     """
 
     retry_mode, mode_source = resolver.get("retry_mode")
@@ -48,8 +48,10 @@ def resolve_retry_strategy(
     # Construct mixed source string showing where each component came from
     source = ComplexSource(
         {
-            "retry_mode": mode_source.name if mode_source else "default",
-            "max_attempts": attempts_source.name if attempts_source else "default",
+            "retry_mode": mode_source.name if mode_source else SourceName.DEFAULT,
+            "max_attempts": attempts_source.name
+            if attempts_source
+            else SourceName.DEFAULT,
         }
     )
 
