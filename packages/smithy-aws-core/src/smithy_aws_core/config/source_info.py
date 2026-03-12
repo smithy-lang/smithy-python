@@ -23,6 +23,7 @@ class SimpleSource:
 
     Examples: region from environment, max_attempts from config file.
     """
+
     # TODO: Currently only environment variable is implemented as a config
     # source. Tests use raw strings (e.g., "environment", "config_file") as
     # source names to simulate multi-source scenarios. Once additional
