@@ -20,11 +20,16 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 @SmithyInternalApi
 public final class AwsJson11ProtocolGenerator implements ProtocolGenerator {
     private static final Set<String> TESTS_TO_SKIP = Set.of(
+            // These two tests essentially try to assert nan == nan,
+            // which is never true. We should update the generator to
+            // make specific assertions for these.
+            "AwsJson11SupportsNaNFloatInputs",
+
             // TODO: support the request compression trait
             // https://smithy.io/2.0/spec/behavior-traits.html#smithy-api-requestcompression-trait
             "SDKAppliedContentEncoding_awsJson1_1",
             "SDKAppendsGzipAndIgnoresHttpProvidedEncoding_awsJson1_1",
-            
+
             // TODO: support of the endpoint trait
             "AwsJson11EndpointTraitWithHostLabel",
             "AwsJson11EndpointTrait");

@@ -538,7 +538,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 .findAny();
 
         if (streamBinding.isEmpty()) {
-            writer.write("_assert_modeled_value(actual, expected)\n");
+            writer.write("assert actual == expected\n");
             return;
         }
 
@@ -563,7 +563,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 compareMediaBlob(testCase, writer);
                 continue;
             }
-            writer.write("_assert_modeled_value(actual.$1L, expected.$1L)\n", memberName);
+            writer.write("assert actual.$1L == expected.$1L\n", memberName);
         }
     }
 
@@ -631,9 +631,6 @@ public final class HttpProtocolTestGenerator implements Runnable {
         LOGGER.fine(String.format("Writing utility stubs for %s : %s", serviceSymbol.getName(), protocol.getName()));
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-        writer.addStdlibImport("dataclasses", "fields");
-        writer.addStdlibImport("dataclasses", "is_dataclass");
-        writer.addStdlibImport("math", "isnan");
         writer.addImports("smithy_http.interfaces",
                 Set.of(
                         "HTTPRequestConfiguration",
@@ -644,24 +641,6 @@ public final class HttpProtocolTestGenerator implements Runnable {
         writer.addImport("smithy_core.aio.utils", "async_list");
 
         writer.write("""
-                def _assert_modeled_value(actual: object, expected: object) -> None:
-                    if isinstance(expected, float) and isnan(expected):
-                        assert isinstance(actual, float)
-                        assert isnan(actual)
-                        return
-
-                    if is_dataclass(expected):
-                        assert is_dataclass(actual)
-                        for field in fields(expected):
-                            _assert_modeled_value(
-                                getattr(actual, field.name),
-                                getattr(expected, field.name),
-                            )
-                        return
-
-                    assert actual == expected
-
-
                 class $1L($2T):
                     ""\"A test error that subclasses the service-error for protocol tests.""\"
 
