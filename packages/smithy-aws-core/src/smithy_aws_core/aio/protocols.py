@@ -229,7 +229,7 @@ class RestJsonClientProtocol(
         return self._error_identifier
 
 
-class _AWSJSONClientProtocol(_EventStreamClientProtocolMixin, HttpClientProtocol):
+class _AWSJSONClientProtocol(HttpClientProtocol):
     _error_identifier: Final = AWSErrorIdentifier()
     _http_trait: Final = HTTPTrait({"method": "POST", "uri": "/"})
 
