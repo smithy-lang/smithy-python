@@ -4,7 +4,8 @@
 from typing import Any
 
 from smithy_aws_core.config.custom_resolvers import resolve_retry_strategy
-from smithy_core.config.resolver import ConfigResolver
+from smithy_aws_core.config.resolver import ConfigResolver
+from smithy_aws_core.config.source_info import ComplexSource
 from smithy_core.retries import RetryStrategyOptions
 
 
@@ -39,7 +40,9 @@ class TestResolveCustomResolverRetryStrategy:
         assert isinstance(result, RetryStrategyOptions)
         assert result.retry_mode == "standard"
         assert result.max_attempts == 3
-        assert source_name == "retry_mode=environment, max_attempts=environment"
+        assert source_name == ComplexSource(
+            {"retry_mode": "environment", "max_attempts": "environment"}
+        )
 
     def test_tracks_different_sources_for_each_component(self) -> None:
         source1 = StubSource("environment", {"retry_mode": "standard"})
@@ -51,7 +54,9 @@ class TestResolveCustomResolverRetryStrategy:
         assert isinstance(result, RetryStrategyOptions)
         assert result.retry_mode == "standard"
         assert result.max_attempts == 5
-        assert source_name == "retry_mode=environment, max_attempts=config_file"
+        assert source_name == ComplexSource(
+            {"retry_mode": "environment", "max_attempts": "config_file"}
+        )
 
     def test_converts_max_attempts_string_to_int(self) -> None:
         source = StubSource(
@@ -76,7 +81,9 @@ class TestResolveCustomResolverRetryStrategy:
         # None for max_attempts means the RetryStrategy will use its
         # own default max_attempts value for the set retry_mode
         assert result.max_attempts is None
-        assert source_name == "retry_mode=environment, max_attempts=default"
+        assert source_name == ComplexSource(
+            {"retry_mode": "environment", "max_attempts": "default"}
+        )
 
     def test_returns_strategy_when_only_max_attempts_set(self) -> None:
         source = StubSource("environment", {"max_attempts": "5"})
@@ -87,7 +94,9 @@ class TestResolveCustomResolverRetryStrategy:
         assert isinstance(result, RetryStrategyOptions)
         assert result.max_attempts == 5
         assert result.retry_mode == "standard"
-        assert source_name == "retry_mode=default, max_attempts=environment"
+        assert source_name == ComplexSource(
+            {"retry_mode": "default", "max_attempts": "environment"}
+        )
 
     def test_returns_none_when_both_values_missing(self) -> None:
         source = StubSource("environment", {})

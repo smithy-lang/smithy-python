@@ -343,9 +343,9 @@ public final class ConfigGenerator implements Runnable {
 
         // Only add config resolution imports if there are descriptor properties
         if (hasDescriptors) {
-            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-            writer.addImport("smithy_core.config.property", "ConfigProperty");
-            writer.addImport("smithy_core.config.resolver", "ConfigResolver");
+            writer.addDependency(SmithyPythonDependency.SMITHY_AWS_CORE);
+            writer.addImport("smithy_aws_core.config.property", "ConfigProperty");
+            writer.addImport("smithy_aws_core.config.resolver", "ConfigResolver");
             writer.addImport("smithy_aws_core.config.sources", "EnvironmentSource");
 
             // Add validator and resolver imports for properties that use descriptors
@@ -580,17 +580,19 @@ public final class ConfigGenerator implements Runnable {
             }
 
             writer.write(previousText);
+            writer.addImport("smithy_aws_core.config.source_info", "SourceInfo");
 
             writer.write("""
 
-                        def get_source(self, key: str) -> str | None:
+                        def get_source(self, key: str) -> SourceInfo | None:
                             \"""Get the source that provided a configuration value.
 
                             Args:
                                 key: The configuration key (e.g., 'region', 'retry_strategy')
 
                             Returns:
-                                The source name ('instance', 'environment', etc.),
+                                The source info (SimpleSource('source_name') or
+                                ComplexSource({"retry_mode": "source1", "max_attempts": "source2"})),
                                 or None if the key hasn't been resolved yet.
                             \"""
                             cached = self.__dict__.get(f'_cache_{key}')

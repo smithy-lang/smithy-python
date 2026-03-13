@@ -5,6 +5,8 @@ from typing import Any
 
 from smithy_core.interfaces.config import ConfigSource
 
+from smithy_aws_core.config.source_info import SimpleSource
+
 
 class ConfigResolver:
     """Resolves configuration values from multiple sources.
@@ -21,7 +23,7 @@ class ConfigResolver:
         """
         self._sources = sources
 
-    def get(self, key: str) -> tuple[Any, str | None]:
+    def get(self, key: str) -> tuple[Any, SimpleSource | None]:
         """Resolve a configuration value from sources by iterating through them in precedence order.
 
         :param key: The configuration key to resolve (e.g., 'retry_mode')
@@ -32,5 +34,5 @@ class ConfigResolver:
         for source in self._sources:
             value = source.get(key)
             if value is not None:
-                return (value, source.name)
+                return (value, SimpleSource(source.name))
         return (None, None)

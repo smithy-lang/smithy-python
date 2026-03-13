@@ -3,7 +3,8 @@
 from collections.abc import Callable
 from typing import Any
 
-from smithy_core.config.resolver import ConfigResolver
+from smithy_aws_core.config.resolver import ConfigResolver
+from smithy_aws_core.config.source_info import SimpleSource, SourceInfo, SourceName
 
 
 class ConfigProperty:
@@ -27,8 +28,9 @@ class ConfigProperty:
     def __init__(
         self,
         key: str,
-        validator: Callable[[Any, str | None], Any] | None = None,
-        resolver_func: Callable[[ConfigResolver], tuple[Any, str | None]] | None = None,
+        validator: Callable[[Any, SourceInfo | None], Any] | None = None,
+        resolver_func: Callable[[ConfigResolver], tuple[Any, SourceInfo | None]]
+        | None = None,
         default_value: Any = None,
     ):
         """Initialize config property descriptor.
@@ -78,7 +80,7 @@ class ConfigProperty:
 
         if value is None:
             value = self.default_value
-            source = "default"
+            source = SimpleSource(SourceName.DEFAULT)
 
         if self.validator:
             value = self.validator(value, source)
@@ -99,7 +101,11 @@ class ConfigProperty:
         # Determine source based on when the value was set
         # If cache already exists, it means it was not set during initialization
         # In that case source will be set to in-code
-        source = "in-code" if hasattr(obj, self.cache_attr) else "instance"
+        source = (
+            SimpleSource(SourceName.IN_CODE)
+            if hasattr(obj, self.cache_attr)
+            else SimpleSource(SourceName.INSTANCE)
+        )
         if self.validator:
             value = self.validator(value, source)
 

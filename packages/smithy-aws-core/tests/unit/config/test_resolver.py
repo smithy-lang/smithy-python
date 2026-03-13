@@ -2,7 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 from typing import Any
 
-from smithy_core.config.resolver import ConfigResolver
+from smithy_aws_core.config.resolver import ConfigResolver
+from smithy_aws_core.config.source_info import SimpleSource
 
 
 class StubSource:
@@ -31,7 +32,7 @@ class TestConfigResolver:
 
         result = resolver.get("region")
 
-        assert result == ("us-west-2", "environment")
+        assert result == ("us-west-2", SimpleSource("environment"))
 
     def test_returns_None_when_source_has_no_value(self):
         source = StubSource("environment", {})
@@ -57,7 +58,7 @@ class TestConfigResolver:
 
         result = resolver.get("region")
 
-        assert result == ("us-east-1", "source_one")
+        assert result == ("us-east-1", SimpleSource("source_one"))
 
     def test_skips_source_returning_none_and_uses_next(self):
         empty_source = StubSource("source_one", {})
@@ -66,7 +67,7 @@ class TestConfigResolver:
 
         result = resolver.get("region")
 
-        assert result == ("ap-south-1", "source_two")
+        assert result == ("ap-south-1", SimpleSource("source_two"))
 
     def test_resolves_different_keys_from_different_sources(self):
         instance = StubSource("source_one", {"region": "us-west-2"})
@@ -76,8 +77,8 @@ class TestConfigResolver:
         region = resolver.get("region")
         retry_mode = resolver.get("retry_mode")
 
-        assert region == ("us-west-2", "source_one")
-        assert retry_mode == ("adaptive", "source_two")
+        assert region == ("us-west-2", SimpleSource("source_one"))
+        assert retry_mode == ("adaptive", SimpleSource("source_two"))
 
     def test_returns_non_string_values(self):
         source = StubSource(
@@ -89,8 +90,8 @@ class TestConfigResolver:
         )
         resolver = ConfigResolver(sources=[source])
 
-        assert resolver.get("max_retries") == (3, "default")
-        assert resolver.get("use_ssl") == (True, "default")
+        assert resolver.get("max_retries") == (3, SimpleSource("default"))
+        assert resolver.get("use_ssl") == (True, SimpleSource("default"))
 
     def test_get_is_idempotent(self):
         source = StubSource("environment", {"region": "us-west-2"})
@@ -100,7 +101,9 @@ class TestConfigResolver:
         result2 = resolver.get("region")
         result3 = resolver.get("region")
 
-        assert result1 == result2 == result3 == ("us-west-2", "environment")
+        assert (
+            result1 == result2 == result3 == ("us-west-2", SimpleSource("environment"))
+        )
 
     def test_treats_empty_string_as_valid_value(self):
         source = StubSource("test", {"region": ""})
@@ -109,4 +112,4 @@ class TestConfigResolver:
         value, source_name = resolver.get("region")
 
         assert value == ""
-        assert source_name == "test"
+        assert source_name == SimpleSource("test")
