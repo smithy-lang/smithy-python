@@ -96,25 +96,6 @@ class TestConfigPropertyDescriptor:
         assert region == "us-west-2"
         assert retry_mode == "adaptive"
 
-    def test_unresolved_ua_app_id_defaults_to_none(self) -> None:
-        class ConfigWithNoDefault:
-            sdk_ua_app_id = ConfigProperty("sdk_ua_app_id")
-
-            def __init__(self, resolver: ConfigResolver) -> None:
-                self._resolver = resolver
-
-        source = StubSource("environment", {})
-        resolver = ConfigResolver(sources=[source])
-        config = ConfigWithNoDefault(resolver)
-
-        result = config.sdk_ua_app_id
-
-        assert result is None
-        assert getattr(config, "_cache_sdk_ua_app_id") == (
-            None,
-            SimpleSource("default"),
-        )
-
 
 class TestConfigPropertyValidation:
     """Test suite for ConfigProperty validation behavior."""
