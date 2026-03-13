@@ -2,15 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import re
-from string import ascii_letters, digits
 from typing import Any, get_args
 
 from smithy_core.interfaces.retries import RetryStrategy
 from smithy_core.retries import RetryStrategyOptions, RetryStrategyType
 
 from smithy_aws_core.config.source_info import SourceInfo
-
-_USERAGENT_ALLOWED_CHARACTERS = ascii_letters + digits + "!#$%&'*+-.^_`|~/"
 
 
 class ConfigValidationError(ValueError):
@@ -149,18 +146,13 @@ def validate_retry_strategy(
     )
 
 
-def validate_and_sanitize_ua_string(
-    value: Any, source: SourceInfo | None = None
-) -> str | None:
-    """Validate and sanitize a User-Agent string component.
+def validate_ua_string(value: Any, source: SourceInfo | None = None) -> str | None:
+    """Validate a User-Agent string component.
 
-    Replaces all disallowed characters with a hyphen. Allowed characters are
-    ASCII alphanumerics and "!#$%&'*+-.^_`|~/".
-
-    :param value: The UA string value to sanitize
+    :param value: The UA string value to validate
     :param source: The source that provided this value
 
-    :returns: The sanitized UA string or None if value is None
+    :returns: The UA string or None if value is None
 
     :raises ConfigValidationError: If the value is not a string
     """
@@ -173,4 +165,4 @@ def validate_and_sanitize_ua_string(
             f"UA string must be a string, got {type(value).__name__}",
             source,
         )
-    return "".join(c if c in _USERAGENT_ALLOWED_CHARACTERS else "-" for c in value)
+    return value

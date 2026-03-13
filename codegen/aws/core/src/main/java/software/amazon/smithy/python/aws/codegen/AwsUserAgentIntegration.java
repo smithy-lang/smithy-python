@@ -51,7 +51,7 @@ public class AwsUserAgentIntegration implements PythonIntegration {
                     .nullable(true)
                     .useDescriptor(true)
                     .validator(Symbol.builder()
-                            .name("validate_and_sanitize_ua_string")
+                            .name("validate_ua_string")
                             .namespace("smithy_aws_core.config.validators", ".")
                             .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                             .build())
