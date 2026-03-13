@@ -49,6 +49,12 @@ public class AwsUserAgentIntegration implements PythonIntegration {
                             "A unique and opaque application ID that is appended to the User-Agent header.")
                     .type(Symbol.builder().name("str").build())
                     .nullable(true)
+                    .useDescriptor(true)
+                    .validator(Symbol.builder()
+                            .name("validate_ua_string")
+                            .namespace("smithy_aws_core.config.validators", ".")
+                            .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                            .build())
                     .build();
 
             final String user_agent_plugin_file = "user_agent";

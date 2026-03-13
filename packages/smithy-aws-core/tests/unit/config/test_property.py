@@ -107,7 +107,6 @@ class TestConfigPropertyValidation:
 
         class ConfigWithValidator:
             region = ConfigProperty("region", validator=validator)
-            retry_strategy = ConfigProperty("retry_strategy", validator=validator)
 
             def __init__(self, resolver: ConfigResolver) -> None:
                 self._resolver = resolver
@@ -153,9 +152,7 @@ class TestConfigPropertyValidation:
             retry_strategy = ConfigProperty(
                 "retry_strategy",
                 resolver_func=mock_resolver,
-                default_value=RetryStrategyOptions(
-                    retry_mode="standard", max_attempts=3
-                ),
+                default_value=RetryStrategyOptions(retry_mode="standard"),
             )
 
             def __init__(self, resolver: ConfigResolver) -> None:
@@ -171,7 +168,7 @@ class TestConfigPropertyValidation:
 
         assert isinstance(result, RetryStrategyOptions)
         assert result.retry_mode == "standard"
-        assert result.max_attempts == 3
+        assert result.max_attempts is None
         assert source_info == SimpleSource("default")
 
     def test_validator_not_called_on_cached_access(self) -> None:

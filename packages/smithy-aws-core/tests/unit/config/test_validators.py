@@ -8,6 +8,7 @@ from smithy_aws_core.config.validators import (
     validate_max_attempts,
     validate_region,
     validate_retry_mode,
+    validate_ua_string,
 )
 
 
@@ -49,3 +50,20 @@ class TestValidators:
             "Invalid value for 'retry_mode': 'random_mode'. retry_mode must be one "
             "of ('standard',), got random_mode" in str(exc_info.value)
         )
+
+
+class TestValidateUaString:
+    def test_allows_string(self) -> None:
+        assert validate_ua_string("abc123") == "abc123"
+
+    def test_none_returns_none(self) -> None:
+        assert validate_ua_string(None) is None
+
+    def test_empty_string_passthrough(self) -> None:
+        assert validate_ua_string("") == ""
+
+    def test_rejects_non_string(self) -> None:
+        with pytest.raises(ConfigValidationError) as exc_info:
+            validate_ua_string(123)
+
+        assert exc_info.value.key == "sdk_ua_app_id"

@@ -144,3 +144,25 @@ def validate_retry_strategy(
         f"retry_strategy must be RetryStrategy or RetryStrategyOptions, got {type(value).__name__}",
         source,
     )
+
+
+def validate_ua_string(value: Any, source: SourceInfo | None = None) -> str | None:
+    """Validate a User-Agent string component.
+
+    :param value: The UA string value to validate
+    :param source: The source that provided this value
+
+    :returns: The UA string or None if value is None
+
+    :raises ConfigValidationError: If the value is not a string
+    """
+    if value is None:
+        return None
+    if not isinstance(value, str):
+        raise ConfigValidationError(
+            "sdk_ua_app_id",
+            value,
+            f"UA string must be a string, got {type(value).__name__}",
+            source,
+        )
+    return value
