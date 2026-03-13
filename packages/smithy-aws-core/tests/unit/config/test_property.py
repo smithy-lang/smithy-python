@@ -96,31 +96,9 @@ class TestConfigPropertyDescriptor:
         assert region == "us-west-2"
         assert retry_mode == "adaptive"
 
-    def test_unresolved_ua_extra_defaults_to_empty_string(self) -> None:
-        class ConfigWithEmptyDefault:
-            user_agent_extra = ConfigProperty(
-                "user_agent_extra",
-                default_value="",
-            )
-
-            def __init__(self, resolver: ConfigResolver) -> None:
-                self._resolver = resolver
-
-        source = StubSource("environment", {})
-        resolver = ConfigResolver(sources=[source])
-        config = ConfigWithEmptyDefault(resolver)
-
-        result = config.user_agent_extra
-
-        assert result == ""
-        assert getattr(config, "_cache_user_agent_extra") == (
-            "",
-            SimpleSource("default"),
-        )
-
-    def test_endpoint_url_defaults_to_none(self) -> None:
+    def test_unresolved_ua_app_id_defaults_to_none(self) -> None:
         class ConfigWithNoDefault:
-            endpoint_url = ConfigProperty("endpoint_url")
+            sdk_ua_app_id = ConfigProperty("sdk_ua_app_id")
 
             def __init__(self, resolver: ConfigResolver) -> None:
                 self._resolver = resolver
@@ -129,10 +107,10 @@ class TestConfigPropertyDescriptor:
         resolver = ConfigResolver(sources=[source])
         config = ConfigWithNoDefault(resolver)
 
-        result = config.endpoint_url
+        result = config.sdk_ua_app_id
 
         assert result is None
-        assert getattr(config, "_cache_endpoint_url") == (
+        assert getattr(config, "_cache_sdk_ua_app_id") == (
             None,
             SimpleSource("default"),
         )
@@ -148,7 +126,6 @@ class TestConfigPropertyValidation:
 
         class ConfigWithValidator:
             region = ConfigProperty("region", validator=validator)
-            retry_strategy = ConfigProperty("retry_strategy", validator=validator)
 
             def __init__(self, resolver: ConfigResolver) -> None:
                 self._resolver = resolver
@@ -194,9 +171,7 @@ class TestConfigPropertyValidation:
             retry_strategy = ConfigProperty(
                 "retry_strategy",
                 resolver_func=mock_resolver,
-                default_value=RetryStrategyOptions(
-                    retry_mode="standard", max_attempts=3
-                ),
+                default_value=RetryStrategyOptions(retry_mode="standard"),
             )
 
             def __init__(self, resolver: ConfigResolver) -> None:
@@ -212,7 +187,7 @@ class TestConfigPropertyValidation:
 
         assert isinstance(result, RetryStrategyOptions)
         assert result.retry_mode == "standard"
-        assert result.max_attempts == 3
+        assert result.max_attempts is None
         assert source_info == SimpleSource("default")
 
     def test_validator_not_called_on_cached_access(self) -> None:

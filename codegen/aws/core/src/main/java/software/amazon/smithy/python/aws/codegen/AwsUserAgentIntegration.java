@@ -9,13 +9,11 @@ import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.python.codegen.CodegenUtils;
+import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
 import software.amazon.smithy.utils.SmithyInternalApi;
-
-import static software.amazon.smithy.python.aws.codegen.AwsConfiguration.SDK_UA_APP_ID;
-import static software.amazon.smithy.python.aws.codegen.AwsConfiguration.USER_AGENT_EXTRA;
 
 /**
  * Adds a runtime plugin to set user agent.
@@ -38,6 +36,27 @@ public class AwsUserAgentIntegration implements PythonIntegration {
     @Override
     public List<RuntimeClientPlugin> getClientPlugins(GenerationContext context) {
         if (context.applicationProtocol().isHttpProtocol()) {
+            final ConfigProperty userAgentExtra = ConfigProperty.builder()
+                    .name("user_agent_extra")
+                    .documentation("Additional suffix to be added to the User-Agent header.")
+                    .type(Symbol.builder().name("str").build())
+                    .nullable(true)
+                    .build();
+
+            final ConfigProperty uaAppId = ConfigProperty.builder()
+                    .name("sdk_ua_app_id")
+                    .documentation(
+                            "A unique and opaque application ID that is appended to the User-Agent header.")
+                    .type(Symbol.builder().name("str").build())
+                    .nullable(true)
+                    .useDescriptor(true)
+                    .validator(Symbol.builder()
+                            .name("validate_and_sanitize_ua_string")
+                            .namespace("smithy_aws_core.config.validators", ".")
+                            .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                            .build())
+                    .build();
+
             final String user_agent_plugin_file = "user_agent";
 
             final String moduleName = context.settings().moduleName();
@@ -73,8 +92,8 @@ public class AwsUserAgentIntegration implements PythonIntegration {
 
             return List.of(
                     RuntimeClientPlugin.builder()
-                            .addConfigProperty(USER_AGENT_EXTRA)
-                            .addConfigProperty(SDK_UA_APP_ID)
+                            .addConfigProperty(userAgentExtra)
+                            .addConfigProperty(uaAppId)
                             .pythonPlugin(userAgentPlugin)
                             .writeAdditionalFiles((c) -> {
                                 String filename = "src/%s/%s.py".formatted(moduleName, user_agent_plugin_file);

@@ -4,7 +4,6 @@
  */
 package software.amazon.smithy.python.aws.codegen;
 
-import static software.amazon.smithy.python.aws.codegen.AwsConfiguration.ENDPOINT_URL;
 import static software.amazon.smithy.python.aws.codegen.AwsConfiguration.REGION;
 
 import java.util.List;
@@ -24,7 +23,6 @@ public class AwsStandardRegionalEndpointsIntegration implements PythonIntegratio
             return List.of(
                     RuntimeClientPlugin.builder()
                             .addConfigProperty(REGION)
-                            .addConfigProperty(ENDPOINT_URL)
                             .build());
         } else {
             return List.of();

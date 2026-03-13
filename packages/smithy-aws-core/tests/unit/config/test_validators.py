@@ -5,6 +5,7 @@ from typing import Any
 import pytest
 from smithy_aws_core.config.validators import (
     ConfigValidationError,
+    validate_and_sanitize_ua_string,
     validate_max_attempts,
     validate_region,
     validate_retry_mode,
@@ -49,3 +50,27 @@ class TestValidators:
             "Invalid value for 'retry_mode': 'random_mode'. retry_mode must be one "
             "of ('standard',), got random_mode" in str(exc_info.value)
         )
+
+
+class TestValidateUaString:
+    def test_allows_alphanumeric(self) -> None:
+        assert validate_and_sanitize_ua_string("abc123") == "abc123"
+
+    def test_none_returns_none(self) -> None:
+        assert validate_and_sanitize_ua_string(None) is None
+
+    def test_allows_spec_special_chars(self) -> None:
+        assert validate_and_sanitize_ua_string("!#$%&'*+-.^_`|~/") == "!#$%&'*+-.^_`|~/"
+
+    def test_sanitizes_parentheses(self) -> None:
+        result = validate_and_sanitize_ua_string("Java_HotSpot_(TM)_64-Bit_Server_VM")
+        assert result == "Java_HotSpot_-TM-_64-Bit_Server_VM"
+
+    def test_empty_string_passthrough(self) -> None:
+        assert validate_and_sanitize_ua_string("") == ""
+
+    def test_rejects_non_string(self) -> None:
+        with pytest.raises(ConfigValidationError) as exc_info:
+            validate_and_sanitize_ua_string(123)
+
+        assert exc_info.value.key == "sdk_ua_app_id"
