@@ -5,13 +5,15 @@ from __future__ import annotations
 import asyncio
 import json
 from datetime import UTC, datetime, timedelta
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
+from smithy_aws_core.identity.components import AWSCredentialsIdentity
 from smithy_aws_core.identity.process import (
     ProcessCredentialsConfig,
     ProcessCredentialsResolver,
 )
+from smithy_core.aio.identity import ChainedIdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
 
 ISO8601 = "%Y-%m-%dT%H:%M:%SZ"
@@ -35,13 +37,18 @@ def test_config_custom_values():
 
 
 def test_resolver_empty_command():
-    with pytest.raises(ValueError, match="command must be a non-empty list"):
+    with pytest.raises(ValueError, match="command must be a non-empty string or list"):
         ProcessCredentialsResolver([])
 
 
 def test_resolver_none_command():
-    with pytest.raises(ValueError, match="command must be a non-empty list"):
+    with pytest.raises(ValueError, match="command must be a non-empty string or list"):
         ProcessCredentialsResolver(None)  # type: ignore[arg-type]
+
+
+def test_resolver_empty_command_string():
+    with pytest.raises(ValueError, match="command must be a non-empty string or list"):
+        ProcessCredentialsResolver("")
 
 
 def mock_subprocess(returncode: int, stdout: bytes, stderr: bytes = b""):
@@ -206,12 +213,11 @@ async def test_invalid_json():
 
 @pytest.mark.asyncio
 async def test_process_timeout():
-    async def timeout_communicate():
-        await asyncio.sleep(100)
-        return (b"", b"")
-
     process = AsyncMock()
-    process.communicate = timeout_communicate
+    process.returncode = None
+    process.communicate = AsyncMock(side_effect=TimeoutError)
+    process.kill = Mock()
+    process.wait = AsyncMock()
 
     config = ProcessCredentialsConfig(timeout=1)
 
@@ -219,6 +225,45 @@ async def test_process_timeout():
         resolver = ProcessCredentialsResolver(["mock-process"], config=config)
         with pytest.raises(SmithyIdentityError, match="timed out after 1 seconds"):
             await resolver.get_identity(properties={})
+
+    process.kill.assert_called_once_with()
+    process.wait.assert_awaited_once_with()
+
+
+@pytest.mark.asyncio
+async def test_process_startup_failure_raises_smithy_identity_error():
+    with patch(
+        "asyncio.create_subprocess_exec",
+        side_effect=FileNotFoundError("No such file or directory"),
+    ):
+        resolver = ProcessCredentialsResolver(["missing-process"])
+        with pytest.raises(SmithyIdentityError, match="failed to start"):
+            await resolver.get_identity(properties={})
+
+
+@pytest.mark.asyncio
+async def test_process_startup_failure_allows_chained_fallback():
+    class SuccessfulResolver:
+        async def get_identity(self, *, properties: dict[str, str]):
+            return AWSCredentialsIdentity(
+                access_key_id="fallback-akid",
+                secret_access_key="fallback-secret",
+            )
+
+    with patch(
+        "asyncio.create_subprocess_exec",
+        side_effect=FileNotFoundError("No such file or directory"),
+    ):
+        resolver = ChainedIdentityResolver(
+            [
+                ProcessCredentialsResolver(["missing-process"]),
+                SuccessfulResolver(),
+            ]
+        )
+        identity = await resolver.get_identity(properties={})
+
+    assert identity.access_key_id == "fallback-akid"
+    assert identity.secret_access_key == "fallback-secret"
 
 
 @pytest.mark.asyncio
@@ -300,6 +345,28 @@ async def test_command_with_multiple_args():
         "aws-credential-helper",
         "--profile",
         "test",
+        "--format",
+        "json",
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+    )
+
+
+@pytest.mark.asyncio
+async def test_string_command_with_multiple_args():
+    resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
+    process = mock_subprocess(0, resp_body.encode("utf-8"))
+
+    with patch("asyncio.create_subprocess_exec", return_value=process) as mock_exec:
+        resolver = ProcessCredentialsResolver(
+            'aws-credential-helper --profile "test profile" --format json'
+        )
+        await resolver.get_identity(properties={})
+
+    mock_exec.assert_called_once_with(
+        "aws-credential-helper",
+        "--profile",
+        "test profile",
         "--format",
         "json",
         stdout=asyncio.subprocess.PIPE,

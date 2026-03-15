@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
 import json
+import shlex
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
@@ -30,12 +31,15 @@ class ProcessCredentialsResolver(
 
     def __init__(
         self,
-        command: list[str],
+        command: str | list[str],
         config: ProcessCredentialsConfig | None = None,
     ):
-        if not command:
-            raise ValueError("command must be a non-empty list")
-        self._command = command
+        normalized_command = (
+            shlex.split(command) if isinstance(command, str) else command
+        )
+        if not normalized_command:
+            raise ValueError("command must be a non-empty string or list")
+        self._command = list(normalized_command)
         self._config = config or ProcessCredentialsConfig()
         self._credentials = None
 
@@ -56,10 +60,20 @@ class ProcessCredentialsResolver(
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.PIPE,
             )
+        except OSError as e:
+            raise SmithyIdentityError(f"Credential process failed to start: {e}") from e
+
+        try:
             stdout, stderr = await asyncio.wait_for(
                 process.communicate(), timeout=self._config.timeout
             )
         except TimeoutError as e:
+            if process.returncode is None:
+                try:
+                    process.kill()
+                except ProcessLookupError:
+                    pass
+            await process.wait()
             raise SmithyIdentityError(
                 f"Credential process timed out after {self._config.timeout} seconds"
             ) from e
