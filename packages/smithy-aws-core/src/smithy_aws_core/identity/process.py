@@ -82,7 +82,12 @@ class ProcessCredentialsResolver(
             raise SmithyIdentityError(
                 f"Credential process failed with non-zero exit code: {stderr.decode('utf-8')}"
             )
-        creds = json.loads(stdout.decode("utf-8"))
+        try:
+            creds = json.loads(stdout.decode("utf-8"))
+        except json.JSONDecodeError as e:
+            raise SmithyIdentityError(
+                f"Failed to parse credential process output: {e}"
+            ) from e
 
         version = creds.get("Version")
         if version is None or version != 1:
@@ -96,7 +101,8 @@ class ProcessCredentialsResolver(
         account_id = creds.get("AccountId")
 
         if isinstance(expiration, str):
-            expiration = datetime.fromisoformat(expiration).replace(tzinfo=UTC)
+            dt = datetime.fromisoformat(expiration)
+            expiration = dt.astimezone(UTC) if dt.tzinfo else dt.replace(tzinfo=UTC)
 
         if access_key_id is None or secret_access_key is None:
             raise SmithyIdentityError(
