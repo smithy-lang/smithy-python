@@ -21,6 +21,14 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 @SmithyInternalApi
 public class AwsUserAgentIntegration implements PythonIntegration {
 
+    public static final AwsConfigPropertyMetadata SDK_UA_APP_ID_METADATA = AwsConfigPropertyMetadata.builder()
+            .validator(Symbol.builder()
+                    .name("validate_ua_string")
+                    .namespace("smithy_aws_core.config.validators", ".")
+                    .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                    .build())
+            .build();
+
     public static final String USER_AGENT_PLUGIN = """
             def aws_user_agent_plugin(config: $1T):
                 config.interceptors.append(
@@ -49,12 +57,6 @@ public class AwsUserAgentIntegration implements PythonIntegration {
                             "A unique and opaque application ID that is appended to the User-Agent header.")
                     .type(Symbol.builder().name("str").build())
                     .nullable(true)
-                    .useDescriptor(true)
-                    .validator(Symbol.builder()
-                            .name("validate_ua_string")
-                            .namespace("smithy_aws_core.config.validators", ".")
-                            .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
-                            .build())
                     .build();
 
             final String user_agent_plugin_file = "user_agent";
