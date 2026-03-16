@@ -23,9 +23,9 @@ ISO8601 = "%Y-%m-%dT%H:%M:%SZ"
 
 DEFAULT_RESPONSE_DATA = {
     "Version": 1,
-    "AccessKeyId": "akid123",
-    "SecretAccessKey": "s3cr3t",
-    "SessionToken": "session_token",
+    "AccessKeyId": "foo",
+    "SecretAccessKey": "bar",
+    "SessionToken": "baz",
 }
 
 
@@ -71,9 +71,9 @@ async def test_valid_credentials_with_session_token():
         resolver = ProcessCredentialsResolver(["mock-process"])
         identity = await resolver.get_identity(properties={})
 
-    assert identity.access_key_id == "akid123"
-    assert identity.secret_access_key == "s3cr3t"
-    assert identity.session_token == "session_token"
+    assert identity.access_key_id == "foo"
+    assert identity.secret_access_key == "bar"
+    assert identity.session_token == "baz"
     assert identity.expiration is None
     assert identity.account_id is None
 
@@ -82,8 +82,8 @@ async def test_valid_credentials_with_session_token():
 async def test_valid_credentials_without_session_token():
     resp_data = {
         "Version": 1,
-        "AccessKeyId": "akid456",
-        "SecretAccessKey": "s3cr3t456",
+        "AccessKeyId": "foo",
+        "SecretAccessKey": "bar",
     }
     resp_body = json.dumps(resp_data)
     process = mock_subprocess(0, resp_body.encode("utf-8"))
@@ -92,8 +92,8 @@ async def test_valid_credentials_without_session_token():
         resolver = ProcessCredentialsResolver(["mock-process"])
         identity = await resolver.get_identity(properties={})
 
-    assert identity.access_key_id == "akid456"
-    assert identity.secret_access_key == "s3cr3t456"
+    assert identity.access_key_id == "foo"
+    assert identity.secret_access_key == "bar"
     assert identity.session_token is None
 
 
@@ -143,7 +143,7 @@ async def test_non_zero_exit_code():
 async def test_missing_access_key_id():
     resp_data = {
         "Version": 1,
-        "SecretAccessKey": "s3cr3t",
+        "SecretAccessKey": "bar",
     }
     resp_body = json.dumps(resp_data)
     process = mock_subprocess(0, resp_body.encode("utf-8"))
@@ -161,7 +161,7 @@ async def test_missing_access_key_id():
 async def test_missing_secret_access_key():
     resp_data = {
         "Version": 1,
-        "AccessKeyId": "akid123",
+        "AccessKeyId": "foo",
     }
     resp_body = json.dumps(resp_data)
     process = mock_subprocess(0, resp_body.encode("utf-8"))
@@ -192,8 +192,8 @@ async def test_invalid_version():
 @pytest.mark.asyncio
 async def test_missing_version():
     resp_data = {
-        "AccessKeyId": "akid123",
-        "SecretAccessKey": "s3cr3t",
+        "AccessKeyId": "foo",
+        "SecretAccessKey": "bar",
     }
     resp_body = json.dumps(resp_data)
     process = mock_subprocess(0, resp_body.encode("utf-8"))
