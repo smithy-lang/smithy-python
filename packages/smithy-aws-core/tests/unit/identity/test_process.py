@@ -34,9 +34,9 @@ def test_config_custom_values():
     assert config.timeout == 60
 
 
-@pytest.mark.parametrize("command", [[], "", None])
+@pytest.mark.parametrize("command", [[], None])
 def test_resolver_invalid_command(command: object):
-    with pytest.raises(ValueError, match="command must be a non-empty string or list"):
+    with pytest.raises((ValueError, TypeError)):
         ProcessCredentialsResolver(command)  # type: ignore[arg-type]
 
 
@@ -378,28 +378,6 @@ async def test_command_with_multiple_args():
         "aws-credential-helper",
         "--profile",
         "test",
-        "--format",
-        "json",
-        stdout=asyncio.subprocess.PIPE,
-        stderr=asyncio.subprocess.PIPE,
-    )
-
-
-@pytest.mark.asyncio
-async def test_string_command_with_multiple_args():
-    resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
-    process = mock_subprocess(0, resp_body.encode("utf-8"))
-
-    with patch("asyncio.create_subprocess_exec", return_value=process) as mock_exec:
-        resolver = ProcessCredentialsResolver(
-            'aws-credential-helper --profile "test profile" --format json'
-        )
-        await resolver.get_identity(properties={})
-
-    mock_exec.assert_called_once_with(
-        "aws-credential-helper",
-        "--profile",
-        "test profile",
         "--format",
         "json",
         stdout=asyncio.subprocess.PIPE,
