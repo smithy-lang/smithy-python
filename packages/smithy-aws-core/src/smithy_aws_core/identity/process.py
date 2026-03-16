@@ -2,7 +2,6 @@
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
 import json
-import shlex
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
@@ -31,15 +30,12 @@ class ProcessCredentialsResolver(
 
     def __init__(
         self,
-        command: str | list[str],
+        command: list[str],
         config: ProcessCredentialsConfig | None = None,
     ):
-        normalized_command = (
-            shlex.split(command) if isinstance(command, str) else command
-        )
-        if not normalized_command:
-            raise ValueError("command must be a non-empty string or list")
-        self._command = list(normalized_command)
+        if not command:
+            raise ValueError("command must be a non-empty list")
+        self._command = list(command)
         self._config = config or ProcessCredentialsConfig()
         self._credentials = None
 
