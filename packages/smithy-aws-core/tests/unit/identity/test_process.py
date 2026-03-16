@@ -8,7 +8,10 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from smithy_aws_core.identity.components import AWSCredentialsIdentity
+from smithy_aws_core.identity.components import (
+    AWSCredentialsIdentity,
+    AWSIdentityProperties,
+)
 from smithy_aws_core.identity.process import (
     ProcessCredentialsConfig,
     ProcessCredentialsResolver,
@@ -244,7 +247,9 @@ async def test_process_startup_failure_raises_smithy_identity_error():
 @pytest.mark.asyncio
 async def test_process_startup_failure_allows_chained_fallback():
     class SuccessfulResolver:
-        async def get_identity(self, *, properties: dict[str, str]):
+        async def get_identity(
+            self, *, properties: AWSIdentityProperties
+        ) -> AWSCredentialsIdentity:
             return AWSCredentialsIdentity(
                 access_key_id="fallback-akid",
                 secret_access_key="fallback-secret",
