@@ -204,14 +204,14 @@ class TestAdaptiveRetryStrategy:
             # Error case - we got a response (even if it's an error)
             if isinstance(response, Exception):
                 error = response
-                is_throttling = False
             else:
                 error = CallError(
                     fault="server" if response >= 500 else "client",
                     message=f"HTTP {response}",
-                    is_retry_safe=response >= 500,
+                    is_retry_safe=response >= 500 or response == 429,
+                    is_throttling_error=response == 429,
                 )
-                is_throttling = response == 429
+            is_throttling = strategy.is_throttling_error(error)
             # Update rate limiter after error response
             await strategy.rate_limiter.after_receiving_response(
                 throttling_error=is_throttling
@@ -243,8 +243,8 @@ class TestAdaptiveRetryStrategy:
 
         assert quota.available_capacity == 490
 
-    async def test_adaptive_retry_timeout_counts_as_attempt_main1(self):
-        """Test that token acquisition timeout counts as a retry attempt and continues retrying."""
+    async def test_adaptive_retry_timeout_counts_as_attempt(self):
+        # Test that token acquisition timeout counts as a retry attempt and continues retrying
         quota = StandardRetryQuota(initial_capacity=500)
 
         time_counter = [0.0]
@@ -290,3 +290,42 @@ class TestAdaptiveRetryStrategy:
             assert result == "success"
             assert attempts == 3
             assert quota.available_capacity == 495
+
+    async def test_adaptive_retry_throttle_enables_rate_limiting(self):
+        # Test that a 429 throttle response enables rate limiting and subsequent
+        # requests go through the token bucket
+        time_counter = [0.0]
+
+        def mock_monotonic():
+            current = time_counter[0]
+            time_counter[0] += 0.1
+            return current
+
+        with (
+            patch("time.monotonic", side_effect=mock_monotonic),
+            patch("asyncio.sleep"),
+        ):
+            token_bucket = TokenBucket()
+            tracker = RequestRateTracker()
+            calculator = CubicCalculator(starting_max_rate=10.0, start_time=0.0)
+            rate_limiter = ClientRateLimiter(
+                token_bucket=token_bucket,
+                cubic_calculator=calculator,
+                rate_tracker=tracker,
+                rate_limiter_enabled=False,
+            )
+
+            strategy = AdaptiveRetryStrategy(max_attempts=4, rate_limiter=rate_limiter)
+
+            assert rate_limiter.rate_limit_enabled is False
+
+            # First request gets 429 (throttled), second gets 500 (server error),
+            # third succeeds.
+            result, attempts = await self.retry_operation_with_rate_limiting(
+                strategy, [429, 500, 200]
+            )
+
+            assert result == "success"
+            assert attempts == 3
+            # Rate limiting should now be enabled after the 429
+            assert rate_limiter.rate_limit_enabled is True

@@ -667,8 +667,9 @@ class CubicCalculator:
         :param timestamp: Timestamp of the response.
         :return: New calculated request rate based on CUBIC throttling.
         """
-        calculated_rate = rate_to_use * self._BETA
         self._last_max_rate = rate_to_use
+        self.calculate_and_update_inflection_point()
+        calculated_rate = rate_to_use * self._BETA
         self._last_throttle_time = timestamp
         return calculated_rate
 
@@ -804,7 +805,6 @@ class ClientRateLimiter:
                 fill_rate = self._token_bucket.fill_rate
                 rate_to_use = min(measured_rate, fill_rate)
 
-            self._cubic_calculator.calculate_and_update_inflection_point()
             cubic_calculated_rate = (
                 self._cubic_calculator.calculate_throttled_request_rate(
                     rate_to_use, timestamp
@@ -866,10 +866,13 @@ class AdaptiveRetryStrategy(StandardRetryStrategy):
     def is_throttling_error(self, error: Exception) -> bool:
         """Check if error is a throttling error using existing ErrorRetryInfo."""
         if isinstance(error, retries_interface.ErrorRetryInfo):
-            # Check if ErrorRetryInfo has throttling detection
-            return getattr(error, "is_throttling_error", False)
+            return error.is_throttling_error
         return False
 
-    async def acquire_from_token_bucket(self):
+    async def acquire_from_token_bucket(self) -> None:
         if self._rate_limiter.rate_limit_enabled:
             await self._rate_limiter.before_sending_request()
+
+    def __deepcopy__(self, memo: Any) -> "AdaptiveRetryStrategy":
+        # Override return type from StandardRetryStrategy to AdaptiveRetryStrategy
+        return self

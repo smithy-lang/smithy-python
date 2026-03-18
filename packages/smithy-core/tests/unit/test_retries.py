@@ -1,5 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+from copy import deepcopy
 from unittest.mock import patch
 
 import pytest
@@ -672,7 +673,6 @@ class TestAdaptiveRetryStrategy:
     """Tests for AdaptiveRetryStrategy with rate limiting."""
 
     def test_initialization_with_default_rate_limiter(self):
-        """Test that AdaptiveRetryStrategy creates default rate limiter components."""
         strategy = AdaptiveRetryStrategy()
 
         assert strategy.rate_limiter is not None
@@ -680,7 +680,6 @@ class TestAdaptiveRetryStrategy:
         assert strategy.rate_limiter.rate_limit_enabled is False  # Disabled by default
 
     def test_initialization_with_custom_rate_limiter(self):
-        """Test that AdaptiveRetryStrategy accepts custom rate limiter."""
         token_bucket = TokenBucket()
         calculator = CubicCalculator(starting_max_rate=5.0, start_time=0.0)
         tracker = RequestRateTracker()
@@ -697,7 +696,6 @@ class TestAdaptiveRetryStrategy:
         assert strategy.rate_limiter.rate_limit_enabled is True
 
     def test_is_throttling_error_with_throttling_error(self):
-        """Test detection of throttling errors."""
         strategy = AdaptiveRetryStrategy()
 
         # Create an error with throttling flag set
@@ -706,7 +704,6 @@ class TestAdaptiveRetryStrategy:
         assert strategy.is_throttling_error(error) is True
 
     def test_is_throttling_error_with_non_throttling_error(self):
-        """Test that non-throttling errors return False."""
         strategy = AdaptiveRetryStrategy()
 
         error = CallError(message="Server error", is_throttling_error=False)
@@ -714,7 +711,6 @@ class TestAdaptiveRetryStrategy:
         assert strategy.is_throttling_error(error) is False
 
     def test_is_throttling_error_with_non_retry_info_error(self):
-        """Test that errors without ErrorRetryInfo return False."""
         strategy = AdaptiveRetryStrategy()
 
         error = Exception("Generic error")
@@ -723,7 +719,6 @@ class TestAdaptiveRetryStrategy:
 
     @pytest.mark.asyncio
     async def test_acquire_from_token_bucket_when_enabled(self):
-        """Test that acquire is called when rate limiting is enabled."""
         with patch("time.monotonic") as mock_time:
             mock_time.return_value = 0.0
 
@@ -744,7 +739,6 @@ class TestAdaptiveRetryStrategy:
 
     @pytest.mark.asyncio
     async def test_acquire_from_token_bucket_when_disabled(self):
-        """Test that acquire is not called when rate limiting is disabled."""
         token_bucket = TokenBucket(curr_capacity=1.0)
         calculator = CubicCalculator(starting_max_rate=1.0, start_time=0.0)
         tracker = RequestRateTracker()
@@ -762,7 +756,6 @@ class TestAdaptiveRetryStrategy:
 
     @pytest.mark.asyncio
     async def test_rate_limiter_enabled_after_throttling(self):
-        """Test that rate limiter is enabled after first throttling error."""
         with patch("time.monotonic") as mock_time:
             mock_time.side_effect = [0.0, 0.1, 0.2, 0.3]
 
@@ -789,7 +782,6 @@ class TestAdaptiveRetryStrategy:
 
     @pytest.mark.asyncio
     async def test_resolver_creates_adaptive_strategy(self):
-        """Test that RetryStrategyResolver can create AdaptiveRetryStrategy."""
         resolver = RetryStrategyResolver()
         option1 = RetryStrategyOptions(retry_mode="adaptive")
 
@@ -841,11 +833,20 @@ class TestAdaptiveRetryStrategy:
         )
         assert token.retry_delay == 5.5
 
+    def test_deepcopy_returns_adaptive_strategy_with_rate_limiter(self) -> None:
+        # Test that deepcopy returns an AdaptiveRetryStrategy, not StandardRetryStrategy.
+        strategy = AdaptiveRetryStrategy()
+        copied = deepcopy(strategy)
+
+        assert copied is strategy
+        assert isinstance(copied, AdaptiveRetryStrategy)
+        assert copied.rate_limiter is strategy.rate_limiter
+
 
 class TestRequestPipelineRateLimiting:
     @pytest.mark.asyncio
     async def test_pre_request_rate_limiting_with_adaptive_strategy(self):
-        """Test that pre-request rate limiting is called for adaptive strategy."""
+        # Test that pre-request rate limiting is called for adaptive strategy.
         with patch("time.monotonic") as mock_time:
             mock_time.return_value = 0.0
 
@@ -870,7 +871,7 @@ class TestRequestPipelineRateLimiting:
 
     @pytest.mark.asyncio
     async def test_pre_request_rate_limiting_with_standard_strategy(self):
-        """Test that pre-request rate limiting is skipped for standard strategy."""
+        # Test that pre-request rate limiting is skipped for standard strategy
         strategy = StandardRetryStrategy()
 
         if isinstance(strategy, AdaptiveRetryStrategy):
@@ -881,7 +882,6 @@ class TestRequestPipelineRateLimiting:
 
     @pytest.mark.asyncio
     async def test_post_error_rate_limiting_with_throttling_error(self):
-        """Test rate limiter update after throttling error."""
         with patch("time.monotonic") as mock_time:
             mock_time.side_effect = [0.0, 0.1, 0.2, 0.3]
 
@@ -909,7 +909,6 @@ class TestRequestPipelineRateLimiting:
 
     @pytest.mark.asyncio
     async def test_success_rate_limiting_increases_rate(self):
-        """Test rate limiter update after successful response."""
         with patch("time.monotonic") as mock_time:
             mock_time.side_effect = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
 
