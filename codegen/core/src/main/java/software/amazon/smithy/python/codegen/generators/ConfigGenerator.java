@@ -349,28 +349,41 @@ public final class ConfigGenerator implements Runnable {
 
                     ${C|}
 
+                    ${C|}
+
                     def __init__(
                         self,
                         *,
                         ${C|}
                     ):
                         ${C|}
+                        ${C|}
                 """,
                 configSymbol.getName(),
                 serviceId,
+                writer.consumer(w -> {
+                    w.pushState(new ConfigSection.PrePropertyDeclarationsSection(finalProperties));
+                    w.popState();
+                }),
                 writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
                 writer.consumer(w -> writeInitParams(w, finalProperties)),
+                writer.consumer(w -> {
+                    w.pushState(new ConfigSection.PreInitializePropertiesSection(finalProperties));
+                    w.popState();
+                }),
                 writer.consumer(w -> initializeProperties(w, finalProperties)));
         writer.popState();
     }
 
     private void writePropertyDeclarations(PythonWriter writer, Collection<ConfigProperty> properties) {
         for (ConfigProperty property : properties) {
+            writer.pushState(new ConfigSection.PropertyDeclarationSection(property));
             var formatString = property.isNullable()
                     ? "$L: $T | None"
                     : "$L: $T";
             writer.write(formatString, property.name(), property.type());
             writer.writeDocs(property.documentation(), context);
+            writer.popState();
             writer.write("");
         }
     }
