@@ -131,12 +131,13 @@ class XMLShapeDeserializer(ShapeDeserializer):
         raise NotImplementedError("XML does not support document types")
 
     def read_timestamp(self, schema: Schema) -> datetime.datetime:
-        fmt = self._settings.default_timestamp_format
-        if format_trait := schema.get_trait(TimestampFormatTrait):
-            fmt = format_trait.format
+        format = self._settings.default_timestamp_format
+        if self._settings.use_timestamp_format:
+            if format_trait := schema.get_trait(TimestampFormatTrait):
+                format = format_trait.format
 
         text = self._read_text()
-        return fmt.deserialize(text)
+        return format.deserialize(text)
 
     def read_struct(
         self,
@@ -371,8 +372,9 @@ class _AttributeDeserializer(SpecificShapeDeserializer):
         return Decimal(self._value)
 
     def read_timestamp(self, schema: Schema) -> datetime.datetime:
-        fmt = self._settings.default_timestamp_format
-        if format_trait := schema.get_trait(TimestampFormatTrait):
-            fmt = format_trait.format
+        format = self._settings.default_timestamp_format
+        if self._settings.use_timestamp_format:
+            if format_trait := schema.get_trait(TimestampFormatTrait):
+                format = format_trait.format
 
-        return fmt.deserialize(self._value)
+        return format.deserialize(self._value)

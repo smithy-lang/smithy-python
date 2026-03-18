@@ -5,12 +5,16 @@ from dataclasses import dataclass
 from smithy_core.types import TimestampFormat
 
 
-@dataclass(frozen=True)
+@dataclass(slots=True)
 class XMLSettings:
-    """Configuration for XML serialization/deserialization."""
+    """Settings for the XML codec."""
+
+    use_timestamp_format: bool = True
+    """Whether the codec should use the `smithy.api#timestampFormat` trait, if present."""
 
     default_timestamp_format: TimestampFormat = TimestampFormat.DATE_TIME
-    """Default timestamp format when a member does not define @timestampFormat."""
+    """The default timestamp format to use if the `smithy.api#timestampFormat` trait is
+    not enabled or not present."""
 
     default_namespace: str | None = None
-    """Default XML namespace (``xmlns``) applied to the root element during serialization."""
+    """Default XML namespace (`xmlns`) applied to the root element during serialization."""
