@@ -50,6 +50,9 @@ eventstream = [
 json = [
     "smithy-json~=0.2.0"
 ]
+xml = [
+    "smithy-xml~=0.1.0"
+]
 
 [tool.hatch.build]
 exclude = [
