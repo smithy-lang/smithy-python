@@ -1,6 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 
+import re
 from base64 import b64encode
 from collections.abc import Callable, Mapping, Sequence
 from contextlib import AbstractContextManager
@@ -26,6 +27,30 @@ from . import Flushable
 
 _INF: float = float("inf")
 _NEG_INF: float = float("-inf")
+
+# RFC 8259 §7: All control characters U+0000 through U+001F MUST be escaped.
+_ESCAPE_MAP: dict[str, str] = {
+    "\\": "\\\\",
+    '"': '\\"',
+    "\n": "\\n",
+    "\r": "\\r",
+    "\t": "\\t",
+    "\b": "\\b",
+    "\f": "\\f",
+}
+_CHARS_TO_ESCAPE = re.compile(r'[\\"\x00-\x1f]')
+
+
+def _escape_char(match: re.Match[str]) -> str:
+    c = match.group()
+    if c in _ESCAPE_MAP:
+        return _ESCAPE_MAP[c]
+    return f"\\u{ord(c):04x}"
+
+
+def _escape_string(value: str) -> str:
+    """Escape a string value per RFC 8259 §7."""
+    return _CHARS_TO_ESCAPE.sub(_escape_char, value)
 
 
 class JSONShapeSerializer(ShapeSerializer):
@@ -271,9 +296,7 @@ class StreamingJSONEncoder:
 
     def write_string(self, value: str) -> None:
         self._sink.write(b'"')
-        self._sink.write(
-            value.replace("\\", "\\\\").replace('"', '\\"').encode("utf-8")
-        )
+        self._sink.write(_escape_string(value).encode("utf-8"))
         self._sink.write(b'"')
 
     def write_int(self, value: int) -> None:
