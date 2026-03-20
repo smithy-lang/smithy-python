@@ -20,6 +20,7 @@ public final class AwsConfiguration {
             .type(Symbol.builder().name("str").build())
             .documentation("The AWS region to connect to. The configured region is used to "
                     + "determine the service endpoint.")
+            .nullable(false)
             .build();
 
     public static final ConfigProperty RETRY_STRATEGY = ConfigProperty.builder()

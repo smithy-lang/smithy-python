@@ -35,7 +35,7 @@ public class AwsConfigResolutionIntegration implements PythonIntegration {
             GenerationContext context
     ) {
         return List.of(
-                new PropertyDeclarationInterceptor(),
+                new PropertyDeclarationInterceptor(context),
                 new PropertyInitInterceptor(),
                 new PreDeclarationsInterceptor(),
                 new PreInitInterceptor(),
@@ -47,6 +47,12 @@ public class AwsConfigResolutionIntegration implements PythonIntegration {
     // that have AWS metadata registered.
     private static final class PropertyDeclarationInterceptor
             implements CodeInterceptor<ConfigSection.PropertyDeclarationSection, PythonWriter> {
+
+        private final GenerationContext context;
+
+        PropertyDeclarationInterceptor(GenerationContext context) {
+            this.context = context;
+        }
 
         @Override
         public Class<ConfigSection.PropertyDeclarationSection> sectionType() {
@@ -63,7 +69,7 @@ public class AwsConfigResolutionIntegration implements PythonIntegration {
             AwsConfigPropertyMetadata meta = DESCRIPTOR_METADATA.get(prop.name());
 
             if (meta == null) {
-                writer.write(previousText);
+                writer.write(previousText.stripTrailing());
                 return;
             }
 
@@ -73,18 +79,7 @@ public class AwsConfigResolutionIntegration implements PythonIntegration {
             }
             writer.write("$L: $L = _descriptors['$L']  # type: ignore[assignment]",
                     prop.name(), typeHint, prop.name());
-            if (!prop.documentation().isEmpty()) {
-                String doc = prop.documentation();
-                if (doc.contains("\n")) {
-                    writer.write("\"\"\"");
-                    for (String docLine : doc.split("\n")) {
-                        writer.write(docLine);
-                    }
-                    writer.write("\"\"\"");
-                } else {
-                    writer.write("\"\"\"$L\"\"\"", doc);
-                }
-            }
+            writer.writeDocs(prop.documentation(), context);
         }
     }
 
@@ -107,7 +102,7 @@ public class AwsConfigResolutionIntegration implements PythonIntegration {
             if (DESCRIPTOR_METADATA.containsKey(section.property().name())) {
                 return;
             }
-            writer.write(previousText);
+            writer.write(previousText.stripTrailing());
         }
     }
 
@@ -233,7 +228,7 @@ public class AwsConfigResolutionIntegration implements PythonIntegration {
             boolean hasDescriptors = section.properties().stream()
                     .anyMatch(p -> DESCRIPTOR_METADATA.containsKey(p.name()));
 
-            writer.write(previousText);
+            writer.write(previousText.stripTrailing());
 
             if (!hasDescriptors) {
                 return;
