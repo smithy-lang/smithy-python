@@ -1,4 +1,4 @@
 {
   "type": "enhancement",
-  "description": "Added XML binding traits: `XMNameTrait`, `XMLNamespaceTrait`, `XMLFlattenedTrait`, and `XMLAttributeTrait`."
+  "description": "Added XML binding traits: `XMLNameTrait`, `XMLNamespaceTrait`, `XMLFlattenedTrait`, and `XMLAttributeTrait`."
 }
