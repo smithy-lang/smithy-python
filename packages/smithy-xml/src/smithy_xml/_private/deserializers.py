@@ -14,9 +14,9 @@ from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import (
     TimestampFormatTrait,
-    XmlAttributeTrait,
-    XmlFlattenedTrait,
-    XmlNameTrait,
+    XMLAttributeTrait,
+    XMLFlattenedTrait,
+    XMLNameTrait,
 )
 
 from ..settings import XMLSettings
@@ -34,7 +34,7 @@ def _expected_root_name(schema: Schema) -> str | None:
     """Get the expected root element name for root validation."""
     if schema.shape_type not in (ShapeType.STRUCTURE, ShapeType.UNION):
         return None
-    if xml_name := schema.get_trait(XmlNameTrait):
+    if xml_name := schema.get_trait(XMLNameTrait):
         return xml_name.value
     return schema.id.name
 
@@ -48,7 +48,7 @@ def _validate_element_name(expected: str, elem: Element) -> None:
 
 def _xml_member_name(member_schema: Schema) -> str:
     """Get the XML element name for a member, respecting @xmlName."""
-    if xml_name := member_schema.get_trait(XmlNameTrait):
+    if xml_name := member_schema.get_trait(XMLNameTrait):
         return xml_name.value
     return member_schema.expect_member_name()
 
@@ -157,7 +157,7 @@ class XMLShapeDeserializer(ShapeDeserializer):
         # so their attributes cannot be deserialized as struct members.
         if not start_from_wrapper:
             for member_schema in schema.members.values():
-                if member_schema.get_trait(XmlAttributeTrait) is None:
+                if member_schema.get_trait(XMLAttributeTrait) is None:
                     continue
                 expected_attr_name = _xml_member_name(member_schema)
                 for attr_name, attr_value in start_elem.attrib.items():
@@ -176,7 +176,7 @@ class XMLShapeDeserializer(ShapeDeserializer):
         flattened_names = {
             xml_name: member_schema
             for xml_name, member_schema in xml_names.items()
-            if member_schema.get_trait(XmlFlattenedTrait) is not None
+            if member_schema.get_trait(XMLFlattenedTrait) is not None
         }
 
         while self._reader.peek().type != "end":
@@ -206,7 +206,7 @@ class XMLShapeDeserializer(ShapeDeserializer):
         schema: Schema,
         consumer: Callable[["ShapeDeserializer"], None],
     ) -> None:
-        is_flattened = schema.get_trait(XmlFlattenedTrait) is not None
+        is_flattened = schema.get_trait(XMLFlattenedTrait) is not None
         if not is_flattened:
             self._consume_start_event()
             while self._reader.peek().type != "end":
@@ -223,7 +223,7 @@ class XMLShapeDeserializer(ShapeDeserializer):
         schema: Schema,
         consumer: Callable[[str, "ShapeDeserializer"], None],
     ) -> None:
-        is_flattened = schema.get_trait(XmlFlattenedTrait) is not None
+        is_flattened = schema.get_trait(XMLFlattenedTrait) is not None
         key_schema = schema.members["key"]
         value_schema = schema.members["value"]
         key_tag = _xml_member_name(key_schema)
@@ -293,7 +293,7 @@ class XMLShapeDeserializer(ShapeDeserializer):
             return self._xml_names[schema.id]
         result: dict[str, Schema] = {}
         for member_schema in schema.members.values():
-            if member_schema.get_trait(XmlAttributeTrait) is not None:
+            if member_schema.get_trait(XMLAttributeTrait) is not None:
                 continue
             xml_name = _xml_member_name(member_schema)
             result[xml_name] = member_schema

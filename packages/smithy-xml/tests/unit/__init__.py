@@ -20,10 +20,10 @@ from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import (
     TimestampFormatTrait,
-    XmlAttributeTrait,
-    XmlFlattenedTrait,
-    XmlNamespaceTrait,
-    XmlNameTrait,
+    XMLAttributeTrait,
+    XMLFlattenedTrait,
+    XMLNamespaceTrait,
+    XMLNameTrait,
 )
 
 STRING_LIST_SCHEMA = Schema.collection(
@@ -56,7 +56,7 @@ RENAMED_LIST_SCHEMA = Schema.collection(
     members={
         "member": {
             "target": STRING,
-            "traits": [XmlNameTrait("item")],
+            "traits": [XMLNameTrait("item")],
         }
     },
 )
@@ -68,11 +68,11 @@ RENAMED_MAP_SCHEMA = Schema.collection(
     members={
         "key": {
             "target": STRING,
-            "traits": [XmlNameTrait("Attribute")],
+            "traits": [XMLNameTrait("Attribute")],
         },
         "value": {
             "target": STRING,
-            "traits": [XmlNameTrait("Setting")],
+            "traits": [XMLNameTrait("Setting")],
         },
     },
 )
@@ -85,15 +85,15 @@ RENAMED_NS_MAP_SCHEMA = Schema.collection(
         "key": {
             "target": STRING,
             "traits": [
-                XmlNameTrait("K"),
-                XmlNamespaceTrait({"uri": "https://the-key.example.com"}),
+                XMLNameTrait("K"),
+                XMLNamespaceTrait({"uri": "https://the-key.example.com"}),
             ],
         },
         "value": {
             "target": STRING,
             "traits": [
-                XmlNameTrait("V"),
-                XmlNamespaceTrait({"uri": "https://the-value.example.com"}),
+                XMLNameTrait("V"),
+                XMLNamespaceTrait({"uri": "https://the-value.example.com"}),
             ],
         },
     },
@@ -106,7 +106,7 @@ NAMESPACED_LIST_SCHEMA = Schema.collection(
     members={
         "member": {
             "target": STRING,
-            "traits": [XmlNamespaceTrait({"uri": "http://bux.com"})],
+            "traits": [XMLNamespaceTrait({"uri": "http://bux.com"})],
         }
     },
 )
@@ -114,7 +114,7 @@ NAMESPACED_LIST_SCHEMA = Schema.collection(
 # Struct with @xmlNamespace (default xmlns)
 NAMESPACED_STRUCT_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#NsStruct"),
-    traits=[XmlNamespaceTrait({"uri": "https://example.com"})],
+    traits=[XMLNamespaceTrait({"uri": "https://example.com"})],
     members={
         "value": {"target": STRING},
     },
@@ -123,7 +123,7 @@ NAMESPACED_STRUCT_SCHEMA = Schema.collection(
 # Struct with @xmlNamespace (prefixed xmlns)
 PREFIXED_NS_STRUCT_SCHEMA = Schema.collection(
     id=ShapeID("smithy.example#PrefixedNsStruct"),
-    traits=[XmlNamespaceTrait({"uri": "https://example.com", "prefix": "baz"})],
+    traits=[XMLNamespaceTrait({"uri": "https://example.com", "prefix": "baz"})],
     members={
         "value": {"target": STRING},
     },
@@ -149,7 +149,7 @@ SCHEMA: Schema = Schema.collection(
         },
         "xmlNameMember": {
             "target": STRING,
-            "traits": [XmlNameTrait("CustomName")],
+            "traits": [XMLNameTrait("CustomName")],
         },
         "blobMember": {
             "target": BLOB,
@@ -178,30 +178,30 @@ SCHEMA: Schema = Schema.collection(
         "structMember": None,
         "xmlAttributeMember": {
             "target": STRING,
-            "traits": [XmlAttributeTrait()],
+            "traits": [XMLAttributeTrait()],
         },
         "renamedListMember": {
             "target": RENAMED_LIST_SCHEMA,
         },
         "flattenedListMember": {
             "target": STRING_LIST_SCHEMA,
-            "traits": [XmlFlattenedTrait()],
+            "traits": [XMLFlattenedTrait()],
         },
         "flattenedMapMember": {
             "target": STRING_MAP_SCHEMA,
-            "traits": [XmlFlattenedTrait()],
+            "traits": [XMLFlattenedTrait()],
         },
         "flattenedRenamedListMember": {
             "target": STRING_LIST_SCHEMA,
-            "traits": [XmlFlattenedTrait(), XmlNameTrait("customItem")],
+            "traits": [XMLFlattenedTrait(), XMLNameTrait("customItem")],
         },
         "flattenedRenamedMapMember": {
             "target": RENAMED_MAP_SCHEMA,
-            "traits": [XmlFlattenedTrait(), XmlNameTrait("KVP")],
+            "traits": [XMLFlattenedTrait(), XMLNameTrait("KVP")],
         },
         "xmlAttributeNamedMember": {
             "target": STRING,
-            "traits": [XmlAttributeTrait(), XmlNameTrait("test")],
+            "traits": [XMLAttributeTrait(), XMLNameTrait("test")],
         },
     },
 )
