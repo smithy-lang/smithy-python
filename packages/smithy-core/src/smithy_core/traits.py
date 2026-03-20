@@ -350,3 +350,43 @@ class HTTPAPIKeyAuthTrait(Trait, id=ShapeID("smithy.api#httpApiKeyAuth")):
     @property
     def scheme(self) -> str | None:
         return self.document_value.get("scheme")  # type: ignore
+
+
+@dataclass(init=False, frozen=True)
+class XMLNameTrait(Trait, id=ShapeID("smithy.api#xmlName")):
+    document_value: str | None = None
+
+    def __post_init__(self):
+        assert isinstance(self.document_value, str)
+
+    @property
+    def value(self) -> str:
+        return self.document_value  # type: ignore
+
+
+@dataclass(init=False, frozen=True)
+class XMLNamespaceTrait(Trait, id=ShapeID("smithy.api#xmlNamespace")):
+    def __post_init__(self):
+        assert isinstance(self.document_value, Mapping)
+        assert isinstance(self.document_value["uri"], str)
+        assert isinstance(self.document_value.get("prefix"), str | None)
+
+    @property
+    def uri(self) -> str:
+        return self.document_value["uri"]  # type: ignore
+
+    @property
+    def prefix(self) -> str | None:
+        return self.document_value.get("prefix")  # type: ignore
+
+
+@dataclass(init=False, frozen=True)
+class XMLFlattenedTrait(Trait, id=ShapeID("smithy.api#xmlFlattened")):
+    def __post_init__(self):
+        assert self.document_value is None
+
+
+@dataclass(init=False, frozen=True)
+class XMLAttributeTrait(Trait, id=ShapeID("smithy.api#xmlAttribute")):
+    def __post_init__(self):
+        assert self.document_value is None
