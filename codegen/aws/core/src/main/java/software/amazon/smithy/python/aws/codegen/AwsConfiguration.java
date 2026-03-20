@@ -17,22 +17,16 @@ public final class AwsConfiguration {
 
     public static final ConfigProperty REGION = ConfigProperty.builder()
             .name("region")
-            .type(Symbol.builder().name("str | None").build())
-            .documentation(" The AWS region to connect to. The configured region is used to "
+            .type(Symbol.builder().name("str").build())
+            .documentation("The AWS region to connect to. The configured region is used to "
                     + "determine the service endpoint.")
             .nullable(false)
-            .useDescriptor(true)
-            .validator(Symbol.builder()
-                    .name("validate_region")
-                    .namespace("smithy_aws_core.config.validators", ".")
-                    .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
-                    .build())
             .build();
 
     public static final ConfigProperty RETRY_STRATEGY = ConfigProperty.builder()
             .name("retry_strategy")
             .type(Symbol.builder()
-                    .name("RetryStrategy | RetryStrategyOptions | None")
+                    .name("RetryStrategy | RetryStrategyOptions")
                     .addReference(Symbol.builder()
                             .name("RetryStrategy")
                             .namespace("smithy_core.interfaces.retries", ".")
@@ -46,8 +40,22 @@ public final class AwsConfiguration {
                     .build())
             .documentation(
                     "The retry strategy or options for configuring retry behavior. Can be either a configured RetryStrategy or RetryStrategyOptions to create one.")
-            .nullable(false)
-            .useDescriptor(true)
+            .build();
+
+    /**
+     * AWS-specific metadata for descriptor-based config properties.
+     */
+    public static final AwsConfigPropertyMetadata REGION_METADATA = AwsConfigPropertyMetadata.builder()
+            .validator(Symbol.builder()
+                    .name("validate_region")
+                    .namespace("smithy_aws_core.config.validators", ".")
+                    .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                    .build())
+            .build();
+    /**
+     * AWS-specific metadata for descriptor-based config properties.
+     */
+    public static final AwsConfigPropertyMetadata RETRY_STRATEGY_METADATA = AwsConfigPropertyMetadata.builder()
             .validator(Symbol.builder()
                     .name("validate_retry_strategy")
                     .namespace("smithy_aws_core.config.validators", ".")

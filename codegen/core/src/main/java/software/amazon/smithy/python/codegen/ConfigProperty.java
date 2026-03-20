@@ -23,10 +23,6 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
     private final boolean nullable;
     private final String documentation;
     private final Consumer<PythonWriter> initialize;
-    private final Symbol validator;
-    private final Symbol customResolver;
-    private final boolean useDescriptor;
-    private final String defaultValue;
 
     /**
      * Constructor.
@@ -37,10 +33,6 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
         this.nullable = builder.nullable;
         this.documentation = Objects.requireNonNull(builder.documentation);
         this.initialize = Objects.requireNonNull(builder.initialize);
-        this.validator = builder.validator;
-        this.customResolver = builder.customResolver;
-        this.useDescriptor = builder.useDescriptor;
-        this.defaultValue = builder.defaultValue;
     }
 
     /**
@@ -69,34 +61,6 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
      */
     public String documentation() {
         return documentation;
-    }
-
-    /**
-     * @return Returns the validator symbol for this property, if any.
-     */
-    public java.util.Optional<Symbol> validator() {
-        return java.util.Optional.ofNullable(validator);
-    }
-
-    /**
-     * @return Returns the custom resolver symbol for this property, if any.
-     */
-    public java.util.Optional<Symbol> customResolver() {
-        return java.util.Optional.ofNullable(customResolver);
-    }
-
-    /**
-     * @return Returns whether this property uses the ConfigProperty descriptor.
-     */
-    public boolean useDescriptor() {
-        return useDescriptor;
-    }
-
-    /**
-     * @return Returns the default value for this property, if any.
-     */
-    public java.util.Optional<String> defaultValue() {
-        return java.util.Optional.ofNullable(defaultValue);
     }
 
     /**
@@ -130,11 +94,7 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
                 .type(type)
                 .nullable(nullable)
                 .documentation(documentation)
-                .initialize(initialize)
-                .validator(validator)
-                .customResolver(customResolver)
-                .useDescriptor(useDescriptor)
-                .defaultValue(defaultValue);
+                .initialize(initialize);
     }
 
     /**
@@ -146,11 +106,6 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
         private boolean nullable = true;
         private String documentation;
         private Consumer<PythonWriter> initialize = writer -> writer.write("self.$1L = $1L", name);
-
-        private Symbol validator;
-        private Symbol customResolver;
-        private boolean useDescriptor = false;
-        private String defaultValue;
 
         @Override
         public ConfigProperty build() {
@@ -225,50 +180,6 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
          */
         public Builder initialize(Consumer<PythonWriter> initialize) {
             this.initialize = initialize;
-            return this;
-        }
-
-        /**
-         * Sets the validator symbol for the config property.
-         *
-         * @param validator The validator function symbol.
-         * @return Returns the builder.
-         */
-        public Builder validator(Symbol validator) {
-            this.validator = validator;
-            return this;
-        }
-
-        /**
-         * Sets the custom resolver symbol for the config property.
-         *
-         * @param customResolver The custom resolver function symbol.
-         * @return Returns the builder.
-         */
-        public Builder customResolver(Symbol customResolver) {
-            this.customResolver = customResolver;
-            return this;
-        }
-
-        /**
-         * Sets whether the config property uses the ConfigProperty descriptor.
-         *
-         * @param useDescriptor Whether to use the descriptor pattern.
-         * @return Returns the builder.
-         */
-        public Builder useDescriptor(boolean useDescriptor) {
-            this.useDescriptor = useDescriptor;
-            return this;
-        }
-
-        /**
-         * Sets the default value for the config property.
-         *
-         * @param defaultValue The default value as a Python expression string.
-         * @return Returns the builder.
-         */
-        public Builder defaultValue(String defaultValue) {
-            this.defaultValue = defaultValue;
             return this;
         }
     }

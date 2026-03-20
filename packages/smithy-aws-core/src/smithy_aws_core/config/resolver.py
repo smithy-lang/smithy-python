@@ -3,9 +3,8 @@
 from collections.abc import Sequence
 from typing import Any
 
-from smithy_core.interfaces.config import ConfigSource
-
 from smithy_aws_core.config.source_info import SimpleSource
+from smithy_aws_core.interfaces.config import ConfigSource
 
 
 class ConfigResolver:
