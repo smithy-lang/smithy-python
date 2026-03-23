@@ -8,7 +8,7 @@ from smithy_core.prelude import STRING
 from smithy_core.schemas import Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import XmlFlattenedTrait, XmlNameTrait
+from smithy_core.traits import XMLFlattenedTrait, XMLNameTrait
 
 
 def test_query_list_serialization() -> None:
@@ -40,7 +40,7 @@ def test_query_flattened_list_serialization() -> None:
     list_schema = Schema.collection(
         id=ShapeID("com.test#StringList"),
         shape_type=ShapeType.LIST,
-        traits=[XmlFlattenedTrait()],
+        traits=[XMLFlattenedTrait()],
         members={"member": {"target": STRING}},
     )
     params: list[tuple[str, str]] = []
@@ -83,14 +83,14 @@ def test_query_flattened_list_uses_member_xml_name() -> None:
     list_schema = Schema.collection(
         id=ShapeID("com.test#StringList"),
         shape_type=ShapeType.LIST,
-        members={"member": {"target": STRING, "traits": [XmlNameTrait("item")]}},
+        members={"member": {"target": STRING, "traits": [XMLNameTrait("item")]}},
     )
     input_schema = Schema.collection(
         id=ShapeID("com.test#Input"),
         members={
             "values": {
                 "target": list_schema,
-                "traits": [XmlFlattenedTrait(), XmlNameTrait("Hi")],
+                "traits": [XMLFlattenedTrait(), XMLNameTrait("Hi")],
             }
         },
     )
@@ -124,8 +124,8 @@ def test_query_map_serialization_uses_xml_name_traits() -> None:
         id=ShapeID("com.test#StringMap"),
         shape_type=ShapeType.MAP,
         members={
-            "key": {"target": STRING, "traits": [XmlNameTrait("K")]},
-            "value": {"target": STRING, "traits": [XmlNameTrait("V")]},
+            "key": {"target": STRING, "traits": [XMLNameTrait("K")]},
+            "value": {"target": STRING, "traits": [XMLNameTrait("V")]},
         },
     )
     params: list[tuple[str, str]] = []
@@ -151,7 +151,7 @@ def test_query_flattened_map_serialization() -> None:
     map_schema = Schema.collection(
         id=ShapeID("com.test#StringMap"),
         shape_type=ShapeType.MAP,
-        traits=[XmlFlattenedTrait()],
+        traits=[XMLFlattenedTrait()],
         members={
             "key": {"target": STRING},
             "value": {"target": STRING},

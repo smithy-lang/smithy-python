@@ -19,7 +19,7 @@ from smithy_core.serializers import (
     MapSerializer,
     ShapeSerializer,
 )
-from smithy_core.traits import TimestampFormatTrait, XmlFlattenedTrait, XmlNameTrait
+from smithy_core.traits import TimestampFormatTrait, XMLFlattenedTrait, XMLNameTrait
 from smithy_core.types import TimestampFormat
 from smithy_core.utils import serialize_float
 
@@ -31,14 +31,14 @@ def _percent_encode_query(value: str) -> str:
 
 def _resolve_name(schema: Schema, default: str) -> str:
     """Return ``@xmlName`` when present, otherwise ``default``."""
-    if (xml_name := schema.get_trait(XmlNameTrait)) is not None:
+    if (xml_name := schema.get_trait(XMLNameTrait)) is not None:
         return xml_name.value
     return default
 
 
 def _is_flattened(schema: Schema) -> bool:
     """Return whether a collection is ``@xmlFlattened``."""
-    return schema.get_trait(XmlFlattenedTrait) is not None
+    return schema.get_trait(XMLFlattenedTrait) is not None
 
 
 class QueryShapeSerializer(ShapeSerializer):
