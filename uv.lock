@@ -11,6 +11,7 @@ members = [
     "smithy-http",
     "smithy-json",
     "smithy-python",
+    "smithy-xml",
 ]
 
 [[package]]
@@ -788,6 +789,16 @@ test = [
     { name = "pytest-cov", specifier = ">=6.0.0" },
 ]
 typing = [{ name = "pyright", specifier = ">=1.1.400" }]
+
+[[package]]
+name = "smithy-xml"
+source = { editable = "packages/smithy-xml" }
+dependencies = [
+    { name = "smithy-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
 
 [[package]]
 name = "typing-extensions"
