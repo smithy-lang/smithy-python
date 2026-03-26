@@ -2,9 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 from collections.abc import AsyncIterable, Callable
 from inspect import iscoroutinefunction
-from string import Formatter
 from typing import TYPE_CHECKING, Any, Final
-from urllib.parse import quote as urlquote
 
 from smithy_core import URI as _URI
 from smithy_core.aio.interfaces import AsyncByteStream, AsyncWriter
@@ -35,7 +33,7 @@ from smithy_core.prelude import DOCUMENT
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import SerializeableShape
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import EndpointTrait, HTTPTrait
+from smithy_core.traits import HTTPTrait
 from smithy_core.types import TimestampFormat
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPRequest as _HTTPRequest
@@ -296,10 +294,9 @@ class _AWSJSONClientProtocol(HttpClientProtocol):
             body = AsyncBytesReader(payload)
 
         fields = tuples_to_fields(field_tuples)
-        host = self._resolve_host_prefix(operation=operation, payload=payload)
         return _HTTPRequest(
             destination=_URI(
-                host=host,
+                host="",
                 path=self._http_trait.path.pattern,
                 query=self._http_trait.query,
             ),
@@ -368,47 +365,6 @@ class _AWSJSONClientProtocol(HttpClientProtocol):
     ) -> bool:
         return 200 <= response.status < 300
 
-    def _resolve_host_prefix(
-        self,
-        *,
-        operation: APIOperation[Any, Any],
-        payload: bytes,
-    ) -> str:
-        endpoint_trait = operation.schema.get_trait(EndpointTrait)
-        if endpoint_trait is None:
-            return ""
-
-        host_prefix = endpoint_trait.host_prefix
-        labels = self._host_prefix_labels(host_prefix)
-        if not labels:
-            return host_prefix
-
-        deserializer = self.payload_codec.create_deserializer(source=payload)
-        document = deserializer.read_document(schema=DOCUMENT)
-        if document.shape_type is not ShapeType.MAP:
-            raise ExpectationNotMetError(
-                f"Expected input document to be a map for host labels, got {document.shape_type}"
-            )
-
-        values: dict[str, str] = {}
-        map_document = document.as_map()
-        for label in labels:
-            value = map_document.get(label)
-            if value is None or value.shape_type is not ShapeType.STRING:
-                raise ExpectationNotMetError(
-                    f"Expected host label member '{label}' to be a string in input payload"
-                )
-            values[label] = urlquote(value.as_string(), safe=".")
-
-        return host_prefix.format(**values)
-
-    def _host_prefix_labels(self, host_prefix: str) -> set[str]:
-        labels: set[str] = set()
-        for _, field_name, _, _ in Formatter().parse(host_prefix):
-            if field_name:
-                labels.add(field_name)
-        return labels
-
     def _coerce_json_source(
         self,
         *,
@@ -453,6 +409,10 @@ class _AWSJSONClientProtocol(HttpClientProtocol):
         error_registry: TypeRegistry,
         context: TypedProperties,
     ) -> CallError:
+        # Keeps HttpBindingClientProtocol._create_error's error ID resolution,
+        # but awsJson operations do not use per-operation HTTP bindings. Once
+        # the error shape is resolved, deserialize it directly from JSON and
+        # normalize empty bodies to {} for structured errors.
         error_id = self.error_identifier.identify(
             operation=operation, response=response
         )

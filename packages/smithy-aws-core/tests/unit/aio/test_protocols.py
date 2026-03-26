@@ -16,18 +16,12 @@ from smithy_core import URI
 from smithy_core.aio.interfaces import AsyncWriter
 from smithy_core.documents import TypeRegistry
 from smithy_core.exceptions import DiscriminatorError, ModeledError
-from smithy_core.prelude import STRING
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import (
-    DynamicTrait,
-    EndpointTrait,
-    HostLabelTrait,
-    HTTPHeaderTrait,
     HTTPTrait,
     StreamingTrait,
-    Trait,
 )
 from smithy_core.types import TypedProperties
 from smithy_http import Fields, tuples_to_fields
@@ -125,13 +119,6 @@ def test_aws_json_document_discriminator(
 _EMPTY_INPUT_SCHEMA = Schema.collection(
     id=ShapeID("com.test#EmptyInput"),
 )
-_HEADER_AND_LABEL_INPUT_SCHEMA = Schema.collection(
-    id=ShapeID("com.test#HeaderAndLabelInput"),
-    members={
-        "headerMember": {"target": STRING, "traits": [HTTPHeaderTrait("x-test")]},
-        "label": {"target": STRING, "traits": [HostLabelTrait()]},
-    },
-)
 _EVENT_STREAM_MEMBER_SCHEMA = Schema(
     id=ShapeID("com.test#InputEvents"),
     shape_type=ShapeType.UNION,
@@ -148,35 +135,10 @@ class _EmptyInput:
         pass
 
 
-@dataclass
-class _HeaderAndLabelInput:
-    header_member: str | None = None
-    label: str | None = None
-
-    def serialize(self, serializer: ShapeSerializer) -> None:
-        serializer.write_struct(_HEADER_AND_LABEL_INPUT_SCHEMA, self)
-
-    def serialize_members(self, serializer: ShapeSerializer) -> None:
-        if self.header_member is not None:
-            serializer.write_string(
-                _HEADER_AND_LABEL_INPUT_SCHEMA.members["headerMember"],
-                self.header_member,
-            )
-        if self.label is not None:
-            serializer.write_string(
-                _HEADER_AND_LABEL_INPUT_SCHEMA.members["label"],
-                self.label,
-            )
-
-
-def _operation_schema(name: str, *, endpoint: str | None = None) -> Schema:
-    traits: list[Trait | DynamicTrait] = []
-    if endpoint is not None:
-        traits.append(EndpointTrait({"hostPrefix": endpoint}))
+def _operation_schema(name: str) -> Schema:
     return Schema(
         id=ShapeID(f"com.test#{name}"),
         shape_type=ShapeType.OPERATION,
-        traits=traits,
     )
 
 
@@ -237,28 +199,6 @@ async def test_aws_json11_serializes_input_event_stream_request_with_writable_bo
     )
     assert "content-length" not in request.fields
     assert isinstance(request.body, AsyncWriter)
-
-
-@pytest.mark.asyncio
-async def test_aws_json_ignores_http_bindings_but_applies_host_labels() -> None:
-    protocol = AwsJson11ClientProtocol(
-        Schema(id=ShapeID("com.test#JsonService"), shape_type=ShapeType.SERVICE)
-    )
-    request = protocol.serialize_request(
-        operation=_mock_operation(
-            _operation_schema("EndpointOperation", endpoint="foo.{label}.")
-        ),
-        input=_HeaderAndLabelInput(header_member="payload", label="bar"),
-        endpoint=URI(host="example.com"),
-        context=TypedProperties(),
-    )
-
-    assert request.destination.host == "foo.bar."
-    assert "x-test" not in request.fields
-    assert (
-        await request.consume_body_async()
-        == b'{"headerMember":"payload","label":"bar"}'
-    )
 
 
 def test_aws_json_matches_content_type_with_parameters() -> None:

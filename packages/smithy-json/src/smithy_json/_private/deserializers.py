@@ -139,9 +139,7 @@ class JSONShapeDeserializer(ShapeDeserializer):
         match event.value:
             case Decimal():
                 return event.value
-            case int() | float():
-                return Decimal.from_float(event.value)
-            case "Infinity" | "-Infinity" | "NaN":
+            case int() | float() | "Infinity" | "-Infinity" | "NaN":
                 return Decimal(event.value)
             case _:
                 raise JSONTokenError("number", event)
