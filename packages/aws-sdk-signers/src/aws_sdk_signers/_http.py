@@ -36,7 +36,7 @@ class Field(interfaces_http.Field):
         *,
         name: str,
         values: Iterable[str] | None = None,
-        kind: interfaces_http.FieldPosition = interfaces_http.FieldPosition.HEADER,
+        kind: interfaces_http.FieldPosition = "header",
     ):
         self.name = name
         self.values: list[str] = list(values) if values is not None else []
@@ -92,7 +92,7 @@ class Field(interfaces_http.Field):
             return False
         return (
             self.name == other.name
-            and self.kind is other.kind
+            and self.kind == other.kind
             and self.values == other.values
         )
 
@@ -168,7 +168,7 @@ class Fields(interfaces_http.Fields):
 
         Used to grab all headers or all trailers.
         """
-        return [entry for entry in self.entries.values() if entry.kind is kind]
+        return [entry for entry in self.entries.values() if entry.kind == kind]
 
     def extend(self, other: interfaces_http.Fields) -> None:
         """Merges ``entries`` of ``other`` into the current ``entries``.

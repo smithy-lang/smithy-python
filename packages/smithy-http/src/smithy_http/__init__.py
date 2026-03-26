@@ -24,7 +24,7 @@ class Field(interfaces.Field):
         *,
         name: str,
         values: Iterable[str] | None = None,
-        kind: FieldPosition = FieldPosition.HEADER,
+        kind: FieldPosition = "header",
     ):
         self.name = name
         self.values: list[str] = list(values) if values is not None else []
@@ -79,7 +79,7 @@ class Field(interfaces.Field):
             return False
         return (
             self.name == other.name
-            and self.kind is other.kind
+            and self.kind == other.kind
             and self.values == other.values
         )
 
@@ -153,7 +153,7 @@ class Fields(interfaces.Fields):
 
         Used to grab all headers or all trailers.
         """
-        return [entry for entry in self.entries.values() if entry.kind is kind]
+        return [entry for entry in self.entries.values() if entry.kind == kind]
 
     def extend(self, other: interfaces.Fields) -> None:
         """Merges ``entries`` of ``other`` into the current ``entries``.
@@ -225,8 +225,6 @@ def tuples_to_fields(
         try:
             fields[name].add(value)
         except KeyError:
-            fields[name] = Field(
-                name=name, values=[value], kind=kind or FieldPosition.HEADER
-            )
+            fields[name] = Field(name=name, values=[value], kind=kind or "header")
 
     return fields

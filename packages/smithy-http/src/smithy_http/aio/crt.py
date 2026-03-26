@@ -41,7 +41,6 @@ from smithy_core.exceptions import MissingDependencyError
 from .. import Field, Fields
 from .. import interfaces as http_interfaces
 from ..exceptions import SmithyHTTPError
-from ..interfaces import FieldPosition
 from . import interfaces as http_aio_interfaces
 
 # Default buffer size for reading from streams (8 KB)
@@ -203,7 +202,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
                 fields[header_name] = Field(
                     name=header_name,
                     values=[header_val],
-                    kind=FieldPosition.HEADER,
+                    kind="header",
                 )
         return AWSCRTHTTPResponse(
             status=status_code,
@@ -294,8 +293,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             request.fields.set_field(Field(name="accept", values=["*/*"]))
 
         for fld in request.fields.entries.values():
-            # TODO: Use literal values for "header"/"trailer".
-            if fld.kind.value != FieldPosition.HEADER.value:
+            if fld.kind != "header":
                 continue
             for val in fld.values:
                 headers_list.append((fld.name, val))

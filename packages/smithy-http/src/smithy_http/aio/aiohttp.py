@@ -28,7 +28,6 @@ from smithy_core.interfaces import URI
 
 from .. import Field, Fields
 from ..interfaces import (
-    FieldPosition,
     HTTPClientConfiguration,
     HTTPRequestConfiguration,
 )
@@ -125,7 +124,7 @@ class AIOHTTPClient(HTTPClient):
                 headers[header_name] = Field(
                     name=header_name,
                     values=[header_val],
-                    kind=FieldPosition.HEADER,
+                    kind="header",
                 )
 
         return HTTPResponse(
