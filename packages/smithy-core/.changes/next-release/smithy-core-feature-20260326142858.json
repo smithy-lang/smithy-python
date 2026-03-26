@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added a new retry strategy that uses a token bucket for client-side rate-limiting."
+}
