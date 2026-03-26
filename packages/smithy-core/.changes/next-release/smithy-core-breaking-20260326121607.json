@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Refactored retry strategies to be async, allowing them to wait internally or use async synchronization primitives if necessary."
+}

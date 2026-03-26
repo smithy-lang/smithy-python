@@ -22,7 +22,6 @@ from ..interceptors import (
 )
 from ..interfaces import Endpoint, TypedProperties
 from ..interfaces.auth import AuthOption, AuthSchemeResolver
-from ..interfaces.retries import RetryStrategy
 from ..schemas import APIOperation
 from ..serializers import SerializeableShape
 from ..shapes import ShapeID
@@ -37,6 +36,7 @@ from .interfaces import (
 )
 from .interfaces.auth import AuthScheme
 from .interfaces.eventstream import EventReceiver
+from .interfaces.retries import RetryStrategy
 from .utils import seek
 
 if TYPE_CHECKING:
@@ -330,7 +330,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             return await self._handle_attempt(call, request_context, request_future)
 
         retry_strategy = call.retry_strategy
-        retry_token = retry_strategy.acquire_initial_retry_token(
+        retry_token = await retry_strategy.acquire_initial_retry_token(
             token_scope=call.retry_scope
         )
 
@@ -349,7 +349,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
 
             if isinstance(output_context.response, Exception):
                 try:
-                    retry_strategy.refresh_retry_token_for_retry(
+                    await retry_strategy.refresh_retry_token_for_retry(
                         token_to_renew=retry_token,
                         error=output_context.response,
                     )
@@ -364,7 +364,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
 
                 await seek(request_context.transport_request.body, 0)
             else:
-                retry_strategy.record_success(token=retry_token)
+                await retry_strategy.record_success(token=retry_token)
                 return output_context
 
     async def _handle_attempt[I: SerializeableShape, O: DeserializeableShape](

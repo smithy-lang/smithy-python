@@ -55,14 +55,14 @@ public final class ConfigGenerator implements Runnable {
                     .name("retry_strategy")
                     .type(Symbol.builder()
                             .name("RetryStrategy")
-                            .namespace("smithy_core.interfaces.retries", ".")
+                            .namespace("smithy_core.aio.interfaces.retries", ".")
                             .addDependency(SmithyPythonDependency.SMITHY_CORE)
                             .build())
                     .documentation("The retry strategy for issuing retry tokens and computing retry delays.")
                     .nullable(false)
                     .initialize(writer -> {
                         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-                        writer.addImport("smithy_core.retries", "SimpleRetryStrategy");
+                        writer.addImport("smithy_core.aio.retries", "SimpleRetryStrategy");
                         writer.write("self.retry_strategy = retry_strategy or SimpleRetryStrategy()");
                     })
                     .build(),
