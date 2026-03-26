@@ -392,3 +392,21 @@ def test_response_properties() -> None:
     assert response.status == 404
     assert response.fields == fields
     assert response.reason is None
+
+
+async def test_error_response_chunks_stops_after_first_chunk() -> None:
+    """Test that error responses stop reading after the first chunk."""
+    mock_stream = AsyncMock()
+    mock_stream.get_next_response_chunk.side_effect = [
+        b"error body",
+        b"should not be read",
+        b"",
+    ]
+
+    response = AWSCRTHTTPResponse(status=500, fields=Fields(), stream=mock_stream)
+
+    chunks: list[bytes] = []
+    async for chunk in response.chunks():
+        chunks.append(chunk)
+
+    assert chunks == [b"error body"]

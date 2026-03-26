@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Fix infinite hang when a bidirectional stream receives a non-2xx HTTP response from the server"
+}

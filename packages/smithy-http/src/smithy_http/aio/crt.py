@@ -102,6 +102,10 @@ class AWSCRTHTTPResponse(http_aio_interfaces.HTTPResponse):
             chunk = await self._stream.get_next_response_chunk()
             if chunk:
                 yield chunk
+                # CRT will hang infinitely and not close the stream if it is closed server side; to work around this,
+                # we need to break this loop ourselves after reading the first chunk.
+                if self._status >= 400:
+                    break
             else:
                 break
 
