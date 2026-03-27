@@ -424,8 +424,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
         if (contentType.equals("application/x-www-form-urlencoded")) {
             writer.addStdlibImport("urllib.parse", "parse_qsl");
             writer.write("""
-                    actual_params = sorted(parse_qsl(actual_body_content.decode()))
-                    expected_params = sorted(parse_qsl(expected_body_content.decode()))
+                    actual_params = sorted(parse_qsl(actual_body_content.decode(), keep_blank_values=True))
+                    expected_params = sorted(parse_qsl(expected_body_content.decode(), keep_blank_values=True))
                     assert actual_params == expected_params
 
                     """);

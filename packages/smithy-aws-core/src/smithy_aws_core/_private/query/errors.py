@@ -1,15 +1,37 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from typing import Any
+from typing import TYPE_CHECKING, Any
 from xml.etree.ElementTree import Element, ParseError, fromstring
 
 from smithy_core.documents import TypeRegistry
-from smithy_core.exceptions import CallError, ExpectationNotMetError, ModeledError
+from smithy_core.exceptions import (
+    CallError,
+    ExpectationNotMetError,
+    MissingDependencyError,
+    ModeledError,
+)
+from smithy_core.interfaces import TypedProperties
 from smithy_core.schemas import APIOperation
 from smithy_core.shapes import ShapeID
-from smithy_xml import XMLCodec
 
 from ...traits import AwsQueryErrorTrait
+
+try:
+    from smithy_xml import XMLCodec
+
+    _HAS_XML = True
+except ImportError:
+    _HAS_XML = False  # type: ignore
+
+if TYPE_CHECKING:
+    from smithy_xml import XMLCodec
+
+
+def _assert_xml() -> None:
+    if not _HAS_XML:
+        raise MissingDependencyError(
+            "Attempted to use XML codec, but smithy-xml is not installed."
+        )
 
 
 def _local_name(tag: str) -> str:
@@ -76,6 +98,7 @@ def create_aws_query_error(
     default_namespace: str,
     wrapper_elements: tuple[str, ...],
     status: int,
+    context: TypedProperties,
 ) -> CallError:
     """Create a modeled or generic CallError from an awsQuery error response."""
     code = _parse_aws_query_error_code(body, wrapper_elements)
@@ -94,6 +117,7 @@ def create_aws_query_error(
                     f"but got {error_shape}"
                 )
 
+            _assert_xml()
             deserializer = XMLCodec().create_deserializer(
                 body, wrapper_elements=wrapper_elements
             )
@@ -102,5 +126,15 @@ def create_aws_query_error(
     message = f"Unknown error for operation {operation.schema.id} - status: {status}"
     if code is not None:
         message += f", code: {code}"
-    fault = "client" if 400 <= status < 500 else "server"
-    return CallError(message=message, fault=fault)
+
+    is_timeout = status == 408
+    is_throttle = status == 429
+    fault = "client" if status < 500 else "server"
+
+    return CallError(
+        message=message,
+        fault=fault,
+        is_throttling_error=is_throttle,
+        is_timeout_error=is_timeout,
+        is_retry_safe=is_throttle or is_timeout or None,
+    )

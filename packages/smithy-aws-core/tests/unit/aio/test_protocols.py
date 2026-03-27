@@ -23,7 +23,7 @@ from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import Trait
 from smithy_core.types import TypedProperties
 from smithy_http import Fields, tuples_to_fields
-from smithy_http.aio import HTTPResponse
+from smithy_http.aio import HTTPRequest, HTTPResponse
 from smithy_json import JSONSettings
 
 
@@ -199,60 +199,80 @@ async def test_aws_query_serializes_base_request_shape() -> None:
     assert body == b"Action=TestOperation&Version=2020-01-08&name=example"
 
 
-def test_aws_query_resolves_modeled_error_from_query_error_trait() -> None:
+@pytest.mark.asyncio
+async def test_aws_query_resolves_modeled_error_from_query_error_trait() -> None:
     protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
-    error = getattr(protocol, "_create_error")(
-        operation=_mock_operation(
-            _operation_schema("FailingOperation"),
-            error_schemas=[_INVALID_ACTION_ERROR_SCHEMA],
-        ),
-        response=HTTPResponse(status=400, fields=tuples_to_fields([])),
-        response_body=(
-            b"<ErrorResponse><Error><Code>InvalidAction</Code>"
-            b"<message>bad request</message></Error></ErrorResponse>"
-        ),
-        error_registry=TypeRegistry(
-            {ShapeID("com.test#InvalidActionError"): _ModeledQueryError}
-        ),
-    )
+    with pytest.raises(_ModeledQueryError) as exc_info:
+        await protocol.deserialize_response(
+            operation=_mock_operation(
+                _operation_schema("FailingOperation"),
+                error_schemas=[_INVALID_ACTION_ERROR_SCHEMA],
+            ),
+            request=cast(HTTPRequest, Mock()),
+            response=HTTPResponse(
+                status=400,
+                fields=tuples_to_fields([]),
+                body=(
+                    b"<ErrorResponse><Error><Code>InvalidAction</Code>"
+                    b"<message>bad request</message></Error></ErrorResponse>"
+                ),
+            ),
+            error_registry=TypeRegistry(
+                {ShapeID("com.test#InvalidActionError"): _ModeledQueryError}
+            ),
+            context=TypedProperties(),
+        )
 
-    assert isinstance(error, _ModeledQueryError)
-    assert error.message == "bad request"
+    assert exc_info.value.message == "bad request"
 
 
-def test_aws_query_resolves_modeled_error_from_default_namespace_fallback() -> None:
+@pytest.mark.asyncio
+async def test_aws_query_resolves_modeled_error_from_default_namespace_fallback() -> (
+    None
+):
     protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
-    error = getattr(protocol, "_create_error")(
-        operation=_mock_operation(_operation_schema("FailingOperation")),
-        response=HTTPResponse(status=503, fields=tuples_to_fields([])),
-        response_body=(
-            b"<ErrorResponse><Error><Code>ServiceUnavailable</Code>"
-            b"<message>try again</message></Error></ErrorResponse>"
-        ),
-        error_registry=TypeRegistry(
-            {ShapeID("com.test#ServiceUnavailable"): _ModeledQueryError}
-        ),
-    )
+    with pytest.raises(_ModeledQueryError) as exc_info:
+        await protocol.deserialize_response(
+            operation=_mock_operation(_operation_schema("FailingOperation")),
+            request=cast(HTTPRequest, Mock()),
+            response=HTTPResponse(
+                status=503,
+                fields=tuples_to_fields([]),
+                body=(
+                    b"<ErrorResponse><Error><Code>ServiceUnavailable</Code>"
+                    b"<message>try again</message></Error></ErrorResponse>"
+                ),
+            ),
+            error_registry=TypeRegistry(
+                {ShapeID("com.test#ServiceUnavailable"): _ModeledQueryError}
+            ),
+            context=TypedProperties(),
+        )
 
-    assert isinstance(error, _ModeledQueryError)
-    assert error.message == "try again"
+    assert exc_info.value.message == "try again"
 
 
-def test_aws_query_returns_generic_error_for_unknown_code() -> None:
+@pytest.mark.asyncio
+async def test_aws_query_returns_generic_error_for_unknown_code() -> None:
     protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
-    error = getattr(protocol, "_create_error")(
-        operation=_mock_operation(_operation_schema("FailingOperation")),
-        response=HTTPResponse(status=500, fields=tuples_to_fields([])),
-        response_body=(
-            b"<ErrorResponse><Error><Code>UnknownThing</Code>"
-            b"<message>bad request</message></Error></ErrorResponse>"
-        ),
-        error_registry=TypeRegistry({}),
-    )
+    with pytest.raises(CallError) as exc_info:
+        await protocol.deserialize_response(
+            operation=_mock_operation(_operation_schema("FailingOperation")),
+            request=cast(HTTPRequest, Mock()),
+            response=HTTPResponse(
+                status=500,
+                fields=tuples_to_fields([]),
+                body=(
+                    b"<ErrorResponse><Error><Code>UnknownThing</Code>"
+                    b"<message>bad request</message></Error></ErrorResponse>"
+                ),
+            ),
+            error_registry=TypeRegistry({}),
+            context=TypedProperties(),
+        )
 
-    assert isinstance(error, CallError)
-    assert not isinstance(error, ModeledError)
-    assert error.message == (
+    assert not isinstance(exc_info.value, ModeledError)
+    assert exc_info.value.message == (
         "Unknown error for operation com.test#FailingOperation"
         " - status: 500, code: UnknownThing"
     )

@@ -57,15 +57,15 @@ class AwsQueryErrorTrait(Trait, id=ShapeID("aws.protocols#awsQueryError")):
     def __post_init__(self):
         assert isinstance(self.document_value, Mapping)
         assert isinstance(self.document_value.get("code"), str)
-        assert isinstance(self.document_value.get("httpResponseCode"), int | None)
+        assert isinstance(self.document_value.get("httpResponseCode"), int)
 
     @property
     def code(self) -> str:
         return self.document_value["code"]  # type: ignore
 
     @property
-    def http_response_code(self) -> int | None:
-        return self.document_value.get("httpResponseCode")  # type: ignore
+    def http_response_code(self) -> int:
+        return self.document_value["httpResponseCode"]  # type: ignore
 
 
 @dataclass(init=False, frozen=True)

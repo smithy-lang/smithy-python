@@ -76,14 +76,14 @@ if TYPE_CHECKING:
 def _assert_json() -> None:
     if not _HAS_JSON:
         raise MissingDependencyError(
-            "Attempted to use JSON protocol support, but smithy-json is not installed."
+            "Attempted to use JSON codec, but smithy-json is not installed."
         )
 
 
 def _assert_xml() -> None:
     if not _HAS_XML:
         raise MissingDependencyError(
-            "Attempted to use XML protocol support, but smithy-xml is not installed."
+            "Attempted to use XML codec, but smithy-xml is not installed."
         )
 
 
@@ -114,17 +114,21 @@ class AWSErrorIdentifier(HTTPErrorIdentifier):
         return None
 
 
-class AWSJSONDocument(JSONDocument):
-    @property
-    def discriminator(self) -> ShapeID:
-        if self.shape_type is ShapeType.STRUCTURE:
-            return self._schema.id
-        parsed = parse_document_discriminator(self, self._settings.default_namespace)
-        if parsed is None:
-            raise DiscriminatorError(
-                f"Unable to parse discriminator for {self.shape_type} document."
+if _HAS_JSON:
+
+    class AWSJSONDocument(JSONDocument):
+        @property
+        def discriminator(self) -> ShapeID:
+            if self.shape_type is ShapeType.STRUCTURE:
+                return self._schema.id
+            parsed = parse_document_discriminator(
+                self, self._settings.default_namespace
             )
-        return parsed
+            if parsed is None:
+                raise DiscriminatorError(
+                    f"Unable to parse discriminator for {self.shape_type} document."
+                )
+            return parsed
 
 
 class RestJsonClientProtocol(HttpBindingClientProtocol):
@@ -242,6 +246,14 @@ class AwsQueryClientProtocol(HttpClientProtocol):
     def id(self) -> ShapeID:
         return self._id
 
+    @property
+    def payload_codec(self) -> "XMLCodec":
+        return self._codec
+
+    @property
+    def content_type(self) -> str:
+        return self._content_type
+
     def serialize_request[
         OperationInput: SerializeableShape,
         OperationOutput: DeserializeableShape,
@@ -271,7 +283,7 @@ class AwsQueryClientProtocol(HttpClientProtocol):
             destination=_URI(host="", path="/"),
             fields=tuples_to_fields(
                 [
-                    ("content-type", self._content_type),
+                    ("content-type", self.content_type),
                     ("content-length", str(content_length)),
                 ]
             ),
@@ -292,36 +304,46 @@ class AwsQueryClientProtocol(HttpClientProtocol):
     ) -> OperationOutput:
         body = await response.consume_body_async()
 
-        if response.status >= 300:
-            raise self._create_error(
+        if not self._is_success(operation, context, response):
+            raise await self._create_error(
                 operation=operation,
                 response=response,
                 response_body=body,
                 error_registry=error_registry,
+                context=context,
             )
 
         if len(body) == 0:
             return operation.output.deserialize(
                 HTTPResponseDeserializer(
-                    payload_codec=self._codec,
+                    payload_codec=self.payload_codec,
                     response=response,
                     body=body,
                 )
             )
 
         wrapper_elements = self._response_wrapper_elements(operation)
-        deserializer = self._codec.create_deserializer(
+        deserializer = self.payload_codec.create_deserializer(
             body, wrapper_elements=wrapper_elements
         )
         return operation.output.deserialize(deserializer)
 
-    def _create_error(
+    def _is_success(
+        self,
+        operation: APIOperation[Any, Any],
+        context: TypedProperties,
+        response: HTTPResponse,
+    ) -> bool:
+        return 200 <= response.status < 300
+
+    async def _create_error(
         self,
         *,
         operation: APIOperation[Any, Any],
         response: HTTPResponse,
         response_body: bytes,
         error_registry: TypeRegistry,
+        context: TypedProperties,
     ) -> CallError:
         return create_aws_query_error(
             body=response_body,
@@ -330,6 +352,7 @@ class AwsQueryClientProtocol(HttpClientProtocol):
             default_namespace=self._default_namespace,
             wrapper_elements=self._error_wrapper_elements(),
             status=response.status,
+            context=context,
         )
 
     def _action_name(
