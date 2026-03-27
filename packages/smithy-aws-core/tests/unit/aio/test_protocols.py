@@ -126,7 +126,7 @@ _INVALID_ACTION_ERROR_SCHEMA = Schema.collection(
         Trait.new(id=ShapeID("smithy.api#error"), value="client"),
         Trait.new(
             id=ShapeID("aws.protocols#awsQueryError"),
-            value={"code": "InvalidAction"},
+            value={"code": "InvalidAction", "httpResponseCode": 400},
         ),
     ],
     members={"message": {"target": STRING}},
@@ -178,7 +178,6 @@ def _mock_operation(
     return cast("APIOperation[Any, Any]", operation)
 
 
-@pytest.mark.asyncio
 async def test_aws_query_serializes_base_request_shape() -> None:
     protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
     request = protocol.serialize_request(
@@ -199,7 +198,6 @@ async def test_aws_query_serializes_base_request_shape() -> None:
     assert body == b"Action=TestOperation&Version=2020-01-08&name=example"
 
 
-@pytest.mark.asyncio
 async def test_aws_query_resolves_modeled_error_from_query_error_trait() -> None:
     protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
     with pytest.raises(_ModeledQueryError) as exc_info:
@@ -226,7 +224,6 @@ async def test_aws_query_resolves_modeled_error_from_query_error_trait() -> None
     assert exc_info.value.message == "bad request"
 
 
-@pytest.mark.asyncio
 async def test_aws_query_resolves_modeled_error_from_default_namespace_fallback() -> (
     None
 ):
@@ -252,7 +249,6 @@ async def test_aws_query_resolves_modeled_error_from_default_namespace_fallback(
     assert exc_info.value.message == "try again"
 
 
-@pytest.mark.asyncio
 async def test_aws_query_returns_generic_error_for_unknown_code() -> None:
     protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
     with pytest.raises(CallError) as exc_info:
