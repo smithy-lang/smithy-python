@@ -1,0 +1,4 @@
+{
+  "type": "dependency",
+  "description": "Upgrade CRT to 0.32.0 to solve infinite hang"
+}
