@@ -22,6 +22,28 @@
                     "moduleVersion": "0.0.1"
                 }
             }
+        },
+        "aws-query": {
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "aws.protocoltests.query#AwsQuery"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
+                }
+            ],
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "aws.protocoltests.query#AwsQuery",
+                    "module": "awsquery",
+                    "moduleVersion": "0.0.1"
+                }
+            }
         }
     }
 }
