@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Replace FieldPosition enum with a Literal type"
+}
