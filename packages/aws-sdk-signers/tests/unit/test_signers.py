@@ -125,6 +125,18 @@ class TestSigV4Signer:
                 identity=identity,
             )
 
+    def test_format_canonical_query_keeps_blank_values(self) -> None:
+        canonical_query = self.SIGV4_SYNC_SIGNER._format_canonical_query(
+            query="foo=bar&baz="
+        )
+        assert canonical_query == "baz=&foo=bar"
+
+    def test_format_canonical_query_with_literal_query_param(self) -> None:
+        canonical_query = self.SIGV4_SYNC_SIGNER._format_canonical_query(
+            query="sync"
+        )
+        assert canonical_query == "sync="
+
 
 class UnreadableAsyncStream:
     def __aiter__(self) -> typing.Self:
@@ -231,3 +243,15 @@ class TestAsyncSigV4Signer:
         assert "X-Amz-Content-SHA256" in signed.fields
         payload_hash = signed.fields["X-Amz-Content-SHA256"].as_string()
         assert payload_hash == "STREAMING-AWS4-HMAC-SHA256-EVENTS"
+
+    async def test_format_canonical_query_keeps_blank_values(self) -> None:
+        canonical_query = await self.SIGV4_ASYNC_SIGNER._format_canonical_query(
+            query="foo=bar&baz="
+        )
+        assert canonical_query == "baz=&foo=bar"
+
+    async def test_format_canonical_query_with_literal_query_param(self) -> None:
+        canonical_query = await self.SIGV4_ASYNC_SIGNER._format_canonical_query(
+            query="sync"
+        )
+        assert canonical_query == "sync="
