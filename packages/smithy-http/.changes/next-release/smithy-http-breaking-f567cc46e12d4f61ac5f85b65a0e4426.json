@@ -1,4 +1,4 @@
 {
   "type": "breaking",
-  "description": "Replace FieldPosition enum with a Literal type"
+  "description": "Replace `FieldPosition` enum values with string literals for `Field.kind`. Use \"header\" and \"trailer\" instead of `FieldPosition.HEADER` and `FieldPosition.TRAILER`."
 }

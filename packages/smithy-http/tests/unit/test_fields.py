@@ -316,3 +316,8 @@ def test_fields_delitem_missing() -> None:
     fields = Fields([Field(name="fname1")])
     with pytest.raises(KeyError):
         del fields["fname2"]
+
+
+def test_field_invalid_kind() -> None:
+    with pytest.raises(ValueError, match="Unknown field kind"):
+        Field(name="fname", kind="metadata")  # type: ignore

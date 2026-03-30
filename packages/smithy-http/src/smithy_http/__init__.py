@@ -2,11 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 from collections import Counter, OrderedDict
 from collections.abc import Iterable, Iterator
+from typing import get_args
 
 from . import interfaces
 from .interfaces import FieldPosition
 
 __version__ = "0.3.1"
+
+_VALID_FIELD_POSITIONS = frozenset(get_args(FieldPosition))
 
 
 class Field(interfaces.Field):
@@ -28,6 +31,8 @@ class Field(interfaces.Field):
     ):
         self.name = name
         self.values: list[str] = list(values) if values is not None else []
+        if kind not in _VALID_FIELD_POSITIONS:
+            raise ValueError(f"Unknown field kind: {kind!r}")
         self.kind = kind
 
     def add(self, value: str) -> None:
