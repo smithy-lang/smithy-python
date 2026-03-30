@@ -51,7 +51,7 @@ json = [
     "smithy-json~=0.2.0"
 ]
 xml = [
-    "smithy-xml~=0.1.0"
+    "smithy-xml~=0.0.0"
 ]
 
 [tool.hatch.build]
