@@ -6,22 +6,21 @@
 
 import pytest
 from smithy_http import Field, Fields
-from smithy_http.interfaces import FieldPosition
 
 
 def test_field_single_valued_basics() -> None:
-    field = Field(name="fname", values=["fval"], kind=FieldPosition.HEADER)
+    field = Field(name="fname", values=["fval"], kind="header")
     assert field.name == "fname"
-    assert field.kind == FieldPosition.HEADER
+    assert field.kind == "header"
     assert field.values == ["fval"]
     assert field.as_string() == "fval"
     assert field.as_tuples() == [("fname", "fval")]
 
 
 def test_field_multi_valued_basics() -> None:
-    field = Field(name="fname", values=["fval1", "fval2"], kind=FieldPosition.HEADER)
+    field = Field(name="fname", values=["fval1", "fval2"], kind="header")
     assert field.name == "fname"
-    assert field.kind == FieldPosition.HEADER
+    assert field.kind == "header"
     assert field.values == ["fval1", "fval2"]
     assert field.as_string() == "fval1, fval2"
     assert field.as_tuples() == [("fname", "fval1"), ("fname", "fval2")]
@@ -65,16 +64,16 @@ def test_field_serialization(values: list[str], expected: str):
     "field,expected_repr",
     [
         (
-            Field(name="fname", values=["fval1", "fval2"], kind=FieldPosition.HEADER),
-            "Field(name='fname', value=['fval1', 'fval2'], kind=<FieldPosition.HEADER: 0>)",
+            Field(name="fname", values=["fval1", "fval2"], kind="header"),
+            "Field(name='fname', value=['fval1', 'fval2'], kind='header')",
         ),
         (
-            Field(name="fname", kind=FieldPosition.TRAILER),
-            "Field(name='fname', value=[], kind=<FieldPosition.TRAILER: 1>)",
+            Field(name="fname", kind="trailer"),
+            "Field(name='fname', value=[], kind='trailer')",
         ),
         (
             Field(name="fname"),
-            "Field(name='fname', value=[], kind=<FieldPosition.HEADER: 0>)",
+            "Field(name='fname', value=[], kind='header')",
         ),
     ],
 )
@@ -86,8 +85,8 @@ def test_field_repr(field: Field, expected_repr: str) -> None:
     "f1,f2",
     [
         (
-            Field(name="fname", values=["fval1", "fval2"], kind=FieldPosition.TRAILER),
-            Field(name="fname", values=["fval1", "fval2"], kind=FieldPosition.TRAILER),
+            Field(name="fname", values=["fval1", "fval2"], kind="trailer"),
+            Field(name="fname", values=["fval1", "fval2"], kind="trailer"),
         ),
         (
             Field(name="fname", values=["fval1", "fval2"]),
@@ -107,20 +106,20 @@ def test_field_equality(f1: Field, f2: Field) -> None:
     "f1,f2",
     [
         (
-            Field(name="fname", values=["fval1", "fval2"], kind=FieldPosition.HEADER),
-            Field(name="fname", values=["fval1", "fval2"], kind=FieldPosition.TRAILER),
+            Field(name="fname", values=["fval1", "fval2"], kind="header"),
+            Field(name="fname", values=["fval1", "fval2"], kind="trailer"),
         ),
         (
-            Field(name="fname", values=["fval1", "fval2"], kind=FieldPosition.HEADER),
-            Field(name="fname", values=["fval2", "fval1"], kind=FieldPosition.HEADER),
+            Field(name="fname", values=["fval1", "fval2"], kind="header"),
+            Field(name="fname", values=["fval2", "fval1"], kind="header"),
         ),
         (
-            Field(name="fname", values=["fval1", "fval2"], kind=FieldPosition.HEADER),
-            Field(name="fname", values=["fval1"], kind=FieldPosition.HEADER),
+            Field(name="fname", values=["fval1", "fval2"], kind="header"),
+            Field(name="fname", values=["fval1"], kind="header"),
         ),
         (
-            Field(name="fname1", values=["fval1", "fval2"], kind=FieldPosition.HEADER),
-            Field(name="fname2", values=["fval1", "fval2"], kind=FieldPosition.HEADER),
+            Field(name="fname1", values=["fval1", "fval2"], kind="header"),
+            Field(name="fname2", values=["fval1", "fval2"], kind="header"),
         ),
     ],
 )
@@ -214,7 +213,7 @@ def test_fields_length_value(fields: Fields, expected_length: int) -> None:
             Fields([Field(name="fname1")]),
             (
                 "Fields(OrderedDict({'fname1': Field(name='fname1', value=[], "
-                "kind=<FieldPosition.HEADER: 0>)}))"
+                "kind='header')}))"
             ),
         ),
     ],
@@ -317,3 +316,8 @@ def test_fields_delitem_missing() -> None:
     fields = Fields([Field(name="fname1")])
     with pytest.raises(KeyError):
         del fields["fname2"]
+
+
+def test_field_invalid_kind() -> None:
+    with pytest.raises(ValueError, match="Unknown field kind"):
+        Field(name="fname", kind="metadata")  # type: ignore
