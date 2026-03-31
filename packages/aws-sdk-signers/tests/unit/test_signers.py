@@ -126,13 +126,13 @@ class TestSigV4Signer:
             )
 
     def test_format_canonical_query_keeps_blank_values(self) -> None:
-        canonical_query = self.SIGV4_SYNC_SIGNER._format_canonical_query(
+        canonical_query = self.SIGV4_SYNC_SIGNER._format_canonical_query(  # pyright: ignore[reportPrivateUsage]
             query="foo=bar&baz="
         )
         assert canonical_query == "baz=&foo=bar"
 
     def test_format_canonical_query_with_literal_query_param(self) -> None:
-        canonical_query = self.SIGV4_SYNC_SIGNER._format_canonical_query(
+        canonical_query = self.SIGV4_SYNC_SIGNER._format_canonical_query(  # pyright: ignore[reportPrivateUsage]
             query="sync"
         )
         assert canonical_query == "sync="
@@ -245,13 +245,13 @@ class TestAsyncSigV4Signer:
         assert payload_hash == "STREAMING-AWS4-HMAC-SHA256-EVENTS"
 
     async def test_format_canonical_query_keeps_blank_values(self) -> None:
-        canonical_query = await self.SIGV4_ASYNC_SIGNER._format_canonical_query(
+        canonical_query = await self.SIGV4_ASYNC_SIGNER._format_canonical_query(  # pyright: ignore[reportPrivateUsage]
             query="foo=bar&baz="
         )
         assert canonical_query == "baz=&foo=bar"
 
     async def test_format_canonical_query_with_literal_query_param(self) -> None:
-        canonical_query = await self.SIGV4_ASYNC_SIGNER._format_canonical_query(
+        canonical_query = await self.SIGV4_ASYNC_SIGNER._format_canonical_query(  # pyright: ignore[reportPrivateUsage]
             query="sync"
         )
         assert canonical_query == "sync="
