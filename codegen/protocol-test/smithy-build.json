@@ -22,6 +22,50 @@
                     "moduleVersion": "0.0.1"
                 }
             }
+        },
+        "aws-json-1-0": {
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "aws.protocoltests.json10#JsonRpc10"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
+                }
+            ],
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "aws.protocoltests.json10#JsonRpc10",
+                    "module": "awsjson10",
+                    "moduleVersion": "0.0.1"
+                }
+            }
+        },
+        "aws-json-1-1": {
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "aws.protocoltests.json#JsonProtocol"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
+                }
+            ],
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "aws.protocoltests.json#JsonProtocol",
+                    "module": "awsjson11",
+                    "moduleVersion": "0.0.1"
+                }
+            }
         }
     }
 }

@@ -346,7 +346,13 @@ JSON_SERDE_CASES = [
     (True, b"true"),
     (1, b"1"),
     (1.1, b"1.1"),
+    (float("nan"), b'"NaN"'),
+    (float("inf"), b'"Infinity"'),
+    (float("-inf"), b'"-Infinity"'),
     (Decimal("1.1"), b"1.1"),
+    (Decimal("NaN"), b'"NaN"'),
+    (Decimal("Infinity"), b'"Infinity"'),
+    (Decimal("-Infinity"), b'"-Infinity"'),
     (b"foo", b'"Zm9v"'),
     ("foo", b'"foo"'),
     # RFC 8259 §7: control characters must be escaped

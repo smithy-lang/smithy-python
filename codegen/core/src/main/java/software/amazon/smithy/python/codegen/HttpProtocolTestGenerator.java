@@ -16,6 +16,7 @@ import java.util.function.BiPredicate;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import software.amazon.smithy.aws.traits.auth.SigV4Trait;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.Model;
@@ -188,12 +189,14 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                     endpoint_uri="https://$L/$L",
                                     transport = $T(),
                                     retry_strategy=SimpleRetryStrategy(max_attempts=1),
+                                    ${C|}
                                 )
                                 """,
                                 CodegenUtils.getConfigSymbol(context.settings()),
                                 host,
                                 path,
-                                REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL);
+                                REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
+                                (Runnable) this::writeSigV4TestConfig);
                     }));
 
                     // Generate the input using the expected shape and params
@@ -437,13 +440,15 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                         headers=$J,
                                         body=b$S,
                                     ),
+                                    ${C|}
                                 )
                                 """,
                                 CodegenUtils.getConfigSymbol(context.settings()),
                                 RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
                                 testCase.getCode(),
                                 CodegenUtils.toTuples(testCase.getHeaders()),
-                                testCase.getBody().filter(body -> !body.isEmpty()).orElse(""));
+                                testCase.getBody().filter(body -> !body.isEmpty()).orElse(""),
+                                (Runnable) this::writeSigV4TestConfig);
                     }));
                     // Create an empty input object to pass
                     var inputShape = model.expectShape(operation.getInputShape(), StructureShape.class);
@@ -490,13 +495,15 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                         headers=$J,
                                         body=b$S,
                                     ),
+                                    ${C|}
                                 )
                                 """,
                                 CodegenUtils.getConfigSymbol(context.settings()),
                                 RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
                                 testCase.getCode(),
                                 CodegenUtils.toTuples(testCase.getHeaders()),
-                                testCase.getBody().orElse(""));
+                                testCase.getBody().orElse(""),
+                                (Runnable) this::writeSigV4TestConfig);
                     }));
                     // Create an empty input object to pass
                     var inputShape = model.expectShape(operation.getInputShape(), StructureShape.class);
@@ -605,6 +612,19 @@ public final class HttpProtocolTestGenerator implements Runnable {
         writer.openBlock("client = $T(", ")\n", serviceSymbol, () -> {
             additionalConfigurator.ifPresent(Runnable::run);
         });
+    }
+
+    private void writeSigV4TestConfig() {
+        if (!service.hasTrait(SigV4Trait.class)) {
+            return;
+        }
+        writer.addImport("smithy_aws_core.identity", "StaticCredentialsResolver");
+        writer.write("""
+                region="us-east-1",
+                aws_access_key_id="test-access-key-id",
+                aws_secret_access_key="test-secret-access-key",
+                aws_credentials_identity_resolver=StaticCredentialsResolver(),
+                """);
     }
 
     private void writeUtilStubs(Symbol serviceSymbol) {

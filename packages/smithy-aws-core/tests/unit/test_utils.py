@@ -64,6 +64,11 @@ def test_aws_json_document_discriminator(
             "com.test#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate",
             "com.test#FooError",
         ),
+        ("com.other#FooError", "com.other#FooError"),
+        (
+            "com.other#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate",
+            "com.other#FooError",
+        ),
         ("", None),
         (":", None),
     ],

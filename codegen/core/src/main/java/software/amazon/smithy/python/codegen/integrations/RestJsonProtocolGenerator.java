@@ -94,13 +94,14 @@ public class RestJsonProtocolGenerator implements ProtocolGenerator {
     // it will need to generate some protocol-specific comparators.
     @Override
     public void generateProtocolTests(GenerationContext context) {
-        context.writerDelegator().useFileWriter("./tests/test_protocol.py", "tests.test_protocol", writer -> {
-            new HttpProtocolTestGenerator(
-                    context,
-                    getProtocol(),
-                    writer,
-                    (shape, testCase) -> filterTests(testCase)).run();
-        });
+        context.writerDelegator()
+                .useFileWriter("./tests/test_restjson_protocol.py", "tests.test_restjson_protocol", writer -> {
+                    new HttpProtocolTestGenerator(
+                            context,
+                            getProtocol(),
+                            writer,
+                            (shape, testCase) -> filterTests(testCase)).run();
+                });
     }
 
     private boolean filterTests(HttpMessageTestCase testCase) {
