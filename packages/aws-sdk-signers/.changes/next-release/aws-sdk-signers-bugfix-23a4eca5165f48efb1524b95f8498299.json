@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Fixed SigV4 signature computation for URIs with literal query parameters (e.g., ?sync). parse_qsl was silently dropping query keys without values, causing InvalidSignatureException."
+}

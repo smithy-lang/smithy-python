@@ -315,7 +315,7 @@ class SigV4Signer:
         if query is None:
             return ""
 
-        query_params = parse_qsl(qs=query)
+        query_params = parse_qsl(qs=query, keep_blank_values=True)
         query_parts = (
             (quote(string=key, safe=""), quote(string=value, safe=""))
             for key, value in query_params
@@ -695,7 +695,7 @@ class AsyncSigV4Signer:
         if query is None:
             return ""
 
-        query_params = parse_qsl(qs=query)
+        query_params = parse_qsl(qs=query, keep_blank_values=True)
         query_parts = (
             (quote(string=key, safe=""), quote(string=value, safe=""))
             for key, value in query_params
