@@ -11,6 +11,7 @@ members = [
     "smithy-http",
     "smithy-json",
     "smithy-python",
+    "smithy-xml",
 ]
 
 [[package]]
@@ -680,6 +681,9 @@ eventstream = [
 json = [
     { name = "smithy-json" },
 ]
+xml = [
+    { name = "smithy-xml" },
+]
 
 [package.metadata]
 requires-dist = [
@@ -688,8 +692,9 @@ requires-dist = [
     { name = "smithy-core", editable = "packages/smithy-core" },
     { name = "smithy-http", editable = "packages/smithy-http" },
     { name = "smithy-json", marker = "extra == 'json'", editable = "packages/smithy-json" },
+    { name = "smithy-xml", marker = "extra == 'xml'", editable = "packages/smithy-xml" },
 ]
-provides-extras = ["eventstream", "json"]
+provides-extras = ["eventstream", "json", "xml"]
 
 [[package]]
 name = "smithy-aws-event-stream"
@@ -788,6 +793,16 @@ test = [
     { name = "pytest-cov", specifier = ">=6.0.0" },
 ]
 typing = [{ name = "pyright", specifier = ">=1.1.400" }]
+
+[[package]]
+name = "smithy-xml"
+source = { editable = "packages/smithy-xml" }
+dependencies = [
+    { name = "smithy-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
 
 [[package]]
 name = "typing-extensions"

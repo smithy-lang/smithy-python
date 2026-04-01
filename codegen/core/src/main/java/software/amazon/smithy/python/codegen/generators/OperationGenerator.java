@@ -58,6 +58,9 @@ public final class OperationGenerator implements Runnable {
                         }),
                         effective_auth_schemes = [
                             $8C
+                        ],
+                        error_schemas = [
+                            $9C
                         ]
                 )
                 """,
@@ -68,7 +71,8 @@ public final class OperationGenerator implements Runnable {
                 inSymbol.expectProperty(SymbolProperties.SCHEMA),
                 outSymbol.expectProperty(SymbolProperties.SCHEMA),
                 writer.consumer(this::writeErrorTypeRegistry),
-                writer.consumer(this::writeAuthSchemes));
+                writer.consumer(this::writeAuthSchemes),
+                writer.consumer(this::writeErrorSchemas));
     }
 
     private void writeErrorTypeRegistry(PythonWriter writer) {
@@ -79,6 +83,13 @@ public final class OperationGenerator implements Runnable {
         for (var error : errors) {
             var errSymbol = symbolProvider.toSymbol(model.expectShape(error));
             writer.write("ShapeID($S): $T,", error, errSymbol);
+        }
+    }
+
+    private void writeErrorSchemas(PythonWriter writer) {
+        for (var error : shape.getErrors()) {
+            var errSymbol = symbolProvider.toSymbol(model.expectShape(error));
+            writer.write("$T,", errSymbol.expectProperty(SymbolProperties.SCHEMA));
         }
     }
 

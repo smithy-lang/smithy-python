@@ -303,6 +303,9 @@ class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
     effective_auth_schemes: Sequence[ShapeID]
     """A list of effective auth schemes for the operation."""
 
+    error_schemas: Sequence[Schema] = field(repr=False)
+    """A list of modeled error schemas for the operation."""
+
     @property
     def idempotency_token_member(self) -> Schema | None:
         """The input schema member that serves as the idempotency token."""

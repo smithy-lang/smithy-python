@@ -1,14 +1,14 @@
 [project]
-name = "smithy-aws-core"
+name = "smithy-xml"
 dynamic = ["version"]
 requires-python = ">=3.12"
 authors = [
   {name = "Amazon Web Services"},
 ]
-description = "Core Smithy components for AWS services and protocols."
+description = "XML serialization and deserialization support for Smithy tooling."
 readme = "README.md"
 license = {text = "Apache License 2.0"}
-keywords = ["aws", "sdk", "amazon", "smithy"]
+keywords = ["smithy", "sdk", "xml"]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Intended Audience :: Developers",
@@ -26,14 +26,12 @@ classifiers = [
   "Topic :: Software Development :: Libraries"
 ]
 dependencies = [
-    "smithy-core~=0.3.0",
-    "smithy-http~=0.3.0",
-    "aws-sdk-signers~=0.1.0"
+    "smithy-core",
 ]
 
 [project.urls]
-"Changelog" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-aws-core/CHANGELOG.md"
-"Code" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-aws-core/"
+"Changelog" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-xml/CHANGELOG.md"
+"Code" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-xml/"
 "Issue tracker" = "https://github.com/smithy-lang/smithy-python/issues"
 
 [build-system]
@@ -41,18 +39,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]
-path = "src/smithy_aws_core/__init__.py"
-
-[project.optional-dependencies]
-eventstream = [
-    "smithy-aws-event-stream~=0.2.0"
-]
-json = [
-    "smithy-json~=0.2.0"
-]
-xml = [
-    "smithy-xml~=0.0.0"
-]
+path = "src/smithy_xml/__init__.py"
 
 [tool.hatch.build]
 exclude = [
