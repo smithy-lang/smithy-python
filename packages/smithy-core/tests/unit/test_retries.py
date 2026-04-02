@@ -1,5 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import asyncio
 from copy import deepcopy
 from unittest.mock import patch
 
@@ -308,9 +309,9 @@ class TestTokenBucket:
         token_bucket = TokenBucket(fill_rate=1.0)
         await token_bucket.acquire(1)
 
-        with patch("asyncio.sleep") as mock_sleep:
+        with patch("asyncio.wait_for", wraps=asyncio.wait_for) as mock_wait_for:
             await token_bucket.acquire(1)
-            mock_sleep.assert_called()
+            mock_wait_for.assert_called()
 
         assert token_bucket.current_capacity == 0.0
 
@@ -336,7 +337,7 @@ class TestTokenBucket:
         # Max and current capacity of the bucket is set to 1.0 initially
         await token_bucket.update_rate(10.0)
 
-        async with token_bucket._lock:  # type: ignore
+        async with token_bucket._condition:  # type: ignore
             token_bucket._refill()  # type: ignore
 
         assert round(token_bucket.current_capacity, 1) == 1.0
@@ -366,6 +367,34 @@ class TestTokenBucket:
                     await token_bucket.update_rate(value)
 
             assert token_bucket.current_capacity == expected_capacity
+
+    async def test_update_rate_wakes_waiting_acquirers(self):
+        token_bucket = TokenBucket(fill_rate=0.01)
+
+        acquired = False
+
+        async def slow_acquire():
+            nonlocal acquired
+            await token_bucket.acquire(2.0)
+            acquired = True
+
+        task = asyncio.create_task(slow_acquire())
+
+        # yield control to the event loop so slow_acquire() can run
+        await asyncio.sleep(0.05)
+        assert not acquired
+
+        # update_rate() is called only after slow_acquire() reaches the
+        # asyncio.wait_for() line in TokenBucket.acquire() and sleeps,
+        # because that's when the event loop is yielded back to this test.
+        await token_bucket.update_rate(100.0)
+
+        # After update_rate() in this test calls notify_all(), it can't resume slow_acquire()
+        # without yielding the event loop. After the event loop
+        # is yielded, it runs slow_acquire() again.
+        await asyncio.sleep(0.1)
+        assert acquired
+        await task
 
 
 class TestRateLimiter:

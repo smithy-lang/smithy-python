@@ -520,7 +520,7 @@ class TokenBucket:
         self._fill_rate: float = max(fill_rate, self.MIN_FILL_RATE)
         self._timeout = timeout
         self._last_timestamp: float = time.monotonic()
-        self._lock = asyncio.Lock()
+        self._condition = asyncio.Condition()
 
     async def acquire(self, amount: float) -> None:
         """Acquire tokens from the bucket.
@@ -534,8 +534,8 @@ class TokenBucket:
         :raises TimeoutError: Acquisition took longer than the configured timeout.
         """
         start_time = time.monotonic()
-        while True:
-            async with self._lock:
+        async with self._condition:
+            while True:
                 self._refill()
                 if self._curr_capacity >= amount:
                     self._curr_capacity -= amount
@@ -548,7 +548,10 @@ class TokenBucket:
                         f"Failed to acquire {amount} tokens within {self._timeout}s"
                     )
                 wait_time = (amount - self._curr_capacity) / self._fill_rate
-            await asyncio.sleep(wait_time)
+                try:
+                    await asyncio.wait_for(self._condition.wait(), timeout=wait_time)
+                except TimeoutError:
+                    pass
 
     def _refill(self) -> None:
         curr_time = time.monotonic()
@@ -566,11 +569,12 @@ class TokenBucket:
         :param rate: New fill rate (tokens/second). It won't be less than MIN_FILL_RATE.
             Current capacity will be reduced if it exceeds the new maximum capacity.
         """
-        async with self._lock:
+        async with self._condition:
             self._refill()
             self._fill_rate = max(rate, self.MIN_FILL_RATE)
             self._max_capacity = max(rate, self.MIN_CAPACITY)
             self._curr_capacity = min(self._curr_capacity, self._max_capacity)
+            self._condition.notify_all()
 
     @property
     def current_capacity(self) -> float:
