@@ -15,7 +15,7 @@ from .exceptions import RetryError
 from .interfaces import retries as retries_interface
 from .interfaces.retries import RetryStrategy
 
-RetryStrategyType = Literal["simple", "standard"]
+RetryStrategyType = Literal["simple", "standard", "adaptive"]
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -69,6 +69,8 @@ class RetryStrategyResolver:
                 return SimpleRetryStrategy(**filtered_kwargs)
             case "standard":
                 return StandardRetryStrategy(**filtered_kwargs)
+            case "adaptive":
+                return AdaptiveRetryStrategy(**filtered_kwargs)
             case _:
                 raise ValueError(f"Unknown retry mode: {retry_mode}")
 
@@ -518,7 +520,7 @@ class TokenBucket:
         self._fill_rate: float = max(fill_rate, self.MIN_FILL_RATE)
         self._timeout = timeout
         self._last_timestamp: float = time.monotonic()
-        self._lock = asyncio.Lock()
+        self._condition = asyncio.Condition()
 
     async def acquire(self, amount: float) -> None:
         """Acquire tokens from the bucket.
@@ -532,8 +534,8 @@ class TokenBucket:
         :raises TimeoutError: Acquisition took longer than the configured timeout.
         """
         start_time = time.monotonic()
-        while True:
-            async with self._lock:
+        async with self._condition:
+            while True:
                 self._refill()
                 if self._curr_capacity >= amount:
                     self._curr_capacity -= amount
@@ -546,7 +548,10 @@ class TokenBucket:
                         f"Failed to acquire {amount} tokens within {self._timeout}s"
                     )
                 wait_time = (amount - self._curr_capacity) / self._fill_rate
-            await asyncio.sleep(wait_time)
+                try:
+                    await asyncio.wait_for(self._condition.wait(), timeout=wait_time)
+                except TimeoutError:
+                    pass
 
     def _refill(self) -> None:
         curr_time = time.monotonic()
@@ -564,11 +569,12 @@ class TokenBucket:
         :param rate: New fill rate (tokens/second). It won't be less than MIN_FILL_RATE.
             Current capacity will be reduced if it exceeds the new maximum capacity.
         """
-        async with self._lock:
+        async with self._condition:
             self._refill()
             self._fill_rate = max(rate, self.MIN_FILL_RATE)
             self._max_capacity = max(rate, self.MIN_CAPACITY)
             self._curr_capacity = min(self._curr_capacity, self._max_capacity)
+            self._condition.notify_all()
 
     @property
     def current_capacity(self) -> float:
@@ -665,8 +671,9 @@ class CubicCalculator:
         :param timestamp: Timestamp of the response.
         :return: New calculated request rate based on CUBIC throttling.
         """
-        calculated_rate = rate_to_use * self._BETA
         self._last_max_rate = rate_to_use
+        self.calculate_and_update_inflection_point()
+        calculated_rate = rate_to_use * self._BETA
         self._last_throttle_time = timestamp
         return calculated_rate
 
@@ -802,7 +809,6 @@ class ClientRateLimiter:
                 fill_rate = self._token_bucket.fill_rate
                 rate_to_use = min(measured_rate, fill_rate)
 
-            self._cubic_calculator.calculate_and_update_inflection_point()
             cubic_calculated_rate = (
                 self._cubic_calculator.calculate_throttled_request_rate(
                     rate_to_use, timestamp
@@ -820,3 +826,57 @@ class ClientRateLimiter:
     @property
     def rate_limit_enabled(self) -> bool:
         return self._rate_limiter_enabled
+
+
+class AdaptiveRetryStrategy(StandardRetryStrategy):
+    """Adaptive retry strategy with client-side rate limiting using CUBIC algorithm.
+
+    Builds on top of StandardRetryStrategy by adding token bucket rate limiting and
+    CUBIC congestion control. Rate limiting is enabled after the first throttling
+    response and dynamically adjusts sending rates based on the response type.
+    """
+
+    STARTING_MAX_RATE = 0.5
+
+    def __init__(self, *, rate_limiter: ClientRateLimiter | None = None, **kwargs):  # type: ignore
+        """Initialize AdaptiveRetryStrategy.
+
+        :param rate_limiter: Optional pre-configured rate limiter. If None, creates
+            default components with rate limiting initially disabled.
+        """
+        super().__init__(**kwargs)  # type: ignore
+
+        if rate_limiter is None:
+            # Create default rate limiting components
+            token_bucket = TokenBucket()
+            cubic_calculator = CubicCalculator(
+                starting_max_rate=self.STARTING_MAX_RATE, start_time=time.monotonic()
+            )
+            rate_tracker = RequestRateTracker()
+            self._rate_limiter = ClientRateLimiter(
+                token_bucket=token_bucket,
+                cubic_calculator=cubic_calculator,
+                rate_tracker=rate_tracker,
+                rate_limiter_enabled=False,  # Disabled until first throttle
+            )
+        else:
+            self._rate_limiter = rate_limiter
+
+    @property
+    def rate_limiter(self) -> ClientRateLimiter:
+        """Get the rate limiter for integration with request pipeline."""
+        return self._rate_limiter
+
+    def is_throttling_error(self, error: Exception) -> bool:
+        """Check if error is a throttling error using existing ErrorRetryInfo."""
+        if isinstance(error, retries_interface.ErrorRetryInfo):
+            return error.is_throttling_error
+        return False
+
+    async def acquire_from_token_bucket(self) -> None:
+        if self._rate_limiter.rate_limit_enabled:
+            await self._rate_limiter.before_sending_request()
+
+    def __deepcopy__(self, memo: Any) -> "AdaptiveRetryStrategy":
+        # Override return type from StandardRetryStrategy to AdaptiveRetryStrategy
+        return self
