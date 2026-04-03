@@ -170,7 +170,6 @@ public final class MarkdownConverter {
 
         // Remove unnecessary backslash escapes that pandoc adds for markdown
         // These characters don't need escaping in Python docstrings
-        // Handles: [ ] ' { } ( ) < > ` @ _ * | ! ~ $
         output = output.replaceAll("\\\\([\\[\\]'{}()<>`@_*|!~$#])", "$1");
 
         // Replace <note> and <important> tags with admonitions for mkdocstrings
