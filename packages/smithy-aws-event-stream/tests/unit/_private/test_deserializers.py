@@ -20,6 +20,7 @@ from . import (
     EventStreamDeserializer,
     EventStreamErrorEvent,
     EventStreamOperationInputOutput,
+    EventStreamUnknown,
 )
 
 
@@ -126,3 +127,20 @@ async def test_read_closed_receiver_source() -> None:
     with pytest.raises(IOError):
         await receiver.receive()
     assert receiver.closed
+
+
+def test_deserialize_unknown_event_type():
+    message = EventMessage(
+        headers={
+            ":message-type": "event",
+            ":event-type": "intermediateGroupEvent",
+            ":content-type": "application/json",
+        },
+        payload=b"{}",
+    )
+    source = Event.decode(BytesIO(message.encode()))
+    assert source is not None
+    deserializer = EventDeserializer(event=source, payload_codec=JSONCodec())
+    result = EventStreamDeserializer().deserialize(deserializer)
+    assert isinstance(result, EventStreamUnknown)
+    assert result.tag == "intermediateGroupEvent"

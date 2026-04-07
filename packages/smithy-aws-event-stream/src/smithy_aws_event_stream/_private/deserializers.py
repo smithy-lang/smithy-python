@@ -10,7 +10,7 @@ from smithy_core.deserializers import (
     SpecificShapeDeserializer,
 )
 from smithy_core.schemas import Schema
-from smithy_core.shapes import ShapeType
+from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import EventHeaderTrait
 from smithy_core.utils import expect_type
 
@@ -57,19 +57,14 @@ class EventDeserializer(SpecificShapeDeserializer):
                         # member_name and a member_index of -1 so the
                         # generated default branch constructs the unknown
                         # variant with the correct tag.
-                        logger.debug(
-                            "Unknown event type: %s", member_name
-                        )
-                        from smithy_core.shapes import ShapeID
+                        logger.debug("Unknown event type: %s", member_name)
 
                         _UNKNOWN_TARGET = Schema(
                             id=ShapeID("smithy.unknown#Unknown"),
                             shape_type=ShapeType.STRUCTURE,
                         )
                         unknown_schema = Schema(
-                            id=ShapeID(
-                                f"smithy.unknown#Unknown${member_name}"
-                            ),
+                            id=ShapeID(f"smithy.unknown#Unknown${member_name}"),
                             shape_type=ShapeType.STRUCTURE,
                             member_target=_UNKNOWN_TARGET,
                             member_index=-1,

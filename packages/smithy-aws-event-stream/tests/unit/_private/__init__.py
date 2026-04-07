@@ -381,7 +381,7 @@ class EventStreamErrorEvent:
 
 
 @dataclass
-class EventStreamUnknownEvent:
+class EventStreamUnknown:
     tag: str
 
     def serialize(self, serializer: ShapeSerializer):
@@ -396,7 +396,7 @@ type EventStream = (
     | EventStreamPayloadEvent
     | EventStreamBlobPayloadEvent
     | EventStreamErrorEvent
-    | EventStreamUnknownEvent
+    | EventStreamUnknown
 )
 
 
@@ -429,7 +429,7 @@ class EventStreamDeserializer:
                 self._set_result(EventStreamErrorEvent(ErrorEvent.deserialize(de)))
 
             case _:
-                raise SmithyError(f"Unexpected member schema: {schema}")
+                self._set_result(EventStreamUnknown(tag=schema.member_name or ""))
 
     def _set_result(self, value: EventStream) -> None:
         if self._result is not None:
@@ -633,6 +633,19 @@ EVENT_STREAM_SERDE_CASES = [
         ),
     ),
 ]
+
+
+UNKNOWN_EVENT_CASE = (
+    EventStreamUnknown(tag="intermediateGroupEvent"),
+    EventMessage(
+        headers={
+            ":message-type": "event",
+            ":event-type": "intermediateGroupEvent",
+            ":content-type": "application/json",
+        },
+        payload=b"{}",
+    ),
+)
 
 
 INITIAL_REQUEST_CASE = (
