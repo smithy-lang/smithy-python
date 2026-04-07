@@ -149,6 +149,7 @@ public final class UnionGenerator implements Runnable {
         var symbol = symbolProvider.toSymbol(shape);
         var deserializerSymbol = symbol.expectProperty(SymbolProperties.DESERIALIZER);
         var schemaSymbol = symbol.expectProperty(SymbolProperties.SCHEMA);
+        var unknownSymbol = symbol.expectProperty(SymbolProperties.UNION_UNKNOWN);
         writer.putContext("schema", schemaSymbol);
         writer.write("""
                 class $1L:
@@ -168,6 +169,7 @@ public final class UnionGenerator implements Runnable {
                             ${4C|}
                             case _:
                                 logger.debug("Unexpected member schema: %s", schema)
+                                self._set_result($5L(tag=schema.member_name or ""))
 
                     def _set_result(self, value: $2T) -> None:
                         if self._result is not None:
@@ -177,7 +179,8 @@ public final class UnionGenerator implements Runnable {
                 deserializerSymbol.getName(),
                 symbol,
                 schemaSymbol,
-                writer.consumer(w -> deserializeMembers()));
+                writer.consumer(w -> deserializeMembers()),
+                unknownSymbol.getName());
     }
 
     private void deserializeMembers() {

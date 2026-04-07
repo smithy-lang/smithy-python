@@ -132,7 +132,7 @@ class AWSEventReceiver[E: DeserializeableShape](EventReceiver[E]):
         )
         result = self._deserializer(deserializer)
         logger.debug("Successfully deserialized event: %s", result)
-        if isinstance(getattr(result, "value"), Exception):
+        if isinstance(getattr(result, "value", None), Exception):
             raise result.value  # type: ignore
         return result
 

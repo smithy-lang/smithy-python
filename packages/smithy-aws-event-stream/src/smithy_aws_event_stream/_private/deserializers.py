@@ -50,11 +50,39 @@ class EventDeserializer(SpecificShapeDeserializer):
                     message_deserializer = self._create_deserializer(schema, headers)
                     message_deserializer.read_struct(schema, consumer)
                 else:
-                    member_schema = schema.members[member_name]
-                    message_deserializer = self._create_deserializer(
-                        member_schema, headers
-                    )
-                    consumer(member_schema, message_deserializer)
+                    member_schema = schema.members.get(member_name)
+                    if member_schema is None:
+                        # Unknown event type. Call the consumer with a
+                        # schema that carries the event type name as
+                        # member_name and a member_index of -1 so the
+                        # generated default branch constructs the unknown
+                        # variant with the correct tag.
+                        logger.debug(
+                            "Unknown event type: %s", member_name
+                        )
+                        from smithy_core.shapes import ShapeID
+
+                        _UNKNOWN_TARGET = Schema(
+                            id=ShapeID("smithy.unknown#Unknown"),
+                            shape_type=ShapeType.STRUCTURE,
+                        )
+                        unknown_schema = Schema(
+                            id=ShapeID(
+                                f"smithy.unknown#Unknown${member_name}"
+                            ),
+                            shape_type=ShapeType.STRUCTURE,
+                            member_target=_UNKNOWN_TARGET,
+                            member_index=-1,
+                        )
+                        consumer(
+                            unknown_schema,
+                            self._payload_codec.create_deserializer(b"{}"),
+                        )
+                    else:
+                        message_deserializer = self._create_deserializer(
+                            member_schema, headers
+                        )
+                        consumer(member_schema, message_deserializer)
             case "exception":
                 member_name = expect_type(str, headers[":exception-type"])
                 member_schema = schema.members[member_name]
