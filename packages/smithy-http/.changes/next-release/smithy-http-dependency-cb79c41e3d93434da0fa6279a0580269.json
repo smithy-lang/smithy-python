@@ -1,4 +1,0 @@
-{
-  "type": "dependency",
-  "description": "Upgrade CRT to 0.32.0 to fix bug where HTTP2 exceptions could hang indefinitely"
-}

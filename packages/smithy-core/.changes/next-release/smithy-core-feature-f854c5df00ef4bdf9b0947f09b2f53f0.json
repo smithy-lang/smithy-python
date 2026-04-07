@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added XML binding traits: `XMLNameTrait`, `XMLNamespaceTrait`, `XMLFlattenedTrait`, and `XMLAttributeTrait`."
-}

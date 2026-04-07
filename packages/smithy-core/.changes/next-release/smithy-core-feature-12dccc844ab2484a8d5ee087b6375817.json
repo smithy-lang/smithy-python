@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added `error_schemas` to `APIOperation` to expose the operation\u2019s modeled error schemas."
-}

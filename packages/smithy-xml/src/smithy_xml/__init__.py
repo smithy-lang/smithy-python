@@ -14,7 +14,7 @@ from ._private.deserializers import XMLShapeDeserializer as _XMLShapeDeserialize
 from ._private.readers import XMLEventReader as _XMLEventReader
 from .settings import XMLSettings
 
-__version__ = "0.0.0"
+__version__ = "0.1.0"
 __all__ = ("XMLCodec", "XMLSettings")
 
 
