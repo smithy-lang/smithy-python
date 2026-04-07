@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.0
+
+### Breaking Changes
+* Replace `FieldPosition` enum values with string literals for `Field.kind`. Use "header" and "trailer" instead of `FieldPosition.HEADER` and `FieldPosition.TRAILER`.
+
+### Dependencies
+* Upgrade CRT to 0.32.0 to fix bug where HTTP2 exceptions could hang indefinitely
+
 ## v0.3.1
 
 ### Bug fixes

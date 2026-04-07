@@ -2,29 +2,18 @@
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import Iterator
 from dataclasses import dataclass
-from enum import Enum
-from typing import Protocol
+from typing import Literal, Protocol
 
+FieldPosition = Literal["header", "trailer"]
+"""The type of a field.
 
-class FieldPosition(Enum):
-    """The type of a field.
+Defines its placement in a request or response.
 
-    Defines its placement in a request or response.
-    """
+header: Header field. In HTTP this is a header as defined in RFC 9110 Section 6.3.
+trailer: Trailer field. In HTTP this is a trailer as defined in RFC 9110 Section 6.5.
 
-    HEADER = 0
-    """Header field.
-
-    In HTTP this is a header as defined in RFC 9110 Section 6.3. Implementations of
-    other protocols may use this FieldPosition for similar types of metadata.
-    """
-
-    TRAILER = 1
-    """Trailer field.
-
-    In HTTP this is a trailer as defined in RFC 9110 Section 6.5. Implementations of
-    other protocols may use this FieldPosition for similar types of metadata.
-    """
+Implementations of other protocols may use this FieldPosition for similar types of metadata.
+"""
 
 
 class Field(Protocol):
@@ -40,7 +29,7 @@ class Field(Protocol):
 
     name: str
     values: list[str]
-    kind: FieldPosition = FieldPosition.HEADER
+    kind: FieldPosition = "header"
 
     def add(self, value: str) -> None:
         """Append a value to a field."""

@@ -349,6 +349,12 @@ JSON_SERDE_CASES = [
     (Decimal("1.1"), b"1.1"),
     (b"foo", b'"Zm9v"'),
     ("foo", b'"foo"'),
+    # RFC 8259 §7: control characters must be escaped
+    ("line 1\nline 2", b'"line 1\\nline 2"'),
+    ("col 1\tcol 2", b'"col 1\\tcol 2"'),
+    ("a\rb", b'"a\\rb"'),
+    ("a\\b", b'"a\\\\b"'),
+    ('a"b', b'"a\\"b"'),
     (datetime(2024, 5, 15, tzinfo=UTC), b'"2024-05-15T00:00:00Z"'),
     (None, b"null"),
     (["foo"], b'["foo"]'),

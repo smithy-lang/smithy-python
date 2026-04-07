@@ -2,11 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 from collections import Counter, OrderedDict
 from collections.abc import Iterable, Iterator
+from typing import get_args
 
 from . import interfaces
 from .interfaces import FieldPosition
 
-__version__ = "0.3.1"
+__version__ = "0.4.0"
+
+_VALID_FIELD_POSITIONS = frozenset(get_args(FieldPosition))
 
 
 class Field(interfaces.Field):
@@ -24,10 +27,12 @@ class Field(interfaces.Field):
         *,
         name: str,
         values: Iterable[str] | None = None,
-        kind: FieldPosition = FieldPosition.HEADER,
+        kind: FieldPosition = "header",
     ):
         self.name = name
         self.values: list[str] = list(values) if values is not None else []
+        if kind not in _VALID_FIELD_POSITIONS:
+            raise ValueError(f"Unknown field kind: {kind!r}")
         self.kind = kind
 
     def add(self, value: str) -> None:
@@ -79,7 +84,7 @@ class Field(interfaces.Field):
             return False
         return (
             self.name == other.name
-            and self.kind is other.kind
+            and self.kind == other.kind
             and self.values == other.values
         )
 
@@ -153,7 +158,7 @@ class Fields(interfaces.Fields):
 
         Used to grab all headers or all trailers.
         """
-        return [entry for entry in self.entries.values() if entry.kind is kind]
+        return [entry for entry in self.entries.values() if entry.kind == kind]
 
     def extend(self, other: interfaces.Fields) -> None:
         """Merges ``entries`` of ``other`` into the current ``entries``.
@@ -225,8 +230,6 @@ def tuples_to_fields(
         try:
             fields[name].add(value)
         except KeyError:
-            fields[name] = Field(
-                name=name, values=[value], kind=kind or FieldPosition.HEADER
-            )
+            fields[name] = Field(name=name, values=[value], kind=kind or "header")
 
     return fields

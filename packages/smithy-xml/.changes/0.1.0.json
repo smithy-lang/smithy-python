@@ -1,0 +1,8 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Added initial support for XML deserialization in Smithy clients."
+    }
+  ]
+}

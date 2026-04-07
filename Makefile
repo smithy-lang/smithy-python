@@ -14,10 +14,12 @@ build-java: ## Builds the Java code generation packages.
 	cd codegen && ./gradlew clean build
 
 
-test-protocols: ## Generates and runs the restJson1 protocol tests.
-	cd codegen && ./gradlew :protocol-test:build
-	uv pip install codegen/protocol-test/build/smithyprojections/protocol-test/rest-json-1/python-client-codegen
-	uv run pytest codegen/protocol-test/build/smithyprojections/protocol-test/rest-json-1/python-client-codegen
+test-protocols: ## Generates and runs protocol tests for all supported protocols.
+	cd codegen && ./gradlew :protocol-test:clean :protocol-test:build
+	@set -e; for projection_dir in codegen/protocol-test/build/smithyprojections/protocol-test/*/python-client-codegen; do \
+		uv pip install "$$projection_dir"; \
+		uv run pytest "$$projection_dir"; \
+	done
 
 
 lint-py: ## Runs linters and formatters on the python packages.

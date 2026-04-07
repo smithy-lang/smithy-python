@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.4.0
+
+### Features
+* Added `error_schemas` to `APIOperation` to expose the operation’s modeled error schemas.
+* Added XML binding traits: `XMLNameTrait`, `XMLNamespaceTrait`, `XMLFlattenedTrait`, and `XMLAttributeTrait`.
+
 ## v0.3.0
 
 ### Breaking Changes

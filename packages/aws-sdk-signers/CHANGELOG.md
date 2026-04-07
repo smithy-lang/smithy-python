@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.2.0
+
+### Breaking Changes
+* Replace `FieldPosition` enum values with string literals for `Field.kind`. Use "header" and "trailer" instead of `FieldPosition.HEADER` and `FieldPosition.TRAILER`.
+
+### Bug fixes
+* Fixed SigV4 signature computation for URIs with literal query parameters (e.g., ?sync). parse_qsl was silently dropping query keys without values, causing InvalidSignatureException.
+
 ## v0.1.0
 
 ### Breaking Changes

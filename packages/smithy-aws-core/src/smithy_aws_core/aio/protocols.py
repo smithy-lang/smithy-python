@@ -2,30 +2,54 @@
 # SPDX-License-Identifier: Apache-2.0
 from collections.abc import Callable
 from inspect import iscoroutinefunction
+from io import BytesIO
 from typing import TYPE_CHECKING, Any, Final
 
+from smithy_core import URI as _URI
 from smithy_core.aio.interfaces import AsyncWriter
 from smithy_core.aio.interfaces.auth import AuthScheme
 from smithy_core.aio.interfaces.eventstream import EventPublisher, EventReceiver
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape, ShapeDeserializer
+from smithy_core.documents import TypeRegistry
 from smithy_core.exceptions import (
+    CallError,
     DiscriminatorError,
     MissingDependencyError,
     UnsupportedStreamError,
 )
-from smithy_core.interfaces import TypedProperties
+from smithy_core.interfaces import TypedProperties, URI
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import SerializeableShape
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.types import TimestampFormat
+from smithy_http import tuples_to_fields
+from smithy_http.aio import HTTPRequest as _HTTPRequest
 from smithy_http.aio.interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
-from smithy_http.aio.protocols import HttpBindingClientProtocol
-from smithy_json import JSONCodec, JSONDocument
+from smithy_http.aio.protocols import HttpBindingClientProtocol, HttpClientProtocol
+from smithy_http.deserializers import HTTPResponseDeserializer
 
-from ..traits import RestJson1Trait
+from .._private.query.errors import (
+    create_aws_query_error,
+)
+from .._private.query.serializers import QueryShapeSerializer
+from ..traits import AwsQueryTrait, RestJson1Trait
 from ..utils import parse_document_discriminator, parse_error_code
+
+try:
+    from smithy_json import JSONCodec, JSONDocument
+
+    _HAS_JSON = True
+except ImportError:
+    _HAS_JSON = False  # type: ignore
+
+try:
+    from smithy_xml import XMLCodec
+
+    _HAS_XML = True
+except ImportError:
+    _HAS_XML = False  # type: ignore
 
 try:
     from smithy_aws_event_stream.aio import (
@@ -44,10 +68,26 @@ if TYPE_CHECKING:
         AWSEventReceiver,
         SigningConfig,
     )
+    from smithy_json import JSONCodec, JSONDocument
+    from smithy_xml import XMLCodec
     from typing_extensions import TypeForm
 
 
-def _assert_event_stream_capable() -> None:
+def _assert_json() -> None:
+    if not _HAS_JSON:
+        raise MissingDependencyError(
+            "Attempted to use JSON codec, but smithy-json is not installed."
+        )
+
+
+def _assert_xml() -> None:
+    if not _HAS_XML:
+        raise MissingDependencyError(
+            "Attempted to use XML codec, but smithy-xml is not installed."
+        )
+
+
+def _assert_event_stream() -> None:
     if not _HAS_EVENT_STREAM:
         raise MissingDependencyError(
             "Attempted to use event streams, but smithy-aws-event-stream "
@@ -74,17 +114,21 @@ class AWSErrorIdentifier(HTTPErrorIdentifier):
         return None
 
 
-class AWSJSONDocument(JSONDocument):
-    @property
-    def discriminator(self) -> ShapeID:
-        if self.shape_type is ShapeType.STRUCTURE:
-            return self._schema.id
-        parsed = parse_document_discriminator(self, self._settings.default_namespace)
-        if parsed is None:
-            raise DiscriminatorError(
-                f"Unable to parse discriminator for {self.shape_type} document."
+if _HAS_JSON:
+
+    class AWSJSONDocument(JSONDocument):
+        @property
+        def discriminator(self) -> ShapeID:
+            if self.shape_type is ShapeType.STRUCTURE:
+                return self._schema.id
+            parsed = parse_document_discriminator(
+                self, self._settings.default_namespace
             )
-        return parsed
+            if parsed is None:
+                raise DiscriminatorError(
+                    f"Unable to parse discriminator for {self.shape_type} document."
+                )
+            return parsed
 
 
 class RestJsonClientProtocol(HttpBindingClientProtocol):
@@ -99,6 +143,7 @@ class RestJsonClientProtocol(HttpBindingClientProtocol):
 
         :param service: The schema for the service to interact with.
         """
+        _assert_json()
         self._codec: Final = JSONCodec(
             document_class=AWSJSONDocument,
             default_namespace=service_schema.id.namespace,
@@ -134,7 +179,7 @@ class RestJsonClientProtocol(HttpBindingClientProtocol):
         context: TypedProperties,
         auth_scheme: AuthScheme[Any, Any, Any, Any] | None = None,
     ) -> EventPublisher[Event]:
-        _assert_event_stream_capable()
+        _assert_event_stream()
         signing_config: SigningConfig | None = None
         if auth_scheme is not None:
             event_signer = auth_scheme.event_signer(request=request)
@@ -177,9 +222,153 @@ class RestJsonClientProtocol(HttpBindingClientProtocol):
         event_deserializer: Callable[[ShapeDeserializer], Event],
         context: TypedProperties,
     ) -> EventReceiver[Event]:
-        _assert_event_stream_capable()
+        _assert_event_stream()
         return AWSEventReceiver(
             payload_codec=self.payload_codec,
             source=AsyncBytesReader(response.body),
             deserializer=event_deserializer,
         )
+
+
+class AwsQueryClientProtocol(HttpClientProtocol):
+    """An implementation of the aws.protocols#awsQuery protocol."""
+
+    _id: Final = AwsQueryTrait.id
+    _content_type: Final = "application/x-www-form-urlencoded"
+
+    def __init__(self, service_schema: Schema, version: str) -> None:
+        _assert_xml()
+        self._default_namespace: Final = service_schema.id.namespace
+        self._version: Final = version
+        self._codec: Final = XMLCodec(default_namespace=self._default_namespace)
+
+    @property
+    def id(self) -> ShapeID:
+        return self._id
+
+    @property
+    def payload_codec(self) -> "XMLCodec":
+        return self._codec
+
+    @property
+    def content_type(self) -> str:
+        return self._content_type
+
+    def serialize_request[
+        OperationInput: SerializeableShape,
+        OperationOutput: DeserializeableShape,
+    ](
+        self,
+        *,
+        operation: APIOperation[OperationInput, OperationOutput],
+        input: OperationInput,
+        endpoint: URI,
+        context: TypedProperties,
+    ) -> HTTPRequest:
+        sink = BytesIO()
+        params: list[tuple[str, str]] = []
+        serializer = QueryShapeSerializer(
+            sink=sink,
+            action=self._action_name(operation),
+            version=self._version,
+            params=params,
+        )
+        input.serialize(serializer)
+        serializer.flush()
+        content_length = sink.tell()
+        sink.seek(0)
+        body = AsyncBytesReader(sink)
+        return _HTTPRequest(
+            method="POST",
+            destination=_URI(host="", path="/"),
+            fields=tuples_to_fields(
+                [
+                    ("content-type", self.content_type),
+                    ("content-length", str(content_length)),
+                ]
+            ),
+            body=body,
+        )
+
+    async def deserialize_response[
+        OperationInput: SerializeableShape,
+        OperationOutput: DeserializeableShape,
+    ](
+        self,
+        *,
+        operation: APIOperation[OperationInput, OperationOutput],
+        request: HTTPRequest,
+        response: HTTPResponse,
+        error_registry: TypeRegistry,
+        context: TypedProperties,
+    ) -> OperationOutput:
+        body = await response.consume_body_async()
+
+        if not self._is_success(operation, context, response):
+            raise await self._create_error(
+                operation=operation,
+                response=response,
+                response_body=body,
+                error_registry=error_registry,
+                context=context,
+            )
+
+        if len(body) == 0:
+            return operation.output.deserialize(
+                HTTPResponseDeserializer(
+                    payload_codec=self.payload_codec,
+                    response=response,
+                    body=body,
+                )
+            )
+
+        wrapper_elements = self._response_wrapper_elements(operation)
+        deserializer = self.payload_codec.create_deserializer(
+            body, wrapper_elements=wrapper_elements
+        )
+        return operation.output.deserialize(deserializer)
+
+    def _is_success(
+        self,
+        operation: APIOperation[Any, Any],
+        context: TypedProperties,
+        response: HTTPResponse,
+    ) -> bool:
+        return 200 <= response.status < 300
+
+    async def _create_error(
+        self,
+        *,
+        operation: APIOperation[Any, Any],
+        response: HTTPResponse,
+        response_body: bytes,
+        error_registry: TypeRegistry,
+        context: TypedProperties,
+    ) -> CallError:
+        return create_aws_query_error(
+            body=response_body,
+            operation=operation,
+            error_registry=error_registry,
+            default_namespace=self._default_namespace,
+            wrapper_elements=self._error_wrapper_elements(),
+            status=response.status,
+            context=context,
+        )
+
+    def _action_name(
+        self,
+        operation: APIOperation[SerializeableShape, DeserializeableShape],
+    ) -> str:
+        return operation.schema.id.name
+
+    def _response_wrapper_elements(
+        self,
+        operation: APIOperation[SerializeableShape, DeserializeableShape],
+    ) -> tuple[str, str]:
+        return (
+            f"{operation.schema.id.name}Response",
+            f"{operation.schema.id.name}Result",
+        )
+
+    def _error_wrapper_elements(self) -> tuple[str, ...]:
+        return ("ErrorResponse", "Error")

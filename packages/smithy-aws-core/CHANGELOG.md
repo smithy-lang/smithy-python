@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.5.0
+
+### Features
+* Add `awsQuery` protocol support for Smithy clients.
+
+### Dependencies
+* Bump `smithy-core` from `~=0.3.0` to `~=0.4.0`.
+* Bump `smithy-http` from `~=0.3.0` to `~=0.4.0`.
+* Bump `aws-sdk-signers` from `~=0.1.0` to `~=0.2.0`.
+* Bump `smithy-xml` from `~=0.0.0` to `~=0.1.0`.
+
 ## v0.4.0
 
 ### Enhancements
