@@ -10,7 +10,7 @@ from smithy_core.deserializers import (
     SpecificShapeDeserializer,
 )
 from smithy_core.schemas import Schema
-from smithy_core.shapes import ShapeID, ShapeType
+from smithy_core.shapes import ShapeType
 from smithy_core.traits import EventHeaderTrait
 from smithy_core.utils import expect_type
 
@@ -50,34 +50,11 @@ class EventDeserializer(SpecificShapeDeserializer):
                     message_deserializer = self._create_deserializer(schema, headers)
                     message_deserializer.read_struct(schema, consumer)
                 else:
-                    member_schema = schema.members.get(member_name)
-                    if member_schema is None:
-                        # Unknown event type. Call the consumer with a
-                        # schema that carries the event type name as
-                        # member_name and a member_index of -1 so the
-                        # generated default branch constructs the unknown
-                        # variant with the correct tag.
-                        logger.debug("Unknown event type: %s", member_name)
-
-                        _UNKNOWN_TARGET = Schema(
-                            id=ShapeID("smithy.unknown#Unknown"),
-                            shape_type=ShapeType.STRUCTURE,
-                        )
-                        unknown_schema = Schema(
-                            id=ShapeID(f"smithy.unknown#Unknown${member_name}"),
-                            shape_type=ShapeType.STRUCTURE,
-                            member_target=_UNKNOWN_TARGET,
-                            member_index=-1,
-                        )
-                        consumer(
-                            unknown_schema,
-                            self._payload_codec.create_deserializer(b"{}"),
-                        )
-                    else:
-                        message_deserializer = self._create_deserializer(
-                            member_schema, headers
-                        )
-                        consumer(member_schema, message_deserializer)
+                    member_schema = self._resolve_member_schema(schema, member_name)
+                    message_deserializer = self._create_deserializer(
+                        member_schema, headers
+                    )
+                    consumer(member_schema, message_deserializer)
             case "exception":
                 member_name = expect_type(str, headers[":exception-type"])
                 member_schema = schema.members[member_name]
@@ -93,6 +70,21 @@ class EventDeserializer(SpecificShapeDeserializer):
                 )
             case _:
                 raise EventError(f"Unknown event structure: {self._event}")
+
+    def _resolve_member_schema(self, schema: Schema, member_name: str) -> Schema:
+        if member_schema := schema.members.get(member_name):
+            return member_schema
+
+        logger.debug(
+            "Received unmodeled event stream member %s for union %s",
+            member_name,
+            schema.id,
+        )
+        return Schema.member(
+            id=schema.id.with_member(member_name),
+            target=schema,
+            index=-1,
+        )
 
     def _create_deserializer(
         self, schema: Schema, headers: HEADERS_DICT

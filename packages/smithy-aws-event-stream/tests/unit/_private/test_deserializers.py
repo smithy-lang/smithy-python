@@ -133,7 +133,7 @@ def test_deserialize_unknown_event_type():
     message = EventMessage(
         headers={
             ":message-type": "event",
-            ":event-type": "intermediateGroupEvent",
+            ":event-type": "unmodeledEvent",
             ":content-type": "application/json",
         },
         payload=b"{}",
@@ -143,4 +143,4 @@ def test_deserialize_unknown_event_type():
     deserializer = EventDeserializer(event=source, payload_codec=JSONCodec())
     result = EventStreamDeserializer().deserialize(deserializer)
     assert isinstance(result, EventStreamUnknown)
-    assert result.tag == "intermediateGroupEvent"
+    assert result.tag == "unmodeledEvent"

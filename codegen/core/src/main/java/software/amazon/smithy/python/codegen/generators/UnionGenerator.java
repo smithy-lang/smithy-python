@@ -144,8 +144,6 @@ public final class UnionGenerator implements Runnable {
         writer.addImport("smithy_core.deserializers", "ShapeDeserializer");
         writer.addImport("smithy_core.exceptions", "SerializationError");
 
-        // TODO: add in unknown handling
-
         var symbol = symbolProvider.toSymbol(shape);
         var deserializerSymbol = symbol.expectProperty(SymbolProperties.DESERIALIZER);
         var schemaSymbol = symbol.expectProperty(SymbolProperties.SCHEMA);
@@ -169,7 +167,7 @@ public final class UnionGenerator implements Runnable {
                             ${4C|}
                             case _:
                                 logger.debug("Unexpected member schema: %s", schema)
-                                self._set_result($5L(tag=schema.member_name or ""))
+                                self._set_result($5L(tag=schema.expect_member_name()))
 
                     def _set_result(self, value: $2T) -> None:
                         if self._result is not None:

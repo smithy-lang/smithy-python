@@ -429,7 +429,7 @@ class EventStreamDeserializer:
                 self._set_result(EventStreamErrorEvent(ErrorEvent.deserialize(de)))
 
             case _:
-                self._set_result(EventStreamUnknown(tag=schema.member_name or ""))
+                self._set_result(EventStreamUnknown(tag=schema.expect_member_name()))
 
     def _set_result(self, value: EventStream) -> None:
         if self._result is not None:
@@ -636,11 +636,11 @@ EVENT_STREAM_SERDE_CASES = [
 
 
 UNKNOWN_EVENT_CASE = (
-    EventStreamUnknown(tag="intermediateGroupEvent"),
+    EventStreamUnknown(tag="unmodeledEvent"),
     EventMessage(
         headers={
             ":message-type": "event",
-            ":event-type": "intermediateGroupEvent",
+            ":event-type": "unmodeledEvent",
             ":content-type": "application/json",
         },
         payload=b"{}",
