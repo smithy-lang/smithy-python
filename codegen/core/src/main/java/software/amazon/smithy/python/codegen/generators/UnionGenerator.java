@@ -166,7 +166,6 @@ public final class UnionGenerator implements Runnable {
                         match schema.expect_member_index():
                             ${4C|}
                             case _:
-                                logger.debug("Unexpected member schema: %s", schema)
                                 self._set_result($5L(tag=schema.expect_member_name()))
 
                     def _set_result(self, value: $2T) -> None:
