@@ -144,11 +144,10 @@ public final class UnionGenerator implements Runnable {
         writer.addImport("smithy_core.deserializers", "ShapeDeserializer");
         writer.addImport("smithy_core.exceptions", "SerializationError");
 
-        // TODO: add in unknown handling
-
         var symbol = symbolProvider.toSymbol(shape);
         var deserializerSymbol = symbol.expectProperty(SymbolProperties.DESERIALIZER);
         var schemaSymbol = symbol.expectProperty(SymbolProperties.SCHEMA);
+        var unknownSymbol = symbol.expectProperty(SymbolProperties.UNION_UNKNOWN);
         writer.putContext("schema", schemaSymbol);
         writer.write("""
                 class $1L:
@@ -167,7 +166,7 @@ public final class UnionGenerator implements Runnable {
                         match schema.expect_member_index():
                             ${4C|}
                             case _:
-                                logger.debug("Unexpected member schema: %s", schema)
+                                self._set_result($5L(tag=schema.expect_member_name()))
 
                     def _set_result(self, value: $2T) -> None:
                         if self._result is not None:
@@ -177,7 +176,8 @@ public final class UnionGenerator implements Runnable {
                 deserializerSymbol.getName(),
                 symbol,
                 schemaSymbol,
-                writer.consumer(w -> deserializeMembers()));
+                writer.consumer(w -> deserializeMembers()),
+                unknownSymbol.getName());
     }
 
     private void deserializeMembers() {
