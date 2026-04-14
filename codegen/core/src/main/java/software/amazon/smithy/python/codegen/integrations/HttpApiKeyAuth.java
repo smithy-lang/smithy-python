@@ -88,19 +88,19 @@ public final class HttpApiKeyAuth implements PythonIntegration {
             writer.addStdlibImport("typing", "Any");
             writer.pushState();
             writer.write("""
-                    def $1L(auth_params: $3T[Any, Any]) -> $4T | None:
-                        return $5T(
-                            scheme_id=$6T($2S),
+                    def $1L(auth_params: $2T[Any, Any]) -> $3T | None:
+                        return $4T(
+                            scheme_id=$5T($6S),
                             identity_properties={},  # type: ignore
                             signer_properties={},  # type: ignore
                         )
                     """,
                     OPTION_GENERATOR_NAME,
-                    HttpApiKeyAuthTrait.ID.toString(),
                     RuntimeTypes.AUTH_PARAMS,
                     RuntimeTypes.AUTH_OPTION_INTERFACE,
                     RuntimeTypes.AUTH_OPTION,
-                    RuntimeTypes.SHAPE_ID);
+                    RuntimeTypes.SHAPE_ID,
+                    HttpApiKeyAuthTrait.ID.toString());
             writer.popState();
         });
     }

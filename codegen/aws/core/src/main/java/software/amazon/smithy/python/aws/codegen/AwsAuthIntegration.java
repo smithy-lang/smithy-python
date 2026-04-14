@@ -101,19 +101,19 @@ public class AwsAuthIntegration implements PythonIntegration {
             writer.pushState();
 
             writer.write("""
-                    def $1L(auth_params: $3T[Any, Any]) -> $4T | None:
-                        return $5T(
-                            scheme_id=$6T($2S),
+                    def $1L(auth_params: $2T[Any, Any]) -> $3T | None:
+                        return $4T(
+                            scheme_id=$5T($6S),
                             identity_properties={},  # type: ignore
                             signer_properties={}  # type: ignore
                         )
                     """,
                     SIGV4_OPTION_GENERATOR_NAME,
-                    SigV4Trait.ID.toString(),
                     RuntimeTypes.AUTH_PARAMS,
                     RuntimeTypes.AUTH_OPTION_INTERFACE,
                     RuntimeTypes.AUTH_OPTION,
-                    RuntimeTypes.SHAPE_ID);
+                    RuntimeTypes.SHAPE_ID,
+                    SigV4Trait.ID.toString());
             writer.popState();
         });
     }
