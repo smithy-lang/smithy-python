@@ -6,7 +6,6 @@ package software.amazon.smithy.python.codegen.integrations;
 
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.model.shapes.ShapeId;
@@ -16,6 +15,7 @@ import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
+import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
@@ -61,12 +61,11 @@ public final class HttpApiKeyAuth implements PythonIntegration {
                                                 .build())
                                         .build())
                                 .initialize(writer -> {
-                                    writer.addImport("smithy_http.aio.identity.apikey", "APIKeyIdentityResolver");
                                     writer.write("""
                                             self.api_key_identity_resolver = (
-                                                api_key_identity_resolver or APIKeyIdentityResolver()
+                                                api_key_identity_resolver or $T()
                                             )
-                                            """);
+                                            """, RuntimeTypes.API_KEY_IDENTITY_RESOLVER);
                                 })
                                 .build())
                         .authScheme(new ApiKeyAuthScheme())
@@ -86,21 +85,22 @@ public final class HttpApiKeyAuth implements PythonIntegration {
         context.writerDelegator().useFileWriter(resolver.getDefinitionFile(), resolver.getNamespace(), writer -> {
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
             writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-            writer.addImport("smithy_core.interfaces.auth", "AuthOption", "AuthOptionProtocol");
-            writer.addImports("smithy_core.auth", Set.of("AuthOption", "AuthParams"));
-            writer.addImport("smithy_core.shapes", "ShapeID");
             writer.addStdlibImport("typing", "Any");
             writer.pushState();
             writer.write("""
-                    def $1L(auth_params: AuthParams[Any, Any]) -> AuthOptionProtocol | None:
-                        return AuthOption(
-                            scheme_id=ShapeID($2S),
+                    def $1L(auth_params: $3T[Any, Any]) -> $4T | None:
+                        return $5T(
+                            scheme_id=$6T($2S),
                             identity_properties={},  # type: ignore
                             signer_properties={},  # type: ignore
                         )
                     """,
                     OPTION_GENERATOR_NAME,
-                    HttpApiKeyAuthTrait.ID.toString());
+                    HttpApiKeyAuthTrait.ID.toString(),
+                    RuntimeTypes.AUTH_PARAMS,
+                    RuntimeTypes.AUTH_OPTION_INTERFACE,
+                    RuntimeTypes.AUTH_OPTION,
+                    RuntimeTypes.SHAPE_ID);
             writer.popState();
         });
     }
@@ -152,11 +152,10 @@ public final class HttpApiKeyAuth implements PythonIntegration {
             var trait = service.expectTrait(HttpApiKeyAuthTrait.class);
             writer.pushState();
             writer.putContext("scheme", trait.getScheme().orElse(null));
-            writer.addImport("smithy_core.traits", "APIKeyLocation");
             writer.write("""
-                    $T(
-                        name=$S,
-                        location=APIKeyLocation.$L,
+                    $1T(
+                        name=$2S,
+                        location=$4T.$3L,
                         ${?scheme}
                         scheme=${scheme:S},
                         ${/scheme}
@@ -164,7 +163,8 @@ public final class HttpApiKeyAuth implements PythonIntegration {
                     """,
                     getAuthSchemeSymbol(context),
                     trait.getName(),
-                    trait.getIn().name().toUpperCase(Locale.ENGLISH));
+                    trait.getIn().name().toUpperCase(Locale.ENGLISH),
+                    RuntimeTypes.API_KEY_LOCATION);
             writer.popState();
         }
     }

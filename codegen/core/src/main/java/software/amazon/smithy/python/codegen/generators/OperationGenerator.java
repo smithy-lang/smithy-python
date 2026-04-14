@@ -12,6 +12,7 @@ import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
@@ -38,38 +39,39 @@ public final class OperationGenerator implements Runnable {
     @Override
     public void run() {
         var opSymbol = symbolProvider.toSymbol(shape);
+        writer.addLocallyDefinedSymbol(opSymbol);
         var inSymbol = symbolProvider.toSymbol(model.expectShape(shape.getInputShape()));
         var outSymbol = symbolProvider.toSymbol(model.expectShape(shape.getOutputShape()));
 
         writer.addStdlibImport("dataclasses", "dataclass");
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-        writer.addImport("smithy_core.schemas", "APIOperation");
-        writer.addImport("smithy_core.documents", "TypeRegistry");
 
         writer.write("""
-                $1L = APIOperation(
-                        input = $2T,
-                        output = $3T,
-                        schema = $4T,
-                        input_schema = $5T,
-                        output_schema = $6T,
-                        error_registry = TypeRegistry({
-                            $7C
+                $1L = $2T(
+                        input = $3T,
+                        output = $4T,
+                        schema = $5T,
+                        input_schema = $6T,
+                        output_schema = $7T,
+                        error_registry = $8T({
+                            $9C
                         }),
                         effective_auth_schemes = [
-                            $8C
+                            ${10C}
                         ],
                         error_schemas = [
-                            $9C
+                            ${11C}
                         ]
                 )
                 """,
                 opSymbol.getName(),
+                RuntimeTypes.API_OPERATION,
                 inSymbol,
                 outSymbol,
                 opSymbol.expectProperty(SymbolProperties.SCHEMA),
                 inSymbol.expectProperty(SymbolProperties.SCHEMA),
                 outSymbol.expectProperty(SymbolProperties.SCHEMA),
+                RuntimeTypes.TYPE_REGISTRY,
                 writer.consumer(this::writeErrorTypeRegistry),
                 writer.consumer(this::writeAuthSchemes),
                 writer.consumer(this::writeErrorSchemas));
@@ -77,12 +79,9 @@ public final class OperationGenerator implements Runnable {
 
     private void writeErrorTypeRegistry(PythonWriter writer) {
         List<ShapeId> errors = shape.getErrors();
-        if (!errors.isEmpty()) {
-            writer.addImport("smithy_core.shapes", "ShapeID");
-        }
         for (var error : errors) {
             var errSymbol = symbolProvider.toSymbol(model.expectShape(error));
-            writer.write("ShapeID($S): $T,", error, errSymbol);
+            writer.write("$1T($2S): $3T,", RuntimeTypes.SHAPE_ID, error, errSymbol);
         }
     }
 
@@ -99,12 +98,8 @@ public final class OperationGenerator implements Runnable {
                         shape.getId(),
                         ServiceIndex.AuthSchemeMode.NO_AUTH_AWARE);
 
-        if (!authSchemes.isEmpty()) {
-            writer.addImport("smithy_core.shapes", "ShapeID");
-        }
-
         for (var authSchemeId : authSchemes.keySet()) {
-            writer.write("ShapeID($S),", authSchemeId);
+            writer.write("$1T($2S),", RuntimeTypes.SHAPE_ID, authSchemeId);
         }
 
     }

@@ -104,6 +104,36 @@ public final class ImportDeclarations implements ImportContainer {
         return this;
     }
 
+    /**
+     * Retroactively aliases an existing import to avoid name collisions.
+     *
+     * <p>This is called by {@link PythonWriter} at {@code toString()} time when a collision
+     * is detected between an imported name and a locally-defined name. The import statement
+     * is rewritten from {@code from namespace import name} to {@code from namespace import name as alias}.
+     *
+     * @param namespace The module namespace of the import.
+     * @param name The original imported name.
+     * @param alias The alias to use instead.
+     */
+    void aliasImport(String namespace, String name, String alias) {
+        aliasImportInMap(namespace, name, alias, externalImports);
+        aliasImportInMap(namespace, name, alias, localImports);
+    }
+
+    private void aliasImportInMap(
+            String namespace,
+            String name,
+            String alias,
+            Map<String, Map<String, String>> importMap
+    ) {
+        var namespaceImports = importMap.get(namespace);
+        if (namespaceImports != null
+                && namespaceImports.containsKey(name)
+                && namespaceImports.get(name).equals(name)) {
+            namespaceImports.put(name, alias);
+        }
+    }
+
     @Override
     public String toString() {
         if (externalImports.isEmpty() && stdlibImports.isEmpty() && localImports.isEmpty()) {

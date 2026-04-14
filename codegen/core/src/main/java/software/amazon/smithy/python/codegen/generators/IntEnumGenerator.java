@@ -40,6 +40,7 @@ public final class IntEnumGenerator implements Runnable {
             writer.addStdlibImport("enum", "IntEnum");
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
             writer.addImport("smithy_core.types", "UnknownEnumMixin");
+            writer.addLocallyDefinedSymbol(enumSymbol);
             writer.openBlock("class $L(UnknownEnumMixin, IntEnum):", "", enumSymbol.getName(), () -> {
                 directive.shape().getTrait(DocumentationTrait.class).ifPresent(trait -> {
                     writer.writeDocs(trait.getValue(), directive.context());

@@ -40,6 +40,7 @@ public final class EnumGenerator implements Runnable {
             writer.addStdlibImport("enum", "StrEnum");
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
             writer.addImport("smithy_core.types", "UnknownEnumMixin");
+            writer.addLocallyDefinedSymbol(enumSymbol);
             writer.openBlock("class $L(UnknownEnumMixin, StrEnum):", "", enumSymbol.getName(), () -> {
                 shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
                     writer.writeDocs(trait.getValue(), context);
