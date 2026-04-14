@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Handle unknown event types gracefully instead of crashing."
+}
