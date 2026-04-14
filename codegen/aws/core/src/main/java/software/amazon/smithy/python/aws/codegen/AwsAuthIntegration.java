@@ -7,7 +7,6 @@ package software.amazon.smithy.python.aws.codegen;
 import static software.amazon.smithy.python.aws.codegen.AwsConfiguration.REGION;
 
 import java.util.List;
-import java.util.Set;
 import software.amazon.smithy.aws.traits.auth.SigV4Trait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.shapes.ServiceShape;
@@ -16,6 +15,7 @@ import software.amazon.smithy.python.codegen.ApplicationProtocol;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.integrations.AuthScheme;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
@@ -98,21 +98,22 @@ public class AwsAuthIntegration implements PythonIntegration {
         // must be accounted for.
         context.writerDelegator().useFileWriter(resolver.getDefinitionFile(), resolver.getNamespace(), writer -> {
             writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-            writer.addImport("smithy_core.interfaces.auth", "AuthOption", "AuthOptionProtocol");
-            writer.addImports("smithy_core.auth", Set.of("AuthOption", "AuthParams"));
-            writer.addImport("smithy_core.shapes", "ShapeID");
             writer.pushState();
 
             writer.write("""
-                    def $1L(auth_params: AuthParams[Any, Any]) -> AuthOptionProtocol | None:
-                        return AuthOption(
-                            scheme_id=ShapeID($2S),
+                    def $1L(auth_params: $3T[Any, Any]) -> $4T | None:
+                        return $5T(
+                            scheme_id=$6T($2S),
                             identity_properties={},  # type: ignore
                             signer_properties={}  # type: ignore
                         )
                     """,
                     SIGV4_OPTION_GENERATOR_NAME,
-                    SigV4Trait.ID.toString());
+                    SigV4Trait.ID.toString(),
+                    RuntimeTypes.AUTH_PARAMS,
+                    RuntimeTypes.AUTH_OPTION_INTERFACE,
+                    RuntimeTypes.AUTH_OPTION,
+                    RuntimeTypes.SHAPE_ID);
             writer.popState();
         });
     }

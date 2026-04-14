@@ -30,6 +30,7 @@ public final class EnumGenerator implements Runnable {
         var enumSymbol = context.symbolProvider().toSymbol(shape).expectProperty(SymbolProperties.ENUM_SYMBOL);
         context.writerDelegator().useShapeWriter(shape, writer -> {
             writer.addStdlibImport("enum", "StrEnum");
+            writer.addLocallyDefinedSymbol(enumSymbol);
             writer.openBlock("class $L(StrEnum):", "", enumSymbol.getName(), () -> {
                 shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
                     writer.writeDocs(trait.getValue(), context);

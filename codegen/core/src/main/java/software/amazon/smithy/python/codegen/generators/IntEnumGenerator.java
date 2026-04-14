@@ -27,6 +27,7 @@ public final class IntEnumGenerator implements Runnable {
         var enumSymbol = directive.symbol().expectProperty(SymbolProperties.ENUM_SYMBOL);
         directive.context().writerDelegator().useShapeWriter(directive.shape(), writer -> {
             writer.addStdlibImport("enum", "IntEnum");
+            writer.addLocallyDefinedSymbol(enumSymbol);
             writer.openBlock("class $L(IntEnum):", "", enumSymbol.getName(), () -> {
                 directive.shape().getTrait(DocumentationTrait.class).ifPresent(trait -> {
                     writer.writeDocs(trait.getValue(), directive.context());

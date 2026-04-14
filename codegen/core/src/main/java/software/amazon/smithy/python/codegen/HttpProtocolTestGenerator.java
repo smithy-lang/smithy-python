@@ -182,13 +182,12 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     } else {
                         path = "";
                     }
-                    writer.addImport("smithy_core.retries", "SimpleRetryStrategy");
                     writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
                         writer.write("""
                                 config = $T(
                                     endpoint_uri="https://$L/$L",
                                     transport = $T(),
-                                    retry_strategy=SimpleRetryStrategy(max_attempts=1),
+                                    retry_strategy=$T(max_attempts=1),
                                     ${C|}
                                 )
                                 """,
@@ -196,6 +195,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 host,
                                 path,
                                 REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
+                                RuntimeTypes.SIMPLE_RETRY_STRATEGY,
                                 (Runnable) this::writeSigV4TestConfig);
                     }));
 
@@ -403,8 +403,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
             return;
         }
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-        writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
-        writer.write("actual_body_content = await AsyncBytesReader(actual.body or b'').read()");
+        writer.write("actual_body_content = await $T(actual.body or b'').read()", RuntimeTypes.ASYNC_BYTES_READER);
         writer.write("expected_body_content = b$S", testCase.getBody().get());
         compareMediaBlob(testCase, writer);
     }
@@ -563,13 +562,11 @@ public final class HttpProtocolTestGenerator implements Runnable {
             var memberName = context.symbolProvider().toMemberName(member);
             if (member.equals(streamingMember)) {
                 writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-                writer.addImport("smithy_core.aio.interfaces", "AsyncByteStream");
-                writer.addImport("smithy_core.aio.types", "AsyncBytesReader");
                 writer.write("""
-                        assert isinstance(actual.$1L, AsyncByteStream)
+                        assert isinstance(actual.$1L, $2T)
                         actual_body_content = await actual.$1L.read()
-                        expected_body_content = await AsyncBytesReader(expected.$1L).read()
-                        """, memberName);
+                        expected_body_content = await $3T(expected.$1L).read()
+                        """, memberName, RuntimeTypes.ASYNC_BYTE_STREAM, RuntimeTypes.ASYNC_BYTES_READER);
                 compareMediaBlob(testCase, writer);
                 continue;
             }
@@ -628,49 +625,28 @@ public final class HttpProtocolTestGenerator implements Runnable {
         if (!service.hasTrait(SigV4Trait.class)) {
             return;
         }
-        writer.addImport("smithy_aws_core.identity", "StaticCredentialsResolver");
         writer.write("""
                 region="us-east-1",
                 aws_access_key_id="test-access-key-id",
                 aws_secret_access_key="test-secret-access-key",
-                aws_credentials_identity_resolver=StaticCredentialsResolver(),
-                """);
+                aws_credentials_identity_resolver=$T(),
+                """, RuntimeTypes.STATIC_CREDENTIALS_RESOLVER);
     }
 
     private void writeUtilStubs(Symbol serviceSymbol) {
         LOGGER.fine(String.format("Writing utility stubs for %s : %s", serviceSymbol.getName(), protocol.getName()));
+        writer.addLocallyDefinedSymbol(TEST_HTTP_SERVICE_ERR_SYMBOL);
+        writer.addLocallyDefinedSymbol(REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL);
+        writer.addLocallyDefinedSymbol(RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL);
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
-        writer.addImports("smithy_http.interfaces",
-                Set.of(
-                        "HTTPRequestConfiguration",
-                        "HTTPClientConfiguration"));
-        writer.addImports("smithy_http.aio.interfaces", Set.of("HTTPRequest", "HTTPResponse"));
-        writer.addImport("smithy_http", "tuples_to_fields");
-        writer.addImport("smithy_http.aio", "HTTPResponse", "_HTTPResponse");
-        writer.addImport("smithy_core.aio.utils", "async_list");
 
         writer.write("""
                 class $1L($2T):
                     ""\"A test error that subclasses the service-error for protocol tests.""\"
 
-                    def __init__(self, request: HTTPRequest):
+                    def __init__(self, request: $3T):
                         self.request = request
-
-
-                class $3L:
-                    ""\"An asynchronous HTTP client solely for testing purposes.""\"
-
-                    TIMEOUT_EXCEPTIONS = ()
-
-                    def __init__(self, *, client_config: HTTPClientConfiguration | None = None):
-                        self._client_config = client_config
-
-                    async def send(
-                        self, request: HTTPRequest, *, request_config: HTTPRequestConfiguration | None = None
-                    ) -> HTTPResponse:
-                        # Raise the exception with the request object to bypass actual request handling
-                        raise $1T(request)
 
 
                 class $4L:
@@ -678,33 +654,55 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
                     TIMEOUT_EXCEPTIONS = ()
 
+                    def __init__(self, *, client_config: $5T | None = None):
+                        self._client_config = client_config
+
+                    async def send(
+                        self, request: $3T, *, request_config: $6T | None = None
+                    ) -> $7T:
+                        # Raise the exception with the request object to bypass actual request handling
+                        raise $1T(request)
+
+
+                class $8L:
+                    ""\"An asynchronous HTTP client solely for testing purposes.""\"
+
+                    TIMEOUT_EXCEPTIONS = ()
+
                     def __init__(
                         self,
                         *,
-                        client_config: HTTPClientConfiguration | None = None,
+                        client_config: $5T | None = None,
                         status: int = 200,
                         headers: list[tuple[str, str]] | None = None,
                         body: bytes = b"",
                     ):
                         self._client_config = client_config
                         self.status = status
-                        self.fields = tuples_to_fields(headers or [])
+                        self.fields = $9T(headers or [])
                         self.body = body
 
                     async def send(
-                        self, request: HTTPRequest, *, request_config: HTTPRequestConfiguration | None = None
-                    ) -> _HTTPResponse:
+                        self, request: $3T, *, request_config: $6T | None = None
+                    ) -> ${10T}:
                         # Pre-construct the response from the request and return it
-                        return _HTTPResponse(
+                        return ${10T}(
                             status=self.status,
                             fields=self.fields,
-                            body=async_list([self.body]),
+                            body=${11T}([self.body]),
                         )
                 """,
                 TEST_HTTP_SERVICE_ERR_SYMBOL,
                 CodegenUtils.getServiceError(context.settings()),
+                RuntimeTypes.HTTP_REQUEST,
                 REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
-                RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL);
+                RuntimeTypes.HTTP_CLIENT_CONFIGURATION,
+                RuntimeTypes.HTTP_REQUEST_CONFIGURATION,
+                RuntimeTypes.HTTP_RESPONSE,
+                RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
+                RuntimeTypes.TUPLES_TO_FIELDS,
+                RuntimeTypes.HTTP_RESPONSE_IMPL,
+                RuntimeTypes.ASYNC_LIST);
     }
 
     /**
@@ -726,8 +724,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
             if (inputShape.isListShape()) {
                 var target = model.expectShape(inputShape.asListShape().get().getMember().getTarget());
                 if (target.isDocumentShape()) {
-                    writer.addImport("smithy_core.documents", "Document");
-                    openList = "Document([";
+                    var docName = writer.format("$T", RuntimeTypes.DOCUMENT);
+                    openList = docName + "([";
                     closeList = "])";
                 }
             }
@@ -832,8 +830,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
                 var formatString = "$L = $C,";
                 if (targetShape.isDocumentShape()) {
-                    writer.addImport("smithy_core.documents", "Document");
-                    formatString = "$L = Document($C),";
+                    var docName = writer.format("$T", RuntimeTypes.DOCUMENT);
+                    formatString = "$L = " + docName + "($C),";
                 }
 
                 writer.write(formatString,
@@ -860,8 +858,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
                         var formatString = "$S: $C,";
                         if (targetShape.isDocumentShape()) {
-                            writer.addImport("smithy_core.documents", "Document");
-                            formatString = "$S: Document($C),";
+                            var docName = writer.format("$T", RuntimeTypes.DOCUMENT);
+                            formatString = "$S: " + docName + "($C),";
                         }
 
                         writer.write(formatString,

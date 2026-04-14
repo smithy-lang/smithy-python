@@ -27,6 +27,7 @@ import software.amazon.smithy.model.traits.EnumTrait;
 import software.amazon.smithy.model.traits.UnitTypeTrait;
 import software.amazon.smithy.model.traits.synthetic.SyntheticEnumTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
@@ -96,11 +97,10 @@ public final class SchemaGenerator implements Consumer<Shape> {
     }
 
     private void writeShapeSchema(PythonWriter writer, Shape shape) {
-        writer.addImport("smithy_core.schemas", "Schema");
-        writer.addImports("smithy_core.shapes", Set.of("ShapeID", "ShapeType"));
         writer.pushState();
 
         var symbol = context.symbolProvider().toSymbol(shape).expectProperty(SymbolProperties.SCHEMA).getSymbol();
+        writer.addLocallyDefinedSymbol(symbol);
 
         var traits = filterTraits(shape);
         writer.putContext("isCollection", shape.isStructureShape() || !shape.members().isEmpty());
@@ -109,19 +109,22 @@ public final class SchemaGenerator implements Consumer<Shape> {
         writer.putContext("hasTraits", !traits.isEmpty());
 
         writer.write("""
-                $L = Schema${?isCollection}.collection${/isCollection}(
-                    id=ShapeID($S),
-                    ${^isStructure}shape_type=ShapeType.${shapeType:L},${/isStructure}
+                $1L = $2T${?isCollection}.collection${/isCollection}(
+                    id=$3T($4S),
+                    ${^isStructure}shape_type=$5T.${shapeType:L},${/isStructure}
                     ${?hasTraits}
                     traits=[
-                        ${C|}
+                        ${6C|}
                     ],
                     ${/hasTraits}
-                    ${C|}
+                    ${7C|}
                 )
                 """,
                 symbol.getName(),
+                RuntimeTypes.SCHEMA,
+                RuntimeTypes.SHAPE_ID,
                 shape.getId(),
+                RuntimeTypes.SHAPE_TYPE,
                 writer.consumer(w -> writeTraits(w, traits)),
                 writer.consumer(w -> writeSchemaMembers(w, shape)));
         writer.popState();
@@ -142,13 +145,14 @@ public final class SchemaGenerator implements Consumer<Shape> {
     }
 
     private void writeTraits(PythonWriter writer, Map<ShapeId, Optional<Node>> traits) {
-        writer.addImport("smithy_core.traits", "Trait");
         writer.pushState();
         writer.putContext("traits", traits);
         writer.write("""
                 ${#traits}
-                Trait.new(id=ShapeID(${key:S})${?value}, value=${value:N}${/value}),
-                ${/traits}""");
+                $1T.new(id=$2T(${key:S})${?value}, value=${value:N}${/value}),
+                ${/traits}""",
+                RuntimeTypes.TRAIT,
+                RuntimeTypes.SHAPE_ID);
         writer.popState();
     }
 
@@ -216,9 +220,6 @@ public final class SchemaGenerator implements Consumer<Shape> {
     }
 
     private void finalizeRecursiveShapes(PythonWriter writer) {
-        writer.addImport("smithy_core.schemas", "Schema");
-        writer.addImport("smithy_core.shapes", "ShapeType");
-
         for (Map.Entry<MemberShape, Integer> entry : deferredMembers.entrySet()) {
             var member = entry.getKey();
             LOGGER.warning("Generating member: " + member.getId());
@@ -236,7 +237,7 @@ public final class SchemaGenerator implements Consumer<Shape> {
             writer.putContext("hasTraits", !traits.isEmpty());
 
             writer.write("""
-                    $1T.members[$2S] = Schema.member(
+                    $1T.members[$2S] = $6T.member(
                         id=$1T.id.with_member($2S),
                         target=$3T,
                         index=$5L,
@@ -252,7 +253,8 @@ public final class SchemaGenerator implements Consumer<Shape> {
                     member.getMemberName(),
                     target,
                     writer.consumer(w -> writeTraits(w, traits)),
-                    entry.getValue());
+                    entry.getValue(),
+                    RuntimeTypes.SCHEMA);
 
             writer.popState();
         }
