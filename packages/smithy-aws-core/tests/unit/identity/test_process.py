@@ -175,7 +175,10 @@ async def test_non_zero_exit_code():
 
     with patch("asyncio.create_subprocess_exec", return_value=process):
         resolver = ProcessCredentialsResolver(["mock-process"])
-        with pytest.raises(SmithyIdentityError, match="non-zero exit code"):
+        with pytest.raises(
+            SmithyIdentityError,
+            match="exit code 1: Process error message",
+        ):
             await resolver.get_identity(properties={})
 
 

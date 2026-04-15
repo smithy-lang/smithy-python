@@ -76,7 +76,8 @@ class ProcessCredentialsResolver(
 
         if process.returncode != 0:
             raise SmithyIdentityError(
-                f"Credential process failed with non-zero exit code: {stderr.decode('utf-8')}"
+                f"Credential process failed with exit code {process.returncode}: "
+                f"{stderr.decode('utf-8', errors='replace')}"
             )
         try:
             creds = json.loads(stdout.decode("utf-8"))
