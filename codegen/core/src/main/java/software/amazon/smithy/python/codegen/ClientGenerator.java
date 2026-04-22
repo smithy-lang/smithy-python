@@ -50,6 +50,7 @@ final class ClientGenerator implements Runnable {
 
     private void generateService(PythonWriter writer) {
         var serviceSymbol = symbolProvider.toSymbol(service);
+        writer.addLocallyDefinedSymbol(serviceSymbol);
         var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
         writer.addLogger();
@@ -71,7 +72,6 @@ final class ClientGenerator implements Runnable {
             }
 
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-            writer.addImport("smithy_core.retries", "RetryStrategyResolver");
             writer.write("""
                     def __init__(self, config: $1T | None = None, plugins: list[$2T] | None = None):
                         $3C
@@ -86,12 +86,13 @@ final class ClientGenerator implements Runnable {
                         for plugin in client_plugins:
                             plugin(self._config)
 
-                        self._retry_strategy_resolver = RetryStrategyResolver()
+                        self._retry_strategy_resolver = $5T()
                     """,
                     configSymbol,
                     pluginSymbol,
                     writer.consumer(w -> writeConstructorDocs(w, serviceSymbol.getName())),
-                    writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)));
+                    writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)),
+                    RuntimeTypes.RETRY_STRATEGY_RESOLVER);
 
             var topDownIndex = TopDownIndex.of(model);
             var eventStreamIndex = EventStreamIndex.of(model);
@@ -209,18 +210,11 @@ final class ClientGenerator implements Runnable {
         }
 
         writer.putContext("operation", symbolProvider.toSymbol(operation));
-        writer.addImport("smithy_core.aio.client", "ClientCall");
-        writer.addImport("smithy_core.interceptors", "InterceptorChain");
-        writer.addImport("smithy_core.types", "TypedProperties");
-        writer.addImport("smithy_core.aio.client", "RequestPipeline");
-        writer.addImport("smithy_core.exceptions", "ExpectationNotMetError");
-        writer.addImport("smithy_core.retries", "RetryStrategyOptions");
-        writer.addImport("smithy_core.interfaces.retries", "RetryStrategy");
         writer.addStdlibImport("copy", "deepcopy");
 
         writer.write("""
                 operation_plugins: list[Plugin] = [
-                    $C
+                    $1C
                 ]
                 if plugins:
                     operation_plugins.extend(plugins)
@@ -228,27 +222,33 @@ final class ClientGenerator implements Runnable {
                 for plugin in operation_plugins:
                     plugin(config)
                 if config.protocol is None or config.transport is None:
-                    raise ExpectationNotMetError("protocol and transport MUST be set on the config to make calls.")
+                    raise $2T("protocol and transport MUST be set on the config to make calls.")
 
                 retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
                     retry_strategy=config.retry_strategy
                 )
 
-                pipeline = RequestPipeline(
+                pipeline = $3T(
                     protocol=config.protocol,
                     transport=config.transport
                 )
-                call = ClientCall(
+                call = $4T(
                     input=input,
                     operation=${operation:T},
-                    context=TypedProperties({"config": config}),
-                    interceptor=InterceptorChain(config.interceptors),
+                    context=$5T({"config": config}),
+                    interceptor=$6T(config.interceptors),
                     auth_scheme_resolver=config.auth_scheme_resolver,
                     supported_auth_schemes=config.auth_schemes,
                     endpoint_resolver=config.endpoint_resolver,
                     retry_strategy=retry_strategy,
                 )
-                """, writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)));
+                """,
+                writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)),
+                RuntimeTypes.EXPECTATION_NOT_MET_ERROR,
+                RuntimeTypes.REQUEST_PIPELINE,
+                RuntimeTypes.CLIENT_CALL,
+                RuntimeTypes.TYPED_PROPERTIES,
+                RuntimeTypes.INTERCEPTOR_CHAIN);
 
     }
 
@@ -291,14 +291,14 @@ final class ClientGenerator implements Runnable {
         // the type declaration so much that it's no better than Any.
         if (inputStreamSymbol.isPresent()) {
             if (outputStreamSymbol.isPresent()) {
-                writer.addImport("smithy_core.aio.eventstream", "DuplexEventStream");
+                writer.putContext("duplexEventStream", RuntimeTypes.DUPLEX_EVENT_STREAM);
                 var outputDocs = "A `DuplexEventStream` for bidirectional streaming.";
                 writer.write("""
                         async def ${operationName:L}(
                             self,
                             input: ${input:T},
                             plugins: list[${plugin:T}] | None = None
-                        ) -> DuplexEventStream[${inputStream:T}, ${outputStream:T}, ${output:T}]:
+                        ) -> ${duplexEventStream:T}[${inputStream:T}, ${outputStream:T}, ${output:T}]:
                             ${C|}
                             return await pipeline.duplex_stream(
                                 call,
@@ -309,14 +309,14 @@ final class ClientGenerator implements Runnable {
                         """,
                         writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, outputDocs)));
             } else {
-                writer.addImport("smithy_core.aio.eventstream", "InputEventStream");
+                writer.putContext("inputEventStream", RuntimeTypes.INPUT_EVENT_STREAM);
                 var outputDocs = "An `InputEventStream` for client-to-server streaming.";
                 writer.write("""
                         async def ${operationName:L}(
                             self,
                             input: ${input:T},
                             plugins: list[${plugin:T}] | None = None
-                        ) -> InputEventStream[${inputStream:T}, ${output:T}]:
+                        ) -> ${inputEventStream:T}[${inputStream:T}, ${output:T}]:
                             ${C|}
                             return await pipeline.input_stream(
                                 call,
@@ -326,14 +326,14 @@ final class ClientGenerator implements Runnable {
                         writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, outputDocs)));
             }
         } else {
-            writer.addImport("smithy_core.aio.eventstream", "OutputEventStream");
+            writer.putContext("outputEventStream", RuntimeTypes.OUTPUT_EVENT_STREAM);
             var outputDocs = "An `OutputEventStream` for server-to-client streaming.";
             writer.write("""
                     async def ${operationName:L}(
                         self,
                         input: ${input:T},
                         plugins: list[${plugin:T}] | None = None
-                    ) -> OutputEventStream[${outputStream:T}, ${output:T}]:
+                    ) -> ${outputEventStream:T}[${outputStream:T}, ${output:T}]:
                         ${C|}
                         return await pipeline.output_stream(
                             call,

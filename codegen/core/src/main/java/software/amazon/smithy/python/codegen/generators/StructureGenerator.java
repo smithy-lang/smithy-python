@@ -29,6 +29,7 @@ import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
+import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
@@ -93,6 +94,7 @@ public final class StructureGenerator implements Runnable {
     private void renderStructure() {
         writer.addStdlibImport("dataclasses", "dataclass");
         var symbol = symbolProvider.toSymbol(shape);
+        writer.addLocallyDefinedSymbol(symbol);
         writer.write("""
                 @dataclass(kw_only=True)
                 class $L:
@@ -119,6 +121,7 @@ public final class StructureGenerator implements Runnable {
 
         var fault = errorTrait.getValue();
         var symbol = symbolProvider.toSymbol(shape);
+        writer.addLocallyDefinedSymbol(symbol);
         var baseError = CodegenUtils.getServiceError(settings);
         writer.putContext("retryable", false);
         writer.putContext("throttling", false);
@@ -275,7 +278,9 @@ public final class StructureGenerator implements Runnable {
         }
 
         if (target.isDocumentShape()) {
-            return String.format("lambda: Document(%s)", switch (defaultNode.getType()) {
+            var docSymbol = RuntimeTypes.DOCUMENT;
+            var docName = writer.format("$T", docSymbol);
+            return String.format("lambda: %s(%s)", docName, switch (defaultNode.getType()) {
                 case NULL -> "None";
                 case BOOLEAN -> defaultNode.expectBooleanNode().getValue() ? "True" : "False";
                 case ARRAY -> "list()";
@@ -296,17 +301,17 @@ public final class StructureGenerator implements Runnable {
 
     private void generateSerializeMethod() {
         writer.pushState();
-        writer.addImport("smithy_core.serializers", "ShapeSerializer");
+        writer.putContext("shapeSerializer", RuntimeTypes.SHAPE_SERIALIZER);
 
         writer.putContext("schema", symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.SCHEMA));
         writer.write("""
-                def serialize(self, serializer: ShapeSerializer):
+                def serialize(self, serializer: ${shapeSerializer:T}):
                     serializer.write_struct(${schema:T}, self)
 
                 """);
 
         var serializeableMembers = filterMembers();
-        writer.write("def serialize_members(self, serializer: ShapeSerializer):").indent();
+        writer.write("def serialize_members(self, serializer: ${shapeSerializer:T}):").indent();
         if (serializeableMembers.isEmpty()) {
             writer.write("pass");
         } else {
@@ -352,8 +357,6 @@ public final class StructureGenerator implements Runnable {
         writer.pushState();
         writer.addLogger();
         writer.addStdlibImports("typing", Set.of("Self", "Any"));
-        writer.addImport("smithy_core.deserializers", "ShapeDeserializer");
-        writer.addImport("smithy_core.schemas", "Schema");
 
         var schemaSymbol = symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.SCHEMA);
         writer.putContext("schema", schemaSymbol);
@@ -361,23 +364,25 @@ public final class StructureGenerator implements Runnable {
         // TODO: either formalize deserialize_kwargs or remove it when http serde is converted
         writer.write("""
                 @classmethod
-                def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+                def deserialize(cls, deserializer: $1T) -> Self:
                     return cls(**cls.deserialize_kwargs(deserializer))
 
                 @classmethod
-                def deserialize_kwargs(cls, deserializer: ShapeDeserializer) -> dict[str, Any]:
+                def deserialize_kwargs(cls, deserializer: $1T) -> dict[str, Any]:
                     kwargs: dict[str, Any] = {}
 
-                    def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
+                    def _consumer(schema: $2T, de: $1T) -> None:
                         match schema.expect_member_index():
-                            ${C|}
+                            ${3C|}
                             case _:
                                 logger.debug("Unexpected member schema: %s", schema)
 
-                    deserializer.read_struct($T, consumer=_consumer)
+                    deserializer.read_struct($4T, consumer=_consumer)
                     return kwargs
 
                 """,
+                RuntimeTypes.SHAPE_DESERIALIZER,
+                RuntimeTypes.SCHEMA,
                 writer.consumer(w -> deserializeMembers(shape.members())),
                 schemaSymbol);
         writer.popState();
