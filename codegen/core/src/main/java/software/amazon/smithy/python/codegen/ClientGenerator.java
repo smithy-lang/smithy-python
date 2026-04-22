@@ -71,7 +71,7 @@ final class ClientGenerator implements Runnable {
             }
 
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-            writer.addImport("smithy_core.retries", "RetryStrategyResolver");
+            writer.addImport("smithy_core.aio.retries", "RetryStrategyResolver");
             writer.write("""
                     def __init__(self, config: $1T | None = None, plugins: list[$2T] | None = None):
                         $3C
@@ -215,7 +215,7 @@ final class ClientGenerator implements Runnable {
         writer.addImport("smithy_core.aio.client", "RequestPipeline");
         writer.addImport("smithy_core.exceptions", "ExpectationNotMetError");
         writer.addImport("smithy_core.retries", "RetryStrategyOptions");
-        writer.addImport("smithy_core.interfaces.retries", "RetryStrategy");
+        writer.addImport("smithy_core.aio.interfaces.retries", "RetryStrategy");
         writer.addStdlibImport("copy", "deepcopy");
 
         writer.write("""

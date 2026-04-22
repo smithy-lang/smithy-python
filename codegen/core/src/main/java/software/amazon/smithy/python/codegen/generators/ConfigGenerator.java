@@ -58,7 +58,7 @@ public final class ConfigGenerator implements Runnable {
                             .name("RetryStrategy | RetryStrategyOptions")
                             .addReference(Symbol.builder()
                                     .name("RetryStrategy")
-                                    .namespace("smithy_core.interfaces.retries", ".")
+                                    .namespace("smithy_core.aio.interfaces.retries", ".")
                                     .addDependency(SmithyPythonDependency.SMITHY_CORE)
                                     .build())
                             .addReference(Symbol.builder()

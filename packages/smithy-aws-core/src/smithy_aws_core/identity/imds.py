@@ -9,9 +9,9 @@ from typing import Literal
 
 from smithy_core import URI
 from smithy_core.aio.interfaces.identity import IdentityResolver
+from smithy_core.aio.interfaces.retries import RetryStrategy
+from smithy_core.aio.retries import SimpleRetryStrategy
 from smithy_core.exceptions import SmithyIdentityError
-from smithy_core.interfaces.retries import RetryStrategy
-from smithy_core.retries import SimpleRetryStrategy
 from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest
 from smithy_http.aio.interfaces import HTTPClient
