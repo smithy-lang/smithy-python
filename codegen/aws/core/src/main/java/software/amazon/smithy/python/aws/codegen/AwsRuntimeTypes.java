@@ -17,17 +17,9 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
 public final class AwsRuntimeTypes {
 
     // smithy_aws_core.aio.protocols
-    public static final Symbol REST_JSON_CLIENT_PROTOCOL = createSymbol(
-            "aio.protocols",
-            "RestJsonClientProtocol");
     public static final Symbol AWS_QUERY_CLIENT_PROTOCOL = createSymbol(
             "aio.protocols",
             "AwsQueryClientProtocol");
-
-    // smithy_aws_core.identity
-    public static final Symbol STATIC_CREDENTIALS_RESOLVER = createSymbol(
-            "identity",
-            "StaticCredentialsResolver");
 
     // smithy_aws_core.endpoints.standard_regional
     public static final Symbol STANDARD_REGIONAL_ENDPOINTS_RESOLVER = createSymbol(
