@@ -13,10 +13,11 @@ permissions:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.python-version == '3.15' }}
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.12", "3.13", "3.14"]
+        python-version: ["3.12", "3.13", "3.14", "3.15"]
 
     steps:
       - name: Checkout Repository
