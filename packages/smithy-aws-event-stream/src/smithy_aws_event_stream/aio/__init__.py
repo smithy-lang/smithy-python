@@ -17,7 +17,7 @@ from smithy_core.serializers import SerializeableShape
 
 from .._private.deserializers import EventDeserializer as _EventDeserializer
 from .._private.serializers import EventSerializer as _EventSerializer
-from ..events import Event
+from ..events import Event, EventMessage
 from ..exceptions import EventError
 
 logger = logging.getLogger(__name__)
@@ -84,6 +84,20 @@ class AWSEventPublisher[E: SerializeableShape](EventPublisher[E]):
         if self._closed:
             return
         self._closed = True
+
+        # Send a signed empty frame to signal stream completion.
+        if self._signing_config is not None:
+            end_frame = EventMessage()
+            identity = await self._signing_config.identity_resolver.get_identity(
+                properties=self._signing_config.identity_properties
+            )
+            end_frame = await self._signing_config.signer.sign(
+                event=end_frame,
+                identity=identity,
+                properties=self._signing_config.signing_properties,
+            )
+            logger.debug("Sending signed empty message to terminate the event stream")
+            await self._writer.write(end_frame.encode())
 
         if (close := getattr(self._writer, "close", None)) is not None:
             if asyncio.iscoroutine(result := close()):

@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Fixed `AWSEventPublisher` to send signed empty end frame to signal event stream completion."
+}

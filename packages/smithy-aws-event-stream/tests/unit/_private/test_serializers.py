@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 from typing import Any
+from unittest.mock import AsyncMock
 
 import pytest
 from smithy_aws_event_stream._private.serializers import EventSerializer
@@ -76,4 +77,20 @@ async def test_send_to_closed_writer():
     with pytest.raises(IOError):
         await publisher.send(EVENT_STREAM_SERDE_CASES[0][0])
 
+    assert publisher.closed
+
+
+async def test_close_with_signing_sends_end_frame():
+    writer = AsyncMock()
+    end_frame = EventMessage()
+    signing_config = AsyncMock()
+    signing_config.signer.sign.return_value = end_frame
+
+    publisher: AWSEventPublisher[Any] = AWSEventPublisher(
+        payload_codec=JSONCodec(), async_writer=writer, signing_config=signing_config
+    )
+
+    await publisher.close()
+
+    writer.write.assert_awaited_once_with(end_frame.encode())
     assert publisher.closed
