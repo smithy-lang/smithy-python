@@ -91,12 +91,12 @@ class AWSEventPublisher[E: SerializeableShape](EventPublisher[E]):
             identity = await self._signing_config.identity_resolver.get_identity(
                 properties=self._signing_config.identity_properties
             )
-            end_frame = await self._signing_config.signer.sign(
+            end_frame = await self._signing_config.signer.sign_empty(
                 event=end_frame,
                 identity=identity,
                 properties=self._signing_config.signing_properties,
             )
-            logger.debug("Sending signed empty message to terminate the event stream")
+            logger.debug("Sending signed empty message to terminate the event stream.")
             await self._writer.write(end_frame.encode())
 
         if (close := getattr(self._writer, "close", None)) is not None:
