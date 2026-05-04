@@ -31,6 +31,17 @@ class EventSigner[I, SP: Mapping[str, Any]](Protocol):
         """Get a signed version of the event.
 
         :param event: The event to be signed.
+        :param identity: The identity to use to sign the event.
+        :param properties: Additional properties used to sign the event.
+        """
+        ...
+
+    async def sign_empty(self, *, event: Any, identity: I, properties: SP) -> Any:
+        """Get a signed version of an empty event.
+
+        :param event: The empty event to be signed.
+        :param identity: The identity to use to sign the event.
+        :param properties: Additional properties used to sign the event.
         """
         ...
 
