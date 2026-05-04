@@ -843,9 +843,53 @@ class AsyncEventSigner:
         identity: _AWSCredentialsIdentity,
         properties: SigV4SigningProperties,
     ) -> "EventMessage":
+        return await self._sign_payload(
+            event=event,
+            payload=event.encode(),
+            identity=identity,
+            properties=properties,
+        )
+
+    async def sign_empty(
+        self,
+        *,
+        event: "EventMessage",
+        identity: _AWSCredentialsIdentity,
+        properties: SigV4SigningProperties,
+    ) -> "EventMessage":
+        """Produce the SigV4 event-stream terminator frame.
+
+        The terminator is a signed event-stream message whose outer payload is
+        zero bytes (not a nested encoded empty event). The AWS auth handler
+        requires exactly one such frame immediately before the HTTP body stream
+        is closed; without it the service returns
+        ``InvalidSignatureException: "A complete signal was sent without the
+        preceding empty frame."``.
+
+        The caller must pass an ``EventMessage`` with no headers and no
+        payload (or whose headers/payload will be overwritten). The returned
+        event carries ``:date`` and ``:chunk-signature`` headers on the outer
+        event-stream envelope and an empty payload, and chains from
+        ``self._prior_signature`` (updating it) so subsequent signed frames
+        continue the chain correctly.
+        """
+        return await self._sign_payload(
+            event=event,
+            payload=b"",
+            identity=identity,
+            properties=properties,
+        )
+
+    async def _sign_payload(
+        self,
+        *,
+        event: "EventMessage",
+        payload: bytes,
+        identity: _AWSCredentialsIdentity,
+        properties: SigV4SigningProperties,
+    ) -> "EventMessage":
         async with self._signing_lock:
-            # Copy and prepopulate any missing values in the
-            # signing properties.
+            # Copy and prepopulate any missing values in the signing properties.
             new_signing_properties = SigV4SigningProperties(  # type: ignore
                 **properties
             )
@@ -861,8 +905,6 @@ class AsyncEventSigner:
             encoder = self._event_encoder_cls()
             encoder.encode_headers(headers)
             encoded_headers = encoder.get_result()
-
-            payload = event.encode()
 
             string_to_sign = await self._event_string_to_sign(
                 timestamp=timestamp,
@@ -882,7 +924,7 @@ class AsyncEventSigner:
             event.headers = headers
             event.payload = payload
 
-            # set new prior signature before releasing the lock
+            # Set new prior signature before releasing the lock.
             self._prior_signature = hexlify(event_signature)
 
         return event
