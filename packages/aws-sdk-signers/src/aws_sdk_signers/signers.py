@@ -835,6 +835,7 @@ class AsyncEventSigner:
         self._prior_signature = initial_signature
         self._signing_lock = asyncio.Lock()
         self._event_encoder_cls = event_encoder_cls
+        self._is_finalized = False
 
     async def sign(
         self,
@@ -843,9 +844,60 @@ class AsyncEventSigner:
         identity: _AWSCredentialsIdentity,
         properties: SigV4SigningProperties,
     ) -> "EventMessage":
+        return await self._sign_payload(
+            event=event,
+            payload=event.encode(),
+            identity=identity,
+            properties=properties,
+        )
+
+    async def sign_empty(
+        self,
+        *,
+        event: "EventMessage",
+        identity: _AWSCredentialsIdentity,
+        properties: SigV4SigningProperties,
+    ) -> "EventMessage":
+        """Sign an Amazon Event Stream final empty message.
+
+        The supplied ``event`` must have no headers and an empty payload.
+        Calling ``sign`` with an empty event message is not equivalent because
+        ``sign`` wraps the encoded event message as the payload.
+
+        The returned message contains ``:date`` and ``:chunk-signature``
+        headers and advances the running signature chain. After this method
+        returns, the signer cannot sign additional event stream messages.
+        """
+        if event.headers or event.payload:
+            raise ValueError(
+                "sign_empty requires an event with no headers and an empty payload."
+            )
+
+        return await self._sign_payload(
+            event=event,
+            payload=b"",
+            identity=identity,
+            properties=properties,
+            is_final=True,
+        )
+
+    async def _sign_payload(
+        self,
+        *,
+        event: "EventMessage",
+        payload: bytes,
+        identity: _AWSCredentialsIdentity,
+        properties: SigV4SigningProperties,
+        is_final: bool = False,
+    ) -> "EventMessage":
         async with self._signing_lock:
-            # Copy and prepopulate any missing values in the
-            # signing properties.
+            if self._is_finalized:
+                raise RuntimeError(
+                    "Cannot sign event stream messages after the final empty event "
+                    "has been signed."
+                )
+
+            # Copy and prepopulate any missing values in the signing properties.
             new_signing_properties = SigV4SigningProperties(  # type: ignore
                 **properties
             )
@@ -861,8 +913,6 @@ class AsyncEventSigner:
             encoder = self._event_encoder_cls()
             encoder.encode_headers(headers)
             encoded_headers = encoder.get_result()
-
-            payload = event.encode()
 
             string_to_sign = await self._event_string_to_sign(
                 timestamp=timestamp,
@@ -882,8 +932,10 @@ class AsyncEventSigner:
             event.headers = headers
             event.payload = payload
 
-            # set new prior signature before releasing the lock
+            # Set new prior signature before releasing the lock.
             self._prior_signature = hexlify(event_signature)
+            if is_final:
+                self._is_finalized = True
 
         return event
 
