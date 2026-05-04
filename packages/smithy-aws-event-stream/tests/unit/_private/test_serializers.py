@@ -80,11 +80,11 @@ async def test_send_to_closed_writer():
     assert publisher.closed
 
 
-async def test_close_with_signing_sends_end_frame():
+async def test_close_sends_empty_end_frame_when_signing():
     writer = AsyncMock()
     end_frame = EventMessage()
     signing_config = AsyncMock()
-    signing_config.signer.sign.return_value = end_frame
+    signing_config.signer.sign_empty.return_value = end_frame
 
     publisher: AWSEventPublisher[Any] = AWSEventPublisher(
         payload_codec=JSONCodec(), async_writer=writer, signing_config=signing_config
@@ -92,5 +92,6 @@ async def test_close_with_signing_sends_end_frame():
 
     await publisher.close()
 
+    signing_config.signer.sign_empty.assert_awaited_once()
     writer.write.assert_awaited_once_with(end_frame.encode())
     assert publisher.closed
