@@ -857,21 +857,14 @@ class AsyncEventSigner:
         identity: _AWSCredentialsIdentity,
         properties: SigV4SigningProperties,
     ) -> "EventMessage":
-        """Produce the SigV4 event-stream terminator frame.
+        """Sign an Amazon Event Stream final empty message.
 
-        The terminator is a signed event-stream message whose outer payload is
-        zero bytes (not a nested encoded empty event). The AWS auth handler
-        requires exactly one such frame immediately before the HTTP body stream
-        is closed; without it the service returns
-        ``InvalidSignatureException: "A complete signal was sent without the
-        preceding empty frame."``.
+        The terminator must have a zero-byte outer payload. Calling ``sign``
+        with an empty event message is not equivalent because ``sign`` wraps the
+        encoded event message as the payload.
 
-        The caller must pass an ``EventMessage`` with no headers and no
-        payload (or whose headers/payload will be overwritten). The returned
-        event carries ``:date`` and ``:chunk-signature`` headers on the outer
-        event-stream envelope and an empty payload, and chains from
-        ``self._prior_signature`` (updating it) so subsequent signed frames
-        continue the chain correctly.
+        The returned message contains ``:date`` and ``:chunk-signature``
+        headers and advances the running signature chain.
         """
         return await self._sign_payload(
             event=event,
