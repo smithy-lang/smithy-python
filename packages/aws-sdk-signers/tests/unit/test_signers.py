@@ -199,6 +199,59 @@ class TestAsyncEventSigner:
         assert ":date" in decoded.message.headers
         assert ":chunk-signature" in decoded.message.headers
 
+    async def test_sign_empty_rejects_non_empty_event(
+        self,
+        aws_identity: AWSCredentialIdentity,
+    ) -> None:
+        signer = AsyncEventSigner(
+            initial_signature=b"initial-signature",
+            event_encoder_cls=EventHeaderEncoder,
+        )
+
+        with pytest.raises(ValueError):
+            await signer.sign_empty(
+                event=EventMessage(headers={"foo": "bar"}),
+                identity=aws_identity,
+                properties=SigV4SigningProperties(
+                    region="us-west-2", service="transcribe"
+                ),
+            )
+
+        with pytest.raises(ValueError):
+            await signer.sign_empty(
+                event=EventMessage(payload=b"audio"),
+                identity=aws_identity,
+                properties=SigV4SigningProperties(
+                    region="us-west-2", service="transcribe"
+                ),
+            )
+
+    async def test_sign_rejects_events_after_empty_event(
+        self,
+        aws_identity: AWSCredentialIdentity,
+    ) -> None:
+        signer = AsyncEventSigner(
+            initial_signature=b"initial-signature",
+            event_encoder_cls=EventHeaderEncoder,
+        )
+        properties = SigV4SigningProperties(region="us-west-2", service="transcribe")
+
+        await signer.sign_empty(
+            event=EventMessage(),
+            identity=aws_identity,
+            properties=properties,
+        )
+
+        with pytest.raises(RuntimeError, match="final empty event"):
+            await signer.sign(
+                event=EventMessage(
+                    headers={":message-type": "event", ":event-type": "AudioEvent"},
+                    payload=b"audio",
+                ),
+                identity=aws_identity,
+                properties=properties,
+            )
+
 
 class TestAsyncSigV4Signer:
     SIGV4_ASYNC_SIGNER = AsyncSigV4Signer()
