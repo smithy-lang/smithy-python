@@ -9,6 +9,7 @@ from io import BytesIO
 
 import pytest
 from aws_sdk_signers import (
+    AsyncEventSigner,
     AsyncSigV4Signer,
     AWSCredentialIdentity,
     AWSRequest,
@@ -18,6 +19,7 @@ from aws_sdk_signers import (
     SigV4SigningProperties,
     URI,
 )
+from smithy_aws_event_stream.events import Event, EventHeaderEncoder, EventMessage
 
 SIGV4_RE = re.compile(
     r"AWS4-HMAC-SHA256 "
@@ -144,6 +146,111 @@ class UnreadableAsyncStream:
 
     async def __anext__(self) -> bytes:
         raise Exception("Read should not have been called!")
+
+
+class TestAsyncEventSigner:
+    async def test_sign_wraps_event_message_payload(
+        self,
+        aws_identity: AWSCredentialIdentity,
+    ) -> None:
+        signer = AsyncEventSigner(
+            initial_signature=b"initial-signature",
+            event_encoder_cls=EventHeaderEncoder,
+        )
+        message = EventMessage(
+            headers={":message-type": "event", ":event-type": "AudioEvent"},
+            payload=b"audio",
+        )
+
+        signed = await signer.sign(
+            event=message,
+            identity=aws_identity,
+            properties=SigV4SigningProperties(region="us-west-2", service="transcribe"),
+        )
+
+        assert (
+            signed.payload
+            == EventMessage(
+                headers={":message-type": "event", ":event-type": "AudioEvent"},
+                payload=b"audio",
+            ).encode()
+        )
+        assert ":date" in signed.headers
+        assert ":chunk-signature" in signed.headers
+
+    async def test_sign_empty_uses_zero_byte_outer_payload(
+        self,
+        aws_identity: AWSCredentialIdentity,
+    ) -> None:
+        signer = AsyncEventSigner(
+            initial_signature=b"initial-signature",
+            event_encoder_cls=EventHeaderEncoder,
+        )
+
+        signed = await signer.sign_empty(
+            event=EventMessage(),
+            identity=aws_identity,
+            properties=SigV4SigningProperties(region="us-west-2", service="transcribe"),
+        )
+
+        decoded = Event.decode(BytesIO(signed.encode()))
+        assert decoded is not None
+        assert decoded.message.payload == b""
+        assert ":date" in decoded.message.headers
+        assert ":chunk-signature" in decoded.message.headers
+
+    async def test_sign_empty_rejects_non_empty_event(
+        self,
+        aws_identity: AWSCredentialIdentity,
+    ) -> None:
+        signer = AsyncEventSigner(
+            initial_signature=b"initial-signature",
+            event_encoder_cls=EventHeaderEncoder,
+        )
+
+        with pytest.raises(ValueError):
+            await signer.sign_empty(
+                event=EventMessage(headers={"foo": "bar"}),
+                identity=aws_identity,
+                properties=SigV4SigningProperties(
+                    region="us-west-2", service="transcribe"
+                ),
+            )
+
+        with pytest.raises(ValueError):
+            await signer.sign_empty(
+                event=EventMessage(payload=b"audio"),
+                identity=aws_identity,
+                properties=SigV4SigningProperties(
+                    region="us-west-2", service="transcribe"
+                ),
+            )
+
+    async def test_sign_rejects_events_after_empty_event(
+        self,
+        aws_identity: AWSCredentialIdentity,
+    ) -> None:
+        signer = AsyncEventSigner(
+            initial_signature=b"initial-signature",
+            event_encoder_cls=EventHeaderEncoder,
+        )
+        properties = SigV4SigningProperties(region="us-west-2", service="transcribe")
+
+        await signer.sign_empty(
+            event=EventMessage(),
+            identity=aws_identity,
+            properties=properties,
+        )
+
+        with pytest.raises(RuntimeError, match="final empty event"):
+            await signer.sign(
+                event=EventMessage(
+                    headers={":message-type": "event", ":event-type": "AudioEvent"},
+                    payload=b"audio",
+                ),
+                identity=aws_identity,
+                properties=properties,
+            )
 
 
 class TestAsyncSigV4Signer:

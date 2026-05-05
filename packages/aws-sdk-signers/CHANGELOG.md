@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.3.0
+
+### Features
+* Added `AsyncEventSigner.sign_empty` for SigV4-signed Amazon Event Stream terminator frames. This supports services that require a final signed empty message before the HTTP body stream closes.
+
 ## v0.2.0
 
 ### Breaking Changes

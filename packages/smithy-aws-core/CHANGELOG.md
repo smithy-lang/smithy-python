@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.6.0
+
+### Dependencies
+* Bump `smithy-core` from `~=0.4.0` to `~=0.5.0`.
+* Bump `aws-sdk-signers` from `~=0.2.0` to `~=0.3.0`.
+* Bump `smithy-aws-event-stream` from `~=0.2.0` to `~=0.3.0`.
+
 ## v0.5.0
 
 ### Features
