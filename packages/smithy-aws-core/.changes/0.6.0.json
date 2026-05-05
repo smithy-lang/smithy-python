@@ -1,0 +1,16 @@
+{
+  "changes": [
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-core` from `~=0.4.0` to `~=0.5.0`."
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `aws-sdk-signers` from `~=0.2.0` to `~=0.3.0`."
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-aws-event-stream` from `~=0.2.0` to `~=0.3.0`."
+    }
+  ]
+}

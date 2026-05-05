@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.5.0
+
+### Features
+* Added `EventSigner.sign_empty` to the protocol for signing empty events.
+
 ## v0.4.0
 
 ### Features
