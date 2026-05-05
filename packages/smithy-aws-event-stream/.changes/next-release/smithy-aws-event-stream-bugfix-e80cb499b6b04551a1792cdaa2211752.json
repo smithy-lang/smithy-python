@@ -1,4 +1,4 @@
 {
-  "type": "bugfix",
-  "description": "Fixed `AWSEventPublisher` to send signed empty end frame to signal event stream completion."
+  "type": "feature",
+  "description": "Added a signed empty end frame to `AWSEventPublisher.close` to signal event stream completion. This supports services that require a final signed empty message before the HTTP body stream closes."
 }

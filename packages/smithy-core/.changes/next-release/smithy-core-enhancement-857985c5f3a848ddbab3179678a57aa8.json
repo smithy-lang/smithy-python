@@ -1,4 +1,4 @@
 {
-  "type": "enhancement",
-  "description": "Added sign_empty method to EventSigner protocol for signing empty events."
+  "type": "feature",
+  "description": "Added `EventSigner.sign_empty` to the protocol for signing empty events."
 }
