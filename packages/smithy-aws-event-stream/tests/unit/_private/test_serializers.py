@@ -1,12 +1,14 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+import asyncio
+from io import BytesIO
 from typing import Any
 from unittest.mock import AsyncMock
 
 import pytest
 from smithy_aws_event_stream._private.serializers import EventSerializer
 from smithy_aws_event_stream.aio import AWSEventPublisher
-from smithy_aws_event_stream.events import EventMessage
+from smithy_aws_event_stream.events import Event, EventMessage
 from smithy_core.aio.types import AsyncBytesProvider
 from smithy_core.serializers import SerializeableShape
 from smithy_json import JSONCodec
@@ -81,7 +83,7 @@ async def test_send_to_closed_writer():
 
 
 async def test_close_sends_empty_end_frame_when_signing():
-    writer = AsyncMock()
+    writer = AsyncBytesProvider()
     end_frame = EventMessage()
     signing_config = AsyncMock()
     signing_config.signer.sign_empty.return_value = end_frame
@@ -90,8 +92,21 @@ async def test_close_sends_empty_end_frame_when_signing():
         payload_codec=JSONCodec(), async_writer=writer, signing_config=signing_config
     )
 
+    # Read from the writer concurrently with close(), since close() flushes
+    # and blocks until all chunks are consumed.
+    reader = asyncio.create_task(_read(writer))
     await publisher.close()
+    written = await reader
 
     signing_config.signer.sign_empty.assert_awaited_once()
-    writer.write.assert_awaited_once_with(end_frame.encode())
     assert publisher.closed
+    assert writer.closed
+
+    decoded = Event.decode(BytesIO(written))
+    assert decoded is not None
+    assert decoded.message.payload == b""
+    assert decoded.message.headers == {}
+
+
+async def _read(source: AsyncBytesProvider) -> bytes:
+    return b"".join([chunk async for chunk in source])
