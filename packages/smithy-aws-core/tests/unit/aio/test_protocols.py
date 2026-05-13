@@ -6,6 +6,7 @@ from typing import Any, cast
 from unittest.mock import Mock
 
 import pytest
+from ijson.common import IncompleteJSONError  # type: ignore[reportMissingTypeStubs]
 from smithy_aws_core.aio.protocols import (
     AWSErrorIdentifier,
     AwsJson11ClientProtocol,
@@ -210,7 +211,6 @@ def _aws_json11_protocol() -> AwsJson11ClientProtocol:
     )
 
 
-@pytest.mark.asyncio
 async def test_aws_json11_serializes_base_request_shape() -> None:
     protocol = _aws_json11_protocol()
     request = protocol.serialize_request(
@@ -228,18 +228,52 @@ async def test_aws_json11_serializes_base_request_shape() -> None:
     assert await request.consume_body_async() == b"{}"
 
 
-def test_aws_json_matches_content_type_with_parameters() -> None:
+async def test_aws_json11_resolves_body_error_with_content_type_parameters() -> None:
     protocol = _aws_json11_protocol()
     response = HTTPResponse(
         status=500,
         fields=tuples_to_fields(
             [("content-type", "application/x-amz-json-1.1; charset=utf-8")]
         ),
+        body=b'{"__type":"com.test#OtherNsError"}',
     )
-    assert getattr(protocol, "_matches_content_type")(response)
+    operation = _mock_operation(_operation_schema("FailingOperation"))
+
+    with pytest.raises(_ModeledJSONError):
+        await protocol.deserialize_response(
+            operation=operation,
+            request=cast(HTTPRequest, Mock()),
+            response=response,
+            error_registry=TypeRegistry(
+                {ShapeID("com.test#OtherNsError"): _ModeledJSONError}
+            ),
+            context=TypedProperties(),
+        )
 
 
-@pytest.mark.asyncio
+async def test_aws_json11_ignores_body_error_with_unexpected_content_type() -> None:
+    protocol = _aws_json11_protocol()
+    response = HTTPResponse(
+        status=500,
+        fields=tuples_to_fields([("content-type", "application/json")]),
+        body=b'{"__type":"com.test#OtherNsError"}',
+    )
+    operation = _mock_operation(_operation_schema("FailingOperation"))
+
+    with pytest.raises(CallError) as exc_info:
+        await protocol.deserialize_response(
+            operation=operation,
+            request=cast(HTTPRequest, Mock()),
+            response=response,
+            error_registry=TypeRegistry(
+                {ShapeID("com.test#OtherNsError"): _ModeledJSONError}
+            ),
+            context=TypedProperties(),
+        )
+
+    assert not isinstance(exc_info.value, ModeledError)
+
+
 async def test_aws_json11_deserializes_empty_response_body() -> None:
     protocol = _aws_json11_protocol()
     operation = _mock_operation(_operation_schema("EmptyOperation"))
@@ -256,13 +290,12 @@ async def test_aws_json11_deserializes_empty_response_body() -> None:
     assert isinstance(output, _EmptyOutput)
 
 
-class _OtherNamespaceModeledError(ModeledError):
+class _ModeledJSONError(ModeledError):
     @classmethod
-    def deserialize(cls, deserializer: Any) -> "_OtherNamespaceModeledError":
-        return cls("other namespace")
+    def deserialize(cls, deserializer: Any) -> "_ModeledJSONError":
+        return cls("modeled JSON error")
 
 
-@pytest.mark.asyncio
 async def test_aws_json11_resolves_modeled_error_from_header_other_namespace() -> None:
     protocol = _aws_json11_protocol()
     operation = _mock_operation(_operation_schema("FailingOperation"))
@@ -278,20 +311,18 @@ async def test_aws_json11_resolves_modeled_error_from_header_other_namespace() -
         body=b'{"__type":"com.other#OtherNsError"}',
     )
 
-    error = await getattr(protocol, "_create_error")(
-        operation=operation,
-        response=response,
-        response_body=response.body,
-        error_registry=TypeRegistry(
-            {ShapeID("com.other#OtherNsError"): _OtherNamespaceModeledError}
-        ),
-        context=TypedProperties(),
-    )
+    with pytest.raises(_ModeledJSONError):
+        await protocol.deserialize_response(
+            operation=operation,
+            request=cast(HTTPRequest, Mock()),
+            response=response,
+            error_registry=TypeRegistry(
+                {ShapeID("com.other#OtherNsError"): _ModeledJSONError}
+            ),
+            context=TypedProperties(),
+        )
 
-    assert isinstance(error, _OtherNamespaceModeledError)
 
-
-@pytest.mark.asyncio
 async def test_aws_json11_resolves_modeled_error_from_header_only_shapeid() -> None:
     protocol = _aws_json11_protocol()
     operation = _mock_operation(_operation_schema("FailingOperation"))
@@ -302,20 +333,37 @@ async def test_aws_json11_resolves_modeled_error_from_header_only_shapeid() -> N
         body=b"",
     )
 
-    error = await getattr(protocol, "_create_error")(
-        operation=operation,
-        response=response,
-        response_body=response.body,
-        error_registry=TypeRegistry(
-            {ShapeID("com.other#OtherNsError"): _OtherNamespaceModeledError}
-        ),
-        context=TypedProperties(),
+    with pytest.raises(_ModeledJSONError):
+        await protocol.deserialize_response(
+            operation=operation,
+            request=cast(HTTPRequest, Mock()),
+            response=response,
+            error_registry=TypeRegistry(
+                {ShapeID("com.other#OtherNsError"): _ModeledJSONError}
+            ),
+            context=TypedProperties(),
+        )
+
+
+async def test_aws_json11_raises_parse_error_for_invalid_error_body() -> None:
+    protocol = _aws_json11_protocol()
+    operation = _mock_operation(_operation_schema("FailingOperation"))
+    response = HTTPResponse(
+        status=400,
+        fields=tuples_to_fields([("content-type", "application/x-amz-json-1.1")]),
+        body=b'{"__type":',
     )
 
-    assert isinstance(error, _OtherNamespaceModeledError)
+    with pytest.raises(IncompleteJSONError, match="premature EOF|parse error"):
+        await protocol.deserialize_response(
+            operation=operation,
+            request=cast(HTTPRequest, Mock()),
+            response=response,
+            error_registry=TypeRegistry({}),
+            context=TypedProperties(),
+        )
 
 
-@pytest.mark.asyncio
 async def test_aws_query_serializes_base_request_shape() -> None:
     protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
     request = protocol.serialize_request(
