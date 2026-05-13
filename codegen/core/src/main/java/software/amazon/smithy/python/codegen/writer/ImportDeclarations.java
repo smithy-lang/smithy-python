@@ -108,16 +108,34 @@ public final class ImportDeclarations implements ImportContainer {
      * Retroactively aliases an existing import to avoid name collisions.
      *
      * <p>This is called by {@link PythonWriter} at {@code toString()} time when a collision
-     * is detected between an imported name and a locally-defined name. The import statement
-     * is rewritten from {@code from namespace import name} to {@code from namespace import name as alias}.
+     * is detected. The import statement is rewritten from {@code from namespace import name}
+     * to {@code from namespace import name as alias}.
      *
-     * @param namespace The module namespace of the import.
+     * <p>The lookup mirrors the dispatch logic in {@link #addImport} so that aliasing works
+     * for all three import maps:
+     * <ul>
+     *   <li>{@code stdlibImports} — keyed by absolute namespace.</li>
+     *   <li>{@code externalImports} — keyed by absolute namespace.</li>
+     *   <li>{@code localImports} — keyed by relativized namespace for same-package imports.</li>
+     * </ul>
+     *
+     * @param namespace The module namespace of the import (absolute).
      * @param name The original imported name.
      * @param alias The alias to use instead.
      */
     void aliasImport(String namespace, String name, String alias) {
+        // stdlib imports are stored with absolute namespaces.
+        aliasImportInMap(namespace, name, alias, stdlibImports);
+
+        // external imports are stored with absolute namespaces.
         aliasImportInMap(namespace, name, alias, externalImports);
-        aliasImportInMap(namespace, name, alias, localImports);
+
+        // local imports may be stored with relativized namespaces (mirroring addImport).
+        if (namespace.startsWith(settings.moduleName())) {
+            var isTestModule = this.localNamespace.startsWith("tests");
+            var ns = isTestModule ? namespace : relativize(namespace);
+            aliasImportInMap(ns, name, alias, localImports);
+        }
     }
 
     private void aliasImportInMap(

@@ -479,15 +479,29 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         /**
          * Returns a placeholder token for the symbol and registers it in the symbol table.
          *
-         * <p>Only symbols that are imported from another module (have a namespace but no
-         * definition file) get a placeholder. Symbols without a namespace (builtins like
-         * int, str, bool) and symbols with a definition file (locally-defined types) are
-         * returned as-is since they don't need collision detection.
+         * <p>Symbols that do not participate in collision detection are returned as-is:
+         * <ul>
+         *   <li>Builtins (no namespace) such as {@code int}, {@code str}, {@code bool}:
+         *       they produce no import statement, so there is no import we could alias
+         *       to resolve a collision. A sanity check across all public AWS service
+         *       models confirms no class-generating shape name collides with a Python
+         *       built-in emitted by the codegen, so builtins are not special-cased here.</li>
+         *   <li>Symbols defined in the current writer's file (namespace equals the
+         *       writer's package name): they produce no import and cannot collide
+         *       with themselves.</li>
+         * </ul>
+         *
+         * <p>All other symbols (framework types and generated symbols imported from
+         * other files in the same package) are registered in the symbol table so
+         * collisions can be detected at {@link PythonWriter#toString()} time.
          */
         private String resolvePlaceholder(Symbol symbol) {
-            if (symbol.getNamespace().isEmpty() || !symbol.getDefinitionFile().isEmpty()) {
-                // No namespace means builtin. Has definition file means locally-defined.
-                // Neither case needs collision detection.
+            if (symbol.getNamespace().isEmpty()) {
+                // Builtin — no import statement is produced, so there is no alias to apply.
+                return symbol.getName();
+            }
+            if (symbol.getNamespace().equals(fullPackageName)) {
+                // Defined in the current writer's file — no import needed.
                 return symbol.getName();
             }
 
