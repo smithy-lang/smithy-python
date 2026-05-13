@@ -66,6 +66,69 @@ async def test_port_included_in_host_header(host: str, expected: str) -> None:
     assert crt_request.headers.get("host") == expected  # type: ignore
 
 
+async def test_send_http1_uses_body_stream() -> None:
+    """Test HTTP/1.1 requests use the CRT body stream."""
+    client = AWSCRTHTTPClient()
+    request = HTTPRequest(
+        method="POST",
+        destination=URI(scheme="https", host="example.com", path="/"),
+        body=AsyncBytesReader(b"Action=Test&Version=2020-01-08"),
+        fields=Fields(),
+    )
+    mock_stream = Mock()
+    mock_response = Mock()
+    mock_connection = Mock()
+    mock_connection.version = crt_http.HttpVersion.Http1_1
+    mock_connection.request = Mock(return_value=mock_stream)
+
+    with (
+        patch.object(
+            client, "_get_connection", AsyncMock(return_value=mock_connection)
+        ),
+        patch.object(client, "_await_response", AsyncMock(return_value=mock_response)),
+    ):
+        actual = await client.send(request)
+
+    assert actual is mock_response
+    mock_connection.request.assert_called_once()
+    assert "request_body_generator" not in mock_connection.request.call_args.kwargs
+    crt_request = mock_connection.request.call_args.args[0]
+    assert crt_request.body_stream is not None
+
+
+async def test_send_http2_uses_body_generator() -> None:
+    """Test HTTP/2 requests use the CRT body generator."""
+    client = AWSCRTHTTPClient()
+    request = HTTPRequest(
+        method="POST",
+        destination=URI(scheme="https", host="example.com", path="/"),
+        body=AsyncBytesReader(b"Action=Test&Version=2020-01-08"),
+        fields=Fields(),
+    )
+    mock_stream = Mock()
+    mock_response = Mock()
+    mock_connection = Mock()
+    mock_connection.version = crt_http.HttpVersion.Http2
+    mock_connection.request = Mock(return_value=mock_stream)
+
+    with (
+        patch.object(
+            client, "_get_connection", AsyncMock(return_value=mock_connection)
+        ),
+        patch.object(client, "_await_response", AsyncMock(return_value=mock_response)),
+    ):
+        actual = await client.send(request)
+
+    assert actual is mock_response
+    mock_connection.request.assert_called_once()
+    crt_request = mock_connection.request.call_args.args[0]
+    body_generator = mock_connection.request.call_args.kwargs["request_body_generator"]
+    assert crt_request.body_stream is None
+    assert [chunk async for chunk in body_generator] == [
+        b"Action=Test&Version=2020-01-08"
+    ]
+
+
 async def test_body_generator_bytes() -> None:
     """Test body generator with bytes input."""
     client = AWSCRTHTTPClient()
@@ -189,6 +252,53 @@ async def test_body_generator_empty_bytes() -> None:
         chunks.append(chunk)
 
     assert chunks == [b""]
+
+
+async def test_body_stream_bytes() -> None:
+    """Test body stream with bytes input."""
+    client = AWSCRTHTTPClient()
+
+    body_stream = await client._create_body_stream(b"Hello, World!")
+
+    assert body_stream is not None
+    assert body_stream.read() == b"Hello, World!"
+
+
+async def test_body_stream_bytesio() -> None:
+    """Test body stream with BytesIO."""
+    client = AWSCRTHTTPClient()
+    body = BytesIO(b"data from BytesIO")
+
+    body_stream = await client._create_body_stream(body)
+
+    assert body_stream is not None
+    assert body_stream is body
+    assert body_stream.read() == b"data from BytesIO"
+
+
+async def test_body_stream_async_iterable() -> None:
+    """Test body stream with custom AsyncIterable."""
+
+    async def custom_generator() -> AsyncIterator[bytes]:
+        yield b"chunk1"
+        yield b"chunk2"
+        yield b"chunk3"
+
+    client = AWSCRTHTTPClient()
+
+    body_stream = await client._create_body_stream(custom_generator())
+
+    assert body_stream is not None
+    assert body_stream.read() == b"chunk1chunk2chunk3"
+
+
+async def test_body_stream_empty_bytes() -> None:
+    """Test body stream with empty bytes."""
+    client = AWSCRTHTTPClient()
+
+    body_stream = await client._create_body_stream(b"")
+
+    assert body_stream is None
 
 
 async def test_build_connection_http() -> None:

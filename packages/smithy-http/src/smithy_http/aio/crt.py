@@ -6,6 +6,7 @@ from collections.abc import AsyncGenerator, AsyncIterable
 from copy import deepcopy
 from dataclasses import dataclass
 from inspect import iscoroutinefunction
+from io import BytesIO
 from typing import TYPE_CHECKING, Any
 
 from awscrt.exceptions import AwsCrtError
@@ -36,6 +37,7 @@ except ImportError:
 from smithy_core import interfaces as core_interfaces
 from smithy_core.aio import interfaces as core_aio_interfaces
 from smithy_core.aio.types import AsyncBytesReader
+from smithy_core.aio.utils import read_streaming_blob_async
 from smithy_core.exceptions import MissingDependencyError
 
 from .. import Field, Fields
@@ -175,13 +177,18 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             crt_request = self._marshal_request(request)
             connection = await self._get_connection(request.destination)
 
-            # Convert body to async iterator for request_body_generator
-            body_generator = self._create_body_generator(request.body)
-
-            crt_stream = connection.request(
-                crt_request,
-                request_body_generator=body_generator,
-            )
+            # request_body_generator is HTTP/2-only in CRT; HTTP/1.1 must use body_stream
+            if connection.version == crt_http.HttpVersion.Http2:
+                crt_stream = connection.request(
+                    crt_request,
+                    request_body_generator=self._create_body_generator(request.body),
+                )
+            else:
+                if (
+                    body_stream := await self._create_body_stream(request.body)
+                ) is not None:
+                    crt_request.body_stream = body_stream
+                crt_stream = connection.request(crt_request)
 
             return await self._await_response(crt_stream)
         except AwsCrtError as e:
@@ -307,6 +314,15 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             headers=headers,
         )
         return crt_request
+
+    async def _create_body_stream(
+        self, body: core_aio_interfaces.StreamingBlob
+    ) -> core_interfaces.BytesReader | None:
+        """Convert various body types to a bytes reader for CRT HTTP/1.1."""
+        if core_interfaces.is_bytes_reader(body):
+            return body
+        buffered = await read_streaming_blob_async(body)
+        return BytesIO(buffered) if buffered else None
 
     async def _create_body_generator(
         self, body: core_aio_interfaces.StreamingBlob
