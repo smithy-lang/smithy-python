@@ -8,10 +8,12 @@ from unittest.mock import Mock
 import pytest
 from smithy_aws_core.aio.protocols import (
     AWSErrorIdentifier,
+    AwsJson11ClientProtocol,
     AWSJSONDocument,
     AwsQueryClientProtocol,
 )
 from smithy_aws_core.traits import AwsQueryTrait
+from smithy_core import URI as _URI
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import TypeRegistry
 from smithy_core.exceptions import CallError, DiscriminatorError, ModeledError
@@ -39,6 +41,7 @@ from smithy_json import JSONSettings
             "com.test#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate",
             "com.test#FooError",
         ),
+        ("com.other#FooError", "com.other#FooError"),
         ("", None),
         (":", None),
         (None, None),
@@ -111,6 +114,12 @@ def test_aws_json_document_discriminator(
         assert discriminator == expected
 
 
+_EMPTY_INPUT_SCHEMA = Schema.collection(
+    id=ShapeID("com.test#EmptyInput"),
+)
+_EMPTY_OUTPUT_SCHEMA = Schema.collection(
+    id=ShapeID("com.test#EmptyOutput"),
+)
 _INPUT_SCHEMA = Schema.collection(
     id=ShapeID("com.test#TestInput"),
     members={"name": {"target": STRING}},
@@ -131,6 +140,23 @@ _INVALID_ACTION_ERROR_SCHEMA = Schema.collection(
     ],
     members={"message": {"target": STRING}},
 )
+
+
+@dataclass
+class _EmptyInput:
+    def serialize(self, serializer: ShapeSerializer) -> None:
+        serializer.write_struct(_EMPTY_INPUT_SCHEMA, self)
+
+    def serialize_members(self, serializer: ShapeSerializer) -> None:
+        pass
+
+
+@dataclass
+class _EmptyOutput:
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> "_EmptyOutput":
+        deserializer.read_struct(_EMPTY_OUTPUT_SCHEMA, lambda _schema, _de: None)
+        return cls()
 
 
 @dataclass
@@ -178,6 +204,118 @@ def _mock_operation(
     return cast("APIOperation[Any, Any]", operation)
 
 
+def _aws_json11_protocol() -> AwsJson11ClientProtocol:
+    return AwsJson11ClientProtocol(
+        Schema(id=ShapeID("com.test#JsonService"), shape_type=ShapeType.SERVICE)
+    )
+
+
+@pytest.mark.asyncio
+async def test_aws_json11_serializes_base_request_shape() -> None:
+    protocol = _aws_json11_protocol()
+    request = protocol.serialize_request(
+        operation=_mock_operation(_operation_schema("EmptyOperation")),
+        input=_EmptyInput(),
+        endpoint=_URI(host="example.com"),
+        context=TypedProperties(),
+    )
+
+    assert request.method == "POST"
+    assert request.destination.path == "/"
+    assert request.fields["content-type"].as_string() == "application/x-amz-json-1.1"
+    assert request.fields["x-amz-target"].as_string() == "JsonService.EmptyOperation"
+    assert request.fields["content-length"].as_string() == "2"
+    assert await request.consume_body_async() == b"{}"
+
+
+def test_aws_json_matches_content_type_with_parameters() -> None:
+    protocol = _aws_json11_protocol()
+    response = HTTPResponse(
+        status=500,
+        fields=tuples_to_fields(
+            [("content-type", "application/x-amz-json-1.1; charset=utf-8")]
+        ),
+    )
+    assert getattr(protocol, "_matches_content_type")(response)
+
+
+@pytest.mark.asyncio
+async def test_aws_json11_deserializes_empty_response_body() -> None:
+    protocol = _aws_json11_protocol()
+    operation = _mock_operation(_operation_schema("EmptyOperation"))
+    cast(Any, operation).output = _EmptyOutput
+
+    output = await protocol.deserialize_response(
+        operation=operation,
+        request=cast(HTTPRequest, Mock()),
+        response=HTTPResponse(status=200, fields=Fields(), body=b""),
+        error_registry=TypeRegistry({}),
+        context=TypedProperties(),
+    )
+
+    assert isinstance(output, _EmptyOutput)
+
+
+class _OtherNamespaceModeledError(ModeledError):
+    @classmethod
+    def deserialize(cls, deserializer: Any) -> "_OtherNamespaceModeledError":
+        return cls("other namespace")
+
+
+@pytest.mark.asyncio
+async def test_aws_json11_resolves_modeled_error_from_header_other_namespace() -> None:
+    protocol = _aws_json11_protocol()
+    operation = _mock_operation(_operation_schema("FailingOperation"))
+    response = HTTPResponse(
+        status=400,
+        reason="Bad Request",
+        fields=tuples_to_fields(
+            [
+                ("x-amzn-errortype", "com.other#OtherNsError"),
+                ("content-type", "application/x-amz-json-1.1"),
+            ]
+        ),
+        body=b'{"__type":"com.other#OtherNsError"}',
+    )
+
+    error = await getattr(protocol, "_create_error")(
+        operation=operation,
+        response=response,
+        response_body=response.body,
+        error_registry=TypeRegistry(
+            {ShapeID("com.other#OtherNsError"): _OtherNamespaceModeledError}
+        ),
+        context=TypedProperties(),
+    )
+
+    assert isinstance(error, _OtherNamespaceModeledError)
+
+
+@pytest.mark.asyncio
+async def test_aws_json11_resolves_modeled_error_from_header_only_shapeid() -> None:
+    protocol = _aws_json11_protocol()
+    operation = _mock_operation(_operation_schema("FailingOperation"))
+    response = HTTPResponse(
+        status=400,
+        reason="Bad Request",
+        fields=tuples_to_fields([("x-amzn-errortype", "com.other#OtherNsError")]),
+        body=b"",
+    )
+
+    error = await getattr(protocol, "_create_error")(
+        operation=operation,
+        response=response,
+        response_body=response.body,
+        error_registry=TypeRegistry(
+            {ShapeID("com.other#OtherNsError"): _OtherNamespaceModeledError}
+        ),
+        context=TypedProperties(),
+    )
+
+    assert isinstance(error, _OtherNamespaceModeledError)
+
+
+@pytest.mark.asyncio
 async def test_aws_query_serializes_base_request_shape() -> None:
     protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
     request = protocol.serialize_request(

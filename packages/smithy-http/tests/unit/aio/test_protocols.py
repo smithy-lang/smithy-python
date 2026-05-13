@@ -120,6 +120,16 @@ class MockProtocol(HttpClientProtocol):
             URI(host="com.example"),
             URI(host="com.example", fragment="header"),
         ),
+        (
+            URI(host="foo."),
+            URI(host="com.example"),
+            URI(host="com.example"),
+        ),
+        (
+            URI(host="."),
+            URI(host="com.example"),
+            URI(host="com.example"),
+        ),
     ],
 )
 def test_http_protocol_joins_uris(
