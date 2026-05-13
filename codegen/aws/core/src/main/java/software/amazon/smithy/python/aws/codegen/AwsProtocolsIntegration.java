@@ -16,6 +16,9 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 public class AwsProtocolsIntegration implements PythonIntegration {
     @Override
     public List<ProtocolGenerator> getProtocolGenerators() {
-        return List.of(new AwsQueryProtocolGenerator());
+        return List.of(
+                new AwsQueryProtocolGenerator(),
+                new AwsJson10ProtocolGenerator(),
+                new AwsJson11ProtocolGenerator());
     }
 }
