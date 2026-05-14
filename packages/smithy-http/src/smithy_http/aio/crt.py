@@ -178,7 +178,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             connection = await self._get_connection(request.destination)
 
             # request_body_generator is HTTP/2-only in CRT; HTTP/1.1 must use body_stream
-            if connection.version == crt_http.HttpVersion.Http2:
+            if connection.version is crt_http.HttpVersion.Http2:
                 crt_stream = connection.request(
                     crt_request,
                     request_body_generator=self._create_body_generator(request.body),
