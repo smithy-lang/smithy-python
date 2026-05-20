@@ -51,8 +51,8 @@ final class ClientGenerator implements Runnable {
     private void generateService(PythonWriter writer) {
         var serviceSymbol = symbolProvider.toSymbol(service);
         writer.addLocallyDefinedSymbol(serviceSymbol);
-        var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
-        var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
+        var configSymbol = CodegenUtils.getConfigSymbol(context.settings(), context.model());
+        var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings(), context.model());
         writer.addLogger();
 
         writer.openBlock("class $L:", "", serviceSymbol.getName(), () -> {
@@ -159,7 +159,7 @@ final class ClientGenerator implements Runnable {
     private void generateOperation(PythonWriter writer, OperationShape operation) {
         var operationSymbol = symbolProvider.toSymbol(operation);
         var operationMethodSymbol = operationSymbol.expectProperty(OPERATION_METHOD);
-        var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
+        var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings(), context.model());
 
         var input = model.expectShape(operation.getInputShape());
         var inputSymbol = symbolProvider.toSymbol(input);
@@ -237,8 +237,8 @@ final class ClientGenerator implements Runnable {
         writer.addStdlibImport("copy", "deepcopy");
 
         writer.write("""
-                operation_plugins: list[Plugin] = [
-                    $1C
+                operation_plugins: list[${plugin:T}] = [
+                    $C
                 ]
                 if plugins:
                     operation_plugins.extend(plugins)
@@ -283,7 +283,7 @@ final class ClientGenerator implements Runnable {
         writer.putContext("operation", operationSymbol);
         var operationMethodSymbol = operationSymbol.expectProperty(OPERATION_METHOD);
         writer.putContext("operationName", operationMethodSymbol.getName());
-        var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
+        var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings(), context.model());
         writer.putContext("plugin", pluginSymbol);
 
         var input = model.expectShape(operation.getInputShape());
