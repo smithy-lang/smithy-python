@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
+import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.NullableIndex;
 import software.amazon.smithy.model.node.Node;
@@ -63,24 +64,46 @@ public final class CodegenUtils {
     private CodegenUtils() {}
 
     /**
+     * Gets the configuration object symbol for the service.
+     *
+     * <p>For AWS services with a {@code ServiceTrait}, this derives the name from the SDK ID
+     * (e.g., "Bedrock Runtime" becomes "BedrockRuntimeConfig"). For services without a
+     * {@code ServiceTrait}, falls back to the generic "Config" name.
+     *
      * @param settings The client settings, used to account for module configuration.
+     * @param model The model containing the service shape.
      * @return Returns the client's configuration object symbol.
      */
-    public static Symbol getConfigSymbol(PythonSettings settings) {
+    public static Symbol getConfigSymbol(PythonSettings settings, Model model) {
+        var service = settings.service(model);
+        var name = service.getTrait(ServiceTrait.class)
+                .map(trait -> StringUtils.capitalize(trait.getSdkId()).replace(" ", "") + "Config")
+                .orElse("Config");
         return Symbol.builder()
-                .name("Config")
+                .name(name)
                 .namespace(String.format("%s.config", settings.moduleName()), ".")
                 .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
                 .build();
     }
 
     /**
+     * Gets the plugin type hint symbol for the service.
+     *
+     * <p>For AWS services with a {@code ServiceTrait}, this derives the name from the SDK ID
+     * (e.g., "Bedrock Runtime" becomes "BedrockRuntimePlugin"). For services without a
+     * {@code ServiceTrait}, falls back to the generic "Plugin" name.
+     *
      * @param settings The client settings, used to account for module configuration.
+     * @param model The model containing the service shape.
      * @return Returns the client's plugin type hint symbol.
      */
-    public static Symbol getPluginSymbol(PythonSettings settings) {
+    public static Symbol getPluginSymbol(PythonSettings settings, Model model) {
+        var service = settings.service(model);
+        var name = service.getTrait(ServiceTrait.class)
+                .map(trait -> StringUtils.capitalize(trait.getSdkId()).replace(" ", "") + "Plugin")
+                .orElse("Plugin");
         return Symbol.builder()
-                .name("Plugin")
+                .name(name)
                 .namespace(String.format("%s.config", settings.moduleName()), ".")
                 .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
                 .build();

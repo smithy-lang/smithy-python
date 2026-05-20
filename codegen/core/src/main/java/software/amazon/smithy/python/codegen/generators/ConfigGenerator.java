@@ -261,21 +261,57 @@ public final class ConfigGenerator implements Runnable {
 
     @Override
     public void run() {
-        var config = CodegenUtils.getConfigSymbol(context.settings());
+        var model = context.model();
+        var config = CodegenUtils.getConfigSymbol(context.settings(), model);
+        var genericConfigName = "Config";
         context.writerDelegator().useFileWriter(config.getDefinitionFile(), config.getNamespace(), writer -> {
             writeInterceptorsType(writer);
             generateConfig(context, writer);
+
+            // Generate deprecated Config alias if name differs from the generic name
+            if (!config.getName().equals(genericConfigName)) {
+                writer.addStdlibImport("warnings", "warn");
+                writer.addStdlibImport("typing", "Any");
+                writer.write("""
+
+
+                        class $1L($2L):
+                            \"""Deprecated: Use :class:`$2L` instead.\"""
+
+                            def __init__(self, *args: Any, **kwargs: Any):
+                                warn(
+                                    "Importing '$1L' is deprecated. Use '$2L' instead.",
+                                    DeprecationWarning,
+                                    stacklevel=2,
+                                )
+                                super().__init__(*args, **kwargs)
+                        """,
+                        genericConfigName,
+                        config.getName());
+            }
         });
 
         // Generate the plugin symbol. This is just a callable. We could do something
         // like have a class to implement, but that seems unnecessarily burdensome for
         // a single function.
-        var plugin = CodegenUtils.getPluginSymbol(context.settings());
+        var plugin = CodegenUtils.getPluginSymbol(context.settings(), model);
+        var genericPluginName = "Plugin";
         context.writerDelegator().useFileWriter(plugin.getDefinitionFile(), plugin.getNamespace(), writer -> {
             writer.addStdlibImport("typing", "Callable");
             writer.addStdlibImport("typing", "TypeAlias");
             writer.write("$L: TypeAlias = Callable[[$T], None]", plugin.getName(), config);
             writer.writeDocs("A callable that allows customizing the config object on each request.", context);
+
+            // Generate deprecated Plugin alias if name differs from the generic name
+            if (!plugin.getName().equals(genericPluginName)) {
+                writer.write("""
+
+                        $1L: TypeAlias = $2L
+                        \"""Deprecated: Use :data:`$2L` instead.\"""
+                        """,
+                        genericPluginName,
+                        plugin.getName());
+            }
         });
     }
 
@@ -308,7 +344,7 @@ public final class ConfigGenerator implements Runnable {
     }
 
     private void generateConfig(GenerationContext context, PythonWriter writer) {
-        var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
+        var configSymbol = CodegenUtils.getConfigSymbol(context.settings(), context.model());
 
         // Initialize a set of config properties with our base properties.
         var properties = new TreeSet<>(Comparator.comparing(ConfigProperty::name));
