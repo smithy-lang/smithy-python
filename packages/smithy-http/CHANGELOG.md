@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.4.1
+
+### Bug fixes
+* Fixed `AWSCRTHTTPClient` to send HTTP/1.1 request bodies via `body_stream` instead of the HTTP/2-only `request_body_generator`.
+
 ## v0.4.0
 
 ### Breaking Changes
