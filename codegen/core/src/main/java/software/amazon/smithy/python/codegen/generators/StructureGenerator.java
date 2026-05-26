@@ -104,12 +104,15 @@ public final class StructureGenerator implements Runnable {
 
                     ${C|}
 
+                    ${C|}
+
                 """,
                 symbol.getName(),
                 writer.consumer(w -> writeClassDocs()),
                 writer.consumer(w -> writeProperties()),
                 writer.consumer(w -> generateSerializeMethod()),
-                writer.consumer(w -> generateDeserializeMethod()));
+                writer.consumer(w -> generateDeserializeMethod()),
+                writer.consumer(w -> generateSmithyDefaultMethod()));
     }
 
     private void renderError() {
@@ -147,6 +150,8 @@ public final class StructureGenerator implements Runnable {
 
                     ${7C|}
 
+                    ${8C|}
+
                 """,
                 symbol.getName(),
                 baseError,
@@ -154,7 +159,8 @@ public final class StructureGenerator implements Runnable {
                 writer.consumer(w -> writeClassDocs()),
                 writer.consumer(w -> writeProperties()),
                 writer.consumer(w -> generateSerializeMethod()),
-                writer.consumer(w -> generateDeserializeMethod()));
+                writer.consumer(w -> generateDeserializeMethod()),
+                writer.consumer(w -> generateSmithyDefaultMethod()));
     }
 
     private void writeClassDocs() {
@@ -375,12 +381,76 @@ public final class StructureGenerator implements Runnable {
                                 logger.debug("Unexpected member schema: %s", schema)
 
                     deserializer.read_struct($T, consumer=_consumer)
+                    ${C|}
                     return kwargs
 
                 """,
                 writer.consumer(w -> deserializeMembers(shape.members())),
-                schemaSymbol);
+                schemaSymbol,
+                writer.consumer(w -> writeErrorCorrection()));
         writer.popState();
+    }
+
+    /**
+     * Emits client error correction for required members the server failed to serialize.
+     *
+     * @see <a href="https://smithy.io/2.0/spec/aggregate-types.html#client-error-correction">Smithy
+     *     spec: Client error correction</a>
+     */
+    private void writeErrorCorrection() {
+        var visitor = new MemberErrorCorrectionGenerator(context, writer);
+        for (MemberShape member : requiredMembers) {
+            var target = model.expectShape(member.getTarget());
+            if (!MemberErrorCorrectionGenerator.hasDefault(target)) {
+                // Streaming shapes have no synthesizable default; let the dataclass raise.
+                continue;
+            }
+            writer.pushState();
+            writer.putContext("memberName", symbolProvider.toMemberName(member));
+            writer.write("""
+                    if ${memberName:S} not in kwargs:
+                        kwargs[${memberName:S}] = ${C|}""",
+                    writer.consumer(w -> target.accept(visitor)));
+            writer.popState();
+        }
+    }
+
+    /**
+     * Emits a {@code _smithy_default()} classmethod that constructs an instance with all
+     * required members filled in via client error correction. Used to fill nested structure
+     * members per the Smithy spec. If the structure has any required member whose target has
+     * no synthesizable default (i.e. a streaming blob), {@code _smithy_default()} is omitted:
+     * a generated {@code cls()} call would be missing a required argument. But such structures
+     * can only appear as a top-level operation input or output (per spec § 13.3), never as a
+     * nested-struct member, so {@code _smithy_default()} would never be invoked on them anyway.
+     */
+    private void generateSmithyDefaultMethod() {
+        for (MemberShape member : requiredMembers) {
+            var target = model.expectShape(member.getTarget());
+            if (!MemberErrorCorrectionGenerator.hasDefault(target)) {
+                return;
+            }
+        }
+        writer.write("""
+                @classmethod
+                def _smithy_default(cls) -> Self:
+                    return cls(${C|})
+                """,
+                writer.consumer(w -> writeSmithyDefaultArguments()));
+    }
+
+    private void writeSmithyDefaultArguments() {
+        var visitor = new MemberErrorCorrectionGenerator(context, writer);
+        var first = true;
+        for (MemberShape member : requiredMembers) {
+            var target = model.expectShape(member.getTarget());
+            if (!first) {
+                writer.writeInline(", ");
+            }
+            first = false;
+            writer.writeInline("$L=", symbolProvider.toMemberName(member));
+            target.accept(visitor);
+        }
     }
 
     private void deserializeMembers(Collection<MemberShape> members) {
