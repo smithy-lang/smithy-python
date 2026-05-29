@@ -763,12 +763,15 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
         @Override
         public Void numberNode(NumberNode node) {
-            // TODO: Add support for timestamp, int-enum, and others
             if (inputShape.isTimestampShape()) {
                 var parsed = CodegenUtils.parseTimestampNode(model, inputShape, node);
                 writer.writeInline(CodegenUtils.getDatetimeConstructor(writer, parsed));
             } else if (inputShape.isFloatShape() || inputShape.isDoubleShape()) {
                 writer.writeInline("float($L)", node.getValue());
+            } else if (inputShape.isIntEnumShape()) {
+                var enumSymbol =
+                        context.symbolProvider().toSymbol(inputShape).expectProperty(SymbolProperties.ENUM_SYMBOL);
+                writer.writeInline("$T($L)", enumSymbol, node.getValue());
             } else {
                 writer.writeInline("$L", node.getValue());
             }
@@ -800,6 +803,10 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 };
 
                 writer.writeInline("float($S)", value);
+            } else if (inputShape.isEnumShape()) {
+                var enumSymbol =
+                        context.symbolProvider().toSymbol(inputShape).expectProperty(SymbolProperties.ENUM_SYMBOL);
+                writer.writeInline("$T($S)", enumSymbol, node.getValue());
             } else {
                 writer.writeInline("$S", node.getValue());
             }

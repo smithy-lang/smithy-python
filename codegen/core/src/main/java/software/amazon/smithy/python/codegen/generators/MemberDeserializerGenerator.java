@@ -135,7 +135,11 @@ public class MemberDeserializerGenerator extends ShapeVisitor.DataShapeVisitor<V
 
     @Override
     public Void intEnumShape(IntEnumShape shape) {
-        writeDeserializer("integer");
+        pushMemberState();
+        var enumSymbol = context.symbolProvider().toSymbol(shape).expectProperty(SymbolProperties.ENUM_SYMBOL);
+        writer.write("$T(${deserializer:L}.read_integer(${C|}))",
+                enumSymbol,
+                writer.consumer(w -> writeSchema()));
         return null;
     }
 
@@ -183,7 +187,11 @@ public class MemberDeserializerGenerator extends ShapeVisitor.DataShapeVisitor<V
 
     @Override
     public Void enumShape(EnumShape shape) {
-        writeDeserializer("string");
+        pushMemberState();
+        var enumSymbol = context.symbolProvider().toSymbol(shape).expectProperty(SymbolProperties.ENUM_SYMBOL);
+        writer.write("$T(${deserializer:L}.read_string(${C|}))",
+                enumSymbol,
+                writer.consumer(w -> writeSchema()));
         return null;
     }
 

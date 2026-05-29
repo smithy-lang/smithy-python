@@ -4,6 +4,8 @@
  */
 package software.amazon.smithy.python.codegen.generators;
 
+import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.knowledge.NullableIndex;
 import software.amazon.smithy.model.shapes.BigDecimalShape;
 import software.amazon.smithy.model.shapes.BigIntegerShape;
 import software.amazon.smithy.model.shapes.BlobShape;
@@ -26,6 +28,7 @@ import software.amazon.smithy.model.shapes.StringShape;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.shapes.TimestampShape;
 import software.amazon.smithy.model.shapes.UnionShape;
+import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.SymbolProperties;
@@ -40,7 +43,7 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  *     spec: Client error correction</a>
  */
 @SmithyInternalApi
-public final class MemberErrorCorrectionGenerator extends ShapeVisitor.DataShapeVisitor<Boolean> {
+public final class MemberErrorCorrectionGenerator extends ShapeVisitor.DataShapeVisitor<Void> {
 
     private final GenerationContext context;
     private final PythonWriter writer;
@@ -53,7 +56,7 @@ public final class MemberErrorCorrectionGenerator extends ShapeVisitor.DataShape
     /**
      * @return {@code true} if the visitor will emit a default expression for this shape.
      */
-    public static boolean hasDefault(Shape target) {
+    public static boolean hasDefault(Shape target, Model model) {
         return switch (target.getType()) {
             // Note on streaming shapes:
             //   - Streaming unions (event streams) are filtered out earlier by
@@ -64,149 +67,165 @@ public final class MemberErrorCorrectionGenerator extends ShapeVisitor.DataShape
             //     handled by the deserializer (an empty HTTP body becomes a zero-length
             //     AsyncBytesReader), so client error correction is unnecessary.
             case BOOLEAN, BYTE, SHORT, INTEGER, LONG, BIG_INTEGER, FLOAT, DOUBLE, BIG_DECIMAL,
-                    STRING, TIMESTAMP, DOCUMENT, LIST, MAP, ENUM, INT_ENUM, STRUCTURE, UNION ->
+                    STRING, TIMESTAMP, DOCUMENT, LIST, MAP, ENUM, INT_ENUM, UNION ->
                 true;
             case BLOB -> !target.hasTrait(StreamingTrait.class);
+            case STRUCTURE -> structHasDefault((StructureShape) target, model);
             default -> false;
         };
     }
 
+    /**
+     * We can build a default for a struct only when we can build a default for each of its
+     * required members, so we have to recurse into nested structs. The recursion is safe
+     * because Smithy doesn't allow cycles where every member along the path is @required;
+     * we'll always reach a base case (a primitive, list, map, etc.) before looping back.
+     *
+     * See https://smithy.io/2.0/spec/aggregate-types.html#recursive-shape-definitions
+     */
+    private static boolean structHasDefault(StructureShape struct, Model model) {
+        var index = NullableIndex.of(model);
+        for (MemberShape member : struct.members()) {
+            if (index.isMemberNullable(member) || member.hasTrait(DefaultTrait.class)) {
+                continue;
+            }
+            if (!hasDefault(model.expectShape(member.getTarget()), model)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
-    public Boolean booleanShape(BooleanShape shape) {
+    public Void booleanShape(BooleanShape shape) {
         writer.writeInline("False");
-        return true;
+        return null;
     }
 
     @Override
-    public Boolean byteShape(ByteShape shape) {
+    public Void byteShape(ByteShape shape) {
         writer.writeInline("0");
-        return true;
+        return null;
     }
 
     @Override
-    public Boolean shortShape(ShortShape shape) {
+    public Void shortShape(ShortShape shape) {
         writer.writeInline("0");
-        return true;
+        return null;
     }
 
     @Override
-    public Boolean integerShape(IntegerShape shape) {
+    public Void integerShape(IntegerShape shape) {
         writer.writeInline("0");
-        return true;
+        return null;
     }
 
     @Override
-    public Boolean longShape(LongShape shape) {
+    public Void longShape(LongShape shape) {
         writer.writeInline("0");
-        return true;
+        return null;
     }
 
     @Override
-    public Boolean bigIntegerShape(BigIntegerShape shape) {
+    public Void bigIntegerShape(BigIntegerShape shape) {
         writer.writeInline("0");
-        return true;
+        return null;
     }
 
     @Override
-    public Boolean floatShape(FloatShape shape) {
+    public Void floatShape(FloatShape shape) {
         writer.writeInline("0.0");
-        return true;
+        return null;
     }
 
     @Override
-    public Boolean doubleShape(DoubleShape shape) {
+    public Void doubleShape(DoubleShape shape) {
         writer.writeInline("0.0");
-        return true;
+        return null;
     }
 
     @Override
-    public Boolean bigDecimalShape(BigDecimalShape shape) {
+    public Void bigDecimalShape(BigDecimalShape shape) {
         writer.addStdlibImport("decimal", "Decimal");
         writer.writeInline("Decimal(0)");
-        return true;
+        return null;
     }
 
     @Override
-    public Boolean stringShape(StringShape shape) {
+    public Void stringShape(StringShape shape) {
         writer.writeInline("\"\"");
-        return true;
+        return null;
     }
 
     @Override
-    public Boolean blobShape(BlobShape shape) {
+    public Void blobShape(BlobShape shape) {
         writer.writeInline("b\"\"");
-        return true;
+        return null;
     }
 
     @Override
-    public Boolean timestampShape(TimestampShape shape) {
+    public Void timestampShape(TimestampShape shape) {
         writer.addStdlibImport("datetime", "datetime");
         writer.addStdlibImport("datetime", "timezone");
         writer.writeInline("datetime.fromtimestamp(0, tz=timezone.utc)");
-        return true;
+        return null;
     }
 
     @Override
-    public Boolean documentShape(DocumentShape shape) {
+    public Void documentShape(DocumentShape shape) {
         writer.addImport("smithy_core.documents", "Document");
         writer.writeInline("Document(None)");
-        return true;
+        return null;
     }
 
     @Override
-    public Boolean listShape(ListShape shape) {
+    public Void listShape(ListShape shape) {
         writer.writeInline("[]");
-        return true;
+        return null;
     }
 
     @Override
-    public Boolean mapShape(MapShape shape) {
+    public Void mapShape(MapShape shape) {
         writer.writeInline("{}");
-        return true;
+        return null;
     }
 
     @Override
-    public Boolean enumShape(EnumShape shape) {
-        // TODO: the Smithy spec recommends enum types define an unknown variant. If a
-        //   future change adds an unknown variant to the generated enum class (e.g.
-        //   MyEnum.unknown(value)), revisit this to emit it instead of the bare "".
-        writer.writeInline("\"\"");
-        return true;
+    public Void enumShape(EnumShape shape) {
+        var enumSymbol = context.symbolProvider().toSymbol(shape).expectProperty(SymbolProperties.ENUM_SYMBOL);
+        writer.addImport(enumSymbol, enumSymbol.getName());
+        writer.writeInline("$L._unknown(\"\")", enumSymbol.getName());
+        return null;
     }
 
     @Override
-    public Boolean intEnumShape(IntEnumShape shape) {
-        // TODO: the Smithy spec recommends intEnum types define an unknown variant. If a
-        //   future change adds an unknown variant to the generated intEnum class (e.g.
-        //   MyIntEnum.unknown(value)), revisit this to emit it instead of the bare 0.
-        writer.writeInline("0");
-        return true;
+    public Void intEnumShape(IntEnumShape shape) {
+        var enumSymbol = context.symbolProvider().toSymbol(shape).expectProperty(SymbolProperties.ENUM_SYMBOL);
+        writer.addImport(enumSymbol, enumSymbol.getName());
+        writer.writeInline("$L._unknown(0)", enumSymbol.getName());
+        return null;
     }
 
     @Override
-    public Boolean unionShape(UnionShape shape) {
+    public Void unionShape(UnionShape shape) {
         var unknownSymbol = context.symbolProvider()
                 .toSymbol(shape)
                 .expectProperty(SymbolProperties.UNION_UNKNOWN);
         writer.addImport(unknownSymbol, unknownSymbol.getName());
         writer.writeInline("$L(tag=\"\")", unknownSymbol.getName());
-        return true;
+        return null;
     }
 
     @Override
-    public Boolean structureShape(StructureShape shape) {
-        // Delegate to the target struct's _smithy_default() so nested required fields are
-        // also filled in. Recursion terminates because Smithy forbids recursive paths whose
-        // members are all @required:
-        // https://smithy.io/2.0/spec/aggregate-types.html#recursive-shape-definitions
+    public Void structureShape(StructureShape shape) {
         var symbol = context.symbolProvider().toSymbol(shape);
         writer.addImport(symbol, symbol.getName());
         writer.writeInline("$L._smithy_default()", symbol.getName());
-        return true;
+        return null;
     }
 
     @Override
-    public Boolean memberShape(MemberShape shape) {
+    public Void memberShape(MemberShape shape) {
         return context.model().expectShape(shape.getTarget()).accept(this);
     }
 }

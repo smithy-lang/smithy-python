@@ -278,6 +278,15 @@ public final class StructureGenerator implements Runnable {
             return CodegenUtils.getDatetimeConstructor(writer, value);
         } else if (target.isBlobShape()) {
             return String.format("b'%s'", defaultNode.expectStringNode().getValue());
+        } else if (target.isEnumShape()) {
+            // Wrap rather than emit a bare string so the value matches the field type.
+            var enumSymbol = symbolProvider.toSymbol(target).expectProperty(SymbolProperties.ENUM_SYMBOL);
+            writer.addImport(enumSymbol, enumSymbol.getName());
+            return String.format("%s(\"%s\")", enumSymbol.getName(), defaultNode.expectStringNode().getValue());
+        } else if (target.isIntEnumShape()) {
+            var enumSymbol = symbolProvider.toSymbol(target).expectProperty(SymbolProperties.ENUM_SYMBOL);
+            writer.addImport(enumSymbol, enumSymbol.getName());
+            return String.format("%s(%s)", enumSymbol.getName(), defaultNode.expectNumberNode().getValue());
         }
 
         if (target.isDocumentShape()) {
@@ -401,7 +410,7 @@ public final class StructureGenerator implements Runnable {
         var visitor = new MemberErrorCorrectionGenerator(context, writer);
         for (MemberShape member : requiredMembers) {
             var target = model.expectShape(member.getTarget());
-            if (!MemberErrorCorrectionGenerator.hasDefault(target)) {
+            if (!MemberErrorCorrectionGenerator.hasDefault(target, model)) {
                 // Streaming shapes have no synthesizable default; let the dataclass raise.
                 continue;
             }
@@ -418,16 +427,19 @@ public final class StructureGenerator implements Runnable {
     /**
      * Emits a {@code _smithy_default()} classmethod that constructs an instance with all
      * required members filled in via client error correction. Used to fill nested structure
-     * members per the Smithy spec. If the structure has any required member whose target has
-     * no synthesizable default (i.e. a streaming blob), {@code _smithy_default()} is omitted:
-     * a generated {@code cls()} call would be missing a required argument. But such structures
-     * can only appear as a top-level operation input or output (per spec § 13.3), never as a
-     * nested-struct member, so {@code _smithy_default()} would never be invoked on them anyway.
+     * members per the Smithy spec. Only emitted when this structure is actually referenced
+     * as the target of a required structure member elsewhere in the model. If the structure
+     * has any required member whose target has no synthesizable default (a streaming blob,
+     * or another structure whose own required members transitively have no default),
+     * {@code _smithy_default()} is also omitted.
      */
     private void generateSmithyDefaultMethod() {
+        if (!isRequiredStructMemberTarget()) {
+            return;
+        }
         for (MemberShape member : requiredMembers) {
             var target = model.expectShape(member.getTarget());
-            if (!MemberErrorCorrectionGenerator.hasDefault(target)) {
+            if (!MemberErrorCorrectionGenerator.hasDefault(target, model)) {
                 return;
             }
         }
@@ -437,6 +449,24 @@ public final class StructureGenerator implements Runnable {
                     return cls(${C|})
                 """,
                 writer.consumer(w -> writeSmithyDefaultArguments()));
+    }
+
+    /**
+     * Returns true if any structure in the model has a python-required member whose target
+     * is this shape.
+     */
+    private boolean isRequiredStructMemberTarget() {
+        var index = NullableIndex.of(model);
+        for (var struct : model.getStructureShapes()) {
+            for (var member : struct.members()) {
+                if (!index.isMemberNullable(member)
+                        && !member.hasTrait(DefaultTrait.class)
+                        && member.getTarget().equals(shape.getId())) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     private void writeSmithyDefaultArguments() {
