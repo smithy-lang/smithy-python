@@ -62,12 +62,14 @@ public final class UnionGenerator implements Runnable {
 
             var target = model.expectShape(member.getTarget());
             var targetSymbol = symbolProvider.toSymbol(target);
+            writer.pushState();
+            writer.putContext("quote", recursiveShapes.contains(target) ? "'" : "");
             writer.write("""
                     @dataclass
                     class $1L:
                         ${2C|}
 
-                        value: $3T
+                        value: ${quote:L}$3T${quote:L}
 
                         def serialize(self, serializer: ShapeSerializer):
                             serializer.write_struct($4T, self)
@@ -92,6 +94,7 @@ public final class UnionGenerator implements Runnable {
                             new MemberDeserializerGenerator(context, w, member, "deserializer")))
 
             );
+            writer.popState();
         }
 
         // Note that the unknown variant doesn't implement __eq__. This is because
