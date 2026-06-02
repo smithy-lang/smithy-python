@@ -15,5 +15,5 @@
 
 allprojects {
     group = "software.amazon.smithy.python"
-    version = "0.3.0"
+    version = "0.3.1"
 }
