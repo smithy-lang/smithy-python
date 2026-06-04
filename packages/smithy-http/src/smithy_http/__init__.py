@@ -2,10 +2,14 @@
 # SPDX-License-Identifier: Apache-2.0
 from collections import Counter, OrderedDict
 from collections.abc import Iterable, Iterator
-from typing import get_args
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, get_args
 
 from . import interfaces
 from .interfaces import FieldPosition
+
+if TYPE_CHECKING:
+    from .aio.interfaces import HTTPResponse
 
 __version__ = "0.4.1"
 
@@ -215,6 +219,33 @@ def quote_and_escape_field_value(value: str) -> str:
         return f'"{escaped}"'
     else:
         return value
+
+
+@dataclass(frozen=True)
+class ResponseMetadata:
+    """Typed metadata from an HTTP response, including status and request IDs."""
+
+    status_code: int
+    request_id: str | None = None
+    extended_request_id: str | None = None
+
+
+class ResponseMetadataBuilder:
+    """Builds ResponseMetadata from an HTTPResponse using a configurable header mapping.
+
+    :param header_mapping: Maps ResponseMetadata field names to HTTP header names.
+        e.g. {"request_id": "x-amz-request-id", "extended_request_id": "x-amz-id-2"}
+    """
+
+    def __init__(self, header_mapping: dict[str, str] | None = None) -> None:
+        self._header_mapping = header_mapping or {}
+
+    def build(self, response: "HTTPResponse") -> "ResponseMetadata":
+        kwargs: dict[str, str | None] = {}
+        for field_name, header_name in self._header_mapping.items():
+            header = response.fields.entries.get(header_name.lower())
+            kwargs[field_name] = header.as_string() if header is not None else None
+        return ResponseMetadata(status_code=response.status, **kwargs)
 
 
 def tuples_to_fields(

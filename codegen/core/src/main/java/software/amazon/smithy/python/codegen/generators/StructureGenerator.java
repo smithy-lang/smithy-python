@@ -18,6 +18,7 @@ import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.NullableIndex;
 import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
+import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.StructureShape;
 import software.amazon.smithy.model.traits.DefaultTrait;
@@ -104,10 +105,13 @@ public final class StructureGenerator implements Runnable {
 
                     ${C|}
 
+                    ${C|}
+
                 """,
                 symbol.getName(),
                 writer.consumer(w -> writeClassDocs()),
                 writer.consumer(w -> writeProperties()),
+                writer.consumer(w -> writeResponseMetadataField()),
                 writer.consumer(w -> generateSerializeMethod()),
                 writer.consumer(w -> generateDeserializeMethod()));
     }
@@ -155,6 +159,7 @@ public final class StructureGenerator implements Runnable {
                 writer.consumer(w -> writeProperties()),
                 writer.consumer(w -> generateSerializeMethod()),
                 writer.consumer(w -> generateDeserializeMethod()));
+        // Note: errors inherit _response_metadata from CallError, no additional field needed.
     }
 
     private void writeClassDocs() {
@@ -236,6 +241,22 @@ public final class StructureGenerator implements Runnable {
                     writer.consumer(w -> writeMemberDocs(member)));
             writer.popState();
         }
+    }
+
+    private void writeResponseMetadataField() {
+        if (!isOperationOutput()) {
+            return;
+        }
+        writer.addImport("smithy_http", "ResponseMetadata");
+        writer.write("""
+                _response_metadata: ResponseMetadata | None = None
+                """);
+    }
+
+    private boolean isOperationOutput() {
+        return model.getOperationShapes().stream()
+                .map(OperationShape::getOutputShape)
+                .anyMatch(id -> id.equals(shape.getId()));
     }
 
     private void writeMemberDocs(MemberShape member) {

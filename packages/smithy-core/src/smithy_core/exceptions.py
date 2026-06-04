@@ -1,7 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import Any, Literal
 
 
 class SmithyError(Exception):
@@ -52,6 +52,9 @@ class CallError(SmithyError):
 
     is_timeout_error: bool = False
     """Whether the error represents a timeout condition."""
+
+    _response_metadata: Any = None
+    """HTTP response metadata (status code, request IDs). Set by the protocol layer."""
 
     def __post_init__(self):
         super().__init__(self.message)

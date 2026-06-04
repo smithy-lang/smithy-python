@@ -24,7 +24,7 @@ from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import SerializeableShape
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.types import TimestampFormat
-from smithy_http import tuples_to_fields
+from smithy_http import ResponseMetadataBuilder, tuples_to_fields
 from smithy_http.aio import HTTPRequest as _HTTPRequest
 from smithy_http.aio.interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
 from smithy_http.aio.protocols import HttpBindingClientProtocol, HttpClientProtocol
@@ -95,6 +95,14 @@ def _assert_event_stream() -> None:
         )
 
 
+_AWS_METADATA_BUILDER: Final = ResponseMetadataBuilder(
+    header_mapping={
+        "request_id": "x-amz-request-id",
+        "extended_request_id": "x-amz-id-2",
+    }
+)
+
+
 class AWSErrorIdentifier(HTTPErrorIdentifier):
     _HEADER_KEY: Final = "x-amzn-errortype"
 
@@ -143,6 +151,7 @@ class RestJsonClientProtocol(HttpBindingClientProtocol):
 
         :param service: The schema for the service to interact with.
         """
+        super().__init__(metadata_builder=_AWS_METADATA_BUILDER)
         _assert_json()
         self._codec: Final = JSONCodec(
             document_class=AWSJSONDocument,
@@ -237,6 +246,7 @@ class AwsQueryClientProtocol(HttpClientProtocol):
     _content_type: Final = "application/x-www-form-urlencoded"
 
     def __init__(self, service_schema: Schema, version: str) -> None:
+        super().__init__(metadata_builder=_AWS_METADATA_BUILDER)
         _assert_xml()
         self._default_namespace: Final = service_schema.id.namespace
         self._version: Final = version
@@ -305,28 +315,34 @@ class AwsQueryClientProtocol(HttpClientProtocol):
         body = await response.consume_body_async()
 
         if not self._is_success(operation, context, response):
-            raise await self._create_error(
+            error = await self._create_error(
                 operation=operation,
                 response=response,
                 response_body=body,
                 error_registry=error_registry,
                 context=context,
             )
+            error._response_metadata = self._build_metadata(response)
+            raise error
 
         if len(body) == 0:
-            return operation.output.deserialize(
+            output = operation.output.deserialize(
                 HTTPResponseDeserializer(
                     payload_codec=self.payload_codec,
                     response=response,
                     body=body,
                 )
             )
+            output._response_metadata = self._build_metadata(response)
+            return output
 
         wrapper_elements = self._response_wrapper_elements(operation)
         deserializer = self.payload_codec.create_deserializer(
             body, wrapper_elements=wrapper_elements
         )
-        return operation.output.deserialize(deserializer)
+        output = operation.output.deserialize(deserializer)
+        output._response_metadata = self._build_metadata(response)
+        return output
 
     def _is_success(
         self,

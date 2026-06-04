@@ -25,6 +25,7 @@ from smithy_core.schemas import APIOperation
 from smithy_core.serializers import SerializeableShape
 from smithy_core.traits import EndpointTrait, HTTPTrait
 
+from .. import ResponseMetadata, ResponseMetadataBuilder
 from ..deserializers import HTTPResponseDeserializer
 from ..serializers import HTTPRequestSerializer
 from .interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
@@ -32,6 +33,14 @@ from .interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
 
 class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
     """An HTTP-based protocol."""
+
+    def __init__(
+        self, *, metadata_builder: ResponseMetadataBuilder | None = None
+    ) -> None:
+        self._metadata_builder = metadata_builder or ResponseMetadataBuilder()
+
+    def _build_metadata(self, response: HTTPResponse) -> ResponseMetadata:
+        return self._metadata_builder.build(response)
 
     def set_service_endpoint(
         self,
@@ -149,7 +158,9 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             body=body,
         )
 
-        return operation.output.deserialize(deserializer)
+        output = operation.output.deserialize(deserializer)
+        output._response_metadata = self._build_metadata(response)
+        return output
 
     async def _buffer_async_body(self, stream: AsyncStreamingBlob) -> SyncStreamingBlob:
         match stream:
@@ -197,6 +208,7 @@ class HttpBindingClientProtocol(HttpClientProtocol):
                 if isinstance(response_body, SeekableBytesReader):
                     response_body.seek(0)
 
+        error: CallError
         if error_id is not None and error_id in error_registry:
             error_shape = error_registry.get(error_id)
 
@@ -213,28 +225,31 @@ class HttpBindingClientProtocol(HttpClientProtocol):
                 response=response,
                 body=response_body,
             )
-            return error_shape.deserialize(deserializer)
+            error = error_shape.deserialize(deserializer)
+        else:
+            message = (
+                f"Unknown error for operation {operation.schema.id} "
+                f"- status: {response.status}"
+            )
+            if error_id is not None:
+                message += f" - id: {error_id}"
+            if response.reason is not None:
+                message += f" - reason: {response.status}"
 
-        message = (
-            f"Unknown error for operation {operation.schema.id} "
-            f"- status: {response.status}"
-        )
-        if error_id is not None:
-            message += f" - id: {error_id}"
-        if response.reason is not None:
-            message += f" - reason: {response.status}"
+            is_timeout = response.status == 408
+            is_throttle = response.status == 429
+            fault = "client" if response.status < 500 else "server"
 
-        is_timeout = response.status == 408
-        is_throttle = response.status == 429
-        fault = "client" if response.status < 500 else "server"
+            error = CallError(
+                message=message,
+                fault=fault,
+                is_throttling_error=is_throttle,
+                is_timeout_error=is_timeout,
+                is_retry_safe=is_throttle or is_timeout or None,
+            )
 
-        return CallError(
-            message=message,
-            fault=fault,
-            is_throttling_error=is_throttle,
-            is_timeout_error=is_timeout,
-            is_retry_safe=is_throttle or is_timeout or None,
-        )
+        error._response_metadata = self._build_metadata(response)
+        return error
 
     def _matches_content_type(self, response: HTTPResponse) -> bool:
         if "content-type" not in response.fields:

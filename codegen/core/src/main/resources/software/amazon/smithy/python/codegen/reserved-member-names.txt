@@ -81,3 +81,9 @@ str
 # that are likely imported in the generated code (e.g. datetime)
 # We only escape the types we use.
 datetime
+
+# Reserved for framework-managed response metadata attribute.
+# The leading underscore variant is what the runtime uses; the plain variant
+# is reserved to prevent confusion if a model uses that name.
+_response_metadata
+response_metadata
