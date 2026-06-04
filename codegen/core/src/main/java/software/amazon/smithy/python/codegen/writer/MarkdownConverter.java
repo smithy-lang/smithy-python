@@ -168,9 +168,20 @@ public final class MarkdownConverter {
         // Remove empty lines at the start and end
         output = output.trim();
 
-        // Remove unnecessary backslash escapes that pandoc adds for markdown
-        // These characters don't need escaping in Python docstrings
-        output = output.replaceAll("\\\\([\\[\\]'{}()<>`@_*|!~$#^])", "$1");
+        // Remove unnecessary backslash escapes that pandoc adds for markdown.
+        // These characters don't need escaping in Python docstrings. The
+        // negative lookbehind ensures we only strip a single, spurious escape
+        // and never consume one half of a literal "\\" (which is a valid Python
+        // escape and must be preserved, e.g. a charset like "[\\]").
+        output = output.replaceAll("(?<!\\\\)\\\\([\\[\\]'{}()<>`@_*|!~$#^])", "$1");
+
+        // Escape any remaining lone backslash that does not form a valid Python
+        // escape sequence, so the docstring is a valid Python string. A backslash
+        // is left untouched when it begins a recognized Python escape (quote,
+        // letter escapes, octal, hex, Unicode, or a line continuation) and is
+        // doubled otherwise (e.g. a charset like a lone backslash between spaces).
+        // See https://docs.python.org/3/reference/lexical_analysis.html#escape-sequences
+        output = output.replaceAll("(?<!\\\\)\\\\(?![\\\\'\"abfnrtv0-7xNuU\\r\\n])", "\\\\\\\\");
 
         // Replace <note> and <important> tags with admonitions for mkdocstrings
         output = replaceAdmonitionTags(output, "note", "Note");
