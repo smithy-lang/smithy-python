@@ -1,6 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from copy import copy, deepcopy
+import weakref
+from copy import deepcopy
 from itertools import chain
 from typing import TYPE_CHECKING, Any
 from urllib.parse import parse_qs
@@ -65,13 +66,20 @@ class AIOHTTPClient(HTTPClient):
         """
         _assert_aiohttp()
         self._config = client_config or AIOHTTPClientConfig()
-        # Disable transparent response decompression and advertise
-        # 'identity' to request uncompressed responses.
-        # TODO: add a functional test once the test client framework exists
-        self._session = _session or aiohttp.ClientSession(
-            auto_decompress=False,
-            headers={"Accept-Encoding": "identity"},
-        )
+        if _session is not None:
+            self._session = _session
+        else:
+            # Disable transparent response decompression and advertise
+            # 'identity' to request uncompressed responses.
+            # TODO: add a functional test once the test client framework exists
+            self._session = aiohttp.ClientSession(
+                auto_decompress=False,
+                headers={"Accept-Encoding": "identity"},
+            )
+            # Close the connector on GC/interpreter exit so aiohttp doesn't
+            # emit "Unclosed client session"/"Unclosed connector" warnings
+            # when the client is never closed explicitly.
+            self._finalizer = weakref.finalize(self, self._close_session, self._session)
 
     async def send(
         self,
@@ -143,5 +151,17 @@ class AIOHTTPClient(HTTPClient):
     def __deepcopy__(self, memo: Any) -> "AIOHTTPClient":
         return AIOHTTPClient(
             client_config=deepcopy(self._config),
-            _session=copy(self._session),
+            _session=self._session,
         )
+
+    @staticmethod
+    def _close_session(session: "aiohttp.ClientSession") -> None:
+        """Synchronously close a session's connector.
+
+        Runs from the :py:class:`weakref.finalize` hook, where there may be no
+        running event loop, so we close the connector directly instead of
+        awaiting ``session.close()``.
+        """
+        connector = session.connector
+        if connector is not None and not connector.closed:
+            connector._close()  # type: ignore[attr-defined]
