@@ -168,20 +168,9 @@ public final class MarkdownConverter {
         // Remove empty lines at the start and end
         output = output.trim();
 
-        // Remove unnecessary backslash escapes that pandoc adds for markdown.
-        // These characters don't need escaping in Python docstrings. The
-        // negative lookbehind ensures we only strip a single, spurious escape
-        // and never consume one half of a literal "\\" (which is a valid Python
-        // escape and must be preserved, e.g. a charset like "[\\]").
-        output = output.replaceAll("(?<!\\\\)\\\\([\\[\\]'{}()<>`@_*|!~$#^])", "$1");
-
-        // Escape any remaining lone backslash that does not form a valid Python
-        // escape sequence, so the docstring is a valid Python string. A backslash
-        // is left untouched when it begins a recognized Python escape (quote,
-        // letter escapes, octal, hex, Unicode, or a line continuation) and is
-        // doubled otherwise (e.g. a charset like a lone backslash between spaces).
-        // See https://docs.python.org/3/reference/lexical_analysis.html#escape-sequences
-        output = output.replaceAll("(?<!\\\\)\\\\(?![\\\\'\"abfnrtv0-7xNuU\\r\\n])", "\\\\\\\\");
+        // Fix up the backslash escapes pandoc adds for Markdown so the result is
+        // a valid Python string literal (see normalizeBackslashEscapes).
+        output = normalizeBackslashEscapes(output);
 
         // Replace <note> and <important> tags with admonitions for mkdocstrings
         output = replaceAdmonitionTags(output, "note", "Note");
@@ -189,6 +178,45 @@ public final class MarkdownConverter {
 
         // Escape Smithy format specifiers
         return output.replace("$", "$$");
+    }
+
+    // A lone backslash before one of these is dropped: pandoc adds it for Markdown
+    // but it needs no escaping in a Python docstring.
+    private static final String MARKDOWN_ONLY_CHARS = "[](){}<>`@_*|!~$#^'.";
+    // A lone backslash before one of these is kept: together they form a valid
+    // Python escape. (' is intentionally left out; it lives in MARKDOWN_ONLY_CHARS.)
+    private static final String VALID_ESCAPE_CHARS = "\\\"abfnrtv01234567xNuU\r\n";
+    private static final Pattern BACKSLASH_RUN = Pattern.compile("(\\\\+)([^\\\\]|$)", Pattern.DOTALL);
+
+    /**
+     * Fixes pandoc's backslash escaping so the docstring is a valid Python literal.
+     *
+     * <p>Backslashes must come in pairs, but pandoc can leave an odd-length run
+     * (it escapes literal backslashes and Markdown characters separately, and
+     * adjacent escapes pile up). For each run we keep the pairs; a leftover
+     * backslash is then kept if it forms a valid escape, dropped if it is only
+     * there for Markdown, or doubled otherwise.
+     */
+    private static String normalizeBackslashEscapes(String output) {
+        Matcher m = BACKSLASH_RUN.matcher(output);
+        StringBuilder sb = new StringBuilder();
+        while (m.find()) {
+            int runLength = m.group(1).length();
+            String next = m.group(2);
+            int backslashes = (runLength / 2) * 2;
+            if (runLength % 2 != 0) {
+                char c = next.isEmpty() ? '\0' : next.charAt(0);
+                if (!next.isEmpty() && VALID_ESCAPE_CHARS.indexOf(c) >= 0) {
+                    backslashes += 1;
+                } else if (next.isEmpty() || MARKDOWN_ONLY_CHARS.indexOf(c) < 0) {
+                    backslashes += 2;
+                }
+                // else: Markdown-only char, drop the spurious backslash
+            }
+            m.appendReplacement(sb, Matcher.quoteReplacement("\\".repeat(backslashes) + next));
+        }
+        m.appendTail(sb);
+        return sb.toString();
     }
 
     /**

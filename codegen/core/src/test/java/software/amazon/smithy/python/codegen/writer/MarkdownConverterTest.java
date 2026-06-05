@@ -157,6 +157,26 @@ public class MarkdownConverterTest {
     }
 
     @Test
+    public void testConvertHandlesBackslashBeforeMarkdownChar() {
+        // A backslash followed by a Markdown-significant character (here "*") makes
+        // pandoc emit an odd-length backslash run. The spurious escape must be
+        // dropped so the result is valid Python.
+        String html = "<code>arn:aws:iam::\\*:user/\\*</code>";
+        String result = MarkdownConverter.convert(html, createMockContext(true)).trim();
+        assertEquals("`arn:aws:iam::*:user/*`", result);
+    }
+
+    @Test
+    public void testConvertHandlesBackslashStarNextToQuote() {
+        // The API Gateway model documents the comment marker "\*/". Next to a quote,
+        // pandoc emits an odd-length backslash run; the result must stay a valid
+        // Python literal.
+        String html = "<p>Do not include \"\\*/\" characters</p>";
+        String result = MarkdownConverter.convert(html, createMockContext(true)).trim();
+        assertEquals("Do not include \\\"\\\\*/\\\" characters", result);
+    }
+
+    @Test
     public void testConvertMixedElements() {
         String html = "<h1>Title</h1><p>Paragraph</p><ul><li>Item 1</li><li>Item 2</li></ul>";
         String result = MarkdownConverter.convert(html, createMockContext(true));
