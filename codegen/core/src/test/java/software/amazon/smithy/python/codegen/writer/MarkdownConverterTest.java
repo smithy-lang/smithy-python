@@ -129,6 +129,34 @@ public class MarkdownConverterTest {
     }
 
     @Test
+    public void testConvertPreservesLiteralDoubleBackslash() {
+        // A literal "\\" is a valid Python escape (e.g. a password charset like
+        // "[\\]") and must be preserved.
+        String html = "<code>@[\\\\]^</code>";
+        String result = MarkdownConverter.convert(html, createMockContext(true)).trim();
+        assertEquals("`@[\\\\]^`", result);
+    }
+
+    @Test
+    public void testConvertEscapesLoneBackslash() {
+        // A lone backslash that is not part of a recognized Python escape (here a
+        // backslash followed by a space) must be doubled so the docstring is a
+        // valid Python string.
+        String html = "<code>[ \\ ]</code>";
+        String result = MarkdownConverter.convert(html, createMockContext(true)).trim();
+        assertEquals("`[ \\\\ ]`", result);
+    }
+
+    @Test
+    public void testConvertPreservesValidPythonEscapes() {
+        // A backslash that already forms a valid Python escape (e.g. \") must be
+        // left untouched rather than doubled.
+        String html = "<code>!\\\"#</code>";
+        String result = MarkdownConverter.convert(html, createMockContext(true)).trim();
+        assertEquals("`!\\\"#`", result);
+    }
+
+    @Test
     public void testConvertMixedElements() {
         String html = "<h1>Title</h1><p>Paragraph</p><ul><li>Item 1</li><li>Item 2</li></ul>";
         String result = MarkdownConverter.convert(html, createMockContext(true));
