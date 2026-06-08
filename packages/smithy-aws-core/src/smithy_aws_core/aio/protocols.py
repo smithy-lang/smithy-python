@@ -364,10 +364,14 @@ class AwsQueryClientProtocol(HttpClientProtocol):
     def _response_wrapper_elements(
         self,
         operation: APIOperation[SerializeableShape, DeserializeableShape],
-    ) -> tuple[str, str]:
+    ) -> tuple[str, ...]:
+        name = operation.schema.id.name
+        # Operations with no output members will omit the <OpResult> element.
+        if not operation.output_schema.members:
+            return (f"{name}Response",)
         return (
-            f"{operation.schema.id.name}Response",
-            f"{operation.schema.id.name}Result",
+            f"{name}Response",
+            f"{name}Result",
         )
 
     def _error_wrapper_elements(self) -> tuple[str, ...]:
