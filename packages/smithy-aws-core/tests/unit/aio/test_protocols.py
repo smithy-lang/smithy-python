@@ -131,9 +131,6 @@ _INVALID_ACTION_ERROR_SCHEMA = Schema.collection(
     ],
     members={"message": {"target": STRING}},
 )
-_EMPTY_OUTPUT_SCHEMA = Schema.collection(
-    id=ShapeID("com.test#EmptyOutput"),
-)
 
 
 @dataclass
@@ -163,16 +160,6 @@ class _ModeledQueryError(ModeledError):
         return cls(**kwargs)
 
 
-class _EmptyOutput:
-    @classmethod
-    def deserialize(cls, deserializer: ShapeDeserializer) -> "_EmptyOutput":
-        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
-            pass
-
-        deserializer.read_struct(_EMPTY_OUTPUT_SCHEMA, consumer=_consumer)
-        return cls()
-
-
 def _operation_schema(name: str) -> Schema:
     return Schema(
         id=ShapeID(f"com.test#{name}"),
@@ -184,14 +171,10 @@ def _mock_operation(
     schema: Schema,
     *,
     error_schemas: list[Schema] | None = None,
-    output: Any = None,
-    output_schema: Schema | None = None,
 ) -> APIOperation[Any, Any]:
     operation = Mock(spec=APIOperation)
     operation.schema = schema
     operation.error_schemas = error_schemas or []
-    operation.output = output
-    operation.output_schema = output_schema
     return cast("APIOperation[Any, Any]", operation)
 
 
@@ -289,28 +272,3 @@ async def test_aws_query_returns_generic_error_for_unknown_code() -> None:
         "Unknown error for operation com.test#FailingOperation"
         " - status: 500, code: UnknownThing"
     )
-
-
-async def test_aws_query_deserializes_empty_output_without_result_wrapper() -> None:
-    protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
-    result = await protocol.deserialize_response(
-        operation=_mock_operation(
-            _operation_schema("EmptyOperation"),
-            output=_EmptyOutput,
-            output_schema=_EMPTY_OUTPUT_SCHEMA,
-        ),
-        request=cast(HTTPRequest, Mock()),
-        response=HTTPResponse(
-            status=200,
-            fields=tuples_to_fields([]),
-            body=(
-                b"<EmptyOperationResponse>"
-                b"<ResponseMetadata><RequestId>abc-123</RequestId></ResponseMetadata>"
-                b"</EmptyOperationResponse>"
-            ),
-        ),
-        error_registry=TypeRegistry({}),
-        context=TypedProperties(),
-    )
-
-    assert isinstance(result, _EmptyOutput)
