@@ -335,6 +335,8 @@ structure Defaults {
     @required
     requiredDefaultBool: Boolean = true
 
+    defaultNullBoolean: Boolean = null
+
     @required
     requiredStr: String
 
@@ -354,6 +356,8 @@ structure Defaults {
 
     @required
     requiredDefaultInt: Integer = 42
+
+    defaultNullLong: Long = null
 
     @required
     requiredFloat: Float
