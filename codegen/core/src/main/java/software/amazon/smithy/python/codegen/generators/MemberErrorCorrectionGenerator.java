@@ -151,7 +151,7 @@ public final class MemberErrorCorrectionGenerator extends ShapeVisitor.DataShape
         var enumSymbol = context.symbolProvider().toSymbol(shape);
         return writer -> {
             writer.addImport(enumSymbol, enumSymbol.getName());
-            writer.writeInline("$L._unknown(\"\")", enumSymbol.getName());
+            writer.writeInline("$L._corrected(\"\")", enumSymbol.getName());
         };
     }
 
@@ -160,7 +160,9 @@ public final class MemberErrorCorrectionGenerator extends ShapeVisitor.DataShape
         var enumSymbol = context.symbolProvider().toSymbol(shape);
         return writer -> {
             writer.addImport(enumSymbol, enumSymbol.getName());
-            writer.writeInline("$L._unknown(0)", enumSymbol.getName());
+            // -1 is used (rather than 0) as the placeholder because it is least likely to
+            // collide with a real member value.
+            writer.writeInline("$L._corrected(-1)", enumSymbol.getName());
         };
     }
 

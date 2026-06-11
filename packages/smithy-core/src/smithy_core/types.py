@@ -69,16 +69,11 @@ class JsonBlob(bytes):
 class UnknownEnumMixin:
     """Adds unknown-value support to a generated enum.
 
-    Must be mixed into an :class:`enum.Enum` with a data type, e.g.
-    ``class Color(UnknownEnumMixin, StrEnum)``. A value that doesn't match any
-    known member — because the service is newer than the SDK, or because client
-    error correction filled in a placeholder — is represented as a pseudo-member
-    with :attr:`is_unknown` set instead of raising ``ValueError``. Pseudo-members
-    keep the native ``str``/``int`` semantics, so they still compare equal to
-    their raw value.
-
-    See `Smithy's docs <https://smithy.io/2.0/spec/aggregate-types.html#client-error-correction>`_
-    for more details on client error correction.
+    Mixed into an :class:`enum.Enum` with a data type, e.g.
+    ``class Color(UnknownEnumMixin, StrEnum)``. Unrecognized values become
+    pseudo-members (flagged by :attr:`is_unknown`) instead of raising. A value
+    from the wire keeps native equality; an error-correction placeholder
+    (:meth:`_corrected`) equals only itself.
     """
 
     if TYPE_CHECKING:
@@ -88,6 +83,7 @@ class UnknownEnumMixin:
         _value_: Any
 
     _smithy_unknown: bool = False
+    _smithy_corrected: bool = False
 
     @classmethod
     def _unknown(cls, value: Any) -> Self:
@@ -99,10 +95,28 @@ class UnknownEnumMixin:
         return pseudo
 
     @classmethod
+    def _corrected(cls, value: Any) -> Self:
+        pseudo = cls._unknown(value)
+        pseudo._smithy_corrected = True
+        return pseudo
+
+    @classmethod
     def _missing_(cls, value: object) -> Self | None:
         if isinstance(value, cls._member_type_):
             return cls._unknown(value)
         return None
+
+    def __eq__(self, other: object) -> bool:
+        if self._smithy_corrected or getattr(other, "_smithy_corrected", False):
+            return self is other
+        return super().__eq__(other)
+
+    def __ne__(self, other: object) -> bool:
+        result = self.__eq__(other)
+        return result if result is NotImplemented else not result
+
+    def __hash__(self) -> int:
+        return super().__hash__()
 
     @property
     def is_unknown(self) -> bool:

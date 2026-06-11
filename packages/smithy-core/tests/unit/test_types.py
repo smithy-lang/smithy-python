@@ -361,6 +361,7 @@ class _Color(UnknownEnumMixin, StrEnum):
 
 
 class _Code(UnknownEnumMixin, IntEnum):
+    ZERO = 0
     OK = 200
     NOT_FOUND = 404
 
@@ -393,14 +394,45 @@ def test_unknown_enum_keeps_native_equality() -> None:
     assert codes[418] == "teapot"
 
 
-def test_unknown_enum_placeholder_for_error_correction() -> None:
-    color = _Color._unknown("")
-    assert color.is_unknown
-    assert color == ""
+def test_wire_unknown_keeps_native_equality() -> None:
+    # A value the SDK doesn't recognize keeps native equality (forwards-compatible).
+    wire = _Code(418)
+    assert wire.is_unknown
+    assert not wire._smithy_corrected
+    assert wire == 418
 
-    code = _Code._unknown(0)
+
+def test_error_corrected_placeholder_is_equal_to_nothing() -> None:
+    # An invented placeholder for a missing required member equals only itself —
+    # not its raw value, not a known member sharing it, not another placeholder.
+    color = _Color._corrected("")
+    assert color.is_unknown
+    assert color._smithy_corrected
+    assert color != ""
+    assert color != _Color.RED
+    assert color != _Color._corrected("")
+    assert color == color
+
+    code = _Code._corrected(0)
     assert code.is_unknown
-    assert code == 0
+    assert code._smithy_corrected
+    assert code != 0
+    assert code != _Code.ZERO
+    assert code != _Code._corrected(0)
+    assert code == code
+
+    assert {_Code.ZERO: "zero"}.get(code) is None
+
+
+def test_wire_unknown_and_corrected_differ_on_equality() -> None:
+    # Both report is_unknown, but the wire-unknown value keeps native equality
+    # while the invented placeholder matches nothing.
+    wire = _Code(418)
+    corrected = _Code._corrected(418)
+    assert wire.is_unknown and corrected.is_unknown
+    assert wire == 418
+    assert corrected != 418
+    assert wire != corrected
 
 
 def test_unknown_enum_rejects_mismatched_type() -> None:
