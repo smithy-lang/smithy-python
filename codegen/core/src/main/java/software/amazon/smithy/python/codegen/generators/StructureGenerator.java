@@ -9,8 +9,11 @@ import static software.amazon.smithy.python.codegen.CodegenUtils.isErrorMessage;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import software.amazon.smithy.codegen.core.SymbolProvider;
@@ -374,6 +377,9 @@ public final class StructureGenerator implements Runnable {
         var schemaSymbol = symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.SCHEMA);
         writer.putContext("schema", schemaSymbol);
 
+        var corrections = errorCorrections();
+        writer.putContext("errorCorrection", !corrections.isEmpty());
+
         // TODO: either formalize deserialize_kwargs or remove it when http serde is converted
         writer.write("""
                 @classmethod
@@ -391,38 +397,49 @@ public final class StructureGenerator implements Runnable {
                                 logger.debug("Unexpected member schema: %s", schema)
 
                     deserializer.read_struct($T, consumer=_consumer)
+                    ${?errorCorrection}
                     ${C|}
+                    ${/errorCorrection}
                     return kwargs
 
                 """,
                 writer.consumer(w -> deserializeMembers(shape.members())),
                 schemaSymbol,
-                writer.consumer(w -> writeErrorCorrection()));
+                writer.consumer(w -> writeErrorCorrection(corrections)));
         writer.popState();
     }
 
     /**
-     * Emits client error correction for required members the server failed to serialize.
+     * Collects client error correction defaults for required members the server failed
+     * to serialize, keyed by member name. Members whose targets have no synthesizable
+     * default (e.g. a streaming blob) are omitted; the dataclass will raise for those.
      *
      * @see <a href="https://smithy.io/2.0/spec/aggregate-types.html#client-error-correction">Smithy
      *     spec: Client error correction</a>
      */
-    private void writeErrorCorrection() {
+    private Map<String, Consumer<PythonWriter>> errorCorrections() {
         var visitor = new MemberErrorCorrectionGenerator(context);
+        var corrections = new LinkedHashMap<String, Consumer<PythonWriter>>();
         for (MemberShape member : requiredMembers) {
             var defaultExpression = model.expectShape(member.getTarget()).accept(visitor);
             if (defaultExpression == null) {
-                // No synthesizable default (e.g. a streaming blob); let the dataclass raise.
                 continue;
             }
+            corrections.put(symbolProvider.toMemberName(member), defaultExpression);
+        }
+        return corrections;
+    }
+
+    private void writeErrorCorrection(Map<String, Consumer<PythonWriter>> corrections) {
+        corrections.forEach((memberName, defaultExpression) -> {
             writer.pushState();
-            writer.putContext("memberName", symbolProvider.toMemberName(member));
+            writer.putContext("memberName", memberName);
             writer.write("""
                     if ${memberName:S} not in kwargs:
                         kwargs[${memberName:S}] = ${C|}""",
                     writer.consumer(defaultExpression));
             writer.popState();
-        }
+        });
     }
 
     /**
