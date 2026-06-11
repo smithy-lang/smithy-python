@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from email.utils import format_datetime, parsedate_to_datetime
 from enum import Enum
-from typing import TYPE_CHECKING, Any, overload
+from typing import TYPE_CHECKING, Any, ClassVar, Self, overload
 
 from .exceptions import ExpectationNotMetError
 from .interfaces import PropertyKey as _PropertyKey
@@ -64,6 +64,50 @@ class JsonBlob(bytes):
         json_string = JsonBlob(json.dumps(j).encode(encoding="utf-8"))
         json_string._json = j
         return json_string
+
+
+class UnknownEnumMixin:
+    """Adds unknown-value support to a generated enum.
+
+    Must be mixed into an :class:`enum.Enum` with a data type, e.g.
+    ``class Color(UnknownEnumMixin, StrEnum)``. A value that doesn't match any
+    known member — because the service is newer than the SDK, or because client
+    error correction filled in a placeholder — is represented as a pseudo-member
+    with :attr:`is_unknown` set instead of raising ``ValueError``. Pseudo-members
+    keep the native ``str``/``int`` semantics, so they still compare equal to
+    their raw value.
+
+    See `Smithy's docs <https://smithy.io/2.0/spec/aggregate-types.html#client-error-correction>`_
+    for more details on client error correction.
+    """
+
+    if TYPE_CHECKING:
+        # Set by EnumType when this is mixed into an enum with a data type.
+        _member_type_: ClassVar[type[Any]]
+        _name_: str
+        _value_: Any
+
+    _smithy_unknown: bool = False
+
+    @classmethod
+    def _unknown(cls, value: Any) -> Self:
+        member_type: Any = cls._member_type_
+        pseudo: Self = member_type.__new__(cls, value)
+        pseudo._name_ = f"<smithy-unknown:{value}>"
+        pseudo._value_ = value
+        pseudo._smithy_unknown = True
+        return pseudo
+
+    @classmethod
+    def _missing_(cls, value: object) -> Self | None:
+        if isinstance(value, cls._member_type_):
+            return cls._unknown(value)
+        return None
+
+    @property
+    def is_unknown(self) -> bool:
+        """True if this value was not known at SDK generation time."""
+        return self._smithy_unknown
 
 
 class TimestampFormat(Enum):

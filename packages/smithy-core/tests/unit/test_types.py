@@ -3,6 +3,7 @@
 
 # pyright: reportPrivateUsage=false
 from datetime import UTC, datetime
+from enum import IntEnum, StrEnum
 from typing import Any, assert_type
 
 import pytest
@@ -14,6 +15,7 @@ from smithy_core.types import (
     PropertyKey,
     TimestampFormat,
     TypedProperties,
+    UnknownEnumMixin,
 )
 
 
@@ -351,3 +353,63 @@ def test_parametric_property() -> None:
     properties[parametric] = {"foo": "bar"}
 
     assert assert_type(properties[parametric], dict[str, str]) == {"foo": "bar"}
+
+
+class _Color(UnknownEnumMixin, StrEnum):
+    RED = "RED"
+    GREEN = "GREEN"
+
+
+class _Code(UnknownEnumMixin, IntEnum):
+    OK = 200
+    NOT_FOUND = 404
+
+
+def test_unknown_enum_known_values_resolve_to_members() -> None:
+    assert _Color("RED") is _Color.RED
+    assert _Code(200) is _Code.OK
+    assert not _Color.RED.is_unknown
+    assert not _Code.OK.is_unknown
+
+
+def test_unknown_enum_unrecognized_value_does_not_raise() -> None:
+    color = _Color("CHARTREUSE")
+    assert color.is_unknown
+    assert color.value == "CHARTREUSE"
+
+    code = _Code(418)
+    assert code.is_unknown
+    assert code.value == 418
+
+
+def test_unknown_enum_keeps_native_equality() -> None:
+    assert _Color("CHARTREUSE") == "CHARTREUSE"
+    assert _Code(418) == 418
+    assert _Color("CHARTREUSE") == _Color("CHARTREUSE")
+    assert _Color("CHARTREUSE") != _Color.RED
+
+    # Pseudo-members hash like their raw value, so dict lookups by raw value work.
+    codes: dict[Any, str] = {_Code(418): "teapot"}
+    assert codes[418] == "teapot"
+
+
+def test_unknown_enum_placeholder_for_error_correction() -> None:
+    color = _Color._unknown("")
+    assert color.is_unknown
+    assert color == ""
+
+    code = _Code._unknown(0)
+    assert code.is_unknown
+    assert code == 0
+
+
+def test_unknown_enum_rejects_mismatched_type() -> None:
+    with pytest.raises(ValueError):
+        _Color(0)  # type: ignore[arg-type]
+    with pytest.raises(ValueError):
+        _Code("RED")  # type: ignore[arg-type]
+
+
+def test_unknown_enum_str_and_serialization_behavior() -> None:
+    assert str(_Color("CHARTREUSE")) == "CHARTREUSE"
+    assert int(_Code(418)) == 418
