@@ -29,6 +29,7 @@ import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
+import software.amazon.smithy.python.codegen.RequiredMemberTargetIndex;
 import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
@@ -67,10 +68,10 @@ public final class StructureGenerator implements Runnable {
         var optional = new ArrayList<MemberShape>();
         var index = NullableIndex.of(context.model());
         for (MemberShape member : shape.members()) {
-            if (index.isMemberNullable(member) || member.hasTrait(DefaultTrait.class)) {
-                optional.add(member);
-            } else {
+            if (CodegenUtils.isRequiredMember(index, member)) {
                 required.add(member);
+            } else {
+                optional.add(member);
             }
         }
         this.requiredMembers = filterPropertyMembers(required);
@@ -280,11 +281,11 @@ public final class StructureGenerator implements Runnable {
             return String.format("b'%s'", defaultNode.expectStringNode().getValue());
         } else if (target.isEnumShape()) {
             // Wrap rather than emit a bare string so the value matches the field type.
-            var enumSymbol = symbolProvider.toSymbol(target).expectProperty(SymbolProperties.ENUM_SYMBOL);
+            var enumSymbol = symbolProvider.toSymbol(target);
             writer.addImport(enumSymbol, enumSymbol.getName());
             return String.format("%s(\"%s\")", enumSymbol.getName(), defaultNode.expectStringNode().getValue());
         } else if (target.isIntEnumShape()) {
-            var enumSymbol = symbolProvider.toSymbol(target).expectProperty(SymbolProperties.ENUM_SYMBOL);
+            var enumSymbol = symbolProvider.toSymbol(target);
             writer.addImport(enumSymbol, enumSymbol.getName());
             return String.format("%s(%s)", enumSymbol.getName(), defaultNode.expectNumberNode().getValue());
         }
@@ -407,11 +408,11 @@ public final class StructureGenerator implements Runnable {
      *     spec: Client error correction</a>
      */
     private void writeErrorCorrection() {
-        var visitor = new MemberErrorCorrectionGenerator(context, writer);
+        var visitor = new MemberErrorCorrectionGenerator(context);
         for (MemberShape member : requiredMembers) {
-            var target = model.expectShape(member.getTarget());
-            if (!MemberErrorCorrectionGenerator.hasDefault(target, model)) {
-                // Streaming shapes have no synthesizable default; let the dataclass raise.
+            var defaultExpression = model.expectShape(member.getTarget()).accept(visitor);
+            if (defaultExpression == null) {
+                // No synthesizable default (e.g. a streaming blob); let the dataclass raise.
                 continue;
             }
             writer.pushState();
@@ -419,7 +420,7 @@ public final class StructureGenerator implements Runnable {
             writer.write("""
                     if ${memberName:S} not in kwargs:
                         kwargs[${memberName:S}] = ${C|}""",
-                    writer.consumer(w -> target.accept(visitor)));
+                    writer.consumer(defaultExpression));
             writer.popState();
         }
     }
@@ -434,52 +435,30 @@ public final class StructureGenerator implements Runnable {
      * {@code _smithy_default()} is also omitted.
      */
     private void generateSmithyDefaultMethod() {
-        if (!isRequiredStructMemberTarget()) {
+        if (!RequiredMemberTargetIndex.of(model).isRequiredMemberTarget(shape.getId())) {
             return;
         }
-        for (MemberShape member : requiredMembers) {
-            var target = model.expectShape(member.getTarget());
-            if (!MemberErrorCorrectionGenerator.hasDefault(target, model)) {
-                return;
-            }
+        var visitor = new MemberErrorCorrectionGenerator(context);
+        if (shape.accept(visitor) == null) {
+            return;
         }
         writer.write("""
                 @classmethod
                 def _smithy_default(cls) -> Self:
                     return cls(${C|})
                 """,
-                writer.consumer(w -> writeSmithyDefaultArguments()));
+                writer.consumer(w -> writeSmithyDefaultArguments(visitor)));
     }
 
-    /**
-     * Returns true if any structure in the model has a python-required member whose target
-     * is this shape.
-     */
-    private boolean isRequiredStructMemberTarget() {
-        var index = NullableIndex.of(model);
-        for (var struct : model.getStructureShapes()) {
-            for (var member : struct.members()) {
-                if (!index.isMemberNullable(member)
-                        && !member.hasTrait(DefaultTrait.class)
-                        && member.getTarget().equals(shape.getId())) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private void writeSmithyDefaultArguments() {
-        var visitor = new MemberErrorCorrectionGenerator(context, writer);
+    private void writeSmithyDefaultArguments(MemberErrorCorrectionGenerator visitor) {
         var first = true;
         for (MemberShape member : requiredMembers) {
-            var target = model.expectShape(member.getTarget());
             if (!first) {
                 writer.writeInline(", ");
             }
             first = false;
             writer.writeInline("$L=", symbolProvider.toMemberName(member));
-            target.accept(visitor);
+            model.expectShape(member.getTarget()).accept(visitor).accept(writer);
         }
     }
 

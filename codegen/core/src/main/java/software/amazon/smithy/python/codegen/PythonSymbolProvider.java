@@ -330,9 +330,7 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
 
     private Symbol genericEnum(Shape shape) {
         Symbol symbol = createGeneratedSymbolBuilder(shape, getDefaultShapeName(shape), SHAPES_FILE).build();
-        return symbol.toBuilder()
-                .putProperty(SymbolProperties.ENUM_SYMBOL, escaper.escapeSymbol(shape, symbol))
-                .build();
+        return escaper.escapeSymbol(shape, symbol);
     }
 
     @Override
