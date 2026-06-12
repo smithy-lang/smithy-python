@@ -53,6 +53,10 @@ class AIOHTTPClient(HTTPClient):
 
     TIMEOUT_EXCEPTIONS = (TimeoutError,)
 
+    # aiohttp has no HTTP/2 support and this client fully buffers the response
+    # before returning, so it can never interleave request and response data.
+    SUPPORTS_DUPLEX_STREAMING = False
+
     def __init__(
         self,
         *,
