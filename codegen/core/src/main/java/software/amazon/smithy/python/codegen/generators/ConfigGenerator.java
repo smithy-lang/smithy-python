@@ -147,7 +147,9 @@ public final class ConfigGenerator implements Runnable {
                                 .namespace("smithy_core.aio.interfaces", ".")
                                 .build())
                         .build())
-                .documentation("The transport to use to send requests (e.g. an HTTP client).");
+                .documentation("The transport to use to send requests (e.g. an HTTP client). "
+                        + "Operations with bidirectional event streams require a transport that "
+                        + "sets SUPPORTS_DUPLEX_STREAMING to True, such as AWSCRTHTTPClient.");
 
         if (context.applicationProtocol().isHttpProtocol()) {
             properties.addAll(HTTP_PROPERTIES);

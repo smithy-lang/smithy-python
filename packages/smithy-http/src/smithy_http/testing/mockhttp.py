@@ -22,6 +22,11 @@ class MockHTTPClient(HTTPClient):
 
     TIMEOUT_EXCEPTIONS = (TimeoutError,)
 
+    # Declared so duplex (bidirectional) stream operations can be unit tested
+    # against this client. Queued responses are returned without consuming the
+    # request body, which is compatible with duplex streaming.
+    SUPPORTS_DUPLEX_STREAMING = True
+
     def __init__(
         self,
         *,

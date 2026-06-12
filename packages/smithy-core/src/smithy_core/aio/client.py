@@ -12,7 +12,12 @@ from .. import URI
 from ..auth import AuthParams
 from ..deserializers import DeserializeableShape, ShapeDeserializer
 from ..endpoints import EndpointResolverParams
-from ..exceptions import ClientTimeoutError, RetryError, SmithyError
+from ..exceptions import (
+    ClientTimeoutError,
+    RetryError,
+    SmithyError,
+    UnsupportedTransportError,
+)
 from ..interceptors import (
     InputContext,
     Interceptor,
@@ -197,6 +202,18 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         :param output_event_type: The event type to receive in the output stream.
         :param event_deserializer: The method used to deserialize events.
         """
+        # The transport is assumed not to support duplex streaming unless it
+        # explicitly declares otherwise.
+        if not getattr(self.transport, "SUPPORTS_DUPLEX_STREAMING", False):
+            raise UnsupportedTransportError(
+                f"The configured transport ({type(self.transport).__name__}) does "
+                f"not support duplex (bidirectional) event streaming, which is "
+                f"required by the {call.operation.schema.id} operation. Use a "
+                f"transport that does, such as "
+                f"smithy_http.aio.crt.AWSCRTHTTPClient. Custom transports that "
+                f"support duplex streaming must set SUPPORTS_DUPLEX_STREAMING "
+                f"to True."
+            )
         request_future = Future[RequestContext[I, TRequest]]()
         execute_task = asyncio.create_task(self._execute_request(call, request_future))
         request_context = await request_future
