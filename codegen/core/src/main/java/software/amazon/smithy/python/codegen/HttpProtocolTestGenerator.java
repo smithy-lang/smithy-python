@@ -653,6 +653,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     ""\"An asynchronous HTTP client solely for testing purposes.""\"
 
                     TIMEOUT_EXCEPTIONS = ()
+                    SUPPORTS_DUPLEX_STREAMING: bool = True
 
                     def __init__(self, *, client_config: $5T | None = None):
                         self._client_config = client_config
@@ -668,6 +669,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     ""\"An asynchronous HTTP client solely for testing purposes.""\"
 
                     TIMEOUT_EXCEPTIONS = ()
+                    SUPPORTS_DUPLEX_STREAMING: bool = True
 
                     def __init__(
                         self,

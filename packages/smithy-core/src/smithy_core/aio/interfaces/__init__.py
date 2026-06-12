@@ -90,6 +90,14 @@ class ClientTransport[I: Request, O: Response](Protocol):
 
     TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...]
 
+    SUPPORTS_DUPLEX_STREAMING: bool = False
+    """Whether this transport can read response data while the request body is still
+    being written (typically requires HTTP/2).
+
+    Transports that support duplex (bidirectional) event streaming must explicitly set
+    this to True. Transports that don't declare it are assumed not to support it.
+    """
+
     async def send(self, request: I) -> O:
         """Send a request over the transport and receive the response."""
         ...

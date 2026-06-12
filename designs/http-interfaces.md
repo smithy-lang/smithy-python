@@ -258,6 +258,14 @@ which takes a request and some configuration and asynchronously return a respons
 Having a minimal interface makes it much easier to implement these interfaces on top of
 a variety http libraries.
 
+Clients that support duplex (bidirectional) event streaming, which in practice
+requires HTTP/2, must declare it by setting the `SUPPORTS_DUPLEX_STREAMING` class
+attribute to `True`. Clients are assumed not to support it otherwise, and duplex
+stream operations invoked with such a client fail fast with an
+`UnsupportedTransportError`. This surfaces the configuration problem before any
+request is sent instead of letting the stream fail later with an opaque connection
+error.
+
 ```python
 @dataclass(kw_only=True)
 class HTTPRequestConfiguration:
