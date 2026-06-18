@@ -114,5 +114,10 @@ class UnsupportedStreamError(SmithyError):
     streams are not supported."""
 
 
+class UnsupportedTransportError(SmithyError):
+    """Indicates that an operation requires a transport capability that the configured
+    transport does not declare support for (e.g. duplex event streaming)."""
+
+
 class EndpointResolutionError(SmithyError):
     """Exception type for all exceptions raised by endpoint resolution."""

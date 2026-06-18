@@ -5,6 +5,12 @@ import pytest
 from smithy_http.testing import MockHTTPClient, MockHTTPClientError, create_test_request
 
 
+def test_supports_duplex_streaming():
+    # Declared True so generated duplex stream operations can be unit tested
+    # against this client.
+    assert MockHTTPClient.SUPPORTS_DUPLEX_STREAMING is True
+
+
 async def test_default_response():
     # Test error when no responses are queued
     mock_client = MockHTTPClient()
