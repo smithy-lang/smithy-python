@@ -50,7 +50,8 @@ public class AwsAuthIntegration implements PythonIntegration {
                                                 .namespace("smithy_core.aio.interfaces.identity", ".")
                                                 .build())
                                         .addReference(Symbol.builder()
-                                                .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                                                .addDependency(AwsPythonDependency.SMITHY_AWS_CORE
+                                                        .withOptionalDependencies("assume-role"))
                                                 .name("AWSCredentialsIdentity")
                                                 .namespace("smithy_aws_core.identity", ".")
                                                 .build())
@@ -152,7 +153,8 @@ public class AwsAuthIntegration implements PythonIntegration {
             return Symbol.builder()
                     .name("SigV4AuthScheme")
                     .namespace("smithy_aws_core.auth", ".")
-                    .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                    .addDependency(AwsPythonDependency.SMITHY_AWS_CORE
+                            .withOptionalDependencies("assume-role"))
                     .build();
         }
 

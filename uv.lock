@@ -690,6 +690,9 @@ dependencies = [
 ]
 
 [package.optional-dependencies]
+assume-role = [
+    { name = "smithy-xml" },
+]
 eventstream = [
     { name = "smithy-aws-event-stream" },
 ]
@@ -707,9 +710,10 @@ requires-dist = [
     { name = "smithy-core", editable = "packages/smithy-core" },
     { name = "smithy-http", editable = "packages/smithy-http" },
     { name = "smithy-json", marker = "extra == 'json'", editable = "packages/smithy-json" },
+    { name = "smithy-xml", marker = "extra == 'assume-role'", editable = "packages/smithy-xml" },
     { name = "smithy-xml", marker = "extra == 'xml'", editable = "packages/smithy-xml" },
 ]
-provides-extras = ["eventstream", "json", "xml"]
+provides-extras = ["assume-role", "eventstream", "json", "xml"]
 
 [[package]]
 name = "smithy-aws-event-stream"
@@ -753,7 +757,7 @@ awscrt = [
 
 [package.metadata]
 requires-dist = [
-    { name = "aiohttp", marker = "extra == 'aiohttp'", specifier = ">=3.14.0,<4.0" },
+    { name = "aiohttp", marker = "extra == 'aiohttp'", specifier = ">=3.11.12,<4.0" },
     { name = "awscrt", marker = "extra == 'awscrt'", specifier = "~=0.32.0" },
     { name = "smithy-core", editable = "packages/smithy-core" },
     { name = "yarl", marker = "extra == 'aiohttp'" },
