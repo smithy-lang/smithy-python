@@ -9,8 +9,11 @@ import static software.amazon.smithy.python.codegen.CodegenUtils.isErrorMessage;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import software.amazon.smithy.codegen.core.SymbolProvider;
@@ -29,6 +32,7 @@ import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
+import software.amazon.smithy.python.codegen.RequiredMemberTargetIndex;
 import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
@@ -67,10 +71,10 @@ public final class StructureGenerator implements Runnable {
         var optional = new ArrayList<MemberShape>();
         var index = NullableIndex.of(context.model());
         for (MemberShape member : shape.members()) {
-            if (index.isMemberNullable(member) || member.hasTrait(DefaultTrait.class)) {
-                optional.add(member);
-            } else {
+            if (CodegenUtils.isRequiredMember(index, member)) {
                 required.add(member);
+            } else {
+                optional.add(member);
             }
         }
         this.requiredMembers = filterPropertyMembers(required);
@@ -104,12 +108,15 @@ public final class StructureGenerator implements Runnable {
 
                     ${C|}
 
+                    ${C|}
+
                 """,
                 symbol.getName(),
                 writer.consumer(w -> writeClassDocs()),
                 writer.consumer(w -> writeProperties()),
                 writer.consumer(w -> generateSerializeMethod()),
-                writer.consumer(w -> generateDeserializeMethod()));
+                writer.consumer(w -> generateDeserializeMethod()),
+                writer.consumer(w -> generateSmithyDefaultMethod()));
     }
 
     private void renderError() {
@@ -147,6 +154,8 @@ public final class StructureGenerator implements Runnable {
 
                     ${7C|}
 
+                    ${8C|}
+
                 """,
                 symbol.getName(),
                 baseError,
@@ -154,7 +163,8 @@ public final class StructureGenerator implements Runnable {
                 writer.consumer(w -> writeClassDocs()),
                 writer.consumer(w -> writeProperties()),
                 writer.consumer(w -> generateSerializeMethod()),
-                writer.consumer(w -> generateDeserializeMethod()));
+                writer.consumer(w -> generateDeserializeMethod()),
+                writer.consumer(w -> generateSmithyDefaultMethod()));
     }
 
     private void writeClassDocs() {
@@ -280,6 +290,15 @@ public final class StructureGenerator implements Runnable {
             return CodegenUtils.getDatetimeConstructor(writer, value);
         } else if (target.isBlobShape()) {
             return String.format("b'%s'", defaultNode.expectStringNode().getValue());
+        } else if (target.isEnumShape()) {
+            // Wrap rather than emit a bare string so the value matches the field type.
+            var enumSymbol = symbolProvider.toSymbol(target);
+            writer.addImport(enumSymbol, enumSymbol.getName());
+            return String.format("%s(\"%s\")", enumSymbol.getName(), defaultNode.expectStringNode().getValue());
+        } else if (target.isIntEnumShape()) {
+            var enumSymbol = symbolProvider.toSymbol(target);
+            writer.addImport(enumSymbol, enumSymbol.getName());
+            return String.format("%s(%s)", enumSymbol.getName(), defaultNode.expectNumberNode().getValue());
         }
 
         if (target.isDocumentShape()) {
@@ -366,6 +385,9 @@ public final class StructureGenerator implements Runnable {
         var schemaSymbol = symbolProvider.toSymbol(shape).expectProperty(SymbolProperties.SCHEMA);
         writer.putContext("schema", schemaSymbol);
 
+        var corrections = errorCorrections();
+        writer.putContext("errorCorrection", !corrections.isEmpty());
+
         // TODO: either formalize deserialize_kwargs or remove it when http serde is converted
         writer.write("""
                 @classmethod
@@ -383,12 +405,86 @@ public final class StructureGenerator implements Runnable {
                                 logger.debug("Unexpected member schema: %s", schema)
 
                     deserializer.read_struct($T, consumer=_consumer)
+                    ${?errorCorrection}
+                    ${C|}
+                    ${/errorCorrection}
                     return kwargs
 
                 """,
                 writer.consumer(w -> deserializeMembers(shape.members())),
-                schemaSymbol);
+                schemaSymbol,
+                writer.consumer(w -> writeErrorCorrection(corrections)));
         writer.popState();
+    }
+
+    /**
+     * Collects client error correction defaults for required members the server failed
+     * to serialize, keyed by member name. Members whose targets have no synthesizable
+     * default (e.g. a streaming blob) are omitted; the dataclass will raise for those.
+     *
+     * @see <a href="https://smithy.io/2.0/spec/aggregate-types.html#client-error-correction">Smithy
+     *     spec: Client error correction</a>
+     */
+    private Map<String, Consumer<PythonWriter>> errorCorrections() {
+        var visitor = new MemberErrorCorrectionGenerator(context);
+        var corrections = new LinkedHashMap<String, Consumer<PythonWriter>>();
+        for (MemberShape member : requiredMembers) {
+            var defaultExpression = model.expectShape(member.getTarget()).accept(visitor);
+            if (defaultExpression == null) {
+                continue;
+            }
+            corrections.put(symbolProvider.toMemberName(member), defaultExpression);
+        }
+        return corrections;
+    }
+
+    private void writeErrorCorrection(Map<String, Consumer<PythonWriter>> corrections) {
+        corrections.forEach((memberName, defaultExpression) -> {
+            writer.pushState();
+            writer.putContext("memberName", memberName);
+            writer.write("""
+                    if ${memberName:S} not in kwargs:
+                        kwargs[${memberName:S}] = ${C|}""",
+                    writer.consumer(defaultExpression));
+            writer.popState();
+        });
+    }
+
+    /**
+     * Emits a {@code _smithy_default()} classmethod that constructs an instance with all
+     * required members filled in via client error correction. Used to fill nested structure
+     * members per the Smithy spec. Only emitted when this structure is actually referenced
+     * as the target of a required structure member elsewhere in the model. If the structure
+     * has any required member whose target has no synthesizable default (a streaming blob,
+     * or another structure whose own required members transitively have no default),
+     * {@code _smithy_default()} is also omitted.
+     */
+    private void generateSmithyDefaultMethod() {
+        if (!RequiredMemberTargetIndex.of(model).isRequiredMemberTarget(shape.getId())) {
+            return;
+        }
+        var visitor = new MemberErrorCorrectionGenerator(context);
+        if (shape.accept(visitor) == null) {
+            return;
+        }
+        writer.write("""
+                @classmethod
+                def _smithy_default(cls) -> Self:
+                    return cls(${C|})
+                """,
+                writer.consumer(w -> writeSmithyDefaultArguments(visitor)));
+    }
+
+    private void writeSmithyDefaultArguments(MemberErrorCorrectionGenerator visitor) {
+        var first = true;
+        for (MemberShape member : requiredMembers) {
+            if (!first) {
+                writer.writeInline(", ");
+            }
+            first = false;
+            writer.writeInline("$L=", symbolProvider.toMemberName(member));
+            model.expectShape(member.getTarget()).accept(visitor).accept(writer);
+        }
     }
 
     private void deserializeMembers(Collection<MemberShape> members) {

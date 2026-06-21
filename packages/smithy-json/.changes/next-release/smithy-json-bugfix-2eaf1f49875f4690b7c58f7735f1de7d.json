@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Serialize `IntEnum` members as their underlying integer instead of their `repr`."
+}

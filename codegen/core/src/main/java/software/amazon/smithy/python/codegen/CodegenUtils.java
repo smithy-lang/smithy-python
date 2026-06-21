@@ -31,6 +31,7 @@ import software.amazon.smithy.model.knowledge.NullableIndex;
 import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
+import software.amazon.smithy.model.traits.DefaultTrait;
 import software.amazon.smithy.model.traits.ErrorTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait;
 import software.amazon.smithy.model.traits.TimestampFormatTrait.Format;
@@ -126,6 +127,18 @@ public final class CodegenUtils {
     public static boolean isErrorMessage(Model model, MemberShape shape) {
         return ERROR_MESSAGE_MEMBER_NAMES.contains(shape.getMemberName().toLowerCase(Locale.US))
                 && model.expectShape(shape.getContainer()).hasTrait(ErrorTrait.class);
+    }
+
+    /**
+     * Determines whether a member is required in the generated Python constructor — that is,
+     * neither nullable nor carrying a default value.
+     *
+     * @param index A nullable index for the model.
+     * @param member The member to check.
+     * @return Returns whether the member is required in generated code.
+     */
+    public static boolean isRequiredMember(NullableIndex index, MemberShape member) {
+        return !index.isMemberNullable(member) && !member.hasTrait(DefaultTrait.class);
     }
 
     /**

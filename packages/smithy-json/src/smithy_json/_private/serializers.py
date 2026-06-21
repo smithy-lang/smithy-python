@@ -300,7 +300,8 @@ class StreamingJSONEncoder:
         self._sink.write(b'"')
 
     def write_int(self, value: int) -> None:
-        self._sink.write(repr(value).encode("utf-8"))
+        # int() unwraps IntEnum members; otherwise repr would emit "<MyEnum.A: 1>".
+        self._sink.write(str(int(value)).encode("utf-8"))
 
     def write_float(self, value: float | Decimal) -> None:
         if not self._write_non_numeric_float(value=value):

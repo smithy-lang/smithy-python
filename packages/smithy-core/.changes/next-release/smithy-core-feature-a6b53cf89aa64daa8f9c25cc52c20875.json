@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added `UnknownEnumMixin` for representing unknown and error-corrected enum/intEnum variants."
+}
