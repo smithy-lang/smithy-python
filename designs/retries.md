@@ -31,7 +31,7 @@ class RetryStrategy(Protocol):
     max_attempts: int
     """Upper limit on total attempt count (initial attempt plus retries)."""
 
-    def acquire_initial_retry_token(
+    async def acquire_initial_retry_token(
         self, *, token_scope: str | None = None
     ) -> RetryToken:
         """Called before any retries (for the first attempt at the operation).
@@ -44,7 +44,7 @@ class RetryStrategy(Protocol):
         """
         ...
 
-    def refresh_retry_token_for_retry(
+    async def refresh_retry_token_for_retry(
         self, *, token_to_renew: RetryToken, error: Exception
     ) -> RetryToken:
         """Replace an existing retry token from a failed attempt with a new token.
@@ -55,7 +55,7 @@ class RetryStrategy(Protocol):
         """
         ...
 
-    def record_success(self, *, token: RetryToken) -> None:
+    async def record_success(self, *, token: RetryToken) -> None:
         """Return token after successful completion of an operation.
 
         :param token: The token used for the previous successful attempt.
@@ -144,7 +144,7 @@ example:
 
 ```python
 try:
-    retry_token = retry_strategy.acquire_initial_retry_token()
+    retry_token = await retry_strategy.acquire_initial_retry_token()
 except RetryError:
     transport_response = transport_client.send(serialized_request)
     return self._deserialize(transport_response)
@@ -159,7 +159,7 @@ while True:
 
     if isinstance(response, Exception):
         try:
-            retry_token = retry_strategy.refresh_retry_token_for_retry(
+            retry_token = await retry_strategy.refresh_retry_token_for_retry(
                 token_to_renew=retry_token,
                 error=e
             )
@@ -167,6 +167,6 @@ while True:
         except RetryError as retry_error:
             raise retry_error from e
 
-    retry_strategy.record_success(token=retry_token)
+    await retry_strategy.record_success(token=retry_token)
     return response
 ```
