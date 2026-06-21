@@ -1,7 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from functools import lru_cache
-from typing import Any, Literal
+from typing import Any
 
 from ..exceptions import RetryError
 from ..interfaces import retries as retries_interface
@@ -9,13 +9,12 @@ from ..retries import (
     ExponentialBackoffJitterType,
     ExponentialRetryBackoffStrategy,
     RetryStrategyOptions,
+    RetryStrategyType,
     SimpleRetryToken,
     StandardRetryQuota,
     StandardRetryToken,
 )
 from .interfaces.retries import RetryStrategy
-
-RetryStrategyType = Literal["simple", "standard"]
 
 
 class RetryStrategyResolver:

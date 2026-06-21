@@ -46,7 +46,7 @@ class RetryBackoffStrategy(Protocol):
 
 @dataclass(kw_only=True)
 class RetryToken(Protocol):
-    """Token issued by a :py:class:`RetryStrategy` for the next attempt."""
+    """Token issued by a :py:class:`smithy_core.aio.interfaces.retries.RetryStrategy` for the next attempt."""
 
     retry_count: int
     """Retry count is the total number of attempts minus the initial attempt."""
