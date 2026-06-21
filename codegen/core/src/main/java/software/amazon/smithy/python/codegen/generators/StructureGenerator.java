@@ -296,12 +296,14 @@ public final class StructureGenerator implements Runnable {
         } else if (target.isEnumShape()) {
             // Wrap rather than emit a bare string so the value matches the field type.
             var enumSymbol = symbolProvider.toSymbol(target);
-            writer.addImport(enumSymbol, enumSymbol.getName());
-            return String.format("%s(\"%s\")", enumSymbol.getName(), defaultNode.expectStringNode().getValue());
+            return String.format("%s(\"%s\")",
+                    writer.format("$T", enumSymbol),
+                    defaultNode.expectStringNode().getValue());
         } else if (target.isIntEnumShape()) {
             var enumSymbol = symbolProvider.toSymbol(target);
-            writer.addImport(enumSymbol, enumSymbol.getName());
-            return String.format("%s(%s)", enumSymbol.getName(), defaultNode.expectNumberNode().getValue());
+            return String.format("%s(%s)",
+                    writer.format("$T", enumSymbol),
+                    defaultNode.expectNumberNode().getValue());
         }
 
         if (target.isDocumentShape()) {

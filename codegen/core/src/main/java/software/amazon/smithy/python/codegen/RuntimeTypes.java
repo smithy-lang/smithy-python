@@ -78,6 +78,8 @@ public final class RuntimeTypes {
     // smithy_core.types
     public static final Symbol TYPED_PROPERTIES =
             createSymbol("types", "TypedProperties", SmithyPythonDependency.SMITHY_CORE);
+    public static final Symbol UNKNOWN_ENUM_MIXIN =
+            createSymbol("types", "UnknownEnumMixin", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_core.interceptors
     public static final Symbol INTERCEPTOR_CHAIN =

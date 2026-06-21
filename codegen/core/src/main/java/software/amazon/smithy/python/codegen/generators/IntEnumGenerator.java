@@ -10,6 +10,7 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.EnumValueTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
+import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -39,9 +40,8 @@ public final class IntEnumGenerator implements Runnable {
         directive.context().writerDelegator().useShapeWriter(directive.shape(), writer -> {
             writer.addStdlibImport("enum", "IntEnum");
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-            writer.addImport("smithy_core.types", "UnknownEnumMixin");
             writer.addLocallyDefinedSymbol(enumSymbol);
-            writer.openBlock("class $L(UnknownEnumMixin, IntEnum):", "", enumSymbol.getName(), () -> {
+            writer.openBlock("class $L($T, IntEnum):", "", enumSymbol.getName(), RuntimeTypes.UNKNOWN_ENUM_MIXIN, () -> {
                 directive.shape().getTrait(DocumentationTrait.class).ifPresent(trait -> {
                     writer.writeDocs(trait.getValue(), directive.context());
                 });
