@@ -192,7 +192,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                     ${C|}
                                 )
                                 """,
-                                CodegenUtils.getConfigSymbol(context.settings()),
+                                CodegenUtils.getConfigSymbol(context.settings(), context.model()),
                                 host,
                                 path,
                                 REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
@@ -453,7 +453,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                     ${C|}
                                 )
                                 """,
-                                CodegenUtils.getConfigSymbol(context.settings()),
+                                CodegenUtils.getConfigSymbol(context.settings(), context.model()),
                                 RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
                                 testCase.getCode(),
                                 CodegenUtils.toTuples(testCase.getHeaders()),
@@ -508,7 +508,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                     ${C|}
                                 )
                                 """,
-                                CodegenUtils.getConfigSymbol(context.settings()),
+                                CodegenUtils.getConfigSymbol(context.settings(), context.model()),
                                 RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
                                 testCase.getCode(),
                                 CodegenUtils.toTuples(testCase.getHeaders()),

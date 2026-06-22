@@ -97,7 +97,7 @@ public class AwsUserAgentIntegration implements PythonIntegration {
                                                 moduleName + ".",
                                                 writer -> {
                                                     writer.write(USER_AGENT_PLUGIN,
-                                                            CodegenUtils.getConfigSymbol(c.settings()),
+                                                            CodegenUtils.getConfigSymbol(c.settings(), c.model()),
                                                             userAgentInterceptor,
                                                             versionSymbol,
                                                             serviceId);
