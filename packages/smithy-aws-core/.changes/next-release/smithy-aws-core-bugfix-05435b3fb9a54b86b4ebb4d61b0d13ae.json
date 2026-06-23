@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Fixed awsQuery response deserialization for operations with no output members."
-}

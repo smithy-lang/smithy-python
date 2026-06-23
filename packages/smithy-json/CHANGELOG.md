@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.2.3
+
+### Bug fixes
+* Serialize `IntEnum` members as their underlying integer instead of their `repr`.
+
 ## v0.2.2
 
 ### Enhancements

@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.4.2
+
+### Bug fixes
+* Disabled automatic response decompression in `AIOHTTPClient`.
+
 ## v0.4.1
 
 ### Bug fixes

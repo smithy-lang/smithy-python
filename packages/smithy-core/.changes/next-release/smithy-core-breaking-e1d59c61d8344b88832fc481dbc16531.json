@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Refactored retry strategies to be async, allowing them to wait internally or use async synchronization primitives if necessary. The `RetryStrategy` protocol moved from `smithy_core.interfaces.retries` to `smithy_core.aio.interfaces.retries`, and `SimpleRetryStrategy`, `StandardRetryStrategy`, and `RetryStrategyResolver` moved from `smithy_core.retries` to `smithy_core.aio.retries`."
-}
