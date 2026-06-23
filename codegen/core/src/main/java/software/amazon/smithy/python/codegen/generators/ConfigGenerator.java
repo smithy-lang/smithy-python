@@ -22,6 +22,7 @@ import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
+import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
@@ -84,18 +85,15 @@ public final class ConfigGenerator implements Runnable {
                     .build(),
             ConfigProperty.builder()
                     .name("endpoint_resolver")
-                    .type(Symbol.builder()
-                            .name("_EndpointResolver")
-                            .build())
+                    .type(RuntimeTypes.ENDPOINT_RESOLVER)
                     .documentation("""
                             The endpoint resolver used to resolve the final endpoint per-operation based on the \
                             configuration.""")
                     .nullable(false)
                     .initialize(writer -> {
-                        writer.addImport("smithy_core.aio.interfaces", "EndpointResolver", "_EndpointResolver");
                         writer.pushState(new InitDefaultEndpointResolverSection());
-                        writer.addImport("smithy_core.aio.endpoints", "StaticEndpointResolver");
-                        writer.write("self.endpoint_resolver = endpoint_resolver or StaticEndpointResolver()");
+                        writer.write("self.endpoint_resolver = endpoint_resolver or $T()",
+                                RuntimeTypes.STATIC_ENDPOINT_RESOLVER);
                         writer.popState();
                     })
                     .build());
@@ -155,8 +153,8 @@ public final class ConfigGenerator implements Runnable {
                 transportBuilder
                         .initialize(writer -> {
                             writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("awscrt"));
-                            writer.addImport("smithy_http.aio.crt", "AWSCRTHTTPClient");
-                            writer.write("self.transport = transport or AWSCRTHTTPClient()");
+                            writer.write("self.transport = transport or $T()",
+                                    RuntimeTypes.AWS_CRT_HTTP_CLIENT);
                         });
 
             } else {
@@ -164,8 +162,8 @@ public final class ConfigGenerator implements Runnable {
                         .initialize(writer -> {
                             writer.addDependency(
                                     SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("aiohttp"));
-                            writer.addImport("smithy_http.aio.aiohttp", "AIOHTTPClient");
-                            writer.write("self.transport = transport or AIOHTTPClient()");
+                            writer.write("self.transport = transport or $T()",
+                                    RuntimeTypes.AIOHTTP_CLIENT);
                         });
             }
         }
@@ -244,12 +242,12 @@ public final class ConfigGenerator implements Runnable {
         var service = context.settings().service(context.model());
 
         writer.openBlock("self.auth_schemes = auth_schemes or {");
-        writer.addImport("smithy_core.shapes", "ShapeID");
         for (PythonIntegration integration : context.integrations()) {
             for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
                 if (plugin.matchesService(context.model(), service) && plugin.getAuthScheme().isPresent()) {
                     var scheme = plugin.getAuthScheme().get();
-                    writer.write("ShapeID($S): ${C|},",
+                    writer.write("$T($S): ${C|},",
+                            RuntimeTypes.SHAPE_ID,
                             scheme.getAuthTrait(),
                             writer.consumer(w -> scheme.initializeScheme(context, writer, service)));
                 }
@@ -286,7 +284,6 @@ public final class ConfigGenerator implements Runnable {
 
         writer.addStdlibImport("typing", "Union");
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-        writer.getImportContainer().addImport("smithy_core.interceptors", "Interceptor", "Interceptor");
 
         writer.writeInline("_ServiceInterceptor = Union[");
         var iter = operationShapes.iterator();
@@ -297,7 +294,7 @@ public final class ConfigGenerator implements Runnable {
 
             // TODO: pull the transport request/response types off of the application protocol
             writer.addStdlibImport("typing", "Any");
-            writer.writeInline("Interceptor[$T, $T, Any, Any]", input, output);
+            writer.writeInline("$T[$T, $T, Any, Any]", RuntimeTypes.INTERCEPTOR, input, output);
             if (iter.hasNext()) {
                 writer.writeInline(", ");
             } else {
@@ -341,6 +338,7 @@ public final class ConfigGenerator implements Runnable {
                 .map(ServiceTrait::getSdkId)
                 .orElse(context.settings().service().getName());
         writer.pushState(new ConfigSection(finalProperties));
+        writer.addLocallyDefinedSymbol(configSymbol);
         writer.addStdlibImport("dataclasses", "dataclass");
         writer.write("""
                 @dataclass(init=False)

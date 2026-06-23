@@ -30,6 +30,7 @@ import software.amazon.smithy.model.shapes.UnionShape;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
@@ -130,10 +131,7 @@ public final class MemberErrorCorrectionGenerator extends ShapeVisitor.DataShape
 
     @Override
     public Consumer<PythonWriter> documentShape(DocumentShape shape) {
-        return writer -> {
-            writer.addImport("smithy_core.documents", "Document");
-            writer.writeInline("Document(None)");
-        };
+        return writer -> writer.writeInline("$T(None)", RuntimeTypes.DOCUMENT);
     }
 
     @Override
@@ -149,21 +147,15 @@ public final class MemberErrorCorrectionGenerator extends ShapeVisitor.DataShape
     @Override
     public Consumer<PythonWriter> enumShape(EnumShape shape) {
         var enumSymbol = context.symbolProvider().toSymbol(shape);
-        return writer -> {
-            writer.addImport(enumSymbol, enumSymbol.getName());
-            writer.writeInline("$L._corrected(\"\")", enumSymbol.getName());
-        };
+        return writer -> writer.writeInline("$T._corrected(\"\")", enumSymbol);
     }
 
     @Override
     public Consumer<PythonWriter> intEnumShape(IntEnumShape shape) {
         var enumSymbol = context.symbolProvider().toSymbol(shape);
-        return writer -> {
-            writer.addImport(enumSymbol, enumSymbol.getName());
-            // -1 is used (rather than 0) as the placeholder because it is least likely to
-            // collide with a real member value.
-            writer.writeInline("$L._corrected(-1)", enumSymbol.getName());
-        };
+        // -1 is used (rather than 0) as the placeholder because it is least likely to
+        // collide with a real member value.
+        return writer -> writer.writeInline("$T._corrected(-1)", enumSymbol);
     }
 
     @Override
@@ -176,10 +168,7 @@ public final class MemberErrorCorrectionGenerator extends ShapeVisitor.DataShape
         var unknownSymbol = context.symbolProvider()
                 .toSymbol(shape)
                 .expectProperty(SymbolProperties.UNION_UNKNOWN);
-        return writer -> {
-            writer.addImport(unknownSymbol, unknownSymbol.getName());
-            writer.writeInline("$L(tag=\"\")", unknownSymbol.getName());
-        };
+        return writer -> writer.writeInline("$T(tag=\"\")", unknownSymbol);
     }
 
     /**
@@ -202,10 +191,7 @@ public final class MemberErrorCorrectionGenerator extends ShapeVisitor.DataShape
             }
         }
         var symbol = context.symbolProvider().toSymbol(shape);
-        return writer -> {
-            writer.addImport(symbol, symbol.getName());
-            writer.writeInline("$L._smithy_default()", symbol.getName());
-        };
+        return writer -> writer.writeInline("$T._smithy_default()", symbol);
     }
 
     @Override

@@ -9,6 +9,7 @@ import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.EnumValueTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -39,8 +40,8 @@ public final class EnumGenerator implements Runnable {
         context.writerDelegator().useShapeWriter(shape, writer -> {
             writer.addStdlibImport("enum", "StrEnum");
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-            writer.addImport("smithy_core.types", "UnknownEnumMixin");
-            writer.openBlock("class $L(UnknownEnumMixin, StrEnum):", "", enumSymbol.getName(), () -> {
+            writer.addLocallyDefinedSymbol(enumSymbol);
+            writer.openBlock("class $L($T, StrEnum):", "", enumSymbol.getName(), RuntimeTypes.UNKNOWN_ENUM_MIXIN, () -> {
                 shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
                     writer.writeDocs(trait.getValue(), context);
                 });
