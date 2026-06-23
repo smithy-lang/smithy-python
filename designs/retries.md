@@ -146,14 +146,14 @@ example:
 try:
     retry_token = await retry_strategy.acquire_initial_retry_token()
 except RetryError:
-    transport_response = transport_client.send(serialized_request)
-    return self._deserialize(transport_response)
+    transport_response = await transport_client.send(serialized_request)
+    return await self._deserialize(transport_response)
 
 while True:
     await asyncio.sleep(retry_token.retry_delay)
     try:
-        transport_response = transport_client.send(serialized_request)
-        response = self._deserialize(transport_response)
+        transport_response = await transport_client.send(serialized_request)
+        response = await self._deserialize(transport_response)
     except Exception as e:
         response = e
 
