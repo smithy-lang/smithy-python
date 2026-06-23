@@ -65,7 +65,13 @@ class AIOHTTPClient(HTTPClient):
         """
         _assert_aiohttp()
         self._config = client_config or AIOHTTPClientConfig()
-        self._session = _session or aiohttp.ClientSession()
+        # Disable transparent response decompression and advertise
+        # 'identity' to request uncompressed responses.
+        # TODO: add a functional test once the test client framework exists
+        self._session = _session or aiohttp.ClientSession(
+            auto_decompress=False,
+            headers={"Accept-Encoding": "identity"},
+        )
 
     async def send(
         self,

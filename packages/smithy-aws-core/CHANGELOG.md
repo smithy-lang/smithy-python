@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.7.0
+
+### Bug fixes
+* Fixed awsQuery response deserialization for operations with no output members.
+
+### Dependencies
+* Bump `smithy-core` from `~=0.5.0` to `~=0.6.0`.
+
 ## v0.6.0
 
 ### Dependencies

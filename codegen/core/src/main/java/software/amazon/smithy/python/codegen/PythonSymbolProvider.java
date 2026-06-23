@@ -6,7 +6,9 @@ package software.amazon.smithy.python.codegen;
 
 import static java.lang.String.format;
 
+import java.util.HashSet;
 import java.util.Locale;
+import java.util.Set;
 import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.ReservedWordSymbolProvider;
 import software.amazon.smithy.codegen.core.ReservedWordsBuilder;
@@ -70,6 +72,7 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
     private final ReservedWordSymbolProvider.Escaper errorMemberEscaper;
     private final PythonSettings settings;
     private final ServiceShape service;
+    private final Set<String> allShapeNames;
 
     public PythonSymbolProvider(Model model, PythonSettings settings) {
         this.model = model;
@@ -99,6 +102,25 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
                 .memberReservedWords(reservedErrorMembers.build())
                 .escapePredicate((shape, symbol) -> !StringUtils.isEmpty(symbol.getDefinitionFile()))
                 .buildEscaper();
+
+        // Collect all shape names that will be generated as PascalCase classes in models.py.
+        // Used to detect collisions with synthesized names (union variants, unknown types).
+        this.allShapeNames = collectAllShapeNames();
+    }
+
+    /**
+     * Collects the PascalCase names of all shapes that will be generated as classes.
+     */
+    private Set<String> collectAllShapeNames() {
+        var names = new HashSet<String>();
+        for (Shape shape : model.toSet()) {
+            if (shape.isStructureShape() || shape.isUnionShape()
+                    || shape.isEnumShape()
+                    || shape.isIntEnumShape()) {
+                names.add(getDefaultShapeName(shape));
+            }
+        }
+        return names;
     }
 
     private String escapeWord(String word) {
@@ -329,16 +351,8 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
     }
 
     private Symbol genericEnum(Shape shape) {
-        var enumSymbol = createGeneratedSymbolBuilder(shape, getDefaultShapeName(shape), SHAPES_FILE).build();
-
-        // We add this enum symbol as a property on a generic string/int symbol
-        // rather than returning the enum symbol directly because we only
-        // generate the enum constants for convenience. We actually want
-        // to pass around plain types rather than what is effectively
-        // a namespace class.
-        return createSymbolBuilder(shape, shape.isEnumShape() ? "str" : "int")
-                .putProperty(SymbolProperties.ENUM_SYMBOL, escaper.escapeSymbol(shape, enumSymbol))
-                .build();
+        Symbol symbol = createGeneratedSymbolBuilder(shape, getDefaultShapeName(shape), SHAPES_FILE).build();
+        return escaper.escapeSymbol(shape, symbol);
     }
 
     @Override
@@ -352,6 +366,9 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
         String name = getDefaultShapeName(shape);
 
         var unknownName = name + "Unknown";
+        if (allShapeNames.contains(unknownName)) {
+            unknownName = name + "_Unknown";
+        }
         var unknownSymbol = createGeneratedSymbolBuilder(shape, unknownName, SHAPES_FILE).build();
         var builder = createGeneratedSymbolBuilder(shape, name, SHAPES_FILE)
                 .putProperty(SymbolProperties.UNION_UNKNOWN, unknownSymbol);
@@ -374,6 +391,12 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
             // Union members, unlike other shape members, have types generated for them.
             var containerSymbol = container.accept(this);
             var name = containerSymbol.getName() + StringUtils.capitalize(shape.getMemberName());
+            // Check if the synthesized variant name collides with any service-defined shape.
+            // Smithy shape names cannot contain underscores, so using "_" as separator
+            // guarantees the disambiguated name won't collide with any shape.
+            if (allShapeNames.contains(name)) {
+                name = containerSymbol.getName() + "_" + StringUtils.capitalize(shape.getMemberName());
+            }
             return createGeneratedSymbolBuilder(shape, name, SHAPES_FILE, false)
                     .putProperty(SymbolProperties.SCHEMA, containerSymbol.expectProperty(SymbolProperties.SCHEMA))
                     .build();

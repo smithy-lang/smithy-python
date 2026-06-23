@@ -305,6 +305,8 @@ operation ListCities {
         sparseItems: SparseCitySummaries
 
         mutual: MutuallyRecursiveA
+
+        recursiveUnion: RecursiveUnion
     }
 }
 
@@ -335,6 +337,8 @@ structure Defaults {
     @required
     requiredDefaultBool: Boolean = true
 
+    defaultNullBoolean: Boolean = null
+
     @required
     requiredStr: String
 
@@ -354,6 +358,8 @@ structure Defaults {
 
     @required
     requiredDefaultInt: Integer = 42
+
+    defaultNullLong: Long = null
 
     @required
     requiredFloat: Float
@@ -565,6 +571,21 @@ structure MutuallyRecursiveA {
 
 structure MutuallyRecursiveB {
     mutual: MutuallyRecursiveA
+}
+
+union RecursiveUnion {
+    nested: RecursiveUnionMap
+    items: RecursiveUnionList
+    leaf: String
+}
+
+map RecursiveUnionMap {
+    key: String
+    value: RecursiveUnion
+}
+
+list RecursiveUnionList {
+    member: RecursiveUnion
 }
 
 // CitySummaries is a list of CitySummary structures.

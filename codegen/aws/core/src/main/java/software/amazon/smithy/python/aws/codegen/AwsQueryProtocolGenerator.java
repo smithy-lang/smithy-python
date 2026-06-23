@@ -47,12 +47,11 @@ public final class AwsQueryProtocolGenerator implements ProtocolGenerator {
     @Override
     public void initializeProtocol(GenerationContext context, PythonWriter writer) {
         writer.addDependency(AwsPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("xml"));
-        writer.addImport("smithy_aws_core.aio.protocols", "AwsQueryClientProtocol");
         var service = context.settings().service(context.model());
         var serviceSymbol = context.symbolProvider().toSymbol(service);
         var serviceSchema = serviceSymbol.expectProperty(SymbolProperties.SCHEMA);
         var version = service.getVersion();
-        writer.write("AwsQueryClientProtocol($T, $S)", serviceSchema, version);
+        writer.write("$1T($2T, $3S)", AwsRuntimeTypes.AWS_QUERY_CLIENT_PROTOCOL, serviceSchema, version);
     }
 
     @Override

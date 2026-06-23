@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.6.0
+
+### Breaking Changes
+* Refactored retry strategies to be async, allowing them to wait internally or use async synchronization primitives if necessary. The `RetryStrategy` protocol moved from `smithy_core.interfaces.retries` to `smithy_core.aio.interfaces.retries`, and `SimpleRetryStrategy`, `StandardRetryStrategy`, and `RetryStrategyResolver` moved from `smithy_core.retries` to `smithy_core.aio.retries`.
+
+### Features
+* Added `UnknownEnumMixin` for representing unknown and error-corrected enum/intEnum variants.
+
 ## v0.5.0
 
 ### Features

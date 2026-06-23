@@ -10,9 +10,21 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.EnumValueTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
-import software.amazon.smithy.python.codegen.SymbolProperties;
+import software.amazon.smithy.python.codegen.RuntimeTypes;
+import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
+/**
+ * Renders intEnums as an {@code IntEnum} subclass.
+ *
+ * <p>The {@code UnknownEnumMixin} base from smithy-core handles values that
+ * weren't known at generation time: deserializing an unrecognized value (or
+ * filling a missing required member during client error correction, see
+ * {@link MemberErrorCorrectionGenerator}) produces a pseudo-member with
+ * {@code is_unknown} set rather than raising.
+ *
+ * @see <a href="https://smithy.io/2.0/spec/simple-types.html#intenum">Smithy spec: intEnum</a>
+ */
 @SmithyInternalApi
 public final class IntEnumGenerator implements Runnable {
 
@@ -24,10 +36,12 @@ public final class IntEnumGenerator implements Runnable {
 
     @Override
     public void run() {
-        var enumSymbol = directive.symbol().expectProperty(SymbolProperties.ENUM_SYMBOL);
+        var enumSymbol = directive.symbol();
         directive.context().writerDelegator().useShapeWriter(directive.shape(), writer -> {
             writer.addStdlibImport("enum", "IntEnum");
-            writer.openBlock("class $L(IntEnum):", "", enumSymbol.getName(), () -> {
+            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+            writer.addLocallyDefinedSymbol(enumSymbol);
+            writer.openBlock("class $L($T, IntEnum):", "", enumSymbol.getName(), RuntimeTypes.UNKNOWN_ENUM_MIXIN, () -> {
                 directive.shape().getTrait(DocumentationTrait.class).ifPresent(trait -> {
                     writer.writeDocs(trait.getValue(), directive.context());
                 });
@@ -35,7 +49,7 @@ public final class IntEnumGenerator implements Runnable {
                 for (MemberShape member : directive.shape().members()) {
                     var name = directive.symbolProvider().toMemberName(member);
                     var value = member.expectTrait(EnumValueTrait.class).expectIntValue();
-                    writer.write("$L = $L\n", name, value);
+                    writer.write("$L = $L", name, value);
                     member.getTrait(DocumentationTrait.class).ifPresent(trait -> {
                         writer.writeDocs(trait.getValue(), directive.context());
                     });

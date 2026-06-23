@@ -1,0 +1,12 @@
+{
+  "changes": [
+    {
+      "type": "bugfix",
+      "description": "Fixed awsQuery response deserialization for operations with no output members."
+    },
+    {
+      "type": "dependency",
+      "description": "Bump `smithy-core` from `~=0.5.0` to `~=0.6.0`."
+    }
+  ]
+}

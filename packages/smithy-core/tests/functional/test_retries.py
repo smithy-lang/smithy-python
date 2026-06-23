@@ -4,13 +4,13 @@
 from asyncio import gather, sleep
 
 import pytest
+from smithy_core.aio.interfaces import retries as retries_interface
+from smithy_core.aio.retries import StandardRetryStrategy
 from smithy_core.exceptions import CallError, ClientTimeoutError, RetryError
-from smithy_core.interfaces import retries as retries_interface
 from smithy_core.retries import (
     ExponentialBackoffJitterType,
     ExponentialRetryBackoffStrategy,
     StandardRetryQuota,
-    StandardRetryStrategy,
 )
 
 
@@ -19,7 +19,7 @@ async def retry_operation(
     strategy: retries_interface.RetryStrategy,
     responses: list[int | Exception],
 ) -> tuple[str, int]:
-    token = strategy.acquire_initial_retry_token()
+    token = await strategy.acquire_initial_retry_token()
     response_iter = iter(responses)
 
     while True:
@@ -31,7 +31,7 @@ async def retry_operation(
 
         # Success case
         if response == 200:
-            strategy.record_success(token=token)
+            await strategy.record_success(token=token)
             return "success", attempt
 
         # Error case - either status code or exception
@@ -45,7 +45,7 @@ async def retry_operation(
             )
 
         try:
-            token = strategy.refresh_retry_token_for_retry(
+            token = await strategy.refresh_retry_token_for_retry(
                 token_to_renew=token, error=error
             )
         except RetryError:
