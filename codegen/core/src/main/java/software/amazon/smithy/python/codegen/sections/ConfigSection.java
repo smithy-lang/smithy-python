@@ -15,4 +15,14 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  * @param properties The list of properties that need to be present on the config.
  */
 @SmithyInternalApi
-public record ConfigSection(List<ConfigProperty> properties) implements CodeSection {}
+public record ConfigSection(List<ConfigProperty> properties) implements CodeSection {
+
+    /** Section for a single config property's class-level field declaration. */
+    public record PropertyDeclarationSection(ConfigProperty property) implements CodeSection {}
+
+    /** Section before property declarations, for injecting class-level fields. */
+    public record PrePropertyDeclarationsSection(List<ConfigProperty> properties) implements CodeSection {}
+
+    /** Section before property initializations in __init__, for injecting setup code. */
+    public record PreInitializePropertiesSection(List<ConfigProperty> properties) implements CodeSection {}
+}
