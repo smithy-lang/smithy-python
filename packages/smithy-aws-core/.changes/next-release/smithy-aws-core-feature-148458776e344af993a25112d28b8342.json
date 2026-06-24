@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Add an Amazon API Gateway customization that sets the `Accept: application/json` request header."
+}
