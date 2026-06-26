@@ -54,6 +54,9 @@ json = [
 xml = [
     "smithy-xml~=0.1.0"
 ]
+assume-role = [
+    "smithy-aws-core[xml]"
+]
 
 [tool.hatch.build]
 exclude = [

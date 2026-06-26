@@ -219,7 +219,7 @@ public final class SetupGenerator {
                 })
                 .orElse(Collections.emptyList());
         try {
-            return optionals;
+            return optionals.stream().sorted().toList();
         } catch (Exception e) {
             return Collections.emptyList();
         }

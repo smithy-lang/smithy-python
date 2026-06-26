@@ -12,11 +12,13 @@ from .container import ContainerCredentialsResolver
 from .environment import EnvironmentCredentialsResolver
 from .imds import IMDSCredentialsResolver
 from .static import StaticCredentialsResolver
+from .sts import AssumeRoleCredentialsResolver
 
 __all__ = (
     "AWSCredentialsIdentity",
     "AWSCredentialsResolver",
     "AWSIdentityProperties",
+    "AssumeRoleCredentialsResolver",
     "ContainerCredentialsResolver",
     "EnvironmentCredentialsResolver",
     "IMDSCredentialsResolver",
