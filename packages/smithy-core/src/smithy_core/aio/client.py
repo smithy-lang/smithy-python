@@ -459,7 +459,11 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                     transport_task = asyncio.create_task(
                         self.transport.send(request=request_context.transport_request)
                     )
-                    request_future.set_result(request_context)
+                    # The consumer awaiting this future may have been cancelled
+                    # (e.g. the caller was cancelled or timed out), which cancels
+                    # the future. Guard the set so we don't raise InvalidStateError.
+                    if not request_future.cancelled():
+                        request_future.set_result(request_context)
                     transport_response = await transport_task
                 else:
                     # If we don't have an input stream, there's no point in creating a
