@@ -351,8 +351,16 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
     }
 
     private Symbol genericEnum(Shape shape) {
-        Symbol symbol = createGeneratedSymbolBuilder(shape, getDefaultShapeName(shape), SHAPES_FILE).build();
-        return escaper.escapeSymbol(shape, symbol);
+        var enumSymbol = createGeneratedSymbolBuilder(shape, getDefaultShapeName(shape), SHAPES_FILE).build();
+
+        // We add this enum symbol as a property on a generic string/int symbol
+        // rather than returning the enum symbol directly because we only
+        // generate the enum constants for convenience. We actually want
+        // to pass around plain types rather than what is effectively
+        // a namespace class.
+        return createSymbolBuilder(shape, shape.isEnumShape() ? "str" : "int")
+                .putProperty(SymbolProperties.ENUM_SYMBOL, escaper.escapeSymbol(shape, enumSymbol))
+                .build();
     }
 
     @Override

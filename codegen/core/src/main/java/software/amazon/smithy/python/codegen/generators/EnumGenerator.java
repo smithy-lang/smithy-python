@@ -11,6 +11,7 @@ import software.amazon.smithy.model.traits.EnumValueTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
+import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
 /**
@@ -36,7 +37,7 @@ public final class EnumGenerator implements Runnable {
 
     @Override
     public void run() {
-        var enumSymbol = context.symbolProvider().toSymbol(shape);
+        var enumSymbol = context.symbolProvider().toSymbol(shape).expectProperty(SymbolProperties.ENUM_SYMBOL);
         context.writerDelegator().useShapeWriter(shape, writer -> {
             writer.addStdlibImport("enum", "StrEnum");
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
