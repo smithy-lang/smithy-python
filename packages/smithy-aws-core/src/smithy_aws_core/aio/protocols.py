@@ -27,7 +27,11 @@ from smithy_core.types import TimestampFormat
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPRequest as _HTTPRequest
 from smithy_http.aio.interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
-from smithy_http.aio.protocols import HttpBindingClientProtocol, HttpClientProtocol
+from smithy_http.aio.protocols import (
+    HttpBindingClientProtocol,
+    HttpClientProtocol,
+    parse_retry_after,
+)
 from smithy_http.deserializers import HTTPResponseDeserializer
 
 from .._private.query.errors import (
@@ -353,6 +357,7 @@ class AwsQueryClientProtocol(HttpClientProtocol):
             wrapper_elements=self._error_wrapper_elements(),
             status=response.status,
             context=context,
+            retry_after=parse_retry_after(response),
         )
 
     def _action_name(

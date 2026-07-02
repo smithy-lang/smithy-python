@@ -83,6 +83,9 @@ class ClientCall[I: SerializeableShape, O: DeserializeableShape]:
     retry_scope: str | None = None
     """The retry scope for the operation."""
 
+    is_long_polling: bool = False
+    """Whether the operation is a long-polling operation."""
+
     def retryable(self) -> bool:
         # TODO: check to see if the stream is seekable
         return self.operation.input_stream_member is None
@@ -331,7 +334,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
 
         retry_strategy = call.retry_strategy
         retry_token = await retry_strategy.acquire_initial_retry_token(
-            token_scope=call.retry_scope
+            token_scope=call.retry_scope, is_long_polling=call.is_long_polling
         )
 
         while True:
@@ -353,7 +356,11 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                         token_to_renew=retry_token,
                         error=output_context.response,
                     )
-                except RetryError:
+                except RetryError as retry_error:
+                    # Long-polling operations back off even when the retry quota
+                    # is exhausted; the strategy surfaces that delay here.
+                    if retry_error.retry_after is not None:
+                        await sleep(retry_error.retry_after)
                     raise output_context.response
 
                 _LOGGER.debug(

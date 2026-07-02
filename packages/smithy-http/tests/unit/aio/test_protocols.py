@@ -11,11 +11,11 @@ from smithy_core.interfaces import TypedProperties
 from smithy_core.interfaces import URI as URIInterface
 from smithy_core.schemas import APIOperation
 from smithy_core.shapes import ShapeID
-from smithy_http import Fields
-from smithy_http.aio import HTTPRequest
+from smithy_http import Field, Fields
+from smithy_http.aio import HTTPRequest, HTTPResponse
 from smithy_http.aio.interfaces import HTTPRequest as HTTPRequestInterface
 from smithy_http.aio.interfaces import HTTPResponse as HTTPResponseInterface
-from smithy_http.aio.protocols import HttpClientProtocol
+from smithy_http.aio.protocols import HttpClientProtocol, parse_retry_after
 
 
 class MockProtocol(HttpClientProtocol):
@@ -135,3 +135,37 @@ def test_http_protocol_joins_uris(
     updated_request = protocol.set_service_endpoint(request=request, endpoint=endpoint)
     actual = updated_request.destination
     assert actual == expected
+
+
+@pytest.mark.parametrize(
+    "header_value, expected",
+    [
+        ("1500", 1.5),
+        ("0", 0.0),
+        ("20", 0.02),
+        ("invalid", None),
+        ("1.5", None),
+        ("-100", None),
+        ("", None),
+    ],
+)
+def test_parse_retry_after(header_value: str, expected: float | None) -> None:
+    response = HTTPResponse(
+        status=500,
+        fields=Fields([Field(name="x-amz-retry-after", values=[header_value])]),
+    )
+    assert parse_retry_after(response) == expected
+
+
+def test_parse_retry_after_missing_header() -> None:
+    response = HTTPResponse(status=500, fields=Fields())
+    assert parse_retry_after(response) is None
+
+
+def test_parse_retry_after_ignores_standard_retry_after_header() -> None:
+    # The standard HTTP Retry-After header must be ignored.
+    response = HTTPResponse(
+        status=503,
+        fields=Fields([Field(name="Retry-After", values=["120"])]),
+    )
+    assert parse_retry_after(response) is None

@@ -32,12 +32,15 @@ class RetryStrategy(Protocol):
     """Upper limit on total attempt count (initial attempt plus retries)."""
 
     async def acquire_initial_retry_token(
-        self, *, token_scope: str | None = None
+        self, *, token_scope: str | None = None, is_long_polling: bool = False
     ) -> RetryToken:
         """Called before any retries (for the first attempt at the operation).
 
         :param token_scope: An arbitrary string accepted by the retry strategy to
             separate tokens into scopes.
+        :param is_long_polling: Whether the operation is a long-polling operation.
+            Long-polling operations must back off before returning even when the
+            retry quota is exhausted.
         :returns: A retry token, to be used for determining the retry delay, refreshing
             the token after a failure, and recording success after success.
         :raises RetryError: If the retry strategy has no available tokens.
@@ -110,8 +113,9 @@ class HasFault(Protocol):
 
 `RetryStrategy` implementations MUST raise a `RetryError` if they receive an
 exception where `is_retry_safe` is `False` and SHOULD raise a `RetryError` if it
-is `None`. `RetryStrategy` implementations SHOULD use a delay that is at least
-as long as `retry_after` but MAY choose to wait longer.
+is `None`. `RetryStrategy` implementations SHOULD take `retry_after` into account
+when computing the delay, but MAY adjust it (for example, by clamping it to an
+upper bound).
 
 ### Backoff Strategy
 

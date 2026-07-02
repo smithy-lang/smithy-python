@@ -22,6 +22,7 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
+import software.amazon.smithy.python.codegen.sections.InitRetryStrategyResolverSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -86,13 +87,13 @@ final class ClientGenerator implements Runnable {
                         for plugin in client_plugins:
                             plugin(self._config)
 
-                        self._retry_strategy_resolver = $5T()
+                        $5C
                     """,
                     configSymbol,
                     pluginSymbol,
                     writer.consumer(w -> writeConstructorDocs(w, serviceSymbol.getName())),
                     writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)),
-                    RuntimeTypes.RETRY_STRATEGY_RESOLVER);
+                    writer.consumer(this::writeRetryStrategyResolverInit));
 
             var topDownIndex = TopDownIndex.of(model);
             var eventStreamIndex = EventStreamIndex.of(model);
@@ -111,6 +112,22 @@ final class ClientGenerator implements Runnable {
         for (SymbolReference plugin : plugins) {
             writer.write("$T,", plugin);
         }
+    }
+
+    private void writeRetryStrategyResolverInit(PythonWriter writer) {
+        // Wrap this in a section so AWS integrations can inject service-specific retry defaults.
+        writer.pushState(new InitRetryStrategyResolverSection());
+        writer.write("self._retry_strategy_resolver = $T()", RuntimeTypes.RETRY_STRATEGY_RESOLVER);
+        writer.popState();
+    }
+
+    private boolean isLongPollingOperation(OperationShape operation) {
+        for (PythonIntegration integration : context.integrations()) {
+            if (integration.isLongPollingOperation(model, service, operation)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private void writeConstructorDocs(PythonWriter writer, String clientName) {
@@ -210,6 +227,7 @@ final class ClientGenerator implements Runnable {
         }
 
         writer.putContext("operation", symbolProvider.toSymbol(operation));
+        writer.putContext("isLongPolling", isLongPollingOperation(operation));
         writer.addStdlibImport("copy", "deepcopy");
 
         writer.write("""
@@ -240,7 +258,8 @@ final class ClientGenerator implements Runnable {
                     auth_scheme_resolver=config.auth_scheme_resolver,
                     supported_auth_schemes=config.auth_schemes,
                     endpoint_resolver=config.endpoint_resolver,
-                    retry_strategy=retry_strategy,
+                    retry_strategy=retry_strategy,${?isLongPolling}
+                    is_long_polling=True,${/isLongPolling}
                 )
                 """,
                 writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)),

@@ -16,12 +16,15 @@ class RetryStrategy(Protocol):
     """Upper limit on total attempt count (initial attempt plus retries)."""
 
     async def acquire_initial_retry_token(
-        self, *, token_scope: str | None = None
+        self, *, token_scope: str | None = None, is_long_polling: bool = False
     ) -> RetryToken:
         """Create a base retry token for the start of a request.
 
         :param token_scope: An arbitrary string accepted by the retry strategy to
             separate tokens into scopes.
+        :param is_long_polling: Whether the operation is a long-polling operation.
+            Long-polling operations must back off before returning even when the
+            retry quota is exhausted.
         :returns: A retry token, to be used for determining the retry delay, refreshing
             the token after a failure, and recording success after success.
         :raises RetryError: If the retry strategy has no available tokens.

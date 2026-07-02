@@ -1,5 +1,6 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+import logging
 import os
 from collections.abc import AsyncIterable
 from inspect import iscoroutinefunction
@@ -28,6 +29,30 @@ from smithy_core.traits import EndpointTrait, HTTPTrait
 from ..deserializers import HTTPResponseDeserializer
 from ..serializers import HTTPRequestSerializer
 from .interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
+
+_LOGGER = logging.getLogger(__name__)
+
+_RETRY_AFTER_HEADER = "x-amz-retry-after"
+
+
+def parse_retry_after(response: HTTPResponse) -> float | None:
+    """Parse the ``x-amz-retry-after`` header into a backoff duration in seconds.
+
+    The header value is an integer number of milliseconds. Invalid or missing
+    values are ignored (return ``None``) so they fall back to exponential backoff.
+    """
+    if _RETRY_AFTER_HEADER not in response.fields:
+        return None
+    raw = response.fields[_RETRY_AFTER_HEADER].as_string()
+    try:
+        milliseconds = int(raw)
+    except (ValueError, TypeError):
+        _LOGGER.debug("Ignoring invalid %s header value: %r", _RETRY_AFTER_HEADER, raw)
+        return None
+    if milliseconds < 0:
+        _LOGGER.debug("Ignoring negative %s header value: %r", _RETRY_AFTER_HEADER, raw)
+        return None
+    return milliseconds / 1000.0
 
 
 class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
@@ -186,6 +211,8 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             operation=operation, response=response
         )
 
+        retry_after = parse_retry_after(response)
+
         if error_id is None and self._matches_content_type(response):
             if isinstance(response_body, bytearray):
                 response_body = bytes(response_body)
@@ -213,7 +240,10 @@ class HttpBindingClientProtocol(HttpClientProtocol):
                 response=response,
                 body=response_body,
             )
-            return error_shape.deserialize(deserializer)
+            modeled_error = error_shape.deserialize(deserializer)
+            if retry_after is not None:
+                modeled_error.retry_after = retry_after
+            return modeled_error
 
         message = (
             f"Unknown error for operation {operation.schema.id} "
@@ -234,6 +264,7 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             is_throttling_error=is_throttle,
             is_timeout_error=is_timeout,
             is_retry_safe=is_throttle or is_timeout or None,
+            retry_after=retry_after,
         )
 
     def _matches_content_type(self, response: HTTPResponse) -> bool:
