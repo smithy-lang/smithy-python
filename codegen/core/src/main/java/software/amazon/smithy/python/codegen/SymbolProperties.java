@@ -36,6 +36,13 @@ public final class SymbolProperties {
     public static final Property<Boolean> STDLIB = Property.named("stdlib");
 
     /**
+     * Contains a symbol representing the class containing known enum values for the symbol.
+     *
+     * <p>In type signatures, the base int or str is used instead for forwards compatibility.
+     */
+    public static final Property<Symbol> ENUM_SYMBOL = Property.named("enumSymbol");
+
+    /**
      * Contains a symbol representing the unknown variant of a union.
      */
     public static final Property<Symbol> UNION_UNKNOWN = Property.named("unknown");
