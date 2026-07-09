@@ -77,5 +77,11 @@ public final class SymbolProperties {
      */
     public static final Property<Boolean> IMPORTABLE = Property.named("nonImportable");
 
+    /**
+     * Contains a deprecated name for the symbol that is generated as an alias
+     * for backwards compatibility. This is only used for services.
+     */
+    public static final Property<String> DEPRECATED_ALIAS = Property.named("deprecatedAlias");
+
     private SymbolProperties() {}
 }

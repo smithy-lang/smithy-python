@@ -11,6 +11,7 @@ import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.python.codegen.PythonSettings;
+import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.utils.StringUtils;
 
@@ -33,8 +34,13 @@ public final class AwsServiceIdIntegration implements PythonIntegration {
             Symbol symbol = this.delegate.toSymbol(shape);
             if (shape.isServiceShape() && shape.hasTrait(ServiceTrait.class)) {
                 var serviceTrait = shape.expectTrait(ServiceTrait.class);
-                var serviceName = StringUtils.capitalize(serviceTrait.getSdkId() + "Client").replace(" ", "");
-                symbol = symbol.toBuilder().name(serviceName).build();
+                var baseClientName = StringUtils.capitalize(serviceTrait.getSdkId() + "Client").replace(" ", "");
+                var serviceName = "Async" + baseClientName;
+                var deprecatedName = baseClientName;
+                symbol = symbol.toBuilder()
+                        .name(serviceName)
+                        .putProperty(SymbolProperties.DEPRECATED_ALIAS, deprecatedName)
+                        .build();
             }
             return symbol;
         }
