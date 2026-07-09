@@ -8,10 +8,11 @@
 
 * Renamed generated AWS service clients to include `Async` (e.g.
   `BedrockRuntimeClient` is now `AsyncBedrockRuntimeClient`) to match the
-  Python community convention for async clients. The old name is still
-  available as a deprecated alias that emits a `DeprecationWarning`, and will
-  be removed in an upcoming release. The unprefixed name will later be
-  reintroduced for synchronous clients.
+  Python community convention for async clients. For clients that were already
+  published under the unprefixed name, the old name remains available as a
+  deprecated alias that emits a `DeprecationWarning` and will be removed in an
+  upcoming release. The unprefixed name will later be reintroduced for
+  synchronous clients.
 
 <!--
 TODO: Backfill pre-0.4.0 codegen releases into this file. Prior changes were
