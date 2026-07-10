@@ -65,10 +65,28 @@ public final class CodegenUtils {
     private CodegenUtils() {}
 
     /**
+     * SDK IDs of the AWS services that were published before the {@code Async}
+     * prefix was adopted for client and config class names.
+     *
+     * <p>Only these services generate deprecated aliases for the old names so that
+     * existing imports keep working. New services are generated with the
+     * {@code Async}-prefixed names from the start and need no alias. This set can
+     * be removed once the aliases are dropped.
+     */
+    public static final Set<String> LEGACY_ALIAS_SDK_IDS = Set.of(
+            "Bedrock Runtime",
+            "ConnectHealth",
+            "Lex Runtime V2",
+            "Polly",
+            "QBusiness",
+            "SageMaker Runtime HTTP2",
+            "Transcribe Streaming");
+
+    /**
      * Gets the configuration object symbol for the service.
      *
      * <p>For AWS services with a {@code ServiceTrait}, this derives the name from the SDK ID
-     * (e.g., "Bedrock Runtime" becomes "BedrockRuntimeConfig"). For services without a
+     * (e.g., "Bedrock Runtime" becomes "AsyncBedrockRuntimeConfig"). For services without a
      * {@code ServiceTrait}, falls back to the generic "Config" name.
      *
      * @param settings The client settings, used to account for module configuration.
@@ -77,14 +95,24 @@ public final class CodegenUtils {
      */
     public static Symbol getConfigSymbol(PythonSettings settings, Model model) {
         var service = settings.service(model);
-        var name = service.getTrait(ServiceTrait.class)
-                .map(trait -> StringUtils.capitalize(trait.getSdkId()).replace(" ", "") + "Config")
+        var serviceTrait = service.getTrait(ServiceTrait.class);
+        var name = serviceTrait
+                .map(trait -> "Async" + StringUtils.capitalize(trait.getSdkId()).replace(" ", "") + "Config")
                 .orElse("Config");
-        return Symbol.builder()
+        var builder = Symbol.builder()
                 .name(name)
                 .namespace(String.format("%s.config", settings.moduleName()), ".")
-                .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
-                .build();
+                .definitionFile(String.format("./src/%s/config.py", settings.moduleName()));
+
+        // Only services that already shipped under the unprefixed name get a
+        // backwards-compatible alias; new services start life Async-ServiceName-prefixed.
+        serviceTrait.ifPresent(trait -> {
+            if (LEGACY_ALIAS_SDK_IDS.contains(trait.getSdkId())) {
+                builder.putProperty(SymbolProperties.DEPRECATED_ALIAS, "Config");
+            }
+        });
+
+        return builder.build();
     }
 
     /**
@@ -92,7 +120,7 @@ public final class CodegenUtils {
      *
      * <p>For AWS services with a {@code ServiceTrait}, this derives the name from the SDK ID
      * (e.g., "Bedrock Runtime" becomes "BedrockRuntimePlugin"). For services without a
-     * {@code ServiceTrait}, falls back to the generic "Plugin" name.
+     * {@code ServiceTrait} (non-AWS SDKs), falls back to the generic "Plugin" name.
      *
      * @param settings The client settings, used to account for module configuration.
      * @param model The model containing the service shape.

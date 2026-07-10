@@ -50,7 +50,6 @@ final class ClientGenerator implements Runnable {
 
     private void generateService(PythonWriter writer) {
         var serviceSymbol = symbolProvider.toSymbol(service);
-        writer.addLocallyDefinedSymbol(serviceSymbol);
         var configSymbol = CodegenUtils.getConfigSymbol(context.settings(), context.model());
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings(), context.model());
         writer.addLogger();
@@ -238,7 +237,7 @@ final class ClientGenerator implements Runnable {
 
         writer.write("""
                 operation_plugins: list[${plugin:T}] = [
-                    $C
+                    $1C
                 ]
                 if plugins:
                     operation_plugins.extend(plugins)
