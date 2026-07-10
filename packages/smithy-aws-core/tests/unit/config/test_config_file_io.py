@@ -21,8 +21,8 @@ class TestFileIssues:
     @pytest.mark.asyncio
     async def test_load_config_with_missing_files(self, tmp_path: Path):
         config_file = await load_config(
-            config_file_path=str(tmp_path / "no_config"),
-            credentials_file_path=str(tmp_path / "no_credentials"),
+            config_file_path=tmp_path / "no_config",
+            credentials_file_path=tmp_path / "no_credentials",
         )
         assert config_file.profiles == {}
         assert config_file.sso_sessions == {}
@@ -44,11 +44,12 @@ class TestEncodingErrors:
     """Tests for files with invalid encoding."""
 
     @pytest.mark.asyncio
-    async def test_bad_unicode_returns_empty(self, tmp_path: Path):
+    async def test_bad_unicode_raises_error(self, tmp_path: Path):
+        """A file with invalid UTF-8 bytes should raise UnicodeDecodeError."""
         bad_file = tmp_path / "bad_config"
         bad_file.write_bytes(b"[default]\nregion = \xff\xfe invalid")
-        result = await parse_config_file(str(bad_file))
-        assert result == {}
+        with pytest.raises(UnicodeDecodeError):
+            await parse_config_file(str(bad_file))
 
 
 class TestMultiFileMerge:
@@ -68,8 +69,8 @@ class TestMultiFileMerge:
         )
 
         result = await load_config(
-            config_file_path=str(config),
-            credentials_file_path=str(credentials),
+            config_file_path=config,
+            credentials_file_path=credentials,
         )
 
         assert result.get("default", "aws_access_key_id") == "CREDS_KEY"
@@ -82,8 +83,8 @@ class TestMultiFileMerge:
         config.write_text("[profile work]\nregion = us-west-2\n")
 
         result = await load_config(
-            config_file_path=str(config),
-            credentials_file_path=str(tmp_path / "nonexistent"),
+            config_file_path=config,
+            credentials_file_path=tmp_path / "nonexistent",
         )
         assert result.get("work", "region") == "us-west-2"
 
@@ -93,7 +94,7 @@ class TestMultiFileMerge:
         credentials.write_text("[default]\naws_access_key_id = KEY\n")
 
         result = await load_config(
-            config_file_path=str(tmp_path / "nonexistent"),
-            credentials_file_path=str(credentials),
+            config_file_path=tmp_path / "nonexistent",
+            credentials_file_path=credentials,
         )
         assert result.get("default", "aws_access_key_id") == "KEY"

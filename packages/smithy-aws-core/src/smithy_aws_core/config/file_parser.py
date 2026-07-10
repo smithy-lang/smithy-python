@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import asyncio
-import os
+import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
@@ -10,10 +10,10 @@ from pathlib import Path
 
 from smithy_aws_core.config.exceptions import ConfigParseError
 
+logger = logging.getLogger(__name__)
+
+
 # Type aliases
-type PropertyValue = str | dict[str, str]
-type ProfileProperties = dict[str, PropertyValue]
-type ProfileMap = dict[str, ProfileProperties]
 type RawParsedSections = dict[str, dict[str, str | dict[str, str]]]
 
 _VALID_IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9_\-/.%@:+]+$")
@@ -22,6 +22,17 @@ _VALID_IDENTIFIER_RE = re.compile(r"^[A-Za-z0-9_\-/.%@:+]+$")
 class FileType(Enum):
     CONFIG = "config"
     CREDENTIALS = "credentials"
+
+
+@dataclass
+class Profile:
+    """A single profile with its scalar properties and grouped (sub) properties."""
+
+    properties: dict[str, str] = field(default_factory=dict)  # type: ignore[assignment]
+    sub_properties: dict[str, dict[str, str]] = field(default_factory=dict)  # type: ignore[assignment]
+
+
+type ProfileMap = dict[str, Profile]
 
 
 @dataclass
@@ -45,7 +56,7 @@ async def parse_config_file(file_path: str) -> RawParsedSections:
     content = await _read_file(file_path)
     if content is None:
         return {}
-    return parse_content(content)
+    return _parse_content(content)
 
 
 def standardize(
@@ -101,22 +112,22 @@ def standardize(
 async def _read_file(path: str) -> str | None:
     """Read file content asynchronously.
 
-    Returns None if the file doesn't exist or can't be opened.
-    Per the SEP: inaccessible files are treated as empty.
+    Returns None if the file doesn't exist or can't be read due to
+    permission/OS errors. Raises on encoding errors since they likely
+    indicate a misconfigured file the user should know about.
     """
     try:
         content = await asyncio.to_thread(Path(path).read_text, encoding="utf-8")
         return content
-    except (FileNotFoundError, PermissionError, OSError, UnicodeDecodeError):
+    except FileNotFoundError:
+        return None
+    except (PermissionError, OSError) as e:
+        logger.warning("Unable to read config file '%s': %s", path, e)
         return None
 
 
-def parse_content(content: str) -> RawParsedSections:
+def _parse_content(content: str) -> RawParsedSections:
     """Parse config file content from a string into raw sections.
-
-    Note: This function is public only for direct use by unit tests
-    In normal config loading, use parse_config_file() which handles file I/O and
-    calls this internally.
 
     :param content: The raw config file content as a string.
     :returns: Raw sections dict {section_name: {key: value}}.
@@ -128,7 +139,6 @@ def parse_content(content: str) -> RawParsedSections:
     in_sub_property: bool = False
 
     for line_num, line in enumerate(content.splitlines(), start=1):
-
         # Blank line
         if line.strip() == "":
             continue
@@ -354,7 +364,12 @@ def _merge_properties(
     name: str,
     properties: dict[str, str | dict[str, str]],
 ) -> None:
-    """Merge properties into target. Later values win for duplicates."""
+    """Merge properties into target Profile. Later values win for duplicates."""
     if name not in target:
-        target[name] = {}
-    target[name].update(properties)
+        target[name] = Profile()
+    profile = target[name]
+    for key, value in properties.items():
+        if isinstance(value, dict):
+            profile.sub_properties[key] = value
+        else:
+            profile.properties[key] = value

@@ -8,7 +8,9 @@ from typing import cast
 from unittest.mock import patch
 
 import pytest
-from smithy_aws_core.config import resolve_config_paths
+from smithy_aws_core.config import (
+    _resolve_config_paths,  # type: ignore[reportPrivateUsage]
+)
 
 _LOCATION_TESTS_FILE = (
     Path(__file__).parent / "test-data" / "config-file-location-tests.json"
@@ -45,15 +47,15 @@ def test_config_file_location(test_case: dict[str, object]):
     if language_home and language_home != "ignored" and "HOME" not in env_vars:
         env_vars["HOME"] = language_home
 
-    # Test resolve_config_paths() with the mocked environment
+    # Test _resolve_config_paths() with the mocked environment
     with patch.dict("os.environ", env_vars, clear=True):
-        resolved_config, resolved_credentials = resolve_config_paths()
+        resolved_config, resolved_credentials = _resolve_config_paths()
 
-    assert resolved_config == expected_config, (
+    assert str(resolved_config) == expected_config, (
         f"Config location mismatch: got '{resolved_config}', "
         f"expected '{expected_config}'"
     )
-    assert resolved_credentials == expected_credentials, (
+    assert str(resolved_credentials) == expected_credentials, (
         f"Credentials location mismatch: got '{resolved_credentials}', "
         f"expected '{expected_credentials}'"
     )

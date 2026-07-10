@@ -2,13 +2,13 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from smithy_aws_core.config.file_parser import (
+    Profile,
     ProfileMap,
-    ProfileProperties,
     StandardizedOutput,
 )
 
 
-class ParsedConfigFile:
+class MergedConfig:
     """A merged representation of AWS config and credentials files.
 
     Provides lookup access to profile properties after merging both files
@@ -32,22 +32,19 @@ class ParsedConfigFile:
         self._sso_sessions = config_data.sso_sessions
         self._services = config_data.services
 
-    def get(self, profile: str, key: str) -> str | None:
+    def get(self, profile_name: str, key: str) -> str | None:
         """Get a property value for a specific profile.
 
-        :param profile: The profile name to look up.
+        :param profile_name: The profile name to look up.
         :param key: The property key (case-insensitive, stored lowercase).
         :returns: The property value, or None if not found.
         """
-        profile_data = self._profiles.get(profile)
-        if profile_data is None:
+        profile = self._profiles.get(profile_name)
+        if profile is None:
             return None
-        value = profile_data.get(key.lower())
-        if value is None or isinstance(value, dict):
-            return None
-        return value
+        return profile.properties.get(key.lower())
 
-    def get_sub_property(self, profile: str, key: str, sub_key: str) -> str | None:
+    def get_sub_property(self, profile_name: str, key: str, sub_key: str) -> str | None:
         """Get a sub-property value for a specific profile.
 
         For properties like:
@@ -56,32 +53,32 @@ class ParsedConfigFile:
 
         Usage: get_sub_property("default", "s3", "max_concurrent_requests")
 
-        :param profile: The profile name.
+        :param profile_name: The profile name.
         :param key: The parent property key.
         :param sub_key: The sub-property key.
         :returns: The sub-property value, or None if not found.
         """
-        profile_data = self._profiles.get(profile)
-        if profile_data is None:
+        profile = self._profiles.get(profile_name)
+        if profile is None:
             return None
-        parent = profile_data.get(key.lower())
-        if not isinstance(parent, dict):
+        group = profile.sub_properties.get(key.lower())
+        if group is None:
             return None
-        return parent.get(sub_key.lower())
+        return group.get(sub_key.lower())
 
-    def get_profile(self, profile: str) -> ProfileProperties | None:
+    def get_profile(self, profile_name: str) -> Profile | None:
         """Get all properties for a profile.
 
-        :param profile: The profile name.
-        :returns: Dict of properties, or None if profile doesn't exist.
+        :param profile_name: The profile name.
+        :returns: Profile object, or None if profile doesn't exist.
         """
-        return self._profiles.get(profile)
+        return self._profiles.get(profile_name)
 
-    def get_sso_session(self, session_name: str) -> ProfileProperties | None:
+    def get_sso_session(self, session_name: str) -> Profile | None:
         """Get properties for an SSO session.
 
         :param session_name: The SSO session name.
-        :returns: Dict of properties, or None if session doesn't exist.
+        :returns: Profile object, or None if session doesn't exist.
         """
         return self._sso_sessions.get(session_name)
 
@@ -107,17 +104,26 @@ class ParsedConfigFile:
     ) -> ProfileMap:
         """Merge profiles from config and credentials files.
 
-        Properties in Credentials file take precedence for duplicates.
+        Properties in credentials file take precedence for duplicates.
         """
         merged: ProfileMap = {}
 
-        for name, props in config_profiles.items():
-            merged[name] = dict(props)
+        for name, profile in config_profiles.items():
+            merged[name] = Profile(
+                properties=dict(profile.properties),
+                sub_properties={k: dict(v) for k, v in profile.sub_properties.items()},
+            )
 
-        for name, props in credentials_profiles.items():
+        for name, profile in credentials_profiles.items():
             if name in merged:
-                merged[name].update(props)
+                merged[name].properties.update(profile.properties)
+                merged[name].sub_properties.update(profile.sub_properties)
             else:
-                merged[name] = dict(props)
+                merged[name] = Profile(
+                    properties=dict(profile.properties),
+                    sub_properties={
+                        k: dict(v) for k, v in profile.sub_properties.items()
+                    },
+                )
 
         return merged

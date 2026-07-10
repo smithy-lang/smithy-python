@@ -1,31 +1,54 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Unit tests for ParsedConfigFile class."""
+"""Unit tests for MergedConfig class."""
 
-from smithy_aws_core.config.file_parser import ProfileMap, StandardizedOutput
-from smithy_aws_core.config.parsed_config_file import ParsedConfigFile
+from smithy_aws_core.config.file_parser import (
+    Profile,
+    RawParsedSections,
+    StandardizedOutput,
+)
+from smithy_aws_core.config.merged_config import MergedConfig
+
+
+def _to_profile_map(
+    raw: RawParsedSections | None,
+) -> dict[str, Profile]:
+    """Convert a raw dict to a ProfileMap (dict[str, Profile])."""
+    if raw is None:
+        return {}
+    result: dict[str, Profile] = {}
+    for name, value in raw.items():
+        properties: dict[str, str] = {}
+        sub_properties: dict[str, dict[str, str]] = {}
+        for k, v in value.items():
+            if isinstance(v, dict):
+                sub_properties[k] = v
+            else:
+                properties[k] = v
+        result[name] = Profile(properties=properties, sub_properties=sub_properties)
+    return result
 
 
 def _make_config_file(
-    config_profiles: ProfileMap | None = None,
-    config_sso_sessions: ProfileMap | None = None,
-    config_services: ProfileMap | None = None,
-    credentials_profiles: ProfileMap | None = None,
-) -> ParsedConfigFile:
-    """Helper to build a ParsedConfigFile from raw dicts."""
+    config_profiles: RawParsedSections | None = None,
+    config_sso_sessions: RawParsedSections | None = None,
+    config_services: RawParsedSections | None = None,
+    credentials_profiles: RawParsedSections | None = None,
+) -> MergedConfig:
+    """Helper to build a MergedConfig from raw dicts."""
     config_data = StandardizedOutput(
-        profiles=config_profiles or {},
-        sso_sessions=config_sso_sessions or {},
-        services=config_services or {},
+        profiles=_to_profile_map(config_profiles),
+        sso_sessions=_to_profile_map(config_sso_sessions),
+        services=_to_profile_map(config_services),
     )
     credentials_data = StandardizedOutput(
-        profiles=credentials_profiles or {},
+        profiles=_to_profile_map(credentials_profiles),
     )
-    return ParsedConfigFile(config_data, credentials_data)
+    return MergedConfig(config_data, credentials_data)
 
 
 class TestGet:
-    """Tests for ParsedConfigFile.get()"""
+    """Tests for MergedConfig.get()"""
 
     def test_returns_value_for_existing_profile_and_key(self):
         cf = _make_config_file(config_profiles={"default": {"region": "us-east-1"}})
@@ -54,7 +77,7 @@ class TestGet:
 
 
 class TestGetSubProperty:
-    """Tests for ParsedConfigFile.get_sub_property()"""
+    """Tests for MergedConfig.get_sub_property()"""
 
     def test_returns_value(self):
         cf = _make_config_file(
@@ -84,13 +107,16 @@ class TestGetSubProperty:
 
 
 class TestGetProfile:
-    """Tests for ParsedConfigFile.get_profile()"""
+    """Tests for MergedConfig.get_profile()"""
 
     def test_returns_all_properties(self):
         cf = _make_config_file(
             config_profiles={"work": {"region": "us-west-2", "output": "json"}}
         )
-        assert cf.get_profile("work") == {"region": "us-west-2", "output": "json"}
+        profile = cf.get_profile("work")
+        assert profile is not None
+        assert profile.properties == {"region": "us-west-2", "output": "json"}
+        assert profile.sub_properties == {}
 
     def test_returns_none_for_missing(self):
         cf = _make_config_file(config_profiles={})
@@ -133,7 +159,8 @@ class TestMerge:
             },
         )
         profile = cf.get_profile("default")
-        assert profile == {
+        assert profile is not None
+        assert profile.properties == {
             "region": "us-east-1",
             "output": "json",
             "aws_access_key_id": "KEY",
@@ -153,7 +180,9 @@ class TestSsoSessions:
                 }
             }
         )
-        assert cf.get_sso_session("my-session") == {
+        session = cf.get_sso_session("my-session")
+        assert session is not None
+        assert session.properties == {
             "sso_start_url": "https://example.com",
             "sso_region": "us-east-1",
         }
@@ -170,14 +199,19 @@ class TestProperties:
         cf = _make_config_file(
             config_profiles={"a": {"x": "1"}, "b": {"y": "2"}},
         )
-        assert cf.profiles == {"a": {"x": "1"}, "b": {"y": "2"}}
+        assert "a" in cf.profiles
+        assert "b" in cf.profiles
+        assert cf.profiles["a"].properties == {"x": "1"}
+        assert cf.profiles["b"].properties == {"y": "2"}
 
     def test_sso_sessions_property(self):
         cf = _make_config_file(config_sso_sessions={"sess": {"url": "https://x"}})
-        assert cf.sso_sessions == {"sess": {"url": "https://x"}}
+        assert "sess" in cf.sso_sessions
+        assert cf.sso_sessions["sess"].properties == {"url": "https://x"}
 
     def test_services_property(self):
         cf = _make_config_file(
             config_services={"my-svc": {"endpoint_url": "http://localhost"}}
         )
-        assert cf.services == {"my-svc": {"endpoint_url": "http://localhost"}}
+        assert "my-svc" in cf.services
+        assert cf.services["my-svc"].properties == {"endpoint_url": "http://localhost"}
