@@ -1,0 +1,93 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+"""Tests for config field validators."""
+
+import pytest
+from smithy_aws_core.config.exceptions import ConfigError
+from smithy_aws_core.config.types import FieldSpec
+from smithy_aws_core.config.validators import (
+    validate_region,
+    validate_retry_strategy_options,
+)
+from smithy_core.retries import RetryStrategyOptions
+
+
+class TestValidateRegion:
+    @pytest.mark.parametrize(
+        "region",
+        [
+            "us-east-1",
+            "ap-southeast-2",
+            "eu-west-1",
+            "us",
+            "us-gov-west-1",
+        ],
+    )
+    def test_valid_regions(self, region: str):
+        validate_region(region)
+
+    def test_none_raises(self):
+        with pytest.raises(ConfigError, match="Region is required"):
+            validate_region(None)
+
+    @pytest.mark.parametrize(
+        "region,reason",
+        [
+            ("", "empty string"),
+            ("-us-east-1", "starts with dash"),
+            ("us-east-1-", "ends with dash"),
+            ("12345", "all numbers"),
+            ("us-east-1!", "special characters"),
+            ("us east 1", "spaces"),
+        ],
+        ids=lambda x: x if isinstance(x, str) else "",
+    )
+    def test_invalid_regions(self, region: str, reason: str):
+        with pytest.raises(ConfigError, match="Must be a valid AWS region"):
+            validate_region(region)
+
+    def test_non_string_raises(self):
+        with pytest.raises(ConfigError, match="Must be a valid AWS region"):
+            validate_region(123)
+
+
+class TestValidateRetryStrategyOptions:
+    def test_valid_default_options(self):
+        validate_retry_strategy_options(RetryStrategyOptions())
+
+    def test_valid_options_with_values(self):
+        validate_retry_strategy_options(
+            RetryStrategyOptions(retry_mode="standard", max_attempts=5)
+        )
+
+    @pytest.mark.parametrize(
+        "value",
+        [
+            None,
+            "standard",
+            {"retry_mode": "standard"},
+            3,
+        ],
+        ids=["none", "string", "dict", "int"],
+    )
+    def test_invalid_types_raise(self, value: object):
+        with pytest.raises(ConfigError, match="Must be RetryStrategyOptions"):
+            validate_retry_strategy_options(value)
+
+
+class TestFieldSpec:
+    """Tests for FieldSpec validation constraints."""
+
+    def test_default_only_is_valid(self):
+        FieldSpec(default=None)
+
+    def test_default_factory_only_is_valid(self):
+        FieldSpec(default_factory=list)
+
+    def test_both_default_and_factory_raises(self):
+        with pytest.raises(ValueError, match="cannot set both"):
+            FieldSpec(default=None, default_factory=list)
+
+    def test_neither_default_nor_factory_raises(self):
+        with pytest.raises(ValueError, match="exactly one of"):
+            FieldSpec()
