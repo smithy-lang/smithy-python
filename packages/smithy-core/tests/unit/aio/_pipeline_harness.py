@@ -5,7 +5,7 @@ from typing import Any, Self, cast
 
 from smithy_core import URI
 from smithy_core.aio.client import ClientCall, RequestPipeline
-from smithy_core.aio.interfaces import ClientProtocol, ClientTransport
+from smithy_core.aio.interfaces import ClientProtocol
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import TypeRegistry
 from smithy_core.endpoints import EndpointResolverParams
@@ -189,7 +189,7 @@ def pipeline_harness(transport: UndeclaredTransport) -> PipelineHarness:
     protocol = StubProtocol()
     pipeline = RequestPipeline(
         protocol=cast("ClientProtocol[Any, Any]", protocol),
-        transport=cast("ClientTransport[Any, Any]", transport),
+        transport=transport,
     )
     return PipelineHarness(protocol=protocol, transport=transport, pipeline=pipeline)
 

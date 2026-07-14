@@ -1,4 +1,4 @@
 {
   "type": "enhancement",
-  "description": "Declared duplex (bidirectional) streaming support on `AWSCRTHTTPClient` via `SUPPORTS_DUPLEX_STREAMING`. `AIOHTTPClient` explicitly does not support it."
+  "description": "Declared `AWSCRTHTTPClient` as duplex (bidirectional) streaming capable via `SUPPORTS_DUPLEX_STREAMING`. `AIOHTTPClient` explicitly does not support duplex streaming."
 }
