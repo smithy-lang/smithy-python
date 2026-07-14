@@ -128,14 +128,24 @@ public final class CodegenUtils {
      */
     public static Symbol getPluginSymbol(PythonSettings settings, Model model) {
         var service = settings.service(model);
-        var name = service.getTrait(ServiceTrait.class)
+        var serviceTrait = service.getTrait(ServiceTrait.class);
+        var name = serviceTrait
                 .map(trait -> StringUtils.capitalize(trait.getSdkId()).replace(" ", "") + "Plugin")
                 .orElse("Plugin");
-        return Symbol.builder()
+        var builder = Symbol.builder()
                 .name(name)
                 .namespace(String.format("%s.config", settings.moduleName()), ".")
-                .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
-                .build();
+                .definitionFile(String.format("./src/%s/config.py", settings.moduleName()));
+
+        // Only services that already shipped under the unprefixed name get a
+        // backwards-compatible alias; new services start life with the service-prefixed name.
+        serviceTrait.ifPresent(trait -> {
+            if (LEGACY_ALIAS_SDK_IDS.contains(trait.getSdkId())) {
+                builder.putProperty(SymbolProperties.DEPRECATED_ALIAS, "Plugin");
+            }
+        });
+
+        return builder.build();
     }
 
     /**
