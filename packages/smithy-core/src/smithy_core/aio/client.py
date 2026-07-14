@@ -204,15 +204,15 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         """
         # The transport is assumed not to support duplex streaming unless it
         # explicitly declares otherwise.
-        if not getattr(self.transport, "SUPPORTS_DUPLEX_STREAMING", False):
+        if getattr(self.transport, "SUPPORTS_DUPLEX_STREAMING", False) is not True:
             raise UnsupportedTransportError(
                 f"The configured transport ({type(self.transport).__name__}) does "
                 f"not support duplex (bidirectional) event streaming, which is "
                 f"required by the {call.operation.schema.id} operation. Use a "
                 f"transport that does, such as "
                 f"smithy_http.aio.crt.AWSCRTHTTPClient. Custom transports that "
-                f"support duplex streaming must set SUPPORTS_DUPLEX_STREAMING "
-                f"to True."
+                f"support duplex streaming can implement DuplexClientTransport "
+                f"by setting SUPPORTS_DUPLEX_STREAMING to True."
             )
         request_future = Future[RequestContext[I, TRequest]]()
         execute_task = asyncio.create_task(self._execute_request(call, request_future))

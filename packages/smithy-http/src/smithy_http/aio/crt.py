@@ -143,8 +143,8 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
     TIMEOUT_EXCEPTIONS = (_CRTTimeoutError,)
 
-    # True duplex streaming additionally requires the connection to negotiate
-    # HTTP/2 via ALPN; over HTTP/1.1 the CRT falls back to a buffered body_stream.
+    # CRT can stream request and response data concurrently when the connection
+    # negotiates HTTP/2.
     SUPPORTS_DUPLEX_STREAMING = True
 
     def __init__(
