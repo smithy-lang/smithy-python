@@ -1,6 +1,5 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-import logging
 import os
 from collections.abc import AsyncIterable
 from inspect import iscoroutinefunction
@@ -29,30 +28,6 @@ from smithy_core.traits import EndpointTrait, HTTPTrait
 from ..deserializers import HTTPResponseDeserializer
 from ..serializers import HTTPRequestSerializer
 from .interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
-
-_LOGGER = logging.getLogger(__name__)
-
-_RETRY_AFTER_HEADER = "x-amz-retry-after"
-
-
-def parse_retry_after(response: HTTPResponse) -> float | None:
-    """Parse the ``x-amz-retry-after`` header into a backoff duration in seconds.
-
-    The header value is an integer number of milliseconds. Invalid or missing
-    values are ignored (return ``None``) so they fall back to exponential backoff.
-    """
-    if _RETRY_AFTER_HEADER not in response.fields:
-        return None
-    raw = response.fields[_RETRY_AFTER_HEADER].as_string()
-    try:
-        milliseconds = int(raw)
-    except (ValueError, TypeError):
-        _LOGGER.debug("Ignoring invalid %s header value: %r", _RETRY_AFTER_HEADER, raw)
-        return None
-    if milliseconds < 0:
-        _LOGGER.debug("Ignoring negative %s header value: %r", _RETRY_AFTER_HEADER, raw)
-        return None
-    return milliseconds / 1000.0
 
 
 class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
@@ -211,7 +186,7 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             operation=operation, response=response
         )
 
-        retry_after = parse_retry_after(response)
+        retry_after = self._retry_after(response)
 
         if error_id is None and self._matches_content_type(response):
             if isinstance(response_body, bytearray):
@@ -266,6 +241,10 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             is_retry_safe=is_throttle or is_timeout or None,
             retry_after=retry_after,
         )
+
+    def _retry_after(self, response: HTTPResponse) -> float | None:
+        """The retry delay in seconds requested by the server, if the response carries one."""
+        return None
 
     def _matches_content_type(self, response: HTTPResponse) -> bool:
         if "content-type" not in response.fields:

@@ -32,15 +32,14 @@ class RetryStrategy(Protocol):
     """Upper limit on total attempt count (initial attempt plus retries)."""
 
     async def acquire_initial_retry_token(
-        self, *, token_scope: str | None = None, is_long_polling: bool = False
+        self, *, token_scope: str | None = None, context: TypedProperties | None = None
     ) -> RetryToken:
         """Called before any retries (for the first attempt at the operation).
 
         :param token_scope: An arbitrary string accepted by the retry strategy to
             separate tokens into scopes.
-        :param is_long_polling: Whether the operation is a long-polling operation.
-            Long-polling operations must back off before returning even when the
-            retry quota is exhausted.
+        :param context: The operation context, read for per-operation signals such as
+            :py:data:`smithy_core.retries.LONG_POLLING`.
         :returns: A retry token, to be used for determining the retry delay, refreshing
             the token after a failure, and recording success after success.
         :raises RetryError: If the retry strategy has no available tokens.
@@ -48,12 +47,18 @@ class RetryStrategy(Protocol):
         ...
 
     async def refresh_retry_token_for_retry(
-        self, *, token_to_renew: RetryToken, error: Exception
+        self,
+        *,
+        token_to_renew: RetryToken,
+        error: Exception,
+        context: TypedProperties | None = None,
     ) -> RetryToken:
         """Replace an existing retry token from a failed attempt with a new token.
 
         :param token_to_renew: The token used for the previous failed attempt.
         :param error: The error that triggered the need for a retry.
+        :param context: The operation context, read for per-operation signals such as
+            :py:data:`smithy_core.retries.LONG_POLLING`.
         :raises RetryError: If no further retry attempts are allowed.
         """
         ...

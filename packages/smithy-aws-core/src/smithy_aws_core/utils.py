@@ -1,7 +1,34 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import logging
+
 from smithy_core.documents import Document
 from smithy_core.shapes import ShapeID, ShapeType
+from smithy_http.aio.interfaces import HTTPResponse
+
+_LOGGER = logging.getLogger(__name__)
+
+_RETRY_AFTER_HEADER = "x-amz-retry-after"
+
+
+def parse_retry_after(response: HTTPResponse) -> float | None:
+    """Parse the ``x-amz-retry-after`` header into a backoff duration in seconds.
+
+    The header value is an integer number of milliseconds. Invalid or missing
+    values are ignored (return ``None``) so they fall back to exponential backoff.
+    """
+    if _RETRY_AFTER_HEADER not in response.fields:
+        return None
+    raw = response.fields[_RETRY_AFTER_HEADER].as_string()
+    try:
+        milliseconds = int(raw)
+    except (ValueError, TypeError):
+        _LOGGER.debug("Ignoring invalid %s header value: %r", _RETRY_AFTER_HEADER, raw)
+        return None
+    if milliseconds < 0:
+        _LOGGER.debug("Ignoring negative %s header value: %r", _RETRY_AFTER_HEADER, raw)
+        return None
+    return milliseconds / 1000.0
 
 
 def parse_document_discriminator(

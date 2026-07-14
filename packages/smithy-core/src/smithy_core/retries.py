@@ -9,8 +9,12 @@ from typing import Literal
 
 from .exceptions import RetryError
 from .interfaces import retries as retries_interface
+from .types import PropertyKey
 
 RetryStrategyType = Literal["simple", "standard"]
+
+LONG_POLLING = PropertyKey(key="long_polling", value_type=bool)
+"""Context key marking an operation as long-polling."""
 
 
 @dataclass(kw_only=True, frozen=True)
@@ -270,6 +274,3 @@ class StandardRetryToken:
 
     quota_acquired: int = 0
     """The amount of quota acquired for this retry attempt."""
-
-    is_long_polling: bool = False
-    """Whether this token is for a long-polling operation."""

@@ -9,12 +9,14 @@ from smithy_core.aio.retries import (
 )
 from smithy_core.exceptions import CallError, RetryError
 from smithy_core.retries import (
-    ExponentialBackoffJitterType as EBJT,
-)
-from smithy_core.retries import (
+    LONG_POLLING,
     ExponentialRetryBackoffStrategy,
     StandardRetryQuota,
 )
+from smithy_core.retries import (
+    ExponentialBackoffJitterType as EBJT,
+)
+from smithy_core.types import TypedProperties
 
 
 @pytest.mark.parametrize("max_attempts", [2, 3, 10])
@@ -193,6 +195,12 @@ async def test_dynamodb_profile_uses_25ms_scale_and_4_attempts() -> None:
     assert token.retry_delay == pytest.approx(0.05)  # type: ignore
 
 
+def _long_polling_context() -> TypedProperties:
+    context = TypedProperties()
+    context[LONG_POLLING] = True
+    return context
+
+
 async def test_long_polling_backs_off_when_quota_exhausted() -> None:
     strategy = StandardRetryStrategy(
         backoff_strategy=ExponentialRetryBackoffStrategy(
@@ -201,11 +209,13 @@ async def test_long_polling_backs_off_when_quota_exhausted() -> None:
         retry_quota=StandardRetryQuota(initial_capacity=0),
         max_attempts=5,
     )
+    context = _long_polling_context()
     error = CallError(is_retry_safe=True)
-    token = await strategy.acquire_initial_retry_token(is_long_polling=True)
-    assert token.is_long_polling is True
+    token = await strategy.acquire_initial_retry_token(context=context)
     with pytest.raises(RetryError) as exc_info:
-        await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
+        await strategy.refresh_retry_token_for_retry(
+            token_to_renew=token, error=error, context=context
+        )
     assert exc_info.value.retry_after == pytest.approx(0.05)  # type: ignore
 
 
@@ -217,10 +227,13 @@ async def test_long_polling_throttling_backs_off_with_throttling_scale() -> None
         retry_quota=StandardRetryQuota(initial_capacity=0),
         max_attempts=5,
     )
+    context = _long_polling_context()
     error = CallError(is_retry_safe=True, is_throttling_error=True)
-    token = await strategy.acquire_initial_retry_token(is_long_polling=True)
+    token = await strategy.acquire_initial_retry_token(context=context)
     with pytest.raises(RetryError) as exc_info:
-        await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
+        await strategy.refresh_retry_token_for_retry(
+            token_to_renew=token, error=error, context=context
+        )
     assert exc_info.value.retry_after == pytest.approx(1.0)  # type: ignore
 
 
@@ -229,10 +242,13 @@ async def test_long_polling_no_backoff_when_max_attempts_reached() -> None:
         retry_quota=StandardRetryQuota(initial_capacity=0),
         max_attempts=1,
     )
+    context = _long_polling_context()
     error = CallError(is_retry_safe=True)
-    token = await strategy.acquire_initial_retry_token(is_long_polling=True)
+    token = await strategy.acquire_initial_retry_token(context=context)
     with pytest.raises(RetryError) as exc_info:
-        await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
+        await strategy.refresh_retry_token_for_retry(
+            token_to_renew=token, error=error, context=context
+        )
     assert exc_info.value.retry_after is None
 
 
@@ -241,10 +257,13 @@ async def test_long_polling_no_backoff_for_non_retryable_error() -> None:
         retry_quota=StandardRetryQuota(initial_capacity=0),
         max_attempts=5,
     )
+    context = _long_polling_context()
     error = CallError(fault="client", is_retry_safe=False)
-    token = await strategy.acquire_initial_retry_token(is_long_polling=True)
+    token = await strategy.acquire_initial_retry_token(context=context)
     with pytest.raises(RetryError) as exc_info:
-        await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
+        await strategy.refresh_retry_token_for_retry(
+            token_to_renew=token, error=error, context=context
+        )
     assert exc_info.value.retry_after is None
 
 
@@ -255,7 +274,6 @@ async def test_non_long_polling_does_not_back_off_when_quota_exhausted() -> None
     )
     error = CallError(is_retry_safe=True)
     token = await strategy.acquire_initial_retry_token()
-    assert token.is_long_polling is False
     with pytest.raises(RetryError) as exc_info:
         await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
     assert exc_info.value.retry_after is None

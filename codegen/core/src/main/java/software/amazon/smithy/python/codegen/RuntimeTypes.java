@@ -68,6 +68,8 @@ public final class RuntimeTypes {
             createSymbol("aio.retries", "RetryStrategyResolver", SmithyPythonDependency.SMITHY_CORE);
     public static final Symbol RETRY_STRATEGY_OPTIONS =
             createSymbol("retries", "RetryStrategyOptions", SmithyPythonDependency.SMITHY_CORE);
+    public static final Symbol LONG_POLLING =
+            createSymbol("retries", "LONG_POLLING", SmithyPythonDependency.SMITHY_CORE);
     public static final Symbol SIMPLE_RETRY_STRATEGY =
             createSymbol("aio.retries", "SimpleRetryStrategy", SmithyPythonDependency.SMITHY_CORE);
 

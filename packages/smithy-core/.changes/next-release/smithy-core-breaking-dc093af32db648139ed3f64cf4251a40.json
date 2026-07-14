@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Updated retry quota costs and added an `is_long_polling` argument to `acquire_initial_retry_token`."
-}

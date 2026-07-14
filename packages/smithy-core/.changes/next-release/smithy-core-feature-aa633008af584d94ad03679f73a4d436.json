@@ -1,4 +1,4 @@
 {
   "type": "feature",
-  "description": "Added support for separate backoff for throttling errors, the `x-amz-retry-after` header, per-service retry defaults, and long-polling backoff."
+  "description": "Updated the standard retry behavior with separate throttling backoff, new retry quota costs, server-provided retry-after delays, per-service defaults, and long-polling backoff."
 }

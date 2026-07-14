@@ -10,14 +10,17 @@ import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ServiceShape;
+import software.amazon.smithy.model.traits.LongPollTrait;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 
 /**
- * Marks the known long-polling operations so the generic client generator
- * applies long-polling retry behavior to them.
+ * Marks long-polling operations so the generic client generator applies
+ * long-polling retry behavior to them.
  *
- * <p>These operations are hard-coded until the {@code aws.api#longPoll} trait
- * ships in service models. Once it ships, this can check for the trait instead.
+ * <p>An operation is long-polling if it carries the {@code smithy.api#longPoll}
+ * trait. Service models do not yet apply the trait, so the known operations are
+ * hard-coded as a fallback. Once the trait ships in the models, the fallback
+ * can be removed.
  */
 public final class AwsLongPollingIntegration implements PythonIntegration {
 
@@ -31,6 +34,9 @@ public final class AwsLongPollingIntegration implements PythonIntegration {
 
     @Override
     public boolean isLongPollingOperation(Model model, ServiceShape service, OperationShape operation) {
+        if (operation.hasTrait(LongPollTrait.class)) {
+            return true;
+        }
         return service.getTrait(ServiceTrait.class)
                 .map(trait -> LONG_POLLING_OPERATIONS.get(trait.getSdkId()))
                 .map(operations -> operations.contains(operation.getId().getName()))

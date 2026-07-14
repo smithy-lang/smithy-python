@@ -4,8 +4,10 @@ from functools import lru_cache
 from typing import Any
 
 from ..exceptions import RetryError
+from ..interfaces import TypedProperties
 from ..interfaces import retries as retries_interface
 from ..retries import (
+    LONG_POLLING,
     ExponentialBackoffJitterType,
     ExponentialRetryBackoffStrategy,
     RetryStrategyOptions,
@@ -110,12 +112,12 @@ class SimpleRetryStrategy:
         self.max_attempts = max_attempts
 
     async def acquire_initial_retry_token(
-        self, *, token_scope: str | None = None, is_long_polling: bool = False
+        self, *, token_scope: str | None = None, context: TypedProperties | None = None
     ) -> SimpleRetryToken:
         """Create a base retry token for the start of a request.
 
         :param token_scope: This argument is ignored by this retry strategy.
-        :param is_long_polling: This argument is ignored by this retry strategy.
+        :param context: This argument is ignored by this retry strategy.
         """
         retry_delay = self.backoff_strategy.compute_next_backoff_delay(0)
         return SimpleRetryToken(retry_count=0, retry_delay=retry_delay)
@@ -125,6 +127,7 @@ class SimpleRetryStrategy:
         *,
         token_to_renew: retries_interface.RetryToken,
         error: Exception,
+        context: TypedProperties | None = None,
     ) -> SimpleRetryToken:
         """Replace an existing retry token from a failed attempt with a new token.
 
@@ -133,6 +136,7 @@ class SimpleRetryStrategy:
 
         :param token_to_renew: The token used for the previous failed attempt.
         :param error: The error that triggered the need for a retry.
+        :param context: This argument is ignored by this retry strategy.
         :raises RetryError: If no further retry attempts are allowed.
         """
         if isinstance(error, retries_interface.ErrorRetryInfo) and error.is_retry_safe:
@@ -225,25 +229,25 @@ class StandardRetryStrategy:
         self._retry_quota = retry_quota or StandardRetryQuota()
 
     async def acquire_initial_retry_token(
-        self, *, token_scope: str | None = None, is_long_polling: bool = False
+        self, *, token_scope: str | None = None, context: TypedProperties | None = None
     ) -> StandardRetryToken:
         """Create a base retry token for the start of a request.
 
         :param token_scope: This argument is ignored by this retry strategy.
-        :param is_long_polling: Whether the operation is a long-polling operation.
-            Long-polling operations back off before returning even when the retry
-            quota is exhausted.
+        :param context: The operation context. A truthy
+            :py:data:`smithy_core.retries.LONG_POLLING` value marks the operation as
+            long-polling, so it backs off before returning even when the retry quota
+            is exhausted.
         """
         retry_delay = self.backoff_strategy.compute_next_backoff_delay(0)
-        return StandardRetryToken(
-            retry_count=0, retry_delay=retry_delay, is_long_polling=is_long_polling
-        )
+        return StandardRetryToken(retry_count=0, retry_delay=retry_delay)
 
     async def refresh_retry_token_for_retry(
         self,
         *,
         token_to_renew: retries_interface.RetryToken,
         error: Exception,
+        context: TypedProperties | None = None,
     ) -> StandardRetryToken:
         """Replace an existing retry token from a failed attempt with a new token.
 
@@ -252,6 +256,8 @@ class StandardRetryStrategy:
 
         :param token_to_renew: The token used for the previous failed attempt.
         :param error: The error that triggered the need for a retry.
+        :param context: The operation context, read for the
+            :py:data:`smithy_core.retries.LONG_POLLING` flag.
         :raises RetryError: If no further retry attempts are allowed.
         """
         if not isinstance(token_to_renew, StandardRetryToken):
@@ -277,7 +283,8 @@ class StandardRetryStrategy:
             try:
                 quota_acquired = self._retry_quota.acquire(error=error)
             except RetryError as quota_error:
-                if token_to_renew.is_long_polling:
+                # Long-polling operations back off even when the quota is exhausted.
+                if context is not None and context.get(LONG_POLLING):
                     raise RetryError(str(quota_error), retry_after=t_i) from error
                 raise
 
@@ -293,7 +300,6 @@ class StandardRetryStrategy:
                 retry_count=retry_count,
                 retry_delay=retry_delay,
                 quota_acquired=quota_acquired,
-                is_long_polling=token_to_renew.is_long_polling,
             )
         else:
             raise RetryError(f"Error is not retryable: {error}") from error
