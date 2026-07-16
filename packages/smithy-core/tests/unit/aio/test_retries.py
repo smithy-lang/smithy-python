@@ -341,49 +341,6 @@ async def test_retry_strategy_resolver_rejects_invalid_type() -> None:
         await resolver.resolve_retry_strategy(retry_strategy="invalid")  # type: ignore
 
 
-async def test_resolver_service_defaults_applied_when_customer_unset() -> None:
-    resolver = RetryStrategyResolver(
-        default_max_attempts=4, default_backoff_scale=0.025
-    )
-
-    strategy = await resolver.resolve_retry_strategy(retry_strategy=None)
-
-    assert isinstance(strategy, StandardRetryStrategy)
-    assert strategy.max_attempts == 4
-    delay = strategy.backoff_strategy.compute_next_backoff_delay(1)
-    assert 0 <= delay <= 0.025
-
-
-async def test_resolver_customer_max_attempts_overrides_default_keeps_backoff() -> None:
-    resolver = RetryStrategyResolver(
-        default_max_attempts=4, default_backoff_scale=0.025
-    )
-
-    strategy = await resolver.resolve_retry_strategy(
-        retry_strategy=RetryStrategyOptions(max_attempts=10)
-    )
-
-    assert isinstance(strategy, StandardRetryStrategy)
-    assert strategy.max_attempts == 10
-    delay = strategy.backoff_strategy.compute_next_backoff_delay(1)
-    assert 0 <= delay <= 0.025
-
-
-async def test_resolver_empty_options_still_get_service_defaults() -> None:
-    resolver = RetryStrategyResolver(
-        default_max_attempts=4, default_backoff_scale=0.025
-    )
-
-    strategy = await resolver.resolve_retry_strategy(
-        retry_strategy=RetryStrategyOptions()
-    )
-
-    assert isinstance(strategy, StandardRetryStrategy)
-    assert strategy.max_attempts == 4
-    delay = strategy.backoff_strategy.compute_next_backoff_delay(1)
-    assert 0 <= delay <= 0.025
-
-
 async def test_resolver_no_service_defaults_uses_strategy_defaults() -> None:
     resolver = RetryStrategyResolver()
 
@@ -395,13 +352,21 @@ async def test_resolver_no_service_defaults_uses_strategy_defaults() -> None:
     assert 0 <= delay <= 0.05
 
 
-async def test_resolver_explicit_strategy_ignores_service_defaults() -> None:
-    resolver = RetryStrategyResolver(
-        default_max_attempts=4, default_backoff_scale=0.025
-    )
+async def test_resolver_explicit_strategy_is_returned_as_is() -> None:
+    resolver = RetryStrategyResolver()
     provided = StandardRetryStrategy(max_attempts=7)
 
     strategy = await resolver.resolve_retry_strategy(retry_strategy=provided)
 
     assert strategy is provided
     assert strategy.max_attempts == 7
+
+
+async def test_resolver_options_are_cached() -> None:
+    resolver = RetryStrategyResolver()
+    options = RetryStrategyOptions(max_attempts=4)
+
+    strategy1 = await resolver.resolve_retry_strategy(retry_strategy=options)
+    strategy2 = await resolver.resolve_retry_strategy(retry_strategy=options)
+
+    assert strategy1 is strategy2

@@ -7,58 +7,36 @@ package software.amazon.smithy.python.aws.codegen;
 import java.util.List;
 import java.util.Set;
 import software.amazon.smithy.aws.traits.ServiceTrait;
+import software.amazon.smithy.codegen.core.Symbol;
+import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.python.codegen.GenerationContext;
-import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
-import software.amazon.smithy.python.codegen.sections.InitRetryStrategyResolverSection;
-import software.amazon.smithy.python.codegen.writer.PythonWriter;
-import software.amazon.smithy.utils.CodeInterceptor;
-import software.amazon.smithy.utils.CodeSection;
+import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
 
 /**
- * Injects DynamoDB's default retry options (max attempts 4, 25ms non-throttling
- * base backoff).
+ * Registers DynamoDB's retry defaults as a service-scoped client plugin on
+ * DynamoDB / DynamoDB Streams clients.
  */
 public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
 
     private static final Set<String> DYNAMODB_SDK_IDS = Set.of("DynamoDB", "DynamoDB Streams");
 
-    private static final double DYNAMODB_BASE_BACKOFF_SECONDS = 0.025;
-    private static final int DYNAMODB_MAX_ATTEMPTS = 4;
-
-    private static boolean isDynamoDb(GenerationContext context) {
-        return context.settings()
-                .service(context.model())
-                .getTrait(ServiceTrait.class)
-                .map(trait -> DYNAMODB_SDK_IDS.contains(trait.getSdkId()))
-                .orElse(false);
-    }
+    private static final SymbolReference DYNAMODB_RETRY_PLUGIN = SymbolReference.builder()
+            .symbol(Symbol.builder()
+                    .namespace("smithy_aws_core.plugins", ".")
+                    .name("dynamodb_retry_plugin")
+                    .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                    .build())
+            .build();
 
     @Override
-    public List<? extends CodeInterceptor<? extends CodeSection, PythonWriter>> interceptors(
-            GenerationContext context
-    ) {
-        if (!isDynamoDb(context)) {
-            return List.of();
-        }
-        return List.of(new DynamoDbRetryStrategyResolverInterceptor());
-    }
-
-    private static final class DynamoDbRetryStrategyResolverInterceptor
-            implements CodeInterceptor<InitRetryStrategyResolverSection, PythonWriter> {
-
-        @Override
-        public Class<InitRetryStrategyResolverSection> sectionType() {
-            return InitRetryStrategyResolverSection.class;
-        }
-
-        @Override
-        public void write(PythonWriter writer, String previousText, InitRetryStrategyResolverSection section) {
-            writer.write(
-                    "self._retry_strategy_resolver = $T(default_max_attempts=$L, default_backoff_scale=$L)",
-                    RuntimeTypes.RETRY_STRATEGY_RESOLVER,
-                    DYNAMODB_MAX_ATTEMPTS,
-                    DYNAMODB_BASE_BACKOFF_SECONDS);
-        }
+    public List<RuntimeClientPlugin> getClientPlugins(GenerationContext context) {
+        return List.of(
+                RuntimeClientPlugin.builder()
+                        .servicePredicate((model, service) -> service.getTrait(ServiceTrait.class)
+                                .map(trait -> DYNAMODB_SDK_IDS.contains(trait.getSdkId()))
+                                .orElse(false))
+                        .pythonPlugin(DYNAMODB_RETRY_PLUGIN)
+                        .build());
     }
 }

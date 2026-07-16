@@ -25,29 +25,10 @@ class RetryStrategyResolver:
     This resolver caches retry strategy instances based on their configuration to reuse existing
     instances of RetryStrategy with the same settings. Uses LRU cache for thread-safe caching.
 
-    A service may supply its own defaults for these options. Precedence is considered on
-    a per-value basis: a customer-configured value always takes precedence, and a default
-    only fills in a value the customer did not set. For example, if the customer sets
-    ``max_attempts`` but not the backoff scale, the resulting strategy uses the customer's
-    max attempts and the service's default backoff scale.
+    Any defaults are applied upstream by filling the
+    :py:class:`~smithy_core.retries.RetryStrategyOptions` before resolution; the resolver
+    simply builds (and caches) a strategy from the given options.
     """
-
-    def __init__(
-        self,
-        *,
-        default_max_attempts: int | None = None,
-        default_backoff_scale: float | None = None,
-    ):
-        """Initialize the resolver.
-
-        :param default_max_attempts: The maximum number of attempts to use when the
-            customer did not configure one. Only applies to standard mode.
-        :param default_backoff_scale: The base backoff scale in seconds used for
-            non-throttling errors when the customer did not configure one. Only applies
-            to standard mode.
-        """
-        self._default_max_attempts = default_max_attempts
-        self._default_backoff_scale = default_backoff_scale
 
     async def resolve_retry_strategy(
         self, *, retry_strategy: RetryStrategy | RetryStrategyOptions | None
@@ -73,9 +54,6 @@ class RetryStrategyResolver:
     def _create_retry_strategy(
         self, retry_mode: RetryStrategyType, max_attempts: int | None
     ) -> RetryStrategy:
-        if max_attempts is None:
-            max_attempts = self._default_max_attempts
-
         kwargs: dict[str, Any] = {"max_attempts": max_attempts}
         filtered_kwargs: dict[str, Any] = {
             k: v for k, v in kwargs.items() if v is not None
@@ -84,10 +62,6 @@ class RetryStrategyResolver:
             case "simple":
                 return SimpleRetryStrategy(**filtered_kwargs)
             case "standard":
-                if self._default_backoff_scale is not None:
-                    filtered_kwargs["default_backoff_scale"] = (
-                        self._default_backoff_scale
-                    )
                 return StandardRetryStrategy(**filtered_kwargs)
             case _:
                 raise ValueError(f"Unknown retry mode: {retry_mode}")
