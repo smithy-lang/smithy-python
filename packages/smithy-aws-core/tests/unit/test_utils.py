@@ -64,6 +64,10 @@ def test_aws_json_document_discriminator(
             "com.test#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate",
             "com.test#FooError",
         ),
+        (
+            "com.other#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate",
+            "com.test#FooError",
+        ),
         ("", None),
         (":", None),
     ],
@@ -73,6 +77,15 @@ def test_parse_error_code(code: str, expected: ShapeID | None) -> None:
     assert actual == expected
 
 
-def test_parse_error_code_without_default_namespace() -> None:
-    actual = parse_error_code("FooError", None)
-    assert actual is None
+@pytest.mark.parametrize(
+    "code, expected",
+    [
+        ("FooError", None),
+        ("com.test#FooError", "com.test#FooError"),
+    ],
+)
+def test_parse_error_code_without_default_namespace(
+    code: str, expected: ShapeID | None
+) -> None:
+    actual = parse_error_code(code, None)
+    assert actual == expected

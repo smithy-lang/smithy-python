@@ -39,6 +39,10 @@ from smithy_json import JSONSettings
             "com.test#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate",
             "com.test#FooError",
         ),
+        (
+            "com.other#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate",
+            "com.test#FooError",
+        ),
         ("", None),
         (":", None),
         (None, None),
@@ -73,6 +77,12 @@ def test_aws_error_identifier(header: str | None, expected: ShapeID | None) -> N
         (
             {
                 "__type": "com.test#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate"
+            },
+            "com.test#FooError",
+        ),
+        (
+            {
+                "__type": "com.other#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate"
             },
             "com.test#FooError",
         ),
