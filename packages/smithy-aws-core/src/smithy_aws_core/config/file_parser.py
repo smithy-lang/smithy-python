@@ -25,23 +25,23 @@ class FileType(Enum):
 
 
 @dataclass
-class Profile:
-    """A single profile with its scalar properties and grouped (sub) properties."""
+class Section:
+    """A single parsed section with its scalar properties and grouped (sub) properties."""
 
     properties: dict[str, str] = field(default_factory=dict)  # type: ignore[assignment]
     sub_properties: dict[str, dict[str, str]] = field(default_factory=dict)  # type: ignore[assignment]
 
 
-type ProfileMap = dict[str, Profile]
+type SectionMap = dict[str, Section]
 
 
 @dataclass
 class StandardizedOutput:
     """Normalized output after standardization."""
 
-    profiles: ProfileMap = field(default_factory=dict)  # type: ignore[assignment]
-    sso_sessions: ProfileMap = field(default_factory=dict)  # type: ignore[assignment]
-    services: ProfileMap = field(default_factory=dict)  # type: ignore[assignment]
+    profiles: SectionMap = field(default_factory=dict)  # type: ignore[assignment]
+    sso_sessions: SectionMap = field(default_factory=dict)  # type: ignore[assignment]
+    services: SectionMap = field(default_factory=dict)  # type: ignore[assignment]
 
 
 async def parse_config_file(file_path: str) -> RawParsedSections:
@@ -75,9 +75,9 @@ def standardize(
     :param file_type: Whether this is a config or credentials file.
     :returns: StandardizedOutput with profiles, sso_sessions, and services.
     """
-    profiles: ProfileMap = {}
-    sso_sessions: ProfileMap = {}
-    services: ProfileMap = {}
+    profiles: SectionMap = {}
+    sso_sessions: SectionMap = {}
+    services: SectionMap = {}
 
     has_profile_default = False
     if file_type == FileType.CONFIG:
@@ -287,9 +287,9 @@ def _strip_inline_comment(value: str) -> str:
 def _classify_config_section(
     section_name: str,
     properties: dict[str, str | dict[str, str]],
-    profiles: ProfileMap,
-    sso_sessions: ProfileMap,
-    services: ProfileMap,
+    profiles: SectionMap,
+    sso_sessions: SectionMap,
+    services: SectionMap,
     has_profile_default: bool,
 ) -> None:
     stripped = section_name.strip()
@@ -321,7 +321,7 @@ def _classify_config_section(
 def _classify_credentials_section(
     section_name: str,
     properties: dict[str, str | dict[str, str]],
-    profiles: ProfileMap,
+    profiles: SectionMap,
 ) -> None:
     stripped = section_name.strip()
 
@@ -360,13 +360,13 @@ def _is_profile_prefixed_default(section_name: str) -> bool:
 
 
 def _merge_properties(
-    target: ProfileMap,
+    target: SectionMap,
     name: str,
     properties: dict[str, str | dict[str, str]],
 ) -> None:
     """Merge properties into target Profile. Later values win for duplicates."""
     if name not in target:
-        target[name] = Profile()
+        target[name] = Section()
     profile = target[name]
     for key, value in properties.items():
         if isinstance(value, dict):

@@ -13,12 +13,6 @@ class TestFileIssues:
     """Tests that missing files are treated as empty."""
 
     @pytest.mark.asyncio
-    async def test_config_not_found_returns_empty(self, tmp_path: Path):
-        nonexistent = str(tmp_path / "does_not_exist")
-        result = await parse_config_file(nonexistent)
-        assert result == {}
-
-    @pytest.mark.asyncio
     async def test_load_config_with_missing_files(self, tmp_path: Path):
         config_file = await load_config(
             config_file_path=tmp_path / "no_config",

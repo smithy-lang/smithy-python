@@ -2,8 +2,8 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from smithy_aws_core.config.file_parser import (
-    Profile,
-    ProfileMap,
+    Section,
+    SectionMap,
     StandardizedOutput,
 )
 
@@ -66,50 +66,50 @@ class MergedConfig:
             return None
         return group.get(sub_key.lower())
 
-    def get_profile(self, profile_name: str) -> Profile | None:
+    def get_profile(self, profile_name: str) -> Section | None:
         """Get all properties for a profile.
 
         :param profile_name: The profile name.
-        :returns: Profile object, or None if profile doesn't exist.
+        :returns: Section object, or None if profile doesn't exist.
         """
         return self._profiles.get(profile_name)
 
-    def get_sso_session(self, session_name: str) -> Profile | None:
+    def get_sso_session(self, session_name: str) -> Section | None:
         """Get properties for an SSO session.
 
         :param session_name: The SSO session name.
-        :returns: Profile object, or None if session doesn't exist.
+        :returns: Section object, or None if session doesn't exist.
         """
         return self._sso_sessions.get(session_name)
 
     @property
-    def profiles(self) -> ProfileMap:
+    def profiles(self) -> SectionMap:
         """All merged profiles."""
         return self._profiles
 
     @property
-    def sso_sessions(self) -> ProfileMap:
+    def sso_sessions(self) -> SectionMap:
         """All SSO sessions from config file."""
         return self._sso_sessions
 
     @property
-    def services(self) -> ProfileMap:
+    def services(self) -> SectionMap:
         """All services sections from config file."""
         return self._services
 
     @staticmethod
     def _merge_profiles(
-        config_profiles: ProfileMap,
-        credentials_profiles: ProfileMap,
-    ) -> ProfileMap:
+        config_profiles: SectionMap,
+        credentials_profiles: SectionMap,
+    ) -> SectionMap:
         """Merge profiles from config and credentials files.
 
         Properties in credentials file take precedence for duplicates.
         """
-        merged: ProfileMap = {}
+        merged: SectionMap = {}
 
         for name, profile in config_profiles.items():
-            merged[name] = Profile(
+            merged[name] = Section(
                 properties=dict(profile.properties),
                 sub_properties={k: dict(v) for k, v in profile.sub_properties.items()},
             )
@@ -119,7 +119,7 @@ class MergedConfig:
                 merged[name].properties.update(profile.properties)
                 merged[name].sub_properties.update(profile.sub_properties)
             else:
-                merged[name] = Profile(
+                merged[name] = Section(
                     properties=dict(profile.properties),
                     sub_properties={
                         k: dict(v) for k, v in profile.sub_properties.items()

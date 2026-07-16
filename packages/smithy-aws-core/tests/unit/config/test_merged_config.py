@@ -3,20 +3,20 @@
 """Unit tests for MergedConfig class."""
 
 from smithy_aws_core.config.file_parser import (
-    Profile,
     RawParsedSections,
+    Section,
     StandardizedOutput,
 )
 from smithy_aws_core.config.merged_config import MergedConfig
 
 
-def _to_profile_map(
+def _to_section_map(
     raw: RawParsedSections | None,
-) -> dict[str, Profile]:
-    """Convert a raw dict to a ProfileMap (dict[str, Profile])."""
+) -> dict[str, Section]:
+    """Convert a raw dict to a SectionMap (dict[str, Section])."""
     if raw is None:
         return {}
-    result: dict[str, Profile] = {}
+    result: dict[str, Section] = {}
     for name, value in raw.items():
         properties: dict[str, str] = {}
         sub_properties: dict[str, dict[str, str]] = {}
@@ -25,7 +25,7 @@ def _to_profile_map(
                 sub_properties[k] = v
             else:
                 properties[k] = v
-        result[name] = Profile(properties=properties, sub_properties=sub_properties)
+        result[name] = Section(properties=properties, sub_properties=sub_properties)
     return result
 
 
@@ -37,12 +37,12 @@ def _make_config_file(
 ) -> MergedConfig:
     """Helper to build a MergedConfig from raw dicts."""
     config_data = StandardizedOutput(
-        profiles=_to_profile_map(config_profiles),
-        sso_sessions=_to_profile_map(config_sso_sessions),
-        services=_to_profile_map(config_services),
+        profiles=_to_section_map(config_profiles),
+        sso_sessions=_to_section_map(config_sso_sessions),
+        services=_to_section_map(config_services),
     )
     credentials_data = StandardizedOutput(
-        profiles=_to_profile_map(credentials_profiles),
+        profiles=_to_section_map(credentials_profiles),
     )
     return MergedConfig(config_data, credentials_data)
 
