@@ -24,8 +24,7 @@ def parse_error_code(code: str, default_namespace: str | None) -> ShapeID | None
 
     code = code.split(":", 1)[0]
     if "#" in code:
-        parsed_namespace, code = code.rsplit("#", 1)
-        default_namespace = default_namespace or parsed_namespace
+        return ShapeID(code)
 
     if not code or not default_namespace:
         return None
