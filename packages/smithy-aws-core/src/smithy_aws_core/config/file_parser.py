@@ -26,10 +26,9 @@ class FileType(Enum):
 
 @dataclass
 class Section:
-    """A single parsed section with its scalar properties and grouped (sub) properties."""
+    """A single parsed section with its properties."""
 
-    properties: dict[str, str] = field(default_factory=dict)  # type: ignore[assignment]
-    sub_properties: dict[str, dict[str, str]] = field(default_factory=dict)  # type: ignore[assignment]
+    properties: dict[str, str | dict[str, str]] = field(default_factory=dict)  # type: ignore[assignment]
 
 
 type SectionMap = dict[str, Section]
@@ -56,7 +55,10 @@ async def parse_config_file(file_path: str) -> RawParsedSections:
     content = await _read_file(file_path)
     if content is None:
         return {}
-    return _parse_content(content)
+    try:
+        return _parse_content(content)
+    except ConfigParseError as e:
+        raise ConfigParseError(f"Unable to parse config file '{file_path}': {e}")
 
 
 def standardize(
@@ -137,6 +139,7 @@ def _parse_content(content: str) -> RawParsedSections:
     current_section: str | None = None
     current_key: str | None = None
     in_sub_property: bool = False
+    ignore_continuation: bool = False
 
     for line_num, line in enumerate(content.splitlines(), start=1):
         # Blank line
@@ -160,6 +163,8 @@ def _parse_content(content: str) -> RawParsedSections:
                     f"Line {line_num}: Expected a property definition, "
                     f"found continuation"
                 )
+            if ignore_continuation:
+                continue
 
             trimmed = line.strip()
 
@@ -201,6 +206,9 @@ def _parse_content(content: str) -> RawParsedSections:
             # _handle_sub_property promotes it from "" to {}. If no continuation,
             # it stays as ""
             sections[current_section][key] = value
+            ignore_continuation = False
+        else:
+            ignore_continuation = True
 
     return sections
 
@@ -325,13 +333,6 @@ def _classify_credentials_section(
 ) -> None:
     stripped = section_name.strip()
 
-    if stripped.startswith("profile"):
-        return
-    if stripped.startswith("sso-session"):
-        return
-    if stripped.startswith("services"):
-        return
-
     if _is_valid_identifier(stripped):
         _merge_properties(profiles, stripped, properties)
 
@@ -364,12 +365,7 @@ def _merge_properties(
     name: str,
     properties: dict[str, str | dict[str, str]],
 ) -> None:
-    """Merge properties into target Profile. Later values win for duplicates."""
+    """Merge properties into target Section. Later values win for duplicates."""
     if name not in target:
         target[name] = Section()
-    profile = target[name]
-    for key, value in properties.items():
-        if isinstance(value, dict):
-            profile.sub_properties[key] = value
-        else:
-            profile.properties[key] = value
+    target[name].properties.update(properties)

@@ -42,7 +42,8 @@ class MergedConfig:
         profile = self._profiles.get(profile_name)
         if profile is None:
             return None
-        return profile.properties.get(key.lower())
+        val = profile.properties.get(key.lower())
+        return val if isinstance(val, str) else None
 
     def get_sub_property(self, profile_name: str, key: str, sub_key: str) -> str | None:
         """Get a sub-property value for a specific profile.
@@ -61,10 +62,10 @@ class MergedConfig:
         profile = self._profiles.get(profile_name)
         if profile is None:
             return None
-        group = profile.sub_properties.get(key.lower())
-        if group is None:
-            return None
-        return group.get(sub_key.lower())
+        val = profile.properties.get(key.lower())
+        if isinstance(val, dict):
+            return val.get(sub_key.lower())
+        return None
 
     def get_profile(self, profile_name: str) -> Section | None:
         """Get all properties for a profile.
@@ -102,28 +103,13 @@ class MergedConfig:
         config_profiles: SectionMap,
         credentials_profiles: SectionMap,
     ) -> SectionMap:
-        """Merge profiles from config and credentials files.
-
-        Properties in credentials file take precedence for duplicates.
-        """
+        """Merge profiles from config and credentials files. Credentials wins for duplicates."""
         merged: SectionMap = {}
-
-        for name, profile in config_profiles.items():
-            merged[name] = Section(
-                properties=dict(profile.properties),
-                sub_properties={k: dict(v) for k, v in profile.sub_properties.items()},
-            )
-
-        for name, profile in credentials_profiles.items():
+        for name, section in config_profiles.items():
+            merged[name] = Section(properties=dict(section.properties))
+        for name, section in credentials_profiles.items():
             if name in merged:
-                merged[name].properties.update(profile.properties)
-                merged[name].sub_properties.update(profile.sub_properties)
+                merged[name].properties.update(section.properties)
             else:
-                merged[name] = Section(
-                    properties=dict(profile.properties),
-                    sub_properties={
-                        k: dict(v) for k, v in profile.sub_properties.items()
-                    },
-                )
-
+                merged[name] = Section(properties=dict(section.properties))
         return merged

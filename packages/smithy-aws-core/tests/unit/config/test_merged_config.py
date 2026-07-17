@@ -18,14 +18,7 @@ def _to_section_map(
         return {}
     result: dict[str, Section] = {}
     for name, value in raw.items():
-        properties: dict[str, str] = {}
-        sub_properties: dict[str, dict[str, str]] = {}
-        for k, v in value.items():
-            if isinstance(v, dict):
-                sub_properties[k] = v
-            else:
-                properties[k] = v
-        result[name] = Section(properties=properties, sub_properties=sub_properties)
+        result[name] = Section(properties=dict(value))
     return result
 
 
@@ -116,7 +109,6 @@ class TestGetProfile:
         profile = cf.get_profile("work")
         assert profile is not None
         assert profile.properties == {"region": "us-west-2", "output": "json"}
-        assert profile.sub_properties == {}
 
     def test_returns_none_for_missing(self):
         cf = _make_config_file(config_profiles={})
@@ -166,6 +158,26 @@ class TestMerge:
             "aws_access_key_id": "KEY",
             "aws_secret_access_key": "SECRET",
         }
+
+    def test_credentials_sub_property_overrides_config_scalar(self):
+        """When config has a scalar key and credentials has the same key as a
+        sub-property group, credentials wins and the scalar is removed."""
+        cf = _make_config_file(
+            config_profiles={"p": {"x": "config"}},
+            credentials_profiles={"p": {"x": {"nested": "credentials"}}},
+        )
+        assert cf.get("p", "x") is None
+        assert cf.get_sub_property("p", "x", "nested") == "credentials"
+
+    def test_credentials_scalar_overrides_config_sub_property(self):
+        """When config has a sub-property group and credentials has the same key
+        as a scalar, credentials wins and the sub-property is removed."""
+        cf = _make_config_file(
+            config_profiles={"p": {"x": {"nested": "config"}}},
+            credentials_profiles={"p": {"x": "credentials"}},
+        )
+        assert cf.get_sub_property("p", "x", "nested") is None
+        assert cf.get("p", "x") == "credentials"
 
 
 class TestSsoSessions:

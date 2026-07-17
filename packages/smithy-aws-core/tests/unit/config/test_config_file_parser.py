@@ -9,6 +9,7 @@ import pytest
 from smithy_aws_core.config.exceptions import ConfigParseError
 from smithy_aws_core.config.file_parser import (
     FileType,
+    RawParsedSections,
     parse_config_file,
     standardize,
 )
@@ -56,14 +57,12 @@ async def _run_parse_and_standardize(
     profiles_dict = {}
     for name, profile in merged_config.profiles.items():
         flat: dict[str, str | dict[str, str]] = dict(profile.properties)
-        flat.update(profile.sub_properties)
         profiles_dict[name] = flat
     result["profiles"] = profiles_dict
 
     sso_sessions_dict = {}
     for name, profile in merged_config.sso_sessions.items():
         flat = dict(profile.properties)
-        flat.update(profile.sub_properties)
         sso_sessions_dict[name] = flat
     if sso_sessions_dict:
         result["ssoSessions"] = sso_sessions_dict
@@ -114,3 +113,52 @@ async def test_config_file_parser_conformance(
             f"Expected: {json.dumps(expected_output['ssoSessions'], indent=2)}\n"
             f"Actual: {json.dumps(actual_output.get('ssoSessions', {}), indent=2)}"
         )
+
+
+@pytest.mark.parametrize(
+    "section_name,should_be_valid",
+    [
+        # Valid credentials profiles — names that happen to start with reserved words
+        ("services-internal", True),
+        ("sso-session-backup", True),
+        ("sso-session.prod", True),
+        # Invalid — uses the "profile <name>" prefix syntax
+        ("profile prod", False),
+        ("sso-session default", False),
+        ("service my-service", False),
+    ],
+)
+def test_credentials_section_names(section_name: str, should_be_valid: bool):
+    raw: RawParsedSections = {section_name: {"key": "value"}}
+    result = standardize(raw, FileType.CREDENTIALS)
+    if should_be_valid:
+        assert section_name in result.profiles, (
+            f"'{section_name}' should be a valid credentials profile"
+        )
+        assert result.profiles[section_name].properties.get("key") == "value"
+    else:
+        assert section_name not in result.profiles, (
+            f"'{section_name}' should be rejected in credentials file"
+        )
+
+
+@pytest.mark.asyncio
+async def test_parse_error_includes_file_path(tmp_path: Path):
+    bad_file = tmp_path / "config"
+    bad_file.write_text("[profile p\n")  # unclosed section header
+
+    with pytest.raises(ConfigParseError, match=str(bad_file)):
+        await parse_config_file(str(bad_file))
+
+
+@pytest.mark.asyncio
+async def test_invalid_property_continuation_not_appended_to_previous(tmp_path: Path):
+    """Continuation lines after an invalid property should be discarded,
+    not appended to the previous valid property."""
+    config_file = tmp_path / "config"
+    config_file.write_text(
+        "[profile p]\nregion = us-east-1\ninvalid key = ignored\n  continuation\n"
+    )
+    raw = await parse_config_file(str(config_file))
+    result = standardize(raw, FileType.CONFIG)
+    assert result.profiles["p"].properties["region"] == "us-east-1"
