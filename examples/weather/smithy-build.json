@@ -17,6 +17,23 @@
           "moduleVersion": "0.0.1"
         }
       }
+    },
+    "python-poc": {
+      "plugins": {
+        "run::python-client-poc": {
+          "command": [
+            "smithy-python",
+            "generate",
+            "client",
+            "--service",
+            "example.weather#Weather",
+            "--module",
+            "weather",
+            "--module-version",
+            "0.0.1"
+          ]
+        }
+      }
     }
   }
 }

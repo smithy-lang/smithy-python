@@ -11,6 +11,7 @@ members = [
     "smithy-http",
     "smithy-json",
     "smithy-python",
+    "smithy-python-workspace",
     "smithy-xml",
 ]
 
@@ -776,6 +777,11 @@ requires-dist = [
 
 [[package]]
 name = "smithy-python"
+version = "0.1.0"
+source = { editable = "packages/smithy-python" }
+
+[[package]]
+name = "smithy-python-workspace"
 version = "0.1.0"
 source = { virtual = "." }
 

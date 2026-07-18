@@ -14,12 +14,16 @@ build-java: ## Builds the Java code generation packages.
 	cd codegen && ./gradlew clean build
 
 
-test-protocols: ## Generates and runs protocol tests for all supported protocols.
+test-protocols: ## Generates and runs Java codegen protocol tests.
 	cd codegen && ./gradlew :protocol-test:clean :protocol-test:build
 	@set -e; for projection_dir in codegen/protocol-test/build/smithyprojections/protocol-test/*/python-client-codegen; do \
 		uv pip install "$$projection_dir"; \
 		uv run pytest "$$projection_dir"; \
 	done
+
+
+test-python-codegen: ## Tests the experimental Python code generator POC.
+	uv run --package smithy-python pytest packages/smithy-python/tests -q
 
 
 lint-py: ## Runs linters and formatters on the python packages.

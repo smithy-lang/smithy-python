@@ -63,10 +63,10 @@ jobs:
         run: |
           make build-py
 
-      - name: Build (and test) java packages
+      - name: Build (and test) Java codegen
         run: |
           make build-java
 
-      - name: Run protocol tests
+      - name: Run Java codegen protocol tests
         run: |
           make test-protocols
