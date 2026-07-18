@@ -116,7 +116,6 @@ _GENERATED_TYPES = {
 }
 _CLASS_RESERVED = {
     "Config",
-    "Plugin",
     "ServiceError",
     "Schema",
     "ShapeID",
@@ -149,6 +148,12 @@ class PythonSymbolProvider:
         self._renames = self._service_renames()
         self._generated_names = {
             self._shape_name(shape) for shape in model if shape.type in _GENERATED_TYPES
+        }
+        self._generated_schema_names = {
+            snake_case(self._shape_name(shape)).upper()
+            for shape in model
+            if shape.id.namespace != "smithy.api"
+            and shape.type is not ShapeType.RESOURCE
         }
 
     def to_symbol(self, shape: Shape | Member) -> Symbol:
@@ -199,11 +204,18 @@ class PythonSymbolProvider:
     def _create_symbol(self, shape: Shape) -> Symbol:
         if shape.type in _SIMPLE_TYPES:
             name, namespace, dependency = _SIMPLE_TYPES[shape.type]
+            if name in self._generated_names:
+                name = f"_{name}"
             if shape.type is ShapeType.BLOB and shape.has_trait("smithy.api#streaming"):
+                streaming_name = (
+                    "_StreamingBlob"
+                    if "StreamingBlob" in self._generated_names
+                    else "StreamingBlob"
+                )
                 return self._schema_property(
                     shape,
                     Symbol(
-                        name="StreamingBlob",
+                        name=streaming_name,
                         namespace="smithy_core.aio.interfaces",
                         dependencies=(_SMITHY_CORE,),
                     ),
@@ -247,7 +259,9 @@ class PythonSymbolProvider:
                 ).with_property(
                     DESERIALIZER,
                     self._generated(
-                        f"_{symbol.name}Deserializer", include_schema=False
+                        f"{'' if shape.has_trait('smithy.api#streaming') else '_'}"
+                        f"{symbol.name}Deserializer",
+                        include_schema=False,
                     ),
                 )
             return symbol
@@ -285,8 +299,9 @@ class PythonSymbolProvider:
 
     def _schema_property(self, shape: Shape, symbol: Symbol) -> Symbol:
         if shape.id.namespace == "smithy.api":
+            name = snake_case(shape.id.name).upper()
             schema = Symbol(
-                name=snake_case(shape.id.name).upper(),
+                name=f"_{name}" if name in self._generated_schema_names else name,
                 namespace="smithy_core.prelude",
                 dependencies=(_SMITHY_CORE,),
             )

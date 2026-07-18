@@ -5,7 +5,9 @@
 from __future__ import annotations
 
 import fnmatch
+from dataclasses import replace
 from pathlib import Path
+from types import MappingProxyType
 
 from .context import GenerationContext
 from .exceptions import CodegenError
@@ -37,6 +39,7 @@ class PythonCodeGenerator:
         environment: PluginEnvironment | None = None,
     ) -> tuple[Path, ...]:
         environment = environment or PluginEnvironment.from_environ()
+        model = _create_dedicated_inputs_and_outputs(model)
         model = self.plugins.preprocess(model, settings)
         shapes = self._select_shapes(model, settings)
         provider = PythonSymbolProvider(model, settings)
@@ -156,3 +159,79 @@ class PythonCodeGenerator:
         for value in values:
             model.expect(value)
         return values
+
+
+def _create_dedicated_inputs_and_outputs(model: Model) -> Model:
+    """Give every operation dedicated input and output structures."""
+    existing = {shape.id for shape in model}
+    synthetic: list[Shape] = []
+    replacements: dict[ShapeID, Shape] = {}
+    unit = ShapeID.parse("smithy.api#Unit")
+
+    for shape in model:
+        if shape.type is not ShapeType.OPERATION:
+            continue
+
+        attributes = dict(shape.attributes)
+        for key, suffix, trait in (
+            ("input", "Input", "smithy.api#input"),
+            ("output", "Output", "smithy.api#output"),
+        ):
+            reference = attributes.get(key)
+            target = reference.get("target") if isinstance(reference, dict) else None
+            target_id = ShapeID.parse(target) if isinstance(target, str) else unit
+            target_shape = model.expect(target_id)
+            preferred_id = ShapeID(
+                namespace=shape.id.namespace,
+                name=f"{shape.id.name}{suffix}",
+            )
+            fallback_id = ShapeID(
+                namespace=shape.id.namespace,
+                name=f"{shape.id.name}Operation{suffix}",
+            )
+            if target_id in {preferred_id, fallback_id} and target_shape.has_trait(
+                trait
+            ):
+                continue
+
+            synthetic_id = preferred_id
+            if synthetic_id in existing and synthetic_id != target_id:
+                synthetic_id = fallback_id
+            if synthetic_id in existing and synthetic_id != target_id:
+                raise CodegenError(
+                    f"Cannot create dedicated {key} for {shape.id}: "
+                    f"shape already exists: {synthetic_id}"
+                )
+            traits = MappingProxyType(
+                {
+                    "smithy.synthetic#originalShapeId": str(target_id),
+                    **{
+                        name: value
+                        for name, value in target_shape.traits.items()
+                        if name not in {"smithy.api#input", "smithy.api#output"}
+                    },
+                    trait: {},
+                }
+            )
+            dedicated = (
+                Shape(
+                    id=synthetic_id,
+                    type=ShapeType.STRUCTURE,
+                    traits=traits,
+                )
+                if target_id == unit
+                else replace(target_shape, id=synthetic_id, traits=traits)
+            )
+            if synthetic_id == target_id:
+                replacements[target_id] = dedicated
+            else:
+                existing.add(synthetic_id)
+                synthetic.append(dedicated)
+            attributes[key] = {"target": str(synthetic_id)}
+
+        replacements[shape.id] = replace(shape, attributes=MappingProxyType(attributes))
+
+    if not synthetic and not replacements:
+        return model
+    normalized = (replacements.get(shape.id, shape) for shape in model)
+    return model.replace_shapes((*normalized, *synthetic))

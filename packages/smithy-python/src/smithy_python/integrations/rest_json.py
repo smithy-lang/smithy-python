@@ -21,7 +21,7 @@ class RestJsonProtocol:
     )
     dependencies = (
         PythonDependency("smithy-core", "~=0.6.0"),
-        PythonDependency("smithy-http", "~=0.4.0", extras=("aiohttp",)),
+        PythonDependency("smithy-http", "~=0.4.0"),
         PythonDependency("smithy-aws-core", "~=0.7.0", extras=("json",)),
     )
 

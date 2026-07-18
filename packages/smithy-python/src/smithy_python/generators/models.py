@@ -80,49 +80,149 @@ class ModelsGenerator:
         self.context.write(path, writer.render(), section="models")
 
     def _add_imports(self, writer: PythonWriter) -> None:
+        referenced_shapes = [
+            *self.context.shapes,
+            *(
+                self.context.model.expect(member.target)
+                for shape in self.context.shapes
+                for member in shape.members
+            ),
+        ]
+        shape_types = {shape.type for shape in referenced_shapes}
+        structures = [
+            shape for shape in self.context.shapes if shape.type is ShapeType.STRUCTURE
+        ]
+        has_structures = bool(structures)
+        has_unions = ShapeType.UNION in shape_types
+        has_collections = bool(
+            shape_types.intersection({ShapeType.LIST, ShapeType.MAP})
+        )
+        has_serde = has_structures or has_unions or has_collections
+        has_operations = ShapeType.OPERATION in shape_types
+        has_errors = any(shape.has_trait("smithy.api#error") for shape in structures)
         writer.import_("logging", category="stdlib")
-        writer.import_("dataclasses", "dataclass", category="stdlib")
-        writer.import_("dataclasses", "field", category="stdlib")
-        writer.import_("datetime", "datetime", category="stdlib")
-        writer.import_("decimal", "Decimal", category="stdlib")
-        writer.import_("enum", "IntEnum", category="stdlib")
-        writer.import_("enum", "StrEnum", category="stdlib")
-        writer.import_("typing", "Any", category="stdlib")
-        writer.import_("typing", "Literal", category="stdlib")
-        writer.import_("typing", "Self", category="stdlib")
-        writer.import_("typing", "TypeAlias", category="stdlib")
-        writer.import_(
-            "smithy_core.aio.interfaces", "StreamingBlob", category="third_party"
-        )
-        writer.import_(
-            "smithy_core.deserializers", "ShapeDeserializer", category="third_party"
-        )
-        writer.import_("smithy_core.documents", "Document", category="third_party")
-        writer.import_("smithy_core.documents", "TypeRegistry", category="third_party")
-        writer.import_("smithy_core.exceptions", "ModeledError", category="third_party")
-        writer.import_(
-            "smithy_core.exceptions", "SerializationError", category="third_party"
-        )
-        writer.import_("smithy_core.schemas", "APIOperation", category="third_party")
-        writer.import_("smithy_core.schemas", "Schema", category="third_party")
-        writer.import_(
-            "smithy_core.serializers", "ShapeSerializer", category="third_party"
-        )
-        writer.import_("smithy_core.shapes", "ShapeID", category="third_party")
-        writer.import_("smithy_core.types", "UnknownEnumMixin", category="third_party")
+        if has_structures or has_unions:
+            writer.import_("dataclasses", "dataclass", category="stdlib")
+        if self._uses_field(structures):
+            writer.import_("dataclasses", "field", category="stdlib")
+        if ShapeType.TIMESTAMP in shape_types:
+            writer.import_("datetime", "datetime", category="stdlib")
+        if ShapeType.BIG_DECIMAL in shape_types:
+            self._import_runtime_type(
+                writer,
+                referenced_shapes,
+                ShapeType.BIG_DECIMAL,
+                module="decimal",
+                exported_name="Decimal",
+                category="stdlib",
+            )
+        if ShapeType.INT_ENUM in shape_types:
+            writer.import_("enum", "IntEnum", category="stdlib")
+        if ShapeType.ENUM in shape_types:
+            writer.import_("enum", "StrEnum", category="stdlib")
+        if has_structures:
+            writer.import_("typing", "Any", category="stdlib")
+        if has_structures or has_unions:
+            writer.import_("typing", "Self", category="stdlib")
+        if has_errors:
+            writer.import_("typing", "Literal", category="stdlib")
+        if has_unions:
+            writer.import_("typing", "TypeAlias", category="stdlib")
+        if streaming_blob := next(
+            (
+                shape
+                for shape in referenced_shapes
+                if shape.type is ShapeType.BLOB
+                and shape.has_trait("smithy.api#streaming")
+            ),
+            None,
+        ):
+            symbol = self.context.symbol_provider.to_symbol(streaming_blob)
+            imported = (
+                "StreamingBlob"
+                if symbol.name == "StreamingBlob"
+                else f"StreamingBlob as {symbol.name}"
+            )
+            writer.import_(
+                "smithy_core.aio.interfaces", imported, category="third_party"
+            )
+        if has_serde:
+            writer.import_(
+                "smithy_core.deserializers",
+                "ShapeDeserializer",
+                category="third_party",
+            )
+            writer.import_("smithy_core.schemas", "Schema", category="third_party")
+            writer.import_(
+                "smithy_core.serializers", "ShapeSerializer", category="third_party"
+            )
+        if ShapeType.DOCUMENT in shape_types:
+            self._import_runtime_type(
+                writer,
+                referenced_shapes,
+                ShapeType.DOCUMENT,
+                module="smithy_core.documents",
+                exported_name="Document",
+                category="third_party",
+            )
+        if has_operations:
+            writer.import_(
+                "smithy_core.documents", "TypeRegistry", category="third_party"
+            )
+            writer.import_(
+                "smithy_core.schemas", "APIOperation", category="third_party"
+            )
+            writer.import_("smithy_core.shapes", "ShapeID", category="third_party")
+        if has_errors:
+            writer.import_(
+                "smithy_core.exceptions", "ModeledError", category="third_party"
+            )
+        if has_unions:
+            writer.import_(
+                "smithy_core.exceptions",
+                "SerializationError",
+                category="third_party",
+            )
+        if shape_types.intersection({ShapeType.ENUM, ShapeType.INT_ENUM}):
+            writer.import_(
+                "smithy_core.types", "UnknownEnumMixin", category="third_party"
+            )
         self.context.add_dependency(
             *{
                 dependency
-                for shape in self.context.shapes
+                for shape in referenced_shapes
                 for dependency in self.context.symbol_provider.to_symbol(
                     shape
                 ).dependencies
             }
         )
 
+    def _import_runtime_type(
+        self,
+        writer: PythonWriter,
+        shapes: list[Shape],
+        shape_type: ShapeType,
+        *,
+        module: str,
+        exported_name: str,
+        category: str,
+    ) -> None:
+        target = next(shape for shape in shapes if shape.type is shape_type)
+        symbol = self.context.symbol_provider.to_symbol(target)
+        imported = (
+            exported_name
+            if symbol.name == exported_name
+            else f"{exported_name} as {symbol.name}"
+        )
+        writer.import_(module, imported, category=category)
+
     def _import_schemas(self, writer: PythonWriter) -> None:
         for shape in self.context.shapes:
-            if shape.type is ShapeType.RESOURCE or shape.id.namespace == "smithy.api":
+            if shape.type not in {
+                ShapeType.STRUCTURE,
+                ShapeType.UNION,
+                ShapeType.OPERATION,
+            }:
                 continue
             schema = self.context.symbol_provider.to_symbol(shape).get_property(SCHEMA)
             if schema is not None:
@@ -131,6 +231,22 @@ class ModelsGenerator:
                     f"{schema.name} as _SCHEMA_{schema.name}",
                     category="local",
                 )
+
+    def _uses_field(self, structures: list[Shape]) -> bool:
+        for shape in structures:
+            for member in shape.members:
+                target = self.context.model.expect(member.target)
+                default = self._default(member, target)
+                if member.has_trait("smithy.api#sensitive") or target.has_trait(
+                    "smithy.api#sensitive"
+                ):
+                    return True
+                if not isinstance(default, _MissingDefault) and (
+                    isinstance(default, list | dict)
+                    or target.type is ShapeType.DOCUMENT
+                ):
+                    return True
+        return False
 
     def _enum(self, shape: Shape, *, integer: bool) -> str:
         symbol = self.context.symbol_provider.to_symbol(shape)
@@ -162,6 +278,8 @@ class ModelsGenerator:
         if not shape.members and not is_error:
             lines.append("    pass")
         for member in shape.members:
+            if self._is_event_stream_member(member):
+                continue
             if (
                 is_error
                 and self.context.symbol_provider.to_member_name(member, container=shape)
@@ -174,6 +292,11 @@ class ModelsGenerator:
         if is_error:
             fault = shape.trait("smithy.api#error")
             lines.append(f'    fault: Literal["client", "server"] | None = {fault!r}')
+            if "smithy.api#retryable" in shape.traits:
+                lines.append("    is_retry_safe: bool | None = True")
+                retryable = shape.trait("smithy.api#retryable")
+                if isinstance(retryable, dict) and retryable.get("throttling") is True:
+                    lines.append("    is_throttling_error: bool = True")
         lines.extend(("", *self._structure_serde(shape)))
         return "\n".join(lines)
 
@@ -216,15 +339,20 @@ class ModelsGenerator:
     def _structure_serde(self, shape: Shape) -> list[str]:
         schema = self._schema_alias(shape)
         is_error = shape.has_trait("smithy.api#error")
+        members = tuple(
+            member
+            for member in shape.members
+            if not self._is_event_stream_member(member)
+        )
         lines = [
             "    def serialize(self, serializer: ShapeSerializer) -> None:",
             f"        serializer.write_struct({schema}, self)",
             "",
             "    def serialize_members(self, serializer: ShapeSerializer) -> None:",
         ]
-        if not shape.members:
+        if not members:
             lines.append("        pass")
-        for member in shape.members:
+        for member in members:
             target = self.context.model.expect(member.target)
             name = self.context.symbol_provider.to_member_name(member, container=shape)
             required = member.has_trait("smithy.api#required") and not member.has_trait(
@@ -264,13 +392,14 @@ class ModelsGenerator:
                 "            match schema.expect_member_index():",
             )
         )
-        if not shape.members:
+        if not members:
             lines.append("                case _:")
             lines.append(
                 '                    logger.debug("Unexpected member schema: %s", schema)'
             )
         else:
-            for index, member in enumerate(shape.members):
+            indexes = {member.name: index for index, member in enumerate(shape.members)}
+            for member in members:
                 target = self.context.model.expect(member.target)
                 name = self.context.symbol_provider.to_member_name(
                     member, container=shape
@@ -280,7 +409,7 @@ class ModelsGenerator:
                 )
                 lines.extend(
                     (
-                        f"                case {index}:",
+                        f"                case {indexes[member.name]}:",
                         f"                    kwargs[{name!r}] = {expression}",
                     )
                 )
@@ -298,6 +427,12 @@ class ModelsGenerator:
             )
         )
         return lines
+
+    def _is_event_stream_member(self, member: Member) -> bool:
+        target = self.context.model.expect(member.target)
+        return target.type is ShapeType.UNION and target.has_trait(
+            "smithy.api#streaming"
+        )
 
     def _collection_helpers(self, shape: Shape) -> str:
         name = snake_case(shape.id.name)
@@ -423,6 +558,17 @@ class ModelsGenerator:
                     "        ",
                 )
             )
+            expression = self._deserialize_expression(
+                target, f"{schema}.members[{member.name!r}]", "deserializer"
+            )
+            lines.extend(
+                (
+                    "",
+                    "    @classmethod",
+                    "    def deserialize(cls, deserializer: ShapeDeserializer) -> Self:",
+                    f"        return cls(value={expression})",
+                )
+            )
             blocks.append("\n".join(lines))
 
         unknown = symbol.expect_property(UNION_UNKNOWN)
@@ -440,6 +586,10 @@ class ModelsGenerator:
                     "",
                     "    def serialize_members(self, serializer: ShapeSerializer) -> None:",
                     '        raise SerializationError("Unknown union variants cannot be serialized")',
+                    "",
+                    "    @classmethod",
+                    "    def deserialize(cls, deserializer: ShapeDeserializer) -> Self:",
+                    '        raise SerializationError("Unknown union variants cannot be deserialized directly")',
                 )
             )
         )
@@ -617,12 +767,16 @@ class ModelsGenerator:
         return not required and isinstance(default, _MissingDefault)
 
     def _default_expression(self, value: JSONValue, target: Shape) -> str:
+        if target.type is ShapeType.BLOB and isinstance(value, str):
+            return repr(value.encode())
         if target.type is ShapeType.DOCUMENT:
-            return f"Document({value!r})"
+            symbol = self.context.symbol_provider.to_symbol(target)
+            return f"{symbol.name}({value!r})"
         if target.type is ShapeType.TIMESTAMP and isinstance(value, int | float):
             return f"datetime.fromtimestamp({value!r})"
         if target.type is ShapeType.BIG_DECIMAL:
-            return f"Decimal({str(value)!r})"
+            symbol = self.context.symbol_provider.to_symbol(target)
+            return f"{symbol.name}({str(value)!r})"
         return repr(value)
 
     def _schema_alias(self, shape: Shape) -> str:

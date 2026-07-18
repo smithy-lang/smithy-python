@@ -3,12 +3,15 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+import re
+from dataclasses import dataclass, replace
+from types import MappingProxyType
 
 from ..context import GenerationContext
-from ..model import ShapeID
+from ..model import Member, Model, Shape, ShapeID
 from ..plugins import CodeSection, GeneratorPlugin
-from ..symbols import SCHEMA, PythonDependency, Symbol
+from ..settings import GeneratorSettings
+from ..symbols import SCHEMA, PythonDependency, Symbol, SymbolProvider
 from ..writer import PythonWriter
 
 
@@ -22,7 +25,7 @@ class AwsQueryProtocol:
     )
     dependencies = (
         PythonDependency("smithy-core", "~=0.6.0"),
-        PythonDependency("smithy-http", "~=0.4.0", extras=("aiohttp",)),
+        PythonDependency("smithy-http", "~=0.4.0"),
         PythonDependency("smithy-aws-core", "~=0.7.0", extras=("xml",)),
     )
 
@@ -42,6 +45,25 @@ class AwsQueryProtocol:
         ProtocolTestGenerator(context, self.protocol_id).run()
 
 
+@dataclass(frozen=True, slots=True)
+class _AwsSymbolProvider:
+    delegate: SymbolProvider
+    service_id: ShapeID
+    client_name: str
+
+    def to_symbol(self, shape: Shape | Member) -> Symbol:
+        symbol = self.delegate.to_symbol(shape)
+        if isinstance(shape, Shape) and shape.id == self.service_id:
+            return replace(symbol, name=self.client_name)
+        return symbol
+
+    def to_member_name(self, member: Member, *, container: Shape | None = None) -> str:
+        return self.delegate.to_member_name(member, container=container)
+
+    def union_member_symbol(self, container: Shape, member: Member) -> Symbol:
+        return self.delegate.union_member_symbol(container, member)
+
+
 class AwsPlugin(GeneratorPlugin):
     """AWS protocol, signing, endpoint, and user-agent customizations."""
 
@@ -50,6 +72,45 @@ class AwsPlugin(GeneratorPlugin):
 
     def protocols(self) -> tuple[AwsQueryProtocol, ...]:
         return (AwsQueryProtocol(),)
+
+    def preprocess_model(self, model: Model, settings: GeneratorSettings) -> Model:
+        if settings.service is None:
+            return model
+        service = model.service(settings.service)
+        if not service.has_trait("aws.auth#sigv4") or service.has_trait(
+            "smithy.api#auth"
+        ):
+            return model
+        updated_service = replace(
+            service,
+            traits=MappingProxyType(
+                {**service.traits, "smithy.api#auth": ["aws.auth#sigv4"]}
+            ),
+        )
+        return model.replace_shapes(
+            updated_service if shape.id == service.id else shape for shape in model
+        )
+
+    def decorate_symbol_provider(
+        self, provider: SymbolProvider, context: GenerationContext
+    ) -> SymbolProvider:
+        service = context.service
+        if service is None:
+            return provider
+        trait = service.trait("aws.api#service")
+        sdk_id = trait.get("sdkId") if isinstance(trait, dict) else None
+        if not isinstance(sdk_id, str):
+            return provider
+        name = re.sub(r"[^A-Za-z0-9_]", "", sdk_id)
+        if not name:
+            return provider
+        if name[0].isdigit():
+            name = f"_{name}"
+        return _AwsSymbolProvider(
+            delegate=provider,
+            service_id=service.id,
+            client_name=f"{name}Client",
+        )
 
     def write_additional_files(self, context: GenerationContext) -> None:
         service = context.service

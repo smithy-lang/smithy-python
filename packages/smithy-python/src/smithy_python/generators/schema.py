@@ -7,7 +7,7 @@ from typing import Any
 
 from ..context import GenerationContext
 from ..model import JSONValue, Member, Shape, ShapeType
-from ..symbols import SCHEMA
+from ..symbols import SCHEMA, snake_case
 from ..writer import PythonWriter
 
 _TRAIT_FILTER = {
@@ -36,8 +36,9 @@ class SchemaGenerator:
         writer.import_("smithy_core.shapes", "ShapeType", category="third_party")
         writer.import_("smithy_core.traits", "Trait", category="third_party")
         prelude_names = self._prelude_references()
-        for name in prelude_names:
-            writer.import_("smithy_core.prelude", name, category="third_party")
+        for name, alias in prelude_names:
+            imported = name if name == alias else f"{name} as {alias}"
+            writer.import_("smithy_core.prelude", imported, category="third_party")
 
         generated_shapes = [
             shape for shape in self.context.shapes if shape.id in self._generated
@@ -98,18 +99,18 @@ class SchemaGenerator:
             ")"
         )
 
-    def _prelude_references(self) -> tuple[str, ...]:
-        names: set[str] = set()
+    def _prelude_references(self) -> tuple[tuple[str, str], ...]:
+        names: dict[str, str] = {}
         for shape in self.context.shapes:
             for member in shape.members:
                 if member.target.namespace == "smithy.api":
                     target = self.context.model.expect(member.target)
-                    names.add(
+                    names[snake_case(target.id.name).upper()] = (
                         self.context.symbol_provider.to_symbol(target)
                         .expect_property(SCHEMA)
                         .name
                     )
-        return tuple(sorted(names))
+        return tuple(sorted(names.items()))
 
 
 def _shape_type_name(shape_type: ShapeType) -> str:

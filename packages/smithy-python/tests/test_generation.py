@@ -107,6 +107,48 @@ def test_generated_metadata_contains_runtime_dependencies(
     assert '"smithy-http[aiohttp]~=0.4.0"' in pyproject
 
 
+def test_unit_operation_output_gets_a_dedicated_structure(
+    model_document: dict[str, object], tmp_path: Path
+) -> None:
+    shapes = cast(dict[str, object], model_document["shapes"])
+    del shapes["example.weather#GetCityOutput"]
+    operation = cast(dict[str, object], shapes["example.weather#GetCity"])
+    operation["output"] = {"target": "smithy.api#Unit"}
+
+    _generate(Model.from_dict(model_document), tmp_path, ArtifactType.CLIENT)
+
+    models = (tmp_path / "src" / "weather" / "models.py").read_text()
+    assert "class GetCityOutput:" in models
+    assert "GET_CITY = APIOperation(" in models
+    client = (tmp_path / "src" / "weather" / "client.py").read_text()
+    assert "GetCityOutput" in client
+
+
+def test_operation_io_without_dedicated_traits_is_copied_and_renamed(
+    model_document: dict[str, object], tmp_path: Path
+) -> None:
+    shapes = cast(dict[str, object], model_document["shapes"])
+    request = cast(dict[str, object], shapes.pop("example.weather#GetCityInput"))
+    shapes["example.weather#GetCityRequest"] = request
+    response = cast(dict[str, object], shapes["example.weather#GetCityOutput"]).copy()
+    shapes["example.weather#GetCityResponse"] = response
+    operation = cast(dict[str, object], shapes["example.weather#GetCity"])
+    operation["input"] = {"target": "example.weather#GetCityRequest"}
+    operation["output"] = {"target": "example.weather#GetCityResponse"}
+
+    _generate(Model.from_dict(model_document), tmp_path, ArtifactType.CLIENT)
+
+    module = tmp_path / "src" / "weather"
+    models = (module / "models.py").read_text()
+    assert "class GetCityInput:" in models
+    assert "class GetCityOperationOutput:" in models
+    assert "class GetCityRequest:" not in models
+    assert "class GetCityResponse:" not in models
+    schemas = (module / "_private" / "schemas.py").read_text()
+    assert "value='example.weather#GetCityRequest'" in schemas
+    assert "value='example.weather#GetCityResponse'" in schemas
+
+
 def test_generated_package_passes_opt_in_formatters_and_linters(
     model: Model, tmp_path: Path
 ) -> None:
@@ -212,19 +254,26 @@ def test_aws_customizations_are_python_plugins(
     typed_traits = cast(dict[str, object], traits)
     typed_traits.update(
         {
-            "aws.api#service": {"sdkId": "Weather", "endpointPrefix": "weather"},
+            "aws.api#service": {
+                "sdkId": "Weather Service",
+                "endpointPrefix": "weather",
+            },
             "aws.auth#sigv4": {"name": "weather"},
-            "smithy.api#auth": ["aws.auth#sigv4"],
         }
     )
     _generate(Model.from_dict(model_document), tmp_path, ArtifactType.CLIENT)
     module = tmp_path / "src" / "weather"
     user_agent = (module / "user_agent.py").read_text()
     assert "UserAgentInterceptor(" in user_agent
-    assert "service_id='Weather'" in user_agent
+    assert "service_id='Weather Service'" in user_agent
+    assert "class WeatherServiceClient:" in (module / "client.py").read_text()
     config = (module / "config.py").read_text()
     assert "SigV4AuthScheme(service='weather')" in config
     assert "StandardRegionalEndpointsResolver(endpoint_prefix='weather')" in config
+    assert "self.transport = transport or AWSCRTHTTPClient()" in config
+    assert '"smithy-http[awscrt]~=0.4.0"' in (tmp_path / "pyproject.toml").read_text()
+    models = (module / "models.py").read_text()
+    assert "effective_auth_schemes=[ShapeID('aws.auth#sigv4')]" in models
 
 
 def test_nullability_defaults_and_recursive_schemas(
@@ -274,3 +323,117 @@ def test_nullability_defaults_and_recursive_schemas(
     schemas = (tmp_path / "src" / "weather" / "_private" / "schemas.py").read_text()
     assert "NODE.members['next'] = Schema.member(" in schemas
     assert "target=NODE" in schemas
+
+
+def test_string_blob_defaults_are_rendered_as_bytes(
+    model_document: dict[str, object], tmp_path: Path
+) -> None:
+    shapes = cast(dict[str, object], model_document["shapes"])
+    shapes["example.weather#ForecastStream"] = {
+        "type": "blob",
+        "traits": {"smithy.api#streaming": {}},
+    }
+    output = cast(dict[str, object], shapes["example.weather#GetCityOutput"])
+    members = cast(dict[str, object], output["members"])
+    members["forecast"] = {
+        "target": "example.weather#ForecastStream",
+        "traits": {"smithy.api#default": ""},
+    }
+
+    _generate(Model.from_dict(model_document), tmp_path, ArtifactType.CLIENT)
+
+    models = (tmp_path / "src" / "weather" / "models.py").read_text()
+    assert "forecast: StreamingBlob = b''" in models
+
+
+def test_event_stream_operations_use_the_streaming_pipeline(
+    model_document: dict[str, object], tmp_path: Path
+) -> None:
+    shapes = cast(dict[str, object], model_document["shapes"])
+    shapes["example.weather#InputMessage"] = {
+        "type": "structure",
+        "members": {"value": {"target": "smithy.api#String"}},
+    }
+    shapes["example.weather#OutputMessage"] = {
+        "type": "structure",
+        "members": {"value": {"target": "smithy.api#String"}},
+    }
+    shapes["example.weather#InputEvents"] = {
+        "type": "union",
+        "traits": {"smithy.api#streaming": {}},
+        "members": {"message": {"target": "example.weather#InputMessage"}},
+    }
+    shapes["example.weather#OutputEvents"] = {
+        "type": "union",
+        "traits": {"smithy.api#streaming": {}},
+        "members": {"message": {"target": "example.weather#OutputMessage"}},
+    }
+    input_shape = cast(dict[str, object], shapes["example.weather#GetCityInput"])
+    input_members = cast(dict[str, object], input_shape["members"])
+    input_members["events"] = {"target": "example.weather#InputEvents"}
+    output_shape = cast(dict[str, object], shapes["example.weather#GetCityOutput"])
+    output_members = cast(dict[str, object], output_shape["members"])
+    output_members["events"] = {"target": "example.weather#OutputEvents"}
+
+    _generate(Model.from_dict(model_document), tmp_path, ArtifactType.CLIENT)
+
+    client = (tmp_path / "src" / "weather" / "client.py").read_text()
+    assert "from smithy_core.aio.eventstream import DuplexEventStream" in client
+    assert "DuplexEventStream[InputEvents, OutputEvents, GetCityOutput]" in client
+    assert "return await pipeline.duplex_stream(" in client
+    assert "OutputEventsDeserializer().deserialize" in client
+    models = (tmp_path / "src" / "weather" / "models.py").read_text()
+    assert "def deserialize(cls, deserializer: ShapeDeserializer) -> Self:" in models
+    assert "events: InputEvents" not in models
+    assert "events: OutputEvents" not in models
+
+
+def test_retryable_error_metadata_is_generated(
+    model_document: dict[str, object], tmp_path: Path
+) -> None:
+    shapes = cast(dict[str, object], model_document["shapes"])
+    error = cast(dict[str, object], shapes["example.weather#NoSuchCity"])
+    traits = cast(dict[str, object], error["traits"])
+    traits["smithy.api#retryable"] = {"throttling": True}
+
+    _generate(Model.from_dict(model_document), tmp_path, ArtifactType.CLIENT)
+
+    models = (tmp_path / "src" / "weather" / "models.py").read_text()
+    assert "is_retry_safe: bool | None = True" in models
+    assert "is_throttling_error: bool = True" in models
+
+
+def test_prelude_symbols_are_imported_and_aliased_for_modeled_name_collisions(
+    model_document: dict[str, object], tmp_path: Path
+) -> None:
+    shapes = cast(dict[str, object], model_document["shapes"])
+    shapes["example.weather#Document"] = {
+        "type": "structure",
+        "members": {"value": {"target": "smithy.api#Document"}},
+    }
+    shapes["example.weather#Blob"] = {"type": "blob"}
+    output = cast(dict[str, object], shapes["example.weather#GetCityOutput"])
+    members = cast(dict[str, object], output["members"])
+    members.update(
+        {
+            "document": {"target": "example.weather#Document"},
+            "modeledBlob": {"target": "example.weather#Blob"},
+            "preludeBlob": {"target": "smithy.api#Blob"},
+            "observedAt": {"target": "smithy.api#Timestamp"},
+        }
+    )
+
+    _generate(Model.from_dict(model_document), tmp_path, ArtifactType.CLIENT)
+
+    module = tmp_path / "src" / "weather"
+    models = (module / "models.py").read_text()
+    assert "from datetime import datetime" in models
+    assert "from smithy_core.documents import Document as _Document" in models
+    assert "class Document:" in models
+    assert "value: _Document | None = None" in models
+    assert "observed_at: datetime | None = None" in models
+    schemas = (module / "_private" / "schemas.py").read_text()
+    assert "BLOB as _BLOB" in schemas
+    assert "DOCUMENT as _DOCUMENT" in schemas
+    assert "target=_BLOB" in schemas
+    assert "target=_DOCUMENT" in schemas

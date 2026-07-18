@@ -5,7 +5,7 @@ from __future__ import annotations
 
 from ..context import GenerationContext
 from ..model import Shape
-from ..symbols import SCHEMA
+from ..symbols import SCHEMA, PythonDependency
 from ..writer import PythonWriter
 
 
@@ -104,7 +104,11 @@ class ConfigGenerator:
             else "None"
         )
         writer.write(f"        self.protocol = protocol or {expression}")
-        writer.write("        self.transport = transport")
+        writer.write(
+            "        self.transport = transport or AWSCRTHTTPClient()"
+            if aws
+            else "        self.transport = transport"
+        )
         auth_schemes = self._auth_schemes(service)
         resolver = "DefaultAuthResolver()" if auth_schemes else "NoAuthResolver()"
         writer.write(
@@ -147,20 +151,27 @@ class ConfigGenerator:
         self.context.write(path, writer.render(), section="config", shape=service)
 
     def _imports(self, writer: PythonWriter) -> None:
+        service = self.context.service
+        if service is None:
+            return
+        aws = self._is_aws(service)
+        auth_schemes = self._auth_schemes(service)
         writer.import_("dataclasses", "dataclass", category="stdlib")
         writer.import_("typing", "Any", category="stdlib")
         writer.import_("typing", "Callable", category="stdlib")
         writer.import_("typing", "TypeAlias", category="stdlib")
-        writer.import_(
-            "smithy_core.aio.endpoints",
-            "StaticEndpointResolver",
-            category="third_party",
-        )
-        writer.import_(
-            "smithy_core.aio.identity",
-            "ChainedIdentityResolver",
-            category="third_party",
-        )
+        if not aws:
+            writer.import_(
+                "smithy_core.aio.endpoints",
+                "StaticEndpointResolver",
+                category="third_party",
+            )
+        if aws:
+            writer.import_(
+                "smithy_core.aio.identity",
+                "ChainedIdentityResolver",
+                category="third_party",
+            )
         writer.import_(
             "smithy_core.aio.interfaces", "ClientProtocol", category="third_party"
         )
@@ -179,9 +190,10 @@ class ConfigGenerator:
             category="third_party",
         )
         writer.import_(
-            "smithy_core.auth", "DefaultAuthResolver", category="third_party"
+            "smithy_core.auth",
+            "DefaultAuthResolver" if auth_schemes else "NoAuthResolver",
+            category="third_party",
         )
-        writer.import_("smithy_core.auth", "NoAuthResolver", category="third_party")
         writer.import_("smithy_core.interfaces", "URI", category="third_party")
         writer.import_(
             "smithy_core.interfaces.auth", "AuthSchemeResolver", category="third_party"
@@ -204,7 +216,13 @@ class ConfigGenerator:
                 category="third_party",
             )
             self.context.add_dependency(*self.context.protocol.dependencies)
-        if self.context.service is not None and self._is_aws(self.context.service):
+        if aws:
+            writer.import_(
+                "smithy_http.aio.crt", "AWSCRTHTTPClient", category="third_party"
+            )
+            self.context.add_dependency(
+                PythonDependency("smithy-http", "~=0.4.0", extras=("awscrt",))
+            )
             writer.import_(
                 "smithy_aws_core.auth", "SigV4AuthScheme", category="third_party"
             )
