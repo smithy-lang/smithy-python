@@ -3,7 +3,8 @@
 
 from __future__ import annotations
 
-import importlib
+import subprocess
+import sys
 from io import BytesIO
 from pathlib import Path
 
@@ -75,8 +76,17 @@ def test_missing_command_identifies_available_subcommands(
     assert capsys.readouterr().err.startswith(expected_usage)
 
 
-def test_main_module_can_be_imported() -> None:
-    importlib.import_module("smithy_python.__main__")
+def test_main_module_invokes_cli() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "smithy_python", "--version"],
+        capture_output=True,
+        check=False,
+        text=True,
+    )
+
+    assert result.returncode == 0
+    assert result.stdout == f"smithy-python {__version__}\n"
+    assert result.stderr == ""
 
 
 def test_run_plugin_invocation_reads_standard_input(
