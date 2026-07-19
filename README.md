@@ -12,6 +12,11 @@ This code generator, and the clients it generates, are unstable and should not
 be used in production systems yet. Several features, such as detailed logging,
 have not been implemented yet.
 
+> [!NOTE]
+> The Java generator in `codegen` remains the authoritative implementation.
+> `packages/smithy-python` contains an experimental Python-native CLI scaffold
+> that does not generate code yet.
+
 ### What is this repository?
 
 This repository contains two major components:
@@ -20,9 +25,9 @@ This repository contains two major components:
 2) Core modules and interfaces for building service clients in Python
 
 These components facilitate generating clients for any [Smithy](https://smithy.io/)
-service. The `codegen` directory contains the source code for generating clients.
-The `python-packages` directory contains the source code for the handwritten python
-components.
+service. The `codegen` directory contains the current Java generator,
+`packages/smithy-python` contains the Python-native generator scaffold, and the
+other directories under `packages` contain the handwritten Python components.
 
 This repository does *not* contain any generated clients, such as for S3 or other
 AWS services. Rather, these are the tools that facilitate the generation of those
