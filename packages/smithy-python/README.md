@@ -10,10 +10,10 @@ commands so that their top-level shape can be developed independently from the
 generator implementation.
 
 ```console
-smithy-python generate client
-smithy-python generate types
+smithy-python generate client [OPTIONS]
+smithy-python generate types [OPTIONS]
 ```
 
-Both generation commands currently exit with an error explaining that generation
-has not been implemented. The package is included in workspace builds to validate
-its packaging and entry points.
+After validating their invocation options, both generation commands currently exit
+with an error explaining that generation has not been implemented. The package is
+included in workspace builds to validate its packaging and entry points.
