@@ -23,6 +23,7 @@ from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
 from smithy_core.prelude import DOCUMENT
 from smithy_core.schemas import APIOperation
 from smithy_core.serializers import SerializeableShape
+from smithy_core.shapes import ShapeID
 from smithy_core.traits import EndpointTrait, HTTPTrait
 
 from ..deserializers import HTTPResponseDeserializer
@@ -185,15 +186,26 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         error_id = self.error_identifier.identify(
             operation=operation, response=response
         )
+        if error_id is not None and error_id not in error_registry:
+            error_id = self._resolve_error_id(
+                operation=operation,
+                error_id=error_id,
+            )
 
         if error_id is None and self._matches_content_type(response):
             if isinstance(response_body, bytearray):
                 response_body = bytes(response_body)
             deserializer = self.payload_codec.create_deserializer(source=response_body)
             document = deserializer.read_document(schema=DOCUMENT)
+            document_error_id = document.discriminator
+            if document_error_id not in error_registry:
+                document_error_id = self._resolve_error_id(
+                    operation=operation,
+                    error_id=document_error_id,
+                )
 
-            if document.discriminator in error_registry:
-                error_id = document.discriminator
+            if document_error_id in error_registry:
+                error_id = document_error_id
                 if isinstance(response_body, SeekableBytesReader):
                     response_body.seek(0)
 
@@ -235,6 +247,15 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             is_timeout_error=is_timeout,
             is_retry_safe=is_throttle or is_timeout or None,
         )
+
+    def _resolve_error_id(
+        self,
+        *,
+        operation: APIOperation[Any, Any],
+        error_id: ShapeID,
+    ) -> ShapeID:
+        """Resolve a response discriminator to its modeled error shape ID."""
+        return error_id
 
     def _matches_content_type(self, response: HTTPResponse) -> bool:
         if "content-type" not in response.fields:
