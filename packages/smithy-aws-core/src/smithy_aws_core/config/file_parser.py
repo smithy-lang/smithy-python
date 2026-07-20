@@ -158,13 +158,13 @@ def _parse_content(content: str) -> RawParsedSections:
                     f"Line {line_num}: Expected a section definition, "
                     f"found continuation"
                 )
+            if ignore_continuation:
+                continue
             if current_key is None:
                 raise ConfigParseError(
                     f"Line {line_num}: Expected a property definition, "
                     f"found continuation"
                 )
-            if ignore_continuation:
-                continue
 
             trimmed = line.strip()
 
@@ -188,6 +188,7 @@ def _parse_content(content: str) -> RawParsedSections:
             current_section = section_name
             current_key = None
             in_sub_property = False
+            ignore_continuation = False
             if section_name is not None and section_name not in sections:
                 sections[section_name] = {}
             continue

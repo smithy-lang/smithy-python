@@ -162,3 +162,31 @@ async def test_invalid_property_continuation_not_appended_to_previous(tmp_path: 
     raw = await parse_config_file(str(config_file))
     result = standardize(raw, FileType.CONFIG)
     assert result.profiles["p"].properties["region"] == "us-east-1"
+
+
+@pytest.mark.asyncio
+async def test_invalid_property_in_first_line_with_continuation_ignored(tmp_path: Path):
+    """Continuation lines when the first property is invalid should be discarded"""
+    config_file = tmp_path / "config"
+    config_file.write_text(
+        "[profile p]\ninvalid key = ignored\n  continuation\n"
+        "region = us-east-1\ninvalid key = ignored\n  continuation\n"
+    )
+    raw = await parse_config_file(str(config_file))
+    result = standardize(raw, FileType.CONFIG)
+    assert result.profiles["p"].properties["region"] == "us-east-1"
+
+
+@pytest.mark.asyncio
+async def test_consecutive_invalid_properties_ignored(tmp_path: Path):
+    """Consecutive invalid properties should be discarded"""
+    config_file = tmp_path / "config"
+    config_file.write_text(
+        "[profile p]\nregion = us-east-1\ninvalid key = ignored\n  continuation\n"
+        "invalid key = ignored\n  continuation\ninvalid key = ignored\n  continuation\n"
+        "output = json\n"
+    )
+    raw = await parse_config_file(str(config_file))
+    result = standardize(raw, FileType.CONFIG)
+    assert result.profiles["p"].properties["region"] == "us-east-1"
+    assert result.profiles["p"].properties["output"] == "json"
