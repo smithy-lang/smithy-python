@@ -22,7 +22,7 @@ def parse_error_code(code: str, default_namespace: str | None) -> ShapeID | None
     if not code:
         return None
 
-    code = code.split(":", 1)[0]
+    code = code.split(":")[0]
     if "#" in code:
         return ShapeID(code)
 

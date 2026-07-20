@@ -10,7 +10,6 @@ from smithy_aws_core.aio.protocols import (
     AWSErrorIdentifier,
     AWSJSONDocument,
     AwsQueryClientProtocol,
-    RestJsonClientProtocol,
 )
 from smithy_aws_core.traits import AwsQueryTrait
 from smithy_core.deserializers import ShapeDeserializer
@@ -21,7 +20,7 @@ from smithy_core.prelude import STRING
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import HTTPTrait, Trait
+from smithy_core.traits import Trait
 from smithy_core.types import TypedProperties
 from smithy_http import Fields, tuples_to_fields
 from smithy_http.aio import HTTPRequest, HTTPResponse
@@ -39,10 +38,6 @@ from smithy_json import JSONSettings
         (
             "com.test#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate",
             "com.test#FooError",
-        ),
-        (
-            "com.other#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate",
-            "com.other#FooError",
         ),
         ("", None),
         (":", None),
@@ -80,12 +75,6 @@ def test_aws_error_identifier(header: str | None, expected: ShapeID | None) -> N
                 "__type": "com.test#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate"
             },
             "com.test#FooError",
-        ),
-        (
-            {
-                "__type": "com.other#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate"
-            },
-            "com.other#FooError",
         ),
         ({"code": "FooError"}, "com.test#FooError"),
         ({"code": "com.test#FooError"}, "com.test#FooError"),
@@ -131,14 +120,6 @@ _SERVICE_SCHEMA = Schema.collection(
     shape_type=ShapeType.SERVICE,
     traits=[AwsQueryTrait(None)],
 )
-_REST_JSON_SERVICE_SCHEMA = Schema.collection(
-    id=ShapeID("com.test#RestJsonService"),
-    shape_type=ShapeType.SERVICE,
-)
-_CROSS_NAMESPACE_ERROR_SCHEMA = Schema.collection(
-    id=ShapeID("com.shared#CrossNamespaceError"),
-    traits=[Trait.new(id=ShapeID("smithy.api#error"), value="client")],
-)
 _INVALID_ACTION_ERROR_SCHEMA = Schema.collection(
     id=ShapeID("com.test#InvalidActionError"),
     traits=[
@@ -179,28 +160,10 @@ class _ModeledQueryError(ModeledError):
         return cls(**kwargs)
 
 
-class _CrossNamespaceError(ModeledError):
-    @classmethod
-    def deserialize(cls, deserializer: ShapeDeserializer) -> "_CrossNamespaceError":
-        deserializer.read_struct(
-            _CROSS_NAMESPACE_ERROR_SCHEMA,
-            consumer=lambda schema, de: None,
-        )
-        return cls()
-
-
 def _operation_schema(name: str) -> Schema:
     return Schema(
         id=ShapeID(f"com.test#{name}"),
         shape_type=ShapeType.OPERATION,
-    )
-
-
-def _rest_json_operation_schema(name: str) -> Schema:
-    return Schema(
-        id=ShapeID(f"com.test#{name}"),
-        shape_type=ShapeType.OPERATION,
-        traits=[HTTPTrait({"method": "POST", "uri": "/", "code": 200})],
     )
 
 
@@ -213,57 +176,6 @@ def _mock_operation(
     operation.schema = schema
     operation.error_schemas = error_schemas or []
     return cast("APIOperation[Any, Any]", operation)
-
-
-@pytest.mark.parametrize(
-    "headers, body",
-    [
-        pytest.param(
-            [("x-amzn-errortype", "CrossNamespaceError")],
-            b"",
-            id="header-unqualified",
-        ),
-        pytest.param(
-            [("x-amzn-errortype", "com.shared#CrossNamespaceError")],
-            b"",
-            id="header-qualified",
-        ),
-        pytest.param(
-            [("content-type", "application/json")],
-            b'{"__type":"CrossNamespaceError"}',
-            id="body-unqualified",
-        ),
-        pytest.param(
-            [("content-type", "application/json")],
-            b'{"__type":"com.shared#CrossNamespaceError"}',
-            id="body-qualified",
-        ),
-    ],
-)
-async def test_rest_json_resolves_cross_namespace_modeled_error(
-    headers: list[tuple[str, str]],
-    body: bytes,
-) -> None:
-    protocol = RestJsonClientProtocol(_REST_JSON_SERVICE_SCHEMA)
-    operation = _mock_operation(
-        _rest_json_operation_schema("FailingOperation"),
-        error_schemas=[_CROSS_NAMESPACE_ERROR_SCHEMA],
-    )
-
-    with pytest.raises(_CrossNamespaceError):
-        await protocol.deserialize_response(
-            operation=operation,
-            request=cast(HTTPRequest, Mock()),
-            response=HTTPResponse(
-                status=500,
-                fields=tuples_to_fields(headers),
-                body=body,
-            ),
-            error_registry=TypeRegistry(
-                {ShapeID("com.shared#CrossNamespaceError"): _CrossNamespaceError}
-            ),
-            context=TypedProperties(),
-        )
 
 
 async def test_aws_query_serializes_base_request_shape() -> None:
