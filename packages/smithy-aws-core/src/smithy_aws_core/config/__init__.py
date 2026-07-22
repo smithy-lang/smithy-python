@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from .aws_config import AsyncAwsConfig
-from .context import SharedConfigContext, load_config
+from .context import SharedConfigContext, load_config, shared_config_files_exist
 from .exceptions import (
     ConfigError,
     ConfigParseError,
@@ -25,4 +25,5 @@ __all__ = [
     "ProfileNotFoundError",
     "SharedConfigContext",
     "load_config",
+    "shared_config_files_exist",
 ]

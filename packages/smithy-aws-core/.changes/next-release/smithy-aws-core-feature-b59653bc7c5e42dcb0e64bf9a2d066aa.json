@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added a modular credential chain for AWS identity resolution. `IdentityChain.create()` discovers installed chain providers via entry points, orders them by precedence, and assembles a resolver chain. Initially ships with the Environment, SharedConfig, ProfileSessionKeys, and ProfileStaticKeys providers."
+}
