@@ -18,7 +18,8 @@ smithy-python generate types [OPTIONS]
 standalone types package. Both commands accept the following process options:
 
 * `--model PATH` reads a JSON AST from a file instead of standard input.
-* `--output PATH` selects the output directory for direct invocation.
+* `--output PATH` selects the output directory. It defaults to the Smithy run
+  plugin's output directory (`SMITHY_PLUGIN_DIR`) when invoked by Smithy.
 
 Settings specific to each artifact will be added with the functionality that
 consumes them.
