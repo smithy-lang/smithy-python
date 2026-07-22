@@ -74,22 +74,35 @@ def _create_parser() -> argparse.ArgumentParser:
     commands = parser.add_subparsers(required=True)
     generate = commands.add_parser("generate", help="Generate Python source")
     artifacts = generate.add_subparsers(dest="artifact", required=True)
+    common = _common_artifact_options()
     for name, help_text in (
         ("client", "Generate a client package"),
         ("types", "Generate a standalone types package"),
     ):
-        artifact = artifacts.add_parser(name, help=help_text)
-        artifact.add_argument(
-            "--model",
-            type=Path,
-            help="Read the JSON AST from a file instead of standard input",
-        )
-        artifact.add_argument(
-            "--output",
-            type=Path,
-            help="Output directory for direct invocation",
-        )
+        artifacts.add_parser(name, help=help_text, parents=[common])
 
+    return parser
+
+
+def _common_artifact_options() -> argparse.ArgumentParser:
+    """Build a parent parser with the options shared by every artifact."""
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument(
+        "--model",
+        type=Path,
+        help=(
+            "The Smithy JSON AST model file to use for code generation. "
+            "If not set, the model is read from standard input."
+        ),
+    )
+    parser.add_argument(
+        "--output",
+        type=Path,
+        help=(
+            "Output directory for generated files. Defaults to the Smithy run "
+            "plugin's output directory (SMITHY_PLUGIN_DIR) when invoked by Smithy."
+        ),
+    )
     return parser
 
 

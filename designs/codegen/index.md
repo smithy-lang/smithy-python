@@ -37,6 +37,9 @@ Two artifact types are initially planned:
 * `client` will generate a service client and its required types.
 * `types` will generate a standalone package of types selected from a model.
 
+The artifact set may grow over time. A `server` artifact is a natural addition,
+so the generator should not assume that only `client` and `types` exist.
+
 The command-line interface is the generator's first entry point. Smithy's `run`
 plugin invokes it as an external process, so the generator does not need to be
 loaded into the Smithy CLI or implemented in Java.
