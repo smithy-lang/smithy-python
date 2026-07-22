@@ -343,7 +343,7 @@ def _extract_prefixed_name(section_name: str, prefix: str) -> str | None:
     if not remainder or remainder[0] not in (" ", "\t"):
         return None
     name = remainder.strip()
-    return name if name else None
+    return name or None
 
 
 def _is_valid_identifier(name: str) -> bool:
