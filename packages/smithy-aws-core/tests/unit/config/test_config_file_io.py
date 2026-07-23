@@ -3,6 +3,7 @@
 
 
 from pathlib import Path
+from unittest.mock import patch
 
 import pytest
 from smithy_aws_core.config import load_config
@@ -26,12 +27,13 @@ class TestFileIssues:
     async def test_permission_denied_returns_empty(self, tmp_path: Path):
         restricted_file = tmp_path / "restricted_config"
         restricted_file.write_text("[profile default]\nregion = us-east-1\n")
-        restricted_file.chmod(0o000)
-        try:
+        # Patch read_text to raise PermissionError rather than relying on
+        # chmod(0o000), which is bypassed when tests run as root (e.g. in CI).
+        with patch.object(
+            Path, "read_text", side_effect=PermissionError("Permission denied")
+        ):
             result = await parse_config_file(str(restricted_file))
-            assert result == {}
-        finally:
-            restricted_file.chmod(0o644)
+        assert result == {}
 
 
 class TestEncodingErrors:
