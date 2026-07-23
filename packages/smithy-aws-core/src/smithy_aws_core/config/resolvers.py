@@ -1,13 +1,16 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+import os
 from collections.abc import Sequence
 from typing import Any
 
-from smithy_aws_core.config.context import SharedConfigContext
-from smithy_aws_core.config.exceptions import ConfigError
-from smithy_aws_core.config.types import UNSET, ConfigSource, Resolved
+from smithy_core.exceptions import ConfigValidationError
 from smithy_core.retries import RetryStrategyOptions
+
+from smithy_aws_core.config.context import SharedConfigContext
+from smithy_aws_core.config.types import UNSET, ConfigSource, Resolved
+from smithy_aws_core.config.validators import validate_max_attempts, validate_retry_mode
 
 
 async def _resolve_str(
@@ -15,7 +18,7 @@ async def _resolve_str(
     *,
     env_vars: Sequence[str] = (),
     profile_keys: Sequence[str] = (),
-) -> Resolved[str | None]:
+) -> Resolved[str]:
     """Resolve a string value by checking providers in priority order.
 
     Priority: env vars (first match) > config file (profile keys, first match) > unresolved.
@@ -27,7 +30,7 @@ async def _resolve_str(
     """
     # Check environment variables first
     for var_name in env_vars:
-        value: str | None = ctx.env.get(var_name)
+        value: str | None = os.environ.get(var_name)
         if value:
             return Resolved(value=value, source=ConfigSource.ENV)
 
@@ -58,15 +61,13 @@ async def _resolve_int(
     result = await _resolve_str(ctx, env_vars=env_vars, profile_keys=profile_keys)
     if result.value is UNSET:
         return Resolved(value=UNSET, source=ConfigSource.DEFAULT)  # type: ignore[arg-type]
-    if result.value is None:
-        return Resolved(value=None, source=result.source)
     try:
         return Resolved(value=int(result.value), source=result.source)
-    except (ValueError, TypeError):
-        raise ConfigError(
+    except (ValueError, TypeError) as e:
+        raise ConfigValidationError(
             f"Invalid integer value {result.value!r} for config key. "
             "Expected a valid integer."
-        )
+        ) from e
 
 
 def _strongest_source(*sources: ConfigSource) -> ConfigSource:
@@ -117,11 +118,13 @@ async def resolve_retry_config(
     kwargs: dict[str, Any] = {}
     sources_found: list[ConfigSource] = []
 
-    if mode_result.value is not UNSET and mode_result.value is not None:
+    if mode_result.value is not UNSET:
+        validate_retry_mode(mode_result.value)
         kwargs["retry_mode"] = mode_result.value
         sources_found.append(mode_result.source)
 
     if attempts_result.value is not UNSET and attempts_result.value is not None:
+        validate_max_attempts(attempts_result.value)
         kwargs["max_attempts"] = attempts_result.value
         sources_found.append(attempts_result.source)
 

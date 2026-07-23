@@ -1,19 +1,20 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import Any, ClassVar, Self
 
-from smithy_aws_core.config.context import FileSystem, SharedConfigContext
-from smithy_aws_core.config.exceptions import ConfigError
+from smithy_core.exceptions import ConfigError, ConfigValidationError
+from smithy_core.retries import RetryStrategyOptions
+
+from smithy_aws_core.config.context import SharedConfigContext
+from smithy_aws_core.config.filesystem import FileSystem
 from smithy_aws_core.config.resolvers import resolve_region, resolve_retry_config
 from smithy_aws_core.config.types import UNSET, ConfigSource, FieldSpec, Resolved
 from smithy_aws_core.config.validators import (
     validate_region,
     validate_retry_strategy_options,
 )
-from smithy_core.retries import RetryStrategyOptions
 
 
 @dataclass(kw_only=True)
@@ -62,7 +63,6 @@ class AsyncAwsConfig:
         cls,
         *,
         profile: str | None = None,
-        env: Mapping[str, str] | None = None,
         fs: FileSystem | None = None,
         config_file_path: str | None = None,
         credentials_file_path: str | None = None,
@@ -73,7 +73,6 @@ class AsyncAwsConfig:
         This is the only supported way to create a config instance.
 
         :param profile: Override the active profile name.
-        :param env: Override the environment variable mapping.
         :param fs: Override the filesystem abstraction.
         :param config_file_path: Override path for config file.
         :param credentials_file_path: Override path for credentials file.
@@ -82,7 +81,6 @@ class AsyncAwsConfig:
         """
         ctx = SharedConfigContext(
             profile_name=profile,
-            env=env,
             fs=fs,
             config_file_path=config_file_path,
             credentials_file_path=credentials_file_path,
@@ -126,7 +124,7 @@ class AsyncAwsConfig:
         """Run the resolution pipeline for all fields."""
         unknown = set(overrides) - set(self._FIELDS)
         if unknown:
-            raise ConfigError(
+            raise ConfigValidationError(
                 f"Unknown config field(s): {sorted(unknown)}. "
                 f"Valid fields are: {sorted(self._FIELDS)}"
             )
@@ -166,11 +164,14 @@ class AsyncAwsConfig:
 
     def __setattr__(self, name: str, value: Any) -> None:
         """Track provenance when fields are set with plugins after construction"""
-        super().__setattr__(name, value)
         # Mark as override only if the field is in _FIELDS and was already resolved
         if (
             name in self.__class__._FIELDS
             and hasattr(self, "_sources")
             and name in self._sources
         ):
+            spec = self.__class__._FIELDS[name]
+            if spec.validator is not None:
+                spec.validator(value)
             self._sources[name] = ConfigSource.OVERRIDE
+        super().__setattr__(name, value)

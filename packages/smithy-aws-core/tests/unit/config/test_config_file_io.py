@@ -6,7 +6,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-from smithy_aws_core.config import load_config
+from smithy_aws_core.config import DefaultFileSystem, load_config
 from smithy_aws_core.config.file_parser import parse_config_file
 
 
@@ -25,6 +25,7 @@ class TestFileIssues:
 
     @pytest.mark.asyncio
     async def test_permission_denied_returns_empty(self, tmp_path: Path):
+        fs = DefaultFileSystem()
         restricted_file = tmp_path / "restricted_config"
         restricted_file.write_text("[profile default]\nregion = us-east-1\n")
         # Patch read_text to raise PermissionError rather than relying on
@@ -32,7 +33,7 @@ class TestFileIssues:
         with patch.object(
             Path, "read_text", side_effect=PermissionError("Permission denied")
         ):
-            result = await parse_config_file(str(restricted_file))
+            result = await parse_config_file(str(restricted_file), fs)
         assert result == {}
 
 
@@ -42,10 +43,11 @@ class TestEncodingErrors:
     @pytest.mark.asyncio
     async def test_bad_unicode_raises_error(self, tmp_path: Path):
         """A file with invalid UTF-8 bytes should raise UnicodeDecodeError."""
+        fs = DefaultFileSystem()
         bad_file = tmp_path / "bad_config"
         bad_file.write_bytes(b"[default]\nregion = \xff\xfe invalid")
         with pytest.raises(UnicodeDecodeError):
-            await parse_config_file(str(bad_file))
+            await parse_config_file(str(bad_file), fs)
 
 
 class TestMultiFileMerge:

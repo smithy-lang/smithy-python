@@ -116,3 +116,15 @@ class UnsupportedStreamError(SmithyError):
 
 class EndpointResolutionError(SmithyError):
     """Exception type for all exceptions raised by endpoint resolution."""
+
+
+class ConfigError(SmithyError):
+    """Raised when a config value cannot be constructed directly"""
+
+
+class ConfigParseError(ConfigError):
+    """Raised when a config file cannot be parsed due to invalid syntax."""
+
+
+class ConfigValidationError(ConfigError):
+    """Raised when a config value cannot be validated"""

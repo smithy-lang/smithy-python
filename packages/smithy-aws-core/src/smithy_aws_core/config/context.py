@@ -1,58 +1,87 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-import asyncio
 import logging
 import os
-from collections.abc import Mapping
 from pathlib import Path
-from typing import Any, Protocol, runtime_checkable
+from typing import Any
 
-from smithy_aws_core.config import load_config
+from smithy_aws_core.config.file_parser import (
+    FileType,
+    parse_config_file,
+    standardize,
+)
+from smithy_aws_core.config.filesystem import DefaultFileSystem, FileSystem
 from smithy_aws_core.config.merged_config import MergedConfig
 
 logger = logging.getLogger(__name__)
 
+_DEFAULT_CONFIG_FILE = "~/.aws/config"
+_DEFAULT_CREDENTIALS_FILE = "~/.aws/credentials"
+_CONFIG_FILE_ENV_VAR = "AWS_CONFIG_FILE"
+_CREDENTIALS_FILE_ENV_VAR = "AWS_SHARED_CREDENTIALS_FILE"
 
-@runtime_checkable
-class FileSystem(Protocol):
-    """Protocol for filesystem operations.
 
-    Abstraction over file I/O so tests can provide mock implementations
-    without touching the real filesystem.
+def _resolve_config_paths(
+    config_file_path: Path | None = None,
+    credentials_file_path: Path | None = None,
+) -> tuple[Path, Path]:
+    """Resolve the final config and credentials file paths.
+
+    Resolution order for each path:
+    1. Explicit argument (if provided)
+    2. Environment variable (AWS_CONFIG_FILE / AWS_SHARED_CREDENTIALS_FILE)
+    3. Default (~/.aws/config / ~/.aws/credentials)
+
+    The ~ is expanded to the user's home directory.
+
+    :param config_file_path: Override path for config file.
+    :param credentials_file_path: Override path for credentials file.
+    :returns: Tuple of (resolved_config_path, resolved_credentials_path).
     """
+    config_path = (
+        config_file_path
+        or Path(os.environ.get(_CONFIG_FILE_ENV_VAR, _DEFAULT_CONFIG_FILE))
+    ).expanduser()
 
-    async def read_file(self, path: str) -> str | None:
-        """Read a file's content as UTF-8.
+    credentials_path = (
+        credentials_file_path
+        or Path(os.environ.get(_CREDENTIALS_FILE_ENV_VAR, _DEFAULT_CREDENTIALS_FILE))
+    ).expanduser()
 
-        :param path: Resolved file path.
-        :returns: File content, or None if the file is inaccessible.
-        """
-        ...
+    return config_path, credentials_path
 
 
-class DefaultFileSystem:
-    """Default filesystem implementation using real disk I/O."""
+async def load_config(
+    config_file_path: Path | None = None,
+    credentials_file_path: Path | None = None,
+    fs: FileSystem | None = None,
+) -> MergedConfig:
+    """Load and merge AWS config and credentials files.
 
-    async def read_file(self, path: str) -> str | None:
-        """Read a file asynchronously from disk.
+    Parses both files, standardizes them, and returns a merged
+    MergedConfig ready for querying.
 
-        Missing files and permission errors return None with a warning.
-        Encoding errors (invalid UTF-8) are raised to the caller.
+    :param config_file_path: Override path for config file.
+        Defaults to AWS_CONFIG_FILE env var or ~/.aws/config.
+    :param credentials_file_path: Override path for credentials file.
+        Defaults to AWS_SHARED_CREDENTIALS_FILE env var or ~/.aws/credentials.
+    :param fs: FileSystem to use for reading files.
+        Defaults to DefaultFileSystem (real disk I/O).
+    :returns: A MergedConfig with merged profiles from both files.
+    """
+    filesystem = fs or DefaultFileSystem()
+    config_path, credentials_path = _resolve_config_paths(
+        config_file_path, credentials_file_path
+    )
 
-        :param path: Resolved file path.
-        :returns: File content, or None if the file is inaccessible.
-        """
-        try:
-            content: str = await asyncio.to_thread(
-                Path(path).read_text, encoding="utf-8"
-            )
-            return content
-        except FileNotFoundError:
-            return None
-        except (PermissionError, OSError) as e:
-            logger.warning("Unable to read config file '%s': %s", path, e)
-            return None
+    raw_config = await parse_config_file(str(config_path), filesystem)
+    raw_credentials = await parse_config_file(str(credentials_path), filesystem)
+
+    std_config = standardize(raw_config, FileType.CONFIG)
+    std_credentials = standardize(raw_credentials, FileType.CREDENTIALS)
+
+    return MergedConfig(std_config, std_credentials)
 
 
 class SharedConfigContext:
@@ -66,7 +95,6 @@ class SharedConfigContext:
         self,
         *,
         profile_name: str | None = None,
-        env: Mapping[str, str] | None = None,
         fs: FileSystem | None = None,
         http_client: Any | None = None,
         config_file_path: str | Path | None = None,
@@ -76,7 +104,6 @@ class SharedConfigContext:
 
         :param profile_name: The active profile to use. Defaults to
             AWS_PROFILE env var, then "default".
-        :param env: Environment variable mapping. Defaults to os.environ.
         :param fs: Filesystem abstraction for reading config files.
             Defaults to real disk I/O.
         :param http_client: HTTP client for network-based resolvers
@@ -84,7 +111,6 @@ class SharedConfigContext:
         :param config_file_path: Override path for config file.
         :param credentials_file_path: Override path for credentials file.
         """
-        self._env: Mapping[str, str] = env if env is not None else os.environ
         self._fs: FileSystem = fs if fs is not None else DefaultFileSystem()
         self._http_client: Any | None = http_client
         self._profile_name: str = self._resolve_profile_name(profile_name)
@@ -95,11 +121,6 @@ class SharedConfigContext:
             Path(credentials_file_path) if credentials_file_path is not None else None
         )
         self._cached_config_file: MergedConfig | None = None
-
-    @property
-    def env(self) -> Mapping[str, str]:
-        """The environment variable mapping."""
-        return self._env
 
     @property
     def profile_name(self) -> str:
@@ -126,6 +147,7 @@ class SharedConfigContext:
             self._cached_config_file = await load_config(
                 config_file_path=self._config_file_path,
                 credentials_file_path=self._credentials_file_path,
+                fs=self._fs,
             )
         return self._cached_config_file
 
@@ -136,4 +158,4 @@ class SharedConfigContext:
         """
         if explicit_profile is not None:
             return explicit_profile
-        return self._env.get("AWS_PROFILE", "default")
+        return os.environ.get("AWS_PROFILE", "default")

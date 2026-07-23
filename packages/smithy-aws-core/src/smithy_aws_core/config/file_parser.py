@@ -1,14 +1,14 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-import asyncio
 import logging
 import re
 from dataclasses import dataclass, field
 from enum import Enum
-from pathlib import Path
 
-from smithy_aws_core.config.exceptions import ConfigParseError
+from smithy_core.exceptions import ConfigParseError
+
+from smithy_aws_core.config.filesystem import FileSystem
 
 logger = logging.getLogger(__name__)
 
@@ -43,16 +43,19 @@ class StandardizedOutput:
     services: SectionMap = field(default_factory=dict)  # type: ignore[assignment]
 
 
-async def parse_config_file(file_path: str) -> RawParsedSections:
+async def parse_config_file(
+    file_path: str, filesystem: FileSystem
+) -> RawParsedSections:
     """Parse an AWS config or credentials file.
 
     Reads the file asynchronously and parses it into raw sections.
 
     :param file_path: Resolved path to the file.
+    :param filesystem: FileSystem object to use.
     :returns: Raw sections dict {section_name: {key: value}}.
     :raises ConfigParseError: If the file has invalid syntax.
     """
-    content = await _read_file(file_path)
+    content = await filesystem.read_file(file_path)
     if content is None:
         return {}
     try:
@@ -109,23 +112,6 @@ def standardize(
         sso_sessions=sso_sessions,
         services=services,
     )
-
-
-async def _read_file(path: str) -> str | None:
-    """Read file content asynchronously.
-
-    Returns None if the file doesn't exist or can't be read due to
-    permission/OS errors. Raises on encoding errors since they likely
-    indicate a misconfigured file the user should know about.
-    """
-    try:
-        content = await asyncio.to_thread(Path(path).read_text, encoding="utf-8")
-        return content
-    except FileNotFoundError:
-        return None
-    except (PermissionError, OSError) as e:
-        logger.warning("Unable to read config file '%s': %s", path, e)
-        return None
 
 
 def _parse_content(content: str) -> RawParsedSections:

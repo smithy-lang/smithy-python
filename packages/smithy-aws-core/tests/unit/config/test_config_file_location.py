@@ -8,7 +8,7 @@ from typing import cast
 from unittest.mock import patch
 
 import pytest
-from smithy_aws_core.config import (
+from smithy_aws_core.config.context import (
     _resolve_config_paths,  # type: ignore[reportPrivateUsage]
 )
 

@@ -4,7 +4,7 @@
 
 from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
@@ -19,7 +19,7 @@ class _UnsetType:
 UNSET = _UnsetType()
 
 
-class ConfigSource(str, Enum):
+class ConfigSource(StrEnum):
     """Where a resolved config value came from."""
 
     ENV = "env"
