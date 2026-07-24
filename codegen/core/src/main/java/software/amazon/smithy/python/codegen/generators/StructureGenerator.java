@@ -288,11 +288,8 @@ public final class StructureGenerator implements Runnable {
         // see: https://smithy.io/2.0/spec/type-refinement-traits.html#smithy-api-default-trait
         var defaultNode = member.expectTrait(DefaultTrait.class).toNode();
         var target = model.expectShape(member.getTarget());
-        // A member may override its target's default with an explicit null to mark
-        // itself nullable, in which case it resolves to None. This guard covers every
-        // non-document type in one place so each branch below can assume a typed value.
-        // Documents are excluded: a null document default is a non-None Document(None),
-        // built by the document branch below.
+        // A null default marks the member nullable and resolves to None. Documents are
+        // excluded since their null default is a non-None Document(None) (see the branch below).
         if (!target.isDocumentShape() && defaultNode.isNullNode()) {
             return "None";
         }
