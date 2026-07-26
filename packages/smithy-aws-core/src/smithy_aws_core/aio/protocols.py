@@ -361,10 +361,16 @@ class _AWSJSONClientProtocol(HttpClientProtocol):
         ):
             deserializer = self.payload_codec.create_deserializer(response_body)
             document = deserializer.read_document(schema=DOCUMENT)
-            if document.discriminator in error_registry:
-                error_id = document.discriminator
+            error_id = document.discriminator
 
-        if error_id is not None and error_id in error_registry:
+        if error_id is not None:
+            error_id = self._resolve_error_id(
+                operation=operation,
+                error_id=error_id,
+                error_registry=error_registry,
+            )
+
+        if error_id is not None:
             error_shape = error_registry.get(error_id)
 
             # make sure the error shape is derived from modeled exception
@@ -404,6 +410,37 @@ class _AWSJSONClientProtocol(HttpClientProtocol):
             return False
         actual = response.fields["content-type"].as_string()
         return actual.split(";", 1)[0].strip().lower() == self.content_type.lower()
+
+    def _resolve_error_id(
+        self,
+        *,
+        operation: APIOperation[Any, Any],
+        error_id: ShapeID,
+        error_registry: TypeRegistry,
+    ) -> ShapeID | None:
+        """Resolve a wire error ID against the modeled error registry.
+
+        Error registries are keyed by modeled ShapeIDs. The awsJson protocols only
+        consider the shape name (the portion after ``#``) when discriminating errors,
+        so a fully-qualified wire error ID whose namespace differs from the modeled
+        shape is retried with the operation's namespace and the same shape name.
+        """
+        if error_id in error_registry:
+            return error_id
+
+        default_namespace = operation.schema.id.namespace
+        if error_id.namespace == default_namespace:
+            return None
+
+        fallback_error_id = ShapeID.from_parts(
+            namespace=default_namespace,
+            name=error_id.name,
+            member=error_id.member,
+        )
+        if fallback_error_id in error_registry:
+            return fallback_error_id
+
+        return None
 
 
 class AwsJson10ClientProtocol(_AWSJSONClientProtocol):
