@@ -345,14 +345,22 @@ async def test_aws_json11_resolves_modeled_error_from_header_only_shapeid() -> N
         )
 
 
-async def test_aws_json11_resolves_modeled_error_from_header_namespace_fallback() -> (
-    None
-):
-    # The wire error ID uses a different namespace than the modeled error. The
-    # awsJson protocols only match on shape name, so it should fall back to the
-    # operation's namespace and still resolve the modeled error.
+_OTHER_NS_ERROR_SCHEMA = Schema.collection(
+    id=ShapeID("com.test#OtherNsError"),
+    traits=[Trait.new(id=ShapeID("smithy.api#error"), value="client")],
+    members={"message": {"target": STRING}},
+)
+
+
+async def test_aws_json11_resolves_modeled_error_from_header_name_fallback() -> None:
+    # The wire error ID carries a different namespace than the modeled error. The
+    # awsJson protocols discriminate on shape name only, so it should resolve to the
+    # operation's modeled error by matching the shape name.
     protocol = _aws_json11_protocol()
-    operation = _mock_operation(_operation_schema("FailingOperation"))
+    operation = _mock_operation(
+        _operation_schema("FailingOperation"),
+        error_schemas=[_OTHER_NS_ERROR_SCHEMA],
+    )
     response = HTTPResponse(
         status=400,
         reason="Bad Request",
@@ -377,11 +385,14 @@ async def test_aws_json11_resolves_modeled_error_from_header_namespace_fallback(
         )
 
 
-async def test_aws_json11_resolves_modeled_error_from_body_namespace_fallback() -> None:
+async def test_aws_json11_resolves_modeled_error_from_body_name_fallback() -> None:
     # Same as above, but the discriminator comes from the body's __type rather
     # than the x-amzn-errortype header.
     protocol = _aws_json11_protocol()
-    operation = _mock_operation(_operation_schema("FailingOperation"))
+    operation = _mock_operation(
+        _operation_schema("FailingOperation"),
+        error_schemas=[_OTHER_NS_ERROR_SCHEMA],
+    )
     response = HTTPResponse(
         status=400,
         reason="Bad Request",
