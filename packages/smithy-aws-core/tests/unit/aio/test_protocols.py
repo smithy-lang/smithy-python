@@ -421,7 +421,7 @@ async def test_aws_json11_raises_parse_error_for_invalid_error_body() -> None:
         body=b'{"__type":',
     )
 
-    with pytest.raises(IncompleteJSONError, match="premature EOF|parse error"):
+    with pytest.raises(IncompleteJSONError, match=r"premature EOF|parse error"):
         await protocol.deserialize_response(
             operation=operation,
             request=cast(HTTPRequest, Mock()),
