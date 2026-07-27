@@ -58,22 +58,21 @@ def validate_retry_mode(retry_mode: str):
 
 
 def validate_max_attempts(
-    max_attempts: str | int | None,
+    max_attempts: object,
 ):
     """Validate max_attempts
 
-    :param max_attempts: The max attempts value (string or int)
+    :param max_attempts: The max attempts value.
 
-    :raises ConfigValidationError: If the value is less than 1 or cannot be converted to an integer
+    :raises ConfigValidationError: If the value is not an integer or is less than 1.
     """
     if max_attempts is None:
         return
-    try:
-        max_attempts = int(max_attempts)
-    except (ValueError, TypeError) as e:
+
+    if not isinstance(max_attempts, int) or isinstance(max_attempts, bool):
         raise ConfigValidationError(
-            f"max_attempts must be a number, got {type(max_attempts).__name__}",
-        ) from e
+            f"max_attempts must be an integer, got {type(max_attempts).__name__}",
+        )
 
     if max_attempts < 1:
         raise ConfigValidationError(

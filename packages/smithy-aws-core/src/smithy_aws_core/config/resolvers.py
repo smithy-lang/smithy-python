@@ -95,7 +95,7 @@ async def resolve_retry_mode(ctx: SharedConfigContext) -> Resolved[str | None]:
     if result.value == "legacy":
         warnings.warn(
             "'legacy' retry mode is not supported, using 'standard' instead.",
-            DeprecationWarning,
+            UserWarning,
             stacklevel=2,
         )
         return Resolved(value="standard", source=result.source)

@@ -175,6 +175,15 @@ class TestAsyncAwsConfigResolve:
             ):
                 await AsyncAwsConfig.resolve(region="bad-value!")
 
+    @pytest.mark.asyncio
+    async def test_invalid_profile_raises_error(self):
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
+            with pytest.raises(ConfigError, match="not found"):
+                await AsyncAwsConfig.resolve(
+                    profile="FOOBAR",
+                    fs=NullFileSystem(),
+                )
+
 
 class TestProvenanceTracking:
     @pytest.mark.asyncio
@@ -354,7 +363,7 @@ class TestResolveRetryMode:
         with patch.dict(os.environ, {"AWS_RETRY_MODE": "legacy"}, clear=True):
             ctx = SharedConfigContext()
             with pytest.warns(
-                DeprecationWarning,
+                UserWarning,
                 match="'legacy' retry mode is not supported, using 'standard' instead.",
             ):
                 result = await resolve_retry_mode(ctx)

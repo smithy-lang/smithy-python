@@ -85,7 +85,7 @@ class TestValidateMaxAttempts:
     def test_valid_values(self, value: int):
         validate_max_attempts(value)
 
-    @pytest.mark.parametrize("value", [0, -1, -100])
+    @pytest.mark.parametrize("value", [0, -1, -100, "abcd", True, "5"])
     def test_invalid_values(self, value: int):
         with pytest.raises(ConfigValidationError, match="max_attempts"):
             validate_max_attempts(value)

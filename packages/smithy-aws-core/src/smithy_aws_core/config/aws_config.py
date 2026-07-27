@@ -97,6 +97,12 @@ class AsyncAwsConfig:
             credentials_file_path=credentials_file_path,
         )
 
+        # Validate profile exists if explicitly requested
+        if profile is not None:
+            config_file = await ctx.parsed_profiles()
+            if profile not in config_file.profiles:
+                raise ConfigError(f"Profile '{profile}' not found in config file.")
+
         # Create the instance bypassing __post_init__ check
         instance = cls._create_instance()
         instance._ctx = ctx
