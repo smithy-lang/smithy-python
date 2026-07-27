@@ -4,8 +4,9 @@
 import re
 from typing import get_args
 
-from smithy_core.exceptions import ConfigValidationError
-from smithy_core.retries import RetryStrategyOptions, RetryStrategyType
+from smithy_core.retries import RetryStrategyType
+
+from .exceptions import ConfigValidationError
 
 _REGION_PATTERN = re.compile(r"^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{1,63}(?<!-)$")
 
@@ -30,19 +31,6 @@ def validate_region(value: object) -> None:
         )
 
 
-def validate_retry_strategy_options(value: object) -> None:
-    """Validate that retry_strategy_options is a RetryStrategyOptions instance.
-
-    :param value: The resolved retry strategy options value.
-    :raises ConfigValidationError: If the value is not a RetryStrategyOptions instance.
-    """
-    if not isinstance(value, RetryStrategyOptions):
-        raise ConfigValidationError(
-            f"Invalid value for 'retry_strategy_options': {value!r}. "
-            f"Must be RetryStrategyOptions, got {type(value).__name__}."
-        )
-
-
 def validate_retry_mode(retry_mode: str):
     """Validate retry mode.
 
@@ -51,6 +39,11 @@ def validate_retry_mode(retry_mode: str):
     :param retry_mode: The retry mode value to validate
     :raises: ConfigValidationError: If the retry mode is invalid
     """
+    # NOTE: RetryStrategyType includes 'simple' for direct config use, but the only valid
+    # string mode accepted here is 'standard'. 'adaptive' and 'legacy' are intentionally
+    # rejected as direct overrides ('adaptive' support may be added later; 'legacy' is not
+    # recommended and never will be). When 'adaptive' or 'legacy' come from the environment
+    # or a config file, resolve_retry_mode() warns and maps them to 'standard'.
 
     all_modes = list(get_args(RetryStrategyType))
     if "simple" in all_modes:
@@ -65,7 +58,7 @@ def validate_retry_mode(retry_mode: str):
 
 
 def validate_max_attempts(
-    max_attempts: str | int,
+    max_attempts: str | int | None,
 ):
     """Validate max_attempts
 
@@ -73,12 +66,14 @@ def validate_max_attempts(
 
     :raises ConfigValidationError: If the value is less than 1 or cannot be converted to an integer
     """
+    if max_attempts is None:
+        return
     try:
         max_attempts = int(max_attempts)
-    except (ValueError, TypeError):
+    except (ValueError, TypeError) as e:
         raise ConfigValidationError(
             f"max_attempts must be a number, got {type(max_attempts).__name__}",
-        )
+        ) from e
 
     if max_attempts < 1:
         raise ConfigValidationError(

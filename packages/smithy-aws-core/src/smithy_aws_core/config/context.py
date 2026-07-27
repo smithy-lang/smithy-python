@@ -6,13 +6,13 @@ import os
 from pathlib import Path
 from typing import Any
 
-from smithy_aws_core.config.file_parser import (
+from .file_parser import (
     FileType,
     parse_config_file,
     standardize,
 )
-from smithy_aws_core.config.filesystem import DefaultFileSystem, FileSystem
-from smithy_aws_core.config.merged_config import MergedConfig
+from .filesystem import DefaultFileSystem, FileSystem
+from .merged_config import MergedConfig
 
 logger = logging.getLogger(__name__)
 

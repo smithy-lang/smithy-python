@@ -6,9 +6,8 @@ import re
 from dataclasses import dataclass, field
 from enum import Enum
 
-from smithy_core.exceptions import ConfigParseError
-
-from smithy_aws_core.config.filesystem import FileSystem
+from .exceptions import ConfigParseError
+from .filesystem import FileSystem
 
 logger = logging.getLogger(__name__)
 
@@ -61,7 +60,7 @@ async def parse_config_file(
     try:
         return _parse_content(content)
     except ConfigParseError as e:
-        raise ConfigParseError(f"Unable to parse config file '{file_path}': {e}")
+        raise ConfigParseError(f"Unable to parse config file '{file_path}': {e}") from e
 
 
 def standardize(

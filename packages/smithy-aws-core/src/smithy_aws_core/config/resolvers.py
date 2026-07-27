@@ -2,15 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import os
+import warnings
 from collections.abc import Sequence
-from typing import Any
 
-from smithy_core.exceptions import ConfigValidationError
-from smithy_core.retries import RetryStrategyOptions
-
-from smithy_aws_core.config.context import SharedConfigContext
-from smithy_aws_core.config.types import UNSET, ConfigSource, Resolved
-from smithy_aws_core.config.validators import validate_max_attempts, validate_retry_mode
+from .context import SharedConfigContext
+from .exceptions import ConfigValidationError
+from .types import UNSET, ConfigSource, Resolved
 
 
 async def _resolve_str(
@@ -70,15 +67,6 @@ async def _resolve_int(
         ) from e
 
 
-def _strongest_source(*sources: ConfigSource) -> ConfigSource:
-    """Return the highest-priority source among multiple resolved values.
-
-    Priority: ENV > PROFILE > DEFAULT
-    """
-    priority = {ConfigSource.ENV: 3, ConfigSource.PROFILE: 2, ConfigSource.DEFAULT: 1}
-    return max(sources, key=lambda s: priority.get(s, 0))
-
-
 async def resolve_region(ctx: SharedConfigContext) -> Resolved[str | None]:
     """Resolve the AWS region from environment or config file.
 
@@ -92,47 +80,43 @@ async def resolve_region(ctx: SharedConfigContext) -> Resolved[str | None]:
     )
 
 
-async def resolve_retry_config(
-    ctx: SharedConfigContext,
-) -> Resolved[RetryStrategyOptions]:
-    """Resolve retry configuration from environment and config file.
-
-    Combines retry_mode and max_attempts into a single RetryStrategyOptions.
-    Each sub-value is resolved independently with its own priority chain.
+async def resolve_retry_mode(ctx: SharedConfigContext) -> Resolved[str | None]:
+    """
+    Resolve the AWS retry mode from environment or config file.
 
     :param ctx: The shared resolution context.
-    :returns: Resolved RetryStrategyOptions with the strongest source.
+    :returns: Resolved retry mode value with source.
     """
-    mode_result = await _resolve_str(
+    result = await _resolve_str(
         ctx,
         env_vars=("AWS_RETRY_MODE",),
         profile_keys=("retry_mode",),
     )
-    attempts_result = await _resolve_int(
+    if result.value == "legacy":
+        warnings.warn(
+            "'legacy' retry mode is not supported, using 'standard' instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return Resolved(value="standard", source=result.source)
+    elif result.value == "adaptive":
+        warnings.warn(
+            "'adaptive' retry mode is not supported, using 'standard' instead.",
+            UserWarning,
+            stacklevel=2,
+        )
+        return Resolved(value="standard", source=result.source)
+    return result
+
+
+async def resolve_max_attempts(ctx: SharedConfigContext) -> Resolved[int | None]:
+    """Resolve the maximum number of retry attempts from environment or config file.
+
+    :param ctx: The shared resolution context.
+    :returns: Resolved max attempts value with source.
+    """
+    return await _resolve_int(
         ctx,
         env_vars=("AWS_MAX_ATTEMPTS",),
         profile_keys=("max_attempts",),
-    )
-
-    # Build kwargs for values that were resolved
-    kwargs: dict[str, Any] = {}
-    sources_found: list[ConfigSource] = []
-
-    if mode_result.value is not UNSET:
-        validate_retry_mode(mode_result.value)
-        kwargs["retry_mode"] = mode_result.value
-        sources_found.append(mode_result.source)
-
-    if attempts_result.value is not UNSET and attempts_result.value is not None:
-        validate_max_attempts(attempts_result.value)
-        kwargs["max_attempts"] = attempts_result.value
-        sources_found.append(attempts_result.source)
-
-    source = (
-        _strongest_source(*sources_found) if sources_found else ConfigSource.DEFAULT
-    )
-
-    return Resolved(
-        value=RetryStrategyOptions(**kwargs),
-        source=source,
     )

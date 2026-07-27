@@ -3,15 +3,13 @@
 """Tests for config field validators."""
 
 import pytest
+from smithy_aws_core.config.exceptions import ConfigValidationError
 from smithy_aws_core.config.types import FieldSpec
 from smithy_aws_core.config.validators import (
     validate_max_attempts,
     validate_region,
     validate_retry_mode,
-    validate_retry_strategy_options,
 )
-from smithy_core.exceptions import ConfigValidationError
-from smithy_core.retries import RetryStrategyOptions
 
 
 class TestValidateRegion:
@@ -51,30 +49,6 @@ class TestValidateRegion:
     def test_non_string_raises(self):
         with pytest.raises(ConfigValidationError, match="Must be a valid AWS region"):
             validate_region(123)
-
-
-class TestValidateRetryStrategyOptions:
-    def test_valid_default_options(self):
-        validate_retry_strategy_options(RetryStrategyOptions())
-
-    def test_valid_options_with_values(self):
-        validate_retry_strategy_options(
-            RetryStrategyOptions(retry_mode="standard", max_attempts=5)
-        )
-
-    @pytest.mark.parametrize(
-        "value",
-        [
-            None,
-            "standard",
-            {"retry_mode": "standard"},
-            3,
-        ],
-        ids=["none", "string", "dict", "int"],
-    )
-    def test_invalid_types_raise(self, value: object):
-        with pytest.raises(ConfigValidationError, match="Must be RetryStrategyOptions"):
-            validate_retry_strategy_options(value)
 
 
 class TestFieldSpec:

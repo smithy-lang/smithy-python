@@ -1,8 +1,18 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-from smithy_aws_core.config.context import load_config
-from smithy_aws_core.config.filesystem import DefaultFileSystem, FileSystem
-from smithy_aws_core.config.merged_config import MergedConfig
+from .aws_config import AsyncAwsConfig
+from .context import SharedConfigContext, load_config
+from .filesystem import DefaultFileSystem, FileSystem
+from .merged_config import MergedConfig
+from .types import ConfigSource
 
-__all__ = ["DefaultFileSystem", "FileSystem", "MergedConfig", "load_config"]
+__all__ = [
+    "AsyncAwsConfig",
+    "ConfigSource",
+    "DefaultFileSystem",
+    "FileSystem",
+    "MergedConfig",
+    "SharedConfigContext",
+    "load_config",
+]

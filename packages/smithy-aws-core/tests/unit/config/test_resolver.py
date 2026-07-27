@@ -12,12 +12,13 @@ from unittest.mock import patch
 import pytest
 from smithy_aws_core.config.aws_config import AsyncAwsConfig
 from smithy_aws_core.config.context import SharedConfigContext
+from smithy_aws_core.config.exceptions import ConfigError, ConfigValidationError
 from smithy_aws_core.config.resolvers import (
+    resolve_max_attempts,
     resolve_region,
-    resolve_retry_config,
+    resolve_retry_mode,
 )
-from smithy_aws_core.config.types import ConfigSource
-from smithy_core.exceptions import ConfigError, ConfigValidationError
+from smithy_aws_core.config.types import UNSET, ConfigSource
 
 
 class NullFileSystem:
@@ -103,65 +104,6 @@ class TestResolveRegion:
             assert result.source == ConfigSource.PROFILE
 
 
-class TestResolveRetryConfig:
-    @pytest.mark.asyncio
-    async def test_resolves_both_from_env(self):
-        with patch.dict(
-            os.environ,
-            {"AWS_RETRY_MODE": "standard", "AWS_MAX_ATTEMPTS": "10"},
-            clear=True,
-        ):
-            ctx = SharedConfigContext()
-            result = await resolve_retry_config(ctx)
-            assert result.value.retry_mode == "standard"
-            assert result.value.max_attempts == 10
-            assert result.source == ConfigSource.ENV
-
-    @pytest.mark.asyncio
-    async def test_uses_defaults_when_nothing_found(self):
-        with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext(fs=NullFileSystem())
-            result = await resolve_retry_config(ctx)
-            assert result.value.retry_mode == "standard"
-            assert result.value.max_attempts is None
-            assert result.source == ConfigSource.DEFAULT
-
-    @pytest.mark.asyncio
-    async def test_partial_resolution_uses_defaults_for_missing(self):
-        with patch.dict(os.environ, {"AWS_RETRY_MODE": "standard"}, clear=True):
-            ctx = SharedConfigContext(fs=NullFileSystem())
-            result = await resolve_retry_config(ctx)
-            assert result.value.retry_mode == "standard"
-            assert result.value.max_attempts is None
-            assert result.source == ConfigSource.ENV
-
-    @pytest.mark.asyncio
-    async def test_max_attempts_cast_to_int(self):
-        with patch.dict(
-            os.environ,
-            {"AWS_RETRY_MODE": "standard", "AWS_MAX_ATTEMPTS": "5"},
-            clear=True,
-        ):
-            ctx = SharedConfigContext()
-            result = await resolve_retry_config(ctx)
-            assert result.value.max_attempts == 5
-            assert isinstance(result.value.max_attempts, int)
-
-    @pytest.mark.asyncio
-    async def test_max_attempts_unset_when_not_found(self):
-        with patch.dict(os.environ, {}, clear=True):
-            ctx = SharedConfigContext(fs=NullFileSystem())
-            result = await resolve_retry_config(ctx)
-            assert result.value.max_attempts is None
-
-    @pytest.mark.asyncio
-    async def test_invalid_max_attempts_raises_config_error(self):
-        with patch.dict(os.environ, {"AWS_MAX_ATTEMPTS": "abc"}, clear=True):
-            ctx = SharedConfigContext(fs=NullFileSystem())
-            with pytest.raises(ConfigValidationError, match="Invalid integer value"):
-                await resolve_retry_config(ctx)
-
-
 class TestAsyncAwsConfigResolve:
     @pytest.mark.asyncio
     async def test_resolves_region_from_env(self):
@@ -181,9 +123,9 @@ class TestAsyncAwsConfigResolve:
             clear=True,
         ):
             config = await AsyncAwsConfig.resolve(fs=NullFileSystem())
-            assert config.retry_strategy_options is not None
-            assert config.retry_strategy_options.retry_mode == "standard"
-            assert config.retry_strategy_options.max_attempts == 5
+            assert config.region == "us-east-1"
+            assert config.retry_mode == "standard"
+            assert config.max_attempts == 5
 
     @pytest.mark.asyncio
     async def test_explicit_override_takes_precedence(self):
@@ -203,9 +145,9 @@ class TestAsyncAwsConfigResolve:
     async def test_default_retry_strategy(self):
         with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
             config = await AsyncAwsConfig.resolve(fs=NullFileSystem())
-            assert config.retry_strategy_options is not None
-            assert config.retry_strategy_options.retry_mode == "standard"
-            assert config.retry_strategy_options.max_attempts is None
+            assert config.region == "us-east-1"
+            assert config.retry_mode == "standard"
+            assert config.max_attempts is None
 
     @pytest.mark.asyncio
     async def test_resolves_region_from_non_default_profile(self):
@@ -256,7 +198,7 @@ class TestProvenanceTracking:
     async def test_source_of_default_field(self):
         with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
             config = await AsyncAwsConfig.resolve(fs=NullFileSystem())
-            assert config.source_of("retry_strategy_options") == ConfigSource.DEFAULT
+            assert config.source_of("retry_mode") == ConfigSource.DEFAULT
 
     @pytest.mark.asyncio
     async def test_source_of_override_field(self):
@@ -293,9 +235,9 @@ class TestConstructionBlocking:
             ("region", "bad-value!", "Must be a valid AWS region"),
             ("region", None, "Region is required"),
             (
-                "retry_strategy_options",
-                "not-a-strategy",
-                "Must be RetryStrategyOptions",
+                "retry_mode",
+                "not-retry",
+                "Invalid value for 'retry_mode'",
             ),
         ],
     )
@@ -340,3 +282,151 @@ class TestSharedConfigContext:
             result1 = await ctx.parsed_profiles()
             result2 = await ctx.parsed_profiles()
             assert result1 is result2
+
+
+class TestResolveRetryMode:
+    @pytest.mark.asyncio
+    async def test_resolves_from_env(self):
+        with patch.dict(os.environ, {"AWS_RETRY_MODE": "standard"}, clear=True):
+            ctx = SharedConfigContext()
+            result = await resolve_retry_mode(ctx)
+            assert result.value == "standard"
+            assert result.source == ConfigSource.ENV
+
+    @pytest.mark.asyncio
+    async def test_resolves_from_profile_when_no_env(self):
+        fs = FakeFileSystem(
+            {"/fake/config": "[profile default]\nretry_mode = standard\n"}
+        )
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = SharedConfigContext(
+                fs=fs,
+                config_file_path="/fake/config",
+                credentials_file_path="/fake/credentials",
+            )
+            result = await resolve_retry_mode(ctx)
+            assert result.value == "standard"
+            assert result.source == ConfigSource.PROFILE
+
+    @pytest.mark.asyncio
+    async def test_adaptive_from_profile_warns_and_maps_to_standard(self):
+        fs = FakeFileSystem(
+            {"/fake/config": "[profile default]\nretry_mode = adaptive\n"}
+        )
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = SharedConfigContext(
+                fs=fs,
+                config_file_path="/fake/config",
+                credentials_file_path="/fake/credentials",
+            )
+            with pytest.warns(
+                UserWarning,
+                match="'adaptive' retry mode is not supported, using 'standard' instead.",
+            ):
+                result = await resolve_retry_mode(ctx)
+            assert result.value == "standard"
+            assert result.source == ConfigSource.PROFILE
+
+    @pytest.mark.asyncio
+    async def test_env_takes_precedence_over_profile(self):
+        fs = FakeFileSystem(
+            {"/fake/config": "[profile default]\nretry_mode = adaptive\n"}
+        )
+        with patch.dict(os.environ, {"AWS_RETRY_MODE": "standard"}, clear=True):
+            ctx = SharedConfigContext(
+                fs=fs,
+                config_file_path="/fake/config",
+                credentials_file_path="/fake/credentials",
+            )
+            result = await resolve_retry_mode(ctx)
+            assert result.value == "standard"
+            assert result.source == ConfigSource.ENV
+
+    @pytest.mark.asyncio
+    async def test_returns_unset_when_not_found(self):
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = SharedConfigContext(fs=NullFileSystem())
+            result = await resolve_retry_mode(ctx)
+            assert result.value is UNSET
+
+    @pytest.mark.asyncio
+    async def test_legacy_warns_and_maps_to_standard(self):
+        with patch.dict(os.environ, {"AWS_RETRY_MODE": "legacy"}, clear=True):
+            ctx = SharedConfigContext()
+            with pytest.warns(
+                DeprecationWarning,
+                match="'legacy' retry mode is not supported, using 'standard' instead.",
+            ):
+                result = await resolve_retry_mode(ctx)
+            assert result.value == "standard"
+            assert result.source == ConfigSource.ENV
+
+    @pytest.mark.asyncio
+    async def test_adaptive_warns_and_maps_to_standard(self):
+        with patch.dict(os.environ, {"AWS_RETRY_MODE": "adaptive"}, clear=True):
+            ctx = SharedConfigContext()
+            with pytest.warns(
+                UserWarning,
+                match="'adaptive' retry mode is not supported, using 'standard' instead.",
+            ):
+                result = await resolve_retry_mode(ctx)
+            assert result.value == "standard"
+            assert result.source == ConfigSource.ENV
+
+
+class TestResolveMaxAttempts:
+    @pytest.mark.asyncio
+    async def test_resolves_from_env(self):
+        with patch.dict(os.environ, {"AWS_MAX_ATTEMPTS": "5"}, clear=True):
+            ctx = SharedConfigContext()
+            result = await resolve_max_attempts(ctx)
+            assert result.value == 5
+            assert result.source == ConfigSource.ENV
+
+    @pytest.mark.asyncio
+    async def test_resolves_from_profile_when_no_env(self):
+        fs = FakeFileSystem({"/fake/config": "[profile default]\nmax_attempts = 10\n"})
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = SharedConfigContext(
+                fs=fs,
+                config_file_path="/fake/config",
+                credentials_file_path="/fake/credentials",
+            )
+            result = await resolve_max_attempts(ctx)
+            assert result.value == 10
+            assert result.source == ConfigSource.PROFILE
+
+    @pytest.mark.asyncio
+    async def test_env_takes_precedence_over_profile(self):
+        fs = FakeFileSystem({"/fake/config": "[profile default]\nmax_attempts = 10\n"})
+        with patch.dict(os.environ, {"AWS_MAX_ATTEMPTS": "3"}, clear=True):
+            ctx = SharedConfigContext(
+                fs=fs,
+                config_file_path="/fake/config",
+                credentials_file_path="/fake/credentials",
+            )
+            result = await resolve_max_attempts(ctx)
+            assert result.value == 3
+            assert result.source == ConfigSource.ENV
+
+    @pytest.mark.asyncio
+    async def test_returns_unset_when_not_found(self):
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = SharedConfigContext(fs=NullFileSystem())
+            result = await resolve_max_attempts(ctx)
+            assert result.value is UNSET
+
+    @pytest.mark.asyncio
+    async def test_casts_to_int(self):
+        with patch.dict(os.environ, {"AWS_MAX_ATTEMPTS": "7"}, clear=True):
+            ctx = SharedConfigContext()
+            result = await resolve_max_attempts(ctx)
+            assert result.value == 7
+            assert isinstance(result.value, int)
+
+    @pytest.mark.asyncio
+    async def test_invalid_value_raises_error(self):
+        with patch.dict(os.environ, {"AWS_MAX_ATTEMPTS": "abc"}, clear=True):
+            ctx = SharedConfigContext()
+            with pytest.raises(ConfigValidationError, match="Invalid integer value"):
+                await resolve_max_attempts(ctx)

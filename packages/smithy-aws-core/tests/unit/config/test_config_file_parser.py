@@ -7,6 +7,7 @@ from typing import cast
 
 import pytest
 from smithy_aws_core.config import DefaultFileSystem
+from smithy_aws_core.config.exceptions import ConfigParseError
 from smithy_aws_core.config.file_parser import (
     FileType,
     RawParsedSections,
@@ -14,7 +15,6 @@ from smithy_aws_core.config.file_parser import (
     standardize,
 )
 from smithy_aws_core.config.merged_config import MergedConfig
-from smithy_core.exceptions import ConfigParseError
 
 _PARSER_TESTS_FILE = (
     Path(__file__).parent / "test-data" / "config-file-parser-tests.json"

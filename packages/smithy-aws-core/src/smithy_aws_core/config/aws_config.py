@@ -4,16 +4,21 @@
 from dataclasses import dataclass, field
 from typing import Any, ClassVar, Self
 
-from smithy_core.exceptions import ConfigError, ConfigValidationError
 from smithy_core.retries import RetryStrategyOptions
 
-from smithy_aws_core.config.context import SharedConfigContext
-from smithy_aws_core.config.filesystem import FileSystem
-from smithy_aws_core.config.resolvers import resolve_region, resolve_retry_config
-from smithy_aws_core.config.types import UNSET, ConfigSource, FieldSpec, Resolved
-from smithy_aws_core.config.validators import (
+from .context import SharedConfigContext
+from .exceptions import ConfigError, ConfigValidationError
+from .filesystem import FileSystem
+from .resolvers import (
+    resolve_max_attempts,
+    resolve_region,
+    resolve_retry_mode,
+)
+from .types import UNSET, ConfigSource, FieldSpec, Resolved
+from .validators import (
+    validate_max_attempts,
     validate_region,
-    validate_retry_strategy_options,
+    validate_retry_mode,
 )
 
 
@@ -29,7 +34,8 @@ class AsyncAwsConfig:
     """
 
     region: str | None = None
-    retry_strategy_options: RetryStrategyOptions | None = None
+    retry_mode: str | None = None
+    max_attempts: int | None = None
 
     _ctx: SharedConfigContext | None = field(default=None, repr=False, compare=False)
     _sources: dict[str, ConfigSource] = field(  # type: ignore[assignment]
@@ -44,10 +50,15 @@ class AsyncAwsConfig:
             resolver=resolve_region,
             validator=validate_region,
         ),
-        "retry_strategy_options": FieldSpec(
-            default_factory=RetryStrategyOptions,
-            resolver=resolve_retry_config,
-            validator=validate_retry_strategy_options,
+        "retry_mode": FieldSpec(
+            default=RetryStrategyOptions.retry_mode,
+            resolver=resolve_retry_mode,
+            validator=validate_retry_mode,
+        ),
+        "max_attempts": FieldSpec(
+            default=RetryStrategyOptions.max_attempts,
+            resolver=resolve_max_attempts,
+            validator=validate_max_attempts,
         ),
     }
 
