@@ -1,4 +1,0 @@
-{
-  "type": "breaking",
-  "description": "Removed `ChainedIdentityResolver` in favor of `IdentityChain` in `smithy-aws-core`."
-}

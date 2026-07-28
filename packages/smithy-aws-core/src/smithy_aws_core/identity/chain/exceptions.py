@@ -50,7 +50,7 @@ class IdentityChainError(SmithyIdentityError):
         self.failures = failures
         self.unclaimed_sources = unclaimed_sources
         if not failures:
-            message = "No credential providers were discovered."
+            message = "No credential providers were configured to resolve an identity."
         else:
             attempted = "; ".join(
                 f"{failure.provider_name}: {failure.error}" for failure in failures

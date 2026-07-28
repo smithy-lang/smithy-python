@@ -224,11 +224,12 @@ async def test_all_miss_raises_with_per_provider_failures() -> None:
     assert len(excinfo.value.failures) == 2
 
 
-async def test_empty_chain_reports_no_providers_discovered() -> None:
+async def test_empty_chain_reports_no_configured_provider() -> None:
     chain = IdentityChain((), identity_type=AWSCredentialsIdentity)
 
     with pytest.raises(
-        IdentityChainError, match="No credential providers were discovered"
+        IdentityChainError,
+        match="No credential providers were configured to resolve an identity",
     ):
         await chain.get_identity(properties={})
 
