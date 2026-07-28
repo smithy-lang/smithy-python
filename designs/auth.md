@@ -121,9 +121,7 @@ class IdentityResolver[I: Identity, IP: Mapping[str, Any]](Protocol):
 
 Each identity source SHOULD have its own identity resolver implementation. If an
 `Identity` is supported by multiple `IdentityResolver`s, those resolver SHOULD
-be prioritized to provide a stable resolution strategy. A
-`ChainedIdentityResolver` implementation is provided that implements this
-behavior generically.
+be prioritized to provide a stable resolution strategy.
 
 The `get_identity` function takes only one (keyword-only) argument - a mapping
 of properties that is refined by the `IP` generic parameter. The identity

@@ -8,6 +8,7 @@ from typing import Any, Protocol
 
 from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.interfaces.identity import Identity
+from smithy_http.aio.interfaces import HTTPClient
 
 from ...config.file_parser import Section
 from ...config.merged_config import MergedConfig
@@ -16,7 +17,7 @@ from .ordering import OrderingConstraint
 
 @dataclass(frozen=True, kw_only=True)
 class NamedResolver:
-    """Associates an identity resolver with its provider name."""
+    """Associates an identity resolver with its provider's metadata."""
 
     provider_name: str
     resolver: IdentityResolver[Any, Any]
@@ -24,6 +25,10 @@ class NamedResolver:
     async def get_identity(self, *, properties: Mapping[str, Any]) -> Any:
         """Resolve an identity using the underlying resolver."""
         return await self.resolver.get_identity(properties=properties)
+
+    async def invalidate(self) -> None:
+        """Invalidate any identity cached by the underlying resolver."""
+        await self.resolver.invalidate()
 
 
 class ChainSetup:
@@ -34,10 +39,14 @@ class ChainSetup:
         *,
         profile_file: MergedConfig | None = None,
         profile_name_override: str | None = None,
+        region_override: str | None = None,
+        http_client: HTTPClient | None = None,
         properties: MutableMapping[str, Any] | None = None,
     ) -> None:
         self._profile_file = profile_file
         self._profile_name_override = profile_name_override
+        self._region_override = region_override
+        self._http_client = http_client
         self._profile: Section | None = None
         self._properties: MutableMapping[str, Any] = (
             {} if properties is None else properties
@@ -60,6 +69,16 @@ class ChainSetup:
     def profile_name_override(self) -> str | None:
         """Return the client-specified profile name, if provided."""
         return self._profile_name_override
+
+    @property
+    def region_override(self) -> str | None:
+        """Return the region override, if provided."""
+        return self._region_override
+
+    @property
+    def http_client(self) -> HTTPClient | None:
+        """Return the HTTP client to use for network calls, if provided."""
+        return self._http_client
 
     @property
     def properties(self) -> MutableMapping[str, Any]:

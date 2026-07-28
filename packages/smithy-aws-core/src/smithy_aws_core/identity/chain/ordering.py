@@ -33,19 +33,21 @@ class StandardProvider(Enum):
 
     def is_detected(self) -> bool:
         """Return whether this slot has a cheap environment detection signal."""
-        if self is StandardProvider.ENVIRONMENT:
-            return bool(os.getenv("AWS_ACCESS_KEY_ID"))
-        if self is StandardProvider.WEB_IDENTITY_TOKEN_ENV:
-            return bool(os.getenv("AWS_WEB_IDENTITY_TOKEN_FILE")) and bool(
-                os.getenv("AWS_ROLE_ARN")
-            )
-        if self is StandardProvider.ECS_CONTAINER:
-            return bool(os.getenv("AWS_CONTAINER_CREDENTIALS_FULL_URI")) or bool(
-                os.getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
-            )
-        if self is StandardProvider.SHARED_CONFIG:
-            return shared_config_files_exist()
-        return False
+        match self:
+            case StandardProvider.ENVIRONMENT:
+                return bool(os.getenv("AWS_ACCESS_KEY_ID"))
+            case StandardProvider.WEB_IDENTITY_TOKEN_ENV:
+                return bool(os.getenv("AWS_WEB_IDENTITY_TOKEN_FILE")) and bool(
+                    os.getenv("AWS_ROLE_ARN")
+                )
+            case StandardProvider.ECS_CONTAINER:
+                return bool(os.getenv("AWS_CONTAINER_CREDENTIALS_FULL_URI")) or bool(
+                    os.getenv("AWS_CONTAINER_CREDENTIALS_RELATIVE_URI")
+                )
+            case StandardProvider.SHARED_CONFIG:
+                return shared_config_files_exist()
+            case _:
+                return False
 
 
 @dataclass(frozen=True, kw_only=True)

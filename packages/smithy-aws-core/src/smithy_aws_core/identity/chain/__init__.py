@@ -8,6 +8,7 @@ from typing import Any, cast
 from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces.identity import Identity
+from smithy_http.aio.interfaces import HTTPClient
 
 from ...config.merged_config import MergedConfig
 from .exceptions import (
@@ -176,14 +177,29 @@ class IdentityChain[I: Identity](IdentityResolver[I, Mapping[str, Any]]):
         *,
         profile_file: MergedConfig | None = None,
         profile_name_override: str | None = None,
+        region_override: str | None = None,
+        http_client: HTTPClient | None = None,
     ) -> "IdentityChain[ChainIdentity]":
-        """Create an identity chain from discovered providers."""
+        """Create an identity chain from discovered providers.
+
+        :param identity_type: The identity type to resolve.
+        :param profile_file: Parsed config/credentials file. Loaded from disk
+            when not set.
+        :param profile_name_override: Profile name to use, taking precedence over
+            ``AWS_PROFILE``.
+        :param region_override: Region to use for providers whose resolvers
+            fetch credentials through a service call.
+        :param http_client: HTTP client to use for providers whose resolvers make
+            network calls.
+        """
         discovered_providers = _discover_chain_identity_providers()
         _validate_providers(discovered_providers)
         providers = _sort_by_ordering(discovered_providers)
         setup = ChainSetup(
             profile_file=profile_file,
             profile_name_override=profile_name_override,
+            region_override=region_override,
+            http_client=http_client,
         )
         unclaimed_sources = _find_unclaimed_sources(discovered_providers)
 
@@ -226,3 +242,8 @@ class IdentityChain[I: Identity](IdentityResolver[I, Mapping[str, Any]]):
             failures=tuple(failures),
             unclaimed_sources=self._unclaimed_sources,
         )
+
+    async def invalidate(self) -> None:
+        """Invalidate every resolver in the chain."""
+        for resolver in self._resolvers:
+            await resolver.invalidate()

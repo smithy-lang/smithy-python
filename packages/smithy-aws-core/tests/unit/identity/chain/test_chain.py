@@ -71,7 +71,9 @@ async def test_returns_first_successful_resolver() -> None:
 
 
 async def test_non_identity_errors_propagate() -> None:
-    class _BrokenResolver:
+    class _BrokenResolver(
+        IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
+    ):
         async def get_identity(
             self, *, properties: Mapping[str, Any]
         ) -> AWSCredentialsIdentity:
@@ -229,3 +231,28 @@ async def test_empty_chain_reports_no_providers_discovered() -> None:
         IdentityChainError, match="No credential providers were discovered"
     ):
         await chain.get_identity(properties={})
+
+
+async def test_chained_invalidate() -> None:
+    class _InvalidatingResolver(
+        IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
+    ):
+        def __init__(self) -> None:
+            self.invalidated = False
+
+        async def get_identity(
+            self, *, properties: AWSIdentityProperties
+        ) -> AWSCredentialsIdentity:
+            return _credentials("cached")
+
+        async def invalidate(self) -> None:
+            self.invalidated = True
+
+    first = _InvalidatingResolver()
+    second = _InvalidatingResolver()
+    chain = IdentityChain((first, second))
+
+    await chain.invalidate()
+
+    assert first.invalidated
+    assert second.invalidated
