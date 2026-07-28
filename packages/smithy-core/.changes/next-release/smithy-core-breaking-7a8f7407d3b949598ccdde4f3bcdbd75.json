@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Added `invalidate()` method to the `IdentityResolver` protocol to discard cached identities so the next resolution re-reads its source."
+}

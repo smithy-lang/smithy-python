@@ -232,3 +232,7 @@ class IMDSCredentialsResolver(
             account_id=account_id,
         )
         return self._credentials
+
+    async def invalidate(self) -> None:
+        """Discard cached credentials so the next resolution re-queries IMDS."""
+        self._credentials = None

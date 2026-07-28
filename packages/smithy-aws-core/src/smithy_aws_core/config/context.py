@@ -86,6 +86,27 @@ async def load_config(
     return MergedConfig(std_config, std_credentials)
 
 
+def shared_config_files_exist(
+    config_file_path: Path | None = None,
+    credentials_file_path: Path | None = None,
+) -> bool:
+    """Return whether either the shared config or credentials file exists.
+
+    A cheap filesystem check (no parsing) used to detect whether the shared
+    config credential source appears configured.
+
+    :param config_file_path: Override path for config file.
+        Defaults to AWS_CONFIG_FILE env var or ~/.aws/config.
+    :param credentials_file_path: Override path for credentials file.
+        Defaults to AWS_SHARED_CREDENTIALS_FILE env var or ~/.aws/credentials.
+    :returns: True if either file exists on disk.
+    """
+    config_path, credentials_path = _resolve_config_paths(
+        config_file_path, credentials_file_path
+    )
+    return config_path.is_file() or credentials_path.is_file()
+
+
 class SharedConfigContext:
     """Resolution context shared across resolvers during config construction.
 
