@@ -17,6 +17,7 @@ from .resolvers import (
 from .types import UNSET, ConfigSource, FieldSpec, Resolved
 from .validators import (
     validate_max_attempts,
+    validate_profile,
     validate_region,
     validate_retry_mode,
 )
@@ -89,6 +90,9 @@ class AsyncAwsConfig:
         :param credentials_file_path: Override path for credentials file.
         :param overrides: Explicit field values that skip resolution.
         :returns: A fully-resolved config instance.
+        :raises ProfileNotFoundError: If a profile is requested via ``profile`` or
+            the ``AWS_PROFILE`` environment variable but is not defined in the
+            config files.
         """
         ctx = SharedConfigContext(
             profile_name=profile,
@@ -97,11 +101,11 @@ class AsyncAwsConfig:
             credentials_file_path=credentials_file_path,
         )
 
-        # Validate profile exists if explicitly requested
-        if profile is not None:
+        # Fail fast on a bad profile
+        profile_origin = ctx.profile_origin
+        if profile_origin is not None:
             config_file = await ctx.parsed_profiles()
-            if profile not in config_file.profiles:
-                raise ConfigError(f"Profile '{profile}' not found in config file.")
+            validate_profile(ctx.profile_name, config_file.profiles, profile_origin)
 
         # Create the instance bypassing __post_init__ check
         instance = cls._create_instance()

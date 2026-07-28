@@ -5,7 +5,7 @@ from smithy_core.exceptions import SmithyError
 
 
 class ConfigError(SmithyError):
-    """Raised when a config value cannot be constructed directly"""
+    """Base error for AWS shared configuration failures."""
 
 
 class ConfigParseError(ConfigError):
@@ -14,3 +14,7 @@ class ConfigParseError(ConfigError):
 
 class ConfigValidationError(ConfigError):
     """Raised when a config value cannot be validated"""
+
+
+class ProfileNotFoundError(ConfigError):
+    """Raised when an explicitly requested profile is not defined in the config files."""

@@ -20,6 +20,8 @@ _DEFAULT_CONFIG_FILE = "~/.aws/config"
 _DEFAULT_CREDENTIALS_FILE = "~/.aws/credentials"
 _CONFIG_FILE_ENV_VAR = "AWS_CONFIG_FILE"
 _CREDENTIALS_FILE_ENV_VAR = "AWS_SHARED_CREDENTIALS_FILE"
+_PROFILE_ENV_VAR = "AWS_PROFILE"
+_DEFAULT_PROFILE = "default"
 
 
 def _resolve_config_paths(
@@ -113,7 +115,9 @@ class SharedConfigContext:
         """
         self._fs: FileSystem = fs if fs is not None else DefaultFileSystem()
         self._http_client: Any | None = http_client
-        self._profile_name: str = self._resolve_profile_name(profile_name)
+        self._profile_name, self._profile_origin = self._resolve_profile_name(
+            profile_name
+        )
         self._config_file_path: Path | None = (
             Path(config_file_path) if config_file_path is not None else None
         )
@@ -126,6 +130,11 @@ class SharedConfigContext:
     def profile_name(self) -> str:
         """The active profile name."""
         return self._profile_name
+
+    @property
+    def profile_origin(self) -> str | None:
+        """Where the active profile name came from, or None if it defaulted."""
+        return self._profile_origin
 
     @property
     def fs(self) -> FileSystem:
@@ -151,11 +160,21 @@ class SharedConfigContext:
             )
         return self._cached_config_file
 
-    def _resolve_profile_name(self, explicit_profile: str | None) -> str:
-        """Determine the active profile name.
+    def _resolve_profile_name(
+        self, explicit_profile: str | None
+    ) -> tuple[str, str | None]:
+        """Determine the active profile name and where it came from.
 
         Priority: explicit argument > AWS_PROFILE env var > "default"
+
+        :returns: Tuple of (profile_name, origin), where origin describes the
+            source for error messages and is None when the name was defaulted.
         """
         if explicit_profile is not None:
-            return explicit_profile
-        return os.environ.get("AWS_PROFILE", "default")
+            return explicit_profile, "the profile argument"
+
+        env_profile = os.environ.get(_PROFILE_ENV_VAR)
+        if env_profile is not None:
+            return env_profile, _PROFILE_ENV_VAR
+
+        return _DEFAULT_PROFILE, None

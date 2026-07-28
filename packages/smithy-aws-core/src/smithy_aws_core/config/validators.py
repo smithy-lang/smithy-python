@@ -2,11 +2,12 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import re
+from collections.abc import Collection
 from typing import get_args
 
 from smithy_core.retries import RetryStrategyType
 
-from .exceptions import ConfigValidationError
+from .exceptions import ConfigValidationError, ProfileNotFoundError
 
 _REGION_PATTERN = re.compile(r"^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{1,63}(?<!-)$")
 
@@ -77,4 +78,22 @@ def validate_max_attempts(
     if max_attempts < 1:
         raise ConfigValidationError(
             f"max_attempts must be a positive integer, got {max_attempts}",
+        )
+
+
+def validate_profile(
+    profile_name: str,
+    available_profiles: Collection[str],
+    origin: str,
+) -> None:
+    """Validate that a requested profile exists in the config files.
+
+    :param profile_name: The active profile name to check.
+    :param available_profiles: Profile names defined in the config files.
+    :param origin: Where the profile name came from, used in the error message.
+    :raises ProfileNotFoundError: If the profile is not defined.
+    """
+    if profile_name not in available_profiles:
+        raise ProfileNotFoundError(
+            f"Profile {profile_name!r} (from {origin}) not found in config file."
         )

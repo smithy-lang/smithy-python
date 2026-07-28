@@ -3,16 +3,26 @@
 
 from .aws_config import AsyncAwsConfig
 from .context import SharedConfigContext, load_config
+from .exceptions import (
+    ConfigError,
+    ConfigParseError,
+    ConfigValidationError,
+    ProfileNotFoundError,
+)
 from .filesystem import DefaultFileSystem, FileSystem
 from .merged_config import MergedConfig
 from .types import ConfigSource
 
 __all__ = [
     "AsyncAwsConfig",
+    "ConfigError",
+    "ConfigParseError",
     "ConfigSource",
+    "ConfigValidationError",
     "DefaultFileSystem",
     "FileSystem",
     "MergedConfig",
+    "ProfileNotFoundError",
     "SharedConfigContext",
     "load_config",
 ]

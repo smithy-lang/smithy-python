@@ -12,7 +12,11 @@ from unittest.mock import patch
 import pytest
 from smithy_aws_core.config.aws_config import AsyncAwsConfig
 from smithy_aws_core.config.context import SharedConfigContext
-from smithy_aws_core.config.exceptions import ConfigError, ConfigValidationError
+from smithy_aws_core.config.exceptions import (
+    ConfigError,
+    ConfigValidationError,
+    ProfileNotFoundError,
+)
 from smithy_aws_core.config.resolvers import (
     resolve_max_attempts,
     resolve_region,
@@ -178,9 +182,78 @@ class TestAsyncAwsConfigResolve:
     @pytest.mark.asyncio
     async def test_invalid_profile_raises_error(self):
         with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
-            with pytest.raises(ConfigError, match="not found"):
+            with pytest.raises(
+                ProfileNotFoundError, match="'FOOBAR' \\(from the profile argument\\)"
+            ):
                 await AsyncAwsConfig.resolve(
                     profile="FOOBAR",
+                    fs=NullFileSystem(),
+                )
+
+    @pytest.mark.asyncio
+    async def test_invalid_profile_set_via_env_var_raises_error(self):
+        with patch.dict(
+            os.environ,
+            {"AWS_REGION": "us-east-1", "AWS_PROFILE": "FOOBAR"},
+            clear=True,
+        ):
+            with pytest.raises(
+                ProfileNotFoundError, match="'FOOBAR' \\(from AWS_PROFILE\\)"
+            ):
+                await AsyncAwsConfig.resolve(
+                    fs=NullFileSystem(),
+                )
+
+    @pytest.mark.asyncio
+    async def test_unknown_profile_raises_when_config_file_has_others(self):
+        fs = FakeFileSystem({"/fake/config": "[profile work]\nregion = eu-west-1\n"})
+        with patch.dict(os.environ, {}, clear=True):
+            with pytest.raises(
+                ProfileNotFoundError, match="'other' \\(from the profile argument\\)"
+            ):
+                await AsyncAwsConfig.resolve(
+                    profile="other",
+                    fs=fs,
+                    config_file_path="/fake/config",
+                    credentials_file_path="/fake/credentials",
+                )
+
+    @pytest.mark.asyncio
+    async def test_invalid_aws_profile_env_raises_profile_error(self):
+        fs = FakeFileSystem({"/fake/config": "[profile work]\nregion = eu-west-1\n"})
+        with patch.dict(os.environ, {"AWS_PROFILE": "wrok"}, clear=True):
+            with pytest.raises(
+                ProfileNotFoundError, match="'wrok' \\(from AWS_PROFILE\\)"
+            ):
+                await AsyncAwsConfig.resolve(
+                    fs=fs,
+                    config_file_path="/fake/config",
+                    credentials_file_path="/fake/credentials",
+                )
+
+    @pytest.mark.asyncio
+    async def test_profile_from_credentials_file_is_valid(self):
+        fs = FakeFileSystem({"/fake/credentials": "[work]\nregion = eu-west-1\n"})
+        with patch.dict(os.environ, {"AWS_PROFILE": "work"}, clear=True):
+            config = await AsyncAwsConfig.resolve(
+                fs=fs,
+                config_file_path="/fake/config",
+                credentials_file_path="/fake/credentials",
+            )
+            assert config.region == "eu-west-1"
+
+    @pytest.mark.asyncio
+    async def test_implicit_default_profile_not_validated(self):
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
+            config = await AsyncAwsConfig.resolve(fs=NullFileSystem())
+            assert config.region == "us-east-1"
+
+    @pytest.mark.asyncio
+    async def test_explicit_default_profile_is_validated(self):
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
+            with pytest.raises(ProfileNotFoundError, match="'default'"):
+                await AsyncAwsConfig.resolve(
+                    profile="default",
                     fs=NullFileSystem(),
                 )
 
