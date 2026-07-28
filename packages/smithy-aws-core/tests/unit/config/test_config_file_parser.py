@@ -6,6 +6,7 @@ from pathlib import Path
 from typing import cast
 
 import pytest
+from smithy_aws_core.config import DefaultFileSystem
 from smithy_aws_core.config.exceptions import ConfigParseError
 from smithy_aws_core.config.file_parser import (
     FileType,
@@ -30,10 +31,11 @@ async def _run_parse_and_standardize(
 ) -> dict[str, object]:
     """Write content to temp files, parse through public API, return merged output."""
     # Write config content to temp file
+    fs = DefaultFileSystem()
     if config_content is not None:
         config_path = tmp_path / "config"
         config_path.write_text(config_content, encoding="utf-8")
-        raw_config = await parse_config_file(str(config_path))
+        raw_config = await parse_config_file(str(config_path), fs)
     else:
         raw_config = {}
 
@@ -41,7 +43,7 @@ async def _run_parse_and_standardize(
     if credentials_content is not None:
         credentials_path = tmp_path / "credentials"
         credentials_path.write_text(credentials_content, encoding="utf-8")
-        raw_credentials = await parse_config_file(str(credentials_path))
+        raw_credentials = await parse_config_file(str(credentials_path), fs)
     else:
         raw_credentials = {}
 
@@ -144,22 +146,24 @@ def test_credentials_section_names(section_name: str, should_be_valid: bool):
 
 @pytest.mark.asyncio
 async def test_parse_error_includes_file_path(tmp_path: Path):
+    fs = DefaultFileSystem()
     bad_file = tmp_path / "config"
     bad_file.write_text("[profile p\n")  # unclosed section header
 
     with pytest.raises(ConfigParseError, match=str(bad_file)):
-        await parse_config_file(str(bad_file))
+        await parse_config_file(str(bad_file), fs)
 
 
 @pytest.mark.asyncio
 async def test_invalid_property_continuation_not_appended_to_previous(tmp_path: Path):
     """Continuation lines after an invalid property should be discarded,
     not appended to the previous valid property."""
+    fs = DefaultFileSystem()
     config_file = tmp_path / "config"
     config_file.write_text(
         "[profile p]\nregion = us-east-1\ninvalid key = ignored\n  continuation\n"
     )
-    raw = await parse_config_file(str(config_file))
+    raw = await parse_config_file(str(config_file), fs)
     result = standardize(raw, FileType.CONFIG)
     assert result.profiles["p"].properties["region"] == "us-east-1"
 
@@ -167,12 +171,13 @@ async def test_invalid_property_continuation_not_appended_to_previous(tmp_path: 
 @pytest.mark.asyncio
 async def test_invalid_property_in_first_line_with_continuation_ignored(tmp_path: Path):
     """Continuation lines when the first property is invalid should be discarded"""
+    fs = DefaultFileSystem()
     config_file = tmp_path / "config"
     config_file.write_text(
         "[profile p]\ninvalid key = ignored\n  continuation\n"
         "region = us-east-1\ninvalid key = ignored\n  continuation\n"
     )
-    raw = await parse_config_file(str(config_file))
+    raw = await parse_config_file(str(config_file), fs)
     result = standardize(raw, FileType.CONFIG)
     assert result.profiles["p"].properties["region"] == "us-east-1"
 
@@ -180,13 +185,14 @@ async def test_invalid_property_in_first_line_with_continuation_ignored(tmp_path
 @pytest.mark.asyncio
 async def test_consecutive_invalid_properties_ignored(tmp_path: Path):
     """Consecutive invalid properties should be discarded"""
+    fs = DefaultFileSystem()
     config_file = tmp_path / "config"
     config_file.write_text(
         "[profile p]\nregion = us-east-1\ninvalid key = ignored\n  continuation\n"
         "invalid key = ignored\n  continuation\ninvalid key = ignored\n  continuation\n"
         "output = json\n"
     )
-    raw = await parse_config_file(str(config_file))
+    raw = await parse_config_file(str(config_file), filesystem=fs)
     result = standardize(raw, FileType.CONFIG)
     assert result.profiles["p"].properties["region"] == "us-east-1"
     assert result.profiles["p"].properties["output"] == "json"

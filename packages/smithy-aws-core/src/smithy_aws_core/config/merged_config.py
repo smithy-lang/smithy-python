@@ -1,7 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-from smithy_aws_core.config.file_parser import (
+from .file_parser import (
     Section,
     SectionMap,
     StandardizedOutput,
