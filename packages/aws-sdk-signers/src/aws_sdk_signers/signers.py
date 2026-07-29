@@ -705,7 +705,7 @@ class AsyncSigV4Signer:
 
     async def _normalize_signing_fields(self, *, request: AWSRequest) -> dict[str, str]:
         normalized_fields = {
-            field.name.lower(): field.as_string()
+            field.name.lower(): field.as_string(delimiter=",")
             for field in request.fields
             if self._is_signable_header(field.name.lower())
         }
