@@ -27,6 +27,10 @@ def test_deepcopy_client() -> None:
     deepcopy(client)
 
 
+def test_supports_duplex_streaming() -> None:
+    assert AWSCRTHTTPClient.SUPPORTS_DUPLEX_STREAMING is True
+
+
 def test_client_marshal_request() -> None:
     """Test that HTTPRequest is correctly marshaled to CRT HttpRequest."""
     client = AWSCRTHTTPClient()
