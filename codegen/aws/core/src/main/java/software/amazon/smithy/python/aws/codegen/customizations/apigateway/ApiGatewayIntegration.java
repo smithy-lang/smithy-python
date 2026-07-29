@@ -10,6 +10,7 @@ import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
 import software.amazon.smithy.utils.SmithyInternalApi;
@@ -24,9 +25,19 @@ public class ApiGatewayIntegration implements PythonIntegration {
     private static final ShapeId API_GATEWAY_SERVICE_ID =
             ShapeId.from("com.amazonaws.apigateway#BackplaneControlService");
 
-    public static final String ACCEPT_HEADER_PLUGIN = """
-            def accept_header_plugin(config: $1T):
-                config.interceptors.append($2T())
+    public static final String ACCEPT_HEADER_MODULE = """
+            class _AcceptHeaderInterceptor($1T[Any, Any, $2T, None]):
+                \"""Sets the Accept header to application/json if not already present.\"""
+
+                def modify_before_signing(self, context: $3T[Any, $2T]) -> $2T:
+                    request = context.transport_request
+                    if "Accept" not in request.fields:
+                        request.fields.set_field($4T(name="Accept", values=["application/json"]))
+                    return request
+
+
+            def accept_header_plugin(config: $5T):
+                config.interceptors.append(_AcceptHeaderInterceptor())
             """;
 
     @Override
@@ -45,10 +56,28 @@ public class ApiGatewayIntegration implements PythonIntegration {
                         .name("accept_header_plugin")
                         .build())
                 .build();
-        final SymbolReference acceptHeaderInterceptor = SymbolReference.builder()
+        final SymbolReference interceptor = SymbolReference.builder()
                 .symbol(Symbol.builder()
-                        .namespace("smithy_aws_core.interceptors.api_gateway", ".")
-                        .name("ApiGatewayAcceptHeaderInterceptor")
+                        .namespace("smithy_core.interceptors", ".")
+                        .name("Interceptor")
+                        .build())
+                .build();
+        final SymbolReference requestContext = SymbolReference.builder()
+                .symbol(Symbol.builder()
+                        .namespace("smithy_core.interceptors", ".")
+                        .name("RequestContext")
+                        .build())
+                .build();
+        final SymbolReference httpRequest = SymbolReference.builder()
+                .symbol(Symbol.builder()
+                        .namespace("smithy_http.aio.interfaces", ".")
+                        .name("HTTPRequest")
+                        .build())
+                .build();
+        final SymbolReference field = SymbolReference.builder()
+                .symbol(Symbol.builder()
+                        .namespace("smithy_http", ".")
+                        .name("Field")
                         .build())
                 .build();
 
@@ -62,9 +91,17 @@ public class ApiGatewayIntegration implements PythonIntegration {
                                     .useFileWriter(
                                             filename,
                                             moduleName + ".",
-                                            writer -> writer.write(ACCEPT_HEADER_PLUGIN,
-                                                    CodegenUtils.getConfigSymbol(c.settings()),
-                                                    acceptHeaderInterceptor));
+                                            writer -> {
+                                                writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+                                                writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+                                                writer.addStdlibImport("typing", "Any");
+                                                writer.write(ACCEPT_HEADER_MODULE,
+                                                        interceptor,
+                                                        httpRequest,
+                                                        requestContext,
+                                                        field,
+                                                        CodegenUtils.getConfigSymbol(c.settings()));
+                                            });
                             return List.of(filename);
                         })
                         .build());
