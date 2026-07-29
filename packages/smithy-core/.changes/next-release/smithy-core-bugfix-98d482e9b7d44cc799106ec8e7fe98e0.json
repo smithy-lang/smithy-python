@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Guard against `InvalidStateError` when an input or duplex event stream's request future is cancelled before the transport send completes."
+}
