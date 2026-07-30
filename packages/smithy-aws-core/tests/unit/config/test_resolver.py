@@ -18,6 +18,8 @@ from smithy_aws_core.config.exceptions import (
     ProfileNotFoundError,
 )
 from smithy_aws_core.config.resolvers import (
+    EndpointUriResolver,
+    make_endpoint_uri_resolver,
     resolve_max_attempts,
     resolve_region,
     resolve_retry_mode,
@@ -512,3 +514,175 @@ class TestResolveMaxAttempts:
             ctx = SharedConfigContext()
             with pytest.raises(ConfigValidationError, match="Invalid integer value"):
                 await resolve_max_attempts(ctx)
+
+
+class TestMakeEndpointUriResolver:
+    """Tests for the service-aware endpoint URI resolver factory."""
+
+    @pytest.fixture
+    def resolver(self):
+
+        return make_endpoint_uri_resolver("bedrock_runtime")
+
+    @pytest.mark.asyncio
+    async def test_service_specific_env_var_takes_precedence(
+        self, resolver: EndpointUriResolver
+    ):
+        fs = FakeFileSystem(
+            {
+                "/fake/config": "[profile default]\nendpoint_url = https://global-profile.com\n"
+            }
+        )
+        with patch.dict(
+            os.environ,
+            {"AWS_ENDPOINT_URL_BEDROCK_RUNTIME": "https://service-env.com"},
+            clear=True,
+        ):
+            ctx = SharedConfigContext(
+                fs=fs,
+                config_file_path="/fake/config",
+                credentials_file_path="/fake/creds",
+            )
+            result = await resolver(ctx)
+            assert result.value == "https://service-env.com"
+            assert result.source == ConfigSource.ENV
+
+    @pytest.mark.asyncio
+    async def test_global_env_var_when_no_service_specific(
+        self, resolver: EndpointUriResolver
+    ):
+        with patch.dict(
+            os.environ, {"AWS_ENDPOINT_URL": "https://global-env.com"}, clear=True
+        ):
+            ctx = SharedConfigContext(
+                fs=NullFileSystem(),
+                config_file_path="/fake/config",
+                credentials_file_path="/fake/creds",
+            )
+            result = await resolver(ctx)
+            assert result.value == "https://global-env.com"
+            assert result.source == ConfigSource.ENV
+
+    @pytest.mark.asyncio
+    async def test_service_env_beats_global_env(self, resolver: EndpointUriResolver):
+        with patch.dict(
+            os.environ,
+            {
+                "AWS_ENDPOINT_URL_BEDROCK_RUNTIME": "https://service-env.com",
+                "AWS_ENDPOINT_URL": "https://global-env.com",
+            },
+            clear=True,
+        ):
+            ctx = SharedConfigContext(
+                fs=NullFileSystem(),
+                config_file_path="/fake/config",
+                credentials_file_path="/fake/creds",
+            )
+            result = await resolver(ctx)
+            assert result.value == "https://service-env.com"
+
+    @pytest.mark.asyncio
+    async def test_service_specific_config_file(self, resolver: EndpointUriResolver):
+        fs = FakeFileSystem(
+            {
+                "/fake/config": (
+                    "[profile default]\n"
+                    "services = my-services\n"
+                    "\n"
+                    "[services my-services]\n"
+                    "bedrock_runtime =\n"
+                    "  endpoint_url = https://service-config.com\n"
+                )
+            }
+        )
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = SharedConfigContext(
+                fs=fs,
+                config_file_path="/fake/config",
+                credentials_file_path="/fake/creds",
+            )
+            result = await resolver(ctx)
+            assert result.value == "https://service-config.com"
+            assert result.source == ConfigSource.PROFILE
+
+    @pytest.mark.asyncio
+    async def test_global_config_file_fallback(self, resolver: EndpointUriResolver):
+        fs = FakeFileSystem(
+            {
+                "/fake/config": "[profile default]\nendpoint_url = https://global-config.com\n"
+            }
+        )
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = SharedConfigContext(
+                fs=fs,
+                config_file_path="/fake/config",
+                credentials_file_path="/fake/creds",
+            )
+            result = await resolver(ctx)
+            assert result.value == "https://global-config.com"
+            assert result.source == ConfigSource.PROFILE
+
+    @pytest.mark.asyncio
+    async def test_service_config_beats_global_config(
+        self, resolver: EndpointUriResolver
+    ):
+        fs = FakeFileSystem(
+            {
+                "/fake/config": (
+                    "[profile default]\n"
+                    "endpoint_url = https://global-config.com\n"
+                    "services = my-services\n"
+                    "\n"
+                    "[services my-services]\n"
+                    "bedrock_runtime =\n"
+                    "  endpoint_url = https://service-config.com\n"
+                )
+            }
+        )
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = SharedConfigContext(
+                fs=fs,
+                config_file_path="/fake/config",
+                credentials_file_path="/fake/creds",
+            )
+            result = await resolver(ctx)
+            assert result.value == "https://service-config.com"
+
+    @pytest.mark.asyncio
+    async def test_env_beats_config_file(self, resolver: EndpointUriResolver):
+        fs = FakeFileSystem(
+            {
+                "/fake/config": (
+                    "[profile default]\n"
+                    "endpoint_url = https://global-config.com\n"
+                    "services = my-services\n"
+                    "\n"
+                    "[services my-services]\n"
+                    "bedrock_runtime =\n"
+                    "  endpoint_url = https://service-config.com\n"
+                )
+            }
+        )
+        with patch.dict(
+            os.environ, {"AWS_ENDPOINT_URL": "https://global-env.com"}, clear=True
+        ):
+            ctx = SharedConfigContext(
+                fs=fs,
+                config_file_path="/fake/config",
+                credentials_file_path="/fake/creds",
+            )
+            result = await resolver(ctx)
+            assert result.value == "https://global-env.com"
+
+    @pytest.mark.asyncio
+    async def test_returns_unset_when_nothing_found(
+        self, resolver: EndpointUriResolver
+    ):
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = SharedConfigContext(
+                fs=NullFileSystem(),
+                config_file_path="/fake/config",
+                credentials_file_path="/fake/creds",
+            )
+            result = await resolver(ctx)
+            assert result.value is UNSET

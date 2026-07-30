@@ -279,6 +279,23 @@ public final class ConfigGenerator implements Runnable {
             writer.write("$L: TypeAlias = Callable[[$T], None]", plugin.getName(), config);
             writer.writeDocs("A callable that allows customizing the config object on each request.", context);
         });
+
+        // Generate the async config subclass and its plugin type
+        var model = context.model();
+        var asyncConfig = CodegenUtils.getAsyncConfigSymbol(context.settings(), model);
+        var asyncPlugin = CodegenUtils.getAsyncPluginSymbol(context.settings(), model);
+        context.writerDelegator().useFileWriter(asyncConfig.getDefinitionFile(), asyncConfig.getNamespace(), writer -> {
+            generateAsyncConfig(context, writer, asyncConfig);
+
+            // Generate the async plugin type alias
+            writer.addStdlibImport("typing", "Callable");
+            writer.addStdlibImport("typing", "TypeAlias");
+            writer.write("");
+            writer.write("");
+            writer.write("$L: TypeAlias = Callable[[$L], None]", asyncPlugin.getName(), asyncConfig.getName());
+            writer.writeDocs(
+                    "A callable that allows customizing the async config object on each request.", context);
+        });
     }
 
     private void writeInterceptorsType(PythonWriter writer) {
@@ -344,10 +361,16 @@ public final class ConfigGenerator implements Runnable {
         writer.pushState(new ConfigSection(finalProperties));
         writer.addLocallyDefinedSymbol(configSymbol);
         writer.addStdlibImport("dataclasses", "dataclass");
+        writer.addStdlibImport("warnings");
+        var asyncConfigName = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model()).getName();
         writer.write("""
                 @dataclass(init=False)
                 class $L:
-                    \"""Configuration for $L.\"""
+                    \"""Configuration for $L.
+
+                    .. deprecated::
+                        Use :class:`$L` with ``await $L.resolve()`` instead.
+                    \"""
 
                     ${C|}
 
@@ -356,12 +379,22 @@ public final class ConfigGenerator implements Runnable {
                         *,
                         ${C|}
                     ):
+                        warnings.warn(
+                            "$L is deprecated, use $L.resolve() instead. "
+                            "This class will be removed in a future version.",
+                            DeprecationWarning,
+                            stacklevel=2,
+                        )
                         ${C|}
                 """,
                 configSymbol.getName(),
                 serviceId,
+                asyncConfigName,
+                asyncConfigName,
                 writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
                 writer.consumer(w -> writeInitParams(w, finalProperties)),
+                configSymbol.getName(),
+                asyncConfigName,
                 writer.consumer(w -> initializeProperties(w, finalProperties)));
         writer.popState();
     }
@@ -387,6 +420,160 @@ public final class ConfigGenerator implements Runnable {
         for (ConfigProperty property : properties) {
             property.initialize(writer);
         }
+    }
+
+    /**
+     * Generates the async config subclass that inherits from AsyncAwsConfig.
+     *
+     * <p>This class uses the FieldSpec-based resolution pipeline and adds
+     * service-specific fields (endpoint_resolver, protocol, auth_schemes,
+     * auth_scheme_resolver) with their defaults derived from the Smithy model.
+     */
+    private void generateAsyncConfig(GenerationContext context, PythonWriter writer, Symbol asyncConfigSymbol) {
+        var model = context.model();
+        var service = context.settings().service(model);
+        final String serviceId = service.getTrait(ServiceTrait.class)
+                .map(ServiceTrait::getSdkId)
+                .orElse(context.settings().service().getName());
+
+        // Import AsyncAwsConfig base class
+        writer.addDependency(SmithyPythonDependency.SMITHY_AWS_CORE);
+        var asyncAwsConfigSymbol = Symbol.builder()
+                .name("AsyncAwsConfig")
+                .namespace("smithy_aws_core.config.aws_config", ".")
+                .addDependency(SmithyPythonDependency.SMITHY_AWS_CORE)
+                .build();
+
+        // Import FieldSpec and ClassVar
+        var fieldSpecSymbol = Symbol.builder()
+                .name("FieldSpec")
+                .namespace("smithy_aws_core.config.types", ".")
+                .addDependency(SmithyPythonDependency.SMITHY_AWS_CORE)
+                .build();
+        writer.addStdlibImport("typing", "ClassVar");
+        writer.addStdlibImport("typing", "Any");
+        writer.addStdlibImport("dataclasses", "dataclass");
+
+        writer.write("");
+        writer.write("");
+        writer.write("@dataclass(kw_only=True)");
+        writer.openBlock("class $L($T):", asyncConfigSymbol.getName(), asyncAwsConfigSymbol);
+        writer.write("\"\"\"$L configuration (async-resolved).\"\"\"", serviceId);
+        writer.write("");
+
+        // Write service-specific field declarations
+        writer.write("endpoint_resolver: $T | None = None", RuntimeTypes.ENDPOINT_RESOLVER);
+        writer.write("protocol: $T | None = None", Symbol.builder()
+                .name("ClientProtocol[Any, Any]")
+                .addReference(Symbol.builder()
+                        .name("ClientProtocol")
+                        .namespace("smithy_core.aio.interfaces", ".")
+                        .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                        .build())
+                .build());
+        writer.write("auth_schemes: dict[$T, $T] | None = None",
+                RuntimeTypes.SHAPE_ID,
+                Symbol.builder()
+                        .name("AuthScheme[Any, Any, Any, Any]")
+                        .addReference(Symbol.builder()
+                                .name("AuthScheme")
+                                .namespace("smithy_core.aio.interfaces.auth", ".")
+                                .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                                .build())
+                        .build());
+        writer.write("auth_scheme_resolver: $T | None = None",
+                CodegenUtils.getHttpAuthSchemeResolverSymbol(context.settings()));
+        writer.write("");
+
+        // Write _FIELDS class variable with service-specific defaults
+        writer.openBlock("_FIELDS: ClassVar[dict[str, $T]] = {", fieldSpecSymbol);
+        writer.write("**$T._FIELDS,", asyncAwsConfigSymbol);
+
+        // endpoint_uri FieldSpec — overrides base class with service-aware resolver
+        var makeEndpointResolverSymbol = Symbol.builder()
+                .name("make_endpoint_uri_resolver")
+                .namespace("smithy_aws_core.config.resolvers", ".")
+                .addDependency(SmithyPythonDependency.SMITHY_AWS_CORE)
+                .build();
+        var snakeCaseServiceId = serviceId.replace(" ", "_").toLowerCase();
+        writer.write("\"endpoint_uri\": $T(", fieldSpecSymbol);
+        writer.indent();
+        writer.write("default=None,");
+        writer.write("resolver=$T($S),", makeEndpointResolverSymbol, snakeCaseServiceId);
+        writer.dedent();
+        writer.write("),");
+
+        // endpoint_resolver FieldSpec
+        var endpointPrefix = service.getTrait(ServiceTrait.class)
+                .map(ServiceTrait::getEndpointPrefix)
+                .orElse(context.settings().service().getName());
+        var standardRegionalResolverSymbol = Symbol.builder()
+                .name("StandardRegionalEndpointsResolver")
+                .namespace("smithy_aws_core.endpoints.standard_regional", ".")
+                .addDependency(SmithyPythonDependency.SMITHY_AWS_CORE)
+                .build();
+        writer.write("\"endpoint_resolver\": $T(", fieldSpecSymbol);
+        writer.indent();
+        writer.write("default_factory=lambda: $T(endpoint_prefix=$S),",
+                standardRegionalResolverSymbol, endpointPrefix);
+        writer.dedent();
+        writer.write("),");
+
+        // protocol FieldSpec
+        writer.write("\"protocol\": $T(", fieldSpecSymbol);
+        writer.indent();
+        writer.write("default_factory=lambda: ${C|},",
+                writer.consumer(w -> context.protocolGenerator().initializeProtocol(context, w)));
+        writer.dedent();
+        writer.write("),");
+
+        // auth_schemes FieldSpec
+        writer.write("\"auth_schemes\": $T(", fieldSpecSymbol);
+        writer.indent();
+        writer.write("default_factory=lambda: ${C|},",
+                writer.consumer(w -> writeAsyncDefaultAuthSchemes(context, w)));
+        writer.dedent();
+        writer.write("),");
+
+        // auth_scheme_resolver FieldSpec
+        writer.write("\"auth_scheme_resolver\": $T(", fieldSpecSymbol);
+        writer.indent();
+        writer.write("default_factory=HTTPAuthSchemeResolver,");
+        writer.dedent();
+        writer.write("),");
+
+        // transport FieldSpec
+        writer.write("\"transport\": $T(", fieldSpecSymbol);
+        writer.indent();
+        if (usesHttp2(context)) {
+            writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("awscrt"));
+            writer.write("default_factory=lambda: $T(),", RuntimeTypes.AWS_CRT_HTTP_CLIENT);
+        } else {
+            writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("aiohttp"));
+            writer.write("default_factory=lambda: $T(),", RuntimeTypes.AIOHTTP_CLIENT);
+        }
+        writer.dedent();
+        writer.write("),");
+
+        writer.closeBlock("}");
+        writer.closeBlock("");
+    }
+
+    private static void writeAsyncDefaultAuthSchemes(GenerationContext context, PythonWriter writer) {
+        var service = context.settings().service(context.model());
+        writer.openBlock("{");
+        for (PythonIntegration integration : context.integrations()) {
+            for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
+                if (plugin.matchesService(context.model(), service) && plugin.getAuthScheme().isPresent()) {
+                    var scheme = plugin.getAuthScheme().get();
+                    writer.write("$T($S): ${C|},",
+                            RuntimeTypes.SHAPE_ID,
+                            scheme.getAuthTrait(),
+                            writer.consumer(w -> scheme.initializeScheme(context, writer, service)));
+                }
+            }
+        }
+        writer.closeBlock("}");
     }
 
     private static final class AddAuthHelper implements CodeInterceptor<ConfigSection, PythonWriter> {

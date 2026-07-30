@@ -2,17 +2,29 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from dataclasses import dataclass, field
-from typing import Any, ClassVar, Self
+from typing import TYPE_CHECKING, Any, ClassVar, Self
 
 from smithy_core.retries import RetryStrategyOptions
+
+if TYPE_CHECKING:
+    from smithy_core.aio.interfaces import ClientTransport
+    from smithy_core.aio.interfaces.identity import IdentityResolver
+    from smithy_http.interfaces import HTTPRequestConfiguration
+
+    from smithy_aws_core.identity import AWSCredentialsIdentity, AWSIdentityProperties
 
 from .context import SharedConfigContext
 from .exceptions import ConfigError, ConfigValidationError
 from .filesystem import FileSystem
 from .resolvers import (
+    resolve_aws_access_key_id,
+    resolve_aws_secret_access_key,
+    resolve_aws_session_token,
+    resolve_endpoint_uri,
     resolve_max_attempts,
     resolve_region,
     resolve_retry_mode,
+    resolve_sdk_ua_app_id,
 )
 from .types import UNSET, ConfigSource, FieldSpec, Resolved
 from .validators import (
@@ -37,6 +49,17 @@ class AsyncAwsConfig:
     region: str | None = None
     retry_mode: str | None = None
     max_attempts: int | None = None
+    endpoint_uri: str | None = None
+    aws_access_key_id: str | None = None
+    aws_secret_access_key: str | None = None
+    aws_session_token: str | None = None
+    aws_credentials_identity_resolver: "IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties] | None" = None
+    sdk_ua_app_id: str | None = None
+    user_agent_extra: str | None = None
+    interceptors: list[Any] = field(default_factory=list)  # type: ignore
+    http_request_config: "HTTPRequestConfiguration | None" = None
+    transport: "ClientTransport[Any, Any] | None" = None
+    retry_strategy: Any | None = None
 
     _ctx: SharedConfigContext | None = field(default=None, repr=False, compare=False)
     _sources: dict[str, ConfigSource] = field(  # type: ignore[assignment]
@@ -60,6 +83,44 @@ class AsyncAwsConfig:
             default=RetryStrategyOptions.max_attempts,
             resolver=resolve_max_attempts,
             validator=validate_max_attempts,
+        ),
+        "endpoint_uri": FieldSpec(
+            default=None,
+            resolver=resolve_endpoint_uri,
+        ),
+        "aws_access_key_id": FieldSpec(
+            default=None,
+            resolver=resolve_aws_access_key_id,
+        ),
+        "aws_secret_access_key": FieldSpec(
+            default=None,
+            resolver=resolve_aws_secret_access_key,
+        ),
+        "aws_session_token": FieldSpec(
+            default=None,
+            resolver=resolve_aws_session_token,
+        ),
+        "aws_credentials_identity_resolver": FieldSpec(
+            default=None,
+        ),
+        "sdk_ua_app_id": FieldSpec(
+            default=None,
+            resolver=resolve_sdk_ua_app_id,
+        ),
+        "user_agent_extra": FieldSpec(
+            default=None,
+        ),
+        "interceptors": FieldSpec(
+            default_factory=list,
+        ),
+        "http_request_config": FieldSpec(
+            default=None,
+        ),
+        "transport": FieldSpec(
+            default=None,
+        ),
+        "retry_strategy": FieldSpec(
+            default=None,
         ),
     }
 
