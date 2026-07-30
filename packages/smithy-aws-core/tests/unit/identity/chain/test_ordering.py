@@ -121,7 +121,7 @@ def test_shared_config_detection(
             "ProfileCredentialProcess",
             None,
         ),
-        (StandardProvider.ECS_CONTAINER, "EcsContainer", "aws-credentials-ecs"),
+        (StandardProvider.ECS_CONTAINER, "EcsContainer", "aws-credentials-http"),
         (
             StandardProvider.EC2_INSTANCE_METADATA,
             "Ec2InstanceMetadata",
