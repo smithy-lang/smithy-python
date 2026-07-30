@@ -25,16 +25,29 @@ class RetryStrategyResolver:
     """
 
     async def resolve_retry_strategy(
-        self, *, retry_strategy: RetryStrategy | RetryStrategyOptions | None
+        self,
+        *,
+        retry_strategy: RetryStrategy | RetryStrategyOptions | None,
+        retry_mode: RetryStrategyType | None = None,
+        max_attempts: int | None = None,
     ) -> RetryStrategy:
         """Resolve a retry strategy from the provided options, using cache when possible.
 
-        :param retry_strategy: An explicitly configured retry strategy or options for creating one.
+        :param retry_strategy: An explicitly configured retry strategy or options for
+            creating one. Takes precedence over ``retry_mode``/``max_attempts``.
+        :param retry_mode: Retry mode to fall back on when ``retry_strategy`` is None,
+            typically resolved from the ``AWS_RETRY_MODE`` env var or a config profile.
+        :param max_attempts: Maximum attempts to fall back on when ``retry_strategy`` is
+            None, typically resolved from ``AWS_MAX_ATTEMPTS`` or a config profile.
         """
         if isinstance(retry_strategy, RetryStrategy):
             return retry_strategy
         elif retry_strategy is None:
-            retry_strategy = RetryStrategyOptions()
+            # Fall back to the separately-resolved config values.
+            retry_strategy = RetryStrategyOptions(
+                retry_mode=retry_mode if retry_mode is not None else "standard",
+                max_attempts=max_attempts,
+            )
         elif not isinstance(retry_strategy, RetryStrategyOptions):  # type: ignore[reportUnnecessaryIsInstance]
             raise TypeError(
                 f"retry_strategy must be RetryStrategy, RetryStrategyOptions, or None, "

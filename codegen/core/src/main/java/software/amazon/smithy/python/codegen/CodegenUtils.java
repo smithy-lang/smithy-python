@@ -26,6 +26,7 @@ import java.util.Set;
 import java.util.logging.Logger;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
+import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.NullableIndex;
 import software.amazon.smithy.model.node.Node;
@@ -86,6 +87,49 @@ public final class CodegenUtils {
                 .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
                 .build();
     }
+
+    /**
+     * Gets the async configuration object symbol for the service.
+     *
+     * <p>This is the new async-resolved config class that inherits from AsyncAwsConfig.
+     * Derives the name from the SDK ID (e.g., "Bedrock Runtime" becomes
+     * "AsyncBedrockRuntimeConfig"). Falls back to "AsyncConfig" for non-AWS services.
+     *
+     * @param settings The client settings.
+     * @param model The model containing the service shape.
+     * @return Returns the async config symbol.
+     */
+    public static Symbol getAsyncConfigSymbol(PythonSettings settings, Model model) {
+        var service = settings.service(model);
+        var name = service.getTrait(ServiceTrait.class)
+                .map(trait -> "Async" + StringUtils.capitalize(trait.getSdkId()).replace(" ", "") + "Config")
+                .orElse("AsyncConfig");
+        return Symbol.builder()
+                .name(name)
+                .namespace(String.format("%s.config", settings.moduleName()), ".")
+                .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
+                .build();
+    }
+
+    /**
+     * Gets the async plugin type hint symbol for the service.
+     *
+     * @param settings The client settings.
+     * @param model The model containing the service shape.
+     * @return Returns the async plugin type hint symbol.
+     */
+    public static Symbol getAsyncPluginSymbol(PythonSettings settings, Model model) {
+        var service = settings.service(model);
+        var name = service.getTrait(ServiceTrait.class)
+                .map(trait -> "Async" + StringUtils.capitalize(trait.getSdkId()).replace(" ", "") + "Plugin")
+                .orElse("AsyncPlugin");
+        return Symbol.builder()
+                .name(name)
+                .namespace(String.format("%s.config", settings.moduleName()), ".")
+                .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
+                .build();
+    }
+
 
     /**
      * Gets the service error symbol.
