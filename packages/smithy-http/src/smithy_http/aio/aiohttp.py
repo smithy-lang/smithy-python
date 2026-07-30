@@ -90,8 +90,13 @@ class AIOHTTPClient(HTTPClient):
             chain.from_iterable(fld.as_tuples() for fld in request.fields)
         )
 
-        body: StreamingBlob = request.body
-        if not isinstance(body, AsyncBytesReader):
+        body: StreamingBlob | None = request.body
+        if (
+            "content-length" not in request.fields
+            and "transfer-encoding" not in request.fields
+        ):
+            body = await self._prepare_body(body)
+        elif not isinstance(body, AsyncBytesReader):
             body = AsyncBytesReader(body)
 
         # The typing on `params` is incorrect, it'll happily accept a mapping whose
@@ -105,6 +110,19 @@ class AIOHTTPClient(HTTPClient):
             data=body,
         ) as resp:
             return await self._marshal_response(resp)
+
+    async def _prepare_body(self, body: StreamingBlob) -> AsyncBytesReader | None:
+        """Convert a body for aiohttp, omitting seekable bodies with no data."""
+        if not isinstance(body, AsyncBytesReader):
+            body = AsyncBytesReader(body)
+
+        if not body.seekable():
+            return body
+
+        position = await body.seek(0, 1)
+        end = await body.seek(0, 2)
+        await body.seek(position)
+        return None if position == end else body
 
     def _serialize_uri_without_query(self, uri: URI) -> yarl.URL:
         """Serialize all parts of the URI up to and including the path."""
