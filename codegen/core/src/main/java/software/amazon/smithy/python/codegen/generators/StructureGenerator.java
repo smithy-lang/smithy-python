@@ -288,6 +288,11 @@ public final class StructureGenerator implements Runnable {
         // see: https://smithy.io/2.0/spec/type-refinement-traits.html#smithy-api-default-trait
         var defaultNode = member.expectTrait(DefaultTrait.class).toNode();
         var target = model.expectShape(member.getTarget());
+        // A null default marks the member nullable and resolves to None. Documents are
+        // excluded since their null default is a non-None Document(None) (see the branch below).
+        if (!target.isDocumentShape() && defaultNode.isNullNode()) {
+            return "None";
+        }
         if (target.isTimestampShape()) {
             ZonedDateTime value = CodegenUtils.parseTimestampNode(model, member, defaultNode);
             return CodegenUtils.getDatetimeConstructor(writer, value);
@@ -318,8 +323,8 @@ public final class StructureGenerator implements Runnable {
             });
         }
 
+        // A null default is handled by the guard above, so it can't reach here.
         return switch (defaultNode.getType()) {
-            case NULL -> "None";
             case BOOLEAN -> defaultNode.expectBooleanNode().getValue() ? "True" : "False";
             // These will be given to a default_factory in field. They're inherently empty, so no need to
             // worry about any potential values.

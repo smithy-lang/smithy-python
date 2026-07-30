@@ -173,7 +173,7 @@ def test_strict_parse_float_raises(given: str) -> None:
         (float("NaN"), "NaN"),
         (float("Infinity"), "Infinity"),
         (float("-Infinity"), "-Infinity"),
-        (Decimal("1"), "1.0"),
+        (Decimal(1), "1.0"),
         (Decimal("1.0"), "1.0"),
         (Decimal("1.1"), "1.1"),
         (Decimal("1.1e3"), "1.1E+3"),

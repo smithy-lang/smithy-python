@@ -172,6 +172,17 @@ class RestJsonClientProtocol(HttpBindingClientProtocol):
     def _retry_after(self, response: HTTPResponse) -> float | None:
         return parse_retry_after(response)
 
+    def _resolve_error_id(
+        self,
+        *,
+        operation: APIOperation[Any, Any],
+        error_id: ShapeID,
+    ) -> ShapeID:
+        for error_schema in operation.error_schemas:
+            if error_schema.id.name == error_id.name:
+                return error_schema.id
+        return error_id
+
     def create_event_publisher[
         OperationInput: SerializeableShape,
         OperationOutput: DeserializeableShape,

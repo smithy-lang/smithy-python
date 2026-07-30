@@ -27,7 +27,7 @@ class EnvironmentCredentialsResolver(
         session_token = os.getenv("AWS_SESSION_TOKEN")
         account_id = os.getenv("AWS_ACCOUNT_ID")
 
-        if access_key_id is None or secret_access_key is None:
+        if not access_key_id or not secret_access_key:
             raise SmithyIdentityError(
                 "AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY are required"
             )

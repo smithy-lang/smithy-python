@@ -62,7 +62,7 @@ def collect_next_release_changes(next_release_dir: Path) -> list[dict[str, Any]]
                 sys.exit(1)
 
     # Sort changes by type for consistent ordering
-    changes.sort(key=lambda c: (CHANGE_TYPES_ORDER[c["type"]]))
+    changes.sort(key=lambda c: CHANGE_TYPES_ORDER[c["type"]])
 
     return changes
 

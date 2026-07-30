@@ -9,11 +9,19 @@ from .components import AWSCredentialsIdentity, AWSIdentityProperties
 class StaticCredentialsResolver(
     IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
 ):
-    """Resolve Static AWS Credentials."""
+    """Resolves static AWS credentials from a fixed identity or request properties."""
+
+    def __init__(self, identity: AWSCredentialsIdentity | None = None) -> None:
+        """Initialize the resolver with optional fixed credentials."""
+        self._identity = identity
 
     async def get_identity(
         self, *, properties: AWSIdentityProperties
     ) -> AWSCredentialsIdentity:
+        """Resolve credentials from the fixed identity or request properties."""
+        if self._identity is not None:
+            return self._identity
+
         access_key_id = properties.get("access_key_id")
         secret_access_key = properties.get("secret_access_key")
         if access_key_id is not None and secret_access_key is not None:
@@ -23,5 +31,5 @@ class StaticCredentialsResolver(
                 session_token=properties.get("session_token"),
             )
         raise SmithyIdentityError(
-            "Attempted to resolve AWS crendentials from config, but credentials weren't configured."
+            "Attempted to resolve AWS credentials from config, but credentials weren't configured."
         )

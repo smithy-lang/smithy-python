@@ -106,6 +106,30 @@ final class ClientGenerator implements Runnable {
                 }
             }
         });
+
+        serviceSymbol.getProperty(SymbolProperties.DEPRECATED_ALIAS).ifPresent(alias -> {
+            writer.addStdlibImport("typing", "TYPE_CHECKING");
+            writer.addStdlibImport("typing", "Any");
+            writer.addStdlibImport("warnings");
+            writer.write("""
+
+                    if TYPE_CHECKING:
+                        # Deprecated alias for backwards compatibility, to be removed.
+                        $1L = $2L
+
+
+                    def __getattr__(name: str) -> Any:
+                        if name == $1S:
+                            warnings.warn(
+                                "$1L is deprecated, use $2L instead. "
+                                "This alias will be removed in a future version.",
+                                DeprecationWarning,
+                                stacklevel=2,
+                            )
+                            return $2L
+                        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+                    """, alias, serviceSymbol.getName());
+        });
     }
 
     private void writeDefaultPlugins(PythonWriter writer, Collection<SymbolReference> plugins) {

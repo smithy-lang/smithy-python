@@ -381,6 +381,8 @@ structure Defaults {
     @required
     requiredDefaultBlob: Blob = "c3BhbQ=="
 
+    defaultNullBlob: Blob = null
+
     // timestamp
     @required
     requiredTimestamp: Timestamp
@@ -399,6 +401,8 @@ structure Defaults {
 
     @required
     requiredDefaultTimestamp: Timestamp = 4.2
+
+    defaultNullTimestamp: Timestamp = null
 
     @required
     requiredList: StringList
@@ -419,6 +423,14 @@ structure Defaults {
 
     @required
     requiredDefaultMap: StringMap = {}
+
+    defaultEnum: StringYesNo = "YES"
+
+    defaultNullEnum: StringYesNo = null
+
+    defaultIntEnum: IntYesNo = 1
+
+    defaultNullIntEnum: IntYesNo = null
 
     @required
     requiredDocument: Document
