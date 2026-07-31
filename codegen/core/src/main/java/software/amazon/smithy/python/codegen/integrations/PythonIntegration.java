@@ -50,7 +50,7 @@ public interface PythonIntegration extends SmithyIntegration<PythonSettings, Pyt
      * Determines whether the given operation is a long-polling operation, which
      * must back off before returning even when the retry quota is exhausted. AWS
      * integrations use this hook to identify these operations while the
-     * {@code aws.api#longPoll} trait is not yet shipped in service models.
+     * {@code smithy.api#longPoll} trait is not yet shipped in service models.
      *
      * @param model     Model the operation belongs to.
      * @param service   Service the operation belongs to.
