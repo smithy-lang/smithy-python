@@ -266,10 +266,12 @@ final class ClientGenerator implements Runnable {
                     protocol=config.protocol,
                     transport=config.transport
                 )
-                call = $4T(
+                operation_context = $4T({"config": config})
+                ${?isLongPolling}operation_context[$5T] = True
+                ${/isLongPolling}call = $6T(
                     input=input,
                     operation=${operation:T},
-                    context=$5T({"config": config${?isLongPolling}, $6T: True${/isLongPolling}}),
+                    context=operation_context,
                     interceptor=$7T(config.interceptors),
                     auth_scheme_resolver=config.auth_scheme_resolver,
                     supported_auth_schemes=config.auth_schemes,
@@ -280,9 +282,9 @@ final class ClientGenerator implements Runnable {
                 writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)),
                 RuntimeTypes.EXPECTATION_NOT_MET_ERROR,
                 RuntimeTypes.REQUEST_PIPELINE,
-                RuntimeTypes.CLIENT_CALL,
                 RuntimeTypes.TYPED_PROPERTIES,
                 RuntimeTypes.LONG_POLLING,
+                RuntimeTypes.CLIENT_CALL,
                 RuntimeTypes.INTERCEPTOR_CHAIN);
 
     }
