@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Add utilities for parsing and merging shared AWS configuration and credentials files. These utilities are not yet integrated into generated clients."
-}

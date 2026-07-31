@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Fixed `AIOHTTPClient` sending omitted request payloads with chunked transfer encoding."
-}

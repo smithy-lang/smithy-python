@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.4.3
+
+### Enhancements
+* Enabled HTTP binding protocols to resolve modeled response errors when wire identifiers do not exactly match registered shape IDs. ([#742](https://github.com/smithy-lang/smithy-python/pull/742))
+
+### Bug fixes
+* Fixed `AIOHTTPClient` sending omitted request payloads with chunked transfer encoding.
+
 ## v0.4.2
 
 ### Bug fixes

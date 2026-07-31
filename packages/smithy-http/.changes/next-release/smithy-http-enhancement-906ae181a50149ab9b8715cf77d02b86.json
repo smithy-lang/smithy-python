@@ -1,4 +1,0 @@
-{
-  "type": "enhancement",
-  "description": "Enabled HTTP binding protocols to resolve modeled response errors when wire identifiers do not exactly match registered shape IDs. ([#742](https://github.com/smithy-lang/smithy-python/pull/742))"
-}

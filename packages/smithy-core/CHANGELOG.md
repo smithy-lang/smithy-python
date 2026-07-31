@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.7.0
+
+### Breaking Changes
+* Added `invalidate()` method to the `IdentityResolver` protocol to discard cached identities so the next resolution re-reads its source.
+
 ## v0.6.0
 
 ### Breaking Changes

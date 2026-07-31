@@ -1,5 +1,17 @@
 # Changelog
 
+## v0.8.0
+
+### Features
+* Add utilities for parsing and merging shared AWS configuration and credentials files. These utilities are not yet integrated into generated clients.
+* Added a modular credential chain for AWS identity resolution. `IdentityChain.create()` discovers installed chain providers via entry points, orders them by precedence, and assembles a resolver chain. Initially ships with the Environment, SharedConfig, ProfileSessionKeys, and ProfileStaticKeys providers.
+
+### Bug fixes
+* Fixed REST JSON modeled error resolution by matching error identifiers by shape name when wire and modeled namespaces differ. ([#742](https://github.com/smithy-lang/smithy-python/pull/742))
+
+### Dependencies
+* Bump `smithy-core` from `~=0.6.0` to `~=0.7.0`.
+
 ## v0.7.0
 
 ### Bug fixes

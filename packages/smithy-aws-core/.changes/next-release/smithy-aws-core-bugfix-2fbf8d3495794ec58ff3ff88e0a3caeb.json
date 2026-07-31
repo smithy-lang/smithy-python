@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Fixed REST JSON modeled error resolution by matching error identifiers by shape name when wire and modeled namespaces differ. ([#742](https://github.com/smithy-lang/smithy-python/pull/742))"
-}
