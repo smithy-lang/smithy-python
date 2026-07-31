@@ -133,8 +133,7 @@ class SimpleRetryStrategy:
 
 class StandardRetryStrategy:
     _RETRY_AFTER_MAX_ADDITIONAL: float = 5
-    """Maximum number of seconds a server-directed backoff (e.g. x-amz-retry-after)
-    may exceed the normal computed backoff (t_i)."""
+    """Upper bound (seconds) for additional delay beyond the computed backoff."""
 
     _NON_THROTTLING_BACKOFF_SCALE: float = 0.05
     """Base backoff scale (seconds) for non-throttling errors (50ms)."""
