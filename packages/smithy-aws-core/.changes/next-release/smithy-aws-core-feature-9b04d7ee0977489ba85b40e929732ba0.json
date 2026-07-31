@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added DynamoDB and DynamoDB Streams retry defaults (4 max attempts and a 25ms non-throttling backoff)."
-}

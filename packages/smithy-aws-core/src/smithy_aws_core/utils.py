@@ -21,14 +21,18 @@ def parse_retry_after(response: HTTPResponse) -> float | None:
         return None
     raw = response.fields[_RETRY_AFTER_HEADER].as_string()
     try:
-        milliseconds = int(raw)
-    except (ValueError, TypeError):
-        _LOGGER.debug("Ignoring invalid %s header value: %r", _RETRY_AFTER_HEADER, raw)
+        seconds = int(raw) / 1000.0
+        if seconds < 0:
+            raise ValueError("Negative retry-after value")
+        return seconds
+    except (ValueError, TypeError, OverflowError) as error:
+        _LOGGER.debug(
+            "Ignoring invalid %s header value: %r. Error: %s",
+            _RETRY_AFTER_HEADER,
+            raw,
+            error,
+        )
         return None
-    if milliseconds < 0:
-        _LOGGER.debug("Ignoring negative %s header value: %r", _RETRY_AFTER_HEADER, raw)
-        return None
-    return milliseconds / 1000.0
 
 
 def parse_document_discriminator(

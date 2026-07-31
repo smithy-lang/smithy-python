@@ -254,14 +254,6 @@ class StandardRetryStrategy:
             )
             t_i = backoff_strategy.compute_next_backoff_delay(retry_count)
 
-            try:
-                quota_acquired = self._retry_quota.acquire(error=error)
-            except RetryError as quota_error:
-                # Long-polling operations back off even when the quota is exhausted.
-                if context is not None and context.get(LONG_POLLING):
-                    raise RetryError(str(quota_error), retry_after=t_i) from error
-                raise
-
             if error.retry_after is not None:
                 # Bound a server-directed backoff to [t_i, t_i + 5] seconds.
                 retry_delay = max(
@@ -269,6 +261,16 @@ class StandardRetryStrategy:
                 )
             else:
                 retry_delay = t_i
+
+            try:
+                quota_acquired = self._retry_quota.acquire(error=error)
+            except RetryError as quota_error:
+                # Long-polling operations back off even when the quota is exhausted.
+                if context is not None and context.get(LONG_POLLING):
+                    raise RetryError(
+                        str(quota_error), retry_after=retry_delay
+                    ) from error
+                raise
 
             return StandardRetryToken(
                 retry_count=retry_count,
