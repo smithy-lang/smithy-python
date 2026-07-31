@@ -1,7 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 #  pyright: reportMissingTypeStubs=false,reportUnknownMemberType=false
-#  flake8: noqa: F811
 from collections.abc import AsyncGenerator, AsyncIterable
 from copy import deepcopy
 from dataclasses import dataclass

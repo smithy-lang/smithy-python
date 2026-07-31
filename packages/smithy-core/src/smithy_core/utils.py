@@ -5,7 +5,7 @@ from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from math import isinf, isnan
 from types import UnionType
-from typing import Any, TypeVar, overload
+from typing import Any, overload
 
 from .exceptions import ExpectationNotMetError
 
@@ -67,11 +67,8 @@ def epoch_seconds_to_datetime(value: int | float) -> datetime:
         return epoch_zero + timedelta(seconds=value)
 
 
-_T = TypeVar("_T")
-
-
 @overload
-def expect_type(typ: type[_T], value: Any) -> _T: ...
+def expect_type[T](typ: type[T], value: Any) -> T: ...
 
 
 # For some reason, mypy and other type checkers don't treat Union like a full type
