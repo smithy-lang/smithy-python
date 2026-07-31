@@ -10,7 +10,6 @@ from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.interfaces.identity import Identity
 from smithy_http.aio.interfaces import HTTPClient
 
-from ...config.file_parser import Section
 from ...config.merged_config import MergedConfig
 from .ordering import OrderingConstraint
 
@@ -37,17 +36,16 @@ class ChainSetup:
     def __init__(
         self,
         *,
-        profile_file: MergedConfig | None = None,
-        profile_name_override: str | None = None,
+        config_file: MergedConfig | None = None,
+        profile_name: str | None = None,
         region_override: str | None = None,
         http_client: HTTPClient | None = None,
         properties: MutableMapping[str, Any] | None = None,
     ) -> None:
-        self._profile_file = profile_file
-        self._profile_name_override = profile_name_override
+        self._config_file = config_file
+        self._profile_name = profile_name
         self._region_override = region_override
         self._http_client = http_client
-        self._profile: Section | None = None
         self._properties: MutableMapping[str, Any] = (
             {} if properties is None else properties
         )
@@ -56,19 +54,14 @@ class ChainSetup:
         self._terminal = False
 
     @property
-    def profile_file(self) -> MergedConfig | None:
-        """Return the parsed config and credentials files, if loaded."""
-        return self._profile_file
+    def config_file(self) -> MergedConfig | None:
+        """Return the parsed config/credentials file, if loaded."""
+        return self._config_file
 
     @property
-    def profile(self) -> Section | None:
-        """Return the active profile, if selected."""
-        return self._profile
-
-    @property
-    def profile_name_override(self) -> str | None:
-        """Return the client-specified profile name, if provided."""
-        return self._profile_name_override
+    def profile_name(self) -> str | None:
+        """Return the profile name, if selected."""
+        return self._profile_name
 
     @property
     def region_override(self) -> str | None:
@@ -101,15 +94,15 @@ class ChainSetup:
             raise RuntimeError("Cannot change provider after a terminal resolver.")
         self._current_provider = provider
 
-    def set_profile_file(self, profile_file: MergedConfig) -> None:
-        """Set the parsed profile file without overwriting an existing value."""
-        if self._profile_file is not None:
-            raise RuntimeError("Cannot overwrite a profile file already present.")
-        self._profile_file = profile_file
+    def set_config_file(self, config_file: MergedConfig) -> None:
+        """Set the parsed config file without overwriting an existing value."""
+        if self._config_file is not None:
+            raise RuntimeError("Cannot overwrite a config file already present.")
+        self._config_file = config_file
 
-    def set_profile(self, profile: Section) -> None:
-        """Set the active profile."""
-        self._profile = profile
+    def set_profile_name(self, profile_name: str) -> None:
+        """Set the resolved name of the active profile."""
+        self._profile_name = profile_name
 
     def add_resolver(self, resolver: IdentityResolver[Any, Any]) -> None:
         """Add a named resolver and continue assembly."""

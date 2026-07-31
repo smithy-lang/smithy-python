@@ -4,7 +4,7 @@ from collections.abc import Awaitable, Callable
 from typing import Any
 
 import pytest
-from smithy_aws_core.config.file_parser import Section
+from smithy_aws_core.config.merged_config import MergedConfig
 from smithy_aws_core.identity import AWSCredentialsIdentity
 from smithy_aws_core.identity.chain.provider import ChainSetup
 from smithy_aws_core.identity.chain.providers.profile import (
@@ -38,6 +38,25 @@ async def test_requires_active_profile(
     setup_provider: Callable[..., Awaitable[ChainSetup]],
 ) -> None:
     setup = await setup_provider(provider)
+
+    assert setup.resolvers == ()
+    assert not setup.terminal
+
+
+@pytest.mark.parametrize(
+    "provider",
+    [ProfileSessionCredentialsProvider(), ProfileStaticCredentialsProvider()],
+)
+async def test_missing_profile_does_not_register(
+    provider: Any,
+    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    merged_config: Callable[..., MergedConfig],
+) -> None:
+    setup = await setup_provider(
+        provider,
+        config_file=merged_config({"default": {"aws_access_key_id": "akid"}}),
+        profile_name="missing",
+    )
 
     assert setup.resolvers == ()
     assert not setup.terminal
@@ -81,8 +100,13 @@ async def test_registers_terminal_resolver_for_complete_profile(
     profile: dict[str, str | dict[str, str]],
     expected: AWSCredentialsIdentity,
     setup_provider: Callable[..., Awaitable[ChainSetup]],
+    merged_config: Callable[..., MergedConfig],
 ) -> None:
-    setup = await setup_provider(provider, profile=Section(properties=profile))
+    setup = await setup_provider(
+        provider,
+        config_file=merged_config({"default": profile}),
+        profile_name="default",
+    )
 
     assert setup.terminal
     assert len(setup.resolvers) == 1
@@ -111,8 +135,13 @@ async def test_rejects_incomplete_or_non_string_keys(
     provider: Any,
     properties: dict[str, Any],
     setup_provider: Callable[..., Awaitable[ChainSetup]],
+    merged_config: Callable[..., MergedConfig],
 ) -> None:
-    setup = await setup_provider(provider, profile=Section(properties=properties))
+    setup = await setup_provider(
+        provider,
+        config_file=merged_config({"default": properties}),
+        profile_name="default",
+    )
 
     assert setup.resolvers == ()
     assert not setup.terminal

@@ -20,7 +20,7 @@ class StandardProvider(Enum):
     PROFILE_SSO_SESSION = "ProfileSsoSession", "aws-credentials-sso"
     PROFILE_LOGIN = "Login", "aws-credentials-login"
     PROFILE_CREDENTIAL_PROCESS = "ProfileCredentialProcess", None
-    ECS_CONTAINER = "EcsContainer", "aws-credentials-ecs"
+    ECS_CONTAINER = "EcsContainer", "aws-credentials-http"
     EC2_INSTANCE_METADATA = "Ec2InstanceMetadata", "aws-credentials-imds"
 
     def __init__(

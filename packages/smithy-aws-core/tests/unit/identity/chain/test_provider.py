@@ -81,13 +81,13 @@ def test_cannot_add_without_current_provider() -> None:
         setup.add_resolver(AsyncMock())
 
 
-def test_set_profile_file_cannot_overwrite() -> None:
-    setup = ChainSetup(profile_file=_empty_config())
+def test_set_config_file_cannot_overwrite() -> None:
+    setup = ChainSetup(config_file=_empty_config())
 
     with pytest.raises(
-        RuntimeError, match="Cannot overwrite a profile file already present"
+        RuntimeError, match="Cannot overwrite a config file already present"
     ):
-        setup.set_profile_file(_empty_config())
+        setup.set_config_file(_empty_config())
 
 
 def test_properties_bag_is_shared_and_mutable() -> None:

@@ -175,18 +175,18 @@ class IdentityChain[I: Identity](IdentityResolver[I, Mapping[str, Any]]):
     async def create[ChainIdentity: Identity](
         identity_type: type[ChainIdentity],
         *,
-        profile_file: MergedConfig | None = None,
-        profile_name_override: str | None = None,
+        config_file: MergedConfig | None = None,
+        profile_name: str | None = None,
         region_override: str | None = None,
         http_client: HTTPClient | None = None,
     ) -> "IdentityChain[ChainIdentity]":
         """Create an identity chain from discovered providers.
 
         :param identity_type: The identity type to resolve.
-        :param profile_file: Parsed config/credentials file. Loaded from disk
+        :param config_file: Parsed config/credentials file. Loaded from disk
             when not set.
-        :param profile_name_override: Profile name to use, taking precedence over
-            ``AWS_PROFILE``.
+        :param profile_name: Profile name to use. If omitted, the shared config
+            provider uses ``AWS_PROFILE`` when set, otherwise ``default``.
         :param region_override: Region to use for providers whose resolvers
             fetch credentials through a service call.
         :param http_client: HTTP client to use for providers whose resolvers make
@@ -196,8 +196,8 @@ class IdentityChain[I: Identity](IdentityResolver[I, Mapping[str, Any]]):
         _validate_providers(discovered_providers)
         providers = _sort_by_ordering(discovered_providers)
         setup = ChainSetup(
-            profile_file=profile_file,
-            profile_name_override=profile_name_override,
+            config_file=config_file,
+            profile_name=profile_name,
             region_override=region_override,
             http_client=http_client,
         )

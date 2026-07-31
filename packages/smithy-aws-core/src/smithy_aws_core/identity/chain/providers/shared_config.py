@@ -28,14 +28,10 @@ class SharedConfigProvider:
         if identity_type is not AWSCredentialsIdentity:
             return
 
-        profile_file = setup.profile_file
-        if profile_file is None:
-            profile_file = await load_config()
-            setup.set_profile_file(profile_file)
+        config_file = setup.config_file
+        if config_file is None:
+            config_file = await load_config()
+            setup.set_config_file(config_file)
 
-        profile_name = (
-            setup.profile_name_override or os.getenv("AWS_PROFILE") or "default"
-        )
-        profile = profile_file.get_profile(profile_name)
-        if profile is not None:
-            setup.set_profile(profile)
+        profile_name = setup.profile_name or os.getenv("AWS_PROFILE") or "default"
+        setup.set_profile_name(profile_name)

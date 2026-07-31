@@ -2,7 +2,6 @@
 #  SPDX-License-Identifier: Apache-2.0
 from smithy_core.interfaces.identity import Identity
 
-from ....config.file_parser import Section
 from ...components import AWSCredentialsIdentity
 from ...static import StaticCredentialsResolver
 from ..ordering import Standard, StandardProvider
@@ -12,11 +11,6 @@ _ACCESS_KEY_ID = "aws_access_key_id"
 _SECRET_ACCESS_KEY = "aws_secret_access_key"  # noqa: S105
 _SESSION_TOKEN = "aws_session_token"  # noqa: S105
 _ACCOUNT_ID = "aws_account_id"
-
-
-def _get_string(profile: Section, key: str) -> str | None:
-    value = profile.properties.get(key)
-    return value if isinstance(value, str) else None
 
 
 class ProfileSessionCredentialsProvider:
@@ -37,13 +31,14 @@ class ProfileSessionCredentialsProvider:
         if identity_type is not AWSCredentialsIdentity:
             return
 
-        profile = setup.profile
-        if profile is None:
+        config_file = setup.config_file
+        profile_name = setup.profile_name
+        if config_file is None or profile_name is None:
             return
 
-        access_key_id = _get_string(profile, _ACCESS_KEY_ID)
-        secret_access_key = _get_string(profile, _SECRET_ACCESS_KEY)
-        session_token = _get_string(profile, _SESSION_TOKEN)
+        access_key_id = config_file.get(profile_name, _ACCESS_KEY_ID)
+        secret_access_key = config_file.get(profile_name, _SECRET_ACCESS_KEY)
+        session_token = config_file.get(profile_name, _SESSION_TOKEN)
         if access_key_id is None or secret_access_key is None or session_token is None:
             return
 
@@ -51,7 +46,7 @@ class ProfileSessionCredentialsProvider:
             access_key_id=access_key_id,
             secret_access_key=secret_access_key,
             session_token=session_token,
-            account_id=_get_string(profile, _ACCOUNT_ID),
+            account_id=config_file.get(profile_name, _ACCOUNT_ID),
         )
         setup.add_terminal_resolver(StaticCredentialsResolver(identity))
 
@@ -74,18 +69,19 @@ class ProfileStaticCredentialsProvider:
         if identity_type is not AWSCredentialsIdentity:
             return
 
-        profile = setup.profile
-        if profile is None:
+        config_file = setup.config_file
+        profile_name = setup.profile_name
+        if config_file is None or profile_name is None:
             return
 
-        access_key_id = _get_string(profile, _ACCESS_KEY_ID)
-        secret_access_key = _get_string(profile, _SECRET_ACCESS_KEY)
+        access_key_id = config_file.get(profile_name, _ACCESS_KEY_ID)
+        secret_access_key = config_file.get(profile_name, _SECRET_ACCESS_KEY)
         if access_key_id is None or secret_access_key is None:
             return
 
         identity = AWSCredentialsIdentity(
             access_key_id=access_key_id,
             secret_access_key=secret_access_key,
-            account_id=_get_string(profile, _ACCOUNT_ID),
+            account_id=config_file.get(profile_name, _ACCOUNT_ID),
         )
         setup.add_terminal_resolver(StaticCredentialsResolver(identity))
