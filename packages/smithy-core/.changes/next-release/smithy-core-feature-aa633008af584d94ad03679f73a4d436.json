@@ -1,4 +1,4 @@
 {
   "type": "feature",
-  "description": "Updated the standard retry behavior with separate throttling backoff, new retry quota costs, server-provided retry-after delays, per-service defaults, and long-polling backoff."
+  "description": "Updated standard retry behavior with error-specific backoff, revised quota costs, bounded server-provided retry delays, support for service-specific defaults, and long-polling backoff when retry quota is exhausted."
 }
