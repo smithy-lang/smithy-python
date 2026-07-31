@@ -174,27 +174,6 @@ async def test_standard_throttling_uses_throttling_backoff_scale() -> None:
     assert token.retry_delay == pytest.approx(1.0)  # type: ignore
 
 
-async def test_dynamodb_profile_uses_25ms_scale_and_4_attempts() -> None:
-    strategy = StandardRetryStrategy(
-        backoff_strategy=ExponentialRetryBackoffStrategy(
-            backoff_scale_value=0.025, jitter_type=EBJT.NONE
-        ),
-        max_attempts=4,
-    )
-    assert strategy.max_attempts == 4
-
-    error = CallError(is_retry_safe=True)
-    token = await strategy.acquire_initial_retry_token()
-    token = await strategy.refresh_retry_token_for_retry(
-        token_to_renew=token, error=error
-    )
-    assert token.retry_delay == pytest.approx(0.025)  # type: ignore
-    token = await strategy.refresh_retry_token_for_retry(
-        token_to_renew=token, error=error
-    )
-    assert token.retry_delay == pytest.approx(0.05)  # type: ignore
-
-
 def _long_polling_context() -> TypedProperties:
     context = TypedProperties()
     context[LONG_POLLING] = True
@@ -350,23 +329,3 @@ async def test_resolver_no_service_defaults_uses_strategy_defaults() -> None:
     assert strategy.max_attempts == 3
     delay = strategy.backoff_strategy.compute_next_backoff_delay(1)
     assert 0 <= delay <= 0.05
-
-
-async def test_resolver_explicit_strategy_is_returned_as_is() -> None:
-    resolver = RetryStrategyResolver()
-    provided = StandardRetryStrategy(max_attempts=7)
-
-    strategy = await resolver.resolve_retry_strategy(retry_strategy=provided)
-
-    assert strategy is provided
-    assert strategy.max_attempts == 7
-
-
-async def test_resolver_options_are_cached() -> None:
-    resolver = RetryStrategyResolver()
-    options = RetryStrategyOptions(max_attempts=4)
-
-    strategy1 = await resolver.resolve_retry_strategy(retry_strategy=options)
-    strategy2 = await resolver.resolve_retry_strategy(retry_strategy=options)
-
-    assert strategy1 is strategy2

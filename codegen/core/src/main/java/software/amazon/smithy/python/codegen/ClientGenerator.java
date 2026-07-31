@@ -22,7 +22,6 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
-import software.amazon.smithy.python.codegen.sections.InitRetryStrategyResolverSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -87,13 +86,13 @@ final class ClientGenerator implements Runnable {
                         for plugin in client_plugins:
                             plugin(self._config)
 
-                        $5C
+                        self._retry_strategy_resolver = $5T()
                     """,
                     configSymbol,
                     pluginSymbol,
                     writer.consumer(w -> writeConstructorDocs(w, serviceSymbol.getName())),
                     writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)),
-                    writer.consumer(this::writeRetryStrategyResolverInit));
+                    RuntimeTypes.RETRY_STRATEGY_RESOLVER);
 
             var topDownIndex = TopDownIndex.of(model);
             var eventStreamIndex = EventStreamIndex.of(model);
@@ -136,13 +135,6 @@ final class ClientGenerator implements Runnable {
         for (SymbolReference plugin : plugins) {
             writer.write("$T,", plugin);
         }
-    }
-
-    private void writeRetryStrategyResolverInit(PythonWriter writer) {
-        // Wrap this in a section so AWS integrations can inject service-specific retry defaults.
-        writer.pushState(new InitRetryStrategyResolverSection());
-        writer.write("self._retry_strategy_resolver = $T()", RuntimeTypes.RETRY_STRATEGY_RESOLVER);
-        writer.popState();
     }
 
     private boolean isLongPollingOperation(OperationShape operation) {
