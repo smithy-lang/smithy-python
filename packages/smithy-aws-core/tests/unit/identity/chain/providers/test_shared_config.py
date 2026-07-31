@@ -46,13 +46,7 @@ async def test_selects_profile_without_reloading(
     merged_config: Callable[..., MergedConfig],
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    config_file = merged_config(
-        {
-            "override": {"name": "override"},
-            "environment": {"name": "environment"},
-            "default": {"name": "default"},
-        }
-    )
+    config_file = merged_config()
     if environment_profile is None:
         monkeypatch.delenv("AWS_PROFILE", raising=False)
     else:
