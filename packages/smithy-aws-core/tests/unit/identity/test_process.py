@@ -33,7 +33,6 @@ def mock_subprocess(returncode: int, stdout: bytes, stderr: bytes = b""):
     return process
 
 
-@pytest.mark.asyncio
 async def test_valid_credentials_with_session_token():
     resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
     process = mock_subprocess(0, resp_body.encode("utf-8"))
@@ -49,7 +48,6 @@ async def test_valid_credentials_with_session_token():
     assert identity.account_id is None
 
 
-@pytest.mark.asyncio
 async def test_valid_credentials_without_session_token():
     resp_data = {
         "Version": 1,
@@ -68,42 +66,6 @@ async def test_valid_credentials_without_session_token():
     assert identity.session_token is None
 
 
-@pytest.mark.asyncio
-async def test_missing_expiration():
-    resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
-    process = mock_subprocess(0, resp_body.encode("utf-8"))
-
-    with patch("asyncio.create_subprocess_exec", return_value=process):
-        resolver = ProcessCredentialsResolver(["mock-process"])
-        identity = await resolver.get_identity(properties={})
-
-    assert identity.access_key_id == "foo"
-    assert identity.secret_access_key == "bar"
-    assert identity.session_token == "baz"
-    assert identity.expiration is None
-
-
-@pytest.mark.asyncio
-async def test_missing_expiration_and_session_token():
-    resp_data = {
-        "Version": 1,
-        "AccessKeyId": "foo",
-        "SecretAccessKey": "bar",
-    }
-    resp_body = json.dumps(resp_data)
-    process = mock_subprocess(0, resp_body.encode("utf-8"))
-
-    with patch("asyncio.create_subprocess_exec", return_value=process):
-        resolver = ProcessCredentialsResolver(["mock-process"])
-        identity = await resolver.get_identity(properties={})
-
-    assert identity.access_key_id == "foo"
-    assert identity.secret_access_key == "bar"
-    assert identity.session_token is None
-    assert identity.expiration is None
-
-
-@pytest.mark.asyncio
 async def test_credentials_with_expiration():
     current_time = datetime.now(UTC) + timedelta(minutes=10)
     resp_data = dict(DEFAULT_RESPONSE_DATA)
@@ -120,7 +82,6 @@ async def test_credentials_with_expiration():
     assert identity.expiration.tzinfo == UTC
 
 
-@pytest.mark.asyncio
 async def test_credentials_with_non_utc_expiration():
     """Test that non-UTC expiration timestamps are correctly converted to UTC."""
     # 2026-03-16T10:00:00+05:00 should become 2026-03-16T05:00:00 UTC
@@ -139,7 +100,36 @@ async def test_credentials_with_non_utc_expiration():
     assert identity.expiration == datetime(2026, 3, 16, 5, 0, 0, tzinfo=UTC)
 
 
-@pytest.mark.asyncio
+async def test_invalid_expiration_string():
+    resp_data = dict(DEFAULT_RESPONSE_DATA)
+    resp_data["Expiration"] = "not-a-timestamp"
+
+    resp_body = json.dumps(resp_data)
+    process = mock_subprocess(0, resp_body.encode("utf-8"))
+
+    with patch("asyncio.create_subprocess_exec", return_value=process):
+        resolver = ProcessCredentialsResolver(["mock-process"])
+        with pytest.raises(
+            SmithyIdentityError, match="Failed to parse credential process expiration"
+        ):
+            await resolver.get_identity(properties={})
+
+
+async def test_non_string_expiration():
+    resp_data = dict(DEFAULT_RESPONSE_DATA)
+    resp_data["Expiration"] = 12345
+
+    resp_body = json.dumps(resp_data)
+    process = mock_subprocess(0, resp_body.encode("utf-8"))
+
+    with patch("asyncio.create_subprocess_exec", return_value=process):
+        resolver = ProcessCredentialsResolver(["mock-process"])
+        with pytest.raises(
+            SmithyIdentityError, match="Expiration must be an ISO8601 string"
+        ):
+            await resolver.get_identity(properties={})
+
+
 async def test_credentials_with_account_id():
     resp_data = dict(DEFAULT_RESPONSE_DATA)
     resp_data["AccountId"] = "123456789012"
@@ -154,7 +144,6 @@ async def test_credentials_with_account_id():
     assert identity.account_id == "123456789012"
 
 
-@pytest.mark.asyncio
 async def test_account_id_falls_back_to_configured_value():
     """The configured account_id is used when the process omits AccountId."""
     resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
@@ -169,7 +158,6 @@ async def test_account_id_falls_back_to_configured_value():
     assert identity.account_id == "123456789012"
 
 
-@pytest.mark.asyncio
 async def test_process_account_id_takes_precedence_over_configured_value():
     """The process output's AccountId wins over the configured fallback."""
     resp_data = dict(DEFAULT_RESPONSE_DATA)
@@ -187,7 +175,6 @@ async def test_process_account_id_takes_precedence_over_configured_value():
     assert identity.account_id == "111111111111"
 
 
-@pytest.mark.asyncio
 async def test_non_zero_exit_code():
     process = mock_subprocess(1, b"", b"Process error message")
 
@@ -200,12 +187,14 @@ async def test_non_zero_exit_code():
             await resolver.get_identity(properties={})
 
 
-@pytest.mark.asyncio
-async def test_missing_access_key_id():
-    resp_data = {
-        "Version": 1,
-        "SecretAccessKey": "bar",
-    }
+@pytest.mark.parametrize(
+    "resp_data",
+    [
+        {"Version": 1, "SecretAccessKey": "bar"},
+        {"Version": 1, "AccessKeyId": "foo"},
+    ],
+)
+async def test_missing_required_credentials(resp_data: dict[str, object]):
     resp_body = json.dumps(resp_data)
     process = mock_subprocess(0, resp_body.encode("utf-8"))
 
@@ -218,25 +207,6 @@ async def test_missing_access_key_id():
             await resolver.get_identity(properties={})
 
 
-@pytest.mark.asyncio
-async def test_missing_secret_access_key():
-    resp_data = {
-        "Version": 1,
-        "AccessKeyId": "foo",
-    }
-    resp_body = json.dumps(resp_data)
-    process = mock_subprocess(0, resp_body.encode("utf-8"))
-
-    with patch("asyncio.create_subprocess_exec", return_value=process):
-        resolver = ProcessCredentialsResolver(["mock-process"])
-        with pytest.raises(
-            SmithyIdentityError,
-            match="AccessKeyId and SecretAccessKey are required",
-        ):
-            await resolver.get_identity(properties={})
-
-
-@pytest.mark.asyncio
 async def test_invalid_version():
     resp_data = dict(DEFAULT_RESPONSE_DATA)
     resp_data["Version"] = 2
@@ -250,7 +220,6 @@ async def test_invalid_version():
             await resolver.get_identity(properties={})
 
 
-@pytest.mark.asyncio
 async def test_missing_version():
     resp_data = {
         "AccessKeyId": "foo",
@@ -265,7 +234,6 @@ async def test_missing_version():
             await resolver.get_identity(properties={})
 
 
-@pytest.mark.asyncio
 async def test_invalid_json():
     process = mock_subprocess(0, b"not valid json")
 
@@ -275,15 +243,16 @@ async def test_invalid_json():
             await resolver.get_identity(properties={})
 
 
-@pytest.mark.asyncio
 async def test_process_timeout():
     process = AsyncMock()
     process.returncode = None
-    process.communicate = AsyncMock(side_effect=TimeoutError)
     process.kill = Mock()
     process.wait = AsyncMock()
 
-    with patch("asyncio.create_subprocess_exec", return_value=process):
+    with (
+        patch("asyncio.create_subprocess_exec", return_value=process),
+        patch("asyncio.wait_for", side_effect=TimeoutError),
+    ):
         resolver = ProcessCredentialsResolver(["mock-process"], timeout=1)
         with pytest.raises(SmithyIdentityError, match="timed out after 1 seconds"):
             await resolver.get_identity(properties={})
@@ -292,7 +261,6 @@ async def test_process_timeout():
     process.wait.assert_awaited_once_with()
 
 
-@pytest.mark.asyncio
 async def test_process_startup_failure_raises_smithy_identity_error():
     with patch(
         "asyncio.create_subprocess_exec",
@@ -303,7 +271,6 @@ async def test_process_startup_failure_raises_smithy_identity_error():
             await resolver.get_identity(properties={})
 
 
-@pytest.mark.asyncio
 async def test_long_term_credentials_cached():
     """Test that credentials without expiration are cached indefinitely."""
     resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
@@ -320,7 +287,6 @@ async def test_long_term_credentials_cached():
     assert identity_one is identity_two
 
 
-@pytest.mark.asyncio
 async def test_temporary_credentials_cached_when_valid():
     """Test that temporary credentials are cached when not expired."""
     current_time = datetime.now(UTC) + timedelta(minutes=10)
@@ -341,7 +307,6 @@ async def test_temporary_credentials_cached_when_valid():
     assert identity_one is identity_two
 
 
-@pytest.mark.asyncio
 async def test_expired_credentials_refreshed():
     """Test that expired credentials are refreshed."""
     expired_time = datetime.now(UTC) - timedelta(minutes=10)
@@ -380,7 +345,6 @@ async def test_expired_credentials_refreshed():
     assert identity_two.session_token == "baz-refreshed"
 
 
-@pytest.mark.asyncio
 async def test_invalidate_clears_cached_credentials():
     resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
     first_process = mock_subprocess(0, resp_body.encode("utf-8"))
@@ -399,7 +363,6 @@ async def test_invalidate_clears_cached_credentials():
     assert identity_one is not identity_two
 
 
-@pytest.mark.asyncio
 async def test_command_with_multiple_args():
     """Test that commands with multiple arguments are passed correctly."""
     resp_body = json.dumps(DEFAULT_RESPONSE_DATA)

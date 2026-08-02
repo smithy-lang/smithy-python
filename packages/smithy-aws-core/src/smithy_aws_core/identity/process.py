@@ -103,7 +103,12 @@ class ProcessCredentialsResolver(
         # aws_account_id when the process omits it.
         account_id = creds.get("AccountId") or self._account_id
 
-        if isinstance(expiration, str):
+        if expiration is not None:
+            if not isinstance(expiration, str):
+                raise SmithyIdentityError(
+                    "Expiration must be an ISO8601 string, received: "
+                    f"{type(expiration).__name__}"
+                )
             try:
                 dt = datetime.fromisoformat(expiration)
             except ValueError as e:
