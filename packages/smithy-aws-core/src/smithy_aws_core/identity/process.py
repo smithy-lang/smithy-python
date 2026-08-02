@@ -4,16 +4,20 @@ import asyncio
 import json
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import TypeGuard, cast
 
 from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
 
-from smithy_aws_core.identity.components import (
-    AWSCredentialsIdentity,
-    AWSIdentityProperties,
-)
+from .components import AWSCredentialsIdentity, AWSIdentityProperties
 
 _DEFAULT_TIMEOUT = 30
+
+
+def _is_command_list(command: object) -> TypeGuard[list[str]]:
+    if not isinstance(command, list) or not command:
+        return False
+    return all(isinstance(argument, str) for argument in cast(list[object], command))
 
 
 @dataclass
@@ -32,12 +36,12 @@ class ProcessCredentialsResolver(
         self,
         command: list[str],
         config: ProcessCredentialsConfig | None = None,
-    ):
-        if not command:
-            raise ValueError("command must be a non-empty list")
+    ) -> None:
+        if not _is_command_list(command):
+            raise ValueError("command must be a non-empty list of strings")
         self._command = list(command)
         self._config = config or ProcessCredentialsConfig()
-        self._credentials = None
+        self._credentials: AWSCredentialsIdentity | None = None
 
     async def get_identity(
         self, *, properties: AWSIdentityProperties
@@ -114,3 +118,7 @@ class ProcessCredentialsResolver(
             account_id=account_id,
         )
         return self._credentials
+
+    async def invalidate(self) -> None:
+        """Discard cached credentials so the next resolution reruns the process."""
+        self._credentials = None

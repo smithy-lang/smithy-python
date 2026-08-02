@@ -34,9 +34,9 @@ def test_config_custom_values():
     assert config.timeout == 60
 
 
-@pytest.mark.parametrize("command", [[], None])
+@pytest.mark.parametrize("command", [[], None, "mock-process", ["mock-process", 1]])
 def test_resolver_invalid_command(command: object):
-    with pytest.raises((ValueError, TypeError)):
+    with pytest.raises(ValueError, match="command must be a non-empty list"):
         ProcessCredentialsResolver(command)  # type: ignore[arg-type]
 
 
@@ -362,6 +362,25 @@ async def test_expired_credentials_refreshed():
     assert identity_two.access_key_id == "foo-refreshed"
     assert identity_two.secret_access_key == "bar-refreshed"
     assert identity_two.session_token == "baz-refreshed"
+
+
+@pytest.mark.asyncio
+async def test_invalidate_clears_cached_credentials():
+    resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
+    first_process = mock_subprocess(0, resp_body.encode("utf-8"))
+    second_process = mock_subprocess(0, resp_body.encode("utf-8"))
+
+    with patch(
+        "asyncio.create_subprocess_exec",
+        side_effect=[first_process, second_process],
+    ) as mock_exec:
+        resolver = ProcessCredentialsResolver(["mock-process"])
+        identity_one = await resolver.get_identity(properties={})
+        await resolver.invalidate()
+        identity_two = await resolver.get_identity(properties={})
+
+    assert mock_exec.call_count == 2
+    assert identity_one is not identity_two
 
 
 @pytest.mark.asyncio
