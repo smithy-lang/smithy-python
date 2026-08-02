@@ -73,7 +73,7 @@ class ProcessCredentialsResolver(
                     process.kill()
                 except ProcessLookupError:
                     pass
-            await process.wait()
+                await process.wait()
             raise SmithyIdentityError(
                 f"Credential process timed out after {self._timeout} seconds"
             ) from e
@@ -83,12 +83,21 @@ class ProcessCredentialsResolver(
                 f"Credential process failed with exit code {process.returncode}: "
                 f"{stderr.decode('utf-8', errors='replace')}"
             )
+        # These exceptions retain the full process output, which may contain
+        # credentials. Suppress chaining to avoid exposing it in tracebacks.
         try:
-            creds = json.loads(stdout.decode("utf-8"))
-        except (UnicodeDecodeError, json.JSONDecodeError) as e:
+            decoded = stdout.decode("utf-8")
+            creds = json.loads(decoded)
+        except UnicodeDecodeError as e:
             raise SmithyIdentityError(
-                f"Failed to parse credential process output: {e}"
-            ) from e
+                "Credential process output is not valid UTF-8 "
+                f"at byte {e.start}: {e.reason}"
+            ) from None
+        except json.JSONDecodeError as e:
+            raise SmithyIdentityError(
+                "Credential process output is not valid JSON "
+                f"at line {e.lineno}, column {e.colno}: {e.msg}"
+            ) from None
 
         version = creds.get("Version")
         if version != 1:
@@ -104,16 +113,12 @@ class ProcessCredentialsResolver(
         account_id = creds.get("AccountId") or self._account_id
 
         if expiration is not None:
-            if not isinstance(expiration, str):
-                raise SmithyIdentityError(
-                    "Expiration must be an ISO8601 string, received: "
-                    f"{type(expiration).__name__}"
-                )
             try:
                 dt = datetime.fromisoformat(expiration)
-            except ValueError as e:
+            except (TypeError, ValueError) as e:
                 raise SmithyIdentityError(
-                    f"Failed to parse credential process expiration: {e}"
+                    "Invalid credential process Expiration; "
+                    f"expected an ISO 8601 string: {e}"
                 ) from e
             expiration = dt.astimezone(UTC) if dt.tzinfo else dt.replace(tzinfo=UTC)
 

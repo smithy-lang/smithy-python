@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
 import json
+import traceback
 from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, Mock, patch
 
@@ -110,7 +111,8 @@ async def test_invalid_expiration_string():
     with patch("asyncio.create_subprocess_exec", return_value=process):
         resolver = ProcessCredentialsResolver(["mock-process"])
         with pytest.raises(
-            SmithyIdentityError, match="Failed to parse credential process expiration"
+            SmithyIdentityError,
+            match="Invalid credential process Expiration; expected an ISO 8601 string",
         ):
             await resolver.get_identity(properties={})
 
@@ -125,7 +127,8 @@ async def test_non_string_expiration():
     with patch("asyncio.create_subprocess_exec", return_value=process):
         resolver = ProcessCredentialsResolver(["mock-process"])
         with pytest.raises(
-            SmithyIdentityError, match="Expiration must be an ISO8601 string"
+            SmithyIdentityError,
+            match="Invalid credential process Expiration; expected an ISO 8601 string",
         ):
             await resolver.get_identity(properties={})
 
@@ -235,12 +238,33 @@ async def test_missing_version():
 
 
 async def test_invalid_json():
-    process = mock_subprocess(0, b"not valid json")
+    process = mock_subprocess(0, b'{"SecretAccessKey": "json-secret"')
 
     with patch("asyncio.create_subprocess_exec", return_value=process):
         resolver = ProcessCredentialsResolver(["mock-process"])
-        with pytest.raises(SmithyIdentityError, match="Failed to parse"):
+        with pytest.raises(
+            SmithyIdentityError,
+            match="Credential process output is not valid JSON at line 1, column",
+        ) as exc_info:
             await resolver.get_identity(properties={})
+
+    rendered = "".join(traceback.format_exception(exc_info.value))
+    assert "json-secret" not in rendered
+
+
+async def test_invalid_utf8():
+    process = mock_subprocess(0, b'{"SecretAccessKey": "utf8-secret"}\xff')
+
+    with patch("asyncio.create_subprocess_exec", return_value=process):
+        resolver = ProcessCredentialsResolver(["mock-process"])
+        with pytest.raises(
+            SmithyIdentityError,
+            match="Credential process output is not valid UTF-8 at byte",
+        ) as exc_info:
+            await resolver.get_identity(properties={})
+
+    rendered = "".join(traceback.format_exception(exc_info.value))
+    assert "utf8-secret" not in rendered
 
 
 async def test_process_timeout():
