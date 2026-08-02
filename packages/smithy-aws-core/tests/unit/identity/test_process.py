@@ -8,10 +8,7 @@ from datetime import UTC, datetime, timedelta
 from unittest.mock import AsyncMock, Mock, patch
 
 import pytest
-from smithy_aws_core.identity.process import (
-    ProcessCredentialsConfig,
-    ProcessCredentialsResolver,
-)
+from smithy_aws_core.identity.process import ProcessCredentialsResolver
 from smithy_core.exceptions import SmithyIdentityError
 
 ISO8601 = "%Y-%m-%dT%H:%M:%SZ"
@@ -22,16 +19,6 @@ DEFAULT_RESPONSE_DATA = {
     "SecretAccessKey": "bar",
     "SessionToken": "baz",
 }
-
-
-def test_config_default_values():
-    config = ProcessCredentialsConfig()
-    assert config.timeout == 30
-
-
-def test_config_custom_values():
-    config = ProcessCredentialsConfig(timeout=60)
-    assert config.timeout == 60
 
 
 @pytest.mark.parametrize("command", [[], None, "mock-process", ["mock-process", 1]])
@@ -265,10 +252,8 @@ async def test_process_timeout():
     process.kill = Mock()
     process.wait = AsyncMock()
 
-    config = ProcessCredentialsConfig(timeout=1)
-
     with patch("asyncio.create_subprocess_exec", return_value=process):
-        resolver = ProcessCredentialsResolver(["mock-process"], config=config)
+        resolver = ProcessCredentialsResolver(["mock-process"], timeout=1)
         with pytest.raises(SmithyIdentityError, match="timed out after 1 seconds"):
             await resolver.get_identity(properties={})
 

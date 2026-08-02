@@ -2,7 +2,6 @@
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
 import json
-from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import TypeGuard, cast
 
@@ -11,20 +10,11 @@ from smithy_core.exceptions import SmithyIdentityError
 
 from .components import AWSCredentialsIdentity, AWSIdentityProperties
 
-_DEFAULT_TIMEOUT = 30
-
 
 def _is_command_list(command: object) -> TypeGuard[list[str]]:
     if not isinstance(command, list) or not command:
         return False
     return all(isinstance(argument, str) for argument in cast(list[object], command))
-
-
-@dataclass
-class ProcessCredentialsConfig:
-    """Configuration for process credential retrieval operations."""
-
-    timeout: int = _DEFAULT_TIMEOUT
 
 
 class ProcessCredentialsResolver(
@@ -35,12 +25,13 @@ class ProcessCredentialsResolver(
     def __init__(
         self,
         command: list[str],
-        config: ProcessCredentialsConfig | None = None,
+        *,
+        timeout: float | None = None,
     ) -> None:
         if not _is_command_list(command):
             raise ValueError("command must be a non-empty list of strings")
         self._command = list(command)
-        self._config = config or ProcessCredentialsConfig()
+        self._timeout = timeout
         self._credentials: AWSCredentialsIdentity | None = None
 
     async def get_identity(
@@ -65,7 +56,7 @@ class ProcessCredentialsResolver(
 
         try:
             stdout, stderr = await asyncio.wait_for(
-                process.communicate(), timeout=self._config.timeout
+                process.communicate(), timeout=self._timeout
             )
         except TimeoutError as e:
             if process.returncode is None:
@@ -75,7 +66,7 @@ class ProcessCredentialsResolver(
                     pass
             await process.wait()
             raise SmithyIdentityError(
-                f"Credential process timed out after {self._config.timeout} seconds"
+                f"Credential process timed out after {self._timeout} seconds"
             ) from e
 
         if process.returncode != 0:
