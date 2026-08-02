@@ -20,18 +20,27 @@ def _is_command_list(command: object) -> TypeGuard[list[str]]:
 class ProcessCredentialsResolver(
     IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
 ):
-    """Resolves AWS Credentials from a process."""
+    """Resolves AWS Credentials from a process.
+
+    :param command: The process command and arguments to execute, as a
+        non-empty list of strings.
+    :param timeout: Maximum time in seconds to wait for the process to complete.
+    :param account_id: Fallback account ID to associate with the resolved
+        credentials when the process output does not include an ``AccountId``.
+    """
 
     def __init__(
         self,
         command: list[str],
         *,
         timeout: float | None = None,
+        account_id: str | None = None,
     ) -> None:
         if not _is_command_list(command):
             raise ValueError("command must be a non-empty list of strings")
         self._command = list(command)
         self._timeout = timeout
+        self._account_id = account_id
         self._credentials: AWSCredentialsIdentity | None = None
 
     async def get_identity(
@@ -76,13 +85,13 @@ class ProcessCredentialsResolver(
             )
         try:
             creds = json.loads(stdout.decode("utf-8"))
-        except json.JSONDecodeError as e:
+        except (UnicodeDecodeError, json.JSONDecodeError) as e:
             raise SmithyIdentityError(
                 f"Failed to parse credential process output: {e}"
             ) from e
 
         version = creds.get("Version")
-        if version is None or version != 1:
+        if version != 1:
             raise SmithyIdentityError(
                 f"Unsupported version '{version}' for credential process provider, supported versions: 1"
             )
@@ -90,10 +99,17 @@ class ProcessCredentialsResolver(
         secret_access_key = creds.get("SecretAccessKey")
         session_token = creds.get("SessionToken")
         expiration = creds.get("Expiration")
-        account_id = creds.get("AccountId")
+        # Prefer the process output's AccountId, falling back to the profile's
+        # aws_account_id when the process omits it.
+        account_id = creds.get("AccountId") or self._account_id
 
         if isinstance(expiration, str):
-            dt = datetime.fromisoformat(expiration)
+            try:
+                dt = datetime.fromisoformat(expiration)
+            except ValueError as e:
+                raise SmithyIdentityError(
+                    f"Failed to parse credential process expiration: {e}"
+                ) from e
             expiration = dt.astimezone(UTC) if dt.tzinfo else dt.replace(tzinfo=UTC)
 
         if access_key_id is None or secret_access_key is None:

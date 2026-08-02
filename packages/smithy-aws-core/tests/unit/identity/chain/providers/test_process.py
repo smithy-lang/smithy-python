@@ -180,3 +180,38 @@ async def test_registers_terminal_resolver(
         stdout=asyncio.subprocess.PIPE,
         stderr=asyncio.subprocess.PIPE,
     )
+
+
+async def test_account_id_falls_back_to_profile_config(
+    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    merged_config: Callable[..., MergedConfig],
+) -> None:
+    setup = await setup_provider(
+        ProfileProcessCredentialsProvider(),
+        config_file=merged_config(
+            {
+                "default": {
+                    "credential_process": "credential-helper",
+                    "aws_account_id": "123456789012",
+                }
+            }
+        ),
+        profile_name="default",
+    )
+
+    process = AsyncMock()
+    process.returncode = 0
+    process.communicate.return_value = (
+        json.dumps(
+            {
+                "Version": 1,
+                "AccessKeyId": "akid",
+                "SecretAccessKey": "secret",
+            }
+        ).encode(),
+        b"",
+    )
+    with patch("asyncio.create_subprocess_exec", return_value=process):
+        identity = await setup.resolvers[0].get_identity(properties={})
+
+    assert identity.account_id == "123456789012"

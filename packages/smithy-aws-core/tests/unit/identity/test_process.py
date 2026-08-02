@@ -157,6 +157,39 @@ async def test_credentials_with_account_id():
 
 
 @pytest.mark.asyncio
+async def test_account_id_falls_back_to_configured_value():
+    """The configured account_id is used when the process omits AccountId."""
+    resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
+    process = mock_subprocess(0, resp_body.encode("utf-8"))
+
+    with patch("asyncio.create_subprocess_exec", return_value=process):
+        resolver = ProcessCredentialsResolver(
+            ["mock-process"], account_id="123456789012"
+        )
+        identity = await resolver.get_identity(properties={})
+
+    assert identity.account_id == "123456789012"
+
+
+@pytest.mark.asyncio
+async def test_process_account_id_takes_precedence_over_configured_value():
+    """The process output's AccountId wins over the configured fallback."""
+    resp_data = dict(DEFAULT_RESPONSE_DATA)
+    resp_data["AccountId"] = "111111111111"
+
+    resp_body = json.dumps(resp_data)
+    process = mock_subprocess(0, resp_body.encode("utf-8"))
+
+    with patch("asyncio.create_subprocess_exec", return_value=process):
+        resolver = ProcessCredentialsResolver(
+            ["mock-process"], account_id="222222222222"
+        )
+        identity = await resolver.get_identity(properties={})
+
+    assert identity.account_id == "111111111111"
+
+
+@pytest.mark.asyncio
 async def test_non_zero_exit_code():
     process = mock_subprocess(1, b"", b"Process error message")
 

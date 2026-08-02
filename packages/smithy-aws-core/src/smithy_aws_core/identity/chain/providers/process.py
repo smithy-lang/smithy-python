@@ -11,6 +11,7 @@ from ..ordering import Standard, StandardProvider
 from ..provider import ChainSetup
 
 _CREDENTIAL_PROCESS = "credential_process"
+_ACCOUNT_ID = "aws_account_id"
 
 
 def _split_process_command(
@@ -103,6 +104,11 @@ class ProfileProcessCredentialsProvider:
         if not command:
             return
 
+        # The process output's AccountId takes precedence; the profile's
+        # aws_account_id is only used as a fallback.
         setup.add_terminal_resolver(
-            ProcessCredentialsResolver(_split_process_command(command))
+            ProcessCredentialsResolver(
+                _split_process_command(command),
+                account_id=config_file.get(profile_name, _ACCOUNT_ID),
+            )
         )
