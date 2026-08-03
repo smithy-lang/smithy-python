@@ -290,7 +290,8 @@ public final class ConfigGenerator implements Runnable {
             writer.write("");
             writer.write("$L: TypeAlias = Callable[[$L], None]", asyncPlugin.getName(), asyncConfig.getName());
             writer.writeDocs(
-                    "A callable that allows customizing the async config object on each request.", context);
+                    "A callable that allows customizing the async config object on each request.",
+                    context);
         });
     }
 
@@ -459,14 +460,15 @@ public final class ConfigGenerator implements Runnable {
 
         // Write service-specific field declarations
         writer.write("endpoint_resolver: $T | None = None", RuntimeTypes.ENDPOINT_RESOLVER);
-        writer.write("protocol: $T | None = None", Symbol.builder()
-                .name("ClientProtocol[Any, Any]")
-                .addReference(Symbol.builder()
-                        .name("ClientProtocol")
-                        .namespace("smithy_core.aio.interfaces", ".")
-                        .addDependency(SmithyPythonDependency.SMITHY_CORE)
-                        .build())
-                .build());
+        writer.write("protocol: $T | None = None",
+                Symbol.builder()
+                        .name("ClientProtocol[Any, Any]")
+                        .addReference(Symbol.builder()
+                                .name("ClientProtocol")
+                                .namespace("smithy_core.aio.interfaces", ".")
+                                .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                                .build())
+                        .build());
         writer.write("auth_schemes: dict[$T, $T] | None = None",
                 RuntimeTypes.SHAPE_ID,
                 Symbol.builder()
@@ -487,7 +489,7 @@ public final class ConfigGenerator implements Runnable {
 
         // endpoint_uri FieldSpec — overrides base class with service-aware resolver
         var makeEndpointResolverSymbol = Symbol.builder()
-                .name("make_endpoint_uri_resolver")
+                .name("EndpointUriResolver")
                 .namespace("smithy_aws_core.config.resolvers", ".")
                 .addDependency(SmithyPythonDependency.SMITHY_AWS_CORE)
                 .build();
@@ -511,7 +513,8 @@ public final class ConfigGenerator implements Runnable {
         writer.write("\"endpoint_resolver\": $T(", fieldSpecSymbol);
         writer.indent();
         writer.write("default_factory=lambda: $T(endpoint_prefix=$S),",
-                standardRegionalResolverSymbol, endpointPrefix);
+                standardRegionalResolverSymbol,
+                endpointPrefix);
         writer.dedent();
         writer.write("),");
 
