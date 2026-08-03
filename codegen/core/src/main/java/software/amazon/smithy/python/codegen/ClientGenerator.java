@@ -72,10 +72,23 @@ final class ClientGenerator implements Runnable {
             }
 
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+            var asyncConfigSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
             writer.write("""
-                    def __init__(self, config: $1T | None = None, plugins: list[$2T] | None = None):
+                    def __init__(
+                        self,
+                        config: $1T | $6T | None = None,
+                        plugins: list[$2T] | None = None,
+                    ):
                         $3C
-                        self._config = config or $1T()
+                        if isinstance(config, $6T):
+                            self._config: $1T = config  # type: ignore[assignment]
+                        elif isinstance(config, $1T) or config is None:
+                            self._config = config or $1T()
+                        else:
+                            raise $7T(
+                                f"config must be $6L or $1L, got {type(config).__name__}. "
+                                f"Use 'await $6L.resolve()' instead."
+                            )
 
                         client_plugins: list[$2T] = [
                             $4C
@@ -92,7 +105,9 @@ final class ClientGenerator implements Runnable {
                     pluginSymbol,
                     writer.consumer(w -> writeConstructorDocs(w, serviceSymbol.getName())),
                     writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)),
-                    RuntimeTypes.RETRY_STRATEGY_RESOLVER);
+                    RuntimeTypes.RETRY_STRATEGY_RESOLVER,
+                    asyncConfigSymbol,
+                    RuntimeTypes.EXPECTATION_NOT_MET_ERROR);
 
             var topDownIndex = TopDownIndex.of(model);
             var eventStreamIndex = EventStreamIndex.of(model);
@@ -249,7 +264,9 @@ final class ClientGenerator implements Runnable {
                     raise $2T("protocol and transport MUST be set on the config to make calls.")
 
                 retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
-                    retry_strategy=config.retry_strategy
+                    retry_strategy=config.retry_strategy,
+                    retry_mode=getattr(config, "retry_mode", None),
+                    max_attempts=getattr(config, "max_attempts", None),
                 )
 
                 pipeline = $3T(
