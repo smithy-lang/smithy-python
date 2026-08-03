@@ -170,7 +170,9 @@ class HTTPRequestSerializer(SpecificShapeSerializer):
             payload = AsyncBytesReader(sync_payload)
 
         headers = binding_serializer.header_serializer.headers
-        if content_type is not None:
+        if content_type is not None and not any(
+            name.lower() == "content-type" for name, _ in headers
+        ):
             headers.append(("content-type", content_type))
 
         if content_length is not None:
@@ -358,7 +360,9 @@ class HTTPResponseSerializer(SpecificShapeSerializer):
             payload = AsyncBytesReader(sync_payload)
 
         headers = binding_serializer.header_serializer.headers
-        if content_type is not None:
+        if content_type is not None and not any(
+            name.lower() == "content-type" for name, _ in headers
+        ):
             headers.append(("content-type", content_type))
 
         if content_length is not None:
