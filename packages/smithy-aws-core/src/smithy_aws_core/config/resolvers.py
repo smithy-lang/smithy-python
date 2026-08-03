@@ -126,7 +126,7 @@ async def resolve_endpoint_uri(ctx: SharedConfigContext) -> Resolved[str | None]
     """Resolve the endpoint URI from global environment or config file.
 
     This is the base resolver that only checks global sources.
-    For service-specific resolution, use make_endpoint_uri_resolver().
+    For service-specific resolution, use EndpointUriResolver().
 
     :param ctx: The shared resolution context.
     :returns: Resolved endpoint URI value with source.
@@ -135,47 +135,6 @@ async def resolve_endpoint_uri(ctx: SharedConfigContext) -> Resolved[str | None]
         ctx,
         env_vars=("AWS_ENDPOINT_URL",),
         profile_keys=("endpoint_url",),
-    )
-
-
-async def resolve_aws_access_key_id(ctx: SharedConfigContext) -> Resolved[str | None]:
-    """Resolve the AWS access key ID from environment or config file.
-
-    :param ctx: The shared resolution context.
-    :returns: Resolved access key ID value with source.
-    """
-    return await _resolve_str(
-        ctx,
-        env_vars=("AWS_ACCESS_KEY_ID",),
-        profile_keys=("aws_access_key_id",),
-    )
-
-
-async def resolve_aws_secret_access_key(
-    ctx: SharedConfigContext,
-) -> Resolved[str | None]:
-    """Resolve the AWS secret access key from environment or config file.
-
-    :param ctx: The shared resolution context.
-    :returns: Resolved secret access key value with source.
-    """
-    return await _resolve_str(
-        ctx,
-        env_vars=("AWS_SECRET_ACCESS_KEY",),
-        profile_keys=("aws_secret_access_key",),
-    )
-
-
-async def resolve_aws_session_token(ctx: SharedConfigContext) -> Resolved[str | None]:
-    """Resolve the AWS session token from environment or config file.
-
-    :param ctx: The shared resolution context.
-    :returns: Resolved session token value with source.
-    """
-    return await _resolve_str(
-        ctx,
-        env_vars=("AWS_SESSION_TOKEN",),
-        profile_keys=("aws_session_token",),
     )
 
 
@@ -209,9 +168,10 @@ class EndpointUriResolver:
             Used to construct the service-specific env var and config lookup key.
         """
         self._service_env_var = (
-            f"AWS_ENDPOINT_URL_{service_id.replace('-', '_').upper()}"
+            f"AWS_ENDPOINT_URL_{service_id.replace(' ', '_').replace('-', '_').upper()}"
         )
-        self._service_key = service_id.replace("-", "_").lower()
+
+        self._service_key = service_id.replace(" ", "_").replace("-", "_").lower()
 
     async def __call__(self, ctx: SharedConfigContext) -> Resolved[str | None]:
         """Resolve the endpoint URI from all sources.
@@ -239,12 +199,3 @@ class EndpointUriResolver:
             return Resolved(value=value, source=ConfigSource.PROFILE)
 
         return Resolved(value=UNSET, source=ConfigSource.DEFAULT)  # type: ignore[arg-type]
-
-
-def make_endpoint_uri_resolver(service_id: str) -> EndpointUriResolver:
-    """Create a service-aware endpoint URI resolver.
-
-    :param service_id: The service identifier (e.g., "bedrock_runtime").
-    :returns: An EndpointUriResolver instance for use in FieldSpec.
-    """
-    return EndpointUriResolver(service_id)

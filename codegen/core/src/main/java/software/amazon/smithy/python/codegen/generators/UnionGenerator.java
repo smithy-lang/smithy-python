@@ -157,30 +157,31 @@ public final class UnionGenerator implements Runnable {
         var schemaSymbol = symbol.expectProperty(SymbolProperties.SCHEMA);
         var unknownSymbol = symbol.expectProperty(SymbolProperties.UNION_UNKNOWN);
         writer.putContext("schema", schemaSymbol);
-        writer.write("""
-                class $1L:
-                    _result: $2T | None = None
+        writer.write(
+                """
+                        class $1L:
+                            _result: $2T | None = None
 
-                    def deserialize(self, deserializer: ${shapeDeserializer:T}) -> $2T:
-                        self._result = None
-                        deserializer.read_struct($3T, self._consumer)
+                            def deserialize(self, deserializer: ${shapeDeserializer:T}) -> $2T:
+                                self._result = None
+                                deserializer.read_struct($3T, self._consumer)
 
-                        if self._result is None:
-                            raise ${serializationError:T}("Unions must have exactly one value, but found none.")
+                                if self._result is None:
+                                    raise ${serializationError:T}("Unions must have exactly one value, but found none.")
 
-                        return self._result
+                                return self._result
 
-                    def _consumer(self, schema: $4T, de: ${shapeDeserializer:T}) -> None:
-                        match schema.expect_member_index():
-                            ${5C|}
-                            case _:
-                                self._set_result($6L(tag=schema.expect_member_name()))
+                            def _consumer(self, schema: $4T, de: ${shapeDeserializer:T}) -> None:
+                                match schema.expect_member_index():
+                                    ${5C|}
+                                    case _:
+                                        self._set_result($6L(tag=schema.expect_member_name()))
 
-                    def _set_result(self, value: $2T) -> None:
-                        if self._result is not None:
-                            raise ${serializationError:T}("Unions must have exactly one value, but found more than one.")
-                        self._result = value
-                """,
+                            def _set_result(self, value: $2T) -> None:
+                                if self._result is not None:
+                                    raise ${serializationError:T}("Unions must have exactly one value, but found more than one.")
+                                self._result = value
+                        """,
                 deserializerSymbol.getName(),
                 symbol,
                 schemaSymbol,

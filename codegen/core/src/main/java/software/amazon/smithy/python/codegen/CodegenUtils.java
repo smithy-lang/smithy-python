@@ -24,9 +24,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.logging.Logger;
+import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
-import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.NullableIndex;
 import software.amazon.smithy.model.node.Node;
@@ -129,7 +129,6 @@ public final class CodegenUtils {
                 .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
                 .build();
     }
-
 
     /**
      * Gets the service error symbol.
