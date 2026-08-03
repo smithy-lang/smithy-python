@@ -259,21 +259,72 @@ public final class ConfigGenerator implements Runnable {
 
     @Override
     public void run() {
-        var config = CodegenUtils.getConfigSymbol(context.settings());
+        var model = context.model();
+        var config = CodegenUtils.getConfigSymbol(context.settings(), model);
+        var plugin = CodegenUtils.getPluginSymbol(context.settings(), model);
         context.writerDelegator().useFileWriter(config.getDefinitionFile(), config.getNamespace(), writer -> {
             writeInterceptorsType(writer);
             generateConfig(context, writer);
-        });
 
-        // Generate the plugin symbol. This is just a callable. We could do something
-        // like have a class to implement, but that seems unnecessarily burdensome for
-        // a single function.
-        var plugin = CodegenUtils.getPluginSymbol(context.settings());
-        context.writerDelegator().useFileWriter(plugin.getDefinitionFile(), plugin.getNamespace(), writer -> {
+            // Generate the plugin type alias
             writer.addStdlibImport("typing", "Callable");
             writer.addStdlibImport("typing", "TypeAlias");
+            writer.write("");
+            writer.write("");
             writer.write("$L: TypeAlias = Callable[[$T], None]", plugin.getName(), config);
             writer.writeDocs("A callable that allows customizing the config object on each request.", context);
+
+            // Generate deprecated aliases using __getattr__ for backwards compatibility
+            var configAlias = config.getProperty(SymbolProperties.DEPRECATED_ALIAS);
+            var pluginAlias = plugin.getProperty(SymbolProperties.DEPRECATED_ALIAS);
+
+            if (configAlias.isPresent() || pluginAlias.isPresent()) {
+                writer.addStdlibImport("typing", "TYPE_CHECKING");
+                writer.addStdlibImport("typing", "Any");
+                writer.addStdlibImport("warnings");
+
+                writer.write("");
+                writer.write("");
+                writer.openBlock("if TYPE_CHECKING:");
+                if (configAlias.isPresent()) {
+                    writer.write("# Deprecated alias for backwards compatibility, to be removed.");
+                    writer.write("$L = $L", configAlias.get(), config.getName());
+                }
+                if (pluginAlias.isPresent()) {
+                    writer.write("# Deprecated alias for backwards compatibility, to be removed.");
+                    writer.write("$L = $L", pluginAlias.get(), plugin.getName());
+                }
+                writer.closeBlock("");
+
+                writer.write("");
+                writer.openBlock("def __getattr__(name: str) -> Any:");
+                if (configAlias.isPresent()) {
+                    writer.openBlock("if name == $S:", configAlias.get());
+                    writer.write("""
+                            warnings.warn(
+                                "$1L is deprecated, use $2L instead. "
+                                "This alias will be removed in a future version.",
+                                DeprecationWarning,
+                                stacklevel=2,
+                            )
+                            return $2L""", configAlias.get(), config.getName());
+                    writer.closeBlock("");
+                }
+                if (pluginAlias.isPresent()) {
+                    writer.openBlock("if name == $S:", pluginAlias.get());
+                    writer.write("""
+                            warnings.warn(
+                                "$1L is deprecated, use $2L instead. "
+                                "This alias will be removed in a future version.",
+                                DeprecationWarning,
+                                stacklevel=2,
+                            )
+                            return $2L""", pluginAlias.get(), plugin.getName());
+                    writer.closeBlock("");
+                }
+                writer.write("raise AttributeError(f\"module {__name__!r} has no attribute {name!r}\")");
+                writer.closeBlock("");
+            }
         });
     }
 
@@ -305,7 +356,7 @@ public final class ConfigGenerator implements Runnable {
     }
 
     private void generateConfig(GenerationContext context, PythonWriter writer) {
-        var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
+        var configSymbol = CodegenUtils.getConfigSymbol(context.settings(), context.model());
 
         // Initialize a set of config properties with our base properties.
         var properties = new TreeSet<>(Comparator.comparing(ConfigProperty::name));
