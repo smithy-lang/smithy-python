@@ -137,15 +137,6 @@ final class ClientGenerator implements Runnable {
         }
     }
 
-    private boolean isLongPollingOperation(OperationShape operation) {
-        for (PythonIntegration integration : context.integrations()) {
-            if (integration.isLongPollingOperation(model, service, operation)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
     private void writeConstructorDocs(PythonWriter writer, String clientName) {
         writer.writeMultiLineDocs(() -> {
             writer.write("""
@@ -243,7 +234,6 @@ final class ClientGenerator implements Runnable {
         }
 
         writer.putContext("operation", symbolProvider.toSymbol(operation));
-        writer.putContext("isLongPolling", isLongPollingOperation(operation));
         writer.addStdlibImport("copy", "deepcopy");
 
         writer.write("""
@@ -266,14 +256,11 @@ final class ClientGenerator implements Runnable {
                     protocol=config.protocol,
                     transport=config.transport
                 )
-                ${?isLongPolling}operation_context = $4T({"config": config})
-                operation_context[$5T] = True
-                ${/isLongPolling}call = $6T(
+                call = $4T(
                     input=input,
                     operation=${operation:T},
-                    ${?isLongPolling}context=operation_context,
-                    ${/isLongPolling}${^isLongPolling}context=$4T({"config": config}),
-                    ${/isLongPolling}interceptor=$7T(config.interceptors),
+                    context=$5T({"config": config}),
+                    interceptor=$6T(config.interceptors),
                     auth_scheme_resolver=config.auth_scheme_resolver,
                     supported_auth_schemes=config.auth_schemes,
                     endpoint_resolver=config.endpoint_resolver,
@@ -283,9 +270,8 @@ final class ClientGenerator implements Runnable {
                 writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)),
                 RuntimeTypes.EXPECTATION_NOT_MET_ERROR,
                 RuntimeTypes.REQUEST_PIPELINE,
-                RuntimeTypes.TYPED_PROPERTIES,
-                RuntimeTypes.LONG_POLLING,
                 RuntimeTypes.CLIENT_CALL,
+                RuntimeTypes.TYPED_PROPERTIES,
                 RuntimeTypes.INTERCEPTOR_CHAIN);
 
     }

@@ -9,14 +9,12 @@ from smithy_core.aio.retries import (
 )
 from smithy_core.exceptions import CallError, RetryError
 from smithy_core.retries import (
-    LONG_POLLING,
+    ExponentialBackoffJitterType as EBJT,
+)
+from smithy_core.retries import (
     ExponentialRetryBackoffStrategy,
     StandardRetryQuota,
 )
-from smithy_core.retries import (
-    ExponentialBackoffJitterType as EBJT,
-)
-from smithy_core.types import TypedProperties
 
 
 @pytest.mark.parametrize("max_attempts", [2, 3, 10])
@@ -145,42 +143,54 @@ async def test_standard_retry_after_capped_at_backoff_plus_max() -> None:
 
 
 async def test_standard_non_throttling_uses_default_backoff_scale() -> None:
-    strategy = StandardRetryStrategy(
-        backoff_strategy=ExponentialRetryBackoffStrategy(
-            backoff_scale_value=0.05,
-            jitter_type=EBJT.NONE,
-        )
-    )
+    strategy = StandardRetryStrategy()
     error = CallError(is_retry_safe=True, is_throttling_error=False)
     token = await strategy.acquire_initial_retry_token()
     token = await strategy.refresh_retry_token_for_retry(
         token_to_renew=token, error=error
     )
-    assert token.retry_delay == pytest.approx(0.05)  # type: ignore
+    # The default non-throttling backoff has a 50ms base with full jitter.
+    assert 0 <= token.retry_delay <= 0.05
 
 
 async def test_standard_throttling_uses_throttling_backoff_scale() -> None:
-    strategy = StandardRetryStrategy(
-        throttling_backoff_strategy=ExponentialRetryBackoffStrategy(
-            backoff_scale_value=1,
-            jitter_type=EBJT.NONE,
-        )
-    )
+    strategy = StandardRetryStrategy()
     error = CallError(is_retry_safe=True, is_throttling_error=True)
     token = await strategy.acquire_initial_retry_token()
     token = await strategy.refresh_retry_token_for_retry(
         token_to_renew=token, error=error
     )
+    # The default throttling backoff has a 1s base with full jitter.
+    assert 0 <= token.retry_delay <= 1.0
+
+
+async def test_standard_throttling_and_non_throttling_use_separate_strategies() -> None:
+    strategy = StandardRetryStrategy(
+        backoff_strategy=ExponentialRetryBackoffStrategy(
+            backoff_scale_value=0.05,
+            jitter_type=EBJT.NONE,
+        ),
+        throttling_backoff_strategy=ExponentialRetryBackoffStrategy(
+            backoff_scale_value=1,
+            jitter_type=EBJT.NONE,
+        ),
+    )
+    non_throttling_error = CallError(is_retry_safe=True, is_throttling_error=False)
+    token = await strategy.acquire_initial_retry_token()
+    token = await strategy.refresh_retry_token_for_retry(
+        token_to_renew=token, error=non_throttling_error
+    )
+    assert token.retry_delay == pytest.approx(0.05)  # type: ignore
+
+    throttling_error = CallError(is_retry_safe=True, is_throttling_error=True)
+    token = await strategy.acquire_initial_retry_token()
+    token = await strategy.refresh_retry_token_for_retry(
+        token_to_renew=token, error=throttling_error
+    )
     assert token.retry_delay == pytest.approx(1.0)  # type: ignore
 
 
-def _long_polling_context() -> TypedProperties:
-    context = TypedProperties()
-    context[LONG_POLLING] = True
-    return context
-
-
-async def test_long_polling_backs_off_when_quota_exhausted() -> None:
+async def test_quota_exhausted_error_carries_backoff_delay() -> None:
     strategy = StandardRetryStrategy(
         backoff_strategy=ExponentialRetryBackoffStrategy(
             backoff_scale_value=0.05, jitter_type=EBJT.NONE
@@ -188,17 +198,14 @@ async def test_long_polling_backs_off_when_quota_exhausted() -> None:
         retry_quota=StandardRetryQuota(initial_capacity=0),
         max_attempts=5,
     )
-    context = _long_polling_context()
     error = CallError(is_retry_safe=True)
-    token = await strategy.acquire_initial_retry_token(context=context)
+    token = await strategy.acquire_initial_retry_token()
     with pytest.raises(RetryError) as exc_info:
-        await strategy.refresh_retry_token_for_retry(
-            token_to_renew=token, error=error, context=context
-        )
+        await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
     assert exc_info.value.retry_after == pytest.approx(0.05)  # type: ignore
 
 
-async def test_long_polling_throttling_backs_off_with_throttling_scale() -> None:
+async def test_quota_exhausted_error_carries_throttling_backoff_delay() -> None:
     strategy = StandardRetryStrategy(
         throttling_backoff_strategy=ExponentialRetryBackoffStrategy(
             backoff_scale_value=1, jitter_type=EBJT.NONE
@@ -206,52 +213,31 @@ async def test_long_polling_throttling_backs_off_with_throttling_scale() -> None
         retry_quota=StandardRetryQuota(initial_capacity=0),
         max_attempts=5,
     )
-    context = _long_polling_context()
     error = CallError(is_retry_safe=True, is_throttling_error=True)
-    token = await strategy.acquire_initial_retry_token(context=context)
+    token = await strategy.acquire_initial_retry_token()
     with pytest.raises(RetryError) as exc_info:
-        await strategy.refresh_retry_token_for_retry(
-            token_to_renew=token, error=error, context=context
-        )
+        await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
     assert exc_info.value.retry_after == pytest.approx(1.0)  # type: ignore
 
 
-async def test_long_polling_no_backoff_when_max_attempts_reached() -> None:
+async def test_max_attempts_error_has_no_retry_after() -> None:
     strategy = StandardRetryStrategy(
         retry_quota=StandardRetryQuota(initial_capacity=0),
         max_attempts=1,
     )
-    context = _long_polling_context()
     error = CallError(is_retry_safe=True)
-    token = await strategy.acquire_initial_retry_token(context=context)
+    token = await strategy.acquire_initial_retry_token()
     with pytest.raises(RetryError) as exc_info:
-        await strategy.refresh_retry_token_for_retry(
-            token_to_renew=token, error=error, context=context
-        )
+        await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
     assert exc_info.value.retry_after is None
 
 
-async def test_long_polling_no_backoff_for_non_retryable_error() -> None:
+async def test_non_retryable_error_has_no_retry_after() -> None:
     strategy = StandardRetryStrategy(
         retry_quota=StandardRetryQuota(initial_capacity=0),
         max_attempts=5,
     )
-    context = _long_polling_context()
     error = CallError(fault="client", is_retry_safe=False)
-    token = await strategy.acquire_initial_retry_token(context=context)
-    with pytest.raises(RetryError) as exc_info:
-        await strategy.refresh_retry_token_for_retry(
-            token_to_renew=token, error=error, context=context
-        )
-    assert exc_info.value.retry_after is None
-
-
-async def test_non_long_polling_does_not_back_off_when_quota_exhausted() -> None:
-    strategy = StandardRetryStrategy(
-        retry_quota=StandardRetryQuota(initial_capacity=0),
-        max_attempts=5,
-    )
-    error = CallError(is_retry_safe=True)
     token = await strategy.acquire_initial_retry_token()
     with pytest.raises(RetryError) as exc_info:
         await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
@@ -329,3 +315,7 @@ async def test_resolver_no_service_defaults_uses_strategy_defaults() -> None:
     assert strategy.max_attempts == 3
     delay = strategy.backoff_strategy.compute_next_backoff_delay(1)
     assert 0 <= delay <= 0.05
+    throttling_delay = strategy.throttling_backoff_strategy.compute_next_backoff_delay(
+        1
+    )
+    assert 0 <= throttling_delay <= 1.0

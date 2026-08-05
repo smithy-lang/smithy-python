@@ -208,6 +208,20 @@ class IdempotencyTokenTrait(Trait, id=ShapeID("smithy.api#IdempotencyToken")):
         assert self.document_value is None
 
 
+@dataclass(init=False, frozen=True)
+class LongPollTrait(Trait, id=ShapeID("smithy.api#longPoll")):
+    """Indicates that the service may hold the request open while waiting for
+    information to become available."""
+
+    @property
+    def timeout_millis(self) -> int:
+        """The timeout in milliseconds that a client should wait for a response."""
+        assert isinstance(self.document_value, Mapping)
+        value = self.document_value["timeoutMillis"]
+        assert isinstance(value, int)
+        return value
+
+
 # TODO: Get all this moved over to the http package
 @dataclass(init=False, frozen=True)
 class HTTPTrait(Trait, id=ShapeID("smithy.api#http")):

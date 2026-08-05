@@ -4,10 +4,8 @@ from functools import lru_cache
 from typing import Any
 
 from ..exceptions import RetryError
-from ..interfaces import TypedProperties
 from ..interfaces import retries as retries_interface
 from ..retries import (
-    LONG_POLLING,
     ExponentialBackoffJitterType,
     ExponentialRetryBackoffStrategy,
     RetryStrategyOptions,
@@ -24,10 +22,6 @@ class RetryStrategyResolver:
 
     This resolver caches retry strategy instances based on their configuration to reuse existing
     instances of RetryStrategy with the same settings. Uses LRU cache for thread-safe caching.
-
-    Any defaults are applied upstream by filling the
-    :py:class:`~smithy_core.retries.RetryStrategyOptions` before resolution; the resolver
-    simply builds (and caches) a strategy from the given options.
     """
 
     async def resolve_retry_strategy(
@@ -86,22 +80,17 @@ class SimpleRetryStrategy:
         self.max_attempts = max_attempts
 
     async def acquire_initial_retry_token(
-        self, *, token_scope: str | None = None, context: TypedProperties | None = None
+        self, *, token_scope: str | None = None
     ) -> SimpleRetryToken:
         """Create a base retry token for the start of a request.
 
         :param token_scope: This argument is ignored by this retry strategy.
-        :param context: This argument is ignored by this retry strategy.
         """
         retry_delay = self.backoff_strategy.compute_next_backoff_delay(0)
         return SimpleRetryToken(retry_count=0, retry_delay=retry_delay)
 
     async def refresh_retry_token_for_retry(
-        self,
-        *,
-        token_to_renew: retries_interface.RetryToken,
-        error: Exception,
-        context: TypedProperties | None = None,
+        self, *, token_to_renew: retries_interface.RetryToken, error: Exception
     ) -> SimpleRetryToken:
         """Replace an existing retry token from a failed attempt with a new token.
 
@@ -110,7 +99,6 @@ class SimpleRetryStrategy:
 
         :param token_to_renew: The token used for the previous failed attempt.
         :param error: The error that triggered the need for a retry.
-        :param context: This argument is ignored by this retry strategy.
         :raises RetryError: If no further retry attempts are allowed.
         """
         if isinstance(error, retries_interface.ErrorRetryInfo) and error.is_retry_safe:
@@ -150,7 +138,6 @@ class StandardRetryStrategy:
         backoff_strategy: retries_interface.RetryBackoffStrategy | None = None,
         throttling_backoff_strategy: retries_interface.RetryBackoffStrategy
         | None = None,
-        default_backoff_scale: float | None = None,
         max_attempts: int = 3,
         retry_quota: StandardRetryQuota | None = None,
     ):
@@ -165,10 +152,6 @@ class StandardRetryStrategy:
             retry delay for throttling errors. Defaults to a 1000ms-base
             :py:class:`ExponentialRetryBackoffStrategy`.
 
-        :param default_backoff_scale: Overrides the base backoff scale (in seconds) of
-            the default non-throttling backoff strategy. Ignored when
-            ``backoff_strategy`` is provided.
-
         :param max_attempts: Upper limit on total number of attempts made, including
             initial attempt and retries.
 
@@ -180,13 +163,8 @@ class StandardRetryStrategy:
                 f"max_attempts must be a non-negative integer, got {max_attempts}"
             )
 
-        non_throttling_scale = (
-            self._NON_THROTTLING_BACKOFF_SCALE
-            if default_backoff_scale is None
-            else default_backoff_scale
-        )
         self.backoff_strategy = backoff_strategy or ExponentialRetryBackoffStrategy(
-            backoff_scale_value=non_throttling_scale,
+            backoff_scale_value=self._NON_THROTTLING_BACKOFF_SCALE,
             max_backoff=self._MAX_BACKOFF,
             jitter_type=ExponentialBackoffJitterType.FULL,
         )
@@ -202,25 +180,17 @@ class StandardRetryStrategy:
         self._retry_quota = retry_quota or StandardRetryQuota()
 
     async def acquire_initial_retry_token(
-        self, *, token_scope: str | None = None, context: TypedProperties | None = None
+        self, *, token_scope: str | None = None
     ) -> StandardRetryToken:
         """Create a base retry token for the start of a request.
 
         :param token_scope: This argument is ignored by this retry strategy.
-        :param context: The operation context. A truthy
-            :py:data:`smithy_core.retries.LONG_POLLING` value marks the operation as
-            long-polling, so it backs off before returning even when the retry quota
-            is exhausted.
         """
         retry_delay = self.backoff_strategy.compute_next_backoff_delay(0)
         return StandardRetryToken(retry_count=0, retry_delay=retry_delay)
 
     async def refresh_retry_token_for_retry(
-        self,
-        *,
-        token_to_renew: retries_interface.RetryToken,
-        error: Exception,
-        context: TypedProperties | None = None,
+        self, *, token_to_renew: retries_interface.RetryToken, error: Exception
     ) -> StandardRetryToken:
         """Replace an existing retry token from a failed attempt with a new token.
 
@@ -229,9 +199,9 @@ class StandardRetryStrategy:
 
         :param token_to_renew: The token used for the previous failed attempt.
         :param error: The error that triggered the need for a retry.
-        :param context: The operation context, read for the
-            :py:data:`smithy_core.retries.LONG_POLLING` flag.
-        :raises RetryError: If no further retry attempts are allowed.
+        :raises RetryError: If no further retry attempts are allowed. When the retry
+            quota is exhausted, the raised error carries ``retry_after`` so callers
+            such as long-polling operations can back off before returning.
         """
         if not isinstance(token_to_renew, StandardRetryToken):
             raise TypeError(
@@ -264,12 +234,9 @@ class StandardRetryStrategy:
             try:
                 quota_acquired = self._retry_quota.acquire(error=error)
             except RetryError as quota_error:
-                # Long-polling operations back off even when the quota is exhausted.
-                if context is not None and context.get(LONG_POLLING):
-                    raise RetryError(
-                        str(quota_error), retry_after=retry_delay
-                    ) from error
-                raise
+                # Surface the computed delay so callers can back off before giving
+                # up; long-polling operations sleep for it before returning.
+                raise RetryError(str(quota_error), retry_after=retry_delay) from error
 
             return StandardRetryToken(
                 retry_count=retry_count,

@@ -9,12 +9,8 @@ from typing import Literal
 
 from .exceptions import RetryError
 from .interfaces import retries as retries_interface
-from .types import PropertyKey
 
 RetryStrategyType = Literal["simple", "standard"]
-
-LONG_POLLING = PropertyKey(key="long_polling", value_type=bool)
-"""Context key marking an operation as long-polling."""
 
 
 @dataclass(kw_only=True, frozen=True)

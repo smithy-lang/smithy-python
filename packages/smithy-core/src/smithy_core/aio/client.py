@@ -331,7 +331,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
 
         retry_strategy = call.retry_strategy
         retry_token = await retry_strategy.acquire_initial_retry_token(
-            token_scope=call.retry_scope, context=call.context
+            token_scope=call.retry_scope
         )
 
         while True:
@@ -352,12 +352,14 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                     retry_token = await retry_strategy.refresh_retry_token_for_retry(
                         token_to_renew=retry_token,
                         error=output_context.response,
-                        context=call.context,
                     )
                 except RetryError as retry_error:
                     # Long-polling operations back off even when the retry quota
                     # is exhausted; the strategy surfaces that delay here.
-                    if retry_error.retry_after is not None:
+                    if (
+                        call.operation.long_polling
+                        and retry_error.retry_after is not None
+                    ):
                         await sleep(retry_error.retry_after)
                     raise output_context.response
 

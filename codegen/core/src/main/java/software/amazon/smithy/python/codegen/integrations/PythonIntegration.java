@@ -8,8 +8,6 @@ import java.util.Collections;
 import java.util.List;
 import software.amazon.smithy.codegen.core.SmithyIntegration;
 import software.amazon.smithy.model.Model;
-import software.amazon.smithy.model.shapes.OperationShape;
-import software.amazon.smithy.model.shapes.ServiceShape;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.python.codegen.generators.ProtocolGenerator;
@@ -44,21 +42,6 @@ public interface PythonIntegration extends SmithyIntegration<PythonSettings, Pyt
 
     default Model preprocessModel(Model model, PythonSettings settings) {
         return model;
-    }
-
-    /**
-     * Determines whether the given operation is a long-polling operation, which
-     * must back off before returning even when the retry quota is exhausted. AWS
-     * integrations use this hook to identify these operations while the
-     * {@code smithy.api#longPoll} trait is not yet shipped in service models.
-     *
-     * @param model     Model the operation belongs to.
-     * @param service   Service the operation belongs to.
-     * @param operation Operation to test.
-     * @return Returns true if the operation is a long-polling operation.
-     */
-    default boolean isLongPollingOperation(Model model, ServiceShape service, OperationShape operation) {
-        return false;
     }
 
     /**

@@ -64,7 +64,10 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
                         if max_attempts is not None
                         else _DYNAMODB_DEFAULT_MAX_ATTEMPTS
                     ),
-                    default_backoff_scale=_DYNAMODB_DEFAULT_BACKOFF_SCALE,
+                    backoff_strategy=$5T(
+                        backoff_scale_value=_DYNAMODB_DEFAULT_BACKOFF_SCALE,
+                        jitter_type=$6T.FULL,
+                    ),
                 )
             """;
 
@@ -96,6 +99,14 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
                 .namespace("smithy_aws_core.config", ".")
                 .name("ConfigSource")
                 .build();
+        final Symbol exponentialBackoffStrategy = Symbol.builder()
+                .namespace("smithy_core.retries", ".")
+                .name("ExponentialRetryBackoffStrategy")
+                .build();
+        final Symbol exponentialBackoffJitterType = Symbol.builder()
+                .namespace("smithy_core.retries", ".")
+                .name("ExponentialBackoffJitterType")
+                .build();
 
         return List.of(
                 RuntimeClientPlugin.builder()
@@ -118,7 +129,9 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
                                                         retryStrategy,
                                                         retryStrategyOptions,
                                                         standardRetryStrategy,
-                                                        configSource);
+                                                        configSource,
+                                                        exponentialBackoffStrategy,
+                                                        exponentialBackoffJitterType);
                                             });
                             return List.of(filename);
                         })
