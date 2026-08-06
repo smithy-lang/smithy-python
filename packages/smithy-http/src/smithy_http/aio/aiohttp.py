@@ -108,6 +108,7 @@ class AIOHTTPClient(HTTPClient):
             params=parse_qs(request.destination.query),  # type: ignore
             headers=headers_list,
             data=body,
+            allow_redirects=False,
         ) as resp:
             return await self._marshal_response(resp)
 
