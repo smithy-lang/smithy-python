@@ -51,6 +51,20 @@ async def test_send_preserves_explicitly_framed_empty_body() -> None:
     assert session.request.call_args.kwargs["data"] is body
 
 
+async def test_send_disables_redirects() -> None:
+    client, session = _create_client()
+    request = HTTPRequest(
+        method="GET",
+        destination=URI(scheme="https", host="example.com", path="/"),
+        body=AsyncBytesReader(b""),
+        fields=Fields(),
+    )
+
+    await client.send(request)
+
+    assert session.request.call_args.kwargs["allow_redirects"] is False
+
+
 async def test_prepare_body_preserves_nonempty_reader_position() -> None:
     client, _ = _create_client()
     body = AsyncBytesReader(b"request body")
