@@ -91,7 +91,7 @@ class DiscriminatorError(SmithyError):
 class RetryError(SmithyError):
     """Base exception type for all exceptions raised in retry strategies.
 
-    :param retry_after: An optional delay in seconds that would have applied to the
+    :param retry_after: An optional delay in seconds that could apply to the
         next attempt. Long-polling operations use this to back off before giving up
         on retries.
     """

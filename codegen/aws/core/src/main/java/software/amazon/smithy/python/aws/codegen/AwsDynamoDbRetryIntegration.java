@@ -25,6 +25,7 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
     public static final String DYNAMODB_RETRY_MODULE = """
             _DYNAMODB_DEFAULT_MAX_ATTEMPTS = 4
             _DYNAMODB_DEFAULT_BACKOFF_SCALE = 0.025
+            _DYNAMODB_DEFAULT_MAX_BACKOFF = 20
 
 
             class _RetryConfig(Protocol):
@@ -66,6 +67,7 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
                     ),
                     backoff_strategy=$5T(
                         backoff_scale_value=_DYNAMODB_DEFAULT_BACKOFF_SCALE,
+                        max_backoff=_DYNAMODB_DEFAULT_MAX_BACKOFF,
                         jitter_type=$6T.FULL,
                     ),
                 )
@@ -73,7 +75,7 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
 
     @Override
     public List<RuntimeClientPlugin> getClientPlugins(GenerationContext context) {
-        final String pluginFile = "retry";
+        final String pluginFile = "retries";
         final String moduleName = context.settings().moduleName();
 
         final SymbolReference dynamodbRetryPlugin = SymbolReference.builder()
