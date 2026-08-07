@@ -353,7 +353,14 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                         token_to_renew=retry_token,
                         error=output_context.response,
                     )
-                except RetryError:
+                except RetryError as retry_error:
+                    # Long-polling operations back off even when the retry quota
+                    # is exhausted; the strategy surfaces that delay here.
+                    if (
+                        call.operation.long_polling
+                        and retry_error.retry_after is not None
+                    ):
+                        await sleep(retry_error.retry_after)
                     raise output_context.response
 
                 _LOGGER.debug(

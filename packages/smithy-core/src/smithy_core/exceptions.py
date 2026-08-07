@@ -44,7 +44,8 @@ class CallError(SmithyError):
     retry_after: float | None = None
     """The amount of time that should pass before a retry.
 
-    Retry strategies MAY choose to wait longer.
+    Retry strategies MAY adjust this value, for example by clamping it to an
+    upper bound.
     """
 
     is_throttling_error: bool = False
@@ -88,7 +89,16 @@ class DiscriminatorError(SmithyError):
 
 
 class RetryError(SmithyError):
-    """Base exception type for all exceptions raised in retry strategies."""
+    """Base exception type for all exceptions raised in retry strategies.
+
+    :param retry_after: An optional delay in seconds that could apply to the
+        next attempt. Long-polling operations use this to back off before giving up
+        on retries.
+    """
+
+    def __init__(self, message: str = "", *, retry_after: float | None = None) -> None:
+        super().__init__(message)
+        self.retry_after = retry_after
 
 
 class ExpectationNotMetError(SmithyError):

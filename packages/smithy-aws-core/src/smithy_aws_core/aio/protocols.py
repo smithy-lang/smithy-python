@@ -27,7 +27,10 @@ from smithy_core.types import TimestampFormat
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPRequest as _HTTPRequest
 from smithy_http.aio.interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
-from smithy_http.aio.protocols import HttpBindingClientProtocol, HttpClientProtocol
+from smithy_http.aio.protocols import (
+    HttpBindingClientProtocol,
+    HttpClientProtocol,
+)
 from smithy_http.deserializers import HTTPResponseDeserializer
 
 from .._private.query.errors import (
@@ -35,7 +38,7 @@ from .._private.query.errors import (
 )
 from .._private.query.serializers import QueryShapeSerializer
 from ..traits import AwsQueryTrait, RestJson1Trait
-from ..utils import parse_document_discriminator, parse_error_code
+from ..utils import parse_document_discriminator, parse_error_code, parse_retry_after
 
 try:
     from smithy_json import JSONCodec, JSONDocument
@@ -165,6 +168,9 @@ class RestJsonClientProtocol(HttpBindingClientProtocol):
     @property
     def error_identifier(self) -> HTTPErrorIdentifier:
         return self._error_identifier
+
+    def _retry_after(self, response: HTTPResponse) -> float | None:
+        return parse_retry_after(response)
 
     def _resolve_error_id(
         self,
@@ -364,6 +370,7 @@ class AwsQueryClientProtocol(HttpClientProtocol):
             wrapper_elements=self._error_wrapper_elements(),
             status=response.status,
             context=context,
+            retry_after=parse_retry_after(response),
         )
 
     def _action_name(

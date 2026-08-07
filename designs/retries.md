@@ -89,7 +89,8 @@ class ErrorRetryInfo(Protocol):
     retry_after: float | None = None
     """The amount of time that should pass before a retry.
 
-    Retry strategies MAY choose to wait longer.
+    Retry strategies MAY adjust this value, for example by clamping it to an
+    upper bound.
     """
 
     is_throttling_error: bool = False
@@ -110,8 +111,9 @@ class HasFault(Protocol):
 
 `RetryStrategy` implementations MUST raise a `RetryError` if they receive an
 exception where `is_retry_safe` is `False` and SHOULD raise a `RetryError` if it
-is `None`. `RetryStrategy` implementations SHOULD use a delay that is at least
-as long as `retry_after` but MAY choose to wait longer.
+is `None`. `RetryStrategy` implementations SHOULD take `retry_after` into account
+when computing the delay, but MAY adjust it (for example, by clamping it to an
+upper bound).
 
 ### Backoff Strategy
 

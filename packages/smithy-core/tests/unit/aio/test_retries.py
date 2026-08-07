@@ -9,7 +9,11 @@ from smithy_core.aio.retries import (
 )
 from smithy_core.exceptions import CallError, RetryError
 from smithy_core.retries import (
+    ExponentialBackoffJitterType as EBJT,
+)
+from smithy_core.retries import (
     ExponentialRetryBackoffStrategy,
+    StandardRetryQuota,
 )
 
 
@@ -96,14 +100,148 @@ async def test_standard_retry_does_not_retry(error: Exception | CallError) -> No
         await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
 
 
-async def test_standard_retry_after_overrides_backoff() -> None:
-    strategy = StandardRetryStrategy()
-    error = CallError(is_retry_safe=True, retry_after=5.5)
+async def test_standard_retry_after_within_bounds_is_honored() -> None:
+    strategy = StandardRetryStrategy(
+        backoff_strategy=ExponentialRetryBackoffStrategy(
+            backoff_scale_value=1, jitter_type=EBJT.NONE
+        )
+    )
+    error = CallError(is_retry_safe=True, retry_after=3.0)
     token = await strategy.acquire_initial_retry_token()
     token = await strategy.refresh_retry_token_for_retry(
         token_to_renew=token, error=error
     )
-    assert token.retry_delay == 5.5
+    assert token.retry_delay == 3.0
+
+
+async def test_standard_retry_after_floored_to_backoff() -> None:
+    strategy = StandardRetryStrategy(
+        backoff_strategy=ExponentialRetryBackoffStrategy(
+            backoff_scale_value=1, jitter_type=EBJT.NONE
+        )
+    )
+    error = CallError(is_retry_safe=True, retry_after=0.5)
+    token = await strategy.acquire_initial_retry_token()
+    token = await strategy.refresh_retry_token_for_retry(
+        token_to_renew=token, error=error
+    )
+    assert token.retry_delay == 1.0
+
+
+async def test_standard_retry_after_capped_at_backoff_plus_max() -> None:
+    strategy = StandardRetryStrategy(
+        backoff_strategy=ExponentialRetryBackoffStrategy(
+            backoff_scale_value=1, jitter_type=EBJT.NONE
+        )
+    )
+    error = CallError(is_retry_safe=True, retry_after=10.0)
+    token = await strategy.acquire_initial_retry_token()
+    token = await strategy.refresh_retry_token_for_retry(
+        token_to_renew=token, error=error
+    )
+    assert token.retry_delay == 6.0
+
+
+async def test_standard_non_throttling_uses_default_backoff_scale() -> None:
+    strategy = StandardRetryStrategy()
+    error = CallError(is_retry_safe=True, is_throttling_error=False)
+    token = await strategy.acquire_initial_retry_token()
+    token = await strategy.refresh_retry_token_for_retry(
+        token_to_renew=token, error=error
+    )
+    # The default non-throttling backoff has a 50ms base with full jitter.
+    assert 0 <= token.retry_delay <= 0.05
+
+
+async def test_standard_throttling_uses_throttling_backoff_scale() -> None:
+    strategy = StandardRetryStrategy()
+    error = CallError(is_retry_safe=True, is_throttling_error=True)
+    token = await strategy.acquire_initial_retry_token()
+    token = await strategy.refresh_retry_token_for_retry(
+        token_to_renew=token, error=error
+    )
+    # The default throttling backoff has a 1s base with full jitter.
+    assert 0 <= token.retry_delay <= 1.0
+
+
+async def test_standard_throttling_and_non_throttling_use_separate_strategies() -> None:
+    strategy = StandardRetryStrategy(
+        backoff_strategy=ExponentialRetryBackoffStrategy(
+            backoff_scale_value=0.05,
+            jitter_type=EBJT.NONE,
+        ),
+        throttling_backoff_strategy=ExponentialRetryBackoffStrategy(
+            backoff_scale_value=1,
+            jitter_type=EBJT.NONE,
+        ),
+    )
+    non_throttling_error = CallError(is_retry_safe=True, is_throttling_error=False)
+    token = await strategy.acquire_initial_retry_token()
+    token = await strategy.refresh_retry_token_for_retry(
+        token_to_renew=token, error=non_throttling_error
+    )
+    assert token.retry_delay == pytest.approx(0.05)  # type: ignore
+
+    throttling_error = CallError(is_retry_safe=True, is_throttling_error=True)
+    token = await strategy.acquire_initial_retry_token()
+    token = await strategy.refresh_retry_token_for_retry(
+        token_to_renew=token, error=throttling_error
+    )
+    assert token.retry_delay == pytest.approx(1.0)  # type: ignore
+
+
+async def test_quota_exhausted_error_carries_backoff_delay() -> None:
+    strategy = StandardRetryStrategy(
+        backoff_strategy=ExponentialRetryBackoffStrategy(
+            backoff_scale_value=0.05, jitter_type=EBJT.NONE
+        ),
+        retry_quota=StandardRetryQuota(initial_capacity=0),
+        max_attempts=5,
+    )
+    error = CallError(is_retry_safe=True)
+    token = await strategy.acquire_initial_retry_token()
+    with pytest.raises(RetryError) as exc_info:
+        await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
+    assert exc_info.value.retry_after == pytest.approx(0.05)  # type: ignore
+
+
+async def test_quota_exhausted_error_carries_throttling_backoff_delay() -> None:
+    strategy = StandardRetryStrategy(
+        throttling_backoff_strategy=ExponentialRetryBackoffStrategy(
+            backoff_scale_value=1, jitter_type=EBJT.NONE
+        ),
+        retry_quota=StandardRetryQuota(initial_capacity=0),
+        max_attempts=5,
+    )
+    error = CallError(is_retry_safe=True, is_throttling_error=True)
+    token = await strategy.acquire_initial_retry_token()
+    with pytest.raises(RetryError) as exc_info:
+        await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
+    assert exc_info.value.retry_after == pytest.approx(1.0)  # type: ignore
+
+
+async def test_max_attempts_error_has_no_retry_after() -> None:
+    strategy = StandardRetryStrategy(
+        retry_quota=StandardRetryQuota(initial_capacity=0),
+        max_attempts=1,
+    )
+    error = CallError(is_retry_safe=True)
+    token = await strategy.acquire_initial_retry_token()
+    with pytest.raises(RetryError) as exc_info:
+        await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
+    assert exc_info.value.retry_after is None
+
+
+async def test_non_retryable_error_has_no_retry_after() -> None:
+    strategy = StandardRetryStrategy(
+        retry_quota=StandardRetryQuota(initial_capacity=0),
+        max_attempts=5,
+    )
+    error = CallError(fault="client", is_retry_safe=False)
+    token = await strategy.acquire_initial_retry_token()
+    with pytest.raises(RetryError) as exc_info:
+        await strategy.refresh_retry_token_for_retry(token_to_renew=token, error=error)
+    assert exc_info.value.retry_after is None
 
 
 async def test_standard_retry_invalid_max_attempts() -> None:
@@ -166,3 +304,18 @@ async def test_retry_strategy_resolver_rejects_invalid_type() -> None:
         match="retry_strategy must be RetryStrategy, RetryStrategyOptions, or None",
     ):
         await resolver.resolve_retry_strategy(retry_strategy="invalid")  # type: ignore
+
+
+async def test_resolver_no_service_defaults_uses_strategy_defaults() -> None:
+    resolver = RetryStrategyResolver()
+
+    strategy = await resolver.resolve_retry_strategy(retry_strategy=None)
+
+    assert isinstance(strategy, StandardRetryStrategy)
+    assert strategy.max_attempts == 3
+    delay = strategy.backoff_strategy.compute_next_backoff_delay(1)
+    assert 0 <= delay <= 0.05
+    throttling_delay = strategy.throttling_backoff_strategy.compute_next_backoff_delay(
+        1
+    )
+    assert 0 <= throttling_delay <= 1.0
