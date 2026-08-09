@@ -89,45 +89,54 @@ public final class CodegenUtils {
     }
 
     /**
-     * Gets the async configuration object symbol for the service.
+     * Gets the async configuration object symbol for the service, if one is generated.
      *
      * <p>This is the new async-resolved config class that inherits from AsyncAwsConfig.
      * Derives the name from the SDK ID (e.g., "Bedrock Runtime" becomes
-     * "AsyncBedrockRuntimeConfig"). Falls back to "AsyncConfig" for non-AWS services.
+     * "AsyncBedrockRuntimeConfig").
+     *
+     * <p>The async config class lives in {@code smithy-aws-core} and is only generated
+     * for AWS services, so this returns an empty {@code Optional} otherwise. This is the
+     * single source of truth for whether the class exists: generators must not emit
+     * references to it when this is empty, and the integration that defines it gates
+     * itself on this same result. Callers that need the name unconditionally would
+     * reintroduce references to a class nobody defines.
      *
      * @param settings The client settings.
      * @param model The model containing the service shape.
-     * @return Returns the async config symbol.
+     * @return Returns the async config symbol, or empty if none is generated.
      */
-    public static Symbol getAsyncConfigSymbol(PythonSettings settings, Model model) {
-        var service = settings.service(model);
-        var name = service.getTrait(ServiceTrait.class)
-                .map(trait -> "Async" + StringUtils.capitalize(trait.getSdkId()).replace(" ", "") + "Config")
-                .orElse("AsyncConfig");
-        return Symbol.builder()
-                .name(name)
-                .namespace(String.format("%s.config", settings.moduleName()), ".")
-                .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
-                .build();
+    public static Optional<Symbol> getAsyncConfigSymbol(PythonSettings settings, Model model) {
+        return asyncConfigSymbolName(settings, model, "Config");
     }
 
     /**
-     * Gets the async plugin type hint symbol for the service.
+     * Gets the async plugin type hint symbol for the service, if one is generated.
      *
      * @param settings The client settings.
      * @param model The model containing the service shape.
-     * @return Returns the async plugin type hint symbol.
+     * @return Returns the async plugin symbol, or empty if none is generated.
+     * @see #getAsyncConfigSymbol(PythonSettings, Model)
      */
-    public static Symbol getAsyncPluginSymbol(PythonSettings settings, Model model) {
-        var service = settings.service(model);
-        var name = service.getTrait(ServiceTrait.class)
-                .map(trait -> "Async" + StringUtils.capitalize(trait.getSdkId()).replace(" ", "") + "Plugin")
-                .orElse("AsyncPlugin");
-        return Symbol.builder()
+    public static Optional<Symbol> getAsyncPluginSymbol(PythonSettings settings, Model model) {
+        return asyncConfigSymbolName(settings, model, "Plugin");
+    }
+
+    private static Optional<Symbol> asyncConfigSymbolName(
+            PythonSettings settings,
+            Model model,
+            String suffix
+    ) {
+        if (!isAwsService(settings, model)) {
+            return Optional.empty();
+        }
+        var sdkId = settings.service(model).expectTrait(ServiceTrait.class).getSdkId();
+        var name = "Async" + StringUtils.capitalize(sdkId).replace(" ", "") + suffix;
+        return Optional.of(Symbol.builder()
                 .name(name)
                 .namespace(String.format("%s.config", settings.moduleName()), ".")
                 .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
-                .build();
+                .build());
     }
 
     /**
@@ -343,8 +352,18 @@ public final class CodegenUtils {
      * @return Returns true if the service is an AWS service, false otherwise.
      */
     public static boolean isAwsService(GenerationContext context) {
-        var service = context.model().expectShape(context.settings().service());
-        return service.hasTrait(software.amazon.smithy.aws.traits.ServiceTrait.class);
+        return isAwsService(context.settings(), context.model());
+    }
+
+    /**
+     * Determines whether the service being generated is an AWS service.
+     *
+     * @param settings The client settings.
+     * @param model The model containing the service shape.
+     * @return Returns true if the service is an AWS service, false otherwise.
+     */
+    public static boolean isAwsService(PythonSettings settings, Model model) {
+        return model.expectShape(settings.service()).hasTrait(ServiceTrait.class);
     }
 
     /**

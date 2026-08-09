@@ -1,8 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-import os
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from typing import TYPE_CHECKING, Any, ClassVar, Self
 
 from smithy_core.retries import RetryStrategyOptions
@@ -13,7 +12,10 @@ if TYPE_CHECKING:
     from smithy_core.interfaces import URI
     from smithy_http.interfaces import HTTPRequestConfiguration
 
-    from smithy_aws_core.identity import AWSCredentialsIdentity, AWSIdentityProperties
+    from smithy_aws_core.identity.components import (
+        AWSCredentialsIdentity,
+        AWSIdentityProperties,
+    )
 
 from .context import SharedConfigContext
 from .exceptions import ConfigError, ConfigValidationError
@@ -48,19 +50,67 @@ class AsyncAwsConfig:
     """
 
     region: str | None = None
+    """The AWS region to connect to.
+    """
+
     retry_mode: str | None = None
+    """The retry mode to use. ``standard`` is the only accepted override.
+
+    ``legacy`` and ``adaptive`` are rejected when set here; when they come from
+    the environment or a config file they warn and fall back to ``standard``.
+    """
+
     max_attempts: int | None = None
+    """The maximum number of attempts to make per request, including the initial
+    attempt. Must be an integer of at least 1."""
+
     endpoint_uri: "str | URI | None" = None
+    """A static URI to route requests to."""
+
     aws_access_key_id: str | None = field(default=None, repr=False)
+    """The identifier for a secret access key.
+
+    Set this together with ``aws_secret_access_key`` to supply credentials in
+    code. Cannot be modified after resolution; see
+    ``aws_credentials_identity_resolver`` to supply credentials dynamically.
+    """
+
     aws_secret_access_key: str | None = field(default=None, repr=False)
+    """A secret access key that can be used to sign requests.
+
+    Must be set together with ``aws_access_key_id``.
+    """
+
     aws_session_token: str | None = field(default=None, repr=False)
+    """An access key ID that identifies temporary security credentials."""
+
     aws_credentials_identity_resolver: "IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties] | None" = None
+    """Resolves AWS Credentials.
+
+    Set automatically to a ``StaticCredentialsResolver`` when
+    ``aws_access_key_id`` and ``aws_secret_access_key`` are supplied in code.
+    """
+
     sdk_ua_app_id: str | None = None
+    """A unique and opaque application ID that is appended to the User-Agent
+    header."""
+
     user_agent_extra: str | None = None
+    """Additional suffix to be added to the User-Agent header."""
+
     interceptors: list[Any] = field(default_factory=list)  # type: ignore
+    """The list of interceptors, which are hooks that are called during the
+    execution of a request."""
+
     http_request_config: "HTTPRequestConfiguration | None" = None
+    """Configuration for individual HTTP requests."""
+
     transport: "ClientTransport[Any, Any] | None" = None
+    """The transport to use to send requests"""
+
     retry_strategy: Any | None = None
+    """The retry strategy or options for configuring retry behavior.
+    """
 
     _ctx: SharedConfigContext | None = field(default=None, repr=False, compare=False)
     _sources: dict[str, ConfigSource] = field(  # type: ignore[assignment]
@@ -121,6 +171,22 @@ class AsyncAwsConfig:
             default=None,
         ),
     }
+
+    def __repr__(self) -> str:
+        """Render the config without exposing credential material.
+
+        Defined on the base class so that every subclass inherits the
+        filtering, rather than relying on each subclass to mark its own
+        credential fields ``repr=False``. Subclasses must be declared with
+        ``@dataclass(repr=False)`` so they inherit this instead of generating
+        their own ``__repr__``.
+        """
+        rendered = ", ".join(
+            f"{f.name}={getattr(self, f.name)!r}"
+            for f in fields(self)
+            if f.repr and f.name not in _CREDENTIAL_FIELDS
+        )
+        return f"{type(self).__name__}({rendered})"
 
     def __post_init__(self) -> None:
         """Block direct construction. Use resolve() instead."""
@@ -209,15 +275,11 @@ class AsyncAwsConfig:
                 f"Valid fields are: {sorted(self._FIELDS)}"
             )
 
-        # Resolve credentials atomically before the field loop
-        await self._resolve_credentials(overrides)
+        # Validate credential overrides and auto-wire the identity resolver
+        # before the field loop, so the loop sees the resolver as an override.
+        self._resolve_credentials(overrides)
 
         for field_name, spec in self._FIELDS.items():
-            # Skip credentials — already resolved atomically above
-            if field_name in _CREDENTIAL_FIELDS:
-                if field_name in self._sources:
-                    continue
-
             # check for overrides first
             if field_name in overrides:
                 value = overrides[field_name]
@@ -250,71 +312,57 @@ class AsyncAwsConfig:
         setattr(self, field_name, value)
         self._sources[field_name] = ConfigSource.DEFAULT
 
-    async def _resolve_credentials(self, overrides: dict[str, Any]) -> None:
-        """Resolve credential fields atomically from a single source.
+    def _resolve_credentials(self, overrides: dict[str, Any]) -> None:
+        """Validate in-code credentials and auto-wire StaticCredentialsResolver.
 
         Rules:
         - If both aws_access_key_id and aws_secret_access_key are overridden,
-          resolve normally
-        - If only one credential is overridden, raise ConfigValidationError.
-        - Otherwise, resolve atomically: if both key and secret are present in
-          env, take all three from env. If both are in the profile, take all
-          three from profile. Token may be None in either case.
-
-        This prevents mixing credentials from different sources.
+          auto-set aws_credentials_identity_resolver to a
+          StaticCredentialsResolver (unless the caller already provided one).
+          Only the overridden values are used, so a session token present in a
+          profile is not picked up here.
+        - If credentials are overridden but the key/secret pair is incomplete,
+          raise ConfigValidationError.
+        - If no credential is overridden,  credentials are resolved from the
+         remaining sources.
         """
 
         required = {"aws_access_key_id", "aws_secret_access_key"}
 
         cred_overrides = {f for f in _CREDENTIAL_FIELDS if f in overrides}
-        if cred_overrides:
-            if required <= cred_overrides:
-                return
-            else:
-                raise ConfigValidationError(
-                    f"Partial credential override: {sorted(cred_overrides)}. "
-                    "Both 'aws_access_key_id' and 'aws_secret_access_key' must be "
-                    "provided together when overriding credentials."
-                )
 
-        # Check env vars atomically
-        env_creds = (
-            (os.environ.get("AWS_ACCESS_KEY_ID") or "").strip() or None,
-            (os.environ.get("AWS_SECRET_ACCESS_KEY") or "").strip() or None,
-            (os.environ.get("AWS_SESSION_TOKEN") or "").strip() or None,
-        )
-        if env_creds[0] and env_creds[1]:
-            self._set_credentials(_CREDENTIAL_FIELDS, env_creds, ConfigSource.ENV)
+        if not cred_overrides:
             return
 
-        # Check profile atomically
-        ctx = self._ctx
-        if ctx is None:
-            raise ConfigError("Resolution context not initialized")
-        config_file = await ctx.parsed_profiles()
-        profile_creds = (
-            config_file.get(ctx.profile_name, "aws_access_key_id"),
-            config_file.get(ctx.profile_name, "aws_secret_access_key"),
-            config_file.get(ctx.profile_name, "aws_session_token"),
-        )
-        if profile_creds[0] and profile_creds[1]:
-            self._set_credentials(
-                _CREDENTIAL_FIELDS, profile_creds, ConfigSource.PROFILE
+        if not required <= cred_overrides:
+            raise ConfigValidationError(
+                f"Partial credential override: {sorted(cred_overrides)}. "
+                "Both 'aws_access_key_id' and 'aws_secret_access_key' must be "
+                "provided together when overriding credentials."
             )
 
-    def _set_credentials(
-        self,
-        fields: tuple[str, ...],
-        values: tuple[str | None, ...],
-        source: ConfigSource,
-    ) -> None:
-        """Set credential fields atomically, bypassing __setattr__ tracking."""
-        for field_name, value in zip(fields, values, strict=True):
-            object.__setattr__(self, field_name, value or None)
-            self._sources[field_name] = source
+        # Auto-wire StaticCredentialsResolver if user didn't provide one
+        if overrides.get("aws_credentials_identity_resolver") is None:
+            # Lazy import to avoid circular dependency
+            from smithy_aws_core.identity.components import AWSCredentialsIdentity
+            from smithy_aws_core.identity.static import StaticCredentialsResolver
+
+            identity = AWSCredentialsIdentity(
+                access_key_id=overrides["aws_access_key_id"],
+                secret_access_key=overrides["aws_secret_access_key"],
+                session_token=overrides.get("aws_session_token"),
+            )
+            overrides["aws_credentials_identity_resolver"] = StaticCredentialsResolver(
+                identity=identity
+            )
 
     def __setattr__(self, name: str, value: Any) -> None:
-        """Track provenance when fields are set with plugins after construction"""
+        """Guard and track config fields set after resolution.
+
+        Rejects unknown field names, blocks credential mutation, validates the
+        new value, and records the field as an override so ``source_of()``
+        stays accurate when plugins customize a config per request.
+        """
         # Reject unknown fields
         if not name.startswith("_") and name not in self.__class__._FIELDS:
             raise AttributeError(
@@ -328,8 +376,10 @@ class AsyncAwsConfig:
             and name in self._sources
         ):
             raise AttributeError(
-                f"'{name}' cannot be modified after resolution. "
-                "Create a new config with the desired credentials instead."
+                f"'{name}' cannot be modified after resolution. Pass credentials "
+                f"to `await {type(self).__name__}.resolve(...)`, or set "
+                "'aws_credentials_identity_resolver' to supply credentials "
+                "dynamically."
             )
 
         # Mark as override only if the field is in _FIELDS and was already resolved

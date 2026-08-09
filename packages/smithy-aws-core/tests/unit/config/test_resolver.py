@@ -7,6 +7,8 @@ provenance tracking, and precedence behavior.
 """
 
 import os
+from copy import deepcopy
+from dataclasses import dataclass
 from unittest.mock import patch
 
 import pytest
@@ -19,11 +21,14 @@ from smithy_aws_core.config.exceptions import (
 )
 from smithy_aws_core.config.resolvers import (
     EndpointUriResolver,
+    resolve_endpoint_uri,
     resolve_max_attempts,
     resolve_region,
     resolve_retry_mode,
+    resolve_sdk_ua_app_id,
 )
 from smithy_aws_core.config.types import UNSET, ConfigSource
+from smithy_aws_core.identity.static import StaticCredentialsResolver
 
 
 class NullFileSystem:
@@ -397,6 +402,58 @@ class TestSharedConfigContext:
             result2 = await ctx.parsed_profiles()
             assert result1 is result2
 
+    def test_deepcopy_returns_same_instance(self):
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = SharedConfigContext(fs=NullFileSystem())
+            assert deepcopy(ctx) is ctx
+
+
+class TestConfigDeepCopy:
+    """Generated clients deep-copy the config on every operation call.
+
+    The copy exists to keep plugin mutations scoped to a single call, so the
+    fields plugins write must be independent per copy. The resolution context
+    is read-only afterwards and is shared instead, which keeps the per-request
+    cost from scaling with the size of the caller's shared config files.
+    """
+
+    @pytest.mark.asyncio
+    async def test_resolution_context_is_shared(self):
+        fs = FakeFileSystem({"/fake/config": "[profile default]\nregion = us-east-1\n"})
+        with patch.dict(os.environ, {}, clear=True):
+            config = await AsyncAwsConfig.resolve(
+                fs=fs,
+                config_file_path="/fake/config",
+                credentials_file_path="/fake/credentials",
+            )
+        # Sanity check: there is a context to share, so the assertion below
+        # is meaningful.
+        assert config.resolution_context() is not None
+        assert deepcopy(config).resolution_context() is config.resolution_context()
+
+    @pytest.mark.asyncio
+    async def test_mutable_fields_are_isolated(self):
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
+            config = await AsyncAwsConfig.resolve(fs=NullFileSystem())
+
+        first = deepcopy(config)
+        second = deepcopy(config)
+
+        # A plugin appending an interceptor must not affect the shared config
+        # or any other in-flight call.
+        first.interceptors.append("first-only")
+        second.interceptors.append("second-only")
+        assert first.interceptors == ["first-only"]
+        assert second.interceptors == ["second-only"]
+        assert config.interceptors == []
+
+        # Scalar overrides and their provenance stay per-copy too.
+        first.region = "eu-west-2"
+        assert first.region == "eu-west-2"
+        assert config.region == "us-east-1"
+        assert first.source_of("region") is ConfigSource.OVERRIDE
+        assert config.source_of("region") is ConfigSource.ENV
+
 
 class TestResolveRetryMode:
     @pytest.mark.asyncio
@@ -487,6 +544,24 @@ class TestResolveRetryMode:
                 result = await resolve_retry_mode(ctx)
             assert result.value == "standard"
             assert result.source == ConfigSource.ENV
+
+    @pytest.mark.asyncio
+    @pytest.mark.parametrize(
+        "env_value,expected",
+        [
+            ("STANDARD", "standard"),
+            ("Standard", "standard"),
+            ("LEGACY", "standard"),
+            ("Legacy", "standard"),
+            ("ADAPTIVE", "standard"),
+            ("Adaptive", "standard"),
+        ],
+    )
+    async def test_retry_mode_is_case_insensitive(self, env_value: str, expected: str):
+        with patch.dict(os.environ, {"AWS_RETRY_MODE": env_value}, clear=True):
+            ctx = SharedConfigContext(fs=NullFileSystem())
+            result = await resolve_retry_mode(ctx)
+            assert result.value == expected
 
 
 class TestResolveMaxAttempts:
@@ -739,130 +814,54 @@ class TestEndpointUriResolver:
 class TestReprDoesNotLeakSecrets:
     @pytest.mark.asyncio
     async def test_repr_does_not_leak_secrets(self):
-        with patch.dict(
-            os.environ,
-            {
-                "AWS_REGION": "us-east-1",
-                "AWS_ACCESS_KEY_ID": "AKIAIOSFODNN7EXAMPLE",
-                "AWS_SECRET_ACCESS_KEY": "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
-                "AWS_SESSION_TOKEN": "FwoGZXIvYXdzEBYaDHqa0AP",
-            },
-            clear=True,
-        ):
-            config = await AsyncAwsConfig.resolve(fs=NullFileSystem())
-            config_repr = repr(config)
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
+            config = await AsyncAwsConfig.resolve(
+                fs=NullFileSystem(),
+                aws_access_key_id="AKIAIOSFODNN7EXAMPLE",
+                aws_secret_access_key="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
+                aws_session_token="FwoGZXIvYXdzEBYaDHqa0AP",
+            )
 
+            # Sanity check: the credentials really are populated, so the
+            # assertions below are meaningful.
+            assert config.aws_access_key_id == "AKIAIOSFODNN7EXAMPLE"
+
+            config_repr = repr(config)
             assert "AKIAIOSFODNN7EXAMPLE" not in config_repr
             assert "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" not in config_repr
             assert "FwoGZXIvYXdzEBYaDHqa0AP" not in config_repr
-
-
-class TestCredentialSetIsAtomic:
-    """Credentials must be resolved from a single source — never mixed."""
+            assert "region='us-east-1'" in config_repr
 
     @pytest.mark.asyncio
-    async def test_env_credentials_do_not_mix_with_profile_token(self):
-        """If access_key and secret come from env, token must also come from env (or be None)."""
-        fs = FakeFileSystem(
-            {"/fake/credentials": "[default]\naws_session_token = TOKEN_FROM_PROFILE\n"}
-        )
-        with patch.dict(
-            os.environ,
-            {
-                "AWS_REGION": "us-east-1",
-                "AWS_ACCESS_KEY_ID": "AKID_FROM_ENV",
-                "AWS_SECRET_ACCESS_KEY": "SECRET_FROM_ENV",
-            },
-            clear=True,
-        ):
-            config = await AsyncAwsConfig.resolve(
-                fs=fs,
-                config_file_path="/fake/config",
-                credentials_file_path="/fake/credentials",
-            )
-            assert config.aws_access_key_id == "AKID_FROM_ENV"
-            assert config.aws_secret_access_key == "SECRET_FROM_ENV"
-            assert config.aws_session_token is None  # NOT from profile
-            assert config.source_of("aws_access_key_id") == ConfigSource.ENV
-            assert config.source_of("aws_session_token") == ConfigSource.ENV
+    async def test_subclass_repr_does_not_leak_secrets(self):
+        """Subclasses declared with repr=False inherit the filtered __repr__.
 
-    @pytest.mark.asyncio
-    async def test_all_three_from_env_when_all_set(self):
-        with patch.dict(
-            os.environ,
-            {
-                "AWS_REGION": "us-east-1",
-                "AWS_ACCESS_KEY_ID": "AKID",
-                "AWS_SECRET_ACCESS_KEY": "SECRET",
-                "AWS_SESSION_TOKEN": "TOKEN",
-            },
-            clear=True,
-        ):
-            config = await AsyncAwsConfig.resolve(fs=NullFileSystem())
-            assert config.aws_access_key_id == "AKID"
-            assert config.aws_secret_access_key == "SECRET"
-            assert config.aws_session_token == "TOKEN"
-            assert config.source_of("aws_access_key_id") == ConfigSource.ENV
-            assert config.source_of("aws_secret_access_key") == ConfigSource.ENV
-            assert config.source_of("aws_session_token") == ConfigSource.ENV
+        This mirrors what codegen emits for service-specific async configs.
+        """
 
-    @pytest.mark.asyncio
-    async def test_all_three_from_profile_when_no_env(self):
-        fs = FakeFileSystem(
-            {
-                "/fake/credentials": (
-                    "[default]\n"
-                    "aws_access_key_id = AKID_PROFILE\n"
-                    "aws_secret_access_key = SECRET_PROFILE\n"
-                    "aws_session_token = TOKEN_PROFILE\n"
-                )
-            }
-        )
+        @dataclass(kw_only=True, repr=False)
+        class ServiceConfig(AsyncAwsConfig):
+            aws_access_key_id: str | None = None
+            aws_secret_access_key: str | None = None
+            aws_session_token: str | None = None
+
         with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
-            config = await AsyncAwsConfig.resolve(
-                fs=fs,
-                config_file_path="/fake/config",
-                credentials_file_path="/fake/credentials",
+            config = await ServiceConfig.resolve(
+                fs=NullFileSystem(),
+                aws_access_key_id="AKIAIOSFODNN7EXAMPLE",
+                aws_secret_access_key="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY",
             )
-            assert config.aws_access_key_id == "AKID_PROFILE"
-            assert config.aws_secret_access_key == "SECRET_PROFILE"
-            assert config.aws_session_token == "TOKEN_PROFILE"
-            assert config.source_of("aws_access_key_id") == ConfigSource.PROFILE
-            assert config.source_of("aws_secret_access_key") == ConfigSource.PROFILE
-            assert config.source_of("aws_session_token") == ConfigSource.PROFILE
 
-    @pytest.mark.asyncio
-    async def test_profile_token_not_used_when_env_has_key_and_secret(self):
-        """Even if profile has all three, env key+secret means token comes from env too."""
-        fs = FakeFileSystem(
-            {
-                "/fake/credentials": (
-                    "[default]\n"
-                    "aws_access_key_id = AKID_PROFILE\n"
-                    "aws_secret_access_key = SECRET_PROFILE\n"
-                    "aws_session_token = TOKEN_PROFILE\n"
-                )
-            }
-        )
-        with patch.dict(
-            os.environ,
-            {
-                "AWS_REGION": "us-east-1",
-                "AWS_ACCESS_KEY_ID": "AKID_ENV",
-                "AWS_SECRET_ACCESS_KEY": "SECRET_ENV",
-            },
-            clear=True,
-        ):
-            config = await AsyncAwsConfig.resolve(
-                fs=fs,
-                config_file_path="/fake/config",
-                credentials_file_path="/fake/credentials",
-            )
-            # Env wins for all three — token is None because env doesn't have it
-            assert config.aws_access_key_id == "AKID_ENV"
-            assert config.aws_secret_access_key == "SECRET_ENV"
-            assert config.aws_session_token is None
-            assert config.source_of("aws_session_token") == ConfigSource.ENV
+            assert config.aws_access_key_id == "AKIAIOSFODNN7EXAMPLE"
+
+            config_repr = repr(config)
+            assert config_repr.startswith("ServiceConfig(")
+            assert "AKIAIOSFODNN7EXAMPLE" not in config_repr
+            assert "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" not in config_repr
+
+
+class TestIncodeStaticCredentialResolution:
+    """Credentials must be resolved from a single source — never mixed."""
 
     @pytest.mark.asyncio
     async def test_no_credentials_when_nothing_set(self):
@@ -876,21 +875,12 @@ class TestCredentialSetIsAtomic:
     @pytest.mark.asyncio
     async def test_partial_credential_override_raises_error(self):
         """Overriding only one credential raises an error."""
-        fs = FakeFileSystem(
-            {
-                "/fake/credentials": (
-                    "[default]\n"
-                    "aws_access_key_id = AKID_PROFILE\n"
-                    "aws_secret_access_key = SECRET_PROFILE\n"
-                )
-            }
-        )
         with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
             with pytest.raises(
                 ConfigValidationError, match="Partial credential override"
             ):
                 await AsyncAwsConfig.resolve(
-                    fs=fs,
+                    fs=NullFileSystem(),
                     config_file_path="/fake/config",
                     credentials_file_path="/fake/credentials",
                     aws_access_key_id="OVERRIDE_KEY",
@@ -898,16 +888,12 @@ class TestCredentialSetIsAtomic:
 
     @pytest.mark.asyncio
     async def test_credentials_cannot_be_overridden_after_resolution(self):
-        with patch.dict(
-            os.environ,
-            {
-                "AWS_REGION": "us-east-1",
-                "AWS_ACCESS_KEY_ID": "AKID",
-                "AWS_SECRET_ACCESS_KEY": "SECRET",
-            },
-            clear=True,
-        ):
-            config = await AsyncAwsConfig.resolve(fs=NullFileSystem())
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
+            config = await AsyncAwsConfig.resolve(
+                fs=NullFileSystem(),
+                aws_access_key_id="AKID",
+                aws_secret_access_key="SECRET",
+            )
             with pytest.raises(
                 AttributeError, match="cannot be modified after resolution"
             ):
@@ -925,84 +911,96 @@ class TestCredentialSetIsAtomic:
                 )
 
     @pytest.mark.asyncio
-    async def test_env_session_token_only_falls_through_to_profile(self):
-        fs = FakeFileSystem(
-            {
-                "/fake/credentials": (
-                    "[default]\n"
-                    "aws_access_key_id = AKID_PROFILE\n"
-                    "aws_secret_access_key = SECRET_PROFILE\n"
-                    "aws_session_token = TOKEN_PROFILE\n"
-                )
-            }
-        )
-        with patch.dict(
-            os.environ,
-            {"AWS_REGION": "us-east-1", "AWS_SESSION_TOKEN": "TOKEN_ENV"},
-            clear=True,
-        ):
+    async def test_key_and_secret_auto_wires_static_resolver(self):
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
             config = await AsyncAwsConfig.resolve(
-                fs=fs,
-                config_file_path="/fake/config",
-                credentials_file_path="/fake/credentials",
+                fs=NullFileSystem(),
+                aws_access_key_id="AKID",
+                aws_secret_access_key="SECRET",
             )
-            # Token-only env doesn't trigger env path — all from profile
-            assert config.aws_access_key_id == "AKID_PROFILE"
-            assert config.aws_secret_access_key == "SECRET_PROFILE"
-            assert config.aws_session_token == "TOKEN_PROFILE"
-            assert config.source_of("aws_access_key_id") == ConfigSource.PROFILE
+            assert config.aws_access_key_id == "AKID"
+            assert config.aws_secret_access_key == "SECRET"
+            assert config.aws_credentials_identity_resolver is not None
+            identity = await config.aws_credentials_identity_resolver.get_identity(
+                properties={}
+            )
+            assert identity.access_key_id == "AKID"
+            assert identity.secret_access_key == "SECRET"
 
     @pytest.mark.asyncio
-    async def test_env_key_only_without_secret_falls_through_to_profile(self):
-        fs = FakeFileSystem(
-            {
-                "/fake/credentials": (
-                    "[default]\n"
-                    "aws_access_key_id = AKID_PROFILE\n"
-                    "aws_secret_access_key = SECRET_PROFILE\n"
-                )
-            }
-        )
-        with patch.dict(
-            os.environ,
-            {"AWS_REGION": "us-east-1", "AWS_ACCESS_KEY_ID": "AKID_ENV"},
-            clear=True,
-        ):
+    async def test_explicit_resolver_not_overwritten(self):
+        custom_resolver = StaticCredentialsResolver()
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
             config = await AsyncAwsConfig.resolve(
-                fs=fs,
-                config_file_path="/fake/config",
-                credentials_file_path="/fake/credentials",
+                fs=NullFileSystem(),
+                aws_access_key_id="AKID",
+                aws_secret_access_key="SECRET",
+                aws_credentials_identity_resolver=custom_resolver,
             )
-
-            assert config.aws_access_key_id == "AKID_PROFILE"
-            assert config.aws_secret_access_key == "SECRET_PROFILE"
-            assert config.source_of("aws_access_key_id") == ConfigSource.PROFILE
+            assert config.aws_credentials_identity_resolver is custom_resolver
 
     @pytest.mark.asyncio
-    async def test_empty_string_env_credentials_fall_through_to_profile(self):
+    async def test_no_credentials_leaves_resolver_none(self):
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
+            config = await AsyncAwsConfig.resolve(fs=NullFileSystem())
+            assert config.aws_credentials_identity_resolver is None
+
+
+class TestResolveSdkUaAppId:
+    @pytest.mark.asyncio
+    async def test_resolves_from_env(self):
+        with patch.dict(os.environ, {"AWS_SDK_UA_APP_ID": "my-app"}, clear=True):
+            ctx = SharedConfigContext(fs=NullFileSystem())
+            result = await resolve_sdk_ua_app_id(ctx)
+            assert result.value == "my-app"
+            assert result.source == ConfigSource.ENV
+
+    @pytest.mark.asyncio
+    async def test_resolves_from_profile(self):
+        fs = FakeFileSystem(
+            {"/fake/config": "[profile default]\nsdk_ua_app_id = profile-app\n"}
+        )
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = SharedConfigContext(fs=fs, config_file_path="/fake/config")
+            result = await resolve_sdk_ua_app_id(ctx)
+            assert result.value == "profile-app"
+            assert result.source == ConfigSource.PROFILE
+
+    @pytest.mark.asyncio
+    async def test_returns_unset_when_not_configured(self):
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = SharedConfigContext(fs=NullFileSystem())
+            result = await resolve_sdk_ua_app_id(ctx)
+            assert result.value is UNSET
+
+
+class TestResolveEndpointUri:
+    @pytest.mark.asyncio
+    async def test_resolves_from_env(self):
+        with patch.dict(
+            os.environ, {"AWS_ENDPOINT_URL": "https://custom.endpoint"}, clear=True
+        ):
+            ctx = SharedConfigContext(fs=NullFileSystem())
+            result = await resolve_endpoint_uri(ctx)
+            assert result.value == "https://custom.endpoint"
+            assert result.source == ConfigSource.ENV
+
+    @pytest.mark.asyncio
+    async def test_resolves_from_profile(self):
         fs = FakeFileSystem(
             {
-                "/fake/credentials": (
-                    "[default]\n"
-                    "aws_access_key_id = AKID_PROFILE\n"
-                    "aws_secret_access_key = SECRET_PROFILE\n"
-                )
+                "/fake/config": "[profile default]\nendpoint_url = https://profile.endpoint\n"
             }
         )
-        with patch.dict(
-            os.environ,
-            {
-                "AWS_REGION": "us-east-1",
-                "AWS_ACCESS_KEY_ID": "",
-                "AWS_SECRET_ACCESS_KEY": "",
-            },
-            clear=True,
-        ):
-            config = await AsyncAwsConfig.resolve(
-                fs=fs,
-                config_file_path="/fake/config",
-                credentials_file_path="/fake/credentials",
-            )
-            assert config.aws_access_key_id == "AKID_PROFILE"
-            assert config.aws_secret_access_key == "SECRET_PROFILE"
-            assert config.source_of("aws_access_key_id") == ConfigSource.PROFILE
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = SharedConfigContext(fs=fs, config_file_path="/fake/config")
+            result = await resolve_endpoint_uri(ctx)
+            assert result.value == "https://profile.endpoint"
+            assert result.source == ConfigSource.PROFILE
+
+    @pytest.mark.asyncio
+    async def test_returns_unset_when_not_configured(self):
+        with patch.dict(os.environ, {}, clear=True):
+            ctx = SharedConfigContext(fs=NullFileSystem())
+            result = await resolve_endpoint_uri(ctx)
+            assert result.value is UNSET

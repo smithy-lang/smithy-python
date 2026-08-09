@@ -22,6 +22,19 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 public class AwsUserAgentIntegration implements PythonIntegration {
 
     public static final String USER_AGENT_PLUGIN = """
+            def aws_user_agent_plugin(config: $1T | $5T):
+                config.interceptors.append(
+                    $2T(
+                        ua_suffix=config.user_agent_extra,
+                        ua_app_id=config.sdk_ua_app_id,
+                        sdk_version=$3T,
+                        service_id=$4S,
+                    )
+                )
+            """;
+
+    // Variant for services without a generated async config, which must not be referenced.
+    private static final String USER_AGENT_PLUGIN_SYNC_ONLY = """
             def aws_user_agent_plugin(config: $1T):
                 config.interceptors.append(
                     $2T(
@@ -96,12 +109,23 @@ public class AwsUserAgentIntegration implements PythonIntegration {
                                                 filename,
                                                 moduleName + ".",
                                                 writer -> {
-                                                    writer.write(USER_AGENT_PLUGIN,
-                                                            CodegenUtils.getConfigSymbol(c.settings()),
-                                                            userAgentInterceptor,
-                                                            versionSymbol,
-                                                            serviceId);
-
+                                                    var asyncConfig = CodegenUtils.getAsyncConfigSymbol(
+                                                            c.settings(),
+                                                            c.model());
+                                                    if (asyncConfig.isPresent()) {
+                                                        writer.write(USER_AGENT_PLUGIN,
+                                                                CodegenUtils.getConfigSymbol(c.settings()),
+                                                                userAgentInterceptor,
+                                                                versionSymbol,
+                                                                serviceId,
+                                                                asyncConfig.get());
+                                                    } else {
+                                                        writer.write(USER_AGENT_PLUGIN_SYNC_ONLY,
+                                                                CodegenUtils.getConfigSymbol(c.settings()),
+                                                                userAgentInterceptor,
+                                                                versionSymbol,
+                                                                serviceId);
+                                                    }
                                                 });
                                 return List.of(filename);
                             })
