@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import org.junit.jupiter.api.Test;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.MemberShape;
+import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.model.shapes.UnionShape;
 
@@ -82,6 +83,29 @@ public class PythonSymbolProviderTest {
 
         assertEquals("MyUnion_Unknown",
                 provider.toSymbol(union).expectProperty(SymbolProperties.UNION_UNKNOWN).getName());
+    }
+
+    @Test
+    public void testOperationNameCollidingWithClientMethodIsEscaped() {
+        Model model = loadModel("""
+                $version: "2"
+                namespace smithy.example
+
+                service TestService {
+                    version: "2024-01-01"
+                    operations: [Close]
+                }
+
+                operation Close {}
+                """);
+        PythonSymbolProvider provider = createProvider(model);
+        var operation = model.expectShape(ShapeId.from(NS + "#Close"), OperationShape.class);
+
+        assertEquals(
+                "close_",
+                provider.toSymbol(operation)
+                        .expectProperty(SymbolProperties.OPERATION_METHOD)
+                        .getName());
     }
 
     private static Model loadModel(String smithyIdl) {

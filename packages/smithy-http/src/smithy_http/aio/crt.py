@@ -1,12 +1,12 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 #  pyright: reportMissingTypeStubs=false,reportUnknownMemberType=false
+from asyncio import gather
 from collections.abc import AsyncGenerator, AsyncIterable
-from copy import deepcopy
 from dataclasses import dataclass
 from inspect import iscoroutinefunction
 from io import BytesIO
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 from awscrt.exceptions import AwsCrtError
 
@@ -199,6 +199,18 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
                 raise _CRTTimeoutError(f"CRT {e.name}: {e.message}") from e
             raise
 
+    async def close(self) -> None:
+        """Close all pooled HTTP connections."""
+        connections = tuple(self._connections.values())
+        self._connections.clear()
+        await gather(*(connection.close() for connection in connections))
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        await self.close()
+
     async def _await_response(
         self, stream: "AIOHttpClientStreamUnified"
     ) -> AWSCRTHTTPResponse:
@@ -368,7 +380,4 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
                     yield chunk
 
     def __deepcopy__(self, memo: Any) -> "AWSCRTHTTPClient":
-        return AWSCRTHTTPClient(
-            eventloop=self._eventloop,
-            client_config=deepcopy(self._config),
-        )
+        return self

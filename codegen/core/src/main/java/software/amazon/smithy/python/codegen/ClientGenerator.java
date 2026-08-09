@@ -134,6 +134,29 @@ final class ClientGenerator implements Runnable {
                         w.popState();
                     }));
 
+            writer.addStdlibImport("typing", "Any");
+            writer.write("""
+
+                    async def close(self) -> None:
+                        \"\"\"Close any resources held by this client's transport.\"\"\"
+                        await self._ensure_setup()
+                        assert self._config is not None
+                        await $1T(self._config.transport)
+
+                    async def __aenter__(self) -> "$2L":
+                        return self
+
+                    async def __aexit__(
+                        self,
+                        exc_type: Any,
+                        exc_value: Any,
+                        traceback: Any,
+                    ) -> None:
+                        await self.close()
+                    """,
+                    RuntimeTypes.ASYNC_CLOSE,
+                    serviceSymbol.getName());
+
             var topDownIndex = TopDownIndex.of(model);
             var eventStreamIndex = EventStreamIndex.of(model);
             for (OperationShape operation : topDownIndex.getContainedOperations(service)) {
@@ -289,7 +312,10 @@ final class ClientGenerator implements Runnable {
                         assert self._config is not None
                         if operation_plugins:
                             # Keep operation-plugin mutations scoped to this call.
-                            config = deepcopy(self._config)
+                            config = deepcopy(
+                                self._config,
+                                {id(self._config.transport): self._config.transport},
+                            )
                             for plugin in operation_plugins:
                                 plugin(config)
                         else:

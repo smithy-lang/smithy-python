@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Preserved HTTP clients across operation configuration copies to avoid duplicating sessions and discarding connection pools."
+}

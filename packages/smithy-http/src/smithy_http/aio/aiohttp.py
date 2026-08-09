@@ -1,8 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from copy import copy, deepcopy
 from itertools import chain
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 from urllib.parse import parse_qs
 
 import yarl
@@ -116,6 +115,16 @@ class AIOHTTPClient(HTTPClient):
         ) as resp:
             return await self._marshal_response(resp)
 
+    async def close(self) -> None:
+        """Close the underlying aiohttp session and its connection pool."""
+        await self._session.close()
+
+    async def __aenter__(self) -> Self:
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        await self.close()
+
     async def _prepare_body(self, body: StreamingBlob) -> AsyncBytesReader | None:
         """Convert a body for aiohttp, omitting seekable bodies with no data."""
         if not isinstance(body, AsyncBytesReader):
@@ -164,7 +173,4 @@ class AIOHTTPClient(HTTPClient):
         )
 
     def __deepcopy__(self, memo: Any) -> "AIOHTTPClient":
-        return AIOHTTPClient(
-            client_config=deepcopy(self._config),
-            _session=copy(self._session),
-        )
+        return self

@@ -22,9 +22,25 @@ from smithy_http.exceptions import SmithyHTTPError
 
 
 def test_deepcopy_client() -> None:
-    """Test that AWSCRTHTTPClient can be deep copied."""
+    """Test that config copies share the stateful HTTP client."""
     client = AWSCRTHTTPClient()
-    deepcopy(client)
+    assert deepcopy(client) is client
+
+
+async def test_close_closes_and_clears_pooled_connections() -> None:
+    client = AWSCRTHTTPClient()
+    connections = [AsyncMock(), AsyncMock()]
+    client._connections = {
+        ("https", "one.example.com", None): connections[0],
+        ("https", "two.example.com", None): connections[1],
+    }
+
+    await client.close()
+    await client.close()
+
+    assert client._connections == {}
+    for connection in connections:
+        connection.close.assert_awaited_once()
 
 
 def test_supports_duplex_streaming() -> None:

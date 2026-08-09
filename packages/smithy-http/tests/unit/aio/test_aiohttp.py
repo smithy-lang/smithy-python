@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 #  pyright: reportPrivateUsage=false
 from collections.abc import AsyncIterator
+from copy import deepcopy
 from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock
 
@@ -17,9 +18,34 @@ def _create_client() -> tuple[AIOHTTPClient, MagicMock]:
     response.read = AsyncMock(return_value=b"")
 
     session = MagicMock()
+    session.close = AsyncMock()
     session.request.return_value.__aenter__ = AsyncMock(return_value=response)
     session.request.return_value.__aexit__ = AsyncMock(return_value=None)
     return AIOHTTPClient(_session=cast(Any, session)), session
+
+
+def test_deepcopy_returns_same_client() -> None:
+    client, _ = _create_client()
+
+    assert deepcopy(client) is client
+
+
+async def test_close_closes_session() -> None:
+    client, session = _create_client()
+
+    await client.close()
+    await client.close()
+
+    assert session.close.await_count == 2
+
+
+async def test_context_manager_closes_session() -> None:
+    client, session = _create_client()
+
+    async with client as entered:
+        assert entered is client
+
+    session.close.assert_awaited_once()
 
 
 async def test_send_omits_empty_async_reader_body() -> None:
