@@ -152,7 +152,3 @@ class ProcessCredentialsResolver(
                 f"got {type(value).__name__}"
             )
         return value
-
-    async def invalidate(self) -> None:
-        """Discard cached credentials so the next resolution reruns the process."""
-        self._credentials = None

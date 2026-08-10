@@ -397,22 +397,18 @@ async def test_expired_credentials_refreshed():
     assert identity_two.session_token == "baz-refreshed"
 
 
-async def test_invalidate_clears_cached_credentials():
+async def test_invalidate_preserves_cached_credentials():
     resp_body = json.dumps(DEFAULT_RESPONSE_DATA)
-    first_process = mock_subprocess(0, resp_body.encode("utf-8"))
-    second_process = mock_subprocess(0, resp_body.encode("utf-8"))
+    process = mock_subprocess(0, resp_body.encode("utf-8"))
 
-    with patch(
-        "asyncio.create_subprocess_exec",
-        side_effect=[first_process, second_process],
-    ) as mock_exec:
+    with patch("asyncio.create_subprocess_exec", return_value=process) as mock_exec:
         resolver = ProcessCredentialsResolver(["mock-process"])
         identity_one = await resolver.get_identity(properties={})
         await resolver.invalidate()
         identity_two = await resolver.get_identity(properties={})
 
-    assert mock_exec.call_count == 2
-    assert identity_one is not identity_two
+    mock_exec.assert_called_once()
+    assert identity_one is identity_two
 
 
 async def test_command_with_multiple_args():
