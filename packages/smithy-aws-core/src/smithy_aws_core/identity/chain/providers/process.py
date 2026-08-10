@@ -3,6 +3,7 @@
 import shlex
 import sys
 
+from smithy_core.exceptions import SmithyError
 from smithy_core.interfaces.identity import Identity
 
 from ...components import AWSCredentialsIdentity
@@ -12,6 +13,10 @@ from ..provider import ChainSetup
 
 _CREDENTIAL_PROCESS = "credential_process"
 _ACCOUNT_ID = "aws_account_id"
+
+
+class ProcessConfigurationError(SmithyError):
+    """Raised when a profile's credential process command is misconfigured."""
 
 
 def _split_process_command(
@@ -24,7 +29,12 @@ def _split_process_command(
         platform = sys.platform
     if platform == "win32":
         return _split_windows_command(command)
-    return shlex.split(command)
+    try:
+        return shlex.split(command)
+    except ValueError as e:
+        raise ProcessConfigurationError(
+            f"Could not parse credential process command: {e}"
+        ) from e
 
 
 def _split_windows_command(command: str) -> list[str]:
@@ -76,7 +86,7 @@ def _split_windows_command(command: str) -> list[str]:
         argument_started = True
 
     if in_quotes:
-        raise ValueError(f"No closing quotation in string: {command}")
+        raise ProcessConfigurationError(f"No closing quotation in string: {command}")
 
     if backslashes:
         argument.extend("\\" * backslashes)
@@ -86,7 +96,7 @@ def _split_windows_command(command: str) -> list[str]:
     return arguments
 
 
-class ProfileProcessCredentialsProvider:
+class ProfileCredentialProcessProvider:
     """Adds a process credential resolver configured by the active profile."""
 
     @property

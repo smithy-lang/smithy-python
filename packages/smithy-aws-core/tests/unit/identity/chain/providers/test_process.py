@@ -11,7 +11,8 @@ import pytest
 from smithy_aws_core.config.merged_config import MergedConfig
 from smithy_aws_core.identity.chain.provider import ChainSetup
 from smithy_aws_core.identity.chain.providers.process import (
-    ProfileProcessCredentialsProvider,
+    ProcessConfigurationError,
+    ProfileCredentialProcessProvider,
     _split_process_command,
 )
 from smithy_aws_core.identity.process import ProcessCredentialsResolver
@@ -86,7 +87,7 @@ def test_split_process_command_posix(platform: str) -> None:
 
 @pytest.mark.parametrize("platform", ["darwin", "linux", "win32"])
 def test_split_process_command_rejects_unclosed_quote(platform: str) -> None:
-    with pytest.raises(ValueError, match="No closing quotation"):
+    with pytest.raises(ProcessConfigurationError, match="No closing quotation"):
         _split_process_command('"credential-helper', platform=platform)
 
 
@@ -94,7 +95,7 @@ async def test_ignores_non_aws_identity_type(
     setup_provider: Callable[..., Awaitable[ChainSetup]],
     merged_config: Callable[..., MergedConfig],
 ) -> None:
-    provider = ProfileProcessCredentialsProvider()
+    provider = ProfileCredentialProcessProvider()
 
     setup = await setup_provider(
         provider,
@@ -112,7 +113,7 @@ async def test_ignores_non_aws_identity_type(
 async def test_requires_active_profile(
     setup_provider: Callable[..., Awaitable[ChainSetup]],
 ) -> None:
-    setup = await setup_provider(ProfileProcessCredentialsProvider())
+    setup = await setup_provider(ProfileCredentialProcessProvider())
 
     assert setup.resolvers == ()
     assert not setup.terminal
@@ -123,7 +124,7 @@ async def test_missing_process_does_not_register(
     merged_config: Callable[..., MergedConfig],
 ) -> None:
     setup = await setup_provider(
-        ProfileProcessCredentialsProvider(),
+        ProfileCredentialProcessProvider(),
         config_file=merged_config({"default": {}}),
         profile_name="default",
     )
@@ -137,7 +138,7 @@ async def test_registers_terminal_resolver(
     merged_config: Callable[..., MergedConfig],
 ) -> None:
     setup = await setup_provider(
-        ProfileProcessCredentialsProvider(),
+        ProfileCredentialProcessProvider(),
         config_file=merged_config(
             {
                 "default": {
@@ -187,7 +188,7 @@ async def test_account_id_falls_back_to_profile_config(
     merged_config: Callable[..., MergedConfig],
 ) -> None:
     setup = await setup_provider(
-        ProfileProcessCredentialsProvider(),
+        ProfileCredentialProcessProvider(),
         config_file=merged_config(
             {
                 "default": {

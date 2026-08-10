@@ -4,7 +4,7 @@ from smithy_core.types import PropertyKey
 
 from .chain import IdentityChain, IdentityChainError, UnclaimedSource
 from .chain.providers.environment import EnvironmentCredentialsProvider
-from .chain.providers.process import ProfileProcessCredentialsProvider
+from .chain.providers.process import ProfileCredentialProcessProvider
 from .chain.providers.profile import (
     ProfileSessionCredentialsProvider,
     ProfileStaticCredentialsProvider,
@@ -33,7 +33,7 @@ __all__ = (
     "IdentityChain",
     "IdentityChainError",
     "ProcessCredentialsResolver",
-    "ProfileProcessCredentialsProvider",
+    "ProfileCredentialProcessProvider",
     "ProfileSessionCredentialsProvider",
     "ProfileStaticCredentialsProvider",
     "SharedConfigProvider",

@@ -99,18 +99,25 @@ class ProcessCredentialsResolver(
                 f"at line {e.lineno}, column {e.colno}: {e.msg}"
             ) from None
 
+        if not isinstance(creds, dict):
+            raise SmithyIdentityError(
+                "Credential process output must be a JSON object, "
+                f"got {type(creds).__name__}"
+            )
+        creds = cast(dict[str, object], creds)
+
         version = creds.get("Version")
         if version != 1:
             raise SmithyIdentityError(
                 f"Unsupported version '{version}' for credential process provider, supported versions: 1"
             )
-        access_key_id = creds.get("AccessKeyId")
-        secret_access_key = creds.get("SecretAccessKey")
-        session_token = creds.get("SessionToken")
-        expiration = creds.get("Expiration")
+        access_key_id = self._get_string_field(creds, "AccessKeyId")
+        secret_access_key = self._get_string_field(creds, "SecretAccessKey")
+        session_token = self._get_string_field(creds, "SessionToken")
+        expiration = self._get_string_field(creds, "Expiration")
         # Prefer the process output's AccountId, falling back to the profile's
         # aws_account_id when the process omits it.
-        account_id = creds.get("AccountId") or self._account_id
+        account_id = self._get_string_field(creds, "AccountId") or self._account_id
 
         if expiration is not None:
             try:
@@ -135,6 +142,16 @@ class ProcessCredentialsResolver(
             account_id=account_id,
         )
         return self._credentials
+
+    @staticmethod
+    def _get_string_field(creds: dict[str, object], key: str) -> str | None:
+        value = creds.get(key)
+        if value is not None and not isinstance(value, str):
+            raise SmithyIdentityError(
+                f"Credential process output field '{key}' must be a string, "
+                f"got {type(value).__name__}"
+            )
+        return value
 
     async def invalidate(self) -> None:
         """Discard cached credentials so the next resolution reruns the process."""

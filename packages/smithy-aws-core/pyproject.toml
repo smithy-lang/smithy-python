@@ -42,7 +42,7 @@ Environment = "smithy_aws_core.identity.chain.providers.environment:EnvironmentC
 SharedConfig = "smithy_aws_core.identity.chain.providers.shared_config:SharedConfigProvider"
 ProfileSessionKeys = "smithy_aws_core.identity.chain.providers.profile:ProfileSessionCredentialsProvider"
 ProfileStaticKeys = "smithy_aws_core.identity.chain.providers.profile:ProfileStaticCredentialsProvider"
-ProfileCredentialProcess = "smithy_aws_core.identity.chain.providers.process:ProfileProcessCredentialsProvider"
+ProfileCredentialProcess = "smithy_aws_core.identity.chain.providers.process:ProfileCredentialProcessProvider"
 
 [build-system]
 requires = ["hatchling"]

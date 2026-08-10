@@ -128,7 +128,7 @@ async def test_non_string_expiration():
         resolver = ProcessCredentialsResolver(["mock-process"])
         with pytest.raises(
             SmithyIdentityError,
-            match="Invalid credential process Expiration; expected an ISO 8601 string",
+            match="Credential process output field 'Expiration' must be a string",
         ):
             await resolver.get_identity(properties={})
 
@@ -250,6 +250,34 @@ async def test_invalid_json():
 
     rendered = "".join(traceback.format_exception(exc_info.value))
     assert "json-secret" not in rendered
+
+
+async def test_non_dict_output():
+    process = mock_subprocess(0, b'["not", "an", "object"]')
+
+    with patch("asyncio.create_subprocess_exec", return_value=process):
+        resolver = ProcessCredentialsResolver(["mock-process"])
+        with pytest.raises(
+            SmithyIdentityError,
+            match="Credential process output must be a JSON object, got list",
+        ):
+            await resolver.get_identity(properties={})
+
+
+async def test_non_string_field():
+    resp_data = dict(DEFAULT_RESPONSE_DATA)
+    resp_data["AccessKeyId"] = 12345
+
+    resp_body = json.dumps(resp_data)
+    process = mock_subprocess(0, resp_body.encode("utf-8"))
+
+    with patch("asyncio.create_subprocess_exec", return_value=process):
+        resolver = ProcessCredentialsResolver(["mock-process"])
+        with pytest.raises(
+            SmithyIdentityError,
+            match="Credential process output field 'AccessKeyId' must be a string",
+        ):
+            await resolver.get_identity(properties={})
 
 
 async def test_invalid_utf8():
