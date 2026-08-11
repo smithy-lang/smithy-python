@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Updated the Environment credentials provider to skip registering a terminal resolver when a configured profile assumes a role using `credential_source = Environment`."
+}
