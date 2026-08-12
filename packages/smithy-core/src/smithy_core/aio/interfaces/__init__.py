@@ -1,7 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import AsyncIterable, Callable
-from typing import TYPE_CHECKING, Any, Protocol, runtime_checkable
+from typing import TYPE_CHECKING, Any, Literal, Protocol, runtime_checkable
 
 from ...documents import TypeRegistry
 from ...endpoints import EndpointResolverParams
@@ -86,13 +86,27 @@ class EndpointResolver(Protocol):
 
 
 class ClientTransport[I: Request, O: Response](Protocol):
-    """Protocol-agnostic representation of a client transport (e.g. an HTTP client)."""
+    """Protocol-agnostic representation of a client transport (e.g. an HTTP client).
+
+    Transports that support duplex (bidirectional) event streaming can implement
+    :py:class:`DuplexClientTransport`.
+    """
 
     TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...]
 
     async def send(self, request: I) -> O:
         """Send a request over the transport and receive the response."""
         ...
+
+
+class DuplexClientTransport[I: Request, O: Response](ClientTransport[I, O], Protocol):
+    """A client transport that supports duplex (bidirectional) event streaming.
+
+    Duplex transports can read response data while the request body is still being
+    written. HTTP transports typically require HTTP/2 for this capability.
+    """
+
+    SUPPORTS_DUPLEX_STREAMING: Literal[True]
 
 
 class ClientProtocol[I: Request, O: Response](Protocol):

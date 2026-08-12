@@ -92,3 +92,7 @@ async def test_prepare_body_does_not_consume_nonseekable_body() -> None:
     assert started is False
     assert prepared is not None
     assert await prepared.read() == b"request body"
+
+
+def test_does_not_support_duplex_streaming() -> None:
+    assert AIOHTTPClient.SUPPORTS_DUPLEX_STREAMING is False
