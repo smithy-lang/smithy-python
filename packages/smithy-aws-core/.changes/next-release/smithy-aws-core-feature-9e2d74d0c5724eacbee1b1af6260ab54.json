@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added process credentials support to the default AWS identity chain through the active profile's `credential_process` setting."
-}

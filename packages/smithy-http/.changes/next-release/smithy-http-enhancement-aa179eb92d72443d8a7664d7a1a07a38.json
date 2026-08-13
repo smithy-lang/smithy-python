@@ -1,4 +1,0 @@
-{
-  "type": "enhancement",
-  "description": "Disabled automatic redirects in `AIOHTTPClient` so that redirect responses are returned to the caller instead of being followed transparently."
-}

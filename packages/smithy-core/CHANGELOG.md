@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.8.0
+
+### Features
+* Updated standard retry behavior with error-specific backoff, revised quota costs, bounded server-provided retry delays, support for service-specific defaults, and long-polling backoff when retry quota is exhausted.
+
+### Enhancements
+* Added `DuplexClientTransport` so transports can declare support for duplex (bidirectional) event streaming. `RequestPipeline.duplex_stream` now fails fast with an `UnsupportedTransportError` when the configured transport does not declare support.
+
 ## v0.7.0
 
 ### Breaking Changes

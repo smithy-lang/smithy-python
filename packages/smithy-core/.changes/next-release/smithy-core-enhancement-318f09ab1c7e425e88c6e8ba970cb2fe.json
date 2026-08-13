@@ -1,4 +1,0 @@
-{
-  "type": "enhancement",
-  "description": "Added `DuplexClientTransport` so transports can declare support for duplex (bidirectional) event streaming. `RequestPipeline.duplex_stream` now fails fast with an `UnsupportedTransportError` when the configured transport does not declare support."
-}

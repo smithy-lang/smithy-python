@@ -1,4 +1,0 @@
-{
-  "type": "enhancement",
-  "description": "Added support for the `x-amz-retry-after` response header."
-}
