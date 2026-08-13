@@ -60,7 +60,7 @@ async def test_standard_retry_eventually_succeeds():
 
     assert result == "success"
     assert attempts == 3
-    assert quota.available_capacity == 495
+    assert quota.available_capacity == 486
 
 
 async def test_standard_retry_fails_due_to_max_attempts():
@@ -70,11 +70,11 @@ async def test_standard_retry_fails_due_to_max_attempts():
     with pytest.raises(CallError, match="502"):
         await retry_operation(strategy, [502, 502, 502])
 
-    assert quota.available_capacity == 490
+    assert quota.available_capacity == 472
 
 
 async def test_retry_quota_exhausted_after_single_retry():
-    quota = StandardRetryQuota(initial_capacity=5)
+    quota = StandardRetryQuota(initial_capacity=14)
     strategy = StandardRetryStrategy(max_attempts=3, retry_quota=quota)
 
     with pytest.raises(CallError, match="502"):
@@ -94,26 +94,26 @@ async def test_retry_quota_prevents_retries_when_quota_zero():
 
 
 async def test_retry_quota_stops_retries_when_exhausted():
-    quota = StandardRetryQuota(initial_capacity=10)
+    quota = StandardRetryQuota(initial_capacity=20)
     strategy = StandardRetryStrategy(max_attempts=5, retry_quota=quota)
 
-    with pytest.raises(CallError, match="503"):
-        await retry_operation(strategy, [500, 502, 503])
+    with pytest.raises(CallError, match="502"):
+        await retry_operation(strategy, [500, 502])
 
-    assert quota.available_capacity == 0
+    assert quota.available_capacity == 6
 
 
 async def test_retry_quota_recovers_after_successful_responses():
-    quota = StandardRetryQuota(initial_capacity=15)
+    quota = StandardRetryQuota(initial_capacity=30)
     strategy = StandardRetryStrategy(max_attempts=5, retry_quota=quota)
 
     # First operation: 2 retries then success
     await retry_operation(strategy, [500, 502, 200])
-    assert quota.available_capacity == 10
+    assert quota.available_capacity == 16
 
     # Second operation: 1 retry then success
     await retry_operation(strategy, [500, 200])
-    assert quota.available_capacity == 10
+    assert quota.available_capacity == 16
 
 
 async def test_retry_quota_shared_across_concurrent_operations():
@@ -136,7 +136,7 @@ async def test_retry_quota_shared_across_concurrent_operations():
 
     assert result1 == ("success", 3)
     assert result2 == ("success", 2)
-    assert quota.available_capacity == 495
+    assert quota.available_capacity == 486
 
 
 async def test_retry_quota_handles_timeout_errors():
@@ -150,4 +150,4 @@ async def test_retry_quota_handles_timeout_errors():
 
     assert result == "success"
     assert attempts == 3
-    assert quota.available_capacity == 490
+    assert quota.available_capacity == 486

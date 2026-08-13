@@ -7,7 +7,7 @@ from typing import get_args
 from . import interfaces
 from .interfaces import FieldPosition
 
-__version__ = "0.4.3"
+__version__ = "0.4.4"
 
 _VALID_FIELD_POSITIONS = frozenset(get_args(FieldPosition))
 

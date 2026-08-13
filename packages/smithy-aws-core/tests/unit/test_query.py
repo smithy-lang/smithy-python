@@ -2,13 +2,18 @@
 #  SPDX-License-Identifier: Apache-2.0
 from dataclasses import dataclass
 from io import BytesIO
+from typing import Any, cast
+from unittest.mock import Mock
 
+from smithy_aws_core._private.query.errors import create_aws_query_error
 from smithy_aws_core._private.query.serializers import QueryShapeSerializer
+from smithy_core.documents import TypeRegistry
 from smithy_core.prelude import STRING
-from smithy_core.schemas import Schema
+from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import XMLFlattenedTrait, XMLNameTrait
+from smithy_core.types import TypedProperties
 
 
 def test_query_list_serialization() -> None:
@@ -280,3 +285,39 @@ def test_query_nested_struct_serialization() -> None:
     Outer(inner=Inner("x")).serialize(serializer)
 
     assert params == [("inner.value", "x")]
+
+
+def _error_test_operation() -> APIOperation[Any, Any]:
+    operation = Mock(spec=APIOperation)
+    operation.schema = Schema(
+        id=ShapeID("com.example#TestOp"), shape_type=ShapeType.OPERATION
+    )
+    operation.error_schemas = []
+    return cast("APIOperation[Any, Any]", operation)
+
+
+def test_aws_query_error_sets_retry_after_on_generic_error() -> None:
+    error = create_aws_query_error(
+        body=b"",
+        operation=_error_test_operation(),
+        error_registry=TypeRegistry({}),
+        default_namespace="com.example",
+        wrapper_elements=("ErrorResponse", "Error"),
+        status=503,
+        context=TypedProperties(),
+        retry_after=1.5,
+    )
+    assert error.retry_after == 1.5
+
+
+def test_aws_query_error_retry_after_none_by_default() -> None:
+    error = create_aws_query_error(
+        body=b"",
+        operation=_error_test_operation(),
+        error_registry=TypeRegistry({}),
+        default_namespace="com.example",
+        wrapper_elements=("ErrorResponse", "Error"),
+        status=503,
+        context=TypedProperties(),
+    )
+    assert error.retry_after is None

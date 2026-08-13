@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.9.0
+
+### Features
+* Added process credentials support to the default AWS identity chain through the active profile's `credential_process` setting.
+
+### Enhancements
+* Added support for the `x-amz-retry-after` response header.
+
+### Dependencies
+* Bump `smithy-core` from `~=0.7.0` to `~=0.8.0`.
+
 ## v0.8.0
 
 ### Features

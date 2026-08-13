@@ -204,9 +204,9 @@ class StandardRetryQuota:
     """Retry quota used by :py:class:`StandardRetryStrategy`."""
 
     INITIAL_RETRY_TOKENS: int = 500
-    RETRY_COST: int = 5
+    RETRY_COST: int = 14
     NO_RETRY_INCREMENT: int = 1
-    TIMEOUT_RETRY_COST: int = 10
+    THROTTLING_RETRY_COST: int = 5
 
     def __init__(self, initial_capacity: int = INITIAL_RETRY_TOKENS):
         """Initialize retry quota with configurable capacity.
@@ -224,11 +224,13 @@ class StandardRetryQuota:
         Otherwise, return the amount of capacity successfully allocated.
         """
 
-        is_timeout = (
+        is_throttling = (
             isinstance(error, retries_interface.ErrorRetryInfo)
-            and error.is_timeout_error
+            and error.is_throttling_error
         )
-        capacity_amount = self.TIMEOUT_RETRY_COST if is_timeout else self.RETRY_COST
+        capacity_amount = (
+            self.THROTTLING_RETRY_COST if is_throttling else self.RETRY_COST
+        )
 
         with self._lock:
             if capacity_amount > self._available_capacity:

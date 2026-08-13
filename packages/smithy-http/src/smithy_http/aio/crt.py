@@ -142,6 +142,10 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
 
     TIMEOUT_EXCEPTIONS = (_CRTTimeoutError,)
 
+    # CRT can stream request and response data concurrently when the connection
+    # negotiates HTTP/2.
+    SUPPORTS_DUPLEX_STREAMING = True
+
     def __init__(
         self,
         eventloop: _AWSCRTEventLoop | None = None,
