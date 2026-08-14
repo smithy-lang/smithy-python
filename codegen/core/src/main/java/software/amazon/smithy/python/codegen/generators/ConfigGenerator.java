@@ -265,9 +265,17 @@ public final class ConfigGenerator implements Runnable {
     @Override
     public void run() {
         var config = CodegenUtils.getConfigSymbol(context.settings());
+        var asyncConfigForPlugin = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
+
         context.writerDelegator().useFileWriter(config.getDefinitionFile(), config.getNamespace(), writer -> {
             writeInterceptorsType(writer);
-            generateConfig(context, writer);
+
+            // For AWS services, old Config is no longer generated — only the async
+            // config subclass (emitted by AwsAsyncConfigIntegration via section interceptor).
+            // For non-AWS services, generate old Config as usual.
+            if (asyncConfigForPlugin.isEmpty()) {
+                generateConfig(context, writer);
+            }
 
             // Emit the async config section — AWS integrations intercept this
             // to generate the service-specific async config subclass.
@@ -279,17 +287,16 @@ public final class ConfigGenerator implements Runnable {
         // like have a class to implement, but that seems unnecessarily burdensome for
         // a single function.
         //
-        // For AWS services that have an async config, the Plugin type accepts both
-        // Config and the async config. For non-AWS services without an async config,
-        // the Plugin type accepts only Config.
+        // For AWS services, the Plugin type accepts only the async config.
+        // For non-AWS services, the Plugin type accepts only Config.
         var plugin = CodegenUtils.getPluginSymbol(context.settings());
-        var asyncConfigForPlugin = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
         context.writerDelegator().useFileWriter(plugin.getDefinitionFile(), plugin.getNamespace(), writer -> {
             writer.addStdlibImport("typing", "Callable");
             writer.addStdlibImport("typing", "TypeAlias");
             if (asyncConfigForPlugin.isPresent()) {
-                writer.write("$L: TypeAlias = Callable[[$T | $T], None]",
-                        plugin.getName(), config, asyncConfigForPlugin.get());
+                writer.write("$L: TypeAlias = Callable[[$T], None]",
+                        plugin.getName(),
+                        asyncConfigForPlugin.get());
             } else {
                 writer.write("$L: TypeAlias = Callable[[$T], None]", plugin.getName(), config);
             }

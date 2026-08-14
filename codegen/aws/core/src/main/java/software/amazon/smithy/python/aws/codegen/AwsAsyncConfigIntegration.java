@@ -68,12 +68,10 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             // to emit references to these classes. If it says no symbol is generated, we
             // must not define one, or the two would disagree.
             var maybeAsyncConfigSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), model);
-            var maybeAsyncPluginSymbol = CodegenUtils.getAsyncPluginSymbol(context.settings(), model);
-            if (maybeAsyncConfigSymbol.isEmpty() || maybeAsyncPluginSymbol.isEmpty()) {
+            if (maybeAsyncConfigSymbol.isEmpty()) {
                 return;
             }
             var asyncConfigSymbol = maybeAsyncConfigSymbol.get();
-            var asyncPluginSymbol = maybeAsyncPluginSymbol.get();
 
             final String serviceId = service.getTrait(ServiceTrait.class)
                     .map(ServiceTrait::getSdkId)
@@ -172,19 +170,11 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             // Write _FIELDS class variable with service-specific defaults
             writer.openBlock("_FIELDS: ClassVar[dict[str, $T]] = {", fieldSpecSymbol);
 
-            // Plugin-contributed FieldSpec entries.
-            //
-            // These are written *before* the base class spread on purpose. Plugins
-            // declare config properties for the legacy Config object, which has no
-            // base class, so some of them duplicate fields AsyncAwsConfig already
-            // owns and resolves (region, credentials, sdk_ua_app_id, ...). Emitting
-            // them first means the spread below wins for any such duplicate, so a
-            // bare FieldSpec(default=None) can never clobber a base spec that
-            // carries a resolver or validator. Properties the base doesn't declare
-            // (e.g. api_key for @httpApiKeyAuth) survive untouched.
-            //
-            // Reuse the set collected above so these entries stay in step with the
-            // field declarations and duplicate contributions are written once.
+            // Plugin-contributed FieldSpec entries are emitted before the base class
+            // spread. Some duplicate fields already in AsyncAwsConfig._FIELDS (e.g.,
+            // region, sdk_ua_app_id) — these are harmlessly overwritten by the spread
+            // below. Fields unique to this service (e.g., api_key from @httpApiKeyAuth)
+            // survive and participate in the resolution pipeline.
             for (String propertyName : writtenProperties) {
                 writer.write("\"$L\": $T(default=None),", propertyName, fieldSpecSymbol);
             }
@@ -261,18 +251,6 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
 
             writer.closeBlock("}");
             writer.closeBlock("");
-
-            // Generate the async plugin type alias
-            writer.addStdlibImport("typing", "Callable");
-            writer.addStdlibImport("typing", "TypeAlias");
-            writer.write("");
-            writer.write("");
-            writer.write("$L: TypeAlias = Callable[[$L], None]",
-                    asyncPluginSymbol.getName(),
-                    asyncConfigSymbol.getName());
-            writer.writeDocs(
-                    "A callable that allows customizing the async config object on each request.",
-                    context);
         }
 
         private static void writeAsyncDefaultAuthSchemes(GenerationContext context, PythonWriter writer) {

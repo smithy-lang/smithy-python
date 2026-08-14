@@ -22,7 +22,7 @@ import software.amazon.smithy.utils.SmithyInternalApi;
 public class AwsUserAgentIntegration implements PythonIntegration {
 
     public static final String USER_AGENT_PLUGIN = """
-            def aws_user_agent_plugin(config: $1T | $5T):
+            def aws_user_agent_plugin(config: $1T):
                 config.interceptors.append(
                     $2T(
                         ua_suffix=config.user_agent_extra,
@@ -33,7 +33,7 @@ public class AwsUserAgentIntegration implements PythonIntegration {
                 )
             """;
 
-    // Variant for services without a generated async config, which must not be referenced.
+    // Variant for services without a generated async config, which uses old Config.
     private static final String USER_AGENT_PLUGIN_SYNC_ONLY = """
             def aws_user_agent_plugin(config: $1T):
                 config.interceptors.append(
@@ -114,11 +114,10 @@ public class AwsUserAgentIntegration implements PythonIntegration {
                                                             c.model());
                                                     if (asyncConfig.isPresent()) {
                                                         writer.write(USER_AGENT_PLUGIN,
-                                                                CodegenUtils.getConfigSymbol(c.settings()),
+                                                                asyncConfig.get(),
                                                                 userAgentInterceptor,
                                                                 versionSymbol,
-                                                                serviceId,
-                                                                asyncConfig.get());
+                                                                serviceId);
                                                     } else {
                                                         writer.write(USER_AGENT_PLUGIN_SYNC_ONLY,
                                                                 CodegenUtils.getConfigSymbol(c.settings()),

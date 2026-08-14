@@ -183,15 +183,16 @@ public final class HttpProtocolTestGenerator implements Runnable {
                         path = "";
                     }
                     writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
+                        var configPrefix = getTestConfigPrefix();
                         writer.write("""
-                                config = $T(
+                                $L
                                     endpoint_uri="https://$L/$L",
                                     transport = $T(),
                                     retry_strategy=$T(max_attempts=1),
                                     ${C|}
                                 )
                                 """,
-                                CodegenUtils.getConfigSymbol(context.settings()),
+                                configPrefix,
                                 host,
                                 path,
                                 REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
@@ -441,8 +442,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 testFilter.test(operation, testCase),
                 () -> {
                     writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
+                        var configPrefix = getTestConfigPrefix();
                         writer.write("""
-                                config = $T(
+                                $L
                                     endpoint_uri="https://example.com",
                                     transport = $T(
                                         status=$L,
@@ -452,7 +454,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                     ${C|}
                                 )
                                 """,
-                                CodegenUtils.getConfigSymbol(context.settings()),
+                                configPrefix,
                                 RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
                                 testCase.getCode(),
                                 CodegenUtils.toTuples(testCase.getHeaders()),
@@ -496,8 +498,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 testFilter.test(error, testCase),
                 () -> {
                     writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
+                        var configPrefix = getTestConfigPrefix();
                         writer.write("""
-                                config = $T(
+                                $L
                                     endpoint_uri="https://example.com",
                                     transport = $T(
                                         status=$L,
@@ -507,7 +510,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                     ${C|}
                                 )
                                 """,
-                                CodegenUtils.getConfigSymbol(context.settings()),
+                                configPrefix,
                                 RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
                                 testCase.getCode(),
                                 CodegenUtils.toTuples(testCase.getHeaders()),
@@ -619,6 +622,20 @@ public final class HttpProtocolTestGenerator implements Runnable {
         writer.openBlock("client = $T(", ")\n", serviceSymbol, () -> {
             additionalConfigurator.ifPresent(Runnable::run);
         });
+    }
+
+    /**
+     * Returns the config construction prefix for test code.
+     * For AWS services: "config = await AsyncConfig.resolve("
+     * For non-AWS services: "config = Config("
+     */
+    private String getTestConfigPrefix() {
+        var configSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), model)
+                .orElse(CodegenUtils.getConfigSymbol(context.settings()));
+        writer.addImport(configSymbol.getNamespace(), configSymbol.getName());
+        return CodegenUtils.getAsyncConfigSymbol(context.settings(), model).isPresent()
+                ? "config = await %s.resolve(".formatted(configSymbol.getName())
+                : "config = %s(".formatted(configSymbol.getName());
     }
 
     private void writeSigV4TestConfig() {
