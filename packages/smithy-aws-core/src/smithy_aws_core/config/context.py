@@ -167,6 +167,20 @@ class SharedConfigContext:
         """HTTP client for network-based resolvers."""
         return self._http_client
 
+    def __deepcopy__(self, memo: Any) -> "SharedConfigContext":
+        """Return self rather than a copy.
+
+        The context is read-only once resolution finishes: resolvers have
+        already pulled their values onto the config's fields, and nothing on
+        the request path reads it again. Generated clients deep-copy the
+        config on every operation call to keep plugin mutations scoped to
+        that call, which would otherwise rebuild the whole parsed profile
+        tree per request — work proportional to the size of the caller's
+        shared config files. Sharing this instead keeps that cost flat
+        without weakening the isolation of the fields plugins actually write.
+        """
+        return self
+
     async def parsed_profiles(self) -> MergedConfig:
         """Get the parsed and merged config/credentials file data.
 

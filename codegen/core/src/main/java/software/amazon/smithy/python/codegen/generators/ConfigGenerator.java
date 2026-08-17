@@ -27,6 +27,7 @@ import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
+import software.amazon.smithy.python.codegen.sections.AsyncConfigSection;
 import software.amazon.smithy.python.codegen.sections.ConfigSection;
 import software.amazon.smithy.python.codegen.sections.InitDefaultEndpointResolverSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
@@ -264,19 +265,41 @@ public final class ConfigGenerator implements Runnable {
     @Override
     public void run() {
         var config = CodegenUtils.getConfigSymbol(context.settings());
+        var asyncConfigForPlugin = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
+
         context.writerDelegator().useFileWriter(config.getDefinitionFile(), config.getNamespace(), writer -> {
             writeInterceptorsType(writer);
-            generateConfig(context, writer);
+
+            // For AWS services, old Config is no longer generated — only the async
+            // config subclass (emitted by AwsAsyncConfigIntegration via section interceptor).
+            // For non-AWS services, generate old Config as usual.
+            if (asyncConfigForPlugin.isEmpty()) {
+                generateConfig(context, writer);
+            }
+
+            // Emit the async config section — AWS integrations intercept this
+            // to generate the service-specific async config subclass.
+            writer.pushState(new AsyncConfigSection());
+            writer.popState();
         });
 
         // Generate the plugin symbol. This is just a callable. We could do something
         // like have a class to implement, but that seems unnecessarily burdensome for
         // a single function.
+        //
+        // For AWS services, the Plugin type accepts only the async config.
+        // For non-AWS services, the Plugin type accepts only Config.
         var plugin = CodegenUtils.getPluginSymbol(context.settings());
         context.writerDelegator().useFileWriter(plugin.getDefinitionFile(), plugin.getNamespace(), writer -> {
             writer.addStdlibImport("typing", "Callable");
             writer.addStdlibImport("typing", "TypeAlias");
-            writer.write("$L: TypeAlias = Callable[[$T], None]", plugin.getName(), config);
+            if (asyncConfigForPlugin.isPresent()) {
+                writer.write("$L: TypeAlias = Callable[[$T], None]",
+                        plugin.getName(),
+                        asyncConfigForPlugin.get());
+            } else {
+                writer.write("$L: TypeAlias = Callable[[$T], None]", plugin.getName(), config);
+            }
             writer.writeDocs("A callable that allows customizing the config object on each request.", context);
         });
     }
@@ -344,25 +367,66 @@ public final class ConfigGenerator implements Runnable {
         writer.pushState(new ConfigSection(finalProperties));
         writer.addLocallyDefinedSymbol(configSymbol);
         writer.addStdlibImport("dataclasses", "dataclass");
-        writer.write("""
-                @dataclass(init=False)
-                class $L:
-                    \"""Configuration for $L.\"""
+        // This class is only deprecated where an async replacement is generated to point
+        // at. For services without one it remains the supported config class.
+        var asyncConfigSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
+        if (asyncConfigSymbol.isPresent()) {
+            var asyncConfigName = asyncConfigSymbol.get().getName();
+            writer.addStdlibImport("warnings");
+            writer.write("""
+                    @dataclass(init=False)
+                    class $L:
+                        \"""Configuration for $L.
 
-                    ${C|}
+                        .. deprecated::
+                            Use :class:`$L` with ``await $L.resolve()`` instead.
+                        \"""
 
-                    def __init__(
-                        self,
-                        *,
                         ${C|}
-                    ):
+
+                        def __init__(
+                            self,
+                            *,
+                            ${C|}
+                        ):
+                            warnings.warn(
+                                "$L is deprecated, use $L.resolve() instead. "
+                                "This class will be removed in a future version.",
+                                DeprecationWarning,
+                                stacklevel=2,
+                            )
+                            ${C|}
+                    """,
+                    configSymbol.getName(),
+                    serviceId,
+                    asyncConfigName,
+                    asyncConfigName,
+                    writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
+                    writer.consumer(w -> writeInitParams(w, finalProperties)),
+                    configSymbol.getName(),
+                    asyncConfigName,
+                    writer.consumer(w -> initializeProperties(w, finalProperties)));
+        } else {
+            writer.write("""
+                    @dataclass(init=False)
+                    class $L:
+                        \"""Configuration for $L.\"""
+
                         ${C|}
-                """,
-                configSymbol.getName(),
-                serviceId,
-                writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
-                writer.consumer(w -> writeInitParams(w, finalProperties)),
-                writer.consumer(w -> initializeProperties(w, finalProperties)));
+
+                        def __init__(
+                            self,
+                            *,
+                            ${C|}
+                        ):
+                            ${C|}
+                    """,
+                    configSymbol.getName(),
+                    serviceId,
+                    writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
+                    writer.consumer(w -> writeInitParams(w, finalProperties)),
+                    writer.consumer(w -> initializeProperties(w, finalProperties)));
+        }
         writer.popState();
     }
 

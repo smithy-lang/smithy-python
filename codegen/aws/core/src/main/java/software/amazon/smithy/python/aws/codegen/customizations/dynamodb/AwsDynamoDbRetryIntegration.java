@@ -2,13 +2,14 @@
  * Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
-package software.amazon.smithy.python.aws.codegen;
+package software.amazon.smithy.python.aws.codegen.customizations.dynamodb;
 
 import java.util.List;
 import java.util.Set;
 import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolReference;
+import software.amazon.smithy.python.aws.codegen.AwsPythonDependency;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
