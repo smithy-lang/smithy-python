@@ -41,20 +41,24 @@ public final class IntEnumGenerator implements Runnable {
             writer.addStdlibImport("enum", "IntEnum");
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
             writer.addLocallyDefinedSymbol(enumSymbol);
-            writer.openBlock("class $L($T, IntEnum):", "", enumSymbol.getName(), RuntimeTypes.UNKNOWN_ENUM_MIXIN, () -> {
-                directive.shape().getTrait(DocumentationTrait.class).ifPresent(trait -> {
-                    writer.writeDocs(trait.getValue(), directive.context());
-                });
+            writer.openBlock("class $L($T, IntEnum):",
+                    "",
+                    enumSymbol.getName(),
+                    RuntimeTypes.UNKNOWN_ENUM_MIXIN,
+                    () -> {
+                        directive.shape().getTrait(DocumentationTrait.class).ifPresent(trait -> {
+                            writer.writeDocs(trait.getValue(), directive.context());
+                        });
 
-                for (MemberShape member : directive.shape().members()) {
-                    var name = directive.symbolProvider().toMemberName(member);
-                    var value = member.expectTrait(EnumValueTrait.class).expectIntValue();
-                    writer.write("$L = $L", name, value);
-                    member.getTrait(DocumentationTrait.class).ifPresent(trait -> {
-                        writer.writeDocs(trait.getValue(), directive.context());
+                        for (MemberShape member : directive.shape().members()) {
+                            var name = directive.symbolProvider().toMemberName(member);
+                            var value = member.expectTrait(EnumValueTrait.class).expectIntValue();
+                            writer.write("$L = $L", name, value);
+                            member.getTrait(DocumentationTrait.class).ifPresent(trait -> {
+                                writer.writeDocs(trait.getValue(), directive.context());
+                            });
+                        }
                     });
-                }
-            });
         });
     }
 }
