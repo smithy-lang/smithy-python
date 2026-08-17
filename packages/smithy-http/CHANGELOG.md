@@ -1,5 +1,12 @@
 # Changelog
 
+## v0.4.4
+
+### Enhancements
+* Added a protocol hook for extracting server-provided retry delays from error responses.
+* Declared `AWSCRTHTTPClient` as duplex (bidirectional) streaming capable via `SUPPORTS_DUPLEX_STREAMING`. `AIOHTTPClient` explicitly does not support duplex streaming.
+* Disabled automatic redirects in `AIOHTTPClient` so that redirect responses are returned to the caller instead of being followed transparently.
+
 ## v0.4.3
 
 ### Enhancements

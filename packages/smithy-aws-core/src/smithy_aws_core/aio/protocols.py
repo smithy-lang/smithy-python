@@ -30,13 +30,16 @@ from smithy_core.types import TimestampFormat
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPRequest as _HTTPRequest
 from smithy_http.aio.interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
-from smithy_http.aio.protocols import HttpBindingClientProtocol, HttpClientProtocol
+from smithy_http.aio.protocols import (
+    HttpBindingClientProtocol,
+    HttpClientProtocol,
+)
 from smithy_http.deserializers import HTTPResponseDeserializer
 
 from .._private.query.errors import create_aws_query_error
 from .._private.query.serializers import QueryShapeSerializer
 from ..traits import AwsJson1_0Trait, AwsJson1_1Trait, AwsQueryTrait, RestJson1Trait
-from ..utils import parse_document_discriminator, parse_error_code
+from ..utils import parse_document_discriminator, parse_error_code, parse_retry_after
 
 try:
     from smithy_json import JSONCodec, JSONDocument
@@ -170,6 +173,9 @@ class RestJsonClientProtocol(HttpBindingClientProtocol):
     @property
     def error_identifier(self) -> HTTPErrorIdentifier:
         return self._error_identifier
+
+    def _retry_after(self, response: HTTPResponse) -> float | None:
+        return parse_retry_after(response)
 
     def _resolve_error_id(
         self,
@@ -356,6 +362,8 @@ class _AWSJSONClientProtocol(HttpClientProtocol):
         if error_id is not None and error_id not in error_registry:
             error_id = self._resolve_error_id(operation=operation, error_id=error_id)
 
+        retry_after = parse_retry_after(response)
+
         if (
             error_id is None
             and len(response_body) > 0
@@ -384,7 +392,10 @@ class _AWSJSONClientProtocol(HttpClientProtocol):
 
             body = response_body if len(response_body) > 0 else b"{}"
             deserializer = self.payload_codec.create_deserializer(body)
-            return error_shape.deserialize(deserializer)
+            modeled_error = error_shape.deserialize(deserializer)
+            if retry_after is not None:
+                modeled_error.retry_after = retry_after
+            return modeled_error
 
         message = (
             f"Unknown error for operation {operation.schema.id} "
@@ -405,6 +416,7 @@ class _AWSJSONClientProtocol(HttpClientProtocol):
             is_throttling_error=is_throttle,
             is_timeout_error=is_timeout,
             is_retry_safe=is_throttle or is_timeout or None,
+            retry_after=retry_after,
         )
 
     def _matches_content_type(self, response: HTTPResponse) -> bool:
@@ -562,6 +574,7 @@ class AwsQueryClientProtocol(HttpClientProtocol):
             wrapper_elements=self._error_wrapper_elements(),
             status=response.status,
             context=context,
+            retry_after=parse_retry_after(response),
         )
 
     def _action_name(

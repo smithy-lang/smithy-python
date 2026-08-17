@@ -99,6 +99,7 @@ def create_aws_query_error(
     wrapper_elements: tuple[str, ...],
     status: int,
     context: TypedProperties,
+    retry_after: float | None = None,
 ) -> CallError:
     """Create a modeled or generic CallError from an awsQuery error response."""
     code = _parse_aws_query_error_code(body, wrapper_elements)
@@ -121,7 +122,10 @@ def create_aws_query_error(
             deserializer = XMLCodec().create_deserializer(
                 body, wrapper_elements=wrapper_elements
             )
-            return error_shape.deserialize(deserializer)
+            modeled_error = error_shape.deserialize(deserializer)
+            if retry_after is not None:
+                modeled_error.retry_after = retry_after
+            return modeled_error
 
     message = f"Unknown error for operation {operation.schema.id} - status: {status}"
     if code is not None:
@@ -137,4 +141,5 @@ def create_aws_query_error(
         is_throttling_error=is_throttle,
         is_timeout_error=is_timeout,
         is_retry_safe=is_throttle or is_timeout or None,
+        retry_after=retry_after,
     )

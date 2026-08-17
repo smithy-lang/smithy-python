@@ -12,7 +12,12 @@ from .. import URI
 from ..auth import AuthParams
 from ..deserializers import DeserializeableShape, ShapeDeserializer
 from ..endpoints import EndpointResolverParams
-from ..exceptions import ClientTimeoutError, RetryError, SmithyError
+from ..exceptions import (
+    ClientTimeoutError,
+    RetryError,
+    SmithyError,
+    UnsupportedTransportError,
+)
 from ..interceptors import (
     InputContext,
     Interceptor,
@@ -197,6 +202,18 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         :param output_event_type: The event type to receive in the output stream.
         :param event_deserializer: The method used to deserialize events.
         """
+        # The transport is assumed not to support duplex streaming unless it
+        # explicitly declares otherwise.
+        if getattr(self.transport, "SUPPORTS_DUPLEX_STREAMING", False) is not True:
+            raise UnsupportedTransportError(
+                f"The configured transport ({type(self.transport).__name__}) does "
+                f"not support duplex (bidirectional) event streaming, which is "
+                f"required by the {call.operation.schema.id} operation. Use a "
+                f"transport that does, such as "
+                f"smithy_http.aio.crt.AWSCRTHTTPClient. Custom transports that "
+                f"support duplex streaming can implement DuplexClientTransport "
+                f"by setting SUPPORTS_DUPLEX_STREAMING to True."
+            )
         request_future = Future[RequestContext[I, TRequest]]()
         execute_task = asyncio.create_task(self._execute_request(call, request_future))
         request_context = await request_future
@@ -353,7 +370,14 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                         token_to_renew=retry_token,
                         error=output_context.response,
                     )
-                except RetryError:
+                except RetryError as retry_error:
+                    # Long-polling operations back off even when the retry quota
+                    # is exhausted; the strategy surfaces that delay here.
+                    if (
+                        call.operation.long_polling
+                        and retry_error.retry_after is not None
+                    ):
+                        await sleep(retry_error.retry_after)
                     raise output_context.response
 
                 _LOGGER.debug(

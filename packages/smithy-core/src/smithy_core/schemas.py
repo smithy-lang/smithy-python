@@ -6,7 +6,13 @@ from typing import TYPE_CHECKING, Any, NotRequired, Required, Self, TypedDict, o
 
 from .exceptions import ExpectationNotMetError, SmithyError
 from .shapes import ShapeID, ShapeType
-from .traits import DynamicTrait, IdempotencyTokenTrait, StreamingTrait, Trait
+from .traits import (
+    DynamicTrait,
+    IdempotencyTokenTrait,
+    LongPollTrait,
+    StreamingTrait,
+    Trait,
+)
 
 if TYPE_CHECKING:
     from .deserializers import DeserializeableShape
@@ -329,3 +335,9 @@ class APIOperation[I: "SerializeableShape", O: "DeserializeableShape"]:
             if member.get_trait(StreamingTrait) is not None:
                 return member
         return None
+
+    @property
+    def long_polling(self) -> bool:
+        """Whether the service may hold the request open until information is
+        available."""
+        return self.schema.get_trait(LongPollTrait) is not None

@@ -296,6 +296,55 @@ class _ModeledJSONError(ModeledError):
         return cls("modeled JSON error")
 
 
+async def test_aws_json11_sets_retry_after_on_modeled_error() -> None:
+    protocol = _aws_json11_protocol()
+    operation = _mock_operation(_operation_schema("FailingOperation"))
+    response = HTTPResponse(
+        status=400,
+        fields=tuples_to_fields(
+            [
+                ("x-amzn-errortype", "com.test#OtherNsError"),
+                ("x-amz-retry-after", "1500"),
+            ]
+        ),
+        body=b"",
+    )
+
+    with pytest.raises(_ModeledJSONError) as exc_info:
+        await protocol.deserialize_response(
+            operation=operation,
+            request=cast(HTTPRequest, Mock()),
+            response=response,
+            error_registry=TypeRegistry(
+                {ShapeID("com.test#OtherNsError"): _ModeledJSONError}
+            ),
+            context=TypedProperties(),
+        )
+
+    assert exc_info.value.retry_after == 1.5
+
+
+async def test_aws_json11_sets_retry_after_on_generic_error() -> None:
+    protocol = _aws_json11_protocol()
+    operation = _mock_operation(_operation_schema("FailingOperation"))
+    response = HTTPResponse(
+        status=500,
+        fields=tuples_to_fields([("x-amz-retry-after", "1500")]),
+        body=b"",
+    )
+
+    with pytest.raises(CallError) as exc_info:
+        await protocol.deserialize_response(
+            operation=operation,
+            request=cast(HTTPRequest, Mock()),
+            response=response,
+            error_registry=TypeRegistry({}),
+            context=TypedProperties(),
+        )
+
+    assert exc_info.value.retry_after == 1.5
+
+
 async def test_aws_json11_resolves_modeled_error_from_header_other_namespace() -> None:
     protocol = _aws_json11_protocol()
     operation = _mock_operation(_operation_schema("FailingOperation"))

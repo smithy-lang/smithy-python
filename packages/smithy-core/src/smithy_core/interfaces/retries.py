@@ -21,7 +21,8 @@ class ErrorRetryInfo(Protocol):
     retry_after: float | None = None
     """The amount of time that should pass before a retry.
 
-    Retry strategies MAY choose to wait longer.
+    Retry strategies MAY adjust this value, for example by clamping it to an
+    upper bound.
     """
 
     is_throttling_error: bool = False

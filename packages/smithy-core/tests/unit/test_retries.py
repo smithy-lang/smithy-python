@@ -58,20 +58,21 @@ def test_exponential_backoff_strategy(
 
 @pytest.fixture
 def retry_quota() -> StandardRetryQuota:
-    return StandardRetryQuota(initial_capacity=10)
+    return StandardRetryQuota(initial_capacity=28)
 
 
 def test_retry_quota_initial_state(
     retry_quota: StandardRetryQuota,
 ) -> None:
-    assert retry_quota.available_capacity == 10
+    assert retry_quota.available_capacity == 28
 
 
 def test_retry_quota_acquire_success(
     retry_quota: StandardRetryQuota,
 ) -> None:
     acquired = retry_quota.acquire(error=Exception())
-    assert retry_quota.available_capacity == 10 - acquired
+    assert acquired == StandardRetryQuota.RETRY_COST
+    assert retry_quota.available_capacity == 28 - acquired
 
 
 def test_retry_quota_acquire_when_exhausted(
@@ -81,7 +82,7 @@ def test_retry_quota_acquire_when_exhausted(
     retry_quota.acquire(error=Exception())
     retry_quota.acquire(error=Exception())
 
-    # Not enough capacity for another retry (need 5, only 0 left)
+    # Not enough capacity for another retry (need RETRY_COST, only 0 left)
     with pytest.raises(RetryError, match="Retry quota exceeded"):
         retry_quota.acquire(error=Exception())
 
@@ -91,16 +92,19 @@ def test_retry_quota_release_restores_capacity(
 ) -> None:
     acquired = retry_quota.acquire(error=Exception())
     retry_quota.release(release_amount=acquired)
-    assert retry_quota.available_capacity == 10
+    assert retry_quota.available_capacity == 28
 
 
 def test_retry_quota_release_zero_adds_increment(
     retry_quota: StandardRetryQuota,
 ) -> None:
     retry_quota.acquire(error=Exception())
-    assert retry_quota.available_capacity == 5
+    assert retry_quota.available_capacity == 28 - StandardRetryQuota.RETRY_COST
     retry_quota.release(release_amount=0)
-    assert retry_quota.available_capacity == 6
+    assert (
+        retry_quota.available_capacity
+        == 28 - StandardRetryQuota.RETRY_COST + StandardRetryQuota.NO_RETRY_INCREMENT
+    )
 
 
 def test_retry_quota_release_caps_at_max(
@@ -110,13 +114,15 @@ def test_retry_quota_release_caps_at_max(
     retry_quota.acquire(error=Exception())
     # Release more than we acquired. Should cap at initial capacity.
     retry_quota.release(release_amount=50)
-    assert retry_quota.available_capacity == 10
+    assert retry_quota.available_capacity == 28
 
 
-def test_retry_quota_acquire_timeout_error(
+def test_retry_quota_acquire_throttling_error(
     retry_quota: StandardRetryQuota,
 ) -> None:
-    timeout_error = CallError(is_timeout_error=True, is_retry_safe=True)
-    acquired = retry_quota.acquire(error=timeout_error)
-    assert acquired == StandardRetryQuota.TIMEOUT_RETRY_COST
-    assert retry_quota.available_capacity == 0
+    throttling_error = CallError(is_throttling_error=True, is_retry_safe=True)
+    acquired = retry_quota.acquire(error=throttling_error)
+    assert acquired == StandardRetryQuota.THROTTLING_RETRY_COST
+    assert (
+        retry_quota.available_capacity == 28 - StandardRetryQuota.THROTTLING_RETRY_COST
+    )

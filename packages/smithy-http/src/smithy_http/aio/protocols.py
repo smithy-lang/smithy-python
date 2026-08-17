@@ -192,6 +192,8 @@ class HttpBindingClientProtocol(HttpClientProtocol):
                 error_id=error_id,
             )
 
+        retry_after = self._retry_after(response)
+
         if error_id is None and self._matches_content_type(response):
             if isinstance(response_body, bytearray):
                 response_body = bytes(response_body)
@@ -225,7 +227,10 @@ class HttpBindingClientProtocol(HttpClientProtocol):
                 response=response,
                 body=response_body,
             )
-            return error_shape.deserialize(deserializer)
+            modeled_error = error_shape.deserialize(deserializer)
+            if retry_after is not None:
+                modeled_error.retry_after = retry_after
+            return modeled_error
 
         message = (
             f"Unknown error for operation {operation.schema.id} "
@@ -246,7 +251,12 @@ class HttpBindingClientProtocol(HttpClientProtocol):
             is_throttling_error=is_throttle,
             is_timeout_error=is_timeout,
             is_retry_safe=is_throttle or is_timeout or None,
+            retry_after=retry_after,
         )
+
+    def _retry_after(self, response: HTTPResponse) -> float | None:
+        """The retry delay in seconds requested by the server, if the response carries one."""
+        return None
 
     def _resolve_error_id(
         self,
