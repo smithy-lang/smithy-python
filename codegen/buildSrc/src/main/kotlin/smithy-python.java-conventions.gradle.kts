@@ -129,12 +129,6 @@ tasks.named("spotbugsTest") {
     enabled = false
 }
 
-tasks {
-    spotlessCheck {
-        dependsOn(tasks.spotlessApply)
-    }
-}
-
 /*
  * Repositories
  * ================================
