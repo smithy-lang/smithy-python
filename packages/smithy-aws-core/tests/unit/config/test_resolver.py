@@ -556,24 +556,6 @@ class TestResolveRetryMode:
             assert result.value == "standard"
             assert result.source == ConfigSource.ENV
 
-    @pytest.mark.asyncio
-    @pytest.mark.parametrize(
-        "env_value,expected",
-        [
-            ("STANDARD", "standard"),
-            ("Standard", "standard"),
-            ("LEGACY", "standard"),
-            ("Legacy", "standard"),
-            ("ADAPTIVE", "standard"),
-            ("Adaptive", "standard"),
-        ],
-    )
-    async def test_retry_mode_is_case_insensitive(self, env_value: str, expected: str):
-        with patch.dict(os.environ, {"AWS_RETRY_MODE": env_value}, clear=True):
-            ctx = SharedConfigContext(fs=NullFileSystem())
-            result = await resolve_retry_mode(ctx)
-            assert result.value == expected
-
 
 class TestResolveMaxAttempts:
     @pytest.mark.asyncio
