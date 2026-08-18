@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Deprecated the built-in IMDS and container credentials resolvers in favor of the resolvers provided by the `aws-credentials-imds` and `aws-credentials-http` packages."
+}

@@ -4,6 +4,7 @@ import asyncio
 import ipaddress
 import json
 import os
+import warnings
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from urllib.parse import urlparse
@@ -106,7 +107,12 @@ class ContainerMetadataClient:
 class ContainerCredentialsResolver(
     IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
 ):
-    """Resolves AWS Credentials from container credential sources."""
+    """Resolves AWS Credentials from container credential sources.
+
+    .. warning::
+        This resolver is deprecated. Use the resolver provided by the
+        ``aws-credentials-http`` package instead.
+    """
 
     ENV_VAR = "AWS_CONTAINER_CREDENTIALS_RELATIVE_URI"
     ENV_VAR_FULL = "AWS_CONTAINER_CREDENTIALS_FULL_URI"
@@ -118,6 +124,12 @@ class ContainerCredentialsResolver(
         http_client: HTTPClient,
         config: ContainerCredentialsConfig | None = None,
     ):
+        warnings.warn(
+            "`ContainerCredentialsResolver` is deprecated; install "
+            "`aws-credentials-http` and use its resolver instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         self._http_client = http_client
         self._config = config or ContainerCredentialsConfig()
         self._client = ContainerMetadataClient(http_client, self._config)
