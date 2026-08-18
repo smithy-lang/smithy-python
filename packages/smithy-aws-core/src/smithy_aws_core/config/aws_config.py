@@ -105,7 +105,11 @@ class AsyncAwsConfig:
     """
 
     aws_session_token: str | None = field(default=None, repr=False)
-    """An access key ID that identifies temporary security credentials."""
+    """The session token used with temporary AWS credentials.
+
+    Set this together with ``aws_access_key_id`` and ``aws_secret_access_key``
+    when supplying temporary credentials in code.
+    """
 
     aws_credentials_identity_resolver: "IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties] | None" = None
     """Resolves AWS Credentials.
