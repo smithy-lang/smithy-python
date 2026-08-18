@@ -115,6 +115,35 @@ async def test_registers_terminal_resolver_for_complete_profile(
 
 
 @pytest.mark.parametrize(
+    "provider",
+    [ProfileSessionCredentialsProvider(), ProfileStaticCredentialsProvider()],
+)
+async def test_defers_when_selected_profile_declares_assume_role(
+    provider: Any,
+    setup_provider: Callable[..., Awaitable[ChainSetup]],
+    merged_config: Callable[..., MergedConfig],
+) -> None:
+    setup = await setup_provider(
+        provider,
+        config_file=merged_config(
+            {
+                "default": {
+                    "aws_access_key_id": "akid",
+                    "aws_secret_access_key": "secret",
+                    "aws_session_token": "token",
+                    "role_arn": "arn:aws:iam::123456789012:role/test",
+                    "source_profile": "default",
+                }
+            }
+        ),
+        profile_name="default",
+    )
+
+    assert setup.resolvers == ()
+    assert not setup.terminal
+
+
+@pytest.mark.parametrize(
     "provider, properties",
     [
         (
