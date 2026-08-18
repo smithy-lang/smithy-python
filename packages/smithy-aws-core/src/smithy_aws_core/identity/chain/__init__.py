@@ -185,8 +185,9 @@ class IdentityChain[I: Identity](IdentityResolver[I, Mapping[str, Any]]):
         :param identity_type: The identity type to resolve.
         :param config_file: Parsed config/credentials file. Loaded from disk
             when not set.
-        :param profile_name: Profile name to use. If omitted, the shared config
-            provider uses ``AWS_PROFILE`` when set, otherwise ``default``.
+        :param profile_name: Explicit profile name to use. When set, top-level
+            environment credential resolution is suppressed. If omitted, the shared
+            config provider uses ``AWS_PROFILE`` when set, otherwise ``default``.
         :param region_override: Region to use for providers whose resolvers
             fetch credentials through a service call.
         :param http_client: HTTP client to use for providers whose resolvers make
