@@ -131,12 +131,26 @@ def test_sort_orders_standards_by_slot_declaration() -> None:
     static = _StubProvider(
         "static", Standard(slot=StandardProvider.PROFILE_STATIC_KEYS)
     )
+    assume_role = _StubProvider(
+        "assume-role", Standard(slot=StandardProvider.PROFILE_ASSUME_ROLE)
+    )
+    session = _StubProvider(
+        "session", Standard(slot=StandardProvider.PROFILE_SESSION_KEYS)
+    )
     env = _StubProvider("env", Standard(slot=StandardProvider.ENVIRONMENT))
     shared = _StubProvider("shared", Standard(slot=StandardProvider.SHARED_CONFIG))
 
-    ordered = chain_module._sort_by_ordering((static, env, shared))
+    ordered = chain_module._sort_by_ordering(
+        (static, session, env, assume_role, shared)
+    )
 
-    assert [p.name for p in ordered] == ["env", "shared", "static"]
+    assert [p.name for p in ordered] == [
+        "env",
+        "shared",
+        "assume-role",
+        "session",
+        "static",
+    ]
 
 
 def test_sort_places_before_and_after_around_slot() -> None:

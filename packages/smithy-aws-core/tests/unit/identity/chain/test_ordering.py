@@ -98,13 +98,13 @@ def test_shared_config_detection(
             "aws-credentials-sts",
         ),
         (StandardProvider.SHARED_CONFIG, "SharedConfig", None),
-        (StandardProvider.PROFILE_SESSION_KEYS, "ProfileSessionKeys", None),
-        (StandardProvider.PROFILE_STATIC_KEYS, "ProfileStaticKeys", None),
         (
             StandardProvider.PROFILE_ASSUME_ROLE,
             "ProfileAssumeRole",
             "aws-credentials-sts",
         ),
+        (StandardProvider.PROFILE_SESSION_KEYS, "ProfileSessionKeys", None),
+        (StandardProvider.PROFILE_STATIC_KEYS, "ProfileStaticKeys", None),
         (
             StandardProvider.PROFILE_WEB_IDENTITY,
             "ProfileWebIdentity",
