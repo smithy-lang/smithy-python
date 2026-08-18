@@ -367,66 +367,28 @@ public final class ConfigGenerator implements Runnable {
         writer.pushState(new ConfigSection(finalProperties));
         writer.addLocallyDefinedSymbol(configSymbol);
         writer.addStdlibImport("dataclasses", "dataclass");
-        // This class is only deprecated where an async replacement is generated to point
-        // at. For services without one it remains the supported config class.
-        var asyncConfigSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
-        if (asyncConfigSymbol.isPresent()) {
-            var asyncConfigName = asyncConfigSymbol.get().getName();
-            writer.addStdlibImport("warnings");
-            writer.write("""
-                    @dataclass(init=False)
-                    class $L:
-                        \"""Configuration for $L.
+        // Only reached for non-AWS services (run() gates this on getAsyncConfigSymbol()
+        // being empty), so this Config has no async replacement and is the supported
+        // config class rather than a deprecated shim.
+        writer.write("""
+                @dataclass(init=False)
+                class $L:
+                    \"""Configuration for $L.\"""
 
-                        .. deprecated::
-                            Use :class:`$L` with ``await $L.resolve()`` instead.
-                        \"""
+                    ${C|}
 
+                    def __init__(
+                        self,
+                        *,
                         ${C|}
-
-                        def __init__(
-                            self,
-                            *,
-                            ${C|}
-                        ):
-                            warnings.warn(
-                                "$L is deprecated, use $L.resolve() instead. "
-                                "This class will be removed in a future version.",
-                                DeprecationWarning,
-                                stacklevel=2,
-                            )
-                            ${C|}
-                    """,
-                    configSymbol.getName(),
-                    serviceId,
-                    asyncConfigName,
-                    asyncConfigName,
-                    writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
-                    writer.consumer(w -> writeInitParams(w, finalProperties)),
-                    configSymbol.getName(),
-                    asyncConfigName,
-                    writer.consumer(w -> initializeProperties(w, finalProperties)));
-        } else {
-            writer.write("""
-                    @dataclass(init=False)
-                    class $L:
-                        \"""Configuration for $L.\"""
-
+                    ):
                         ${C|}
-
-                        def __init__(
-                            self,
-                            *,
-                            ${C|}
-                        ):
-                            ${C|}
-                    """,
-                    configSymbol.getName(),
-                    serviceId,
-                    writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
-                    writer.consumer(w -> writeInitParams(w, finalProperties)),
-                    writer.consumer(w -> initializeProperties(w, finalProperties)));
-        }
+                """,
+                configSymbol.getName(),
+                serviceId,
+                writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
+                writer.consumer(w -> writeInitParams(w, finalProperties)),
+                writer.consumer(w -> initializeProperties(w, finalProperties)));
         writer.popState();
     }
 
