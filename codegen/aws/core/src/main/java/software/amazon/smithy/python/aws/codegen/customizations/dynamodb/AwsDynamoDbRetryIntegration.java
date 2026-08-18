@@ -10,6 +10,7 @@ import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.python.aws.codegen.AwsPythonDependency;
+import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
@@ -29,11 +30,7 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
             _DYNAMODB_DEFAULT_MAX_BACKOFF = 20
 
 
-            class _RetryConfig(Protocol):
-                retry_strategy: $1T | $2T | None
-
-
-            def dynamodb_retry_plugin(config: _RetryConfig) -> None:
+            def dynamodb_retry_plugin(config: $1T) -> None:
                 \"\"\"Apply DynamoDB's standard-mode retry defaults for any option left unset.\"\"\"
                 retry_strategy = config.retry_strategy
                 if retry_strategy is not None and not isinstance(
@@ -46,15 +43,10 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
                     retry_mode = retry_strategy.retry_mode
                     max_attempts = retry_strategy.max_attempts
                 else:
-                    # Read independently resolved AsyncConfig fields when available. A legacy
-                    # Config has no scalar retry fields, so None represents an unset value.
-                    retry_mode = getattr(config, "retry_mode", None) or "standard"
-                    max_attempts = getattr(config, "max_attempts", None)
-                    source_of = getattr(config, "source_of", None)
-                    if (
-                        source_of is not None
-                        and source_of("max_attempts") == $4T.DEFAULT
-                    ):
+                    # Fall back to the config's independently resolved retry fields.
+                    retry_mode = config.retry_mode or "standard"
+                    max_attempts = config.max_attempts
+                    if config.source_of("max_attempts") == $4T.DEFAULT:
                         max_attempts = None
 
                 if retry_mode != "standard":
@@ -85,10 +77,6 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
                         .definitionFile(String.format("./src/%s/%s.py", moduleName, pluginFile))
                         .name("dynamodb_retry_plugin")
                         .build())
-                .build();
-        final Symbol retryStrategy = Symbol.builder()
-                .namespace("smithy_core.aio.interfaces.retries", ".")
-                .name("RetryStrategy")
                 .build();
         final Symbol retryStrategyOptions = Symbol.builder()
                 .namespace("smithy_core.retries", ".")
@@ -126,10 +114,10 @@ public final class AwsDynamoDbRetryIntegration implements PythonIntegration {
                                             writer -> {
                                                 writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
                                                 writer.addDependency(AwsPythonDependency.SMITHY_AWS_CORE);
-                                                writer.addStdlibImport("typing", "Protocol");
                                                 writer.write(
                                                         DYNAMODB_RETRY_MODULE,
-                                                        retryStrategy,
+                                                        CodegenUtils.getAsyncConfigSymbol(c.settings(), c.model())
+                                                                .orElseThrow(),
                                                         retryStrategyOptions,
                                                         standardRetryStrategy,
                                                         configSource,
