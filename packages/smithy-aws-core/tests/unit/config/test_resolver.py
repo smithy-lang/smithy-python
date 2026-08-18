@@ -9,10 +9,11 @@ provenance tracking, and precedence behavior.
 import os
 from copy import deepcopy
 from dataclasses import dataclass
+from inspect import signature
 from unittest.mock import patch
 
 import pytest
-from smithy_aws_core.config.aws_config import AsyncAwsConfig
+from smithy_aws_core.config.aws_config import AsyncAwsConfig, AwsConfigOverrides
 from smithy_aws_core.config.context import SharedConfigContext
 from smithy_aws_core.config.exceptions import (
     ConfigError,
@@ -335,11 +336,21 @@ class TestConstructionBlocking:
         with pytest.raises(ConfigError, match="cannot be constructed directly"):
             AsyncAwsConfig()
 
+    def test_direct_constructor_does_not_advertise_config_fields(self):
+        assert not signature(AsyncAwsConfig).parameters
+
+    def test_typed_overrides_cover_all_base_config_fields(self):
+        assert set(AwsConfigOverrides.__annotations__) == set(
+            AsyncAwsConfig._FIELDS  # pyright: ignore[reportPrivateUsage]
+        )
+
     @pytest.mark.asyncio
     async def test_unknown_override_field_raises_error(self):
         with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
             with pytest.raises(ConfigValidationError, match="Unknown config field"):
-                await AsyncAwsConfig.resolve(reigon="us-west-2")
+                await AsyncAwsConfig.resolve(
+                    reigon="us-west-2"  # pyright: ignore[reportCallIssue]
+                )
 
     @pytest.mark.parametrize(
         "field_name,invalid_value,match",
@@ -839,7 +850,7 @@ class TestReprDoesNotLeakSecrets:
         This mirrors what codegen emits for service-specific async configs.
         """
 
-        @dataclass(kw_only=True, repr=False)
+        @dataclass(kw_only=True, repr=False, init=False)
         class ServiceConfig(AsyncAwsConfig):
             aws_access_key_id: str | None = None
             aws_secret_access_key: str | None = None

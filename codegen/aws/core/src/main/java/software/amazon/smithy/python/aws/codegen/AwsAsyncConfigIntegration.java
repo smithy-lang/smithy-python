@@ -4,9 +4,10 @@
  */
 package software.amazon.smithy.python.aws.codegen;
 
-import java.util.LinkedHashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.knowledge.EventStreamIndex;
@@ -34,6 +35,30 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  */
 @SmithyInternalApi
 public class AwsAsyncConfigIntegration implements PythonIntegration {
+    // Fields the overrides TypedDict already gets from its base or from this file, so a
+    // same-named plugin ConfigProperty must not be re-emitted (see pluginProperties loop).
+    // Hand-synced, no cross-language guard: the base fields mirror AwsConfigOverrides /
+    // AsyncAwsConfig._FIELDS in smithy-aws-core's config/aws_config.py (update here when
+    // those change); the last four are the codegen-managed fields written below.
+    private static final Set<String> PREDEFINED_CONFIG_FIELDS = Set.of(
+            "region",
+            "retry_mode",
+            "max_attempts",
+            "endpoint_uri",
+            "aws_access_key_id",
+            "aws_secret_access_key",
+            "aws_session_token",
+            "aws_credentials_identity_resolver",
+            "sdk_ua_app_id",
+            "user_agent_extra",
+            "interceptors",
+            "http_request_config",
+            "transport",
+            "retry_strategy",
+            "endpoint_resolver",
+            "protocol",
+            "auth_schemes",
+            "auth_scheme_resolver");
 
     @Override
     public List<? extends CodeInterceptor<? extends CodeSection, PythonWriter>> interceptors(
@@ -77,29 +102,91 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                     .map(ServiceTrait::getSdkId)
                     .orElse(context.settings().service().getName());
 
-            // Import AsyncAwsConfig base class
+            var serviceIndex = ServiceIndex.of(context.model());
+            var hasAuth = !serviceIndex.getAuthSchemes(context.settings().service()).isEmpty();
+            // Multiple plugins can contribute the same property. Preserve the first
+            // declaration, matching the previous generated field behavior.
+            var pluginProperties = new LinkedHashMap<String, ConfigProperty>();
+            for (PythonIntegration integration : context.integrations()) {
+                for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
+                    if (plugin.matchesService(model, service)) {
+                        for (ConfigProperty property : plugin.getConfigProperties()) {
+                            pluginProperties.putIfAbsent(property.name(), property);
+                        }
+                    }
+                }
+            }
+
             var asyncAwsConfigSymbol = Symbol.builder()
                     .name("AsyncAwsConfig")
                     .namespace("smithy_aws_core.config.aws_config", ".")
                     .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                     .build();
-
-            // Import FieldSpec and ClassVar
+            var awsConfigOverridesSymbol = Symbol.builder()
+                    .name("AwsConfigOverrides")
+                    .namespace("smithy_aws_core.config", ".")
+                    .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                    .build();
+            var fileSystemSymbol = Symbol.builder()
+                    .name("FileSystem")
+                    .namespace("smithy_aws_core.config", ".")
+                    .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                    .build();
             var fieldSpecSymbol = Symbol.builder()
                     .name("FieldSpec")
                     .namespace("smithy_aws_core.config.types", ".")
                     .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                     .build();
+            var protocolSymbol = Symbol.builder()
+                    .name("ClientProtocol[Any, Any]")
+                    .addReference(Symbol.builder()
+                            .name("ClientProtocol")
+                            .namespace("smithy_core.aio.interfaces", ".")
+                            .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                            .build())
+                    .build();
+            var authSchemeSymbol = Symbol.builder()
+                    .name("AuthScheme[Any, Any, Any, Any]")
+                    .addReference(Symbol.builder()
+                            .name("AuthScheme")
+                            .namespace("smithy_core.aio.interfaces.auth", ".")
+                            .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                            .build())
+                    .build();
+            var authSchemeResolverSymbol = CodegenUtils.getHttpAuthSchemeResolverSymbol(context.settings());
+            var overridesTypeName = "_" + asyncConfigSymbol.getName() + "Overrides";
+
             writer.addStdlibImport("typing", "ClassVar");
             writer.addStdlibImport("typing", "Any");
+            writer.addStdlibImport("typing", "Self");
+            writer.addStdlibImport("typing", "Unpack");
             writer.addStdlibImport("dataclasses", "dataclass");
 
             writer.write("");
             writer.write("");
+            writer.openBlock("class $L($T, total=False):", overridesTypeName, awsConfigOverridesSymbol);
+            writer.write("endpoint_resolver: $T | None", RuntimeTypes.ENDPOINT_RESOLVER);
+            writer.write("protocol: $T | None", protocolSymbol);
+            if (hasAuth) {
+                writer.write("auth_schemes: dict[$T, $T] | None",
+                        RuntimeTypes.SHAPE_ID,
+                        authSchemeSymbol);
+                writer.write("auth_scheme_resolver: $T | None", authSchemeResolverSymbol);
+            }
+            for (ConfigProperty property : pluginProperties.values()) {
+                if (!PREDEFINED_CONFIG_FIELDS.contains(property.name())) {
+                    // Always nullable to match the dataclass field and FieldSpec below,
+                    // both of which are unconditionally "<T> | None = None".
+                    writer.write("$L: $T | None", property.name(), property.type());
+                }
+            }
+            writer.closeBlock("");
+            writer.write("");
+
             // repr=False is required: AsyncAwsConfig defines a __repr__ that filters out
             // credential fields, and a generated __repr__ on this subclass would shadow it
             // and leak secrets.
-            writer.write("@dataclass(kw_only=True, repr=False)");
+            writer.write("@dataclass(kw_only=True, repr=False, init=False)");
             writer.openBlock("class $L($T):", asyncConfigSymbol.getName(), asyncAwsConfigSymbol);
             writer.writeDocs(serviceId + " configuration (async-resolved).", context);
             writer.write("");
@@ -110,61 +197,28 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                     + "based on the configuration.", context);
             writer.write("");
 
-            writer.write("protocol: $T | None = None",
-                    Symbol.builder()
-                            .name("ClientProtocol[Any, Any]")
-                            .addReference(Symbol.builder()
-                                    .name("ClientProtocol")
-                                    .namespace("smithy_core.aio.interfaces", ".")
-                                    .addDependency(SmithyPythonDependency.SMITHY_CORE)
-                                    .build())
-                            .build());
+            writer.write("protocol: $T | None = None", protocolSymbol);
             writer.writeDocs("The protocol to serialize and deserialize requests with.", context);
             writer.write("");
-
-            var serviceIndex = ServiceIndex.of(context.model());
-            var hasAuth = !serviceIndex.getAuthSchemes(context.settings().service()).isEmpty();
 
             if (hasAuth) {
                 writer.write("auth_schemes: dict[$T, $T] | None = None",
                         RuntimeTypes.SHAPE_ID,
-                        Symbol.builder()
-                                .name("AuthScheme[Any, Any, Any, Any]")
-                                .addReference(Symbol.builder()
-                                        .name("AuthScheme")
-                                        .namespace("smithy_core.aio.interfaces.auth", ".")
-                                        .addDependency(SmithyPythonDependency.SMITHY_CORE)
-                                        .build())
-                                .build());
+                        authSchemeSymbol);
                 writer.writeDocs("A map of auth scheme ids to auth schemes.", context);
                 writer.write("");
 
-                writer.write("auth_scheme_resolver: $T | None = None",
-                        CodegenUtils.getHttpAuthSchemeResolverSymbol(context.settings()));
+                writer.write("auth_scheme_resolver: $T | None = None", authSchemeResolverSymbol);
                 writer.writeDocs("An auth scheme resolver that determines the auth scheme "
                         + "for each operation.", context);
                 writer.write("");
             }
 
             // Plugin-contributed field declarations (e.g., api_key for @httpApiKeyAuth).
-            //
-            // More than one plugin can contribute the same property — region, for
-            // instance, comes from both the auth and regional-endpoints integrations
-            // — so track the names already written and emit each only once.
-            var writtenProperties = new LinkedHashSet<String>();
-            for (PythonIntegration integration : context.integrations()) {
-                for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
-                    if (plugin.matchesService(model, service)) {
-                        for (ConfigProperty property : plugin.getConfigProperties()) {
-                            if (!writtenProperties.add(property.name())) {
-                                continue;
-                            }
-                            writer.write("$L: $T | None = None", property.name(), property.type());
-                            writer.writeDocs(property.documentation(), context);
-                            writer.write("");
-                        }
-                    }
-                }
+            for (ConfigProperty property : pluginProperties.values()) {
+                writer.write("$L: $T | None = None", property.name(), property.type());
+                writer.writeDocs(property.documentation(), context);
+                writer.write("");
             }
 
             // Write _FIELDS class variable with service-specific defaults
@@ -175,7 +229,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             // region, sdk_ua_app_id) — these are harmlessly overwritten by the spread
             // below. Fields unique to this service (e.g., api_key from @httpApiKeyAuth)
             // survive and participate in the resolution pipeline.
-            for (String propertyName : writtenProperties) {
+            for (String propertyName : pluginProperties.keySet()) {
                 writer.write("\"$L\": $T(default=None),", propertyName, fieldSpecSymbol);
             }
 
@@ -250,6 +304,33 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             writer.write("),");
 
             writer.closeBlock("}");
+            writer.write("");
+            writer.write("@classmethod");
+            writer.write("async def resolve(  # pyright: ignore[reportIncompatibleMethodOverride]");
+            writer.indent();
+            writer.write("cls,");
+            writer.write("*,");
+            writer.write("profile: str | None = None,");
+            writer.write("fs: $T | None = None,", fileSystemSymbol);
+            writer.write("config_file_path: str | None = None,");
+            writer.write("credentials_file_path: str | None = None,");
+            writer.write("**overrides: Unpack[$L],", overridesTypeName);
+            writer.dedent();
+            writer.write(") -> Self:");
+            writer.indent();
+            writer.writeDocs(
+                    "Resolve config from environment, config files, defaults, and explicit overrides.",
+                    context);
+            writer.write("return await cls._resolve(");
+            writer.indent();
+            writer.write("profile=profile,");
+            writer.write("fs=fs,");
+            writer.write("config_file_path=config_file_path,");
+            writer.write("credentials_file_path=credentials_file_path,");
+            writer.write("overrides=overrides,");
+            writer.dedent();
+            writer.write(")");
+            writer.dedent();
             writer.closeBlock("");
         }
 
