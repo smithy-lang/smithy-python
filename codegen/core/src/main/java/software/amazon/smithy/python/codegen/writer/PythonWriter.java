@@ -158,7 +158,7 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
         if (formatted.contains("\n")) {
             writeMultiLineDocs(() -> write(formatted));
         } else {
-            writeSingleLineDocs(() -> write(formatted));
+            writeSingleLineDocs(() -> writeInline(formatted));
         }
         return this;
     }

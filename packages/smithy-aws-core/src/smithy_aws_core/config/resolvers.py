@@ -92,6 +92,7 @@ async def resolve_retry_mode(ctx: SharedConfigContext) -> Resolved[str | None]:
         env_vars=("AWS_RETRY_MODE",),
         profile_keys=("retry_mode",),
     )
+
     if result.value == "legacy":
         warnings.warn(
             "'legacy' retry mode is not supported, using 'standard' instead.",
@@ -120,3 +121,82 @@ async def resolve_max_attempts(ctx: SharedConfigContext) -> Resolved[int | None]
         env_vars=("AWS_MAX_ATTEMPTS",),
         profile_keys=("max_attempts",),
     )
+
+
+async def resolve_endpoint_uri(ctx: SharedConfigContext) -> Resolved[str | None]:
+    """Resolve the endpoint URI from global environment or config file.
+
+    This is the base resolver that only checks global sources.
+    For service-specific resolution, use EndpointUriResolver().
+
+    :param ctx: The shared resolution context.
+    :returns: Resolved endpoint URI value with source.
+    """
+    return await _resolve_str(
+        ctx,
+        env_vars=("AWS_ENDPOINT_URL",),
+        profile_keys=("endpoint_url",),
+    )
+
+
+async def resolve_sdk_ua_app_id(ctx: SharedConfigContext) -> Resolved[str | None]:
+    """Resolve the SDK user-agent app ID from environment or config file.
+
+    :param ctx: The shared resolution context.
+    :returns: Resolved app ID value with source.
+    """
+    return await _resolve_str(
+        ctx,
+        env_vars=("AWS_SDK_UA_APP_ID",),
+        profile_keys=("sdk_ua_app_id",),
+    )
+
+
+class EndpointUriResolver:
+    """Service-aware endpoint URI resolver.
+
+    Resolution order (first match wins):
+    1. Service-specific env var (AWS_ENDPOINT_URL_<SERVICE_ID>)
+    2. Global env var (AWS_ENDPOINT_URL)
+    3. Service-specific config file (services section -> service_id -> endpoint_url)
+    4. Global config file (profile -> endpoint_url)
+    """
+
+    def __init__(self, service_id: str):
+        """Initialize with a service identifier.
+
+        :param service_id: The service identifier (e.g., "bedrock_runtime").
+            Used to construct the service-specific env var and config lookup key.
+        """
+        self._service_env_var = (
+            f"AWS_ENDPOINT_URL_{service_id.replace(' ', '_').replace('-', '_').upper()}"
+        )
+
+        self._service_key = service_id.replace(" ", "_").replace("-", "_").lower()
+
+    async def __call__(self, ctx: SharedConfigContext) -> Resolved[str | None]:
+        """Resolve the endpoint URI from all sources.
+
+        :param ctx: The shared resolution context.
+        :returns: Resolved endpoint URI value with source.
+        """
+        value = os.environ.get(self._service_env_var)
+        if value:
+            return Resolved(value=value, source=ConfigSource.ENV)
+
+        value = os.environ.get("AWS_ENDPOINT_URL")
+        if value:
+            return Resolved(value=value, source=ConfigSource.ENV)
+
+        config_file = await ctx.parsed_profiles()
+        value = config_file.get_service_config(
+            ctx.profile_name, self._service_key, "endpoint_url"
+        )
+        if value:
+            return Resolved(value=value, source=ConfigSource.PROFILE)
+
+        value = config_file.get(ctx.profile_name, "endpoint_url")
+        if value:
+            return Resolved(value=value, source=ConfigSource.PROFILE)
+
+        return Resolved(value=UNSET, source=ConfigSource.DEFAULT)  # type: ignore[arg-type]

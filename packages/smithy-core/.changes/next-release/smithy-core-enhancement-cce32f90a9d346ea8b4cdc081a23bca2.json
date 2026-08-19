@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Update RetryStrategyResolver.resolve_retry_strategy to accept retry_mode and max_attempts as fallback parameters when retry_strategy is not explicitly set in config."
+}

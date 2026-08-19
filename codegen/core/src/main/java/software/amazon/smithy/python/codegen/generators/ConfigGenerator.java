@@ -27,6 +27,7 @@ import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
+import software.amazon.smithy.python.codegen.sections.AsyncConfigSection;
 import software.amazon.smithy.python.codegen.sections.ConfigSection;
 import software.amazon.smithy.python.codegen.sections.InitDefaultEndpointResolverSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
@@ -264,20 +265,42 @@ public final class ConfigGenerator implements Runnable {
     @Override
     public void run() {
         var config = CodegenUtils.getConfigSymbol(context.settings());
+        var asyncConfigForPlugin = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
+
         context.writerDelegator().useFileWriter(config.getDefinitionFile(), config.getNamespace(), writer -> {
             writeInterceptorsType(writer);
-            generateConfig(context, writer);
+
+            // AWS services generate only the async config subclass.
+            if (asyncConfigForPlugin.isEmpty()) {
+                generateConfig(context, writer);
+            }
+
+            // AWS integrations intercept this section to emit the async config.
+            writer.pushState(new AsyncConfigSection());
+            writer.popState();
         });
 
         // Generate the plugin symbol. This is just a callable. We could do something
         // like have a class to implement, but that seems unnecessarily burdensome for
         // a single function.
+        //
+        // Plugins accept the config type generated for the service.
         var plugin = CodegenUtils.getPluginSymbol(context.settings());
         context.writerDelegator().useFileWriter(plugin.getDefinitionFile(), plugin.getNamespace(), writer -> {
             writer.addStdlibImport("typing", "Callable");
             writer.addStdlibImport("typing", "TypeAlias");
-            writer.write("$L: TypeAlias = Callable[[$T], None]", plugin.getName(), config);
-            writer.writeDocs("A callable that allows customizing the config object on each request.", context);
+            if (asyncConfigForPlugin.isPresent()) {
+                writer.write("$L: TypeAlias = Callable[[$T], None]",
+                        plugin.getName(),
+                        asyncConfigForPlugin.get());
+            } else {
+                writer.write("$L: TypeAlias = Callable[[$T], None]", plugin.getName(), config);
+            }
+            writer.writeDocs("""
+                    A callable that customizes a client configuration. Service-level plugins are
+                    applied once to the base configuration inherited by every operation.
+                    Operation-level plugins apply only to a single operation invocation.
+                    """, context);
         });
     }
 
@@ -344,6 +367,7 @@ public final class ConfigGenerator implements Runnable {
         writer.pushState(new ConfigSection(finalProperties));
         writer.addLocallyDefinedSymbol(configSymbol);
         writer.addStdlibImport("dataclasses", "dataclass");
+        // Only non-AWS services reach this path.
         writer.write("""
                 @dataclass(init=False)
                 class $L:
