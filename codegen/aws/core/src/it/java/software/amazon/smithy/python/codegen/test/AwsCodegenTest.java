@@ -60,22 +60,28 @@ public class AwsCodegenTest {
         var applyServicePlugins = "for plugin in self._client_plugins:";
         var applyConfiguredPlugins = "for plugin in self._plugins:";
         var publishConfig = "self._config = config";
+        var checkOperationPlugins = "if operation_plugins:";
         var copyOperationConfig = "config = deepcopy(self._config)";
         var applyOperationPlugins = "for plugin in operation_plugins:";
+        var reuseBaseConfig = "config = self._config";
 
         var resolveConfigIndex = client.indexOf(resolveConfig);
         var applyServicePluginsIndex = client.indexOf(applyServicePlugins);
         var applyConfiguredPluginsIndex = client.indexOf(applyConfiguredPlugins);
         var publishConfigIndex = client.indexOf(publishConfig, applyConfiguredPluginsIndex);
-        var copyOperationConfigIndex = client.indexOf(copyOperationConfig, publishConfigIndex);
+        var checkOperationPluginsIndex = client.indexOf(checkOperationPlugins, publishConfigIndex);
+        var copyOperationConfigIndex = client.indexOf(copyOperationConfig, checkOperationPluginsIndex);
         var applyOperationPluginsIndex = client.indexOf(applyOperationPlugins, copyOperationConfigIndex);
+        var reuseBaseConfigIndex = client.indexOf(reuseBaseConfig, applyOperationPluginsIndex);
 
         assertTrue(resolveConfigIndex >= 0);
         assertTrue(resolveConfigIndex < applyServicePluginsIndex);
         assertTrue(applyServicePluginsIndex < applyConfiguredPluginsIndex);
         assertTrue(applyConfiguredPluginsIndex < publishConfigIndex);
-        assertTrue(publishConfigIndex < copyOperationConfigIndex);
+        assertTrue(publishConfigIndex < checkOperationPluginsIndex);
+        assertTrue(checkOperationPluginsIndex < copyOperationConfigIndex);
         assertTrue(copyOperationConfigIndex < applyOperationPluginsIndex);
+        assertTrue(applyOperationPluginsIndex < reuseBaseConfigIndex);
         assertFalse(client.contains("plugin(self._config)"));
         assertTrue(client.contains("retry_mode=config.retry_mode"));
         assertTrue(client.contains("max_attempts=config.max_attempts"));

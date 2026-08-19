@@ -284,11 +284,13 @@ final class ClientGenerator implements Runnable {
                             operation_plugins.extend(plugins)
                         await self._ensure_setup()
                         assert self._config is not None
-                        # deepcopy keeps operation-plugin mutations (e.g. appending
-                        # interceptors) scoped to this call.
-                        config = deepcopy(self._config)
-                        for plugin in operation_plugins:
-                            plugin(config)
+                        if operation_plugins:
+                            # Keep operation-plugin mutations scoped to this call.
+                            config = deepcopy(self._config)
+                            for plugin in operation_plugins:
+                                plugin(config)
+                        else:
+                            config = self._config
                         if (
                             config.protocol is None
                             or config.transport is None
