@@ -1,14 +1,16 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field, fields
-from typing import TYPE_CHECKING, Any, ClassVar, Self
+from typing import TYPE_CHECKING, Any, ClassVar, Self, TypedDict, Unpack
 
-from smithy_core.retries import RetryStrategyOptions
+from smithy_core.retries import RetryStrategyOptions, RetryStrategyType
 
 if TYPE_CHECKING:
     from smithy_core.aio.interfaces import ClientTransport
     from smithy_core.aio.interfaces.identity import IdentityResolver
+    from smithy_core.aio.interfaces.retries import RetryStrategy
     from smithy_core.interfaces import URI
     from smithy_http.interfaces import HTTPRequestConfiguration
 
@@ -38,7 +40,28 @@ from .validators import (
 _CREDENTIAL_FIELDS = ("aws_access_key_id", "aws_secret_access_key", "aws_session_token")
 
 
-@dataclass(kw_only=True)
+class AwsConfigOverrides(TypedDict, total=False):
+    """Common keyword overrides accepted by AWS config resolution."""
+
+    region: str | None
+    retry_mode: RetryStrategyType | None
+    max_attempts: int | None
+    endpoint_uri: "str | URI | None"
+    aws_access_key_id: str | None
+    aws_secret_access_key: str | None
+    aws_session_token: str | None
+    aws_credentials_identity_resolver: (
+        "IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties] | None"
+    )
+    sdk_ua_app_id: str | None
+    user_agent_extra: str | None
+    interceptors: list[Any]
+    http_request_config: "HTTPRequestConfiguration | None"
+    transport: "ClientTransport[Any, Any] | None"
+    retry_strategy: "RetryStrategy | RetryStrategyOptions | None"
+
+
+@dataclass(kw_only=True, init=False)
 class AsyncAwsConfig:
     """Base configuration class for all AWS services.
 
@@ -53,7 +76,7 @@ class AsyncAwsConfig:
     """The AWS region to connect to.
     """
 
-    retry_mode: str | None = None
+    retry_mode: RetryStrategyType | None = None
     """The retry mode to use. ``standard`` is the only accepted override.
 
     ``legacy`` and ``adaptive`` are rejected when set here; when they come from
@@ -82,7 +105,11 @@ class AsyncAwsConfig:
     """
 
     aws_session_token: str | None = field(default=None, repr=False)
-    """An access key ID that identifies temporary security credentials."""
+    """The session token used with temporary AWS credentials.
+
+    Set this together with ``aws_access_key_id`` and ``aws_secret_access_key``
+    when supplying temporary credentials in code.
+    """
 
     aws_credentials_identity_resolver: "IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties] | None" = None
     """Resolves AWS Credentials.
@@ -188,8 +215,8 @@ class AsyncAwsConfig:
         )
         return f"{type(self).__name__}({rendered})"
 
-    def __post_init__(self) -> None:
-        """Block direct construction. Use resolve() instead."""
+    def __init__(self) -> None:
+        """Block direct construction without advertising config fields as parameters."""
         raise ConfigError(
             f"{type(self).__name__} cannot be constructed directly. "
             f"Use `await {type(self).__name__}.resolve(...)` instead."
@@ -203,7 +230,7 @@ class AsyncAwsConfig:
         fs: FileSystem | None = None,
         config_file_path: str | None = None,
         credentials_file_path: str | None = None,
-        **overrides: Any,
+        **overrides: Unpack[AwsConfigOverrides],
     ) -> Self:
         """Resolve a config object from environment, config files, and defaults.
 
@@ -219,6 +246,25 @@ class AsyncAwsConfig:
             the ``AWS_PROFILE`` environment variable but is not defined in the
             config files.
         """
+        return await cls._resolve(
+            profile=profile,
+            fs=fs,
+            config_file_path=config_file_path,
+            credentials_file_path=credentials_file_path,
+            overrides=overrides,
+        )
+
+    @classmethod
+    async def _resolve(
+        cls,
+        *,
+        profile: str | None,
+        fs: FileSystem | None,
+        config_file_path: str | None,
+        credentials_file_path: str | None,
+        overrides: Mapping[str, object],
+    ) -> Self:
+        """Internal resolution entry point for generated typed config factories."""
         ctx = SharedConfigContext(
             profile_name=profile,
             fs=fs,
@@ -232,12 +278,12 @@ class AsyncAwsConfig:
             config_file = await ctx.parsed_profiles()
             validate_profile(ctx.profile_name, config_file.profiles, profile_origin)
 
-        # Create the instance bypassing __post_init__ check
+        # Create the instance without calling the blocked constructor
         instance = cls._create_instance()
         instance._ctx = ctx
 
         # Resolve each field
-        await instance._resolve_fields(overrides)
+        await instance._resolve_fields(dict(overrides))
 
         return instance
 

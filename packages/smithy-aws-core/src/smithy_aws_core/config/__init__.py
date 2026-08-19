@@ -1,7 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-from .aws_config import AsyncAwsConfig
+from .aws_config import AsyncAwsConfig, AwsConfigOverrides
 from .context import SharedConfigContext, load_config, shared_config_files_exist
 from .exceptions import (
     ConfigError,
@@ -15,6 +15,7 @@ from .types import ConfigSource
 
 __all__ = [
     "AsyncAwsConfig",
+    "AwsConfigOverrides",
     "ConfigError",
     "ConfigParseError",
     "ConfigSource",

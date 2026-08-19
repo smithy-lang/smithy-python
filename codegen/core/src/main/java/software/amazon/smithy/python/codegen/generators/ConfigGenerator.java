@@ -270,15 +270,12 @@ public final class ConfigGenerator implements Runnable {
         context.writerDelegator().useFileWriter(config.getDefinitionFile(), config.getNamespace(), writer -> {
             writeInterceptorsType(writer);
 
-            // For AWS services, old Config is no longer generated — only the async
-            // config subclass (emitted by AwsAsyncConfigIntegration via section interceptor).
-            // For non-AWS services, generate old Config as usual.
+            // AWS services generate only the async config subclass.
             if (asyncConfigForPlugin.isEmpty()) {
                 generateConfig(context, writer);
             }
 
-            // Emit the async config section — AWS integrations intercept this
-            // to generate the service-specific async config subclass.
+            // AWS integrations intercept this section to emit the async config.
             writer.pushState(new AsyncConfigSection());
             writer.popState();
         });
@@ -287,8 +284,7 @@ public final class ConfigGenerator implements Runnable {
         // like have a class to implement, but that seems unnecessarily burdensome for
         // a single function.
         //
-        // For AWS services, the Plugin type accepts only the async config.
-        // For non-AWS services, the Plugin type accepts only Config.
+        // Plugins accept the config type generated for the service.
         var plugin = CodegenUtils.getPluginSymbol(context.settings());
         context.writerDelegator().useFileWriter(plugin.getDefinitionFile(), plugin.getNamespace(), writer -> {
             writer.addStdlibImport("typing", "Callable");
@@ -300,7 +296,11 @@ public final class ConfigGenerator implements Runnable {
             } else {
                 writer.write("$L: TypeAlias = Callable[[$T], None]", plugin.getName(), config);
             }
-            writer.writeDocs("A callable that allows customizing the config object on each request.", context);
+            writer.writeDocs("""
+                    A callable that customizes a client configuration. Service-level plugins are
+                    applied once to the base configuration inherited by every operation.
+                    Operation-level plugins apply only to a single operation invocation.
+                    """, context);
         });
     }
 
@@ -367,66 +367,26 @@ public final class ConfigGenerator implements Runnable {
         writer.pushState(new ConfigSection(finalProperties));
         writer.addLocallyDefinedSymbol(configSymbol);
         writer.addStdlibImport("dataclasses", "dataclass");
-        // This class is only deprecated where an async replacement is generated to point
-        // at. For services without one it remains the supported config class.
-        var asyncConfigSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
-        if (asyncConfigSymbol.isPresent()) {
-            var asyncConfigName = asyncConfigSymbol.get().getName();
-            writer.addStdlibImport("warnings");
-            writer.write("""
-                    @dataclass(init=False)
-                    class $L:
-                        \"""Configuration for $L.
+        // Only non-AWS services reach this path.
+        writer.write("""
+                @dataclass(init=False)
+                class $L:
+                    \"""Configuration for $L.\"""
 
-                        .. deprecated::
-                            Use :class:`$L` with ``await $L.resolve()`` instead.
-                        \"""
+                    ${C|}
 
+                    def __init__(
+                        self,
+                        *,
                         ${C|}
-
-                        def __init__(
-                            self,
-                            *,
-                            ${C|}
-                        ):
-                            warnings.warn(
-                                "$L is deprecated, use $L.resolve() instead. "
-                                "This class will be removed in a future version.",
-                                DeprecationWarning,
-                                stacklevel=2,
-                            )
-                            ${C|}
-                    """,
-                    configSymbol.getName(),
-                    serviceId,
-                    asyncConfigName,
-                    asyncConfigName,
-                    writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
-                    writer.consumer(w -> writeInitParams(w, finalProperties)),
-                    configSymbol.getName(),
-                    asyncConfigName,
-                    writer.consumer(w -> initializeProperties(w, finalProperties)));
-        } else {
-            writer.write("""
-                    @dataclass(init=False)
-                    class $L:
-                        \"""Configuration for $L.\"""
-
+                    ):
                         ${C|}
-
-                        def __init__(
-                            self,
-                            *,
-                            ${C|}
-                        ):
-                            ${C|}
-                    """,
-                    configSymbol.getName(),
-                    serviceId,
-                    writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
-                    writer.consumer(w -> writeInitParams(w, finalProperties)),
-                    writer.consumer(w -> initializeProperties(w, finalProperties)));
-        }
+                """,
+                configSymbol.getName(),
+                serviceId,
+                writer.consumer(w -> writePropertyDeclarations(w, finalProperties)),
+                writer.consumer(w -> writeInitParams(w, finalProperties)),
+                writer.consumer(w -> initializeProperties(w, finalProperties)));
         writer.popState();
     }
 

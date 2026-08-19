@@ -93,9 +93,6 @@ async def resolve_retry_mode(ctx: SharedConfigContext) -> Resolved[str | None]:
         profile_keys=("retry_mode",),
     )
 
-    if result.value is not UNSET:
-        result = Resolved(value=result.value.lower(), source=result.source)
-
     if result.value == "legacy":
         warnings.warn(
             "'legacy' retry mode is not supported, using 'standard' instead.",
