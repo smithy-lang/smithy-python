@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Updated `SharedConfigContext` to track the source of the active profile as a `ConfigSource`."
+}

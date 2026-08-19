@@ -22,6 +22,7 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
+import software.amazon.smithy.python.codegen.sections.ClientSetupSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -113,6 +114,7 @@ final class ClientGenerator implements Runnable {
                                         for plugin in self._plugins:
                                             plugin(config)
                                     self._config = config
+                                    ${7C|}
                                     self._setup_done = True
                     """,
                     configSym,
@@ -126,6 +128,10 @@ final class ClientGenerator implements Runnable {
                         } else {
                             w.write("config = $T()", configSym);
                         }
+                    }),
+                    writer.consumer(w -> {
+                        w.pushState(new ClientSetupSection());
+                        w.popState();
                     }));
 
             var topDownIndex = TopDownIndex.of(model);

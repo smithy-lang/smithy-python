@@ -13,6 +13,7 @@ from .file_parser import (
 )
 from .filesystem import DefaultFileSystem, FileSystem
 from .merged_config import MergedConfig
+from .types import ConfigSource
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +137,7 @@ class SharedConfigContext:
         """
         self._fs: FileSystem = fs if fs is not None else DefaultFileSystem()
         self._http_client: Any | None = http_client
-        self._profile_name, self._profile_origin = self._resolve_profile_name(
+        self._profile_name, self._profile_source = self._resolve_profile_name(
             profile_name
         )
         self._config_file_path: Path | None = (
@@ -153,9 +154,9 @@ class SharedConfigContext:
         return self._profile_name
 
     @property
-    def profile_origin(self) -> str | None:
-        """Where the active profile name came from, or None if it defaulted."""
-        return self._profile_origin
+    def profile_source(self) -> ConfigSource:
+        """The source of the active profile name."""
+        return self._profile_source
 
     @property
     def fs(self) -> FileSystem:
@@ -197,19 +198,20 @@ class SharedConfigContext:
 
     def _resolve_profile_name(
         self, explicit_profile: str | None
-    ) -> tuple[str, str | None]:
+    ) -> tuple[str, ConfigSource]:
         """Determine the active profile name and where it came from.
 
         Priority: explicit argument > AWS_PROFILE env var > "default"
 
-        :returns: Tuple of (profile_name, origin), where origin describes the
-            source for error messages and is None when the name was defaulted.
+        :returns: Tuple of (profile_name, source), where source is the
+            provenance of the name: ``OVERRIDE`` for the explicit argument,
+            ``ENV`` for ``AWS_PROFILE``, and ``DEFAULT`` for the fallback.
         """
         if explicit_profile is not None:
-            return explicit_profile, "the profile argument"
+            return explicit_profile, ConfigSource.OVERRIDE
 
         env_profile = os.environ.get(_PROFILE_ENV_VAR)
-        if env_profile is not None:
-            return env_profile, _PROFILE_ENV_VAR
+        if env_profile:
+            return env_profile, ConfigSource.ENV
 
-        return _DEFAULT_PROFILE, None
+        return _DEFAULT_PROFILE, ConfigSource.DEFAULT
