@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Updated the credential chain precedence so assume role credentials are resolved before session and static profile keys."
+}

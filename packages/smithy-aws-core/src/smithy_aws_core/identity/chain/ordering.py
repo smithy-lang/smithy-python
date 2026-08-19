@@ -13,9 +13,9 @@ class StandardProvider(Enum):
     ENVIRONMENT = "Environment", None
     WEB_IDENTITY_TOKEN_ENV = "WebIdentityTokenEnv", "aws-credentials-sts"
     SHARED_CONFIG = "SharedConfig", None
+    PROFILE_ASSUME_ROLE = "ProfileAssumeRole", "aws-credentials-sts"
     PROFILE_SESSION_KEYS = "ProfileSessionKeys", None
     PROFILE_STATIC_KEYS = "ProfileStaticKeys", None
-    PROFILE_ASSUME_ROLE = "ProfileAssumeRole", "aws-credentials-sts"
     PROFILE_WEB_IDENTITY = "ProfileWebIdentity", "aws-credentials-sts"
     PROFILE_SSO_SESSION = "ProfileSsoSession", "aws-credentials-sso"
     PROFILE_LOGIN = "Login", "aws-credentials-login"

@@ -14,7 +14,7 @@ _SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY"  # noqa: S105
 
 
 class EnvironmentCredentialsProvider:
-    """Adds an environment resolver when credentials are configured in the environment."""
+    """Adds an environment resolver unless an explicit profile is selected."""
 
     @property
     def name(self) -> str:
@@ -33,6 +33,9 @@ class EnvironmentCredentialsProvider:
     ) -> None:
         """Add an environment resolver when env credentials are configured."""
         if identity_type is not AWSCredentialsIdentity:
+            return
+
+        if setup.profile_name is not None:
             return
 
         if not os.getenv(_ACCESS_KEY_ID) or not os.getenv(_SECRET_ACCESS_KEY):

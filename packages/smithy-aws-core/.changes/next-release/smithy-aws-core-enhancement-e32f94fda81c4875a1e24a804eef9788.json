@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Updated environment credentials provider to defer when `profile_name` is passed to `IdentityChain.create()`."
+}
