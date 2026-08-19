@@ -35,11 +35,8 @@ import software.amazon.smithy.utils.SmithyInternalApi;
  */
 @SmithyInternalApi
 public class AwsAsyncConfigIntegration implements PythonIntegration {
-    // Fields the overrides TypedDict already gets from its base or from this file, so a
-    // same-named plugin ConfigProperty must not be re-emitted (see pluginProperties loop).
-    // Hand-synced, no cross-language guard: the base fields mirror AwsConfigOverrides /
-    // AsyncAwsConfig._FIELDS in smithy-aws-core's config/aws_config.py (update here when
-    // those change); the last four are the codegen-managed fields written below.
+    // Keep base fields synchronized with AwsConfigOverrides. The remaining fields are
+    // generated explicitly below.
     private static final Set<String> PREDEFINED_CONFIG_FIELDS = Set.of(
             "region",
             "retry_mode",
@@ -104,8 +101,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
 
             var serviceIndex = ServiceIndex.of(context.model());
             var hasAuth = !serviceIndex.getAuthSchemes(context.settings().service()).isEmpty();
-            // Multiple plugins can contribute the same property. Preserve the first
-            // declaration, matching the previous generated field behavior.
+            // Preserve the first declaration when plugins contribute duplicate properties.
             var pluginProperties = new LinkedHashMap<String, ConfigProperty>();
             for (PythonIntegration integration : context.integrations()) {
                 for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
@@ -176,8 +172,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             }
             for (ConfigProperty property : pluginProperties.values()) {
                 if (!PREDEFINED_CONFIG_FIELDS.contains(property.name())) {
-                    // Always nullable to match the dataclass field and FieldSpec below,
-                    // both of which are unconditionally "<T> | None = None".
+                    // Match the nullable dataclass field and FieldSpec below.
                     writer.write("$L: $T | None", property.name(), property.type());
                 }
             }

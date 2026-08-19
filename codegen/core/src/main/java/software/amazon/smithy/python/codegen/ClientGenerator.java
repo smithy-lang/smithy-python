@@ -66,8 +66,7 @@ final class ClientGenerator implements Runnable {
             // the rest keep the synchronous constructor with old Config.
             var asyncConfigSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
 
-            // Collect service-scoped plugins. They are applied once to the base
-            // config, which is copied for every operation invocation.
+            // Collect service-scoped plugins applied once during setup.
             var servicePlugins = new LinkedHashSet<SymbolReference>();
             for (PythonIntegration integration : context.integrations()) {
                 for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins(context)) {
@@ -77,9 +76,7 @@ final class ClientGenerator implements Runnable {
                 }
             }
 
-            // The config is resolved lazily on first use so plugins are applied
-            // exactly once, after the config exists. Async services await a
-            // resolver; the rest construct the synchronous Config directly.
+            // Resolve or construct the config lazily before applying plugins once.
             var isAsyncConfig = asyncConfigSymbol.isPresent();
             var configSym = asyncConfigSymbol.orElse(configSymbol);
             writer.addStdlibImport("asyncio");

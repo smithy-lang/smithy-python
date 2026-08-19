@@ -44,9 +44,7 @@ public class PythonCodegenTest {
         plugin.execute(context);
 
         var client = Files.readString(tempDir.resolve("src/weather/client.py"));
-        assertFalse(client.contains("retry_mode=config.retry_mode"));
-        assertFalse(client.contains("max_attempts=config.max_attempts"));
-        assertFalse(client.contains("getattr(config, \"retry_mode\""));
-        assertFalse(client.contains("getattr(config, \"max_attempts\""));
+        assertFalse(client.contains("retry_mode="));
+        assertFalse(client.contains("max_attempts="));
     }
 }

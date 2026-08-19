@@ -270,15 +270,12 @@ public final class ConfigGenerator implements Runnable {
         context.writerDelegator().useFileWriter(config.getDefinitionFile(), config.getNamespace(), writer -> {
             writeInterceptorsType(writer);
 
-            // For AWS services, old Config is no longer generated — only the async
-            // config subclass (emitted by AwsAsyncConfigIntegration via section interceptor).
-            // For non-AWS services, generate old Config as usual.
+            // AWS services generate only the async config subclass.
             if (asyncConfigForPlugin.isEmpty()) {
                 generateConfig(context, writer);
             }
 
-            // Emit the async config section — AWS integrations intercept this
-            // to generate the service-specific async config subclass.
+            // AWS integrations intercept this section to emit the async config.
             writer.pushState(new AsyncConfigSection());
             writer.popState();
         });
@@ -287,8 +284,7 @@ public final class ConfigGenerator implements Runnable {
         // like have a class to implement, but that seems unnecessarily burdensome for
         // a single function.
         //
-        // For AWS services, the Plugin type accepts only the async config.
-        // For non-AWS services, the Plugin type accepts only Config.
+        // Plugins accept the config type generated for the service.
         var plugin = CodegenUtils.getPluginSymbol(context.settings());
         context.writerDelegator().useFileWriter(plugin.getDefinitionFile(), plugin.getNamespace(), writer -> {
             writer.addStdlibImport("typing", "Callable");
@@ -371,9 +367,7 @@ public final class ConfigGenerator implements Runnable {
         writer.pushState(new ConfigSection(finalProperties));
         writer.addLocallyDefinedSymbol(configSymbol);
         writer.addStdlibImport("dataclasses", "dataclass");
-        // Only reached for non-AWS services (run() gates this on getAsyncConfigSymbol()
-        // being empty), so this Config has no async replacement and is the supported
-        // config class rather than a deprecated shim.
+        // Only non-AWS services reach this path.
         writer.write("""
                 @dataclass(init=False)
                 class $L:
