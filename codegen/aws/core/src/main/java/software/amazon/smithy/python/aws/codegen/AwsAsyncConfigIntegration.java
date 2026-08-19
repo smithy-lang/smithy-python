@@ -161,6 +161,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             writer.addStdlibImport("typing", "Self");
             writer.addStdlibImport("typing", "Unpack");
             writer.addStdlibImport("dataclasses", "dataclass");
+            writer.addStdlibImport("dataclasses", "field");
 
             writer.write("");
             writer.write("");
@@ -199,6 +200,12 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
 
             writer.write("protocol: $T | None = None", protocolSymbol);
             writer.writeDocs("The protocol to serialize and deserialize requests with.", context);
+            writer.write("");
+
+            writer.write("interceptors: list[_ServiceInterceptor] = field(default_factory=lambda: [])");
+            writer.writeDocs(
+                    "The list of interceptors, which are hooks that are called during the execution of a request.",
+                    context);
             writer.write("");
 
             if (hasAuth) {
@@ -305,6 +312,20 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
 
             writer.closeBlock("}");
             writer.write("");
+            if (hasAuth) {
+                writer.write("def set_auth_scheme(self, scheme: $T) -> None:", authSchemeSymbol);
+                writer.indent();
+                writer.writeDocs("""
+                        Set an auth scheme implementation using its scheme ID.
+
+                        :param scheme: The auth scheme to add or replace.
+                        """, context);
+                writer.write("auth_schemes = dict(self.auth_schemes or {})");
+                writer.write("auth_schemes[scheme.scheme_id] = scheme");
+                writer.write("self.auth_schemes = auth_schemes");
+                writer.dedent();
+                writer.write("");
+            }
             writer.write("@classmethod");
             writer.write("async def resolve(  # pyright: ignore[reportIncompatibleMethodOverride]");
             writer.indent();

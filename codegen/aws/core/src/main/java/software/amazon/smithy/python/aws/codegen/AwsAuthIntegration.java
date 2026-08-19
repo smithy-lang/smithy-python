@@ -79,7 +79,7 @@ public class AwsAuthIntegration implements PythonIntegration {
                         .addConfigProperty(ConfigProperty.builder()
                                 .name("aws_session_token")
                                 .type(Symbol.builder().name("str").build())
-                                .documentation("An access key ID that identifies temporary security credentials.")
+                                .documentation("The session token used with temporary AWS credentials.")
                                 .nullable(true)
                                 .build())
                         .authScheme(new Sigv4AuthScheme())

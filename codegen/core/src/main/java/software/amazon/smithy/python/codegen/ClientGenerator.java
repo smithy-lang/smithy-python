@@ -251,9 +251,10 @@ final class ClientGenerator implements Runnable {
                         input:
                             $L
                         plugins:
-                            A list of callables applied to a copy of the configuration for this
-                            invocation. Their changes do not affect the client's base
-                            configuration or any other operation invocation.
+                            A list of callables that modify the configuration dynamically.
+                            Changes made by these plugins only apply for the duration of the
+                            operation execution and will not affect any other operation
+                            invocations.
 
                     Returns:
                         ${L|}

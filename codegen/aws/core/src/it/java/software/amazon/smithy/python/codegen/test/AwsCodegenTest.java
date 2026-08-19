@@ -47,6 +47,13 @@ public class AwsCodegenTest {
         assertTrue(config.contains("api_key: str | None"));
         assertTrue(config.contains("@dataclass(kw_only=True, repr=False, init=False)"));
         assertTrue(config.contains("**overrides: Unpack["));
+        assertTrue(config.contains(
+                "interceptors: list[_ServiceInterceptor] = field(default_factory=lambda: [])"));
+        assertTrue(config.contains(
+                "def set_auth_scheme(self, scheme: AuthScheme[Any, Any, Any, Any]) -> None:"));
+        assertTrue(config.contains("auth_schemes = dict(self.auth_schemes or {})"));
+        assertTrue(config.contains("auth_schemes[scheme.scheme_id] = scheme"));
+        assertTrue(config.contains("self.auth_schemes = auth_schemes"));
 
         var client = Files.readString(tempDir.resolve("src/restjson/client.py"));
         var resolveConfig = "config = await AsyncRESTJSONConfig.resolve()";
