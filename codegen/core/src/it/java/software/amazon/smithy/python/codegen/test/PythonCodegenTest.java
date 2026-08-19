@@ -4,6 +4,10 @@
  */
 package software.amazon.smithy.python.codegen.test;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
+
+import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -20,7 +24,7 @@ import software.amazon.smithy.python.codegen.PythonClientCodegenPlugin;
 public class PythonCodegenTest {
 
     @Test
-    public void testCodegen(@TempDir Path tempDir) {
+    public void testCodegen(@TempDir Path tempDir) throws IOException {
         // TODO: Move this to its own package once client codegen is in its own package
         PythonClientCodegenPlugin plugin = new PythonClientCodegenPlugin();
         Model model = Model.assembler(PythonCodegenTest.class.getClassLoader())
@@ -38,5 +42,11 @@ public class PythonCodegenTest {
                 .model(model)
                 .build();
         plugin.execute(context);
+
+        var client = Files.readString(tempDir.resolve("src/weather/client.py"));
+        assertFalse(client.contains("retry_mode=config.retry_mode"));
+        assertFalse(client.contains("max_attempts=config.max_attempts"));
+        assertFalse(client.contains("getattr(config, \"retry_mode\""));
+        assertFalse(client.contains("getattr(config, \"max_attempts\""));
     }
 }

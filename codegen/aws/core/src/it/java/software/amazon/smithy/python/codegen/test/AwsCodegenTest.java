@@ -4,6 +4,7 @@
  */
 package software.amazon.smithy.python.codegen.test;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
@@ -46,6 +47,33 @@ public class AwsCodegenTest {
         assertTrue(config.contains("api_key: str | None"));
         assertTrue(config.contains("@dataclass(kw_only=True, repr=False, init=False)"));
         assertTrue(config.contains("**overrides: Unpack["));
+
+        var client = Files.readString(tempDir.resolve("src/restjson/client.py"));
+        var resolveConfig = "config = await AsyncRESTJSONConfig.resolve()";
+        var applyServicePlugins = "for plugin in self._client_plugins:";
+        var applyConfiguredPlugins = "for plugin in self._plugins:";
+        var publishConfig = "self._config = config";
+        var copyOperationConfig = "config = deepcopy(self._config)";
+        var applyOperationPlugins = "for plugin in operation_plugins:";
+
+        var resolveConfigIndex = client.indexOf(resolveConfig);
+        var applyServicePluginsIndex = client.indexOf(applyServicePlugins);
+        var applyConfiguredPluginsIndex = client.indexOf(applyConfiguredPlugins);
+        var publishConfigIndex = client.indexOf(publishConfig, applyConfiguredPluginsIndex);
+        var copyOperationConfigIndex = client.indexOf(copyOperationConfig, publishConfigIndex);
+        var applyOperationPluginsIndex = client.indexOf(applyOperationPlugins, copyOperationConfigIndex);
+
+        assertTrue(resolveConfigIndex >= 0);
+        assertTrue(resolveConfigIndex < applyServicePluginsIndex);
+        assertTrue(applyServicePluginsIndex < applyConfiguredPluginsIndex);
+        assertTrue(applyConfiguredPluginsIndex < publishConfigIndex);
+        assertTrue(publishConfigIndex < copyOperationConfigIndex);
+        assertTrue(copyOperationConfigIndex < applyOperationPluginsIndex);
+        assertFalse(client.contains("plugin(self._config)"));
+        assertTrue(client.contains("retry_mode=config.retry_mode"));
+        assertTrue(client.contains("max_attempts=config.max_attempts"));
+        assertFalse(client.contains("getattr(config, \"retry_mode\""));
+        assertFalse(client.contains("getattr(config, \"max_attempts\""));
     }
 
 }

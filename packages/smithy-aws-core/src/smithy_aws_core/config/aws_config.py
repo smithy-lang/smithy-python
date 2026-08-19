@@ -5,7 +5,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass, field, fields
 from typing import TYPE_CHECKING, Any, ClassVar, Self, TypedDict, Unpack
 
-from smithy_core.retries import RetryStrategyOptions
+from smithy_core.retries import RetryStrategyOptions, RetryStrategyType
 
 if TYPE_CHECKING:
     from smithy_core.aio.interfaces import ClientTransport
@@ -44,7 +44,7 @@ class AwsConfigOverrides(TypedDict, total=False):
     """Common keyword overrides accepted by AWS config resolution."""
 
     region: str | None
-    retry_mode: str | None
+    retry_mode: RetryStrategyType | None
     max_attempts: int | None
     endpoint_uri: "str | URI | None"
     aws_access_key_id: str | None
@@ -76,7 +76,7 @@ class AsyncAwsConfig:
     """The AWS region to connect to.
     """
 
-    retry_mode: str | None = None
+    retry_mode: RetryStrategyType | None = None
     """The retry mode to use. ``standard`` is the only accepted override.
 
     ``legacy`` and ``adaptive`` are rejected when set here; when they come from

@@ -300,7 +300,11 @@ public final class ConfigGenerator implements Runnable {
             } else {
                 writer.write("$L: TypeAlias = Callable[[$T], None]", plugin.getName(), config);
             }
-            writer.writeDocs("A callable that allows customizing the config object on each request.", context);
+            writer.writeDocs("""
+                    A callable that customizes a client configuration. Service-level plugins are
+                    applied once to the base configuration inherited by every operation.
+                    Operation-level plugins apply only to a single operation invocation.
+                    """, context);
         });
     }
 
