@@ -336,8 +336,15 @@ class TestConstructionBlocking:
         with pytest.raises(ConfigError, match="cannot be constructed directly"):
             AsyncAwsConfig()
 
+    def test_direct_instantiation_with_arguments_raises_error(self):
+        with pytest.raises(ConfigError, match="cannot be constructed directly"):
+            AsyncAwsConfig("unexpected", region="us-east-1")
+
     def test_direct_constructor_does_not_advertise_config_fields(self):
-        assert not signature(AsyncAwsConfig).parameters
+        constructor_parameters = signature(AsyncAwsConfig).parameters
+        assert not set(constructor_parameters) & set(
+            AsyncAwsConfig._FIELDS  # pyright: ignore[reportPrivateUsage]
+        )
 
     def test_typed_overrides_cover_all_base_config_fields(self):
         assert set(AwsConfigOverrides.__annotations__) == set(

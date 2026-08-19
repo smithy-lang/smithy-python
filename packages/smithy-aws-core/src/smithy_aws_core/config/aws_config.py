@@ -215,8 +215,8 @@ class AsyncAwsConfig:
         )
         return f"{type(self).__name__}({rendered})"
 
-    def __init__(self) -> None:
-        """Block direct construction without advertising config fields as parameters."""
+    def __init__(self, *args: object, **kwargs: object) -> None:
+        """Block direct construction."""
         raise ConfigError(
             f"{type(self).__name__} cannot be constructed directly. "
             f"Use `await {type(self).__name__}.resolve(...)` instead."
