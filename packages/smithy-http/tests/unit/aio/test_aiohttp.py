@@ -5,11 +5,13 @@ from collections.abc import AsyncIterator
 from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from smithy_core import URI
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest
 from smithy_http.aio.aiohttp import AIOHTTPClient
+from smithy_http.exceptions import SmithyHTTPError
 
 
 def _create_client() -> tuple[AIOHTTPClient, MagicMock]:
@@ -17,9 +19,40 @@ def _create_client() -> tuple[AIOHTTPClient, MagicMock]:
     response.read = AsyncMock(return_value=b"")
 
     session = MagicMock()
+    session.close = AsyncMock()
     session.request.return_value.__aenter__ = AsyncMock(return_value=response)
     session.request.return_value.__aexit__ = AsyncMock(return_value=None)
     return AIOHTTPClient(_session=cast(Any, session)), session
+
+
+async def test_close_closes_session() -> None:
+    client, session = _create_client()
+
+    await client.close()
+    await client.close()
+
+    session.close.assert_awaited_once()
+
+
+async def test_send_after_close_raises() -> None:
+    client, _ = _create_client()
+    await client.close()
+
+    with pytest.raises(SmithyHTTPError, match="has been closed"):
+        await client.send(MagicMock())
+
+
+async def test_context_manager_closes_session() -> None:
+    client, session = _create_client()
+
+    async with client as entered:
+        assert entered is client
+
+    session.close.assert_awaited_once()
+
+    with pytest.raises(SmithyHTTPError, match="has been closed"):
+        async with client:
+            pass
 
 
 async def test_send_omits_empty_async_reader_body() -> None:

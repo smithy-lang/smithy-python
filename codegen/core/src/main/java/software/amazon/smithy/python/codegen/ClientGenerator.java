@@ -94,6 +94,7 @@ final class ClientGenerator implements Runnable {
                         self._plugins = plugins
                         self._derive_lock = asyncio.Lock()
                         self._setup_done = False
+                        self._closed = False
                         self._retry_strategy_resolver = $4T()
                         self._client_plugins: list[$2T] = [
                             ${5C|}
@@ -133,6 +134,36 @@ final class ClientGenerator implements Runnable {
                         w.pushState(new ClientSetupSection());
                         w.popState();
                     }));
+
+            writer.addStdlibImport("typing", "Any");
+            writer.addStdlibImport("typing", "Self");
+            writer.write("""
+
+                    async def close(self) -> None:
+                        \"\"\"Close this client and any resources held by its transport.\"\"\"
+                        if self._closed:
+                            return
+                        async with self._derive_lock:
+                            if self._closed:
+                                return
+                            self._closed = True
+                            if self._setup_done and self._config is not None:
+                                await $1T(self._config.transport)
+
+                    async def __aenter__(self) -> Self:
+                        if self._closed:
+                            raise RuntimeError("Cannot enter a client that has been closed.")
+                        return self
+
+                    async def __aexit__(
+                        self,
+                        exc_type: Any,
+                        exc_value: Any,
+                        traceback: Any,
+                    ) -> None:
+                        await self.close()
+                    """,
+                    RuntimeTypes.ASYNC_CLOSE);
 
             var topDownIndex = TopDownIndex.of(model);
             var eventStreamIndex = EventStreamIndex.of(model);
@@ -280,6 +311,11 @@ final class ClientGenerator implements Runnable {
 
         writer.write(
                 """
+                        if self._closed:
+                            raise RuntimeError(
+                                "Cannot invoke an operation on a client that has been closed."
+                            )
+
                         operation_plugins: list[Plugin] = [
                             $1C
                         ]
