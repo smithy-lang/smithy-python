@@ -143,10 +143,12 @@ final class ClientGenerator implements Runnable {
                         \"\"\"Close this client and any resources held by its transport.\"\"\"
                         if self._closed:
                             return
-                        self._closed = True
-                        await self._ensure_setup()
-                        assert self._config is not None
-                        await $1T(self._config.transport)
+                        async with self._derive_lock:
+                            if self._closed:
+                                return
+                            self._closed = True
+                            if self._setup_done and self._config is not None:
+                                await $1T(self._config.transport)
 
                     async def __aenter__(self) -> Self:
                         if self._closed:

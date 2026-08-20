@@ -213,7 +213,10 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         self._closed = True
         connections = tuple(self._connections.values())
         self._connections.clear()
-        await gather(*(connection.close() for connection in connections))
+        await gather(
+            *(connection.close() for connection in connections),
+            return_exceptions=True,
+        )
 
     async def __aenter__(self) -> Self:
         if self._closed:
