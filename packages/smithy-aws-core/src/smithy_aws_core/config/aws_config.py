@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 
 from collections.abc import Mapping
+from copy import deepcopy
 from dataclasses import dataclass, field, fields
 from typing import TYPE_CHECKING, Any, ClassVar, Self, TypedDict, Unpack
 
@@ -272,11 +273,11 @@ class AsyncAwsConfig:
             credentials_file_path=credentials_file_path,
         )
 
-        # Fail fast on a bad profile
-        profile_origin = ctx.profile_origin
-        if profile_origin is not None:
+        # Fail fast on a bad profile when one was provided (not the default)
+        profile_source = ctx.profile_source
+        if profile_source is not ConfigSource.DEFAULT:
             config_file = await ctx.parsed_profiles()
-            validate_profile(ctx.profile_name, config_file.profiles, profile_origin)
+            validate_profile(ctx.profile_name, config_file.profiles, profile_source)
 
         # Create the instance without calling the blocked constructor
         instance = cls._create_instance()
@@ -439,3 +440,18 @@ class AsyncAwsConfig:
                 spec.validator(value)
             self._sources[name] = ConfigSource.OVERRIDE
         super().__setattr__(name, value)
+
+    def __deepcopy__(self, memo: dict[int, Any]) -> Self:
+        """Deep-copy the config while sharing resources that must not be duplicated."""
+        for shared in (
+            self.aws_credentials_identity_resolver,
+            self.transport,
+            self.retry_strategy,
+        ):
+            if shared is not None:
+                memo[id(shared)] = shared
+        new = self._create_instance()
+        memo[id(self)] = new
+        for f in fields(self):
+            object.__setattr__(new, f.name, deepcopy(getattr(self, f.name), memo))
+        return new

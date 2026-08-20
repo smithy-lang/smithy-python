@@ -29,7 +29,11 @@ from smithy_aws_core.config.resolvers import (
     resolve_sdk_ua_app_id,
 )
 from smithy_aws_core.config.types import UNSET, ConfigSource
+from smithy_aws_core.identity.environment import EnvironmentCredentialsResolver
 from smithy_aws_core.identity.static import StaticCredentialsResolver
+from smithy_core.aio.retries import StandardRetryStrategy
+from smithy_http.interfaces import HTTPRequestConfiguration
+from smithy_http.testing import MockHTTPClient
 
 
 class NullFileSystem:
@@ -190,7 +194,8 @@ class TestAsyncAwsConfigResolve:
     async def test_invalid_profile_raises_error(self):
         with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
             with pytest.raises(
-                ProfileNotFoundError, match="'FOOBAR' \\(from the profile argument\\)"
+                ProfileNotFoundError,
+                match="Profile 'FOOBAR' from profile argument was not found in config file",
             ):
                 await AsyncAwsConfig.resolve(
                     profile="FOOBAR",
@@ -205,7 +210,8 @@ class TestAsyncAwsConfigResolve:
             clear=True,
         ):
             with pytest.raises(
-                ProfileNotFoundError, match="'FOOBAR' \\(from AWS_PROFILE\\)"
+                ProfileNotFoundError,
+                match="Profile 'FOOBAR' from AWS_PROFILE environment variable was not found in config file",
             ):
                 await AsyncAwsConfig.resolve(
                     fs=NullFileSystem(),
@@ -216,7 +222,8 @@ class TestAsyncAwsConfigResolve:
         fs = FakeFileSystem({"/fake/config": "[profile work]\nregion = eu-west-1\n"})
         with patch.dict(os.environ, {}, clear=True):
             with pytest.raises(
-                ProfileNotFoundError, match="'other' \\(from the profile argument\\)"
+                ProfileNotFoundError,
+                match="Profile 'other' from profile argument was not found in config file",
             ):
                 await AsyncAwsConfig.resolve(
                     profile="other",
@@ -230,7 +237,8 @@ class TestAsyncAwsConfigResolve:
         fs = FakeFileSystem({"/fake/config": "[profile work]\nregion = eu-west-1\n"})
         with patch.dict(os.environ, {"AWS_PROFILE": "wrok"}, clear=True):
             with pytest.raises(
-                ProfileNotFoundError, match="'wrok' \\(from AWS_PROFILE\\)"
+                ProfileNotFoundError,
+                match="Profile 'wrok' from AWS_PROFILE environment variable was not found in config file",
             ):
                 await AsyncAwsConfig.resolve(
                     fs=fs,
@@ -396,16 +404,25 @@ class TestSharedConfigContext:
         with patch.dict(os.environ, {}, clear=True):
             ctx = SharedConfigContext()
             assert ctx.profile_name == "default"
+            assert ctx.profile_source is ConfigSource.DEFAULT
 
     def test_profile_from_aws_profile_env(self):
         with patch.dict(os.environ, {"AWS_PROFILE": "work"}, clear=True):
             ctx = SharedConfigContext()
             assert ctx.profile_name == "work"
+            assert ctx.profile_source is ConfigSource.ENV
+
+    def test_empty_aws_profile_env_treated_as_absent(self):
+        with patch.dict(os.environ, {"AWS_PROFILE": ""}, clear=True):
+            ctx = SharedConfigContext()
+            assert ctx.profile_name == "default"
+            assert ctx.profile_source is ConfigSource.DEFAULT
 
     def test_explicit_profile_overrides_env(self):
         with patch.dict(os.environ, {"AWS_PROFILE": "work"}, clear=True):
             ctx = SharedConfigContext(profile_name="custom")
             assert ctx.profile_name == "custom"
+            assert ctx.profile_source is ConfigSource.OVERRIDE
 
     @pytest.mark.asyncio
     async def test_parsed_profiles_caches_result(self):
@@ -471,6 +488,43 @@ class TestConfigDeepCopy:
         assert config.region == "us-east-1"
         assert first.source_of("region") is ConfigSource.OVERRIDE
         assert config.source_of("region") is ConfigSource.ENV
+
+    @pytest.mark.asyncio
+    async def test_shared_resources_are_shared_by_identity(self):
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
+            config = await AsyncAwsConfig.resolve(fs=NullFileSystem())
+
+        # The transport, credentials resolver, and retry strategy hold network
+        # clients, locks, and shared retry quotas that must not be duplicated
+        transport = MockHTTPClient()
+        resolver = EnvironmentCredentialsResolver()
+        retry_strategy = StandardRetryStrategy()
+        config.transport = transport
+        config.aws_credentials_identity_resolver = resolver
+        config.retry_strategy = retry_strategy
+
+        copy = deepcopy(config)
+        assert copy is not config
+        assert copy.transport is transport
+        assert copy.aws_credentials_identity_resolver is resolver
+        assert copy.retry_strategy is retry_strategy
+
+    @pytest.mark.asyncio
+    async def test_deepcopy_with_no_shared_resources(self):
+        with patch.dict(os.environ, {"AWS_REGION": "us-east-1"}, clear=True):
+            config = await AsyncAwsConfig.resolve(fs=NullFileSystem())
+        config.http_request_config = HTTPRequestConfiguration(read_timeout=1.0)
+
+        copy = deepcopy(config)
+        assert copy is not config
+        # None resources are skipped by the identity-sharing shortcut.
+        assert copy.transport is None
+        assert copy.aws_credentials_identity_resolver is None
+        assert copy.retry_strategy is None
+
+        assert copy.region == "us-east-1"
+        assert copy.http_request_config == config.http_request_config
+        assert copy.http_request_config is not config.http_request_config
 
 
 class TestResolveRetryMode:
