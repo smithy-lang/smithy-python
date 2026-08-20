@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Implement async config resolution mechanism that supports multiple config sources. Replaces the traditional Config class with Async<ServiceId>Config for AWS services."
-}

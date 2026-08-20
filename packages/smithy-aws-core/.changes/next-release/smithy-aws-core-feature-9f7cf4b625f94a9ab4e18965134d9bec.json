@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added client support for the `awsJson1_0` and `awsJson1_1` protocols, including request serialization and modeled response and error deserialization."
-}

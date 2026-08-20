@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.3.0
+
+### Features
+* Added serialization and deserialization support for Smithy non-finite floating-point values (`NaN`, `Infinity`, and `-Infinity`) using their JSON string representations.
+
 ## v0.2.3
 
 ### Bug fixes
