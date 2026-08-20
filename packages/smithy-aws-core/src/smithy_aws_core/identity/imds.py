@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 import asyncio
 import json
+import warnings
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from types import MappingProxyType
@@ -182,11 +183,22 @@ class EC2Metadata:
 class IMDSCredentialsResolver(
     IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties]
 ):
-    """Resolves AWS Credentials from an EC2 Instance Metadata Service (IMDS) client."""
+    """Resolves AWS Credentials from an EC2 Instance Metadata Service (IMDS) client.
+
+    .. warning::
+        This resolver is deprecated. Use the resolver provided by the
+        ``aws-credentials-imds`` package instead.
+    """
 
     _METADATA_PATH_BASE = "/latest/meta-data/iam/security-credentials"
 
     def __init__(self, http_client: HTTPClient, config: Config | None = None):
+        warnings.warn(
+            "`IMDSCredentialsResolver` is deprecated; install "
+            "`aws-credentials-imds` and use its resolver instead.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         # TODO: Respect IMDS specific config values from aws shared config file and environment.
         self._http_client = http_client
         self._ec2_metadata_client = EC2Metadata(http_client=http_client, config=config)

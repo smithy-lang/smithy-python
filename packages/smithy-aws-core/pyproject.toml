@@ -56,7 +56,7 @@ eventstream = [
     "smithy-aws-event-stream~=0.3.0"
 ]
 json = [
-    "smithy-json~=0.2.0"
+    "smithy-json~=0.3.0"
 ]
 xml = [
     "smithy-xml~=0.1.0"

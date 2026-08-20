@@ -8,6 +8,7 @@ from typing import get_args
 from smithy_core.retries import RetryStrategyType
 
 from .exceptions import ConfigValidationError, ProfileNotFoundError
+from .types import ConfigSource
 
 _REGION_PATTERN = re.compile(r"^(?![0-9]+$)(?!-)[a-zA-Z0-9-]{1,63}(?<!-)$")
 
@@ -84,16 +85,22 @@ def validate_max_attempts(
 def validate_profile(
     profile_name: str,
     available_profiles: Collection[str],
-    origin: str,
+    source: ConfigSource,
 ) -> None:
     """Validate that a requested profile exists in the config files.
 
     :param profile_name: The active profile name to check.
     :param available_profiles: Profile names defined in the config files.
-    :param origin: Where the profile name came from, used in the error message.
+    :param source: Where the profile name came from, used to format the error.
     :raises ProfileNotFoundError: If the profile is not defined.
     """
     if profile_name not in available_profiles:
+        # Only OVERRIDE and ENV reach here; a DEFAULT profile is never validated.
+        source_str = (
+            "profile argument"
+            if source is ConfigSource.OVERRIDE
+            else "AWS_PROFILE environment variable"
+        )
         raise ProfileNotFoundError(
-            f"Profile {profile_name!r} (from {origin}) not found in config file."
+            f"Profile {profile_name!r} from {source_str} was not found in config file."
         )

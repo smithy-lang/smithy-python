@@ -227,3 +227,100 @@ class TestProperties:
         )
         assert "my-svc" in cf.services
         assert cf.services["my-svc"].properties == {"endpoint_url": "http://localhost"}
+
+
+class TestGetServiceConfig:
+    """Tests for MergedConfig.get_service_config()"""
+
+    def test_returns_service_specific_endpoint_url(self):
+        config_data = StandardizedOutput(
+            profiles={"default": Section(properties={"services": "my-services"})},
+            services={
+                "my-services": Section(
+                    properties={
+                        "bedrock_runtime": {"endpoint_url": "https://custom.com"}
+                    }
+                )
+            },
+        )
+        cf = MergedConfig(config_data, StandardizedOutput())
+        assert (
+            cf.get_service_config("default", "bedrock_runtime", "endpoint_url")
+            == "https://custom.com"
+        )
+
+    def test_returns_none_when_profile_missing(self):
+        config_data = StandardizedOutput()
+        cf = MergedConfig(config_data, StandardizedOutput())
+        assert (
+            cf.get_service_config("default", "bedrock_runtime", "endpoint_url") is None
+        )
+
+    def test_returns_none_when_no_services_key_in_profile(self):
+        config_data = StandardizedOutput(
+            profiles={"default": Section(properties={"region": "us-east-1"})},
+        )
+        cf = MergedConfig(config_data, StandardizedOutput())
+        assert (
+            cf.get_service_config("default", "bedrock_runtime", "endpoint_url") is None
+        )
+
+    def test_returns_none_when_services_section_not_found(self):
+        config_data = StandardizedOutput(
+            profiles={"default": Section(properties={"services": "nonexistent"})},
+            services={},
+        )
+        cf = MergedConfig(config_data, StandardizedOutput())
+        assert (
+            cf.get_service_config("default", "bedrock_runtime", "endpoint_url") is None
+        )
+
+    def test_returns_none_when_service_id_not_in_section(self):
+        config_data = StandardizedOutput(
+            profiles={"default": Section(properties={"services": "my-services"})},
+            services={
+                "my-services": Section(
+                    properties={"dynamodb": {"endpoint_url": "https://dynamo.local"}}
+                )
+            },
+        )
+        cf = MergedConfig(config_data, StandardizedOutput())
+        assert (
+            cf.get_service_config("default", "bedrock_runtime", "endpoint_url") is None
+        )
+
+    def test_returns_none_when_key_not_in_service(self):
+        config_data = StandardizedOutput(
+            profiles={"default": Section(properties={"services": "my-services"})},
+            services={
+                "my-services": Section(
+                    properties={"bedrock_runtime": {"some_other_key": "value"}}
+                )
+            },
+        )
+        cf = MergedConfig(config_data, StandardizedOutput())
+        assert (
+            cf.get_service_config("default", "bedrock_runtime", "endpoint_url") is None
+        )
+
+    def test_multiple_services_in_section(self):
+        config_data = StandardizedOutput(
+            profiles={"default": Section(properties={"services": "my-services"})},
+            services={
+                "my-services": Section(
+                    properties={
+                        "bedrock_runtime": {"endpoint_url": "https://bedrock.local"},
+                        "dynamodb": {"endpoint_url": "https://dynamo.local"},
+                    }
+                )
+            },
+        )
+        cf = MergedConfig(config_data, StandardizedOutput())
+        assert (
+            cf.get_service_config("default", "bedrock_runtime", "endpoint_url")
+            == "https://bedrock.local"
+        )
+        assert (
+            cf.get_service_config("default", "dynamodb", "endpoint_url")
+            == "https://dynamo.local"
+        )

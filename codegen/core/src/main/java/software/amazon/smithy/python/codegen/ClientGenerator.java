@@ -22,6 +22,7 @@ import software.amazon.smithy.model.traits.DocumentationTrait;
 import software.amazon.smithy.model.traits.StringTrait;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
+import software.amazon.smithy.python.codegen.sections.ClientSetupSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -61,38 +62,77 @@ final class ClientGenerator implements Runnable {
                     .orElse("Client for " + service.getId().getName());
             writer.writeDocs(docs, context);
 
-            var defaultPlugins = new LinkedHashSet<SymbolReference>();
+            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+            // Services with a generated async config resolve lazily on first use;
+            // the rest keep the synchronous constructor with old Config.
+            var asyncConfigSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
 
+            // Collect service-scoped plugins applied once during setup.
+            var servicePlugins = new LinkedHashSet<SymbolReference>();
             for (PythonIntegration integration : context.integrations()) {
                 for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins(context)) {
                     if (runtimeClientPlugin.matchesService(model, service)) {
-                        runtimeClientPlugin.getPythonPlugin().ifPresent(defaultPlugins::add);
+                        runtimeClientPlugin.getPythonPlugin().ifPresent(servicePlugins::add);
                     }
                 }
             }
 
-            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+            // Resolve or construct the config lazily before applying plugins once.
+            var isAsyncConfig = asyncConfigSymbol.isPresent();
+            var configSym = asyncConfigSymbol.orElse(configSymbol);
+            writer.addStdlibImport("asyncio");
+            writer.addStdlibImport("copy", "deepcopy");
+
             writer.write("""
-                    def __init__(self, config: $1T | None = None, plugins: list[$2T] | None = None):
-                        $3C
-                        self._config = config or $1T()
-
-                        client_plugins: list[$2T] = [
-                            $4C
+                    def __init__(
+                        self,
+                        config: $1T | None = None,
+                        plugins: list[$2T] | None = None,
+                    ):
+                        ${3C|}
+                        self._config = config
+                        self._plugins = plugins
+                        self._derive_lock = asyncio.Lock()
+                        self._setup_done = False
+                        self._retry_strategy_resolver = $4T()
+                        self._client_plugins: list[$2T] = [
+                            ${5C|}
                         ]
-                        if plugins:
-                            client_plugins.extend(plugins)
 
-                        for plugin in client_plugins:
-                            plugin(self._config)
-
-                        self._retry_strategy_resolver = $5T()
+                    async def _ensure_setup(self) -> None:
+                        if not self._setup_done:
+                            async with self._derive_lock:
+                                if not self._setup_done:
+                                    if self._config is None:
+                                        ${6C|}
+                                    else:
+                                        # Copy so plugins don't mutate the caller's config.
+                                        config = deepcopy(self._config)
+                                    for plugin in self._client_plugins:
+                                        plugin(config)
+                                    if self._plugins:
+                                        for plugin in self._plugins:
+                                            plugin(config)
+                                    self._config = config
+                                    ${7C|}
+                                    self._setup_done = True
                     """,
-                    configSymbol,
+                    configSym,
                     pluginSymbol,
                     writer.consumer(w -> writeConstructorDocs(w, serviceSymbol.getName())),
-                    writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)),
-                    RuntimeTypes.RETRY_STRATEGY_RESOLVER);
+                    RuntimeTypes.RETRY_STRATEGY_RESOLVER,
+                    writer.consumer(w -> writeDefaultPlugins(w, servicePlugins)),
+                    writer.consumer(w -> {
+                        if (isAsyncConfig) {
+                            w.write("config = await $T.resolve()", configSym);
+                        } else {
+                            w.write("config = $T()", configSym);
+                        }
+                    }),
+                    writer.consumer(w -> {
+                        w.pushState(new ClientSetupSection());
+                        w.popState();
+                    }));
 
             var topDownIndex = TopDownIndex.of(model);
             var eventStreamIndex = EventStreamIndex.of(model);
@@ -147,8 +187,8 @@ final class ClientGenerator implements Runnable {
                             Optional configuration for the client. Here you can set things like
                             the endpoint for HTTP services or auth credentials.
                         plugins:
-                            A list of callables that modify the configuration dynamically. These
-                            can be used to set defaults, for example.
+                            A list of callables applied once to the client's base configuration.
+                            Their changes are inherited by every operation invocation.
                     """, clientName);
         });
     }
@@ -224,6 +264,8 @@ final class ClientGenerator implements Runnable {
                     """, operationDocs, inputDocs, outputDocs);
         });
 
+        // Operation-scoped plugins are collected per-operation. Service-scoped plugins
+        // are stored in self._client_plugins (built once in __init__).
         var defaultPlugins = new LinkedHashSet<SymbolReference>();
         for (PythonIntegration integration : context.integrations()) {
             for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins(context)) {
@@ -236,43 +278,66 @@ final class ClientGenerator implements Runnable {
         writer.putContext("operation", symbolProvider.toSymbol(operation));
         writer.addStdlibImport("copy", "deepcopy");
 
-        writer.write("""
-                operation_plugins: list[Plugin] = [
-                    $1C
-                ]
-                if plugins:
-                    operation_plugins.extend(plugins)
-                config = deepcopy(self._config)
-                for plugin in operation_plugins:
-                    plugin(config)
-                if config.protocol is None or config.transport is None:
-                    raise $2T("protocol and transport MUST be set on the config to make calls.")
+        writer.write(
+                """
+                        operation_plugins: list[Plugin] = [
+                            $1C
+                        ]
+                        if plugins:
+                            operation_plugins.extend(plugins)
+                        await self._ensure_setup()
+                        assert self._config is not None
+                        if operation_plugins:
+                            # Keep operation-plugin mutations scoped to this call.
+                            config = deepcopy(self._config)
+                            for plugin in operation_plugins:
+                                plugin(config)
+                        else:
+                            config = self._config
+                        if (
+                            config.protocol is None
+                            or config.transport is None
+                            or config.endpoint_resolver is None
+                            or config.auth_scheme_resolver is None
+                            or config.auth_schemes is None
+                        ):
+                            raise $2T(
+                                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                                " and auth_schemes MUST be set on the config to make calls."
+                            )
 
-                retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
-                    retry_strategy=config.retry_strategy
-                )
+                        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+                            retry_strategy=config.retry_strategy,
+                            ${7C|}
+                        )
 
-                pipeline = $3T(
-                    protocol=config.protocol,
-                    transport=config.transport
-                )
-                call = $4T(
-                    input=input,
-                    operation=${operation:T},
-                    context=$5T({"config": config}),
-                    interceptor=$6T(config.interceptors),
-                    auth_scheme_resolver=config.auth_scheme_resolver,
-                    supported_auth_schemes=config.auth_schemes,
-                    endpoint_resolver=config.endpoint_resolver,
-                    retry_strategy=retry_strategy,
-                )
-                """,
+                        pipeline = $3T(
+                            protocol=config.protocol,
+                            transport=config.transport
+                        )
+                        call = $4T(
+                            input=input,
+                            operation=${operation:T},
+                            context=$5T({"config": config}),
+                            interceptor=$6T(config.interceptors),
+                            auth_scheme_resolver=config.auth_scheme_resolver,
+                            supported_auth_schemes=config.auth_schemes,
+                            endpoint_resolver=config.endpoint_resolver,
+                            retry_strategy=retry_strategy,
+                        )
+                        """,
                 writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)),
                 RuntimeTypes.EXPECTATION_NOT_MET_ERROR,
                 RuntimeTypes.REQUEST_PIPELINE,
                 RuntimeTypes.CLIENT_CALL,
                 RuntimeTypes.TYPED_PROPERTIES,
-                RuntimeTypes.INTERCEPTOR_CHAIN);
+                RuntimeTypes.INTERCEPTOR_CHAIN,
+                writer.consumer(w -> {
+                    if (CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model()).isPresent()) {
+                        w.write("retry_mode=config.retry_mode,");
+                        w.write("max_attempts=config.max_attempts,");
+                    }
+                }));
 
     }
 

@@ -1,5 +1,23 @@
 # Changelog
 
+## v0.10.0
+
+### Breaking Changes
+* Updated the credential chain precedence so assume role credentials are resolved before session and static profile keys.
+
+### Features
+* Added client support for the `awsJson1_0` and `awsJson1_1` protocols, including request serialization and modeled response and error deserialization.
+* Implement async config resolution mechanism that supports multiple config sources. Replaces the traditional Config class with Async<ServiceId>Config for AWS services.
+
+### Enhancements
+* Updated `SharedConfigContext` to track the source of the active profile as a `ConfigSource`.
+* Deprecated the built-in IMDS and container credentials resolvers in favor of the resolvers provided by the `aws-credentials-imds` and `aws-credentials-http` packages.
+* Updated profile session and static key providers to defer when the selected profile declares an assume-role configuration.
+* Updated environment credentials provider to defer when `profile_name` is passed to `IdentityChain.create()`.
+
+### Dependencies
+* Bump `smithy-json` from `~=0.2.0` to `~=0.3.0`.
+
 ## v0.9.0
 
 ### Features

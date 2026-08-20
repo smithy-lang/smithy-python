@@ -11,6 +11,7 @@ _ACCESS_KEY_ID = "aws_access_key_id"
 _SECRET_ACCESS_KEY = "aws_secret_access_key"  # noqa: S105
 _SESSION_TOKEN = "aws_session_token"  # noqa: S105
 _ACCOUNT_ID = "aws_account_id"
+_ROLE_ARN = "role_arn"
 
 
 class ProfileSessionCredentialsProvider:
@@ -34,6 +35,9 @@ class ProfileSessionCredentialsProvider:
         config_file = setup.config_file
         profile_name = setup.profile_name
         if config_file is None or profile_name is None:
+            return
+
+        if config_file.get(profile_name, _ROLE_ARN) is not None:
             return
 
         access_key_id = config_file.get(profile_name, _ACCESS_KEY_ID)
@@ -72,6 +76,9 @@ class ProfileStaticCredentialsProvider:
         config_file = setup.config_file
         profile_name = setup.profile_name
         if config_file is None or profile_name is None:
+            return
+
+        if config_file.get(profile_name, _ROLE_ARN) is not None:
             return
 
         access_key_id = config_file.get(profile_name, _ACCESS_KEY_ID)

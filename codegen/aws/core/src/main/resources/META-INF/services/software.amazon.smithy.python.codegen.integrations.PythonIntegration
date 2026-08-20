@@ -5,8 +5,10 @@
 
 software.amazon.smithy.python.aws.codegen.customizations.apigateway.ApiGatewayIntegration
 software.amazon.smithy.python.aws.codegen.AwsAuthIntegration
+software.amazon.smithy.python.aws.codegen.AwsIdentityIntegration
 software.amazon.smithy.python.aws.codegen.AwsProtocolsIntegration
 software.amazon.smithy.python.aws.codegen.AwsServiceIdIntegration
 software.amazon.smithy.python.aws.codegen.AwsUserAgentIntegration
 software.amazon.smithy.python.aws.codegen.AwsStandardRegionalEndpointsIntegration
-software.amazon.smithy.python.aws.codegen.AwsDynamoDbRetryIntegration
+software.amazon.smithy.python.aws.codegen.customizations.dynamodb.AwsDynamoDbRetryIntegration
+software.amazon.smithy.python.aws.codegen.AwsAsyncConfigIntegration

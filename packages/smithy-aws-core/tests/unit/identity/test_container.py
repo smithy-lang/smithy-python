@@ -30,6 +30,10 @@ DEFAULT_RESPONSE_DATA = {
 
 ISO8601 = "%Y-%m-%dT%H:%M:%SZ"
 
+pytestmark = pytest.mark.filterwarnings(
+    "ignore:`ContainerCredentialsResolver` is deprecated:DeprecationWarning"
+)
+
 
 def test_config_custom_values():
     config = ContainerCredentialsConfig(timeout=10, retries=5)

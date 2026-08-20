@@ -6,6 +6,7 @@ package software.amazon.smithy.python.codegen.generators;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -141,6 +142,7 @@ public final class SetupGenerator {
 
             Optional.ofNullable(dependencies.get(PythonDependency.Type.DEPENDENCY.getType())).ifPresent(deps -> {
                 writer.openBlock("dependencies = [", "]\n", () -> writeDependencyList(writer, deps.values()));
+                writeOptionalDependencies(writer, deps);
             });
 
             Optional<Collection<SymbolDependency>> testDeps =
@@ -188,6 +190,60 @@ public final class SetupGenerator {
         });
     }
 
+    /**
+     * Emit a {@code [project.optional-dependencies]} table so users can opt into extra features
+     * (e.g. {@code pip install <client>[awscrt]}) without having to hunt down compatible dependency
+     * versions themselves.
+     *
+     * <p>The set of extras is data-driven: {@link #collectOptionalDependencies} decides which
+     * extras apply to this client, and this method renders whatever it returns. To add a new extra,
+     * contribute an entry there rather than changing the rendering here.
+     */
+    private static void writeOptionalDependencies(
+            PythonWriter writer,
+            Map<String, SymbolDependency> dependencies
+    ) {
+        var extras = collectOptionalDependencies(dependencies);
+        if (extras.isEmpty()) {
+            return;
+        }
+
+        writer.write("[project.optional-dependencies]");
+        for (var extra : extras.entrySet()) {
+            writer.openBlock("$L = [", "]\n", extra.getKey(), () -> {
+                for (var iter = extra.getValue().iterator(); iter.hasNext();) {
+                    writer.write("$S$L", iter.next(), iter.hasNext() ? "," : "");
+                }
+            });
+        }
+    }
+
+    /**
+     * Collect the opt-in extras to expose in {@code [project.optional-dependencies]}, keyed by extra
+     * name and mapped to the requirement specifiers that extra installs. Insertion order is
+     * preserved in the generated output.
+     *
+     * <p>This is the single place to register a new extra.
+     */
+    // Package-private for testing.
+    static Map<String, List<String>> collectOptionalDependencies(
+            Map<String, SymbolDependency> dependencies
+    ) {
+        var extras = new LinkedHashMap<String, List<String>>();
+
+        // Let users opt into the CRT transport (AWSCRTHTTPClient) without guessing a compatible
+        // awscrt version, by re-exporting smithy_http's awscrt extra. This keeps the version
+        // constraint sourced from smithy-http, the single source of truth. Skipped when the client
+        // already requires awscrt (e.g. an http2 service that defaults to the CRT transport), where
+        // there is nothing to opt into.
+        var smithyHttp = dependencies.get(SmithyPythonDependency.SMITHY_HTTP.packageName());
+        if (smithyHttp != null && !getOptionalDependencies(smithyHttp).contains("awscrt")) {
+            extras.put("awscrt", List.of("smithy_http[awscrt]" + smithyHttp.getVersion()));
+        }
+
+        return extras;
+    }
+
     private static void writeDependencyList(PythonWriter writer, Collection<SymbolDependency> dependencies) {
         for (var iter = dependencies.iterator(); iter.hasNext();) {
             writer.pushState();
@@ -208,7 +264,7 @@ public final class SetupGenerator {
 
     @SuppressWarnings("unchecked")
     private static List<String> getOptionalDependencies(SymbolDependency dependency) {
-        var optionals = dependency.getProperty(SymbolProperties.OPTIONAL_DEPENDENCIES)
+        return dependency.getProperty(SymbolProperties.OPTIONAL_DEPENDENCIES)
                 .filter(list -> {
                     for (var d : list) {
                         if (!(d instanceof String)) {
@@ -218,11 +274,6 @@ public final class SetupGenerator {
                     return true;
                 })
                 .orElse(Collections.emptyList());
-        try {
-            return optionals;
-        } catch (Exception e) {
-            return Collections.emptyList();
-        }
     }
 
     private static void writeReadme(

@@ -41,20 +41,24 @@ public final class EnumGenerator implements Runnable {
             writer.addStdlibImport("enum", "StrEnum");
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
             writer.addLocallyDefinedSymbol(enumSymbol);
-            writer.openBlock("class $L($T, StrEnum):", "", enumSymbol.getName(), RuntimeTypes.UNKNOWN_ENUM_MIXIN, () -> {
-                shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
-                    writer.writeDocs(trait.getValue(), context);
-                });
+            writer.openBlock("class $L($T, StrEnum):",
+                    "",
+                    enumSymbol.getName(),
+                    RuntimeTypes.UNKNOWN_ENUM_MIXIN,
+                    () -> {
+                        shape.getTrait(DocumentationTrait.class).ifPresent(trait -> {
+                            writer.writeDocs(trait.getValue(), context);
+                        });
 
-                for (MemberShape member : shape.members()) {
-                    var name = context.symbolProvider().toMemberName(member);
-                    var value = member.expectTrait(EnumValueTrait.class).expectStringValue();
-                    writer.write("$L = $S", name, value);
-                    member.getTrait(DocumentationTrait.class).ifPresent(trait -> {
-                        writer.writeDocs(trait.getValue(), context);
+                        for (MemberShape member : shape.members()) {
+                            var name = context.symbolProvider().toMemberName(member);
+                            var value = member.expectTrait(EnumValueTrait.class).expectStringValue();
+                            writer.write("$L = $S", name, value);
+                            member.getTrait(DocumentationTrait.class).ifPresent(trait -> {
+                                writer.writeDocs(trait.getValue(), context);
+                            });
+                        }
                     });
-                }
-            });
         });
     }
 }

@@ -113,3 +113,47 @@ class MergedConfig:
             else:
                 merged[name] = Section(properties=dict(section.properties))
         return merged
+
+    def get_service_config(
+        self, profile_name: str, service_id: str, key: str
+    ) -> str | None:
+        """Get a config value from the services section for a specific service.
+
+        Looks up the services section referenced by the profile, then finds
+        the service-specific sub-property within it.
+
+        For a config file like:
+            [profile default]
+            services = my-services
+
+            [services my-services]
+            bedrock_runtime =
+              endpoint_url = http://localhost:5678
+
+        Usage: get_service_config("default", "bedrock_runtime", "endpoint_url")
+
+        :param profile_name: The profile name to look up.
+        :param service_id: The service identifier (lowercase, underscored).
+        :param key: The property key within the service section.
+
+        :returns: The value, or None if not found.
+        """
+        # Get the services section name from the profile
+        profile = self._profiles.get(profile_name)
+        if profile is None:
+            return None
+        services_name = profile.properties.get("services")
+        if not services_name or not isinstance(services_name, str):
+            return None
+
+        # Look up the services section
+        services_section = self._services.get(services_name)
+        if services_section is None:
+            return None
+
+        # Get the service-specific sub-property
+        service_props = services_section.properties.get(service_id)
+        if not isinstance(service_props, dict):
+            return None
+
+        return service_props.get(key.lower())

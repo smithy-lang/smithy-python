@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.8.1
+
+### Enhancements
+* Update RetryStrategyResolver.resolve_retry_strategy to accept retry_mode and max_attempts as fallback parameters when retry_strategy is not explicitly set in config.
+
 ## v0.8.0
 
 ### Features

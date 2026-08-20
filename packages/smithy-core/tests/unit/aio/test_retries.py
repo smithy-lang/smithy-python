@@ -2,7 +2,6 @@
 #  SPDX-License-Identifier: Apache-2.0
 import pytest
 from smithy_core.aio.retries import (
-    RetryStrategyOptions,
     RetryStrategyResolver,
     SimpleRetryStrategy,
     StandardRetryStrategy,
@@ -13,6 +12,7 @@ from smithy_core.retries import (
 )
 from smithy_core.retries import (
     ExponentialRetryBackoffStrategy,
+    RetryStrategyOptions,
     StandardRetryQuota,
 )
 
@@ -304,6 +304,65 @@ async def test_retry_strategy_resolver_rejects_invalid_type() -> None:
         match="retry_strategy must be RetryStrategy, RetryStrategyOptions, or None",
     ):
         await resolver.resolve_retry_strategy(retry_strategy="invalid")  # type: ignore
+
+
+async def test_retry_strategy_resolver_uses_max_attempts_fallback() -> None:
+    resolver = RetryStrategyResolver()
+
+    strategy = await resolver.resolve_retry_strategy(
+        retry_strategy=None, max_attempts=9
+    )
+
+    assert isinstance(strategy, StandardRetryStrategy)
+    assert strategy.max_attempts == 9
+
+
+async def test_retry_strategy_resolver_uses_retry_mode_fallback() -> None:
+    resolver = RetryStrategyResolver()
+
+    strategy = await resolver.resolve_retry_strategy(
+        retry_strategy=None, retry_mode="simple", max_attempts=4
+    )
+
+    assert isinstance(strategy, SimpleRetryStrategy)
+    assert strategy.max_attempts == 4
+
+
+async def test_retry_strategy_resolver_fallback_defaults_when_unset() -> None:
+    """Omitting both fallbacks must match the prior no-argument behavior."""
+    resolver = RetryStrategyResolver()
+
+    explicit = await resolver.resolve_retry_strategy(
+        retry_strategy=None, retry_mode=None, max_attempts=None
+    )
+    baseline = await resolver.resolve_retry_strategy(retry_strategy=None)
+
+    assert explicit is baseline
+    assert isinstance(explicit, StandardRetryStrategy)
+    assert explicit.max_attempts == 3
+
+
+async def test_explicit_retry_strategy_options_beat_fallbacks() -> None:
+    resolver = RetryStrategyResolver()
+    retry_strategy = RetryStrategyOptions(max_attempts=2)
+
+    strategy = await resolver.resolve_retry_strategy(
+        retry_strategy=retry_strategy, max_attempts=9
+    )
+
+    assert strategy.max_attempts == 2
+
+
+async def test_explicit_retry_strategy_instance_beats_fallbacks() -> None:
+    resolver = RetryStrategyResolver()
+    provided = SimpleRetryStrategy(max_attempts=7)
+
+    strategy = await resolver.resolve_retry_strategy(
+        retry_strategy=provided, retry_mode="standard", max_attempts=9
+    )
+
+    assert strategy is provided
+    assert strategy.max_attempts == 7
 
 
 async def test_resolver_no_service_defaults_uses_strategy_defaults() -> None:
