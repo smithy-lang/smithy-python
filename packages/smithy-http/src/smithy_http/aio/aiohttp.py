@@ -1,5 +1,6 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+from copy import copy, deepcopy
 from itertools import chain
 from typing import TYPE_CHECKING, Any, Self
 from urllib.parse import parse_qs
@@ -26,6 +27,7 @@ from smithy_core.exceptions import MissingDependencyError
 from smithy_core.interfaces import URI
 
 from .. import Field, Fields
+from ..exceptions import SmithyHTTPError
 from ..interfaces import (
     HTTPClientConfiguration,
     HTTPRequestConfiguration,
@@ -68,6 +70,7 @@ class AIOHTTPClient(HTTPClient):
         """
         _assert_aiohttp()
         self._config = client_config or AIOHTTPClientConfig()
+        self._closed = False
         # Disable transparent response decompression and advertise
         # 'identity' to request uncompressed responses.
         # TODO: add a functional test once the test client framework exists
@@ -87,6 +90,11 @@ class AIOHTTPClient(HTTPClient):
         :param request: The request including destination URI, fields, payload.
         :param request_config: Configuration specific to this request.
         """
+        if self._closed:
+            raise SmithyHTTPError(
+                "Cannot send a request after the HTTP client has been closed."
+            )
+
         request_config = request_config or HTTPRequestConfiguration()
 
         headers_list = list(
@@ -117,9 +125,14 @@ class AIOHTTPClient(HTTPClient):
 
     async def close(self) -> None:
         """Close the underlying aiohttp session and its connection pool."""
+        if self._closed:
+            return
+        self._closed = True
         await self._session.close()
 
     async def __aenter__(self) -> Self:
+        if self._closed:
+            raise SmithyHTTPError("Cannot enter an HTTP client that has been closed.")
         return self
 
     async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
@@ -173,4 +186,7 @@ class AIOHTTPClient(HTTPClient):
         )
 
     def __deepcopy__(self, memo: Any) -> "AIOHTTPClient":
-        return self
+        return AIOHTTPClient(
+            client_config=deepcopy(self._config),
+            _session=copy(self._session),
+        )

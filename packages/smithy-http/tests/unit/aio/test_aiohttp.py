@@ -2,15 +2,16 @@
 #  SPDX-License-Identifier: Apache-2.0
 #  pyright: reportPrivateUsage=false
 from collections.abc import AsyncIterator
-from copy import deepcopy
 from typing import Any, cast
 from unittest.mock import AsyncMock, MagicMock
 
+import pytest
 from smithy_core import URI
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest
 from smithy_http.aio.aiohttp import AIOHTTPClient
+from smithy_http.exceptions import SmithyHTTPError
 
 
 def _create_client() -> tuple[AIOHTTPClient, MagicMock]:
@@ -24,19 +25,21 @@ def _create_client() -> tuple[AIOHTTPClient, MagicMock]:
     return AIOHTTPClient(_session=cast(Any, session)), session
 
 
-def test_deepcopy_returns_same_client() -> None:
-    client, _ = _create_client()
-
-    assert deepcopy(client) is client
-
-
 async def test_close_closes_session() -> None:
     client, session = _create_client()
 
     await client.close()
     await client.close()
 
-    assert session.close.await_count == 2
+    session.close.assert_awaited_once()
+
+
+async def test_send_after_close_raises() -> None:
+    client, _ = _create_client()
+    await client.close()
+
+    with pytest.raises(SmithyHTTPError, match="has been closed"):
+        await client.send(MagicMock())
 
 
 async def test_context_manager_closes_session() -> None:
@@ -46,6 +49,10 @@ async def test_context_manager_closes_session() -> None:
         assert entered is client
 
     session.close.assert_awaited_once()
+
+    with pytest.raises(SmithyHTTPError, match="has been closed"):
+        async with client:
+            pass
 
 
 async def test_send_omits_empty_async_reader_body() -> None:

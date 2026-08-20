@@ -94,6 +94,7 @@ final class ClientGenerator implements Runnable {
                         self._plugins = plugins
                         self._derive_lock = asyncio.Lock()
                         self._setup_done = False
+                        self._closed = False
                         self._retry_strategy_resolver = $4T()
                         self._client_plugins: list[$2T] = [
                             ${5C|}
@@ -135,15 +136,21 @@ final class ClientGenerator implements Runnable {
                     }));
 
             writer.addStdlibImport("typing", "Any");
+            writer.addStdlibImport("typing", "Self");
             writer.write("""
 
                     async def close(self) -> None:
-                        \"\"\"Close any resources held by this client's transport.\"\"\"
+                        \"\"\"Close this client and any resources held by its transport.\"\"\"
+                        if self._closed:
+                            return
+                        self._closed = True
                         await self._ensure_setup()
                         assert self._config is not None
                         await $1T(self._config.transport)
 
-                    async def __aenter__(self) -> "$2L":
+                    async def __aenter__(self) -> Self:
+                        if self._closed:
+                            raise RuntimeError("Cannot enter a client that has been closed.")
                         return self
 
                     async def __aexit__(
@@ -154,8 +161,7 @@ final class ClientGenerator implements Runnable {
                     ) -> None:
                         await self.close()
                     """,
-                    RuntimeTypes.ASYNC_CLOSE,
-                    serviceSymbol.getName());
+                    RuntimeTypes.ASYNC_CLOSE);
 
             var topDownIndex = TopDownIndex.of(model);
             var eventStreamIndex = EventStreamIndex.of(model);
@@ -303,6 +309,11 @@ final class ClientGenerator implements Runnable {
 
         writer.write(
                 """
+                        if self._closed:
+                            raise RuntimeError(
+                                "Cannot invoke an operation on a client that has been closed."
+                            )
+
                         operation_plugins: list[Plugin] = [
                             $1C
                         ]
@@ -312,10 +323,7 @@ final class ClientGenerator implements Runnable {
                         assert self._config is not None
                         if operation_plugins:
                             # Keep operation-plugin mutations scoped to this call.
-                            config = deepcopy(
-                                self._config,
-                                {id(self._config.transport): self._config.transport},
-                            )
+                            config = deepcopy(self._config)
                             for plugin in operation_plugins:
                                 plugin(config)
                         else:

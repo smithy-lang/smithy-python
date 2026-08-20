@@ -48,6 +48,6 @@ public class PythonCodegenTest {
         assertFalse(client.contains("retry_mode="));
         assertFalse(client.contains("max_attempts="));
         assertTrue(client.contains("async def close(self) -> None:"));
-        assertTrue(client.contains("{id(self._config.transport): self._config.transport}"));
+        assertTrue(client.contains("if self._closed:"));
     }
 }
