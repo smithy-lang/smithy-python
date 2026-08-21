@@ -71,14 +71,48 @@ async def test_send_omits_empty_async_reader_body() -> None:
     assert session.request.call_args.kwargs["data"] is None
 
 
-async def test_send_preserves_explicitly_framed_empty_body() -> None:
+async def test_send_buffers_sized_body_to_fixed_length_payload() -> None:
+    # A request carrying a signed Content-Length must be sent as a fixed-length
+    # bytes payload, not an unknown-size async iterable. The latter makes aiohttp
+    # fall back to chunked transfer encoding, which drops the signed
+    # Content-Length and breaks SigV4 (403) / trips media-type validation (415).
     client, session = _create_client()
-    body = AsyncBytesReader(b"")
+    request = HTTPRequest(
+        method="POST",
+        destination=URI(scheme="https", host="example.com", path="/"),
+        body=AsyncBytesReader(b'{"hello":"world"}'),
+        fields=Fields([Field(name="content-length", values=["17"])]),
+    )
+
+    await client.send(request)
+
+    assert session.request.call_args.kwargs["data"] == b'{"hello":"world"}'
+
+
+async def test_send_buffers_empty_sized_body_to_empty_payload() -> None:
+    client, session = _create_client()
     request = HTTPRequest(
         method="GET",
         destination=URI(scheme="https", host="example.com", path="/"),
-        body=body,
+        body=AsyncBytesReader(b""),
         fields=Fields([Field(name="content-length", values=["0"])]),
+    )
+
+    await client.send(request)
+
+    assert session.request.call_args.kwargs["data"] == b""
+
+
+async def test_send_streams_body_with_explicit_transfer_encoding() -> None:
+    # When the caller explicitly opts into chunked framing, the body is streamed
+    # rather than buffered.
+    client, session = _create_client()
+    body = AsyncBytesReader(b"streamed body")
+    request = HTTPRequest(
+        method="POST",
+        destination=URI(scheme="https", host="example.com", path="/"),
+        body=body,
+        fields=Fields([Field(name="transfer-encoding", values=["chunked"])]),
     )
 
     await client.send(request)

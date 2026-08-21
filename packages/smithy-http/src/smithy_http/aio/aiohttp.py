@@ -23,6 +23,7 @@ except ImportError:
 
 from smithy_core.aio.interfaces import StreamingBlob
 from smithy_core.aio.types import AsyncBytesReader
+from smithy_core.aio.utils import read_streaming_blob_async
 from smithy_core.exceptions import MissingDependencyError
 from smithy_core.interfaces import URI
 
@@ -117,13 +118,22 @@ class AIOHTTPClient(HTTPClient):
         )
 
         body: StreamingBlob | None = request.body
-        if (
-            "content-length" not in request.fields
-            and "transfer-encoding" not in request.fields
-        ):
+        if "transfer-encoding" in request.fields:
+            # The caller explicitly opted into streamed (chunked) framing.
+            if not isinstance(body, AsyncBytesReader):
+                body = AsyncBytesReader(body)
+        elif "content-length" in request.fields:
+            # The request was signed with this Content-Length. Handing aiohttp an
+            # async iterable of unknown size makes it fall back to chunked
+            # transfer encoding, which drops the signed Content-Length (and
+            # injects Content-Type: application/octet-stream). Both are signed
+            # headers, so the transmitted request no longer matches the SigV4
+            # signature, yielding 403 InvalidSignatureException (or 415 at
+            # services that validate media type first). Buffer to a fixed-length
+            # bytes payload so aiohttp preserves the framing that was signed.
+            body = await read_streaming_blob_async(body)
+        else:
             body = await self._prepare_body(body)
-        elif not isinstance(body, AsyncBytesReader):
-            body = AsyncBytesReader(body)
 
         # The typing on `params` is incorrect, it'll happily accept a mapping whose
         # values are lists (or tuples) and produce expected values.
