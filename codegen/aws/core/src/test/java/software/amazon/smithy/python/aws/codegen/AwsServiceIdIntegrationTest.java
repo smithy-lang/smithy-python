@@ -13,26 +13,17 @@ import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.python.codegen.PythonSymbolProvider;
-import software.amazon.smithy.python.codegen.SymbolProperties;
 
 public class AwsServiceIdIntegrationTest {
 
     private static final String NS = "smithy.example";
 
     @Test
-    public void testLegacyClientGetsAsyncNameWithDeprecatedAlias() {
+    public void testClientGetsAsyncName() {
         var symbol = toServiceSymbol("Bedrock Runtime");
 
         assertEquals("AsyncBedrockRuntimeClient", symbol.getName());
-        assertEquals("BedrockRuntimeClient", symbol.expectProperty(SymbolProperties.DEPRECATED_ALIAS));
-    }
-
-    @Test
-    public void testNewClientGetsAsyncNameWithoutDeprecatedAlias() {
-        var symbol = toServiceSymbol("Weather");
-
-        assertEquals("AsyncWeatherClient", symbol.getName());
-        assertFalse(symbol.getProperty(SymbolProperties.DEPRECATED_ALIAS).isPresent());
+        assertFalse(symbol.getTypedProperties().containsValue("BedrockRuntimeClient"));
     }
 
     private static Symbol toServiceSymbol(String sdkId) {
