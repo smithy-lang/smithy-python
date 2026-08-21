@@ -5,7 +5,6 @@ import asyncio
 import datetime
 import hmac
 import io
-import warnings
 from binascii import hexlify
 from collections.abc import AsyncIterable, Iterable
 from copy import deepcopy
@@ -16,7 +15,7 @@ from urllib.parse import parse_qsl, quote
 
 from ._http import AWSRequest, Field, URI
 from ._io import AsyncBytesReader
-from .exceptions import AWSSDKWarning, MissingExpectedParameterException
+from .exceptions import MissingExpectedParameterException
 from .interfaces.identity import AWSCredentialsIdentity as _AWSCredentialsIdentity
 from .interfaces.io import AsyncSeekable, ConditionallySeekable, Seekable
 
@@ -399,12 +398,6 @@ class SigV4Signer:
                 "AsyncSigV4Signer for async AWSRequests or ensure your body is "
                 "of type Iterable[bytes]."
             )
-
-        warnings.warn(
-            "Payload signing is enabled. This may result in "
-            "decreased performance for large request bodies.",
-            AWSSDKWarning,
-        )
 
         checksum = sha256()
         if self._seekable(body):
@@ -791,12 +784,6 @@ class AsyncSigV4Signer:
                 "SigV4Signer for sync AWSRequests or ensure your body is "
                 "of type AsyncIterable[bytes]."
             )
-        warnings.warn(
-            "Payload signing is enabled. This may result in "
-            "decreased performance for large request bodies.",
-            AWSSDKWarning,
-        )
-
         checksum = sha256()
         if self._seekable(body):
             position = body.tell()
