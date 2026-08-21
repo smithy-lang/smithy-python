@@ -645,6 +645,53 @@ class HTTPBlobPayload:
 
 
 @dataclass
+class HTTPBlobPayloadWithContentType:
+    payload: bytes = b""
+    content_type: str | None = None
+
+    ID: ClassVar[ShapeID] = ShapeID("com.smithy#HTTPBlobPayloadWithContentType")
+    SCHEMA: ClassVar[Schema] = Schema.collection(
+        id=ID,
+        members={
+            "payload": {"target": BLOB, "traits": [HTTPPayloadTrait()]},
+            "contentType": {
+                "target": STRING,
+                "traits": [HTTPHeaderTrait("Content-Type")],
+            },
+        },
+    )
+
+    def serialize(self, serializer: ShapeSerializer) -> None:
+        with serializer.begin_struct(self.SCHEMA) as s:
+            self.serialize_members(s)
+
+    def serialize_members(self, serializer: ShapeSerializer) -> None:
+        serializer.write_blob(self.SCHEMA.members["payload"], self.payload)
+        if self.content_type is not None:
+            serializer.write_string(
+                self.SCHEMA.members["contentType"], self.content_type
+            )
+
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
+        kwargs: dict[str, Any] = {}
+
+        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
+            match schema.expect_member_index():
+                case 0:
+                    kwargs["payload"] = de.read_blob(cls.SCHEMA.members["payload"])
+                case 1:
+                    kwargs["content_type"] = de.read_string(
+                        cls.SCHEMA.members["contentType"]
+                    )
+                case _:
+                    raise Exception(f"Unexpected schema: {schema}")
+
+        deserializer.read_struct(schema=cls.SCHEMA, consumer=_consumer)
+        return cls(**kwargs)
+
+
+@dataclass
 class HTTPStreamingPayload:
     payload: StreamingBlob
 
@@ -1756,6 +1803,20 @@ def payload_cases() -> list[HTTPMessageTestCase]:
                 fields=tuples_to_fields(
                     [
                         ("content-type", "application/octet-stream"),
+                        ("content-length", "4"),
+                    ]
+                ),
+                body=AsyncBytesReader(b"\xde\xad\xbe\xef"),
+            ),
+        ),
+        HTTPMessageTestCase(
+            HTTPBlobPayloadWithContentType(
+                payload=b"\xde\xad\xbe\xef", content_type="application/json"
+            ),
+            HTTPMessage(
+                fields=tuples_to_fields(
+                    [
+                        ("Content-Type", "application/json"),
                         ("content-length", "4"),
                     ]
                 ),
