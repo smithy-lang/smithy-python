@@ -54,6 +54,8 @@ public class AwsCodegenTest {
         assertTrue(config.contains("auth_schemes = dict(self.auth_schemes or {})"));
         assertTrue(config.contains("auth_schemes[scheme.scheme_id] = scheme"));
         assertTrue(config.contains("self.auth_schemes = auth_schemes"));
+        assertTrue(config.contains("default_factory=lambda: AIOHTTPClient()"));
+        assertFalse(config.contains("from smithy_http.aio.crt import AWSCRTHTTPClient"));
 
         var client = Files.readString(tempDir.resolve("src/restjson/client.py"));
         assertInOrder(
