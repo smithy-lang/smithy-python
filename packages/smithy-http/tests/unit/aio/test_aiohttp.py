@@ -3,14 +3,14 @@
 #  pyright: reportPrivateUsage=false
 from collections.abc import AsyncIterator
 from typing import Any, cast
-from unittest.mock import AsyncMock, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 from smithy_core import URI
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest
-from smithy_http.aio.aiohttp import AIOHTTPClient
+from smithy_http.aio.aiohttp import AIOHTTPClient, _AIOHTTPStreamingBody
 from smithy_http.exceptions import SmithyHTTPError
 
 
@@ -20,9 +20,17 @@ def _create_client() -> tuple[AIOHTTPClient, MagicMock]:
 
     session = MagicMock()
     session.close = AsyncMock()
-    session.request.return_value.__aenter__ = AsyncMock(return_value=response)
-    session.request.return_value.__aexit__ = AsyncMock(return_value=None)
+    session.request = AsyncMock(return_value=response)
     return AIOHTTPClient(_session=cast(Any, session)), session
+
+
+def _create_request() -> HTTPRequest:
+    return HTTPRequest(
+        method="GET",
+        destination=URI(scheme="https", host="example.com", path="/"),
+        body=AsyncBytesReader(b""),
+        fields=Fields(),
+    )
 
 
 async def test_close_closes_session() -> None:
@@ -57,14 +65,8 @@ async def test_context_manager_closes_session() -> None:
 
 async def test_send_omits_empty_async_reader_body() -> None:
     client, session = _create_client()
-    request = HTTPRequest(
-        method="GET",
-        destination=URI(scheme="https", host="example.com", path="/"),
-        body=AsyncBytesReader(b""),
-        fields=Fields(),
-    )
 
-    await client.send(request)
+    await client.send(_create_request())
 
     assert session.request.call_args.kwargs["data"] is None
 
@@ -86,16 +88,84 @@ async def test_send_preserves_explicitly_framed_empty_body() -> None:
 
 async def test_send_disables_redirects() -> None:
     client, session = _create_client()
-    request = HTTPRequest(
-        method="GET",
-        destination=URI(scheme="https", host="example.com", path="/"),
-        body=AsyncBytesReader(b""),
-        fields=Fields(),
-    )
 
-    await client.send(request)
+    await client.send(_create_request())
 
     assert session.request.call_args.kwargs["allow_redirects"] is False
+
+
+async def test_send_streams_response_body_and_releases_it_on_close() -> None:
+    async def chunks() -> AsyncIterator[bytes]:
+        yield b"first"
+        yield b"second"
+
+    client, session = _create_client()
+    aiohttp_response = session.request.return_value
+    aiohttp_response.content.iter_any.return_value = chunks()
+
+    response = await client.send(_create_request())
+
+    aiohttp_response.read.assert_not_awaited()
+    aiohttp_response.content.iter_any.assert_not_called()
+    assert isinstance(response.body, _AIOHTTPStreamingBody)
+    assert [chunk async for chunk in response.body] == [
+        b"first",
+        b"second",
+    ]
+    aiohttp_response.content.iter_any.assert_called_once_with()
+    aiohttp_response.release.assert_not_called()
+
+    await response.body.close()
+    aiohttp_response.release.assert_called_once_with()
+
+
+async def test_non_streaming_response_body_can_be_consumed() -> None:
+    async def chunks() -> AsyncIterator[bytes]:
+        yield b'{"message":'
+        yield b'"hello"}'
+
+    client, session = _create_client()
+    aiohttp_response = session.request.return_value
+    aiohttp_response.content.iter_any.return_value = chunks()
+
+    response = await client.send(_create_request())
+
+    assert await response.consume_body_async() == b'{"message":"hello"}'
+    aiohttp_response.content.iter_any.assert_called_once_with()
+
+
+async def test_response_body_close_releases_partially_consumed_response() -> None:
+    async def chunks() -> AsyncIterator[bytes]:
+        yield b"first"
+        yield b"second"
+
+    client, session = _create_client()
+    aiohttp_response = session.request.return_value
+    aiohttp_response.content.iter_any.return_value = chunks()
+
+    response = await client.send(_create_request())
+    assert isinstance(response.body, _AIOHTTPStreamingBody)
+    body_iterator = aiter(response.body)
+    assert await anext(body_iterator) == b"first"
+
+    await response.body.close()
+
+    aiohttp_response.release.assert_called_once_with()
+
+
+async def test_send_releases_response_when_marshaling_fails() -> None:
+    client, session = _create_client()
+    aiohttp_response = session.request.return_value
+
+    with (
+        patch.object(
+            client, "_marshal_response", side_effect=ValueError("invalid response")
+        ),
+        pytest.raises(ValueError, match="invalid response"),
+    ):
+        await client.send(_create_request())
+
+    aiohttp_response.release.assert_called_once_with()
 
 
 async def test_prepare_body_preserves_nonempty_reader_position() -> None:

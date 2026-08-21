@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Stream aiohttp response bodies incrementally to enable true output event streams."
+}
