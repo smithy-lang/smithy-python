@@ -94,6 +94,40 @@ async def test_send_disables_redirects() -> None:
     assert session.request.call_args.kwargs["allow_redirects"] is False
 
 
+async def test_send_skips_automatic_content_type() -> None:
+    client, session = _create_client()
+
+    await client.send(_create_request())
+
+    assert session.request.call_args.kwargs["skip_auto_headers"] == {"Content-Type"}
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "",
+        "sync",
+        "key=",
+        "a=1&a=2",
+        "sync&filter=a%2Fb&q=hello%20world&plus=a%2Bb",
+    ],
+)
+async def test_send_preserves_encoded_query_string(query: str) -> None:
+    client, session = _create_client()
+    request = HTTPRequest(
+        method="POST",
+        destination=URI(scheme="https", host="example.com", path="/p", query=query),
+        body=AsyncBytesReader(b""),
+        fields=Fields(),
+    )
+
+    await client.send(request)
+
+    url = session.request.call_args.kwargs["url"]
+    assert url.raw_path_qs == (f"/p?{query}" if query else "/p")
+    assert "params" not in session.request.call_args.kwargs
+
+
 async def test_send_streams_response_body_and_releases_it_on_close() -> None:
     async def chunks() -> AsyncIterator[bytes]:
         yield b"first"
