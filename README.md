@@ -161,9 +161,9 @@ from echo.models import EchoMessageInput
 
 
 async def main() -> None:
-    client = EchoService(Config(endpoint_uri="https://example.com/"))
-    response = await client.echo_message(EchoMessageInput(message="spam"))
-    print(response.message)
+    async with EchoService(Config(endpoint_uri="https://example.com/")) as client:
+        response = await client.echo_message(EchoMessageInput(message="spam"))
+        print(response.message)
 
 
 if __name__ == "__main__":

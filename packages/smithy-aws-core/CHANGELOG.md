@@ -1,5 +1,13 @@
 # Changelog
 
+## v0.11.0
+
+### Enhancements
+* Aligned with service client minor version
+
+### Dependencies
+* Bump `smithy-http` from `~=0.4.0` to `~=0.5.0`.
+
 ## v0.10.0
 
 ### Breaking Changes

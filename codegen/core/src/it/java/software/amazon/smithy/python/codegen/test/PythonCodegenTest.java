@@ -5,6 +5,7 @@
 package software.amazon.smithy.python.codegen.test;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -46,5 +47,11 @@ public class PythonCodegenTest {
         var client = Files.readString(tempDir.resolve("src/weather/client.py"));
         assertFalse(client.contains("retry_mode="));
         assertFalse(client.contains("max_attempts="));
+        assertTrue(client.contains("async def close(self) -> None:"));
+        assertTrue(client.contains("if self._closed:"));
+
+        var config = Files.readString(tempDir.resolve("src/weather/config.py"));
+        assertTrue(config.contains("self.transport = transport or AIOHTTPClient()"));
+        assertFalse(config.contains("self.transport = transport or AWSCRTHTTPClient()"));
     }
 }

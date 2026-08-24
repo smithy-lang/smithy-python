@@ -117,6 +117,7 @@ public final class RuntimeTypes {
 
     // smithy_core.aio.utils
     public static final Symbol ASYNC_LIST = createSymbol("aio.utils", "async_list", SmithyPythonDependency.SMITHY_CORE);
+    public static final Symbol ASYNC_CLOSE = createSymbol("aio.utils", "close", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_http
     public static final Symbol TUPLES_TO_FIELDS =

@@ -66,6 +66,7 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
     private static final Logger LOGGER = Logger.getLogger(PythonSymbolProvider.class.getName());
     private static final String SHAPES_FILE = "models";
     private static final String SCHEMAS_FILE = "_private/schemas";
+    private static final Set<String> CLIENT_RESERVED_METHOD_NAMES = Set.of("close");
 
     private final Model model;
     private final ReservedWordSymbolProvider.Escaper escaper;
@@ -297,6 +298,9 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
         // Operation names are escaped like members because ultimately they're
         // properties on an object too.
         var methodName = escaper.escapeMemberName(CaseUtils.toSnakeCase(shape.getId().getName(service)));
+        if (CLIENT_RESERVED_METHOD_NAMES.contains(methodName)) {
+            methodName = escapeWord(methodName);
+        }
         var methodSymbol = createGeneratedSymbolBuilder(shape, methodName, "client", false)
                 .putProperty(SymbolProperties.IMPORTABLE, false)
                 .build();

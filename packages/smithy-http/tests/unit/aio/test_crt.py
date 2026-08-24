@@ -27,8 +27,43 @@ def test_deepcopy_client() -> None:
     deepcopy(client)
 
 
+async def test_close_closes_and_clears_pooled_connections() -> None:
+    client = AWSCRTHTTPClient()
+    connections = [AsyncMock(), AsyncMock()]
+    client._connections = {
+        ("https", "one.example.com", None): connections[0],
+        ("https", "two.example.com", None): connections[1],
+    }
+
+    await client.close()
+    await client.close()
+
+    assert client._connections == {}
+    for connection in connections:
+        connection.close.assert_awaited_once()
+
+
 def test_supports_duplex_streaming() -> None:
     assert AWSCRTHTTPClient.SUPPORTS_DUPLEX_STREAMING is True
+
+
+async def test_send_after_close_raises() -> None:
+    client = AWSCRTHTTPClient()
+    await client.close()
+
+    with pytest.raises(SmithyHTTPError, match="has been closed"):
+        await client.send(Mock())
+
+
+async def test_context_manager_cannot_be_reentered() -> None:
+    client = AWSCRTHTTPClient()
+
+    async with client as entered:
+        assert entered is client
+
+    with pytest.raises(SmithyHTTPError, match="has been closed"):
+        async with client:
+            pass
 
 
 def test_client_marshal_request() -> None:

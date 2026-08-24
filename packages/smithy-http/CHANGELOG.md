@@ -1,5 +1,15 @@
 # Changelog
 
+## v0.5.0
+
+### Features
+* Added deterministic connection-pool cleanup and async context manager support to HTTP clients.
+
+### Bug fixes
+* Stream aiohttp response bodies incrementally to enable true output event streams.
+* Fixed `AIOHTTPClient` to stop dropping valueless query parameters and automatically adding a `Content-Type` to bodyless POST, PUT, and PATCH requests.
+* Fixed duplicate Content-Type headers when a member is bound to Content-Type.
+
 ## v0.4.4
 
 ### Enhancements

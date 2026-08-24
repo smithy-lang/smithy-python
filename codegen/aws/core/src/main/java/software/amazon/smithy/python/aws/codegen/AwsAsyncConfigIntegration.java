@@ -6,16 +6,10 @@ package software.amazon.smithy.python.aws.codegen;
 
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.Symbol;
-import software.amazon.smithy.model.knowledge.EventStreamIndex;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
-import software.amazon.smithy.model.knowledge.TopDownIndex;
-import software.amazon.smithy.model.node.ArrayNode;
-import software.amazon.smithy.model.node.StringNode;
-import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
@@ -295,13 +289,8 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             // transport FieldSpec
             writer.write("\"transport\": $T(", fieldSpecSymbol);
             writer.indent();
-            if (usesHttp2(context)) {
-                writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("awscrt"));
-                writer.write("default_factory=lambda: $T(),", RuntimeTypes.AWS_CRT_HTTP_CLIENT);
-            } else {
-                writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("aiohttp"));
-                writer.write("default_factory=lambda: $T(),", RuntimeTypes.AIOHTTP_CLIENT);
-            }
+            writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("aiohttp"));
+            writer.write("default_factory=lambda: $T(),", RuntimeTypes.AIOHTTP_CLIENT);
             writer.dedent();
             writer.write("),");
 
@@ -367,29 +356,5 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             writer.closeBlock("}");
         }
 
-        private static boolean usesHttp2(GenerationContext context) {
-            var configuration = context.applicationProtocol().configuration();
-            var httpVersions = configuration.getArrayMember("http")
-                    .orElse(ArrayNode.arrayNode())
-                    .getElementsAs(StringNode.class)
-                    .stream()
-                    .map(node -> node.getValue().toLowerCase(Locale.ENGLISH))
-                    .toList();
-
-            if (httpVersions.contains("h2")) {
-                return true;
-            }
-
-            var eventIndex = EventStreamIndex.of(context.model());
-            var topDownIndex = TopDownIndex.of(context.model());
-            for (OperationShape operation : topDownIndex.getContainedOperations(context.settings().service())) {
-                if (eventIndex.getInputInfo(operation).isPresent()
-                        || eventIndex.getOutputInfo(operation).isPresent()) {
-                    return true;
-                }
-            }
-
-            return false;
-        }
     }
 }

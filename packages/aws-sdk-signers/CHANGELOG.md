@@ -1,5 +1,10 @@
 # Changelog
 
+## v0.3.1
+
+### Enhancements
+* Removed the `AWSSDKWarning` emitted during SigV4 payload signing. It fired on every signed request regardless of body size, adding noise on the default code path (and, under warnings-as-errors, could turn signing into a raised exception).
+
 ## v0.3.0
 
 ### Features

@@ -8,16 +8,11 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Locale;
 import java.util.TreeSet;
 import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.Symbol;
-import software.amazon.smithy.model.knowledge.EventStreamIndex;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
-import software.amazon.smithy.model.node.ArrayNode;
-import software.amazon.smithy.model.node.StringNode;
-import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
@@ -154,55 +149,18 @@ public final class ConfigGenerator implements Runnable {
 
         if (context.applicationProtocol().isHttpProtocol()) {
             properties.addAll(HTTP_PROPERTIES);
-            if (usesHttp2(context)) {
-                transportBuilder
-                        .initialize(writer -> {
-                            writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("awscrt"));
-                            writer.write("self.transport = transport or $T()",
-                                    RuntimeTypes.AWS_CRT_HTTP_CLIENT);
-                        });
-
-            } else {
-                transportBuilder
-                        .initialize(writer -> {
-                            writer.addDependency(
-                                    SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("aiohttp"));
-                            writer.write("self.transport = transport or $T()",
-                                    RuntimeTypes.AIOHTTP_CLIENT);
-                        });
-            }
+            transportBuilder
+                    .initialize(writer -> {
+                        writer.addDependency(
+                                SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("aiohttp"));
+                        writer.write("self.transport = transport or $T()",
+                                RuntimeTypes.AIOHTTP_CLIENT);
+                    });
         }
 
         properties.add(protocolBuilder.build());
         properties.add(transportBuilder.build());
         return properties;
-    }
-
-    private static boolean usesHttp2(GenerationContext context) {
-        var configuration = context.applicationProtocol().configuration();
-        var httpVersions = configuration.getArrayMember("http")
-                .orElse(ArrayNode.arrayNode())
-                .getElementsAs(StringNode.class)
-                .stream()
-                .map(node -> node.getValue().toLowerCase(Locale.ENGLISH))
-                .toList();
-
-        // An explicit http2 configuration
-        if (httpVersions.contains("h2")) {
-            return true;
-        }
-
-        // enable CRT/http2 client if the service supports any event streams (single or bi-directional)
-        // TODO: Long term, only bi-directional evenstreams strictly require h2
-        var eventIndex = EventStreamIndex.of(context.model());
-        var topDownIndex = TopDownIndex.of(context.model());
-        for (OperationShape operation : topDownIndex.getContainedOperations(context.settings().service())) {
-            if (eventIndex.getInputInfo(operation).isPresent() || eventIndex.getOutputInfo(operation).isPresent()) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     private static List<ConfigProperty> getAuthProperties(GenerationContext context) {

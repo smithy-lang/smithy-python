@@ -94,6 +94,7 @@ final class ClientGenerator implements Runnable {
                         self._plugins = plugins
                         self._derive_lock = asyncio.Lock()
                         self._setup_done = False
+                        self._closed = False
                         self._retry_strategy_resolver = $4T()
                         self._client_plugins: list[$2T] = [
                             ${5C|}
@@ -134,6 +135,36 @@ final class ClientGenerator implements Runnable {
                         w.popState();
                     }));
 
+            writer.addStdlibImport("typing", "Any");
+            writer.addStdlibImport("typing", "Self");
+            writer.write("""
+
+                    async def close(self) -> None:
+                        \"\"\"Close this client and any resources held by its transport.\"\"\"
+                        if self._closed:
+                            return
+                        async with self._derive_lock:
+                            if self._closed:
+                                return
+                            self._closed = True
+                            if self._setup_done and self._config is not None:
+                                await $1T(self._config.transport)
+
+                    async def __aenter__(self) -> Self:
+                        if self._closed:
+                            raise RuntimeError("Cannot enter a client that has been closed.")
+                        return self
+
+                    async def __aexit__(
+                        self,
+                        exc_type: Any,
+                        exc_value: Any,
+                        traceback: Any,
+                    ) -> None:
+                        await self.close()
+                    """,
+                    RuntimeTypes.ASYNC_CLOSE);
+
             var topDownIndex = TopDownIndex.of(model);
             var eventStreamIndex = EventStreamIndex.of(model);
             for (OperationShape operation : topDownIndex.getContainedOperations(service)) {
@@ -146,29 +177,6 @@ final class ClientGenerator implements Runnable {
             }
         });
 
-        serviceSymbol.getProperty(SymbolProperties.DEPRECATED_ALIAS).ifPresent(alias -> {
-            writer.addStdlibImport("typing", "TYPE_CHECKING");
-            writer.addStdlibImport("typing", "Any");
-            writer.addStdlibImport("warnings");
-            writer.write("""
-
-                    if TYPE_CHECKING:
-                        # Deprecated alias for backwards compatibility, to be removed.
-                        $1L = $2L
-
-
-                    def __getattr__(name: str) -> Any:
-                        if name == $1S:
-                            warnings.warn(
-                                "$1L is deprecated, use $2L instead. "
-                                "This alias will be removed in a future version.",
-                                DeprecationWarning,
-                                stacklevel=2,
-                            )
-                            return $2L
-                        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-                    """, alias, serviceSymbol.getName());
-        });
     }
 
     private void writeDefaultPlugins(PythonWriter writer, Collection<SymbolReference> plugins) {
@@ -280,6 +288,11 @@ final class ClientGenerator implements Runnable {
 
         writer.write(
                 """
+                        if self._closed:
+                            raise RuntimeError(
+                                "Cannot invoke an operation on a client that has been closed."
+                            )
+
                         operation_plugins: list[Plugin] = [
                             $1C
                         ]

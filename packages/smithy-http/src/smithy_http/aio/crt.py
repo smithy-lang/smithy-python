@@ -1,12 +1,13 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 #  pyright: reportMissingTypeStubs=false,reportUnknownMemberType=false
+from asyncio import gather
 from collections.abc import AsyncGenerator, AsyncIterable
 from copy import deepcopy
 from dataclasses import dataclass
 from inspect import iscoroutinefunction
 from io import BytesIO
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 from awscrt.exceptions import AwsCrtError
 
@@ -164,6 +165,7 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         self._tls_ctx = crt_io.ClientTlsContext(crt_io.TlsContextOptions())
         self._socket_options = crt_io.SocketOptions()
         self._connections: ConnectionPoolDict = {}
+        self._closed = False
 
     async def send(
         self,
@@ -176,6 +178,11 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
         :param request: The request including destination URI, fields, payload.
         :param request_config: Configuration specific to this request.
         """
+        if self._closed:
+            raise SmithyHTTPError(
+                "Cannot send a request after the HTTP client has been closed."
+            )
+
         try:
             crt_request = self._marshal_request(request)
             connection = await self._get_connection(request.destination)
@@ -198,6 +205,26 @@ class AWSCRTHTTPClient(http_aio_interfaces.HTTPClient):
             if e.name in self._TIMEOUT_ERROR_NAMES:
                 raise _CRTTimeoutError(f"CRT {e.name}: {e.message}") from e
             raise
+
+    async def close(self) -> None:
+        """Close all pooled HTTP connections."""
+        if self._closed:
+            return
+        self._closed = True
+        connections = tuple(self._connections.values())
+        self._connections.clear()
+        await gather(
+            *(connection.close() for connection in connections),
+            return_exceptions=True,
+        )
+
+    async def __aenter__(self) -> Self:
+        if self._closed:
+            raise SmithyHTTPError("Cannot enter an HTTP client that has been closed.")
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        await self.close()
 
     async def _await_response(
         self, stream: "AIOHttpClientStreamUnified"

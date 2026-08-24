@@ -234,8 +234,9 @@ public final class SetupGenerator {
         // Let users opt into the CRT transport (AWSCRTHTTPClient) without guessing a compatible
         // awscrt version, by re-exporting smithy_http's awscrt extra. This keeps the version
         // constraint sourced from smithy-http, the single source of truth. Skipped when the client
-        // already requires awscrt (e.g. an http2 service that defaults to the CRT transport), where
-        // there is nothing to opt into.
+        // already requires awscrt as a hard dependency, where there is nothing to opt into. No
+        // client defaults to CRT today, so the guard is currently always taken; it remains as a
+        // safeguard should a client ever pull awscrt as a hard dependency again.
         var smithyHttp = dependencies.get(SmithyPythonDependency.SMITHY_HTTP.packageName());
         if (smithyHttp != null && !getOptionalDependencies(smithyHttp).contains("awscrt")) {
             extras.put("awscrt", List.of("smithy_http[awscrt]" + smithyHttp.getVersion()));
