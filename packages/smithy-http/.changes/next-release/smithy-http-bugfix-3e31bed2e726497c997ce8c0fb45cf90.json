@@ -1,4 +1,0 @@
-{
-  "type": "bugfix",
-  "description": "Fixed duplicate Content-Type headers when a member is bound to Content-Type."
-}

@@ -1,4 +1,0 @@
-{
-  "type": "feature",
-  "description": "Added deterministic connection-pool cleanup and async context manager support to HTTP clients."
-}

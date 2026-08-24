@@ -33,7 +33,7 @@ public final class SmithyPythonDependency {
      */
     public static final PythonDependency SMITHY_HTTP = new PythonDependency(
             "smithy_http",
-            "~=0.4.0",
+            "~=0.5.0",
             Type.DEPENDENCY,
             false);
 
@@ -78,7 +78,7 @@ public final class SmithyPythonDependency {
      */
     public static final PythonDependency SMITHY_AWS_CORE = new PythonDependency(
             "smithy_aws_core",
-            "~=0.10.0",
+            "~=0.11.0",
             Type.DEPENDENCY,
             false);
 
