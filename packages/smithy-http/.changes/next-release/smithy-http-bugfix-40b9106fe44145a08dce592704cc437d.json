@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Fixed `AIOHTTPClient` to stop dropping valueless query parameters and automatically adding a `Content-Type` to bodyless POST, PUT, and PATCH requests."
+}

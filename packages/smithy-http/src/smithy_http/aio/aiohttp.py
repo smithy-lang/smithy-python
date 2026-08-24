@@ -4,7 +4,6 @@ from collections.abc import AsyncIterable, AsyncIterator
 from copy import copy, deepcopy
 from itertools import chain
 from typing import TYPE_CHECKING, Any, Self
-from urllib.parse import parse_qs
 
 import yarl
 
@@ -125,16 +124,13 @@ class AIOHTTPClient(HTTPClient):
         elif not isinstance(body, AsyncBytesReader):
             body = AsyncBytesReader(body)
 
-        # The typing on `params` is incorrect, it'll happily accept a mapping whose
-        # values are lists (or tuples) and produce expected values.
-        # See: https://github.com/aio-libs/aiohttp/issues/8563
         resp = await self._session.request(
             method=request.method,
-            url=self._serialize_uri_without_query(request.destination),
-            params=parse_qs(request.destination.query),  # type: ignore
+            url=self._serialize_uri(request.destination),
             headers=headers_list,
             data=body,
             allow_redirects=False,
+            skip_auto_headers={"Content-Type"},
         )
         try:
             return self._marshal_response(resp)
@@ -170,8 +166,8 @@ class AIOHTTPClient(HTTPClient):
         await body.seek(position)
         return None if position == end else body
 
-    def _serialize_uri_without_query(self, uri: URI) -> yarl.URL:
-        """Serialize all parts of the URI up to and including the path."""
+    def _serialize_uri(self, uri: URI) -> yarl.URL:
+        """Serialize the URI, preserving the already-encoded query string as-is."""
         return yarl.URL.build(
             scheme=uri.scheme or "",
             host=uri.host,
@@ -179,6 +175,7 @@ class AIOHTTPClient(HTTPClient):
             user=uri.username,
             password=uri.password,
             path=uri.path or "",
+            query_string=uri.query or "",
             encoded=True,
         )
 
