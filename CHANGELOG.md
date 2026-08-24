@@ -2,6 +2,23 @@
 
 ## Unreleased
 
+## v0.5.0
+
+### Breaking Changes
+
+* Removed the deprecated unprefixed aliases for generated AWS service clients.
+  Imports such as `BedrockRuntimeClient` must now use the `Async`-prefixed name,
+  such as `AsyncBedrockRuntimeClient`.
+* Changed all generated AWS clients to use `AIOHTTPClient` as their default
+  transport, including services configured for HTTP/2 or event streaming.
+  Applications that require the CRT transport, such as those using
+  bidirectional event streams, must install the generated client's `awscrt`
+  extra and explicitly configure `AWSCRTHTTPClient`.
+* Removed the legacy `Config` class from generated AWS clients in favor of the
+  service-specific, async-resolved `Async<SdkId>Config` class, such as
+  `AsyncBedrockRuntimeConfig`. Explicit configuration must now be resolved with
+  `await Async<SdkId>Config.resolve(...)` before it is passed to the client.
+
 ## v0.4.0
 
 ### Breaking Changes

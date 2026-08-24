@@ -49,5 +49,9 @@ public class PythonCodegenTest {
         assertFalse(client.contains("max_attempts="));
         assertTrue(client.contains("async def close(self) -> None:"));
         assertTrue(client.contains("if self._closed:"));
+
+        var config = Files.readString(tempDir.resolve("src/weather/config.py"));
+        assertTrue(config.contains("self.transport = transport or AIOHTTPClient()"));
+        assertFalse(config.contains("self.transport = transport or AWSCRTHTTPClient()"));
     }
 }
