@@ -198,6 +198,18 @@ def test_validate_rejects_duplicate_names() -> None:
         chain_module._validate_providers((first, second))
 
 
+def test_validate_rejects_case_insensitive_duplicate_names() -> None:
+    first = _StubProvider("Duplicate", Standard(slot=StandardProvider.ENVIRONMENT))
+    second = _StubProvider("duplicate", Standard(slot=StandardProvider.SHARED_CONFIG))
+
+    with pytest.raises(
+        IdentityChainConfigurationError,
+        match="Credential providers _StubProvider and _StubProvider use the "
+        "same name: duplicate",
+    ):
+        chain_module._validate_providers((first, second))
+
+
 def test_validate_rejects_duplicate_standard_slots() -> None:
     first = _StubProvider("a", Standard(slot=StandardProvider.ENVIRONMENT))
     second = _StubProvider("b", Standard(slot=StandardProvider.ENVIRONMENT))

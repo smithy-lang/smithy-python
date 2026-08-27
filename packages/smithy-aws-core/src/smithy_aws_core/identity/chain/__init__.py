@@ -99,12 +99,13 @@ def _validate_providers(providers: Sequence[ChainIdentityProvider]) -> None:
     discovered_standard_slots: dict[StandardProvider, ChainIdentityProvider] = {}
 
     for provider in providers:
-        if (previous := discovered_names.get(provider.name)) is not None:
+        normalized_name = provider.name.casefold()
+        if (previous := discovered_names.get(normalized_name)) is not None:
             raise IdentityChainConfigurationError(
                 f"Credential providers {type(previous).__name__} and "
                 f"{type(provider).__name__} use the same name: {provider.name}."
             )
-        discovered_names[provider.name] = provider
+        discovered_names[normalized_name] = provider
 
         ordering = provider.ordering
         if isinstance(ordering, Standard):
