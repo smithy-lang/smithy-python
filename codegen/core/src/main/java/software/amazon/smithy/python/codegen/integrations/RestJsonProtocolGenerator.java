@@ -63,7 +63,6 @@ public class RestJsonProtocolGenerator implements ProtocolGenerator {
             "RestJsonClientSkipsTopLevelDefaultValuesInInput",
             "RestJsonClientUsesExplicitlyProvidedMemberValuesOverDefaults",
             "RestJsonClientIgnoresNonTopLevelDefaultsOnMembersWithClientOptional",
-            "RestJsonClientPopulatesDefaultsValuesWhenMissingInResponse",
             "HttpPrefixEmptyHeaders");
 
     @Override
