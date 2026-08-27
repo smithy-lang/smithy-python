@@ -1,0 +1,4 @@
+{
+  "type": "enhancement",
+  "description": "Update identity chain validation to use case-insensitive comparisons for provider names."
+}
