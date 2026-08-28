@@ -395,6 +395,10 @@ the `codegen` directory. If this is the first time you have run this
 (or if you didn't already run `make install`), it will download Gradle onto your
 system to run along with any dependencies of the Java packages.
 
+Java builds check formatting without modifying source. From the repository
+root, run `make format-java` to apply formatting and `make check-java` to check
+it explicitly.
+
 For more details on working on the code generator, see the readme in the
 `codegen` directory.
 
