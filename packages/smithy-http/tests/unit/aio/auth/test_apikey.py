@@ -7,16 +7,16 @@ import pytest
 from smithy_core import URI
 from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.exceptions import SmithyIdentityError
+from smithy_core.traits import APIKeyLocation
 from smithy_core.types import TypedProperties
 from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest
-from smithy_http.aio.auth.apikey import (
-    APIKeyAuthScheme,
+from smithy_http.aio.auth.apikey import APIKeyAuthScheme, APIKeySigner
+from smithy_http.aio.identity.apikey import (
+    APIKeyIdentity,
     APIKeyIdentityProperties,
-    APIKeyLocation,
-    APIKeySigner,
+    APIKeyIdentityResolver,
 )
-from smithy_http.aio.identity.apikey import APIKeyIdentity, APIKeyIdentityResolver
 
 
 class _FakeBody(AsyncIterable[bytes]):

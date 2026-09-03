@@ -8,19 +8,32 @@ from smithy_aws_core.traits import (
     AwsQueryErrorTrait,
     AwsQueryTrait,
     RestJson1Trait,
+    RestXmlTrait,
 )
 
 
 @pytest.mark.parametrize(
     "trait_type",
-    [RestJson1Trait, AwsJson1_0Trait, AwsJson1_1Trait],
+    [RestJson1Trait, AwsJson1_0Trait, AwsJson1_1Trait, RestXmlTrait],
 )
 def test_allows_empty_protocol_trait_value(
-    trait_type: type[RestJson1Trait] | type[AwsJson1_0Trait] | type[AwsJson1_1Trait],
+    trait_type: type[RestJson1Trait]
+    | type[AwsJson1_0Trait]
+    | type[AwsJson1_1Trait]
+    | type[RestXmlTrait],
 ) -> None:
     trait = trait_type(None)
     assert trait.http == ("http/1.1",)
     assert trait.event_stream_http == ("http/1.1",)
+
+
+def test_parses_rest_xml_trait() -> None:
+    assert RestXmlTrait(None).no_error_wrapping is False
+    assert RestXmlTrait({"noErrorWrapping": False}).no_error_wrapping is False
+
+    trait = RestXmlTrait({"noErrorWrapping": True, "http": ["h2"]})
+    assert trait.no_error_wrapping is True
+    assert trait.http == ("h2",)
 
 
 def test_allows_empty_aws_query_trait_value() -> None:

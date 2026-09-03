@@ -11,32 +11,17 @@ from smithy_core.deserializers import ShapeDeserializer, SpecificShapeDeserializ
 from smithy_core.documents import Document
 from smithy_core.exceptions import SmithyError
 from smithy_core.schemas import Schema
-from smithy_core.shapes import ShapeID, ShapeType
+from smithy_core.shapes import ShapeID
 from smithy_core.traits import (
     TimestampFormatTrait,
     XMLAttributeTrait,
     XMLFlattenedTrait,
-    XMLNameTrait,
 )
 
 from ..settings import XMLSettings
 from .readers import XMLEvent, XMLEventReader
-
-
-def _local_name(tag: str) -> str:
-    """Strip namespace URI from an element tag: {uri}local -> local."""
-    if tag.startswith("{"):
-        return tag.split("}", 1)[1]
-    return tag
-
-
-def _expected_root_name(schema: Schema) -> str | None:
-    """Get the expected root element name for root validation."""
-    if schema.shape_type not in (ShapeType.STRUCTURE, ShapeType.UNION):
-        return None
-    if xml_name := schema.get_trait(XMLNameTrait):
-        return xml_name.value
-    return schema.id.name
+from .traits import local_name as _local_name
+from .traits import member_name as _xml_member_name
 
 
 def _validate_element_name(expected: str, elem: Element) -> None:
@@ -44,13 +29,6 @@ def _validate_element_name(expected: str, elem: Element) -> None:
     found = _local_name(elem.tag)
     if found != expected:
         raise XMLParseError(f"Expected element '{expected}', got '{found}'")
-
-
-def _xml_member_name(member_schema: Schema) -> str:
-    """Get the XML element name for a member, respecting @xmlName."""
-    if xml_name := member_schema.get_trait(XMLNameTrait):
-        return xml_name.value
-    return member_schema.expect_member_name()
 
 
 def _parse_xml_float(text: str) -> float:
@@ -82,7 +60,6 @@ class XMLShapeDeserializer(ShapeDeserializer):
     ) -> None:
         self._settings = settings
         self._reader = reader
-        self._is_root = not bool(wrapper_elements)
         self._xml_names: dict[ShapeID, dict[str, Schema]] = {}
         self._preconsumed_start: Element | None = None
 
@@ -145,21 +122,19 @@ class XMLShapeDeserializer(ShapeDeserializer):
         consumer: Callable[[Schema, "ShapeDeserializer"], None],
     ) -> None:
         xml_names = self._get_xml_names(schema)
-        start_from_wrapper = self._preconsumed_start is not None
-        start_elem = self._consume_start_event()
-        if self._is_root:
-            self._is_root = False
-            expected = _expected_root_name(schema)
-            if expected is not None:
-                _validate_element_name(expected, start_elem)
 
-        # Wrapper elements are protocol transport containers, not modeled structs,
-        # so their attributes cannot be deserialized as struct members.
-        if not start_from_wrapper:
+        # The root element's name is deliberately not validated. Services don't
+        # reliably use the modeled name, and when the root is an @httpPayload
+        # member the deserializer only has access to the target's schema.
+        start_elem = self._consume_start_event()
+
+        if start_elem.attrib:
             for member_schema in schema.members.values():
                 if member_schema.get_trait(XMLAttributeTrait) is None:
                     continue
-                expected_attr_name = _xml_member_name(member_schema)
+                # @xmlName on attributes may include a namespace prefix, which
+                # the parser resolves to a URI, so only local names are compared.
+                expected_attr_name = _local_name(_xml_member_name(member_schema))
                 for attr_name, attr_value in start_elem.attrib.items():
                     attr_local_name = _local_name(attr_name)
                     if attr_local_name == expected_attr_name:

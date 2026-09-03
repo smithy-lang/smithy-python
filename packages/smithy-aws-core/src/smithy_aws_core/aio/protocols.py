@@ -21,11 +21,13 @@ from smithy_core.exceptions import (
     ModeledError,
     UnsupportedStreamError,
 )
+from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
 from smithy_core.interfaces import TypedProperties, URI
 from smithy_core.prelude import DOCUMENT
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import SerializeableShape
 from smithy_core.shapes import ShapeID, ShapeType
+from smithy_core.traits import HTTPTrait, XMLNamespaceTrait
 from smithy_core.types import TimestampFormat
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPRequest as _HTTPRequest
@@ -38,7 +40,14 @@ from smithy_http.deserializers import HTTPResponseDeserializer
 
 from .._private.query.errors import create_aws_query_error
 from .._private.query.serializers import QueryShapeSerializer
-from ..traits import AwsJson1_0Trait, AwsJson1_1Trait, AwsQueryTrait, RestJson1Trait
+from .._private.xml import WrappedXMLCodec, parse_rest_xml_error
+from ..traits import (
+    AwsJson1_0Trait,
+    AwsJson1_1Trait,
+    AwsQueryTrait,
+    RestJson1Trait,
+    RestXmlTrait,
+)
 from ..utils import parse_document_discriminator, parse_error_code, parse_retry_after
 
 try:
@@ -451,6 +460,142 @@ class AwsJson11ClientProtocol(_AWSJSONClientProtocol):
     _content_type: ClassVar[str] = "application/x-amz-json-1.1"
 
 
+class RestXmlClientProtocol(HttpBindingClientProtocol):
+    """An implementation of the aws.protocols#restXml protocol."""
+
+    _id: Final = RestXmlTrait.id
+    _content_type: Final = "application/xml"
+    _error_identifier: Final = AWSErrorIdentifier()
+
+    def __init__(self, service_schema: Schema) -> None:
+        """Initialize a RestXmlClientProtocol.
+
+        :param service_schema: The schema for the service to interact with.
+        """
+        _assert_xml()
+        self._default_namespace: Final = service_schema.id.namespace
+        xml_namespace = service_schema.get_trait(XMLNamespaceTrait)
+        self._codec: Final = XMLCodec(
+            default_namespace=xml_namespace.uri if xml_namespace is not None else None,
+            default_namespace_prefix=(
+                xml_namespace.prefix if xml_namespace is not None else None
+            ),
+        )
+
+    @property
+    def id(self) -> ShapeID:
+        return self._id
+
+    @property
+    def payload_codec(self) -> Codec:
+        return self._codec
+
+    @property
+    def content_type(self) -> str:
+        return self._content_type
+
+    @property
+    def error_identifier(self) -> HTTPErrorIdentifier:
+        return self._error_identifier
+
+    def _retry_after(self, response: HTTPResponse) -> float | None:
+        return parse_retry_after(response)
+
+    def _resolve_error_id(
+        self,
+        *,
+        operation: APIOperation[Any, Any],
+        error_id: ShapeID,
+    ) -> ShapeID:
+        for error_schema in operation.error_schemas:
+            if error_schema.id.name == error_id.name:
+                return error_schema.id
+        return error_id
+
+    async def _create_error(
+        self,
+        operation: APIOperation[Any, Any],
+        request: HTTPRequest,
+        response: HTTPResponse,
+        response_body: SyncStreamingBlob,
+        error_registry: TypeRegistry,
+        context: TypedProperties,
+    ) -> CallError:
+        body = _read_sync_body(response_body)
+
+        error_id = self.error_identifier.identify(
+            operation=operation, response=response
+        )
+        if error_id is not None and error_id not in error_registry:
+            error_id = self._resolve_error_id(operation=operation, error_id=error_id)
+
+        # Error responses are either wrapped in <ErrorResponse><Error> or use a
+        # bare <Error> root. Both are accepted regardless of the `noErrorWrapping`
+        # setting because the response itself is unambiguous.
+        code, wrapper_elements = parse_rest_xml_error(body)
+        if error_id is None and code is not None:
+            error_id = parse_error_code(code, self._default_namespace)
+            if error_id is not None and error_id not in error_registry:
+                error_id = self._resolve_error_id(
+                    operation=operation, error_id=error_id
+                )
+
+        retry_after = self._retry_after(response)
+
+        if error_id is not None and error_id in error_registry:
+            error_shape = error_registry.get(error_id)
+
+            # make sure the error shape is derived from modeled exception
+            if not issubclass(error_shape, ModeledError):
+                raise ExpectationNotMetError(
+                    f"Modeled errors must be derived from 'ModeledError', "
+                    f"but got {error_shape}"
+                )
+
+            deserializer = HTTPResponseDeserializer(
+                payload_codec=WrappedXMLCodec(self._codec, wrapper_elements),
+                http_trait=operation.schema.expect_trait(HTTPTrait),
+                response=response,
+                body=body,
+            )
+            modeled_error = error_shape.deserialize(deserializer)
+            if retry_after is not None:
+                modeled_error.retry_after = retry_after
+            return modeled_error
+
+        message = (
+            f"Unknown error for operation {operation.schema.id} "
+            f"- status: {response.status}"
+        )
+        if code is not None:
+            message += f" - code: {code}"
+        elif error_id is not None:
+            message += f" - id: {error_id}"
+        if response.reason is not None:
+            message += f" - reason: {response.reason}"
+
+        is_timeout = response.status == 408
+        is_throttle = response.status == 429
+        fault = "client" if response.status < 500 else "server"
+
+        return CallError(
+            message=message,
+            fault=fault,
+            is_throttling_error=is_throttle,
+            is_timeout_error=is_timeout,
+            is_retry_safe=is_throttle or is_timeout or None,
+            retry_after=retry_after,
+        )
+
+
+def _read_sync_body(body: SyncStreamingBlob) -> bytes:
+    if isinstance(body, bytes):
+        return body
+    if isinstance(body, bytearray):
+        return bytes(body)
+    return body.read()
+
+
 class AwsQueryClientProtocol(HttpClientProtocol):
     """An implementation of the aws.protocols#awsQuery protocol."""
 
@@ -461,7 +606,7 @@ class AwsQueryClientProtocol(HttpClientProtocol):
         _assert_xml()
         self._default_namespace: Final = service_schema.id.namespace
         self._version: Final = version
-        self._codec: Final = XMLCodec(default_namespace=self._default_namespace)
+        self._codec: Final = XMLCodec()
 
     @property
     def id(self) -> ShapeID:

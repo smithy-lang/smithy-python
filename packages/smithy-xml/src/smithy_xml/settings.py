@@ -18,3 +18,8 @@ class XMLSettings:
 
     default_namespace: str | None = None
     """Default XML namespace (`xmlns`) applied to the root element during serialization."""
+
+    default_namespace_prefix: str | None = None
+    """Prefix for the default XML namespace. When set, the root element declares
+    ``xmlns:<prefix>`` instead of the default ``xmlns``. Has no effect unless
+    ``default_namespace`` is also set."""

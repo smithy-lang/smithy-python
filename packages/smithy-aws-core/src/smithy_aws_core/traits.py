@@ -97,6 +97,33 @@ class AwsJson1_1Trait(Trait, id=ShapeID("aws.protocols#awsJson1_1")):
         object.__setattr__(self, "event_stream_http", event_stream_http)
 
 
+@dataclass(init=False, frozen=True)
+class RestXmlTrait(Trait, id=ShapeID("aws.protocols#restXml")):
+    http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+    event_stream_http: Sequence[str] = field(
+        repr=False, hash=False, compare=False, default_factory=tuple
+    )
+    no_error_wrapping: bool = field(
+        repr=False, hash=False, compare=False, default=False
+    )
+    """Whether error responses use a bare ``<Error>`` root element instead of being
+    wrapped in ``<ErrorResponse><Error>``."""
+
+    def __init__(self, value: DocumentValue | DynamicTrait = None):
+        super().__init__(value)
+        http, event_stream_http = _parse_http_protocol_values(value)
+        object.__setattr__(self, "http", http)
+        object.__setattr__(self, "event_stream_http", event_stream_http)
+
+        document_value = self.document_value or {}
+        assert isinstance(document_value, Mapping)
+        no_error_wrapping = document_value.get("noErrorWrapping", False)
+        assert isinstance(no_error_wrapping, bool)
+        object.__setattr__(self, "no_error_wrapping", no_error_wrapping)
+
+
 @dataclass(frozen=True)
 class AwsQueryTrait(Trait, id=ShapeID("aws.protocols#awsQuery")):
     def __post_init__(self):

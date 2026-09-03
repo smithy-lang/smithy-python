@@ -1,74 +1,23 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from typing import TYPE_CHECKING, Any
-from xml.etree.ElementTree import Element, ParseError, fromstring
 
 from smithy_core.documents import TypeRegistry
-from smithy_core.exceptions import (
-    CallError,
-    ExpectationNotMetError,
-    MissingDependencyError,
-    ModeledError,
-)
+from smithy_core.exceptions import CallError, ExpectationNotMetError, ModeledError
 from smithy_core.interfaces import TypedProperties
 from smithy_core.schemas import APIOperation
 from smithy_core.shapes import ShapeID
 
 from ...traits import AwsQueryErrorTrait
+from ..xml import assert_xml, parse_xml_error_code
 
 try:
     from smithy_xml import XMLCodec
-
-    _HAS_XML = True
 except ImportError:
-    _HAS_XML = False  # type: ignore
+    pass
 
 if TYPE_CHECKING:
     from smithy_xml import XMLCodec
-
-
-def _assert_xml() -> None:
-    if not _HAS_XML:
-        raise MissingDependencyError(
-            "Attempted to use XML codec, but smithy-xml is not installed."
-        )
-
-
-def _local_name(tag: str) -> str:
-    """Strip namespace URI from an element tag: {uri}local -> local."""
-    if tag.startswith("{"):
-        return tag.split("}", 1)[1]
-    return tag
-
-
-def _find_child(element: Element, name: str) -> Element | None:
-    """Return the first child element whose local name matches ``name``."""
-    for child in element:
-        if _local_name(child.tag) == name:
-            return child
-    return None
-
-
-def _parse_aws_query_error_code(
-    body: bytes, wrapper_elements: tuple[str, ...]
-) -> str | None:
-    """Parse the ``Code`` field from a wrapped awsQuery error response."""
-    try:
-        element = fromstring(body)  # noqa: S314
-    except ParseError:
-        return None
-
-    if wrapper_elements:
-        if _local_name(element.tag) != wrapper_elements[0]:
-            return None
-        for wrapper in wrapper_elements[1:]:
-            next_element = _find_child(element, wrapper)
-            if next_element is None:
-                return None
-            element = next_element
-
-    code_element = _find_child(element, "Code")
-    return code_element.text if code_element is not None else None
 
 
 def _resolve_aws_query_error_shape_id(
@@ -102,7 +51,7 @@ def create_aws_query_error(
     retry_after: float | None = None,
 ) -> CallError:
     """Create a modeled or generic CallError from an awsQuery error response."""
-    code = _parse_aws_query_error_code(body, wrapper_elements)
+    code = parse_xml_error_code(body, wrapper_elements)
     if code is not None:
         shape_id = _resolve_aws_query_error_shape_id(
             code=code,
@@ -118,7 +67,7 @@ def create_aws_query_error(
                     f"but got {error_shape}"
                 )
 
-            _assert_xml()
+            assert_xml()
             deserializer = XMLCodec().create_deserializer(
                 body, wrapper_elements=wrapper_elements
             )

@@ -12,8 +12,9 @@ from smithy_aws_core.aio.protocols import (
     AwsJson11ClientProtocol,
     AWSJSONDocument,
     AwsQueryClientProtocol,
+    RestXmlClientProtocol,
 )
-from smithy_aws_core.traits import AwsQueryTrait
+from smithy_aws_core.traits import AwsQueryTrait, RestXmlTrait
 from smithy_core import URI as _URI
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import TypeRegistry
@@ -573,4 +574,228 @@ async def test_aws_query_returns_generic_error_for_unknown_code() -> None:
     assert exc_info.value.message == (
         "Unknown error for operation com.test#FailingOperation"
         " - status: 500, code: UnknownThing"
+    )
+
+
+_REST_XML_SERVICE_SCHEMA = Schema.collection(
+    id=ShapeID("com.test#RestXmlService"),
+    shape_type=ShapeType.SERVICE,
+    traits=[RestXmlTrait(None)],
+)
+_REST_XML_NAMESPACED_SERVICE_SCHEMA = Schema.collection(
+    id=ShapeID("com.test#RestXmlNamespacedService"),
+    shape_type=ShapeType.SERVICE,
+    traits=[
+        RestXmlTrait(None),
+        Trait.new(
+            id=ShapeID("smithy.api#xmlNamespace"),
+            value={"uri": "https://example.com"},
+        ),
+    ],
+)
+_REST_XML_ERROR_SCHEMA = Schema.collection(
+    id=ShapeID("com.test#InvalidGreeting"),
+    traits=[Trait.new(id=ShapeID("smithy.api#error"), value="client")],
+    members={
+        "Message": {"target": STRING},
+        "Header": {
+            "target": STRING,
+            "traits": [
+                Trait.new(id=ShapeID("smithy.api#httpHeader"), value="X-Header")
+            ],
+        },
+    },
+)
+
+
+@dataclass(kw_only=True)
+class _ModeledRestXmlError(ModeledError):
+    header: str | None = None
+
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> "_ModeledRestXmlError":
+        kwargs: dict[str, Any] = {"header": None}
+
+        def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
+            match schema.expect_member_name():
+                case "Message":
+                    kwargs["message"] = de.read_string(schema)
+                case "Header":
+                    kwargs["header"] = de.read_string(schema)
+                case _:
+                    pass
+
+        deserializer.read_struct(_REST_XML_ERROR_SCHEMA, consumer=_consumer)
+        return cls(**kwargs)
+
+
+def _rest_xml_operation_schema(name: str) -> Schema:
+    return Schema(
+        id=ShapeID(f"com.test#{name}"),
+        shape_type=ShapeType.OPERATION,
+        traits=[
+            Trait.new(
+                id=ShapeID("smithy.api#http"),
+                value={"method": "PUT", "uri": f"/{name}", "code": 200},
+            )
+        ],
+    )
+
+
+def _rest_xml_error_registry() -> TypeRegistry:
+    return TypeRegistry({ShapeID("com.test#InvalidGreeting"): _ModeledRestXmlError})
+
+
+async def test_rest_xml_serializes_request_body() -> None:
+    protocol = RestXmlClientProtocol(_REST_XML_SERVICE_SCHEMA)
+    request = protocol.serialize_request(
+        operation=_mock_operation(_rest_xml_operation_schema("TestOperation")),
+        input=_TestInput(name="example"),
+        endpoint=cast(URI, Mock()),
+        context=TypedProperties(),
+    )
+
+    assert request.method == "PUT"
+    assert request.destination.path == "/TestOperation"
+    assert request.fields["content-type"].as_string() == "application/xml"
+    body = await request.consume_body_async()
+    assert request.fields["content-length"].as_string() == str(len(body))
+    assert body == b"<TestInput><name>example</name></TestInput>"
+
+
+async def test_rest_xml_applies_service_namespace_to_root() -> None:
+    protocol = RestXmlClientProtocol(_REST_XML_NAMESPACED_SERVICE_SCHEMA)
+    request = protocol.serialize_request(
+        operation=_mock_operation(_rest_xml_operation_schema("TestOperation")),
+        input=_TestInput(name="example"),
+        endpoint=cast(URI, Mock()),
+        context=TypedProperties(),
+    )
+
+    body = await request.consume_body_async()
+    assert body == (
+        b'<TestInput xmlns="https://example.com"><name>example</name></TestInput>'
+    )
+
+
+async def test_rest_xml_omits_body_for_empty_input() -> None:
+    protocol = RestXmlClientProtocol(_REST_XML_SERVICE_SCHEMA)
+    request = protocol.serialize_request(
+        operation=_mock_operation(_rest_xml_operation_schema("TestOperation")),
+        input=_EmptyInput(),
+        endpoint=cast(URI, Mock()),
+        context=TypedProperties(),
+    )
+
+    assert "content-type" not in request.fields
+    assert await request.consume_body_async() == b""
+
+
+async def _raise_rest_xml_error(
+    body: bytes,
+    *,
+    status: int = 400,
+    headers: list[tuple[str, str]] | None = None,
+    error_schemas: list[Schema] | None = None,
+    error_registry: TypeRegistry | None = None,
+) -> None:
+    protocol = RestXmlClientProtocol(_REST_XML_SERVICE_SCHEMA)
+    await protocol.deserialize_response(
+        operation=_mock_operation(
+            _rest_xml_operation_schema("FailingOperation"),
+            error_schemas=error_schemas,
+        ),
+        request=cast(HTTPRequest, Mock()),
+        response=HTTPResponse(
+            status=status,
+            fields=tuples_to_fields(headers or []),
+            body=body,
+        ),
+        error_registry=error_registry
+        if error_registry is not None
+        else _rest_xml_error_registry(),
+        context=TypedProperties(),
+    )
+
+
+async def test_rest_xml_resolves_wrapped_error_with_http_bindings() -> None:
+    with pytest.raises(_ModeledRestXmlError) as exc_info:
+        await _raise_rest_xml_error(
+            b"<ErrorResponse><Error><Type>Sender</Type><Code>InvalidGreeting</Code>"
+            b"<Message>Hi</Message></Error><RequestId>foo-id</RequestId>"
+            b"</ErrorResponse>",
+            headers=[("Content-Type", "application/xml"), ("X-Header", "hdr")],
+        )
+
+    assert exc_info.value.message == "Hi"
+    assert exc_info.value.header == "hdr"
+
+
+async def test_rest_xml_resolves_unwrapped_error() -> None:
+    with pytest.raises(_ModeledRestXmlError) as exc_info:
+        await _raise_rest_xml_error(
+            b"<Error><Code>InvalidGreeting</Code><Message>Hi</Message></Error>",
+        )
+
+    assert exc_info.value.message == "Hi"
+
+
+async def test_rest_xml_resolves_error_from_operation_errors_other_namespace() -> None:
+    error_schema = Schema.collection(
+        id=ShapeID("com.other#InvalidGreeting"),
+        members={"Message": {"target": STRING}},
+    )
+    with pytest.raises(_ModeledRestXmlError) as exc_info:
+        await _raise_rest_xml_error(
+            b"<Error><Code>InvalidGreeting</Code><Message>Hi</Message></Error>",
+            error_schemas=[error_schema],
+            error_registry=TypeRegistry({error_schema.id: _ModeledRestXmlError}),
+        )
+
+    assert exc_info.value.message == "Hi"
+
+
+async def test_rest_xml_resolves_error_from_header() -> None:
+    with pytest.raises(_ModeledRestXmlError) as exc_info:
+        await _raise_rest_xml_error(
+            b"<ErrorResponse><Error><Message>Hi</Message></Error></ErrorResponse>",
+            headers=[("x-amzn-errortype", "InvalidGreeting")],
+        )
+
+    assert exc_info.value.message == "Hi"
+
+
+async def test_rest_xml_sets_retry_after_on_modeled_error() -> None:
+    with pytest.raises(_ModeledRestXmlError) as exc_info:
+        await _raise_rest_xml_error(
+            b"<Error><Code>InvalidGreeting</Code><Message>Hi</Message></Error>",
+            status=429,
+            headers=[("x-amz-retry-after", "3000")],
+        )
+
+    assert exc_info.value.retry_after == 3
+
+
+async def test_rest_xml_returns_generic_error_for_unknown_code() -> None:
+    with pytest.raises(CallError) as exc_info:
+        await _raise_rest_xml_error(
+            b"<ErrorResponse><Error><Code>UnknownThing</Code></Error></ErrorResponse>",
+            status=500,
+        )
+
+    assert not isinstance(exc_info.value, ModeledError)
+    assert exc_info.value.fault == "server"
+    assert exc_info.value.message == (
+        "Unknown error for operation com.test#FailingOperation"
+        " - status: 500 - code: UnknownThing"
+    )
+
+
+async def test_rest_xml_returns_generic_error_for_non_xml_body() -> None:
+    with pytest.raises(CallError) as exc_info:
+        await _raise_rest_xml_error(b"<html>nope</html>", status=503)
+
+    assert not isinstance(exc_info.value, ModeledError)
+    assert exc_info.value.message == (
+        "Unknown error for operation com.test#FailingOperation - status: 503"
     )

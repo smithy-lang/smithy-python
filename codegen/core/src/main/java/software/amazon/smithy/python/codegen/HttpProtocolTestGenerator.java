@@ -82,6 +82,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
     private static final Symbol TEST_HTTP_SERVICE_ERR_SYMBOL = Symbol.builder()
             .name("TestHttpServiceError")
             .build();
+    private static final String XML_COMPARABLE_FUNCTION = "xml_to_comparable";
 
     private final PythonSettings settings;
     private final Model model;
@@ -90,6 +91,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
     private final PythonWriter writer;
     private final GenerationContext context;
     private final BiPredicate<Shape, HttpMessageTestCase> testFilter;
+    private boolean needsXmlComparator = false;
 
     /**
      * Constructor.
@@ -421,6 +423,14 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     """);
             return;
         }
+        if (contentType.equals("application/xml") || contentType.endsWith("+xml")) {
+            needsXmlComparator = true;
+            writer.write("""
+                    assert $1L(actual_body_content) == $1L(expected_body_content)
+
+                    """, XML_COMPARABLE_FUNCTION);
+            return;
+        }
         if (contentType.equals("application/x-www-form-urlencoded")) {
             writer.addStdlibImport("urllib.parse", "parse_qsl");
             writer.write("""
@@ -722,6 +732,37 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 RuntimeTypes.TUPLES_TO_FIELDS,
                 RuntimeTypes.HTTP_RESPONSE_IMPL,
                 RuntimeTypes.ASYNC_LIST);
+
+        if (needsXmlComparator) {
+            writeXmlComparator();
+        }
+    }
+
+    /**
+     * Writes a helper that converts an XML document into a comparable structure.
+     *
+     * <p>Element order, attribute order, and whitespace surrounding child elements
+     * are not significant, matching how other Smithy implementations compare XML
+     * bodies. Text in leaf elements is compared exactly.
+     */
+    private void writeXmlComparator() {
+        writer.addStdlibImport("xml.etree.ElementTree", "Element");
+        writer.addStdlibImport("xml.etree.ElementTree", "fromstring");
+        writer.addStdlibImport("typing", "Any");
+        writer.write("""
+
+                def $L(document: bytes) -> Any:
+                    ""\"Converts an XML document into a structure suitable for equality comparison.""\"
+
+                    def convert(element: Element) -> Any:
+                        children = sorted(convert(child) for child in element)
+                        text = element.text or ""
+                        if children:
+                            text = text.strip()
+                        return (element.tag, sorted(element.attrib.items()), text, children)
+
+                    return convert(fromstring(document))
+                """, XML_COMPARABLE_FUNCTION);
     }
 
     /**

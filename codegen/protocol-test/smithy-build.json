@@ -67,6 +67,50 @@
                 }
             }
         },
+        "rest-xml": {
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "aws.protocoltests.restxml#RestXml"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
+                }
+            ],
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "aws.protocoltests.restxml#RestXml",
+                    "module": "restxml",
+                    "moduleVersion": "0.0.1"
+                }
+            }
+        },
+        "rest-xml-namespace": {
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "aws.protocoltests.restxml.xmlns#RestXmlWithNamespace"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
+                }
+            ],
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "aws.protocoltests.restxml.xmlns#RestXmlWithNamespace",
+                    "module": "restxmlwithnamespace",
+                    "moduleVersion": "0.0.1"
+                }
+            }
+        },
         "aws-query": {
             "transforms": [
                 {

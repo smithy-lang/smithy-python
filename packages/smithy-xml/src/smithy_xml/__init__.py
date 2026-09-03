@@ -12,6 +12,7 @@ from smithy_core.types import TimestampFormat
 
 from ._private.deserializers import XMLShapeDeserializer as _XMLShapeDeserializer
 from ._private.readers import XMLEventReader as _XMLEventReader
+from ._private.serializers import XMLShapeSerializer as _XMLShapeSerializer
 from .settings import XMLSettings
 
 __version__ = "0.1.0"
@@ -26,6 +27,7 @@ class XMLCodec(Codec):
         use_timestamp_format: bool = True,
         default_timestamp_format: TimestampFormat = TimestampFormat.DATE_TIME,
         default_namespace: str | None = None,
+        default_namespace_prefix: str | None = None,
     ) -> None:
         """Initializes an XMLCodec.
 
@@ -34,12 +36,17 @@ class XMLCodec(Codec):
         :param default_timestamp_format: The default timestamp format to use if the
             `smithy.api#timestampFormat` trait is not enabled or not present.
         :param default_namespace: Default XML namespace (`xmlns`) applied to the root
-            element during serialization.
+            element during serialization when the root shape has no
+            `smithy.api#xmlNamespace` trait of its own.
+        :param default_namespace_prefix: Prefix for the default namespace. When set,
+            the root element declares `xmlns:<prefix>` instead of the default `xmlns`.
+            Has no effect unless `default_namespace` is also set.
         """
         self._settings = XMLSettings(
             use_timestamp_format=use_timestamp_format,
             default_timestamp_format=default_timestamp_format,
             default_namespace=default_namespace,
+            default_namespace_prefix=default_namespace_prefix,
         )
 
     @property
@@ -47,7 +54,7 @@ class XMLCodec(Codec):
         return "application/xml"
 
     def create_serializer(self, sink: BytesWriter) -> ShapeSerializer:
-        raise NotImplementedError("XML serialization is not supported")
+        return _XMLShapeSerializer.for_sink(sink, self._settings)
 
     def create_deserializer(
         self,

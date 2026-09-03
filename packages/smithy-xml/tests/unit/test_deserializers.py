@@ -111,6 +111,29 @@ def test_wrapper_elements() -> None:
     assert result.string_member == "hello"
 
 
+@pytest.mark.parametrize(
+    ("xml", "wrapper_elements"),
+    [
+        (
+            b'<Error xmlAttributeMember="modeled" />',
+            ("Error",),
+        ),
+        (
+            b'<ErrorResponse><Error xmlAttributeMember="modeled" /></ErrorResponse>',
+            ("ErrorResponse", "Error"),
+        ),
+    ],
+)
+def test_wrapper_element_attributes(
+    xml: bytes, wrapper_elements: tuple[str, ...]
+) -> None:
+    deserializer = XMLCodec().create_deserializer(
+        xml, wrapper_elements=wrapper_elements
+    )
+    result = SerdeShape.deserialize(deserializer)
+    assert result.xml_attribute_member == "modeled"
+
+
 def test_wrapper_elements_scalar_read() -> None:
     xml = b"<OpResponse><OpResult>hello</OpResult></OpResponse>"
     deserializer = XMLCodec().create_deserializer(

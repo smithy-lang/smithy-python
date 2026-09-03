@@ -20,6 +20,9 @@ public final class AwsRuntimeTypes {
     public static final Symbol AWS_QUERY_CLIENT_PROTOCOL = createSymbol(
             "aio.protocols",
             "AwsQueryClientProtocol");
+    public static final Symbol REST_XML_CLIENT_PROTOCOL = createSymbol(
+            "aio.protocols",
+            "RestXmlClientProtocol");
 
     // smithy_aws_core.endpoints.standard_regional
     public static final Symbol STANDARD_REGIONAL_ENDPOINTS_RESOLVER = createSymbol(
