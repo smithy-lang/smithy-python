@@ -6,7 +6,7 @@ test-logger-plugin = "4.0.0"
 spotbugs = "6.0.22"
 spotless = "8.10.0"
 smithy-gradle-plugins = "1.5.0"
-dep-analysis = "3.18.0"
+dep-analysis = "3.19.1"
 jsoup = "1.22.1"
 commonmark = "0.17.0"
 
