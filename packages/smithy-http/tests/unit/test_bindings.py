@@ -18,6 +18,7 @@ from smithy_core.traits import (
     StreamingTrait,
 )
 from smithy_http.bindings import Binding, RequestBindingMatcher, ResponseBindingMatcher
+from smithy_http.schema_extensions import HTTP_BINDING_SCHEMA_EXTENSION
 
 PAYLOAD_BINDING = Schema.collection(
     id=ShapeID("com.example#Payload"),
@@ -57,7 +58,7 @@ GENERAL_BINDINGS = Schema.collection(
             "target": STRING_MAP,
             "traits": [HTTPQueryParamsTrait()],
         },
-        "header": {"target": STRING, "traits": [HTTPHeaderTrait()]},
+        "header": {"target": STRING, "traits": [HTTPHeaderTrait("header")]},
         "prefixHeaders": {
             "target": STRING_MAP,
             "traits": [HTTPPrefixHeadersTrait("foo")],
@@ -156,3 +157,53 @@ def test_response_matching() -> None:
     assert matcher.match(GENERAL_BINDINGS.members["hostLabel"]) == Binding.BODY
     assert matcher.match(GENERAL_BINDINGS.members["status"]) == Binding.STATUS
     assert matcher.match(GENERAL_BINDINGS.members["body"]) == Binding.BODY
+
+
+def test_http_binding_schema_extension_is_cached() -> None:
+    info = GENERAL_BINDINGS.get_extension(HTTP_BINDING_SCHEMA_EXTENSION)
+
+    assert info is GENERAL_BINDINGS.get_extension(HTTP_BINDING_SCHEMA_EXTENSION)
+    assert info.request_bindings == tuple(
+        RequestBindingMatcher(GENERAL_BINDINGS).bindings
+    )
+    assert info.response_bindings == tuple(
+        ResponseBindingMatcher(GENERAL_BINDINGS).bindings
+    )
+    assert info.has_request_body
+    assert info.has_response_body
+    assert info.response_bound_members == (
+        (
+            GENERAL_BINDINGS.members["header"],
+            Binding.HEADER,
+            "header",
+            False,
+        ),
+        (
+            GENERAL_BINDINGS.members["prefixHeaders"],
+            Binding.PREFIX_HEADERS,
+            "foo",
+            False,
+        ),
+        (
+            GENERAL_BINDINGS.members["status"],
+            Binding.STATUS,
+            None,
+            False,
+        ),
+    )
+
+
+def test_http_binding_schema_extension_caches_payload_and_event_stream() -> None:
+    payload_info = PAYLOAD_BINDING.get_extension(HTTP_BINDING_SCHEMA_EXTENSION)
+    event_info = EVENT_STREAM_BINDING.get_extension(HTTP_BINDING_SCHEMA_EXTENSION)
+
+    assert payload_info.payload_member is PAYLOAD_BINDING.members["payload"]
+    assert payload_info.response_bound_members == (
+        (
+            PAYLOAD_BINDING.members["payload"],
+            Binding.PAYLOAD,
+            None,
+            False,
+        ),
+    )
+    assert event_info.event_stream_member is EVENT_STREAM_BINDING.members["stream"]
