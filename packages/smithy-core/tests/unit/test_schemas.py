@@ -1,11 +1,11 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-from dataclasses import replace
+from dataclasses import asdict, fields, replace
 from typing import Any
 
 import pytest
 from smithy_core.exceptions import ExpectationNotMetError
-from smithy_core.schemas import Schema
+from smithy_core.schemas import Schema, SchemaExtension
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import (
     DynamicTrait,
@@ -45,6 +45,37 @@ def test_get_unknown_trait_by_id():
     trait = InternalTrait()
     schema = Schema(id=ID, shape_type=ShapeType.STRUCTURE, traits=[trait])
     assert schema.get_trait(SensitiveTrait.id) is None
+
+
+def test_schema_extension_is_built_once_and_cached() -> None:
+    calls = 0
+
+    def build_extension(schema: Schema) -> tuple[ShapeID, int]:
+        nonlocal calls
+        calls += 1
+        return schema.id, calls
+
+    extension = SchemaExtension(build_extension)
+    schema = Schema(id=ID, shape_type=ShapeType.STRUCTURE)
+
+    first = schema.get_extension(extension)
+    second = schema.get_extension(extension)
+
+    assert first == (ID, 1)
+    assert second is first
+    assert calls == 1
+
+
+def test_schema_extension_cache_is_not_dataclass_state() -> None:
+    extension = SchemaExtension(lambda schema: schema)
+    schema = Schema(id=ID, shape_type=ShapeType.STRUCTURE)
+
+    assert schema.get_extension(extension) is schema
+    assert "_extensions" not in {schema_field.name for schema_field in fields(schema)}
+    assert "_extensions" not in asdict(schema)
+
+    replaced = replace(schema)
+    assert replaced.get_extension(extension) is replaced
 
 
 def test_members_list():
