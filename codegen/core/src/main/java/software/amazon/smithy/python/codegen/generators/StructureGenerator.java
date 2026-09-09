@@ -297,7 +297,8 @@ public final class StructureGenerator implements Runnable {
             ZonedDateTime value = CodegenUtils.parseTimestampNode(model, member, defaultNode);
             return CodegenUtils.getDatetimeConstructor(writer, value);
         } else if (target.isBlobShape()) {
-            return String.format("b'%s'", defaultNode.expectStringNode().getValue());
+            writer.addStdlibImport("base64", "b64decode");
+            return String.format("b64decode(\"%s\")", defaultNode.expectStringNode().getValue());
         } else if (target.isEnumShape()) {
             // Wrap rather than emit a bare string so the value matches the field type.
             var enumSymbol = symbolProvider.toSymbol(target)
