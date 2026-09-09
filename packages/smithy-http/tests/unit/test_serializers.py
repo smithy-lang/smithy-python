@@ -23,7 +23,10 @@ from smithy_core.prelude import (
     TIMESTAMP,
 )
 from smithy_core.schemas import Schema
-from smithy_core.serializers import SerializeableShape, ShapeSerializer
+from smithy_core.serializers import (
+    SerializeableStruct,
+    ShapeSerializer,
+)
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import (
     EndpointTrait,
@@ -36,6 +39,7 @@ from smithy_core.traits import (
     HTTPQueryTrait,
     HTTPResponseCodeTrait,
     HTTPTrait,
+    RequiresLengthTrait,
     StreamingTrait,
     TimestampFormatTrait,
     Trait,
@@ -43,7 +47,11 @@ from smithy_core.traits import (
 from smithy_http import Fields, tuples_to_fields
 from smithy_http.aio import HTTPResponse as _HTTPResponse
 from smithy_http.deserializers import HTTPResponseDeserializer
-from smithy_http.serializers import HTTPRequestSerializer, HTTPResponseSerializer
+from smithy_http.serializers import (
+    HTTPBindingSerializer,
+    HTTPRequestSerializer,
+    HTTPResponseSerializer,
+)
 from smithy_json import JSONCodec
 
 # TODO: empty header prefix, query map
@@ -1165,7 +1173,8 @@ class HTTPMessage:
     status: int = 200
 
 
-class Shape(SerializeableShape, DeserializeableShape, Protocol): ...
+class Shape(SerializeableStruct, DeserializeableShape, Protocol):
+    SCHEMA: ClassVar[Schema]
 
 
 @dataclass
@@ -1912,16 +1921,16 @@ REQUEST_SER_CASES = (
 
 @pytest.mark.parametrize("case", REQUEST_SER_CASES)
 async def test_serialize_http_request(case: HTTPMessageTestCase) -> None:
-    serializer = HTTPRequestSerializer(
+    serializer = HTTPBindingSerializer(
         payload_codec=JSONCodec(),
+        schema=case.shape.SCHEMA,
         http_trait=case.http_trait,
         endpoint_trait=case.endpoint_trait,
     )
-    case.shape.serialize(serializer)
-    actual = serializer.result
+    case.shape.serialize_members(serializer)
+    actual = serializer.build_request()
     expected = case.request
 
-    assert actual is not None
     assert actual.method == expected.method
     assert actual.destination.host == expected.destination.host
     assert actual.destination.path == expected.destination.path
@@ -1990,6 +1999,38 @@ async def test_serialize_response_omitting_empty_payload() -> None:
     assert actual_body_value == b""
 
 
+async def test_serialize_response_adds_computed_required_content_length() -> None:
+    schema = Schema.collection(
+        id=ShapeID("com.smithy#HTTPRequiredLengthPayload"),
+        members={
+            "payload": {
+                "target": BLOB,
+                "traits": [
+                    HTTPPayloadTrait(),
+                    StreamingTrait(),
+                    RequiresLengthTrait(),
+                ],
+            }
+        },
+    )
+    payload = b"\xde\xad\xbe\xef"
+    serializer = HTTPResponseSerializer(
+        payload_codec=JSONCodec(),
+        http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/"}),
+    )
+
+    with serializer.begin_struct(schema) as struct_serializer:
+        struct_serializer.write_data_stream(
+            schema.members["payload"],
+            BytesIO(payload),
+        )
+
+    actual = serializer.result
+    assert actual is not None
+    assert actual.fields["content-length"].as_string() == str(len(payload))
+    assert await AsyncBytesReader(actual.body).read() == payload
+
+
 RESPONSE_DESER_CASES: list[HTTPMessageTestCase] = (
     header_cases()
     + header_deser_cases()
@@ -2016,6 +2057,90 @@ async def test_deserialize_http_response(case: HTTPMessageTestCase) -> None:
     )
     actual = type(case.shape).deserialize(deserializer)
     assert actual == case.shape
+
+
+def test_deserialize_response_preserves_bound_member_order() -> None:
+    schema = Schema.collection(
+        id=ShapeID("com.smithy#OrderedOutput"),
+        members={
+            "status": {
+                "target": INTEGER,
+                "traits": [HTTPResponseCodeTrait()],
+            },
+            "header": {
+                "target": STRING,
+                "traits": [HTTPHeaderTrait("x-value")],
+            },
+        },
+    )
+    seen: list[str] = []
+    deserializer = HTTPResponseDeserializer(
+        payload_codec=JSONCodec(),
+        response=_HTTPResponse(
+            body=b"",
+            status=201,
+            fields=tuples_to_fields([("x-value", "value")]),
+        ),
+        body=b"",
+    )
+
+    deserializer.read_struct(
+        schema,
+        lambda member, _: seen.append(member.expect_member_name()),
+    )
+
+    assert seen == ["status", "header"]
+
+
+def test_deserialize_recursive_response_uses_original_schema() -> None:
+    recursive_schema = Schema.collection(
+        id=ShapeID("com.smithy#RecursiveOutput"),
+        members={
+            "header": {
+                "target": STRING,
+                "traits": [HTTPHeaderTrait("x-value")],
+            },
+            "child": None,
+        },
+    )
+    recursive_schema.members["child"] = Schema.member(
+        id=recursive_schema.id.with_member("child"),
+        target=recursive_schema,
+        index=1,
+    )
+
+    def deserialize_shape(deserializer: ShapeDeserializer) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+
+        def consume(member: Schema, member_deserializer: ShapeDeserializer) -> None:
+            match member.expect_member_index():
+                case 0:
+                    result["header"] = member_deserializer.read_string(
+                        recursive_schema.members["header"]
+                    )
+                case 1:
+                    result["child"] = deserialize_shape(member_deserializer)
+                case _:
+                    raise AssertionError(f"Unexpected member: {member.id}")
+
+        deserializer.read_struct(recursive_schema, consume)
+        return result
+
+    body = b'{"child":{"header":"nested"}}'
+    deserializer = HTTPResponseDeserializer(
+        payload_codec=JSONCodec(),
+        response=_HTTPResponse(
+            body=body,
+            status=200,
+            fields=tuples_to_fields([("x-value", "top")]),
+        ),
+        body=body,
+    )
+
+    assert deserialize_shape(deserializer) == {
+        "header": "top",
+        "child": {"header": "nested"},
+    }
 
 
 async def test_deserialize_http_response_with_async_stream() -> None:

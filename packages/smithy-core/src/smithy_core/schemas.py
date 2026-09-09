@@ -1,8 +1,17 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
-from typing import TYPE_CHECKING, Any, NotRequired, Required, Self, TypedDict, overload
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    NotRequired,
+    Required,
+    Self,
+    TypedDict,
+    cast,
+    overload,
+)
 
 from .exceptions import ExpectationNotMetError, SmithyError
 from .shapes import ShapeID, ShapeType
@@ -95,6 +104,8 @@ class Schema:
         if member_index is not None:
             object.__setattr__(self, "member_index", member_index)
 
+        object.__setattr__(self, "_extensions", None)
+
     @property
     def member_name(self) -> str | None:
         """The name of the member, if the shape is the MEMBER type."""
@@ -173,6 +184,33 @@ class Schema:
         """
         id = t if isinstance(t, ShapeID) else t.id
         return self.traits[id]
+
+    def get_extension[T](self, extension: "SchemaExtension[T]") -> T:
+        """Get or lazily build metadata associated with this schema.
+
+        Extension descriptors are intended to be shared across all codec and protocol
+        instances. Values are cached per schema after construction. Concurrent cache
+        misses may construct the same value more than once, but subsequent calls return
+        the published cached value.
+
+        :param extension: The shared extension descriptor.
+        :returns: The cached extension value for this schema.
+        """
+        extensions = cast(
+            "dict[object, Any] | None",
+            getattr(self, "_extensions", None),
+        )
+        if extensions is None:
+            value = extension.provider(self)
+            object.__setattr__(self, "_extensions", {extension: value})
+            return value
+
+        try:
+            return extensions[extension]
+        except KeyError:
+            value = extension.provider(self)
+            extensions[extension] = value
+            return value
 
     def __contains__(self, item: Any):
         """Returns whether the schema has the given member or trait."""
@@ -269,6 +307,14 @@ class Schema:
             member_target=target,
             member_index=index,
         )
+
+
+@dataclass(frozen=True, slots=True, eq=False)
+class SchemaExtension[T]:
+    """A shared provider of lazily cached schema metadata."""
+
+    provider: Callable[[Schema], T]
+    """Build the extension value for a schema."""
 
 
 class MemberSchema(TypedDict):

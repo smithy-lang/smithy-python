@@ -29,7 +29,7 @@ from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
 from smithy_core.prelude import DOCUMENT, UNIT
 from smithy_core.response import ResponseMetadata
 from smithy_core.schemas import APIOperation, Schema
-from smithy_core.serializers import SerializeableShape
+from smithy_core.serializers import SerializeableShape, SerializeableStruct
 from smithy_core.shapes import ShapeID
 from smithy_core.traits import (
     ORIGINAL_SHAPE_ID,
@@ -40,7 +40,7 @@ from smithy_core.traits import (
 
 from .. import tuples_to_fields
 from ..deserializers import HTTPResponseDeserializer
-from ..serializers import HTTPRequestSerializer
+from ..serializers import HTTPBindingSerializer, HTTPRequestSerializer
 from . import HTTPRequest as _HTTPRequest
 from .interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
 
@@ -125,22 +125,31 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         endpoint: URI,
         context: TypedProperties,
     ) -> HTTPRequest:
-        # TODO(optimization): request binding cache like done in SJ
+        if isinstance(input, SerializeableStruct):
+            serializer = HTTPBindingSerializer(
+                payload_codec=self.payload_codec,
+                schema=operation.input_schema,
+                http_trait=operation.schema.expect_trait(HTTPTrait),
+                endpoint_trait=operation.schema.get_trait(EndpointTrait),
+            )
+            try:
+                input.serialize_members(serializer)
+            except BaseException as error:
+                serializer.abort(type(error), error, error.__traceback__)
+                raise
+            return serializer.build_request()
+
         serializer = HTTPRequestSerializer(
             payload_codec=self.payload_codec,
             http_trait=operation.schema.expect_trait(HTTPTrait),
             endpoint_trait=operation.schema.get_trait(EndpointTrait),
         )
-
-        input.serialize(serializer=serializer)
-        request = serializer.result
-
-        if request is None:
+        input.serialize(serializer)
+        if serializer.result is None:
             raise ExpectationNotMetError(
                 "Expected request to be serialized, but was None"
             )
-
-        return request
+        return serializer.result
 
     async def deserialize_response[
         OperationInput: "SerializeableShape",
@@ -169,7 +178,6 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         if not operation.output_stream_member and not is_streaming_blob(body):
             body = await self._buffer_async_body(response.body)
 
-        # TODO(optimization): response binding cache like done in SJ
         deserializer = HTTPResponseDeserializer(
             payload_codec=self.payload_codec,
             http_trait=operation.schema.expect_trait(HTTPTrait),
