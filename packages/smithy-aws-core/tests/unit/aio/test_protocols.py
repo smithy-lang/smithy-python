@@ -574,3 +574,122 @@ async def test_aws_query_returns_generic_error_for_unknown_code() -> None:
         "Unknown error for operation com.test#FailingOperation"
         " - status: 500, code: UnknownThing"
     )
+
+
+async def test_aws_query_reports_request_id_from_the_response_body() -> None:
+    protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
+    context = TypedProperties()
+    response = HTTPResponse(
+        status=400,
+        fields=tuples_to_fields([]),
+        body=(
+            b"<ErrorResponse><Error><Code>InvalidAction</Code>"
+            b"<message>bad request</message></Error>"
+            b"<RequestId>body-request-id</RequestId></ErrorResponse>"
+        ),
+    )
+    with pytest.raises(_ModeledQueryError):
+        await protocol.deserialize_response(
+            operation=_mock_operation(
+                _operation_schema("FailingOperation"),
+                error_schemas=[_INVALID_ACTION_ERROR_SCHEMA],
+            ),
+            request=cast(HTTPRequest, Mock()),
+            response=response,
+            error_registry=TypeRegistry(
+                {ShapeID("com.test#InvalidActionError"): _ModeledQueryError}
+            ),
+            context=context,
+        )
+
+    metadata = protocol.extract_response_metadata(response=response, context=context)
+    assert metadata.request_id == "body-request-id"
+    assert metadata.http_status_code == 400
+
+
+async def test_aws_query_prefers_a_request_id_header_when_one_is_sent() -> None:
+    protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
+    context = TypedProperties()
+    response = HTTPResponse(
+        status=400,
+        fields=tuples_to_fields([("x-amzn-requestid", "header-request-id")]),
+        body=(
+            b"<ErrorResponse><Error><Code>InvalidAction</Code>"
+            b"<message>bad request</message></Error>"
+            b"<RequestId>body-request-id</RequestId></ErrorResponse>"
+        ),
+    )
+    await _deserialize_query_error(protocol, response, context)
+
+    metadata = protocol.extract_response_metadata(response=response, context=context)
+    assert metadata.request_id == "header-request-id"
+
+
+async def test_aws_query_reports_no_request_id_when_the_body_has_none() -> None:
+    protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
+    response = HTTPResponse(
+        status=200, fields=tuples_to_fields([]), body=b"<Response/>"
+    )
+    metadata = protocol.extract_response_metadata(
+        response=response, context=TypedProperties()
+    )
+    assert metadata.request_id is None
+    assert metadata.http_status_code == 200
+
+
+async def test_aws_query_does_not_report_a_previous_attempts_request_id() -> None:
+    protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
+    context = TypedProperties()
+
+    first = HTTPResponse(
+        status=400,
+        fields=tuples_to_fields([]),
+        body=(
+            b"<ErrorResponse><Error><Code>InvalidAction</Code>"
+            b"<message>throttled</message></Error>"
+            b"<RequestId>attempt-1-id</RequestId></ErrorResponse>"
+        ),
+    )
+    await _deserialize_query_error(protocol, first, context)
+    assert (
+        protocol.extract_response_metadata(response=first, context=context).request_id
+        == "attempt-1-id"
+    )
+
+    second = HTTPResponse(
+        status=400,
+        fields=tuples_to_fields([]),
+        body=(
+            b"<ErrorResponse><Error><Code>InvalidAction</Code>"
+            b"<message>bad request</message></Error></ErrorResponse>"
+        ),
+    )
+    await _deserialize_query_error(protocol, second, context)
+
+    metadata = protocol.extract_response_metadata(response=second, context=context)
+    assert metadata.request_id is None
+
+
+async def _deserialize_query_error(
+    protocol: AwsQueryClientProtocol,
+    response: HTTPResponse,
+    context: TypedProperties,
+) -> None:
+    """Run an awsQuery error response through deserialization.
+
+    Used to record whatever request ID the body carries the way a real call would,
+    rather than reaching into the protocol's private storage key.
+    """
+    with pytest.raises(_ModeledQueryError):
+        await protocol.deserialize_response(
+            operation=_mock_operation(
+                _operation_schema("FailingOperation"),
+                error_schemas=[_INVALID_ACTION_ERROR_SCHEMA],
+            ),
+            request=cast(HTTPRequest, Mock()),
+            response=response,
+            error_registry=TypeRegistry(
+                {ShapeID("com.test#InvalidActionError"): _ModeledQueryError}
+            ),
+            context=context,
+        )

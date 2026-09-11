@@ -40,6 +40,12 @@ public final class RuntimeTypes {
     public static final Symbol TYPE_REGISTRY =
             createSymbol("documents", "TypeRegistry", SmithyPythonDependency.SMITHY_CORE);
 
+    // smithy_core.response
+    public static final Symbol RESPONSE_METADATA =
+            createSymbol("response", "ResponseMetadata", SmithyPythonDependency.SMITHY_CORE);
+    public static final Symbol EMPTY_RESPONSE_METADATA =
+            createSymbol("response", "EMPTY_RESPONSE_METADATA", SmithyPythonDependency.SMITHY_CORE);
+
     // smithy_core.exceptions
     public static final Symbol MODELED_ERROR =
             createSymbol("exceptions", "ModeledError", SmithyPythonDependency.SMITHY_CORE);

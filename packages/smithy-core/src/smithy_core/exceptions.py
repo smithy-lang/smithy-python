@@ -3,6 +3,8 @@
 from dataclasses import dataclass, field
 from typing import Literal
 
+from .response import EMPTY_RESPONSE_METADATA, ResponseMetadata
+
 
 class SmithyError(Exception):
     """Base exception type for all exceptions raised by smithy-python."""
@@ -53,6 +55,18 @@ class CallError(SmithyError):
 
     is_timeout_error: bool = False
     """Whether the error represents a timeout condition."""
+
+    response_metadata: ResponseMetadata = field(
+        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    )
+    """Metadata about the response that produced this error.
+
+    Members of the metadata are individually optional, and an 
+    ``http_status_code`` of ``None`` indicates that no response
+    was received at all.
+
+    This is always set, so it is safe to access without a null check.
+    """
 
     def __post_init__(self):
         super().__init__(self.message)

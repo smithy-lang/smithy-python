@@ -11,8 +11,9 @@ from smithy_core.interfaces import TypedProperties
 from smithy_core.interfaces import URI as URIInterface
 from smithy_core.schemas import APIOperation
 from smithy_core.shapes import ShapeID
-from smithy_http import Fields
-from smithy_http.aio import HTTPRequest
+from smithy_core.types import TypedProperties as TypedPropertiesImpl
+from smithy_http import Field, Fields
+from smithy_http.aio import HTTPRequest, HTTPResponse
 from smithy_http.aio.interfaces import HTTPRequest as HTTPRequestInterface
 from smithy_http.aio.interfaces import HTTPResponse as HTTPResponseInterface
 from smithy_http.aio.protocols import HttpClientProtocol
@@ -145,3 +146,21 @@ def test_http_protocol_joins_uris(
     updated_request = protocol.set_service_endpoint(request=request, endpoint=endpoint)
     actual = updated_request.destination
     assert actual == expected
+
+
+def test_extract_response_metadata_reports_only_the_status_code() -> None:
+    # Request Ids are not an HTTP concept. The base HTTP layer must not read
+    # request IDs even when an AWS-style header is present; that knowledge
+    # belongs in smithy-aws-core.
+    response = HTTPResponse(
+        status=429,
+        fields=Fields([Field(name="x-amzn-requestid", values=["rid"])]),
+    )
+
+    metadata = MockProtocol().extract_response_metadata(
+        response=response, context=TypedPropertiesImpl()
+    )
+
+    assert metadata.http_status_code == 429
+    assert metadata.request_id is None
+    assert metadata.extended_request_id is None
