@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added `ResponseMetadata`, exposing the request ID, extended request ID, and HTTP status code of the response that produced a result. It is attached to operation outputs and to modeled errors via a `response_metadata` attribute."
+}

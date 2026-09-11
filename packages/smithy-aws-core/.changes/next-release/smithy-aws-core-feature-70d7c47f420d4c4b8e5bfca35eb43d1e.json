@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "AWS protocols now report request identifiers on operation outputs and errors, read from the `x-amzn-requestid`, `x-amz-request-id`, and `x-amz-id-2` headers. awsQuery reads them from the response body."
+}
