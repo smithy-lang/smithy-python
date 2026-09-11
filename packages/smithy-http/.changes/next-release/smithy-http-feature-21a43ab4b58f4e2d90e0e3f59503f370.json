@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "`HttpClientProtocol` implements `extract_response_metadata()`, reporting the HTTP status code."
+}

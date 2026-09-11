@@ -26,6 +26,9 @@ from smithy_core.interfaces import (
     is_streaming_blob,
 )
 from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
+from smithy_core.prelude import DOCUMENT
+from smithy_core.response import ResponseMetadata
+from smithy_core.schemas import APIOperation
 from smithy_core.prelude import DOCUMENT, UNIT
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import SerializeableShape
@@ -79,6 +82,19 @@ class HttpClientProtocol(ClientProtocol[HTTPRequest, HTTPResponse]):
         )
 
         return request
+
+    def extract_response_metadata(
+        self,
+        *,
+        response: HTTPResponse,
+        context: TypedProperties,
+    ) -> ResponseMetadata:
+        """Extract the status code from an HTTP response.
+
+        Identifiers such as request IDs are not part of HTTP itself, so protocols
+        that define them are expected to override this and add them.
+        """
+        return ResponseMetadata(http_status_code=response.status)
 
 
 class HttpBindingClientProtocol(HttpClientProtocol):

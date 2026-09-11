@@ -16,6 +16,7 @@ import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.codegen.core.SymbolReference;
 import software.amazon.smithy.model.Model;
+import software.amazon.smithy.model.knowledge.OperationIndex;
 import software.amazon.smithy.model.loader.Prelude;
 import software.amazon.smithy.model.shapes.BigDecimalShape;
 import software.amazon.smithy.model.shapes.BigIntegerShape;
@@ -74,6 +75,7 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
     private final PythonSettings settings;
     private final ServiceShape service;
     private final Set<String> allShapeNames;
+    private final OperationIndex operationIndex;
 
     public PythonSymbolProvider(Model model, PythonSettings settings) {
         this.model = model;
@@ -107,6 +109,9 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
         // Collect all shape names that will be generated as PascalCase classes in models.py.
         // Used to detect collisions with synthesized names (union variants, unknown types).
         this.allShapeNames = collectAllShapeNames();
+
+        // Built once because toMemberName runs for every member of every shape.
+        this.operationIndex = OperationIndex.of(model);
     }
 
     /**
@@ -149,10 +154,36 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
         }
 
         var container = model.expectShape(shape.getContainer());
+
+        // The response metadata attribute is added to operation outputs and errors
+        // by the generator, so a modeled member of the same name is escaped to keep
+        // it from shadowing the attribute.
+        if (CodegenUtils.RESPONSE_METADATA_MEMBER.equals(memberName)
+                && carriesResponseMetadata(container)) {
+            memberName = escapeWord(memberName);
+            LOGGER.warning(() -> format(
+                    "Renamed member %s to \"%s\" because \"%s\" is reserved for response metadata.",
+                    shape.getId(),
+                    escapeWord(CodegenUtils.RESPONSE_METADATA_MEMBER),
+                    CodegenUtils.RESPONSE_METADATA_MEMBER));
+        }
+
         if (container.isEnumShape() || container.isIntEnumShape()) {
             memberName = memberName.toUpperCase(Locale.ENGLISH);
         }
         return memberName;
+    }
+
+    /**
+     * Whether a shape is given a response metadata attribute, and so has a member
+     * name that must be kept clear.
+     *
+     * <p>Operation inputs and other structures are not given the attribute, so
+     * their members are left alone.
+     */
+    private boolean carriesResponseMetadata(Shape container) {
+        return container.hasTrait(ErrorTrait.class)
+                || operationIndex.isOutputStructure(container);
     }
 
     private String getDefaultShapeName(Shape shape) {
