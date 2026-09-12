@@ -14,8 +14,9 @@ smithy-python generate client [OPTIONS]
 smithy-python generate types [OPTIONS]
 ```
 
-`client` generates a service client and its required types. `types` generates a
-standalone types package. Both commands accept the following process options:
+`client` generates a service client together with the data shapes in the model.
+`types` generates a standalone package containing only the data shapes. Both
+commands accept the following process options:
 
 * `--model PATH` reads a JSON AST from a file instead of standard input.
 * `--output PATH` selects the output directory. It defaults to the Smithy run
@@ -23,6 +24,33 @@ standalone types package. Both commands accept the following process options:
 
 Settings specific to each artifact will be added with the functionality that
 consumes them.
+
+### Service Selection
+
+The CLI does not require a service to be named. It resolves the service to
+generate as follows:
+
+* `--service SHAPE_ID` selects a specific service shape. The shape MUST exist in
+  the model and MUST be a service.
+* When `--service` is omitted and the model contains exactly one service shape,
+  that service is used.
+* When `--service` is omitted and the model contains more than one service
+  shape, the command fails with an invocation error that lists the candidates.
+
+The `client` artifact requires a resolved service. The `types` artifact does
+not. The CLI MUST NOT synthesize a placeholder service to satisfy generation.
+
+### Generated Shapes
+
+Both artifacts generate every data shape in the model they receive; the set is
+not narrowed to the closure of the selected service. Builds that want a smaller
+package apply smithy-build transforms in the projection. Trait definitions,
+prelude shapes, and shapes marked `@private` or `@mixin` are never generated.
+
+Because the model is not limited to a service closure, shape names are not
+guaranteed to be unique. When two generated shapes have case-insensitively equal
+names, the command fails with an error that identifies the conflicting shape
+IDs.
 
 The command MUST return zero after successful generation and non-zero when
 arguments, settings, the model, or generation are invalid. Diagnostics are
@@ -54,6 +82,9 @@ command identifies the artifact to generate:
 ```
 
 Artifact-specific options will be appended to `command` after they are defined.
+The `run` plugin can also pass settings through its `env` property, so an option
+MAY additionally be read from an environment variable. A command-line option
+takes precedence over its environment variable.
 
 The `smithy-python` executable MUST be installed or otherwise available on the
 Smithy process's `PATH`. Smithy passes no arguments other than those in
