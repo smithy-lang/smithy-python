@@ -1,0 +1,244 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+from __future__ import annotations
+
+from typing import Any
+
+import pytest
+from smithy_python.exceptions import CodegenError, ModelError
+from smithy_python.model import Model, ShapeID, ShapeType
+
+
+def test_model_error_is_a_codegen_error() -> None:
+    assert issubclass(ModelError, CodegenError)
+
+
+class TestShapeID:
+    def test_parse_shape_and_member_ids(self) -> None:
+        assert ShapeID.parse("example#Foo") == ShapeID("example", "Foo")
+        assert ShapeID.parse("example#Foo$bar") == ShapeID("example", "Foo", "bar")
+
+    @pytest.mark.parametrize(
+        "value",
+        ["Foo", "#Foo", "example#", "a#b#c", "example#Foo$", "example#F$o$o", "a-b#C"],
+    )
+    def test_parse_rejects_invalid_ids(self, value: str) -> None:
+        with pytest.raises(ModelError, match="shape ID"):
+            ShapeID.parse(value)
+
+    def test_round_trips_through_str(self) -> None:
+        for value in ("example#Foo", "example.nested#Foo$bar"):
+            assert str(ShapeID.parse(value)) == value
+
+    def test_member_helpers(self) -> None:
+        shape = ShapeID.parse("example#Foo")
+        member = shape.with_member("bar")
+        assert member.member == "bar"
+        assert member.without_member() == shape
+        assert ShapeID.parse("smithy.api#String").is_prelude
+        assert not shape.is_prelude
+
+
+class TestParsing:
+    def test_preserves_shape_member_and_trait_order(self, model: Model) -> None:
+        assert [shape.id.name for shape in model][:3] == [
+            "CityId",
+            "Coordinates",
+            "Tags",
+        ]
+        coordinates = model.expect("example.weather#Coordinates")
+        assert [member.name for member in coordinates.members] == [
+            "latitude",
+            "longitude",
+        ]
+        assert coordinates.type is ShapeType.STRUCTURE
+        assert coordinates.member("latitude").has_trait("smithy.api#required")
+
+    def test_parsed_objects_are_immutable(self, model: Model) -> None:
+        coordinates = model.expect("example.weather#Coordinates")
+        with pytest.raises(TypeError):
+            coordinates.traits["example#trait"] = {}  # type: ignore[index]
+
+    def test_from_json_accepts_bytes(self, model_json: bytes, model: Model) -> None:
+        assert Model.from_json(model_json) == model
+
+    def test_len_and_metadata(self, model: Model) -> None:
+        assert len(model) == 9
+        assert model.metadata == {"example": True}
+
+    def test_operation_attributes_are_kept_losslessly(self, model: Model) -> None:
+        operation = model.expect("example.weather#GetCity")
+        assert operation.attributes["input"] == {
+            "target": "example.weather#GetCityInput"
+        }
+        assert operation.trait("smithy.api#http") == {
+            "method": "GET",
+            "uri": "/city/{cityId}",
+            "code": 200,
+        }
+
+    def test_references_follow_structural_relationships(self, model: Model) -> None:
+        service = model.expect("example.weather#Weather")
+        assert service.references() == (ShapeID.parse("example.weather#GetCity"),)
+        operation = model.expect("example.weather#GetCity")
+        assert set(operation.references()) == {
+            ShapeID.parse("example.weather#GetCityInput"),
+            ShapeID.parse("example.weather#GetCityOutput"),
+            ShapeID.parse("example.weather#NoSuchCity"),
+        }
+
+    def test_resources_and_maps_are_parsed(
+        self, model_document: dict[str, Any]
+    ) -> None:
+        shapes = model_document["shapes"]
+        shapes["example.weather#Forecasts"] = {
+            "type": "map",
+            "key": {"target": "example.weather#CityId"},
+            "value": {"target": "smithy.api#String"},
+        }
+        shapes["example.weather#City"] = {
+            "type": "resource",
+            "identifiers": {"cityId": {"target": "example.weather#CityId"}},
+            "properties": {"coordinates": {"target": "example.weather#Coordinates"}},
+            "read": {"target": "example.weather#GetCity"},
+            "collectionOperations": [],
+        }
+        model = Model.from_dict(model_document)
+
+        forecasts = model.expect("example.weather#Forecasts")
+        assert [member.name for member in forecasts.members] == ["key", "value"]
+        assert forecasts.member("key").target == ShapeID.parse("example.weather#CityId")
+
+        city = model.expect("example.weather#City")
+        assert city.references() == (
+            ShapeID.parse("example.weather#GetCity"),
+            ShapeID.parse("example.weather#CityId"),
+            ShapeID.parse("example.weather#Coordinates"),
+        )
+
+    def test_references_report_malformed_targets(
+        self, model_document: dict[str, Any]
+    ) -> None:
+        model_document["shapes"]["example.weather#GetCity"]["errors"] = [{"target": 1}]
+        with pytest.raises(ModelError, match="Expected a shape reference"):
+            Model.from_dict(model_document).expect(
+                "example.weather#GetCity"
+            ).references()
+
+    def test_apply_merges_traits_onto_members(
+        self, model_document: dict[str, Any]
+    ) -> None:
+        model_document["shapes"]["example.weather#Coordinates$latitude"] = {
+            "type": "apply",
+            "traits": {"smithy.api#documentation": "Latitude"},
+        }
+
+        model = Model.from_dict(model_document)
+        latitude = model.expect("example.weather#Coordinates").member("latitude")
+        assert latitude.trait("smithy.api#documentation") == "Latitude"
+        assert latitude.has_trait("smithy.api#required")
+
+    def test_apply_to_missing_member_is_an_error(
+        self, model_document: dict[str, Any]
+    ) -> None:
+        model_document["shapes"]["example.weather#Coordinates$altitude"] = {
+            "type": "apply",
+            "traits": {},
+        }
+        with pytest.raises(ModelError, match="Apply target member not found"):
+            Model.from_dict(model_document)
+
+    def test_apply_to_missing_target_is_an_error(
+        self, model_document: dict[str, Any]
+    ) -> None:
+        model_document["shapes"]["example.weather#Missing"] = {
+            "type": "apply",
+            "traits": {},
+        }
+        with pytest.raises(ModelError, match="Apply target not found"):
+            Model.from_dict(model_document)
+
+    def test_shapes_key_is_optional(self) -> None:
+        assert len(Model.from_dict({"smithy": "2.0"})) == 0
+
+    @pytest.mark.parametrize(
+        ("document", "message"),
+        [
+            ({}, "missing a string 'smithy' version"),
+            ({"smithy": 2}, "missing a string 'smithy' version"),
+            ({"smithy": "2.0", "shapes": []}, "Expected an object"),
+            (
+                {"smithy": "2.0", "shapes": {"example#Bad": {"type": "nope"}}},
+                "Unsupported shape type",
+            ),
+            (
+                {"smithy": "2.0", "shapes": {"example#Bad": {"type": "list"}}},
+                "Expected an object at member",
+            ),
+            (
+                {
+                    "smithy": "2.0",
+                    "shapes": {"example#Bad": {"type": "list", "member": {}}},
+                },
+                "shape target",
+            ),
+            (
+                {
+                    "smithy": "2.0",
+                    "shapes": {
+                        "example#Bad": {"type": "structure", "mixins": "example#M"}
+                    },
+                },
+                "Expected a list",
+            ),
+        ],
+    )
+    def test_invalid_documents_are_reported(
+        self, document: dict[str, Any], message: str
+    ) -> None:
+        with pytest.raises(ModelError, match=message):
+            Model.from_dict(document)
+
+    @pytest.mark.parametrize("source", [b"", b"not json", b"[]", b"\xff"])
+    def test_invalid_json_is_reported(self, source: bytes) -> None:
+        with pytest.raises(ModelError, match="Smithy JSON AST"):
+            Model.from_json(source)
+
+
+class TestLookup:
+    def test_resolves_prelude_without_inserting_it(self, model: Model) -> None:
+        assert model.expect("smithy.api#String").type is ShapeType.STRING
+        assert model.expect("smithy.api#Unit").type is ShapeType.STRUCTURE
+        assert all(not shape.id.is_prelude for shape in model)
+
+    def test_modeled_prelude_takes_precedence(
+        self, model_document: dict[str, Any]
+    ) -> None:
+        model_document["shapes"]["smithy.api#String"] = {
+            "type": "string",
+            "traits": {"smithy.api#documentation": "from the prelude"},
+        }
+        model = Model.from_dict(model_document)
+        assert model.expect("smithy.api#String").has_trait("smithy.api#documentation")
+
+    def test_get_returns_none_for_unknown_shapes(self, model: Model) -> None:
+        assert model.get("example.weather#Nope") is None
+        assert model.get("smithy.api#Nope") is None
+
+    def test_member_id_resolves_to_container(self, model: Model) -> None:
+        shape = model.expect("example.weather#Coordinates$latitude")
+        assert shape.id == ShapeID.parse("example.weather#Coordinates")
+
+    def test_expect_reports_missing_shapes(self, model: Model) -> None:
+        with pytest.raises(ModelError, match="Shape not found"):
+            model.expect("example.weather#Nope")
+        with pytest.raises(ModelError, match="Member not found"):
+            model.expect("example.weather#Coordinates").member("altitude")
+
+    def test_services_are_listed_in_model_order(self, model: Model) -> None:
+        assert [shape.id.name for shape in model.services()] == ["Weather"]
+
+    def test_duplicate_shapes_are_rejected(self, model: Model) -> None:
+        with pytest.raises(ModelError, match="Duplicate shape"):
+            model.replace_shapes((*model.shapes, model.shapes[0]))
