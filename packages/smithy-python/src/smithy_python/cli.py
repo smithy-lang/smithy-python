@@ -14,11 +14,15 @@ from typing import BinaryIO, Final
 
 from . import __version__
 from .environment import PluginEnvironment
-from .exceptions import CodegenError, InvalidInvocationError
+from .exceptions import CodegenError, InvalidInvocationError, ModelError
+from .model import Model, Shape, ShapeID
+from .selection import resolve_service, select_generated_shapes
 
 _GENERATION_NOT_IMPLEMENTED: Final = (
     "smithy-python: error: {artifact} generation is not implemented yet\n"
 )
+
+_CLIENT_ARTIFACT: Final = "client"
 
 
 @dataclass(frozen=True, slots=True)
@@ -27,6 +31,17 @@ class _Invocation:
     model_source: bytes
     output_dir: Path
     environment: PluginEnvironment
+    service: ShapeID | None
+
+
+@dataclass(frozen=True, slots=True)
+class _Request:
+    """A fully resolved generation request."""
+
+    invocation: _Invocation
+    model: Model
+    service: Shape | None
+    shapes: tuple[Shape, ...]
 
 
 def main(
@@ -44,11 +59,12 @@ def main(
         return error.code if isinstance(error.code, int) else 1
 
     try:
-        _resolve_invocation(
+        invocation = _resolve_invocation(
             args,
             environ=os.environ if environ is None else environ,
             stdin=stdin,
         )
+        _resolve_request(invocation)
     except InvalidInvocationError as error:
         sys.stderr.write(f"smithy-python: error: {error}\n")
         return 2
@@ -58,6 +74,19 @@ def main(
 
     sys.stderr.write(_GENERATION_NOT_IMPLEMENTED.format(artifact=args.artifact))
     return 1
+
+
+def _resolve_request(invocation: _Invocation) -> _Request:
+    """Load the model and resolve what the artifact will generate."""
+    # The raw bytes are dropped as soon as the model is parsed.
+    model = Model.from_json(invocation.model_source)
+    service = resolve_service(
+        model,
+        invocation.service,
+        required=invocation.artifact == _CLIENT_ARTIFACT,
+    )
+    shapes = select_generated_shapes(model)
+    return _Request(invocation=invocation, model=model, service=service, shapes=shapes)
 
 
 def _create_parser() -> argparse.ArgumentParser:
@@ -101,6 +130,14 @@ def _common_artifact_options() -> argparse.ArgumentParser:
         help=(
             "Output directory for generated files. Defaults to the Smithy run "
             "plugin's output directory (SMITHY_PLUGIN_DIR) when invoked by Smithy."
+        ),
+    )
+    parser.add_argument(
+        "--service",
+        metavar="SHAPE_ID",
+        help=(
+            "Absolute shape ID of the service to generate. Required only when the "
+            "model contains more than one service."
         ),
     )
     return parser
@@ -150,4 +187,19 @@ def _resolve_invocation(
         model_source=model_source,
         output_dir=output_dir,
         environment=environment,
+        service=_parse_service(args.service),
     )
+
+
+def _parse_service(value: str | None) -> ShapeID | None:
+    if value is None:
+        return None
+    try:
+        service = ShapeID.parse(value)
+    except ModelError as error:
+        raise InvalidInvocationError(f"Invalid --service value: {error}") from error
+    if service.member is not None:
+        raise InvalidInvocationError(
+            f"--service must identify a shape, not a member: {value}"
+        )
+    return service

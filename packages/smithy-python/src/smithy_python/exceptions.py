@@ -11,5 +11,9 @@ class CodegenError(SmithyPythonError):
     """Raised when code generation fails."""
 
 
+class ModelError(CodegenError):
+    """Raised when a Smithy JSON AST model is invalid or unsupported."""
+
+
 class InvalidInvocationError(SmithyPythonError):
     """Raised when command-line inputs do not form a valid invocation."""

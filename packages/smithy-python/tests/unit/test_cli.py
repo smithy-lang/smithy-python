@@ -3,10 +3,12 @@
 
 from __future__ import annotations
 
+import json
 import subprocess
 import sys
 from io import BytesIO
 from pathlib import Path
+from typing import Any
 
 import pytest
 from smithy_python import __version__
@@ -35,11 +37,12 @@ def test_information_commands(
 @pytest.mark.parametrize("artifact", ["client", "types"])
 def test_generation_commands_are_explicitly_unavailable(
     artifact: str,
+    model_json: bytes,
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     model = tmp_path / "model.json"
-    model.write_text("{}")
+    model.write_bytes(model_json)
 
     assert (
         main(
@@ -90,13 +93,13 @@ def test_main_module_invokes_cli() -> None:
 
 
 def test_run_plugin_invocation_reads_standard_input(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    model_json: bytes, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     assert (
         main(
             ("generate", "client"),
             environ={"SMITHY_PLUGIN_DIR": str(tmp_path)},
-            stdin=BytesIO(b"{}"),
+            stdin=BytesIO(model_json),
         )
         == 1
     )
@@ -233,3 +236,134 @@ def test_invocation_reports_model_io_error(
         == 1
     )
     assert "unable to read model" in capsys.readouterr().err
+
+
+def test_help_documents_service_option(capsys: pytest.CaptureFixture[str]) -> None:
+    assert main(("generate", "client", "--help")) == 0
+    assert "--service SHAPE_ID" in capsys.readouterr().out
+
+
+def test_invalid_model_is_a_generation_failure(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert (
+        main(
+            ("generate", "types", "--output", str(tmp_path)),
+            environ={},
+            stdin=BytesIO(b"{}"),
+        )
+        == 1
+    )
+    assert "missing a string 'smithy' version" in capsys.readouterr().err
+
+
+def test_client_requires_a_service(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert (
+        main(
+            ("generate", "client", "--output", str(tmp_path)),
+            environ={},
+            stdin=BytesIO(b'{"smithy": "2.0"}'),
+        )
+        == 2
+    )
+    assert "does not contain a service" in capsys.readouterr().err
+
+
+def test_types_does_not_require_a_service(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert (
+        main(
+            ("generate", "types", "--output", str(tmp_path)),
+            environ={},
+            stdin=BytesIO(b'{"smithy": "2.0"}'),
+        )
+        == 1
+    )
+    assert "types generation is not implemented yet" in capsys.readouterr().err
+
+
+def test_multiple_services_require_service_option(
+    model_document: dict[str, Any],
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    model_document["shapes"]["example.other#Other"] = {
+        "type": "service",
+        "version": "1",
+    }
+    source = json.dumps(model_document).encode()
+
+    assert (
+        main(
+            ("generate", "client", "--output", str(tmp_path)),
+            environ={},
+            stdin=BytesIO(source),
+        )
+        == 2
+    )
+    assert "select one with --service" in capsys.readouterr().err
+
+    assert (
+        main(
+            (
+                "generate",
+                "client",
+                "--output",
+                str(tmp_path),
+                "--service",
+                "example.weather#Weather",
+            ),
+            environ={},
+            stdin=BytesIO(source),
+        )
+        == 1
+    )
+    assert "client generation is not implemented yet" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    ("value", "message"),
+    [
+        ("Weather", "Invalid --service value"),
+        ("example.weather#Weather$member", "not a member"),
+        ("example.weather#Nope", "Service not found"),
+        ("example.weather#Coordinates", "Expected a service shape"),
+    ],
+)
+def test_invalid_service_option_is_an_invocation_error(
+    value: str,
+    message: str,
+    model_json: bytes,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert (
+        main(
+            ("generate", "client", "--output", str(tmp_path), "--service", value),
+            environ={},
+            stdin=BytesIO(model_json),
+        )
+        == 2
+    )
+    assert message in capsys.readouterr().err
+
+
+def test_shape_name_conflicts_are_a_generation_failure(
+    model_document: dict[str, Any],
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    model_document["shapes"]["example.other#coordinates"] = {"type": "string"}
+
+    assert (
+        main(
+            ("generate", "types", "--output", str(tmp_path)),
+            environ={},
+            stdin=BytesIO(json.dumps(model_document).encode()),
+        )
+        == 1
+    )
+    assert "case-insensitively unique" in capsys.readouterr().err
