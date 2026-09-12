@@ -122,5 +122,6 @@ def _require_unique_names(shapes: tuple[Shape, ...]) -> None:
         details = "; ".join(", ".join(map(str, ids)) for ids in conflicts)
         raise CodegenError(
             "Generated shape names must be case-insensitively unique. Rename the "
-            f"conflicting shapes with the renameShapes transform: {details}"
+            "conflicting shapes with the renameShapes transform, or drop shapes not "
+            f"connected to a service with the removeUnusedShapes transform: {details}"
         )
