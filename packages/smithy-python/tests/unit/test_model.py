@@ -242,3 +242,301 @@ class TestLookup:
     def test_duplicate_shapes_are_rejected(self, model: Model) -> None:
         with pytest.raises(ModelError, match="Duplicate shape"):
             model.replace_shapes((*model.shapes, model.shapes[0]))
+
+
+class TestMixins:
+    @staticmethod
+    def _document(shapes: dict[str, Any]) -> dict[str, Any]:
+        return {"smithy": "2.0", "shapes": shapes}
+
+    def test_inherited_members_precede_local_members_depth_first(self) -> None:
+        model = Model.from_dict(
+            self._document(
+                {
+                    "example#FilteredByName": {
+                        "type": "structure",
+                        "traits": {"smithy.api#mixin": {}},
+                        "members": {"nameFilter": {"target": "smithy.api#String"}},
+                    },
+                    "example#Paginated": {
+                        "type": "structure",
+                        "traits": {"smithy.api#mixin": {}},
+                        "members": {
+                            "nextToken": {"target": "smithy.api#String"},
+                            "pageSize": {"target": "smithy.api#Integer"},
+                        },
+                    },
+                    "example#ListInput": {
+                        "type": "structure",
+                        "mixins": [
+                            {"target": "example#Paginated"},
+                            {"target": "example#FilteredByName"},
+                        ],
+                        "members": {"sizeFilter": {"target": "smithy.api#Integer"}},
+                    },
+                }
+            )
+        )
+        shape = model.expect("example#ListInput")
+        assert [member.name for member in shape.members] == [
+            "nextToken",
+            "pageSize",
+            "nameFilter",
+            "sizeFilter",
+        ]
+        assert shape.mixins == (
+            ShapeID.parse("example#Paginated"),
+            ShapeID.parse("example#FilteredByName"),
+        )
+        # Mixins themselves are left untouched.
+        assert len(model.expect("example#Paginated").members) == 2
+
+    def test_traits_are_inherited_with_local_and_later_precedence(self) -> None:
+        model = Model.from_dict(
+            self._document(
+                {
+                    "example#A": {
+                        "type": "structure",
+                        "traits": {
+                            "smithy.api#mixin": {"localTraits": ["smithy.api#private"]},
+                            "smithy.api#private": {},
+                            "smithy.api#documentation": "A",
+                            "example#foo": 1,
+                            "example#onlyA": True,
+                        },
+                    },
+                    "example#B": {
+                        "type": "structure",
+                        "traits": {"smithy.api#mixin": {}, "example#foo": 2},
+                    },
+                    "example#C": {
+                        "type": "structure",
+                        "mixins": [{"target": "example#A"}, {"target": "example#B"}],
+                        "traits": {
+                            "smithy.api#mixin": {},
+                            "smithy.api#documentation": "C",
+                        },
+                    },
+                    "example#D": {
+                        "type": "structure",
+                        "mixins": [{"target": "example#C"}],
+                    },
+                }
+            )
+        )
+        c = model.expect("example#C")
+        assert c.trait("smithy.api#documentation") == "C"
+        assert c.trait("example#foo") == 2
+        assert c.has_trait("example#onlyA")
+        assert not c.has_trait("smithy.api#private")
+        # Inheritance is transitive, and the mixin trait itself is not inherited.
+        d = model.expect("example#D")
+        assert d.trait("smithy.api#documentation") == "C"
+        assert d.trait("example#foo") == 2
+        assert d.has_trait("example#onlyA")
+        assert not d.has_trait("smithy.api#private")
+        assert not d.has_trait("smithy.api#mixin")
+
+    def test_apply_targets_inherited_members(self) -> None:
+        model = Model.from_dict(
+            self._document(
+                {
+                    "example#M": {
+                        "type": "structure",
+                        "traits": {"smithy.api#mixin": {}},
+                        "members": {"foo": {"target": "smithy.api#String"}},
+                    },
+                    "example#S": {
+                        "type": "structure",
+                        "mixins": [{"target": "example#M"}],
+                    },
+                    "example#S$foo": {
+                        "type": "apply",
+                        "traits": {"smithy.api#required": {}},
+                    },
+                    "example#M$foo": {
+                        "type": "apply",
+                        "traits": {"smithy.api#documentation": "docs"},
+                    },
+                }
+            )
+        )
+        foo = model.expect("example#S").member("foo")
+        assert foo.has_trait("smithy.api#required")
+        assert foo.trait("smithy.api#documentation") == "docs"
+        assert (
+            not model.expect("example#M").member("foo").has_trait("smithy.api#required")
+        )
+
+    def test_redefined_members_merge_traits_and_keep_position(self) -> None:
+        model = Model.from_dict(
+            self._document(
+                {
+                    "example#M": {
+                        "type": "structure",
+                        "traits": {"smithy.api#mixin": {}},
+                        "members": {
+                            "a": {
+                                "target": "smithy.api#String",
+                                "traits": {"smithy.api#documentation": "docs"},
+                            },
+                            "b": {"target": "smithy.api#String"},
+                        },
+                    },
+                    "example#S": {
+                        "type": "structure",
+                        "mixins": [{"target": "example#M"}],
+                        "members": {
+                            "c": {"target": "smithy.api#String"},
+                            "a": {
+                                "target": "smithy.api#String",
+                                "traits": {"smithy.api#required": {}},
+                            },
+                        },
+                    },
+                }
+            )
+        )
+        shape = model.expect("example#S")
+        assert [member.name for member in shape.members] == ["a", "b", "c"]
+        a = shape.member("a")
+        assert a.has_trait("smithy.api#required")
+        assert a.has_trait("smithy.api#documentation")
+
+    def test_redefined_members_must_keep_their_target(self) -> None:
+        with pytest.raises(ModelError, match="different target"):
+            Model.from_dict(
+                self._document(
+                    {
+                        "example#M": {
+                            "type": "structure",
+                            "traits": {"smithy.api#mixin": {}},
+                            "members": {"a": {"target": "smithy.api#String"}},
+                        },
+                        "example#S": {
+                            "type": "structure",
+                            "mixins": [{"target": "example#M"}],
+                            "members": {"a": {"target": "smithy.api#Integer"}},
+                        },
+                    }
+                )
+            )
+
+    def test_service_properties_are_merged(self) -> None:
+        model = Model.from_dict(
+            self._document(
+                {
+                    "example#A": {
+                        "type": "service",
+                        "version": "A",
+                        "operations": [{"target": "example#OpA"}],
+                        "traits": {"smithy.api#mixin": {}},
+                    },
+                    "example#B": {
+                        "type": "service",
+                        "version": "B",
+                        "rename": {"example#X": "Y"},
+                        "operations": [{"target": "example#OpB"}],
+                        "mixins": [{"target": "example#A"}],
+                        "traits": {"smithy.api#mixin": {}},
+                    },
+                    "example#C": {
+                        "type": "service",
+                        "version": "C",
+                        "rename": {"example#Z": "W"},
+                        "operations": [
+                            {"target": "example#OpC"},
+                            {"target": "example#OpA"},
+                        ],
+                        "mixins": [{"target": "example#B"}],
+                    },
+                    "example#OpA": {"type": "operation"},
+                    "example#OpB": {"type": "operation"},
+                    "example#OpC": {"type": "operation"},
+                }
+            )
+        )
+        service = model.expect("example#C")
+        assert service.attributes["version"] == "C"
+        assert service.attributes["rename"] == {"example#X": "Y", "example#Z": "W"}
+        assert service.references() == (
+            ShapeID.parse("example#B"),
+            ShapeID.parse("example#OpA"),
+            ShapeID.parse("example#OpB"),
+            ShapeID.parse("example#OpC"),
+        )
+
+    def test_operation_errors_are_inherited(self) -> None:
+        model = Model.from_dict(
+            self._document(
+                {
+                    "example#Validated": {
+                        "type": "operation",
+                        "errors": [{"target": "example#ValidationError"}],
+                        "traits": {"smithy.api#mixin": {}},
+                    },
+                    "example#GetUser": {
+                        "type": "operation",
+                        "errors": [{"target": "example#NotFound"}],
+                        "mixins": [{"target": "example#Validated"}],
+                    },
+                    "example#ValidationError": {
+                        "type": "structure",
+                        "traits": {"smithy.api#error": "client"},
+                    },
+                    "example#NotFound": {
+                        "type": "structure",
+                        "traits": {"smithy.api#error": "client"},
+                    },
+                }
+            )
+        )
+        assert model.expect("example#GetUser").attributes["errors"] == [
+            {"target": "example#ValidationError"},
+            {"target": "example#NotFound"},
+        ]
+
+    @pytest.mark.parametrize(
+        ("shapes", "message"),
+        [
+            (
+                {
+                    "example#S": {
+                        "type": "structure",
+                        "mixins": [{"target": "example#Missing"}],
+                    }
+                },
+                "Mixin not found",
+            ),
+            (
+                {
+                    "example#M": {"type": "structure"},
+                    "example#S": {
+                        "type": "structure",
+                        "mixins": [{"target": "example#M"}],
+                    },
+                },
+                "lacks the smithy.api#mixin trait",
+            ),
+            (
+                {
+                    "example#A": {
+                        "type": "structure",
+                        "traits": {"smithy.api#mixin": {}},
+                        "mixins": [{"target": "example#B"}],
+                    },
+                    "example#B": {
+                        "type": "structure",
+                        "traits": {"smithy.api#mixin": {}},
+                        "mixins": [{"target": "example#A"}],
+                    },
+                },
+                "Mixin cycle",
+            ),
+        ],
+    )
+    def test_invalid_mixins_are_reported(
+        self, shapes: dict[str, Any], message: str
+    ) -> None:
+        with pytest.raises(ModelError, match=message):
+            Model.from_dict(self._document(shapes))
