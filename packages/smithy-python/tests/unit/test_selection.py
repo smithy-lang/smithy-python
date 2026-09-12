@@ -59,6 +59,25 @@ class TestResolveService:
         with pytest.raises(InvalidInvocationError, match="does not contain a service"):
             resolve_service(model, None, required=True)
 
+    def test_mixin_services_are_not_candidates(
+        self, model_document: dict[str, Any]
+    ) -> None:
+        model_document["shapes"]["example.weather#Base"] = {
+            "type": "service",
+            "version": "1",
+            "traits": {"smithy.api#mixin": {}},
+        }
+        model_document["shapes"]["example.weather#Weather"]["mixins"] = [
+            {"target": "example.weather#Base"}
+        ]
+        model = Model.from_dict(model_document)
+
+        service = resolve_service(model, None, required=True)
+        assert service is not None and service.id == WEATHER
+
+        with pytest.raises(InvalidInvocationError, match="mixin service"):
+            resolve_service(model, ShapeID.parse("example.weather#Base"), required=True)
+
 
 class TestSelectGeneratedShapes:
     def test_selects_every_data_shape_in_model_order(self, model: Model) -> None:

@@ -19,6 +19,7 @@ type JSONValue = (
 )
 
 PRELUDE_NAMESPACE = "smithy.api"
+MIXIN_TRAIT = "smithy.api#mixin"
 
 
 class ShapeType(StrEnum):
@@ -239,7 +240,7 @@ class Model:
         metadata = _json_object(document.get("metadata", {}), "Smithy model metadata")
 
         shapes: list[Shape] = []
-        applies: list[tuple[ShapeID, Mapping[str, JSONValue]]] = []
+        applies: list[_Apply] = []
         for shape_id, unparsed_node in shapes_node.items():
             node = _object_mapping(unparsed_node, f"shape {shape_id}")
             parsed_id = ShapeID.parse(shape_id)
@@ -250,8 +251,14 @@ class Model:
                 continue
             shapes.append(_parse_shape(parsed_id, node))
 
-        if applies:
-            shapes = _apply_traits(shapes, applies)
+        # Serialized models omit everything a shape inherits from its mixins, and
+        # traits added to inherited members arrive as apply statements. Traits
+        # applied to members that exist before resolution (including members of
+        # the mixins themselves) are merged first so that they are inherited;
+        # the rest target inherited members and are merged after resolution.
+        shapes, deferred = _apply_traits(shapes, applies, defer_missing_members=True)
+        shapes = _resolve_mixins(shapes)
+        shapes, _ = _apply_traits(shapes, deferred, defer_missing_members=False)
         return cls(smithy=version, metadata=_mapping(metadata), shapes=tuple(shapes))
 
     def __iter__(self) -> Iterator[Shape]:
@@ -412,10 +419,15 @@ def _json_value(value: object, location: str) -> JSONValue:
     raise ModelError(f"Unsupported JSON value at {location}: {type(value).__name__}")
 
 
+type _Apply = tuple[ShapeID, Mapping[str, JSONValue]]
+
+
 def _apply_traits(
-    shapes: list[Shape], applies: list[tuple[ShapeID, Mapping[str, JSONValue]]]
-) -> list[Shape]:
+    shapes: list[Shape], applies: list[_Apply], *, defer_missing_members: bool
+) -> tuple[list[Shape], list[_Apply]]:
+    """Merge apply statements into shapes, returning any that were deferred."""
     positions = {shape.id: index for index, shape in enumerate(shapes)}
+    deferred: list[_Apply] = []
     for target, traits in applies:
         container_id = target.without_member()
         if container_id not in positions:
@@ -436,5 +448,109 @@ def _apply_traits(
                 shapes[position] = replace(shape, members=tuple(members))
                 break
         else:
-            raise ModelError(f"Apply target member not found: {target}")
-    return shapes
+            if not defer_missing_members:
+                raise ModelError(f"Apply target member not found: {target}")
+            deferred.append((target, traits))
+    return shapes, deferred
+
+
+def _resolve_mixins(shapes: list[Shape]) -> list[Shape]:
+    """Copy inherited traits, members, and properties onto shapes using mixins.
+
+    Follows the resolution rules of the Smithy mixins specification: inherited
+    members precede local members in a depth-first traversal of the mixins,
+    later mixins take precedence over earlier ones, local definitions take
+    precedence over anything inherited, and the ``mixin`` trait itself and any
+    ``localTraits`` are not inherited.
+    """
+    by_id = {shape.id: shape for shape in shapes}
+    resolved: dict[ShapeID, Shape] = {}
+    resolving: set[ShapeID] = set()
+
+    def resolve(shape: Shape) -> Shape:
+        if (done := resolved.get(shape.id)) is not None:
+            return done
+        if not shape.mixins:
+            resolved[shape.id] = shape
+            return shape
+        if shape.id in resolving:
+            raise ModelError(f"Mixin cycle detected at {shape.id}")
+        resolving.add(shape.id)
+
+        traits: dict[str, JSONValue] = {}
+        members: dict[str, Member] = {}
+        attributes: dict[str, JSONValue] = {}
+        for mixin_id in shape.mixins:
+            mixin = by_id.get(mixin_id)
+            if mixin is None:
+                raise ModelError(f"Mixin not found: {mixin_id} (used by {shape.id})")
+            if not mixin.has_trait(MIXIN_TRAIT):
+                raise ModelError(
+                    f"{shape.id} uses {mixin_id} as a mixin, but it lacks the "
+                    f"{MIXIN_TRAIT} trait"
+                )
+            mixin = resolve(mixin)
+            traits.update(_inherited_traits(mixin))
+            for member in mixin.members:
+                members[member.name] = _merge_members(members.get(member.name), member)
+            _merge_attributes(attributes, mixin.attributes)
+
+        traits.update(shape.traits)
+        for member in shape.members:
+            members[member.name] = _merge_members(members.get(member.name), member)
+        _merge_attributes(attributes, shape.attributes)
+
+        result = replace(
+            shape,
+            traits=_mapping(traits),
+            members=tuple(members.values()),
+            attributes=_mapping(attributes),
+        )
+        resolving.discard(shape.id)
+        resolved[shape.id] = result
+        return result
+
+    return [resolve(shape) for shape in shapes]
+
+
+def _inherited_traits(mixin: Shape) -> dict[str, JSONValue]:
+    excluded = {MIXIN_TRAIT}
+    mixin_trait = mixin.trait(MIXIN_TRAIT)
+    if isinstance(mixin_trait, dict):
+        local_traits = mixin_trait.get("localTraits", [])
+        if isinstance(local_traits, list):
+            excluded.update(name for name in local_traits if isinstance(name, str))
+    return {name: value for name, value in mixin.traits.items() if name not in excluded}
+
+
+def _merge_members(inherited: Member | None, member: Member) -> Member:
+    """Merge a redefined member onto the one it inherits, keeping its position."""
+    if inherited is None:
+        return member
+    if inherited.target != member.target:
+        raise ModelError(
+            f"Member {member.name} redefines an inherited member with a different "
+            f"target: {inherited.target} != {member.target}"
+        )
+    return replace(member, traits=_mapping({**inherited.traits, **member.traits}))
+
+
+def _merge_attributes(
+    target: dict[str, JSONValue], source: Mapping[str, JSONValue]
+) -> None:
+    """Merge shape properties, giving ``source`` precedence.
+
+    Lists are concatenated without duplicates, objects are merged key by key,
+    and scalars from ``source`` replace existing values.
+    """
+    for key, value in source.items():
+        existing = target.get(key)
+        if isinstance(existing, list) and isinstance(value, list):
+            target[key] = [
+                *existing,
+                *(item for item in value if item not in existing),
+            ]
+        elif isinstance(existing, dict) and isinstance(value, dict):
+            target[key] = {**existing, **value}
+        else:
+            target[key] = value

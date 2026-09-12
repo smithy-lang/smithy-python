@@ -8,11 +8,10 @@ from collections import deque
 from typing import Final
 
 from .exceptions import CodegenError, InvalidInvocationError
-from .model import Model, Shape, ShapeID, ShapeType
+from .model import MIXIN_TRAIT, Model, Shape, ShapeID, ShapeType
 
 TRAIT_DEFINITION: Final = "smithy.api#trait"
 PRIVATE_TRAIT: Final = "smithy.api#private"
-MIXIN_TRAIT: Final = "smithy.api#mixin"
 
 # Shapes carrying these traits describe the model rather than data and are
 # never generated, even when the JSON AST includes them.
@@ -24,10 +23,11 @@ def resolve_service(
 ) -> Shape | None:
     """Return the service to generate, or ``None`` when one is not needed.
 
-    An explicitly requested service must exist and be a service shape. When
-    none is requested, a model containing exactly one service uses it, a model
-    with several services is an error, and a model with none returns ``None``
-    unless the artifact requires a service.
+    An explicitly requested service must exist and be a concrete service shape.
+    When none is requested, a model containing exactly one concrete service uses
+    it, a model with several is an error, and a model with none returns ``None``
+    unless the artifact requires a service. Services marked ``@mixin`` are
+    abstract and never candidates.
     """
     if requested is not None:
         shape = model.get(requested)
@@ -37,9 +37,16 @@ def resolve_service(
             raise InvalidInvocationError(
                 f"Expected a service shape, found {shape.type}: {requested}"
             )
+        if shape.has_trait(MIXIN_TRAIT):
+            raise InvalidInvocationError(
+                f"Cannot generate a mixin service; select a service that uses it: "
+                f"{requested}"
+            )
         return shape
 
-    services = model.services()
+    services = tuple(
+        service for service in model.services() if not service.has_trait(MIXIN_TRAIT)
+    )
     if len(services) == 1:
         return services[0]
     if len(services) > 1:
