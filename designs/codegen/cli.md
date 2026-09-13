@@ -19,8 +19,9 @@ generates a standalone package containing only data shapes. Both commands accept
 the following process options:
 
 * `--model PATH` reads a JSON AST from a file instead of standard input.
-* `--output PATH` selects the output directory. It defaults to the Smithy run
-  plugin's output directory (`SMITHY_PLUGIN_DIR`) when invoked by Smithy.
+* `--output PATH` selects the output directory. It is required for direct
+  invocation and MUST NOT be used when the Smithy run plugin supplies the output
+  directory (`SMITHY_PLUGIN_DIR`).
 
 Settings specific to each artifact will be added with the functionality that
 consumes them.
