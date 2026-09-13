@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from typing import Any
 
 import pytest
@@ -59,6 +60,15 @@ class TestParsing:
         coordinates = model.expect("example.weather#Coordinates")
         with pytest.raises(TypeError):
             coordinates.traits["example#trait"] = {}  # type: ignore[index]
+
+    def test_nested_values_are_immutable(self, model: Model) -> None:
+        http = model.expect("example.weather#GetCity").trait("smithy.api#http")
+        assert isinstance(http, Mapping)
+        with pytest.raises(TypeError):
+            http["method"] = "POST"  # type: ignore[index]
+        errors = model.expect("example.weather#GetCity").attributes["errors"]
+        assert isinstance(errors, tuple)
+        assert model.metadata["example"] is True
 
     def test_from_json_accepts_bytes(self, model_json: bytes, model: Model) -> None:
         assert Model.from_json(model_json) == model
@@ -410,6 +420,40 @@ class TestMixins:
             not model.expect("example#A").member("foo").has_trait("smithy.api#required")
         )
 
+    def test_inherited_values_cannot_be_mutated_through_a_sibling(self) -> None:
+        model = Model.from_dict(
+            self._document(
+                {
+                    "example#M": {
+                        "type": "structure",
+                        "traits": {
+                            "smithy.api#mixin": {},
+                            "smithy.api#tags": ["shared"],
+                            "smithy.api#http": {"method": "GET", "uri": "/"},
+                        },
+                    },
+                    "example#S": {
+                        "type": "structure",
+                        "mixins": [{"target": "example#M"}],
+                    },
+                    "example#T": {
+                        "type": "structure",
+                        "mixins": [{"target": "example#M"}],
+                    },
+                }
+            )
+        )
+        s_http = model.expect("example#S").trait("smithy.api#http")
+        assert isinstance(s_http, Mapping)
+        with pytest.raises(TypeError):
+            s_http["method"] = "POST"  # type: ignore[index]
+        tags = model.expect("example#S").trait("smithy.api#tags")
+        assert isinstance(tags, tuple)
+        assert model.expect("example#T").trait("smithy.api#http") == {
+            "method": "GET",
+            "uri": "/",
+        }
+
     def test_redefined_members_merge_traits_and_keep_position(self) -> None:
         model = Model.from_dict(
             self._document(
@@ -533,10 +577,10 @@ class TestMixins:
                 }
             )
         )
-        assert model.expect("example#GetUser").attributes["errors"] == [
+        assert model.expect("example#GetUser").attributes["errors"] == (
             {"target": "example#ValidationError"},
             {"target": "example#NotFound"},
-        ]
+        )
 
     @pytest.mark.parametrize(
         ("shapes", "message"),

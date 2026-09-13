@@ -1,18 +1,18 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Ordered, read-only objects for Smithy's JSON AST representation.
+"""Ordered, immutable objects for Smithy's JSON AST representation.
 
-Shapes, members, and models are frozen dataclasses whose trait, metadata, and
-attribute containers are read-only views. Values nested inside those containers
-are plain JSON objects shared with the parsed document and are not copied; they
-MUST be treated as read-only by callers.
+Shapes, members, and models are frozen dataclasses. Trait, metadata, and
+attribute values are deeply immutable: JSON objects are exposed as read-only
+mappings and JSON arrays as tuples, so values inherited through mixins can be
+shared between shapes without one shape's consumer affecting another.
 """
 
 from __future__ import annotations
 
 import json
 import re
-from collections.abc import Callable, Iterable, Iterator, Mapping
+from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from enum import StrEnum
 from types import MappingProxyType
@@ -21,7 +21,7 @@ from typing import Self, cast
 from .exceptions import ModelError
 
 type JSONValue = (
-    None | bool | int | float | str | list[JSONValue] | dict[str, JSONValue]
+    None | bool | int | float | str | tuple[JSONValue, ...] | Mapping[str, JSONValue]
 )
 
 PRELUDE_NAMESPACE = "smithy.api"
@@ -108,8 +108,7 @@ def _mapping(
     value: Mapping[str, JSONValue] | None = None,
 ) -> Mapping[str, JSONValue]:
     # A fresh dict preserves JSON insertion order while MappingProxyType prevents
-    # accidental mutation of the container. Nested values are not copied: they are
-    # ordinary JSON objects that callers must treat as read-only.
+    # mutation. Nested values are already frozen by _json_value.
     return MappingProxyType(dict(value or {}))
 
 
@@ -176,7 +175,7 @@ class Shape:
                 result.append(_reference(value, f"{self.id}.{key}"))
         for key in ("identifiers", "properties"):
             values = self.attributes.get(key)
-            if isinstance(values, dict):
+            if isinstance(values, Mapping):
                 result.extend(
                     _reference(value, f"{self.id}.{key}.{name}")
                     for name, value in values.items()
@@ -186,7 +185,7 @@ class Shape:
 
 # Prelude shapes are omitted from the JSON AST unless the build opts in, so they
 # are resolved on demand when a member targets one.
-_PRELUDE_TYPES: dict[str, tuple[ShapeType, dict[str, JSONValue]]] = {
+_PRELUDE_TYPES: dict[str, tuple[ShapeType, Mapping[str, JSONValue]]] = {
     "Blob": (ShapeType.BLOB, {}),
     "Boolean": (ShapeType.BOOLEAN, {}),
     "String": (ShapeType.STRING, {}),
@@ -207,7 +206,7 @@ _PRELUDE_TYPES: dict[str, tuple[ShapeType, dict[str, JSONValue]]] = {
     "PrimitiveLong": (ShapeType.LONG, {"smithy.api#default": 0}),
     "PrimitiveFloat": (ShapeType.FLOAT, {"smithy.api#default": 0}),
     "PrimitiveDouble": (ShapeType.DOUBLE, {"smithy.api#default": 0}),
-    "Unit": (ShapeType.STRUCTURE, {"smithy.api#unitType": {}}),
+    "Unit": (ShapeType.STRUCTURE, {"smithy.api#unitType": MappingProxyType({})}),
 }
 
 
@@ -370,10 +369,10 @@ def _expect_traits(value: object, target: ShapeID) -> Mapping[str, JSONValue]:
     return _mapping(_json_object(value, f"traits on {target}"))
 
 
-def _expect_list(value: object, location: str) -> list[object]:
-    if not isinstance(value, list):
+def _expect_list(value: object, location: str) -> Sequence[object]:
+    if not isinstance(value, list | tuple):
         raise ModelError(f"Expected a list at {location}")
-    return cast(list[object], value)
+    return cast(Sequence[object], value)
 
 
 def _reference(value: object, location: str) -> ShapeID:
@@ -407,18 +406,23 @@ def _object_mapping(value: object, location: str) -> dict[str, object]:
     return result
 
 
-def _json_object(value: object, location: str) -> dict[str, JSONValue]:
-    return {
-        key: _json_value(item, f"{location}.{key}")
-        for key, item in _object_mapping(value, location).items()
-    }
+def _json_object(value: object, location: str) -> Mapping[str, JSONValue]:
+    return MappingProxyType(
+        {
+            key: _json_value(item, f"{location}.{key}")
+            for key, item in _object_mapping(value, location).items()
+        }
+    )
 
 
 def _json_value(value: object, location: str) -> JSONValue:
+    """Convert a decoded JSON value into its deeply immutable form."""
     if value is None or isinstance(value, bool | int | float | str):
         return value
-    if isinstance(value, list):
-        return [_json_value(item, location) for item in cast(list[object], value)]
+    if isinstance(value, list | tuple):
+        return tuple(
+            _json_value(item, location) for item in cast(Sequence[object], value)
+        )
     if isinstance(value, Mapping):
         return _json_object(cast(object, value), location)
     raise ModelError(f"Unsupported JSON value at {location}: {type(value).__name__}")
@@ -520,9 +524,9 @@ def _apply_traits(shape: Shape, applies: list[_Apply]) -> Shape:
 def _inherited_traits(mixin: Shape) -> dict[str, JSONValue]:
     excluded = {MIXIN_TRAIT}
     mixin_trait = mixin.trait(MIXIN_TRAIT)
-    if isinstance(mixin_trait, dict):
-        local_traits = mixin_trait.get("localTraits", [])
-        if isinstance(local_traits, list):
+    if isinstance(mixin_trait, Mapping):
+        local_traits = mixin_trait.get("localTraits", ())
+        if isinstance(local_traits, tuple):
             excluded.update(name for name in local_traits if isinstance(name, str))
     return {name: value for name, value in mixin.traits.items() if name not in excluded}
 
@@ -544,17 +548,17 @@ def _merge_attributes(
 ) -> None:
     """Merge shape properties, giving ``source`` precedence.
 
-    Lists are concatenated without duplicates, objects are merged key by key,
+    Arrays are concatenated without duplicates, objects are merged key by key,
     and scalars from ``source`` replace existing values.
     """
     for key, value in source.items():
         existing = target.get(key)
-        if isinstance(existing, list) and isinstance(value, list):
-            target[key] = [
+        if isinstance(existing, tuple) and isinstance(value, tuple):
+            target[key] = (
                 *existing,
                 *(item for item in value if item not in existing),
-            ]
-        elif isinstance(existing, dict) and isinstance(value, dict):
-            target[key] = {**existing, **value}
+            )
+        elif isinstance(existing, Mapping) and isinstance(value, Mapping):
+            target[key] = MappingProxyType({**existing, **value})
         else:
             target[key] = value
