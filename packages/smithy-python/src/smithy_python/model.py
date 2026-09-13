@@ -15,8 +15,9 @@ import re
 from collections.abc import Callable, Iterable, Iterator, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from enum import StrEnum
+from functools import total_ordering
 from types import MappingProxyType
-from typing import Self, cast
+from typing import Final, Self, cast
 
 from .exceptions import ModelError
 
@@ -26,6 +27,7 @@ type JSONValue = (
 
 PRELUDE_NAMESPACE = "smithy.api"
 MIXIN_TRAIT = "smithy.api#mixin"
+TRAIT_DEFINITION = "smithy.api#trait"
 
 
 class ShapeType(StrEnum):
@@ -64,7 +66,8 @@ _IDENTIFIER = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 _NAMESPACE = re.compile(rf"{_IDENTIFIER.pattern}(?:\.{_IDENTIFIER.pattern})*")
 
 
-@dataclass(frozen=True, slots=True, order=True)
+@total_ordering
+@dataclass(frozen=True, slots=True)
 class ShapeID:
     """An absolute Smithy shape ID, optionally identifying a member."""
 
@@ -73,11 +76,11 @@ class ShapeID:
     member: str | None = None
 
     def __post_init__(self) -> None:
-        if not _NAMESPACE.fullmatch(self.namespace) or not _IDENTIFIER.fullmatch(
-            self.name
+        if not (
+            _NAMESPACE.fullmatch(self.namespace)
+            and _IDENTIFIER.fullmatch(self.name)
+            and (self.member is None or _IDENTIFIER.fullmatch(self.member))
         ):
-            raise ModelError(f"Invalid shape ID: {self}")
-        if self.member is not None and not _IDENTIFIER.fullmatch(self.member):
             raise ModelError(f"Invalid shape ID: {self}")
 
     @classmethod
@@ -93,15 +96,35 @@ class ShapeID:
         return type(self)(namespace=self.namespace, name=self.name, member=member)
 
     def without_member(self) -> Self:
+        if self.member is None:
+            return self
         return type(self)(namespace=self.namespace, name=self.name)
 
     @property
     def is_prelude(self) -> bool:
         return self.namespace == PRELUDE_NAMESPACE
 
+    def __lt__(self, other: ShapeID) -> bool:
+        """Order by namespace, then shape name, then member name."""
+        return (self.namespace, self.name, self.member or "") < (
+            other.namespace,
+            other.name,
+            other.member or "",
+        )
+
     def __str__(self) -> str:
         value = f"{self.namespace}#{self.name}"
         return f"{value}${self.member}" if self.member is not None else value
+
+
+# Frozen values are shared rather than copied, so every empty mapping in the
+# model can be the same object.
+_EMPTY_MAPPING: Final[Mapping[str, JSONValue]] = MappingProxyType({})
+
+
+def _freeze(value: dict[str, JSONValue]) -> Mapping[str, JSONValue]:
+    """Expose a dict this module owns as a read-only mapping."""
+    return MappingProxyType(value) if value else _EMPTY_MAPPING
 
 
 def _mapping(
@@ -109,16 +132,22 @@ def _mapping(
 ) -> Mapping[str, JSONValue]:
     # A fresh dict preserves JSON insertion order while MappingProxyType prevents
     # mutation. Nested values are already frozen by _json_value.
-    return MappingProxyType(dict(value or {}))
+    return _freeze(dict(value)) if value else _EMPTY_MAPPING
 
 
-@dataclass(frozen=True, slots=True)
-class Member:
-    """A member of an aggregate shape, in modeled order."""
+def _merged(
+    base: Mapping[str, JSONValue], overrides: Mapping[str, JSONValue]
+) -> Mapping[str, JSONValue]:
+    """Freeze the union of two frozen mappings, ``overrides`` taking precedence."""
+    return _freeze({**base, **overrides})
 
-    name: str
-    target: ShapeID
-    traits: Mapping[str, JSONValue] = field(default_factory=_mapping)
+
+class _Traited:
+    """Trait lookups shared by the AST nodes that carry traits."""
+
+    __slots__ = ()
+
+    traits: Mapping[str, JSONValue]
 
     def has_trait(self, trait: str) -> bool:
         return trait in self.traits
@@ -128,7 +157,16 @@ class Member:
 
 
 @dataclass(frozen=True, slots=True)
-class Shape:
+class Member(_Traited):
+    """A member of an aggregate shape, in modeled order."""
+
+    name: str
+    target: ShapeID
+    traits: Mapping[str, JSONValue] = field(default_factory=_mapping)
+
+
+@dataclass(frozen=True, slots=True)
+class Shape(_Traited):
     """A Smithy shape with ordered members and lossless shape-specific fields."""
 
     id: ShapeID
@@ -138,53 +176,33 @@ class Shape:
     members: tuple[Member, ...] = ()
     attributes: Mapping[str, JSONValue] = field(default_factory=_mapping)
 
-    def has_trait(self, trait: str) -> bool:
-        return trait in self.traits
-
-    def trait(self, trait: str, default: JSONValue = None) -> JSONValue:
-        return self.traits.get(trait, default)
-
-    def member(self, name: str) -> Member:
+    def get_member(self, name: str) -> Member | None:
+        """Return a member by name, or ``None`` when the shape lacks it."""
         for member in self.members:
             if member.name == name:
                 return member
-        raise ModelError(f"Member not found: {self.id}${name}")
+        return None
+
+    def member(self, name: str) -> Member:
+        """Return a member by name or raise :class:`ModelError` if it is absent."""
+        if (member := self.get_member(name)) is None:
+            raise ModelError(f"Member not found: {self.id}${name}")
+        return member
 
     def references(self) -> tuple[ShapeID, ...]:
         """Return all structural references in stable modeled order."""
         result = [*self.mixins, *(member.target for member in self.members)]
-        for key in (
-            "operations",
-            "resources",
-            "errors",
-            "collectionOperations",
-        ):
-            result.extend(_reference_list(self.attributes.get(key), f"{self.id}.{key}"))
-        for key in (
-            "input",
-            "output",
-            "create",
-            "put",
-            "read",
-            "update",
-            "delete",
-            "list",
-        ):
-            value = self.attributes.get(key)
-            if value is not None:
-                result.append(_reference(value, f"{self.id}.{key}"))
-        for key in ("identifiers", "properties"):
-            values = self.attributes.get(key)
-            if isinstance(values, Mapping):
-                result.extend(
-                    _reference(value, f"{self.id}.{key}.{name}")
-                    for name, value in values.items()
-                )
+        # Only shapes in the service category carry reference attributes, so most
+        # shapes skip the table entirely.
+        if self.attributes:
+            for key, extract in _REFERENCE_ATTRIBUTES.items():
+                if (value := self.attributes.get(key)) is not None:
+                    result.extend(extract(value, f"{self.id}.{key}"))
         return tuple(dict.fromkeys(result))
 
 
 # Prelude shapes are omitted from the JSON AST unless the build opts in, so they
-# are resolved on demand when a member targets one.
+# are layered underneath every model's shapes to resolve on lookup.
 _PRELUDE_TYPES: dict[str, tuple[ShapeType, Mapping[str, JSONValue]]] = {
     "Blob": (ShapeType.BLOB, {}),
     "Boolean": (ShapeType.BOOLEAN, {}),
@@ -206,8 +224,20 @@ _PRELUDE_TYPES: dict[str, tuple[ShapeType, Mapping[str, JSONValue]]] = {
     "PrimitiveLong": (ShapeType.LONG, {"smithy.api#default": 0}),
     "PrimitiveFloat": (ShapeType.FLOAT, {"smithy.api#default": 0}),
     "PrimitiveDouble": (ShapeType.DOUBLE, {"smithy.api#default": 0}),
-    "Unit": (ShapeType.STRUCTURE, {"smithy.api#unitType": MappingProxyType({})}),
+    "Unit": (ShapeType.STRUCTURE, {"smithy.api#unitType": _EMPTY_MAPPING}),
 }
+
+
+def _prelude_shapes() -> Mapping[ShapeID, Shape]:
+    shapes: dict[ShapeID, Shape] = {}
+    for name, (shape_type, traits) in _PRELUDE_TYPES.items():
+        shape_id = ShapeID(namespace=PRELUDE_NAMESPACE, name=name)
+        shapes[shape_id] = Shape(id=shape_id, type=shape_type, traits=_mapping(traits))
+    return MappingProxyType(shapes)
+
+
+# Built once so that every reference to a prelude shape resolves to one object.
+_PRELUDE_SHAPES: Final = _prelude_shapes()
 
 
 @dataclass(frozen=True, slots=True)
@@ -225,7 +255,11 @@ class Model:
             if shape.id in index:
                 raise ModelError(f"Duplicate shape: {shape.id}")
             index[shape.id] = shape
-        object.__setattr__(self, "_index", MappingProxyType(index))
+        # Layering the prelude underneath keeps lookups total over it without
+        # adding shapes the model did not declare to `shapes`.
+        object.__setattr__(
+            self, "_index", MappingProxyType({**_PRELUDE_SHAPES, **index})
+        )
 
     @classmethod
     def from_json(cls, source: str | bytes | bytearray) -> Self:
@@ -251,9 +285,8 @@ class Model:
             node = _object_mapping(unparsed_node, f"shape {shape_id}")
             parsed_id = ShapeID.parse(shape_id)
             if node.get("type") == "apply":
-                traits = _expect_traits(node.get("traits", {}), parsed_id)
                 applies.setdefault(parsed_id.without_member(), []).append(
-                    (parsed_id, traits)
+                    _parse_apply(parsed_id, node)
                 )
                 continue
             shapes.append(_parse_shape(parsed_id, node))
@@ -262,7 +295,7 @@ class Model:
         # traits added to inherited members arrive as apply statements. Both are
         # resolved together so that shapes using a mixin see its applied traits.
         shapes = _resolve_shapes(shapes, applies)
-        return cls(smithy=version, metadata=_mapping(metadata), shapes=tuple(shapes))
+        return cls(smithy=version, metadata=metadata, shapes=tuple(shapes))
 
     def __iter__(self) -> Iterator[Shape]:
         return iter(self.shapes)
@@ -271,16 +304,16 @@ class Model:
         return len(self.shapes)
 
     def get(self, shape_id: ShapeID | str) -> Shape | None:
-        """Return a shape by ID, resolving prelude shapes even when omitted."""
+        """Return a shape by ID, resolving prelude shapes even when omitted.
+
+        A member ID resolves to the shape containing it, or ``None`` when that
+        shape does not define the member.
+        """
         shape_id = ShapeID.parse(shape_id) if isinstance(shape_id, str) else shape_id
-        if shape_id.member is not None:
-            return self._index.get(shape_id.without_member())
-        if (shape := self._index.get(shape_id)) is not None:
+        shape = self._index.get(shape_id.without_member())
+        if shape is None or shape_id.member is None:
             return shape
-        if shape_id.is_prelude and shape_id.name in _PRELUDE_TYPES:
-            shape_type, traits = _PRELUDE_TYPES[shape_id.name]
-            return Shape(id=shape_id, type=shape_type, traits=_mapping(traits))
-        return None
+        return shape if shape.get_member(shape_id.member) is not None else None
 
     def expect(self, shape_id: ShapeID | str) -> Shape:
         """Return a shape by ID or raise :class:`ModelError` if it is absent."""
@@ -294,9 +327,7 @@ class Model:
 
     def replace_shapes(self, shapes: Iterable[Shape]) -> Self:
         """Return a copy of the model with a different set of shapes."""
-        return type(self)(
-            smithy=self.smithy, metadata=self.metadata, shapes=tuple(shapes)
-        )
+        return replace(self, shapes=tuple(shapes))
 
 
 def _parse_shape(shape_id: ShapeID, node: Mapping[str, object]) -> Shape:
@@ -307,25 +338,18 @@ def _parse_shape(shape_id: ShapeID, node: Mapping[str, object]) -> Shape:
         raise ModelError(
             f"Unsupported shape type {type_value!r} on {shape_id}"
         ) from error
-    traits = _expect_traits(node.get("traits", {}), shape_id)
-    mixins = tuple(
-        _reference(value, f"{shape_id}.mixins")
-        for value in _expect_list(node.get("mixins", []), f"{shape_id}.mixins")
-    )
+    traits = _json_object(node.get("traits", {}), f"traits on {shape_id}")
+    mixins = _reference_list(node.get("mixins", []), f"{shape_id}.mixins")
 
     members: list[Member] = []
     consumed = {"type", "traits", "mixins"}
-    if shape_type is ShapeType.LIST:
-        members.append(_parse_member("member", node.get("member"), shape_id))
-        consumed.add("member")
-    elif shape_type is ShapeType.MAP:
-        members.extend(
-            (
-                _parse_member("key", node.get("key"), shape_id),
-                _parse_member("value", node.get("value"), shape_id),
-            )
-        )
-        consumed.update(("key", "value"))
+    if shape_type is ShapeType.LIST or shape_type is ShapeType.MAP:
+        names = ("member",) if shape_type is ShapeType.LIST else ("key", "value")
+        consumed.update(names)
+        for name in names:
+            # A shape using mixins is serialized without the members it inherits.
+            if name in node or not mixins:
+                members.append(_parse_member(name, node.get(name), shape_id))
     elif shape_type in {
         ShapeType.STRUCTURE,
         ShapeType.UNION,
@@ -352,21 +376,18 @@ def _parse_shape(shape_id: ShapeID, node: Mapping[str, object]) -> Shape:
         traits=traits,
         mixins=mixins,
         members=tuple(members),
-        attributes=_mapping(attributes),
+        attributes=_freeze(attributes),
     )
 
 
 def _parse_member(name: str, unparsed_node: object, container: ShapeID) -> Member:
-    node = _object_mapping(unparsed_node, f"member {container}${name}")
+    location = f"{container}${name}"
+    node = _object_mapping(unparsed_node, f"member {location}")
     return Member(
         name=name,
-        target=_target(node.get("target"), f"{container}${name}"),
-        traits=_expect_traits(node.get("traits", {}), container.with_member(name)),
+        target=_target(node.get("target"), location),
+        traits=_json_object(node.get("traits", {}), f"traits on {location}"),
     )
-
-
-def _expect_traits(value: object, target: ShapeID) -> Mapping[str, JSONValue]:
-    return _mapping(_json_object(value, f"traits on {target}"))
 
 
 def _expect_list(value: object, location: str) -> Sequence[object]:
@@ -389,28 +410,65 @@ def _target(value: object, location: str) -> ShapeID:
     return ShapeID.parse(value)
 
 
+def _reference_one(value: object, location: str) -> tuple[ShapeID, ...]:
+    return (_reference(value, location),)
+
+
 def _reference_list(value: object, location: str) -> tuple[ShapeID, ...]:
-    if value is None:
-        return ()
     return tuple(_reference(item, location) for item in _expect_list(value, location))
 
 
-def _object_mapping(value: object, location: str) -> dict[str, object]:
+def _reference_map(value: object, location: str) -> tuple[ShapeID, ...]:
+    return tuple(
+        _reference(item, f"{location}.{name}")
+        for name, item in _object_mapping(value, location).items()
+    )
+
+
+type _ReferenceExtractor = Callable[[object, str], tuple[ShapeID, ...]]
+
+# The shape attributes that hold structural references, and how each spells
+# them. Every other attribute holds plain data. Iteration order fixes the order
+# references are reported in.
+_REFERENCE_ATTRIBUTES: Final[Mapping[str, _ReferenceExtractor]] = MappingProxyType(
+    {
+        "operations": _reference_list,
+        "resources": _reference_list,
+        "errors": _reference_list,
+        "collectionOperations": _reference_list,
+        "input": _reference_one,
+        "output": _reference_one,
+        "create": _reference_one,
+        "put": _reference_one,
+        "read": _reference_one,
+        "update": _reference_one,
+        "delete": _reference_one,
+        "list": _reference_one,
+        "identifiers": _reference_map,
+        "properties": _reference_map,
+    }
+)
+
+
+def _object_items(value: object, location: str) -> Iterator[tuple[str, object]]:
+    """Validate that a decoded JSON value is an object keyed by strings."""
     if not isinstance(value, Mapping):
         raise ModelError(f"Expected an object at {location}")
-    result: dict[str, object] = {}
     for key, item in cast(Mapping[object, object], value).items():
         if not isinstance(key, str):
             raise ModelError(f"Expected string object keys at {location}")
-        result[key] = item
-    return result
+        yield (key, item)
+
+
+def _object_mapping(value: object, location: str) -> dict[str, object]:
+    return dict(_object_items(value, location))
 
 
 def _json_object(value: object, location: str) -> Mapping[str, JSONValue]:
-    return MappingProxyType(
+    return _freeze(
         {
             key: _json_value(item, f"{location}.{key}")
-            for key, item in _object_mapping(value, location).items()
+            for key, item in _object_items(value, location)
         }
     )
 
@@ -428,7 +486,18 @@ def _json_value(value: object, location: str) -> JSONValue:
     raise ModelError(f"Unsupported JSON value at {location}: {type(value).__name__}")
 
 
-type _Apply = tuple[ShapeID, Mapping[str, JSONValue]]
+type _Apply = tuple[str, Mapping[str, JSONValue]]
+
+
+def _parse_apply(target: ShapeID, node: Mapping[str, object]) -> _Apply:
+    """Parse an apply statement, which adds traits to a member of a shape.
+
+    A shape's own traits are serialized with its definition, so an apply keyed by
+    a shape ID would need the key that definition already occupies.
+    """
+    if target.member is None:
+        raise ModelError(f"Expected an apply statement to target a member: {target}")
+    return (target.member, _json_object(node.get("traits", {}), f"traits on {target}"))
 
 
 def _resolve_shapes(
@@ -440,9 +509,9 @@ def _resolve_shapes(
     members precede local members in a depth-first traversal of the mixins,
     later mixins take precedence over earlier ones, local definitions take
     precedence over anything inherited, and the ``mixin`` trait itself and any
-    ``localTraits`` are not inherited. Apply statements targeting a shape are
-    merged as part of resolving that shape, so shapes that use it as a mixin
-    inherit the applied traits.
+    ``localTraits`` are not inherited. Apply statements targeting the members of
+    a shape are merged as part of resolving that shape, so shapes that use it as
+    a mixin inherit the applied traits.
     """
     by_id = {shape.id: shape for shape in shapes}
     for container in applies:
@@ -485,6 +554,11 @@ def _merge_mixins(
                 f"{shape.id} uses {mixin_id} as a mixin, but it lacks the "
                 f"{MIXIN_TRAIT} trait"
             )
+        if mixin.type is not shape.type:
+            raise ModelError(
+                f"{shape.id} is a {shape.type} but uses the {mixin.type} shape "
+                f"{mixin_id} as a mixin"
+            )
         mixin = resolve(mixin)
         traits.update(_inherited_traits(mixin))
         for member in mixin.members:
@@ -498,36 +572,33 @@ def _merge_mixins(
 
     return replace(
         shape,
-        traits=_mapping(traits),
+        traits=_freeze(traits),
         members=tuple(members.values()),
-        attributes=_mapping(attributes),
+        attributes=_freeze(attributes),
     )
 
 
 def _apply_traits(shape: Shape, applies: list[_Apply]) -> Shape:
-    """Merge apply statements targeting a shape or its members."""
+    """Merge apply statements onto the members of a shape."""
     members = {member.name: member for member in shape.members}
-    traits = dict(shape.traits)
-    for target, applied in applies:
-        if target.member is None:
-            traits.update(applied)
-            continue
-        member = members.get(target.member)
+    for name, applied in applies:
+        member = members.get(name)
         if member is None:
-            raise ModelError(f"Apply target member not found: {target}")
-        members[target.member] = replace(
-            member, traits=_mapping({**member.traits, **applied})
-        )
-    return replace(shape, traits=_mapping(traits), members=tuple(members.values()))
+            raise ModelError(
+                f"Apply target member not found: {shape.id.with_member(name)}"
+            )
+        members[name] = replace(member, traits=_merged(member.traits, applied))
+    return replace(shape, members=tuple(members.values()))
 
 
 def _inherited_traits(mixin: Shape) -> dict[str, JSONValue]:
-    excluded = {MIXIN_TRAIT}
     mixin_trait = mixin.trait(MIXIN_TRAIT)
-    if isinstance(mixin_trait, Mapping):
-        local_traits = mixin_trait.get("localTraits", ())
-        if isinstance(local_traits, tuple):
-            excluded.update(name for name in local_traits if isinstance(name, str))
+    local_traits = (
+        mixin_trait.get("localTraits", ()) if isinstance(mixin_trait, Mapping) else ()
+    )
+    excluded = {MIXIN_TRAIT}
+    if isinstance(local_traits, tuple):
+        excluded.update(name for name in local_traits if isinstance(name, str))
     return {name: value for name, value in mixin.traits.items() if name not in excluded}
 
 
@@ -540,7 +611,7 @@ def _merge_members(inherited: Member | None, member: Member) -> Member:
             f"Member {member.name} redefines an inherited member with a different "
             f"target: {inherited.target} != {member.target}"
         )
-    return replace(member, traits=_mapping({**inherited.traits, **member.traits}))
+    return replace(member, traits=_merged(inherited.traits, member.traits))
 
 
 def _merge_attributes(
@@ -559,6 +630,6 @@ def _merge_attributes(
                 *(item for item in value if item not in existing),
             )
         elif isinstance(existing, Mapping) and isinstance(value, Mapping):
-            target[key] = MappingProxyType({**existing, **value})
+            target[key] = _merged(existing, value)
         else:
             target[key] = value

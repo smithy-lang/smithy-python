@@ -4,9 +4,12 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from collections.abc import Mapping
+from io import BytesIO
+from typing import Any, BinaryIO, Protocol
 
 import pytest
+from smithy_python.cli import main
 from smithy_python.model import Model
 
 
@@ -104,3 +107,30 @@ def model(model_document: dict[str, Any]) -> Model:
 @pytest.fixture
 def model_json(model_document: dict[str, Any]) -> bytes:
     return json.dumps(model_document).encode()
+
+
+class CliRunner(Protocol):
+    """Runs the CLI and reports its exit code with what it wrote to stderr."""
+
+    def __call__(
+        self,
+        *argv: str,
+        environ: Mapping[str, str] | None = None,
+        stdin: bytes | BinaryIO | None = None,
+    ) -> tuple[int, str]: ...
+
+
+@pytest.fixture
+def run_cli(capsys: pytest.CaptureFixture[str]) -> CliRunner:
+    """Run the CLI with an empty environment unless one is given."""
+
+    def run(
+        *argv: str,
+        environ: Mapping[str, str] | None = None,
+        stdin: bytes | BinaryIO | None = None,
+    ) -> tuple[int, str]:
+        stream = BytesIO(stdin) if isinstance(stdin, bytes) else stdin
+        exit_code = main(argv, environ={} if environ is None else environ, stdin=stream)
+        return exit_code, capsys.readouterr().err
+
+    return run
