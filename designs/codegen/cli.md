@@ -14,9 +14,9 @@ smithy-python generate client [OPTIONS]
 smithy-python generate types [OPTIONS]
 ```
 
-`client` generates a service client together with the data shapes in the model.
-`types` generates a standalone package containing only the data shapes. Both
-commands accept the following process options:
+`client` generates a service client and the data shapes it uses. `types`
+generates a standalone package containing only data shapes. Both commands accept
+the following process options:
 
 * `--model PATH` reads a JSON AST from a file instead of standard input.
 * `--output PATH` selects the output directory. It defaults to the Smithy run
@@ -42,15 +42,22 @@ not. The CLI MUST NOT synthesize a placeholder service to satisfy generation.
 
 ### Generated Shapes
 
-Both artifacts generate every data shape in the model they receive; the set is
-not narrowed to the closure of the selected service. Builds that want a smaller
-package apply smithy-build transforms in the projection. Trait definitions,
-prelude shapes, and shapes marked `@private` or `@mixin` are never generated.
+When a service is resolved, both artifacts generate the data shapes in the
+service closure: every shape reachable from the service through its operations,
+resources, errors, and members. This matches the surface produced by the other
+Smithy code generators. Data shapes in the model that are not connected to the
+service are not generated, and the CLI reports how many were left out.
 
-Because the model is not limited to a service closure, shape names are not
-guaranteed to be unique. When two generated shapes have case-insensitively equal
-names, the command fails with an error that identifies the conflicting shape
-IDs.
+When no service is resolved, the `types` artifact generates every data shape in
+the model. Smithy guarantees case-insensitively unique shape names only within a
+service closure, so in this mode the command fails when two shapes have
+case-insensitively equal names, identifying the conflicting shape IDs.
+
+Trait definitions, prelude shapes, and shapes marked `@mixin` are never
+generated. Builds that need a different set of shapes, such as types that are
+not bound to any operation, apply smithy-build transforms in the projection.
+An option to generate every shape in the model regardless of the service MAY be
+added when there is a need for it.
 
 The command MUST return zero after successful generation and non-zero when
 arguments, settings, the model, or generation are invalid. Diagnostics are
