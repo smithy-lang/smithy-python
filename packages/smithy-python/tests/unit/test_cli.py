@@ -58,7 +58,7 @@ def test_generation_commands_are_explicitly_unavailable(
         )
         == 1
     )
-    assert capsys.readouterr().err == (
+    assert capsys.readouterr().err.endswith(
         f"smithy-python: error: {artifact} generation is not implemented yet\n"
     )
 
@@ -351,11 +351,31 @@ def test_invalid_service_option_is_an_invocation_error(
     assert message in capsys.readouterr().err
 
 
+def test_unconnected_shapes_are_reported(
+    model_json: bytes,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert (
+        main(
+            ("generate", "client", "--output", str(tmp_path)),
+            environ={},
+            stdin=BytesIO(model_json),
+        )
+        == 1
+    )
+    assert (
+        "note: 1 shape(s) not connected to example.weather#Weather will not be "
+        "generated"
+    ) in capsys.readouterr().err
+
+
 def test_shape_name_conflicts_are_a_generation_failure(
     model_document: dict[str, Any],
     tmp_path: Path,
     capsys: pytest.CaptureFixture[str],
 ) -> None:
+    del model_document["shapes"]["example.weather#Weather"]
     model_document["shapes"]["example.other#coordinates"] = {"type": "string"}
 
     assert (

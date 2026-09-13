@@ -179,28 +179,28 @@ class Shape:
 
 # Prelude shapes are omitted from the JSON AST unless the build opts in, so they
 # are resolved on demand when a member targets one.
-_PRELUDE_TYPES: dict[str, ShapeType] = {
-    "Blob": ShapeType.BLOB,
-    "Boolean": ShapeType.BOOLEAN,
-    "String": ShapeType.STRING,
-    "Timestamp": ShapeType.TIMESTAMP,
-    "Byte": ShapeType.BYTE,
-    "Short": ShapeType.SHORT,
-    "Integer": ShapeType.INTEGER,
-    "Long": ShapeType.LONG,
-    "Float": ShapeType.FLOAT,
-    "Double": ShapeType.DOUBLE,
-    "BigInteger": ShapeType.BIG_INTEGER,
-    "BigDecimal": ShapeType.BIG_DECIMAL,
-    "Document": ShapeType.DOCUMENT,
-    "PrimitiveBoolean": ShapeType.BOOLEAN,
-    "PrimitiveByte": ShapeType.BYTE,
-    "PrimitiveShort": ShapeType.SHORT,
-    "PrimitiveInteger": ShapeType.INTEGER,
-    "PrimitiveLong": ShapeType.LONG,
-    "PrimitiveFloat": ShapeType.FLOAT,
-    "PrimitiveDouble": ShapeType.DOUBLE,
-    "Unit": ShapeType.STRUCTURE,
+_PRELUDE_TYPES: dict[str, tuple[ShapeType, dict[str, JSONValue]]] = {
+    "Blob": (ShapeType.BLOB, {}),
+    "Boolean": (ShapeType.BOOLEAN, {}),
+    "String": (ShapeType.STRING, {}),
+    "Timestamp": (ShapeType.TIMESTAMP, {}),
+    "Byte": (ShapeType.BYTE, {}),
+    "Short": (ShapeType.SHORT, {}),
+    "Integer": (ShapeType.INTEGER, {}),
+    "Long": (ShapeType.LONG, {}),
+    "Float": (ShapeType.FLOAT, {}),
+    "Double": (ShapeType.DOUBLE, {}),
+    "BigInteger": (ShapeType.BIG_INTEGER, {}),
+    "BigDecimal": (ShapeType.BIG_DECIMAL, {}),
+    "Document": (ShapeType.DOCUMENT, {}),
+    "PrimitiveBoolean": (ShapeType.BOOLEAN, {"smithy.api#default": False}),
+    "PrimitiveByte": (ShapeType.BYTE, {"smithy.api#default": 0}),
+    "PrimitiveShort": (ShapeType.SHORT, {"smithy.api#default": 0}),
+    "PrimitiveInteger": (ShapeType.INTEGER, {"smithy.api#default": 0}),
+    "PrimitiveLong": (ShapeType.LONG, {"smithy.api#default": 0}),
+    "PrimitiveFloat": (ShapeType.FLOAT, {"smithy.api#default": 0}),
+    "PrimitiveDouble": (ShapeType.DOUBLE, {"smithy.api#default": 0}),
+    "Unit": (ShapeType.STRUCTURE, {"smithy.api#unitType": {}}),
 }
 
 
@@ -275,7 +275,8 @@ class Model:
         if (shape := self._index.get(shape_id)) is not None:
             return shape
         if shape_id.is_prelude and shape_id.name in _PRELUDE_TYPES:
-            return Shape(id=shape_id, type=_PRELUDE_TYPES[shape_id.name])
+            shape_type, traits = _PRELUDE_TYPES[shape_id.name]
+            return Shape(id=shape_id, type=shape_type, traits=_mapping(traits))
         return None
 
     def expect(self, shape_id: ShapeID | str) -> Shape:

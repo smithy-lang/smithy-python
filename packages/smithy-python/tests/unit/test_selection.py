@@ -7,14 +7,20 @@ from typing import Any
 
 import pytest
 from smithy_python.exceptions import CodegenError, InvalidInvocationError
-from smithy_python.model import Model, ShapeID
+from smithy_python.model import Model, Shape, ShapeID
 from smithy_python.selection import resolve_service, select_generated_shapes
 
 WEATHER = ShapeID.parse("example.weather#Weather")
 
 
-def _names(model: Model) -> list[str]:
-    return [shape.id.name for shape in select_generated_shapes(model)]
+def _service(model: Model) -> Shape:
+    service = resolve_service(model, None, required=True)
+    assert service is not None
+    return service
+
+
+def _names(shapes: tuple[Shape, ...]) -> list[str]:
+    return [shape.id.name for shape in shapes]
 
 
 class TestResolveService:
@@ -79,9 +85,89 @@ class TestResolveService:
             resolve_service(model, ShapeID.parse("example.weather#Base"), required=True)
 
 
-class TestSelectGeneratedShapes:
-    def test_selects_every_data_shape_in_model_order(self, model: Model) -> None:
-        assert _names(model) == [
+class TestSelectWithService:
+    def test_selects_the_service_closure_in_model_order(self, model: Model) -> None:
+        selection = select_generated_shapes(model, _service(model))
+        assert _names(selection.shapes) == [
+            "CityId",
+            "Coordinates",
+            "Tags",
+            "GetCityInput",
+            "GetCityOutput",
+            "NoSuchCity",
+        ]
+        assert _names(selection.excluded) == ["Unused"]
+
+    def test_closure_follows_resources_and_service_errors(
+        self, model_document: dict[str, Any]
+    ) -> None:
+        shapes = model_document["shapes"]
+        shapes["example.weather#Throttled"] = {
+            "type": "structure",
+            "traits": {"smithy.api#error": "client"},
+        }
+        shapes["example.weather#Weather"]["errors"] = [
+            {"target": "example.weather#Throttled"}
+        ]
+        shapes["example.weather#Forecast"] = {"type": "structure"}
+        shapes["example.weather#City"] = {
+            "type": "resource",
+            "identifiers": {"cityId": {"target": "example.weather#CityId"}},
+            "properties": {"forecast": {"target": "example.weather#Forecast"}},
+        }
+        shapes["example.weather#Weather"]["resources"] = [
+            {"target": "example.weather#City"}
+        ]
+        model = Model.from_dict(model_document)
+
+        names = _names(select_generated_shapes(model, _service(model)).shapes)
+        assert "Throttled" in names
+        assert "Forecast" in names
+        assert "City" not in names
+
+    def test_excludes_traits_mixins_and_prelude_even_when_connected(
+        self, model_document: dict[str, Any]
+    ) -> None:
+        shapes = model_document["shapes"]
+        shapes["example.weather#Auditable"] = {
+            "type": "structure",
+            "traits": {"smithy.api#mixin": {}},
+            "members": {"createdAt": {"target": "smithy.api#Timestamp"}},
+        }
+        shapes["example.weather#Coordinates"]["mixins"] = [
+            {"target": "example.weather#Auditable"}
+        ]
+        shapes["example.weather#myTrait"] = {
+            "type": "structure",
+            "traits": {"smithy.api#trait": {}},
+        }
+        shapes["smithy.api#String"] = {"type": "string"}
+        model = Model.from_dict(model_document)
+
+        selection = select_generated_shapes(model, _service(model))
+        all_names = _names(selection.shapes) + _names(selection.excluded)
+        assert "Auditable" not in all_names
+        assert "myTrait" not in all_names
+        assert "String" not in all_names
+
+    def test_conflicting_names_outside_the_closure_are_harmless(
+        self, model_document: dict[str, Any]
+    ) -> None:
+        model_document["shapes"]["example.other#coordinates"] = {"type": "string"}
+        model = Model.from_dict(model_document)
+        selection = select_generated_shapes(model, _service(model))
+        assert "Coordinates" in _names(selection.shapes)
+        assert "coordinates" in _names(selection.excluded)
+
+
+class TestSelectWithoutService:
+    def test_selects_every_data_shape_in_model_order(
+        self, model_document: dict[str, Any]
+    ) -> None:
+        del model_document["shapes"]["example.weather#Weather"]
+        model = Model.from_dict(model_document)
+        selection = select_generated_shapes(model, None)
+        assert _names(selection.shapes) == [
             "CityId",
             "Coordinates",
             "Tags",
@@ -90,73 +176,15 @@ class TestSelectGeneratedShapes:
             "NoSuchCity",
             "Unused",
         ]
-
-    def test_skips_traits_mixins_and_prelude(
-        self, model_document: dict[str, Any]
-    ) -> None:
-        shapes = model_document["shapes"]
-        shapes["example.weather#myTrait"] = {
-            "type": "structure",
-            "traits": {"smithy.api#trait": {}},
-        }
-        shapes["example.weather#Auditable"] = {
-            "type": "structure",
-            "traits": {"smithy.api#mixin": {}},
-            "members": {"createdAt": {"target": "smithy.api#Timestamp"}},
-        }
-        shapes["smithy.api#String"] = {"type": "string"}
-        names = _names(Model.from_dict(model_document))
-        assert "myTrait" not in names
-        assert "Auditable" not in names
-        assert "String" not in names
-
-    def test_private_shapes_are_generated_only_when_referenced(
-        self, model_document: dict[str, Any]
-    ) -> None:
-        shapes = model_document["shapes"]
-        shapes["example.weather#Hidden"] = {
-            "type": "structure",
-            "traits": {"smithy.api#private": {}},
-        }
-        shapes["example.weather#Nested"] = {
-            "type": "structure",
-            "traits": {"smithy.api#private": {}},
-        }
-        shapes["example.weather#Used"] = {
-            "type": "structure",
-            "traits": {"smithy.api#private": {}},
-            "members": {"nested": {"target": "example.weather#Nested"}},
-        }
-        shapes["example.weather#Coordinates"]["members"]["used"] = {
-            "target": "example.weather#Used"
-        }
-        names = _names(Model.from_dict(model_document))
-        assert "Used" in names
-        assert "Nested" in names
-        assert "Hidden" not in names
-
-    def test_private_shapes_referenced_by_operations_are_generated(
-        self, model_document: dict[str, Any]
-    ) -> None:
-        shapes = model_document["shapes"]
-        shapes["example.weather#NoSuchCity"]["traits"]["smithy.api#private"] = {}
-        assert "NoSuchCity" in _names(Model.from_dict(model_document))
+        assert selection.excluded == ()
 
     def test_case_insensitive_name_conflicts_are_an_error(
         self, model_document: dict[str, Any]
     ) -> None:
         model_document["shapes"]["example.other#coordinates"] = {"type": "string"}
+        model = Model.from_dict(model_document)
         with pytest.raises(CodegenError) as info:
-            select_generated_shapes(Model.from_dict(model_document))
+            select_generated_shapes(model, None)
         message = str(info.value)
         assert "renameShapes" in message
         assert "example.weather#Coordinates, example.other#coordinates" in message
-
-    def test_conflicts_with_skipped_shapes_are_ignored(
-        self, model_document: dict[str, Any]
-    ) -> None:
-        model_document["shapes"]["example.other#Coordinates"] = {
-            "type": "structure",
-            "traits": {"smithy.api#private": {}},
-        }
-        assert "Coordinates" in _names(Model.from_dict(model_document))
