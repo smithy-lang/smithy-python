@@ -306,20 +306,35 @@ class Model:
     def get(self, shape_id: ShapeID | str) -> Shape | None:
         """Return a shape by ID, resolving prelude shapes even when omitted.
 
-        A member ID resolves to the shape containing it, or ``None`` when that
-        shape does not define the member.
+        Member IDs are rejected: a member is not a shape, so returning either the
+        member's container or its target would give callers the wrong traits and
+        type. Use :meth:`get_member` to resolve a member ID.
         """
-        shape_id = ShapeID.parse(shape_id) if isinstance(shape_id, str) else shape_id
-        shape = self._index.get(shape_id.without_member())
-        if shape is None or shape_id.member is None:
-            return shape
-        return shape if shape.get_member(shape_id.member) is not None else None
+        shape_id = _shape_id(shape_id)
+        if shape_id.member is not None:
+            raise ModelError(f"Expected a shape ID, found a member ID: {shape_id}")
+        return self._index.get(shape_id)
 
     def expect(self, shape_id: ShapeID | str) -> Shape:
         """Return a shape by ID or raise :class:`ModelError` if it is absent."""
         if (shape := self.get(shape_id)) is None:
             raise ModelError(f"Shape not found: {shape_id}")
         return shape
+
+    def get_member(self, member_id: ShapeID | str) -> Member | None:
+        """Return the member a member ID identifies, or ``None`` if it is absent."""
+        member_id = _shape_id(member_id)
+        if member_id.member is None:
+            raise ModelError(f"Expected a member ID, found a shape ID: {member_id}")
+        if (shape := self._index.get(member_id.without_member())) is None:
+            return None
+        return shape.get_member(member_id.member)
+
+    def expect_member(self, member_id: ShapeID | str) -> Member:
+        """Return a member by ID or raise :class:`ModelError` if it is absent."""
+        if (member := self.get_member(member_id)) is None:
+            raise ModelError(f"Member not found: {member_id}")
+        return member
 
     def services(self) -> tuple[Shape, ...]:
         """Return every service shape in modeled order."""
@@ -328,6 +343,10 @@ class Model:
     def replace_shapes(self, shapes: Iterable[Shape]) -> Self:
         """Return a copy of the model with a different set of shapes."""
         return replace(self, shapes=tuple(shapes))
+
+
+def _shape_id(value: ShapeID | str) -> ShapeID:
+    return ShapeID.parse(value) if isinstance(value, str) else value
 
 
 def _parse_shape(shape_id: ShapeID, node: Mapping[str, object]) -> Shape:
