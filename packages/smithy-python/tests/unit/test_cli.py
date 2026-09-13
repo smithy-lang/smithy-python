@@ -163,7 +163,7 @@ def test_direct_invocation_rejects_interactive_model_input(
     )
 
 
-def test_invocation_reports_unreadable_model(
+def test_invocation_reports_missing_model(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     missing = tmp_path / "missing.json"
@@ -180,14 +180,15 @@ def test_invocation_reports_unreadable_model(
             ),
             environ={},
         )
-        == 2
+        == 1
     )
-    assert f"Model path is not a file: {missing}" in capsys.readouterr().err
+    assert f"Cannot read model {missing}: No such file" in capsys.readouterr().err
 
 
-def test_invocation_rejects_empty_model_path(
+def test_invocation_reports_model_path_that_is_a_directory(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    # An empty path resolves to the current directory.
     assert (
         main(
             (
@@ -200,9 +201,9 @@ def test_invocation_rejects_empty_model_path(
             ),
             environ={},
         )
-        == 2
+        == 1
     )
-    assert "Model path is not a file: ." in capsys.readouterr().err
+    assert "Cannot read model .:" in capsys.readouterr().err
 
 
 def test_invocation_reports_model_io_error(
