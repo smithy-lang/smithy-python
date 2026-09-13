@@ -378,6 +378,38 @@ class TestMixins:
             not model.expect("example#M").member("foo").has_trait("smithy.api#required")
         )
 
+    def test_apply_on_intermediate_mixin_propagates_to_users(self) -> None:
+        # A <- B <- C, with an apply on B$foo, which B inherits from A.
+        model = Model.from_dict(
+            self._document(
+                {
+                    "example#A": {
+                        "type": "structure",
+                        "traits": {"smithy.api#mixin": {}},
+                        "members": {"foo": {"target": "smithy.api#String"}},
+                    },
+                    "example#B": {
+                        "type": "structure",
+                        "traits": {"smithy.api#mixin": {}},
+                        "mixins": [{"target": "example#A"}],
+                    },
+                    "example#C": {
+                        "type": "structure",
+                        "mixins": [{"target": "example#B"}],
+                    },
+                    "example#B$foo": {
+                        "type": "apply",
+                        "traits": {"smithy.api#required": {}},
+                    },
+                }
+            )
+        )
+        assert model.expect("example#B").member("foo").has_trait("smithy.api#required")
+        assert model.expect("example#C").member("foo").has_trait("smithy.api#required")
+        assert (
+            not model.expect("example#A").member("foo").has_trait("smithy.api#required")
+        )
+
     def test_redefined_members_merge_traits_and_keep_position(self) -> None:
         model = Model.from_dict(
             self._document(

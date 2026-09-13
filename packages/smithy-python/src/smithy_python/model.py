@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import json
 import re
-from collections.abc import Iterable, Iterator, Mapping
+from collections.abc import Callable, Iterable, Iterator, Mapping
 from dataclasses import dataclass, field, replace
 from enum import StrEnum
 from types import MappingProxyType
@@ -240,25 +240,22 @@ class Model:
         metadata = _json_object(document.get("metadata", {}), "Smithy model metadata")
 
         shapes: list[Shape] = []
-        applies: list[_Apply] = []
+        applies: dict[ShapeID, list[_Apply]] = {}
         for shape_id, unparsed_node in shapes_node.items():
             node = _object_mapping(unparsed_node, f"shape {shape_id}")
             parsed_id = ShapeID.parse(shape_id)
             if node.get("type") == "apply":
-                applies.append(
-                    (parsed_id, _expect_traits(node.get("traits", {}), parsed_id))
+                traits = _expect_traits(node.get("traits", {}), parsed_id)
+                applies.setdefault(parsed_id.without_member(), []).append(
+                    (parsed_id, traits)
                 )
                 continue
             shapes.append(_parse_shape(parsed_id, node))
 
         # Serialized models omit everything a shape inherits from its mixins, and
-        # traits added to inherited members arrive as apply statements. Traits
-        # applied to members that exist before resolution (including members of
-        # the mixins themselves) are merged first so that they are inherited;
-        # the rest target inherited members and are merged after resolution.
-        shapes, deferred = _apply_traits(shapes, applies, defer_missing_members=True)
-        shapes = _resolve_mixins(shapes)
-        shapes, _ = _apply_traits(shapes, deferred, defer_missing_members=False)
+        # traits added to inherited members arrive as apply statements. Both are
+        # resolved together so that shapes using a mixin see its applied traits.
+        shapes = _resolve_shapes(shapes, applies)
         return cls(smithy=version, metadata=_mapping(metadata), shapes=tuple(shapes))
 
     def __iter__(self) -> Iterator[Shape]:
@@ -423,95 +420,94 @@ def _json_value(value: object, location: str) -> JSONValue:
 type _Apply = tuple[ShapeID, Mapping[str, JSONValue]]
 
 
-def _apply_traits(
-    shapes: list[Shape], applies: list[_Apply], *, defer_missing_members: bool
-) -> tuple[list[Shape], list[_Apply]]:
-    """Merge apply statements into shapes, returning any that were deferred."""
-    positions = {shape.id: index for index, shape in enumerate(shapes)}
-    deferred: list[_Apply] = []
-    for target, traits in applies:
-        container_id = target.without_member()
-        if container_id not in positions:
-            raise ModelError(f"Apply target not found: {target}")
-        position = positions[container_id]
-        shape = shapes[position]
-        if target.member is None:
-            shapes[position] = replace(
-                shape, traits=_mapping({**shape.traits, **traits})
-            )
-            continue
-        members = list(shape.members)
-        for index, member in enumerate(members):
-            if member.name == target.member:
-                members[index] = replace(
-                    member, traits=_mapping({**member.traits, **traits})
-                )
-                shapes[position] = replace(shape, members=tuple(members))
-                break
-        else:
-            if not defer_missing_members:
-                raise ModelError(f"Apply target member not found: {target}")
-            deferred.append((target, traits))
-    return shapes, deferred
-
-
-def _resolve_mixins(shapes: list[Shape]) -> list[Shape]:
-    """Copy inherited traits, members, and properties onto shapes using mixins.
+def _resolve_shapes(
+    shapes: list[Shape], applies: Mapping[ShapeID, list[_Apply]]
+) -> list[Shape]:
+    """Copy inherited definitions onto shapes using mixins and merge applies.
 
     Follows the resolution rules of the Smithy mixins specification: inherited
     members precede local members in a depth-first traversal of the mixins,
     later mixins take precedence over earlier ones, local definitions take
     precedence over anything inherited, and the ``mixin`` trait itself and any
-    ``localTraits`` are not inherited.
+    ``localTraits`` are not inherited. Apply statements targeting a shape are
+    merged as part of resolving that shape, so shapes that use it as a mixin
+    inherit the applied traits.
     """
     by_id = {shape.id: shape for shape in shapes}
+    for container in applies:
+        if container not in by_id:
+            raise ModelError(f"Apply target not found: {container}")
     resolved: dict[ShapeID, Shape] = {}
     resolving: set[ShapeID] = set()
 
     def resolve(shape: Shape) -> Shape:
         if (done := resolved.get(shape.id)) is not None:
             return done
-        if not shape.mixins:
-            resolved[shape.id] = shape
-            return shape
         if shape.id in resolving:
             raise ModelError(f"Mixin cycle detected at {shape.id}")
         resolving.add(shape.id)
 
-        traits: dict[str, JSONValue] = {}
-        members: dict[str, Member] = {}
-        attributes: dict[str, JSONValue] = {}
-        for mixin_id in shape.mixins:
-            mixin = by_id.get(mixin_id)
-            if mixin is None:
-                raise ModelError(f"Mixin not found: {mixin_id} (used by {shape.id})")
-            if not mixin.has_trait(MIXIN_TRAIT):
-                raise ModelError(
-                    f"{shape.id} uses {mixin_id} as a mixin, but it lacks the "
-                    f"{MIXIN_TRAIT} trait"
-                )
-            mixin = resolve(mixin)
-            traits.update(_inherited_traits(mixin))
-            for member in mixin.members:
-                members[member.name] = _merge_members(members.get(member.name), member)
-            _merge_attributes(attributes, mixin.attributes)
+        if shape.mixins:
+            shape = _merge_mixins(shape, by_id, resolve)
+        if shape.id in applies:
+            shape = _apply_traits(shape, applies[shape.id])
 
-        traits.update(shape.traits)
-        for member in shape.members:
-            members[member.name] = _merge_members(members.get(member.name), member)
-        _merge_attributes(attributes, shape.attributes)
-
-        result = replace(
-            shape,
-            traits=_mapping(traits),
-            members=tuple(members.values()),
-            attributes=_mapping(attributes),
-        )
         resolving.discard(shape.id)
-        resolved[shape.id] = result
-        return result
+        resolved[shape.id] = shape
+        return shape
 
     return [resolve(shape) for shape in shapes]
+
+
+def _merge_mixins(
+    shape: Shape, by_id: Mapping[ShapeID, Shape], resolve: Callable[[Shape], Shape]
+) -> Shape:
+    traits: dict[str, JSONValue] = {}
+    members: dict[str, Member] = {}
+    attributes: dict[str, JSONValue] = {}
+    for mixin_id in shape.mixins:
+        mixin = by_id.get(mixin_id)
+        if mixin is None:
+            raise ModelError(f"Mixin not found: {mixin_id} (used by {shape.id})")
+        if not mixin.has_trait(MIXIN_TRAIT):
+            raise ModelError(
+                f"{shape.id} uses {mixin_id} as a mixin, but it lacks the "
+                f"{MIXIN_TRAIT} trait"
+            )
+        mixin = resolve(mixin)
+        traits.update(_inherited_traits(mixin))
+        for member in mixin.members:
+            members[member.name] = _merge_members(members.get(member.name), member)
+        _merge_attributes(attributes, mixin.attributes)
+
+    traits.update(shape.traits)
+    for member in shape.members:
+        members[member.name] = _merge_members(members.get(member.name), member)
+    _merge_attributes(attributes, shape.attributes)
+
+    return replace(
+        shape,
+        traits=_mapping(traits),
+        members=tuple(members.values()),
+        attributes=_mapping(attributes),
+    )
+
+
+def _apply_traits(shape: Shape, applies: list[_Apply]) -> Shape:
+    """Merge apply statements targeting a shape or its members."""
+    members = {member.name: member for member in shape.members}
+    traits = dict(shape.traits)
+    for target, applied in applies:
+        if target.member is None:
+            traits.update(applied)
+            continue
+        member = members.get(target.member)
+        if member is None:
+            raise ModelError(f"Apply target member not found: {target}")
+        members[target.member] = replace(
+            member, traits=_mapping({**member.traits, **applied})
+        )
+    return replace(shape, traits=_mapping(traits), members=tuple(members.values()))
 
 
 def _inherited_traits(mixin: Shape) -> dict[str, JSONValue]:
