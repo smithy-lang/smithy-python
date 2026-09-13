@@ -1,6 +1,12 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Ordered, immutable objects for Smithy's JSON AST representation."""
+"""Ordered, read-only objects for Smithy's JSON AST representation.
+
+Shapes, members, and models are frozen dataclasses whose trait, metadata, and
+attribute containers are read-only views. Values nested inside those containers
+are plain JSON objects shared with the parsed document and are not copied; they
+MUST be treated as read-only by callers.
+"""
 
 from __future__ import annotations
 
@@ -102,7 +108,8 @@ def _mapping(
     value: Mapping[str, JSONValue] | None = None,
 ) -> Mapping[str, JSONValue]:
     # A fresh dict preserves JSON insertion order while MappingProxyType prevents
-    # accidental mutation through a frozen dataclass.
+    # accidental mutation of the container. Nested values are not copied: they are
+    # ordinary JSON objects that callers must treat as read-only.
     return MappingProxyType(dict(value or {}))
 
 
