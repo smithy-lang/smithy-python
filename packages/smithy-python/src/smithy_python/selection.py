@@ -5,13 +5,13 @@
 from __future__ import annotations
 
 from collections import deque
+from dataclasses import dataclass
 from typing import Final
 
 from .exceptions import CodegenError, InvalidInvocationError
 from .model import MIXIN_TRAIT, Model, Shape, ShapeID, ShapeType
 
 TRAIT_DEFINITION: Final = "smithy.api#trait"
-PRIVATE_TRAIT: Final = "smithy.api#private"
 
 # Shapes carrying these traits describe the model rather than data and are
 # never generated, even when the JSON AST includes them.
@@ -60,57 +60,56 @@ def resolve_service(
     return None
 
 
-def select_generated_shapes(model: Model) -> tuple[Shape, ...]:
+@dataclass(frozen=True, slots=True)
+class Selection:
+    """The data shapes to generate and the ones left out."""
+
+    shapes: tuple[Shape, ...]
+    excluded: tuple[Shape, ...]
+
+
+def select_generated_shapes(model: Model, service: Shape | None) -> Selection:
     """Return the data shapes to generate, in modeled order.
 
-    Every data shape in the model is a candidate; the set is not narrowed to a
-    service closure. Prelude shapes, trait definitions, and mixins are never
-    generated. Shapes marked ``@private`` are generated only when reachable from
-    another generated shape, since they are not meant to be used directly but
-    may still be targeted by public members.
+    With a service, the selection is the service closure: every data shape
+    reachable from the service through its operations, resources, and members,
+    which matches the surface every other Smithy generator produces. Data shapes
+    in the model that are not connected to the service are reported as excluded.
 
-    Raises :class:`CodegenError` when two selected shapes have case-insensitively
-    equal names, since they cannot coexist in one Python module.
+    Without a service, every data shape in the model is selected. Names are then
+    checked for case-insensitive uniqueness, which Smithy guarantees only within
+    a service closure, since conflicting names cannot coexist in one module.
+
+    Prelude shapes, trait definitions, and mixins are never generated.
     """
     candidates = tuple(shape for shape in model if _is_candidate(shape))
-    # Operations and services are not generated here, but shapes they reference
-    # are, so they seed reachability alongside the public data shapes.
-    roots = tuple(
-        shape
-        for shape in model
-        if not shape.has_trait(PRIVATE_TRAIT) and not _is_excluded(shape)
-    )
-    reachable = _reachable_ids(model, roots)
-    selected = tuple(
-        shape
-        for shape in candidates
-        if not shape.has_trait(PRIVATE_TRAIT) or shape.id in reachable
-    )
-    _require_unique_names(selected)
-    return selected
+    if service is None:
+        _require_unique_names(candidates)
+        return Selection(shapes=candidates, excluded=())
+
+    closure = _closure(model, service)
+    shapes = tuple(shape for shape in candidates if shape.id in closure)
+    excluded = tuple(shape for shape in candidates if shape.id not in closure)
+    return Selection(shapes=shapes, excluded=excluded)
 
 
 def _is_candidate(shape: Shape) -> bool:
     if shape.type.is_service_category or shape.id.is_prelude:
         return False
-    return not _is_excluded(shape)
+    return not any(shape.has_trait(trait) for trait in _EXCLUDED_TRAITS)
 
 
-def _is_excluded(shape: Shape) -> bool:
-    return any(shape.has_trait(trait) for trait in _EXCLUDED_TRAITS)
-
-
-def _reachable_ids(model: Model, roots: tuple[Shape, ...]) -> set[ShapeID]:
-    reachable: set[ShapeID] = set()
-    queue = deque(root.id for root in roots)
+def _closure(model: Model, service: Shape) -> set[ShapeID]:
+    closure: set[ShapeID] = set()
+    queue = deque([service.id])
     while queue:
         shape_id = queue.popleft().without_member()
-        if shape_id in reachable:
+        if shape_id in closure:
             continue
-        reachable.add(shape_id)
+        closure.add(shape_id)
         if (shape := model.get(shape_id)) is not None:
             queue.extend(shape.references())
-    return reachable
+    return closure
 
 
 def _require_unique_names(shapes: tuple[Shape, ...]) -> None:
@@ -122,6 +121,5 @@ def _require_unique_names(shapes: tuple[Shape, ...]) -> None:
         details = "; ".join(", ".join(map(str, ids)) for ids in conflicts)
         raise CodegenError(
             "Generated shape names must be case-insensitively unique. Rename the "
-            "conflicting shapes with the renameShapes transform, or drop shapes not "
-            f"connected to a service with the removeUnusedShapes transform: {details}"
+            f"conflicting shapes with the renameShapes transform: {details}"
         )

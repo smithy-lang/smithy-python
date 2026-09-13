@@ -209,7 +209,17 @@ class TestParsing:
 class TestLookup:
     def test_resolves_prelude_without_inserting_it(self, model: Model) -> None:
         assert model.expect("smithy.api#String").type is ShapeType.STRING
-        assert model.expect("smithy.api#Unit").type is ShapeType.STRUCTURE
+        assert not model.expect("smithy.api#String").traits
+        unit = model.expect("smithy.api#Unit")
+        assert unit.type is ShapeType.STRUCTURE
+        assert unit.has_trait("smithy.api#unitType")
+        assert (
+            model.expect("smithy.api#PrimitiveInteger").trait("smithy.api#default") == 0
+        )
+        assert (
+            model.expect("smithy.api#PrimitiveBoolean").trait("smithy.api#default")
+            is False
+        )
         assert all(not shape.id.is_prelude for shape in model)
 
     def test_modeled_prelude_takes_precedence(

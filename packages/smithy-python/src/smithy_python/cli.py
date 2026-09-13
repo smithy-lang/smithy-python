@@ -15,7 +15,7 @@ from . import __version__
 from .environment import PluginEnvironment
 from .exceptions import CodegenError, InvalidInvocationError, ModelError
 from .model import Model, Shape, ShapeID
-from .selection import resolve_service, select_generated_shapes
+from .selection import Selection, resolve_service, select_generated_shapes
 
 _GENERATION_NOT_IMPLEMENTED: Final = (
     "smithy-python: error: {artifact} generation is not implemented yet\n"
@@ -40,7 +40,7 @@ class _Request:
     invocation: _Invocation
     model: Model
     service: Shape | None
-    shapes: tuple[Shape, ...]
+    selection: Selection
 
 
 def main(
@@ -80,8 +80,15 @@ def _resolve_request(invocation: _Invocation) -> _Request:
         invocation.service,
         required=invocation.artifact == _CLIENT_ARTIFACT,
     )
-    shapes = select_generated_shapes(model)
-    return _Request(invocation=invocation, model=model, service=service, shapes=shapes)
+    selection = select_generated_shapes(model, service)
+    if selection.excluded and service is not None:
+        sys.stderr.write(
+            f"smithy-python: note: {len(selection.excluded)} shape(s) not connected "
+            f"to {service.id} will not be generated\n"
+        )
+    return _Request(
+        invocation=invocation, model=model, service=service, selection=selection
+    )
 
 
 def _create_parser() -> argparse.ArgumentParser:
