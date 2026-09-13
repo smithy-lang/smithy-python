@@ -102,6 +102,13 @@ Smithy process's `PATH`. Smithy passes no arguments other than those in
 When invoked by Smithy, the CLI reads one JSON AST document from standard input.
 The document represents the model after projection transforms have been applied.
 
+Smithy serializes only what a shape introduces, so shapes that use mixins arrive
+without their inherited members, traits, and properties, and traits added to
+inherited members arrive as `apply` statements. The CLI resolves mixins while
+loading the model, following the rules of the
+[Smithy mixins specification](https://smithy.io/2.0/spec/mixins.html), so builds
+do not need the `flattenAndRemoveMixins` transform.
+
 The presence of `SMITHY_PLUGIN_DIR` identifies an invocation by the `run` plugin.
 Generated files are written beneath this directory, which Smithy also uses as the
 process's working directory. The CLI MUST NOT write generated files outside it,
