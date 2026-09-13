@@ -1,5 +1,5 @@
 [project]
-name = "smithy-python"
+name = "smithy-python-workspace"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
@@ -39,6 +39,7 @@ smithy_xml = { workspace = true }
 smithy_aws_core = { workspace = true }
 smithy_aws_event_stream = { workspace = true }
 aws_sdk_signers = {workspace = true }
+smithy_python = { workspace = true }
 
 [tool.pyright]
 typeCheckingMode = "strict"
