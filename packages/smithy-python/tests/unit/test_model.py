@@ -299,24 +299,37 @@ class TestLookup:
     def test_prelude_shapes_are_shared_between_lookups(self, model: Model) -> None:
         assert model.expect("smithy.api#String") is model.expect("smithy.api#String")
 
-    def test_member_id_resolves_to_container(self, model: Model) -> None:
-        shape = model.expect("example.weather#Coordinates$latitude")
-        assert shape.id == ShapeID.parse("example.weather#Coordinates")
-        assert model.expect("example.weather#Tags$member").type is ShapeType.LIST
+    def test_member_ids_resolve_to_members(self, model: Model) -> None:
+        latitude = model.expect_member("example.weather#Coordinates$latitude")
+        assert latitude.name == "latitude"
+        assert latitude.target == ShapeID.parse("smithy.api#Float")
+        assert model.expect_member(ShapeID.parse("example.weather#Tags$member"))
+
+    def test_shape_lookups_reject_member_ids(self, model: Model) -> None:
+        with pytest.raises(ModelError, match="found a member ID"):
+            model.get("example.weather#Coordinates$latitude")
+        with pytest.raises(ModelError, match="found a member ID"):
+            model.expect("example.weather#Coordinates$latitude")
+
+    def test_member_lookups_reject_shape_ids(self, model: Model) -> None:
+        with pytest.raises(ModelError, match="found a shape ID"):
+            model.get_member("example.weather#Coordinates")
 
     def test_member_id_of_an_undefined_member_does_not_resolve(
         self, model: Model
     ) -> None:
-        assert model.get("example.weather#Coordinates$altitude") is None
-        assert model.get("example.weather#Nope$latitude") is None
+        assert model.get_member("example.weather#Coordinates$altitude") is None
+        assert model.get_member("example.weather#Nope$latitude") is None
         # The prelude resolves, but its shapes declare no members.
-        assert model.get("smithy.api#Unit$value") is None
+        assert model.get_member("smithy.api#Unit$value") is None
 
     def test_expect_reports_missing_shapes(self, model: Model) -> None:
         with pytest.raises(ModelError, match="Shape not found"):
             model.expect("example.weather#Nope")
         with pytest.raises(ModelError, match="Member not found"):
             model.expect("example.weather#Coordinates").member("altitude")
+        with pytest.raises(ModelError, match="Member not found"):
+            model.expect_member("example.weather#Coordinates$altitude")
 
     def test_services_are_listed_in_model_order(self, model: Model) -> None:
         assert [shape.id.name for shape in model.services()] == ["Weather"]
