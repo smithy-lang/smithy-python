@@ -28,6 +28,8 @@ type JSONValue = (
 PRELUDE_NAMESPACE = "smithy.api"
 MIXIN_TRAIT = "smithy.api#mixin"
 TRAIT_DEFINITION = "smithy.api#trait"
+# Smithy 1.0 ASTs differ in shape types (`set`) and nullability semantics.
+SUPPORTED_MAJOR_VERSION = "2"
 
 
 class ShapeType(StrEnum):
@@ -276,6 +278,12 @@ class Model:
         version = document.get("smithy")
         if not isinstance(version, str):
             raise ModelError("The Smithy JSON AST is missing a string 'smithy' version")
+        if version.partition(".")[0] != SUPPORTED_MAJOR_VERSION:
+            raise ModelError(
+                f"Unsupported Smithy version {version!r}: only Smithy "
+                f"{SUPPORTED_MAJOR_VERSION}.x JSON ASTs are supported. Rebuild the "
+                f"model with a Smithy {SUPPORTED_MAJOR_VERSION}.x CLI."
+            )
         shapes_node = _object_mapping(document.get("shapes", {}), "Smithy model shapes")
         metadata = _json_object(document.get("metadata", {}), "Smithy model metadata")
 

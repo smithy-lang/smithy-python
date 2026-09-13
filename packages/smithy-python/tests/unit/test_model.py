@@ -211,6 +211,9 @@ class TestParsing:
         [
             ({}, "missing a string 'smithy' version"),
             ({"smithy": 2}, "missing a string 'smithy' version"),
+            ({"smithy": "1.0"}, "Unsupported Smithy version '1.0'"),
+            ({"smithy": "3.0"}, "Unsupported Smithy version '3.0'"),
+            ({"smithy": ""}, "Unsupported Smithy version ''"),
             ({"smithy": "2.0", "shapes": []}, "Expected an object"),
             (
                 {"smithy": "2.0", "shapes": {"example#Bad": {"type": "nope"}}},

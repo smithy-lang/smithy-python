@@ -102,6 +102,8 @@ Smithy process's `PATH`. Smithy passes no arguments other than those in
 
 When invoked by Smithy, the CLI reads one JSON AST document from standard input.
 The document represents the model after projection transforms have been applied.
+Only Smithy 2.x JSON ASTs are supported; a document declaring another `smithy`
+version is rejected with an error that names the version.
 
 Smithy serializes only what a shape introduces, so shapes that use mixins arrive
 without their inherited members, traits, and properties, and traits added to
