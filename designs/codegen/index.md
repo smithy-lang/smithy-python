@@ -47,6 +47,13 @@ loaded into the Smithy CLI or implemented in Java.
 Generated packages MUST NOT depend on `smithy-python` at runtime. They MAY
 depend on the handwritten runtime packages in this repository.
 
+The generator has no runtime dependencies of its own, including on those
+packages. It therefore defines its own shape IDs, shape types, and prelude
+rather than reusing `smithy-core`'s. Those are shaped for serializing values at
+runtime, whereas the generator needs the JSON AST's own vocabulary: wire-format
+type names, member IDs, and lossless shape attributes. The overlap between the
+two is intentional.
+
 ## Migration
 
 The Java generator remains authoritative while the Python generator is under

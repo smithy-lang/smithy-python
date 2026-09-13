@@ -37,8 +37,24 @@ class TestShapeID:
         member = shape.with_member("bar")
         assert member.member == "bar"
         assert member.without_member() == shape
+        assert shape.without_member() is shape
         assert ShapeID.parse("smithy.api#String").is_prelude
         assert not shape.is_prelude
+
+    def test_shape_and_member_ids_sort_together(self) -> None:
+        ids = [
+            ShapeID.parse("b#A"),
+            ShapeID.parse("a#B$c"),
+            ShapeID.parse("a#B"),
+            ShapeID.parse("a#A"),
+        ]
+        assert [str(shape_id) for shape_id in sorted(ids)] == [
+            "a#A",
+            "a#B",
+            "a#B$c",
+            "b#A",
+        ]
+        assert ShapeID.parse("a#B") >= ShapeID.parse("a#A$c")
 
 
 class TestParsing:
@@ -136,6 +152,16 @@ class TestParsing:
                 "example.weather#GetCity"
             ).references()
 
+    def test_references_report_malformed_identifiers(
+        self, model_document: dict[str, Any]
+    ) -> None:
+        model_document["shapes"]["example.weather#City"] = {
+            "type": "resource",
+            "identifiers": [{"target": "example.weather#CityId"}],
+        }
+        with pytest.raises(ModelError, match="Expected an object at"):
+            Model.from_dict(model_document).expect("example.weather#City").references()
+
     def test_apply_merges_traits_onto_members(
         self, model_document: dict[str, Any]
     ) -> None:
@@ -162,11 +188,19 @@ class TestParsing:
     def test_apply_to_missing_target_is_an_error(
         self, model_document: dict[str, Any]
     ) -> None:
-        model_document["shapes"]["example.weather#Missing"] = {
+        model_document["shapes"]["example.weather#Missing$foo"] = {
             "type": "apply",
             "traits": {},
         }
         with pytest.raises(ModelError, match="Apply target not found"):
+            Model.from_dict(model_document)
+
+    def test_apply_must_target_a_member(self, model_document: dict[str, Any]) -> None:
+        model_document["shapes"]["example.weather#Other"] = {
+            "type": "apply",
+            "traits": {"smithy.api#documentation": "docs"},
+        }
+        with pytest.raises(ModelError, match="apply statement to target a member"):
             Model.from_dict(model_document)
 
     def test_shapes_key_is_optional(self) -> None:
@@ -201,6 +235,22 @@ class TestParsing:
                     },
                 },
                 "Expected a list",
+            ),
+            (
+                {"smithy": "2.0", "shapes": {1: {"type": "string"}}},
+                "Expected string object keys",
+            ),
+            (
+                {
+                    "smithy": "2.0",
+                    "shapes": {
+                        "example#Bad": {
+                            "type": "string",
+                            "traits": {"example#trait": object()},
+                        }
+                    },
+                },
+                "Unsupported JSON value",
             ),
         ],
     )
@@ -246,9 +296,21 @@ class TestLookup:
         assert model.get("example.weather#Nope") is None
         assert model.get("smithy.api#Nope") is None
 
+    def test_prelude_shapes_are_shared_between_lookups(self, model: Model) -> None:
+        assert model.expect("smithy.api#String") is model.expect("smithy.api#String")
+
     def test_member_id_resolves_to_container(self, model: Model) -> None:
         shape = model.expect("example.weather#Coordinates$latitude")
         assert shape.id == ShapeID.parse("example.weather#Coordinates")
+        assert model.expect("example.weather#Tags$member").type is ShapeType.LIST
+
+    def test_member_id_of_an_undefined_member_does_not_resolve(
+        self, model: Model
+    ) -> None:
+        assert model.get("example.weather#Coordinates$altitude") is None
+        assert model.get("example.weather#Nope$latitude") is None
+        # The prelude resolves, but its shapes declare no members.
+        assert model.get("smithy.api#Unit$value") is None
 
     def test_expect_reports_missing_shapes(self, model: Model) -> None:
         with pytest.raises(ModelError, match="Shape not found"):
@@ -489,6 +551,45 @@ class TestMixins:
         assert a.has_trait("smithy.api#required")
         assert a.has_trait("smithy.api#documentation")
 
+    def test_list_and_map_members_are_inherited(self) -> None:
+        # Smithy omits member, key, and value from a shape that inherits them.
+        model = Model.from_dict(
+            self._document(
+                {
+                    "example#AbstractList": {
+                        "type": "list",
+                        "traits": {"smithy.api#mixin": {}},
+                        "member": {"target": "smithy.api#String"},
+                    },
+                    "example#Names": {
+                        "type": "list",
+                        "mixins": [{"target": "example#AbstractList"}],
+                    },
+                    "example#AbstractMap": {
+                        "type": "map",
+                        "traits": {"smithy.api#mixin": {}},
+                        "key": {"target": "smithy.api#String"},
+                        "value": {"target": "smithy.api#Integer"},
+                    },
+                    "example#Counts": {
+                        "type": "map",
+                        "mixins": [{"target": "example#AbstractMap"}],
+                    },
+                    "example#Names$member": {
+                        "type": "apply",
+                        "traits": {"smithy.api#documentation": "A name"},
+                    },
+                }
+            )
+        )
+        names = model.expect("example#Names")
+        assert names.member("member").target == ShapeID.parse("smithy.api#String")
+        assert names.member("member").trait("smithy.api#documentation") == "A name"
+
+        counts = model.expect("example#Counts")
+        assert [member.name for member in counts.members] == ["key", "value"]
+        assert counts.member("value").target == ShapeID.parse("smithy.api#Integer")
+
     def test_redefined_members_must_keep_their_target(self) -> None:
         with pytest.raises(ModelError, match="different target"):
             Model.from_dict(
@@ -603,6 +704,20 @@ class TestMixins:
                     },
                 },
                 "lacks the smithy.api#mixin trait",
+            ),
+            (
+                {
+                    "example#M": {
+                        "type": "list",
+                        "traits": {"smithy.api#mixin": {}},
+                        "member": {"target": "smithy.api#String"},
+                    },
+                    "example#S": {
+                        "type": "structure",
+                        "mixins": [{"target": "example#M"}],
+                    },
+                },
+                "is a structure but uses the list shape",
             ),
             (
                 {

@@ -9,9 +9,7 @@ from dataclasses import dataclass
 from typing import Final
 
 from .exceptions import CodegenError, InvalidInvocationError
-from .model import MIXIN_TRAIT, Model, Shape, ShapeID, ShapeType
-
-TRAIT_DEFINITION: Final = "smithy.api#trait"
+from .model import MIXIN_TRAIT, TRAIT_DEFINITION, Model, Shape, ShapeID, ShapeType
 
 # Shapes carrying these traits describe the model rather than data and are
 # never generated, even when the JSON AST includes them.
@@ -96,7 +94,7 @@ def select_generated_shapes(model: Model, service: Shape | None) -> Selection:
 def _is_candidate(shape: Shape) -> bool:
     if shape.type.is_service_category or shape.id.is_prelude:
         return False
-    return not any(shape.has_trait(trait) for trait in _EXCLUDED_TRAITS)
+    return shape.traits.keys().isdisjoint(_EXCLUDED_TRAITS)
 
 
 def _closure(model: Model, service: Shape) -> set[ShapeID]:
