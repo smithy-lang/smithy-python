@@ -151,28 +151,27 @@ def test_direct_invocation_rejects_interactive_model_input(
     )
 
 
-def test_invocation_reports_unreadable_model(
-    tmp_path: Path, run_cli: CliRunner
-) -> None:
+def test_invocation_reports_missing_model(tmp_path: Path, run_cli: CliRunner) -> None:
     missing = tmp_path / "missing.json"
 
     exit_code, stderr = run_cli(
         "generate", "client", "--model", str(missing), "--output", str(tmp_path)
     )
 
-    assert exit_code == 2
-    assert f"Model path is not a file: {missing}" in stderr
+    assert exit_code == 1
+    assert f"Cannot read model {missing}: No such file" in stderr
 
 
-def test_invocation_rejects_empty_model_path(
+def test_invocation_reports_model_path_that_is_a_directory(
     tmp_path: Path, run_cli: CliRunner
 ) -> None:
+    # An empty path resolves to the current directory.
     exit_code, stderr = run_cli(
         "generate", "client", "--model", "", "--output", str(tmp_path)
     )
 
-    assert exit_code == 2
-    assert "Model path is not a file: ." in stderr
+    assert exit_code == 1
+    assert "Cannot read model .:" in stderr
 
 
 def test_invocation_reports_model_io_error(

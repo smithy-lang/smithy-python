@@ -62,8 +62,10 @@ added when there is a need for it.
 
 The command MUST return zero after successful generation and non-zero when
 arguments, settings, the model, or generation are invalid. Diagnostics are
-written to standard error. Invalid command syntax and invocation inputs return
-2, while I/O and generation failures return 1.
+written to standard error. Invalid command syntax and invocation inputs, such as
+options that cannot be combined or a service that cannot be selected, return 2.
+Model, I/O, and generation failures, including a model file that cannot be read,
+return 1.
 
 ## Smithy `run` Plugin
 

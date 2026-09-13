@@ -179,9 +179,14 @@ def _read_model(
 ) -> bytes:
     """Read the JSON AST document from the model file or standard input."""
     if model_path is not None:
-        if not model_path.is_file():
-            raise InvalidInvocationError(f"Model path is not a file: {model_path}")
-        model_source = model_path.read_bytes()
+        # A model that cannot be read is an I/O failure like any other, whether
+        # the path is missing, a directory, or unreadable.
+        try:
+            model_source = model_path.read_bytes()
+        except OSError as error:
+            raise OSError(
+                f"Cannot read model {model_path}: {error.strerror or error}"
+            ) from error
     else:
         model_stream = sys.stdin.buffer if stdin is None else stdin
         if environment.plugin_dir is None and model_stream.isatty():
