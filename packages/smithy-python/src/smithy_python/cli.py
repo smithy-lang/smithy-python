@@ -5,7 +5,6 @@
 from __future__ import annotations
 
 import argparse
-import os
 import sys
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
@@ -44,11 +43,7 @@ def main(
         return error.code if isinstance(error.code, int) else 1
 
     try:
-        _resolve_invocation(
-            args,
-            environ=os.environ if environ is None else environ,
-            stdin=stdin,
-        )
+        _resolve_invocation(args, environ=environ, stdin=stdin)
     except InvalidInvocationError as error:
         sys.stderr.write(f"smithy-python: error: {error}\n")
         return 2
@@ -109,9 +104,10 @@ def _common_artifact_options() -> argparse.ArgumentParser:
 def _resolve_invocation(
     args: argparse.Namespace,
     *,
-    environ: Mapping[str, str],
+    environ: Mapping[str, str] | None,
     stdin: BinaryIO | None,
 ) -> _Invocation:
+    # PluginEnvironment falls back to os.environ, so the defaulting lives there.
     environment = PluginEnvironment.from_environ(environ)
     model_path: Path | None = args.model
     output_path: Path | None = args.output
