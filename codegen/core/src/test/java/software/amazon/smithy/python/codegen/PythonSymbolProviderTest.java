@@ -108,6 +108,76 @@ public class PythonSymbolProviderTest {
                         .getName());
     }
 
+    @Test
+    public void testResponseMetadataIsEscapedOnOutputsAndErrors() {
+        Model model = loadModel(RESPONSE_METADATA_MODEL);
+        PythonSymbolProvider provider = createProvider(model);
+
+        assertEquals("response_metadata_", memberName(provider, model, "GetThingOutput$responseMetadata"));
+        assertEquals("response_metadata_", memberName(provider, model, "ThingError$responseMetadata"));
+    }
+
+    @Test
+    public void testResponseMetadataIsNotEscapedOnOtherShapes() {
+        // Only outputs and errors are given the attribute, so members elsewhere
+        // must keep their natural name.
+        Model model = loadModel(RESPONSE_METADATA_MODEL);
+        PythonSymbolProvider provider = createProvider(model);
+
+        assertEquals("response_metadata", memberName(provider, model, "GetThingInput$responseMetadata"));
+        assertEquals("response_metadata", memberName(provider, model, "Nested$responseMetadata"));
+    }
+
+    @Test
+    public void testUnrelatedMembersOnOutputsAndErrorsAreUnaffected() {
+        Model model = loadModel(RESPONSE_METADATA_MODEL);
+        PythonSymbolProvider provider = createProvider(model);
+
+        assertEquals("thing_arn", memberName(provider, model, "GetThingOutput$thingArn"));
+        assertEquals("retry_after", memberName(provider, model, "ThingError$retryAfter"));
+    }
+
+    private static final String RESPONSE_METADATA_MODEL = """
+            $version: "2"
+            namespace smithy.example
+
+            service TestService {
+                version: "2024-01-01"
+                operations: [GetThing]
+                errors: [ThingError]
+            }
+
+            operation GetThing {
+                input: GetThingInput
+                output: GetThingOutput
+            }
+
+            structure GetThingInput {
+                responseMetadata: String
+            }
+
+            structure GetThingOutput {
+                responseMetadata: String
+                thingArn: String
+                nested: Nested
+            }
+
+            structure Nested {
+                responseMetadata: String
+            }
+
+            @error("client")
+            structure ThingError {
+                responseMetadata: String
+                retryAfter: String
+            }
+            """;
+
+    private static String memberName(PythonSymbolProvider provider, Model model, String relativeId) {
+        var member = model.expectShape(ShapeId.from(NS + "#" + relativeId), MemberShape.class);
+        return provider.toMemberName(member);
+    }
+
     private static Model loadModel(String smithyIdl) {
         return Model.assembler().addUnparsedModel("test.smithy", smithyIdl).assemble().unwrap();
     }

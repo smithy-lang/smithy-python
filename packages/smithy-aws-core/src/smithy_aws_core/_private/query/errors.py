@@ -1,7 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from typing import TYPE_CHECKING, Any
-from xml.etree.ElementTree import Element, ParseError, fromstring
+from xml.etree.ElementTree import ParseError, fromstring
 
 from smithy_core.documents import TypeRegistry
 from smithy_core.exceptions import (
@@ -15,6 +15,7 @@ from smithy_core.schemas import APIOperation
 from smithy_core.shapes import ShapeID
 
 from ...traits import AwsQueryErrorTrait
+from ._xml import find_child, local_name
 
 try:
     from smithy_xml import XMLCodec
@@ -34,21 +35,6 @@ def _assert_xml() -> None:
         )
 
 
-def _local_name(tag: str) -> str:
-    """Strip namespace URI from an element tag: {uri}local -> local."""
-    if tag.startswith("{"):
-        return tag.split("}", 1)[1]
-    return tag
-
-
-def _find_child(element: Element, name: str) -> Element | None:
-    """Return the first child element whose local name matches ``name``."""
-    for child in element:
-        if _local_name(child.tag) == name:
-            return child
-    return None
-
-
 def _parse_aws_query_error_code(
     body: bytes, wrapper_elements: tuple[str, ...]
 ) -> str | None:
@@ -59,15 +45,15 @@ def _parse_aws_query_error_code(
         return None
 
     if wrapper_elements:
-        if _local_name(element.tag) != wrapper_elements[0]:
+        if local_name(element.tag) != wrapper_elements[0]:
             return None
         for wrapper in wrapper_elements[1:]:
-            next_element = _find_child(element, wrapper)
+            next_element = find_child(element, wrapper)
             if next_element is None:
                 return None
             element = next_element
 
-    code_element = _find_child(element, "Code")
+    code_element = find_child(element, "Code")
     return code_element.text if code_element is not None else None
 
 

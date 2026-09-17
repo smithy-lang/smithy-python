@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from typing_extensions import TypeForm
 
     from ...deserializers import DeserializeableShape, ShapeDeserializer
+    from ...response import ResponseMetadata
     from ...schemas import APIOperation
     from ...serializers import SerializeableShape
     from ...shapes import ShapeID
@@ -169,6 +170,28 @@ class ClientProtocol[I: Request, O: Response](Protocol):
         :param response: The response to deserialize.
         :param error_registry: A TypeRegistry used to deserialize errors.
         :param context: A context bag for the request.
+        """
+        ...
+
+    def extract_response_metadata(
+        self,
+        *,
+        response: O,
+        context: TypedProperties,
+    ) -> "ResponseMetadata":
+        """Extract metadata about a transport response.
+
+        This is called for both successful and failed invocations so that request
+        identifiers remain available to callers for debugging. Implementations
+        MUST NOT raise: metadata is diagnostic, so any value that cannot be
+        determined is left unset instead.
+
+        :param response: The response to extract metadata from.
+        :param context: Per-call storage shared with this protocol's other methods.
+            Protocols whose request IDs arrive in headers need nothing from it, since
+            ``response`` already carries those. Protocols whose IDs arrive in the body
+            do: only ``deserialize_response`` sees the parsed body, so it must leave
+            the value here for this method to read back.
         """
         ...
 
