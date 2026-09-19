@@ -10,7 +10,15 @@ install: ## Sets up workspace (* you should run this first! *)
 	@printf "\n\nWorkspace initialized, please run:\n\033[36msource .venv/bin/activate\033[0m"
 
 
-build-java: ## Builds the Java code generation packages.
+format-java: ## Formats the Java code generation packages.
+	cd codegen && ./gradlew spotlessApply
+
+
+check-java: ## Checks Java and Gradle formatting without modifying source.
+	cd codegen && ./gradlew spotlessCheck
+
+
+build-java: ## Builds and tests the Java code generation packages without modifying source.
 	cd codegen && ./gradlew clean build
 
 
