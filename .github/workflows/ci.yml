@@ -69,4 +69,4 @@ jobs:
 
       - name: Run protocol tests
         run: |
-          make test-protocols
+          make generate-protocol-tests test-protocols

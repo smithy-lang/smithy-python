@@ -22,6 +22,28 @@ test-protocols: ## Generates and runs protocol tests for all supported protocols
 	done
 
 
+generate-protocol-tests: ## Generates protocol-test clients, copies them to ./codegen-output, and asserts no git diff.
+	cd codegen && ./gradlew :protocol-test:clean :protocol-test:build
+	rm -rf codegen-output
+	mkdir -p codegen-output
+	@set -e; for projection_dir in codegen/protocol-test/build/smithyprojections/protocol-test/*/python-client-codegen; do \
+		projection=$$(basename $$(dirname "$$projection_dir")); \
+		echo "Copying $$projection -> codegen-output/$$projection"; \
+		cp -r "$$projection_dir" "codegen-output/$$projection"; \
+		echo "Formatting codegen-output/$$projection"; \
+		uv run ruff check --fix "codegen-output/$$projection"; \
+		uv run ruff format "codegen-output/$$projection"; \
+	done
+	@if ! git diff --quiet --exit-code -- codegen-output || [ -n "$$(git ls-files --others --exclude-standard -- codegen-output)" ]; then \
+		echo "ERROR: generated codegen-output differs from the committed snapshot."; \
+		echo "Review the diff and commit it if the change is intended:"; \
+		git --no-pager status --short -- codegen-output; \
+		git --no-pager diff -- codegen-output; \
+		exit 1; \
+	fi
+	@echo "codegen-output is up to date."
+
+
 lint-py: ## Runs linters and formatters on the python packages.
 	uv run ruff check packages --fix --config pyproject.toml
 	uv run ruff format packages --config pyproject.toml
