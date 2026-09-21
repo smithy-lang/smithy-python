@@ -7,11 +7,13 @@ members = [
     "aws-sdk-signers",
     "smithy-aws-core",
     "smithy-aws-event-stream",
+    "smithy-cbor",
     "smithy-core",
     "smithy-http",
     "smithy-json",
     "smithy-python",
     "smithy-python-workspace",
+    "smithy-test",
     "smithy-xml",
 ]
 
@@ -723,6 +725,16 @@ dependencies = [
 requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
 
 [[package]]
+name = "smithy-cbor"
+source = { editable = "packages/smithy-cbor" }
+dependencies = [
+    { name = "smithy-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
+
+[[package]]
 name = "smithy-core"
 source = { editable = "packages/smithy-core" }
 
@@ -751,15 +763,19 @@ aiohttp = [
 awscrt = [
     { name = "awscrt" },
 ]
+cbor = [
+    { name = "smithy-cbor" },
+]
 
 [package.metadata]
 requires-dist = [
     { name = "aiohttp", marker = "extra == 'aiohttp'", specifier = ">=3.11.12,<4.0" },
     { name = "awscrt", marker = "extra == 'awscrt'", specifier = "~=0.32.0" },
+    { name = "smithy-cbor", marker = "extra == 'cbor'", editable = "packages/smithy-cbor" },
     { name = "smithy-core", editable = "packages/smithy-core" },
     { name = "yarl", marker = "extra == 'aiohttp'" },
 ]
-provides-extras = ["aiohttp", "awscrt"]
+provides-extras = ["aiohttp", "awscrt", "cbor"]
 
 [[package]]
 name = "smithy-json"
@@ -813,6 +829,16 @@ test = [
     { name = "pytest-cov", specifier = ">=6.0.0" },
 ]
 typing = [{ name = "pyright", specifier = ">=1.1.400" }]
+
+[[package]]
+name = "smithy-test"
+source = { editable = "packages/smithy-test" }
+dependencies = [
+    { name = "smithy-core" },
+]
+
+[package.metadata]
+requires-dist = [{ name = "smithy-core", editable = "packages/smithy-core" }]
 
 [[package]]
 name = "smithy-xml"

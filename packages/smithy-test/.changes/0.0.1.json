@@ -1,0 +1,8 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Added the `smithy-test` package providing `deep_equal`, a NaN-aware structural equality check for generated protocol tests."
+    }
+  ]
+}

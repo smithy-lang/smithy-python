@@ -88,6 +88,28 @@
                     "moduleVersion": "0.0.1"
                 }
             }
+        },
+        "rpcv2-cbor": {
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "smithy.protocoltests.rpcv2Cbor#RpcV2Protocol"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
+                }
+            ],
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "smithy.protocoltests.rpcv2Cbor#RpcV2Protocol",
+                    "module": "rpcv2cbor",
+                    "moduleVersion": "0.0.1"
+                }
+            }
         }
     }
 }

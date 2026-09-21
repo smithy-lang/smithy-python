@@ -39,6 +39,9 @@ dependencies = [
 awscrt = [
     "awscrt~=0.32.0",
 ]
+cbor = [
+    "smithy-cbor",
+]
 aiohttp = [
     "aiohttp>=3.11.12, <4.0",
     "yarl"

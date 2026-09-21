@@ -1,0 +1,8 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Added the `smithy-cbor` package: an RFC 8949 CBOR codec supporting the `smithy.protocols#rpcv2Cbor` protocol."
+    }
+  ]
+}
