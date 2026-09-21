@@ -49,6 +49,9 @@ operation TestUnionListOperation {
     }
     output := {
         response: String
+        // A member named responseMetadata collides with the SDK-reserved
+        // response_metadata attribute and must be escaped on the generated output.
+        responseMetadata: String
     }
 }
 

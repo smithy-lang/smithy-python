@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "A modeled `responseMetadata` member on an operation output or error is now generated as `response_metadata_`, since `response_metadata` is reserved for SDK response metadata."
+}

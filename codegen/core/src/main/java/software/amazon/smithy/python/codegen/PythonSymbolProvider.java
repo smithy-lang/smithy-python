@@ -162,8 +162,9 @@ public final class PythonSymbolProvider implements SymbolProvider, ShapeVisitor<
                 && carriesResponseMetadata(container)) {
             memberName = escapeWord(memberName);
             LOGGER.warning(() -> format(
-                    "Renamed member %s to \"%s\" because \"%s\" is reserved for response metadata.",
+                    "Escaped generated Python name for Smithy member %s from \"%s\" to \"%s\" because \"%s\" is reserved for SDK response metadata.",
                     shape.getId(),
+                    CodegenUtils.RESPONSE_METADATA_MEMBER,
                     escapeWord(CodegenUtils.RESPONSE_METADATA_MEMBER),
                     CodegenUtils.RESPONSE_METADATA_MEMBER));
         }
