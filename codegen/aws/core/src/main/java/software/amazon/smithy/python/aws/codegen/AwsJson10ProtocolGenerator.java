@@ -32,17 +32,11 @@ public final class AwsJson10ProtocolGenerator implements ProtocolGenerator {
             "AwsJson10ClientPopulatesDefaultValuesInInput",
             "AwsJson10ClientSkipsTopLevelDefaultValuesInInput",
             "AwsJson10ClientUsesExplicitlyProvidedMemberValuesOverDefaults",
-            "AwsJson10ClientPopulatesDefaultsValuesWhenMissingInResponse",
             "AwsJson10ClientIgnoresNonTopLevelDefaultsOnMembersWithClientOptional",
 
             // TODO: support the endpoint trait.
             "AwsJson10EndpointTrait",
-            "AwsJson10EndpointTraitWithHostLabel",
-
-            // TODO: support client error-correction behavior when the server
-            // omits required values in modeled error responses.
-            "AwsJson10ClientErrorCorrectsWhenServerFailsToSerializeRequiredValues",
-            "AwsJson10ClientErrorCorrectsWithDefaultValuesWhenServerFailsToSerializeRequiredValues");
+            "AwsJson10EndpointTraitWithHostLabel");
 
     @Override
     public ShapeId getProtocol() {

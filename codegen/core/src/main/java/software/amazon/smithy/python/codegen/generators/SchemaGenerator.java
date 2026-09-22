@@ -5,11 +5,12 @@
 package software.amazon.smithy.python.codegen.generators;
 
 import java.util.Collection;
-import java.util.HashMap;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.logging.Logger;
@@ -58,7 +59,8 @@ public final class SchemaGenerator implements Consumer<Shape> {
 
     private final GenerationContext context;
     private final Set<ShapeId> generatedShapes = new HashSet<>();
-    private final Map<MemberShape, Integer> deferredMembers = new HashMap<>();
+    private final Map<MemberShape, Integer> deferredMembers =
+            new TreeMap<>(Comparator.comparing(MemberShape::getId));
 
     public SchemaGenerator(GenerationContext context) {
         this.context = context;
