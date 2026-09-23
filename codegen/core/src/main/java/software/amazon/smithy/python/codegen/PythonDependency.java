@@ -52,6 +52,10 @@ public record PythonDependency(
         return new PythonDependency(packageName, version, type, isLink, List.of(optionalDependencies));
     }
 
+    public PythonDependency asTestDependency() {
+        return new PythonDependency(packageName, version, Type.TEST_DEPENDENCY, isLink, optionalDependencies);
+    }
+
     /**
      * An enum of valid dependency types.
      */

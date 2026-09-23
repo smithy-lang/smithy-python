@@ -65,6 +65,15 @@ public final class SmithyPythonDependency {
             false);
 
     /**
+     * The core smithy-cbor python package.
+     */
+    public static final PythonDependency SMITHY_CBOR = new PythonDependency(
+            "smithy_cbor",
+            "~=0.0.1",
+            Type.DEPENDENCY,
+            false);
+
+    /**
      * Test-support helpers shared by generated clients (e.g. deep_equal).
      */
     public static final PythonDependency SMITHY_TEST = new PythonDependency(
