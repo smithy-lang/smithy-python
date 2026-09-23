@@ -1,14 +1,14 @@
 [project]
-name = "smithy-http"
+name = "smithy-cbor"
 dynamic = ["version"]
 requires-python = ">=3.12"
 authors = [
   {name = "Amazon Web Services"},
 ]
-description = "HTTP components for Smithy tooling."
+description = "CBOR serialization and deserialization support for Smithy tooling."
 readme = "README.md"
 license = {text = "Apache License 2.0"}
-keywords = ["smithy", "sdk", "http"]
+keywords = ["smithy", "sdk", "cbor"]
 classifiers = [
   "Development Status :: 2 - Pre-Alpha",
   "Intended Audience :: Developers",
@@ -31,28 +31,16 @@ dependencies = [
 ]
 
 [project.urls]
-"Changelog" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-http/CHANGELOG.md"
-"Code" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-http/"
+"Changelog" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-cbor/CHANGELOG.md"
+"Code" = "https://github.com/smithy-lang/smithy-python/blob/develop/packages/smithy-cbor/"
 "Issue tracker" = "https://github.com/smithy-lang/smithy-python/issues"
-
-[project.optional-dependencies]
-awscrt = [
-    "awscrt~=0.32.0",
-]
-cbor = [
-    "smithy-cbor",
-]
-aiohttp = [
-    "aiohttp>=3.11.12, <4.0",
-    "yarl"
-]
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.version]
-path = "src/smithy_http/__init__.py"
+path = "src/smithy_cbor/__init__.py"
 
 [tool.hatch.build]
 exclude = [
