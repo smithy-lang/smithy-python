@@ -21,6 +21,7 @@ from smithy_core.aio.interfaces import ClientProtocol, EndpointResolver
 from smithy_core.aio.interfaces.auth import AuthScheme
 from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.interceptors import Interceptor
+from smithy_core.interfaces.auth import AuthSchemeResolver
 from smithy_core.shapes import ShapeID
 from smithy_http.aio.aiohttp import AIOHTTPClient
 
@@ -553,7 +554,7 @@ class _AsyncRestJsonProtocolConfigOverrides(AwsConfigOverrides, total=False):
         ClientProtocol[Any, Any] | ProtocolConstructor[ClientProtocol[Any, Any]] | None
     )
     auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]] | None
-    auth_scheme_resolver: HTTPAuthSchemeResolver | None
+    auth_scheme_resolver: AuthSchemeResolver | None
 
 
 @dataclass(kw_only=True, repr=False, init=False)
@@ -582,7 +583,7 @@ class AsyncRestJsonProtocolConfig(AsyncAwsConfig):
     auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]] | None = None
     """A map of auth scheme ids to auth schemes."""
 
-    auth_scheme_resolver: HTTPAuthSchemeResolver | None = None
+    auth_scheme_resolver: AuthSchemeResolver | None = None
     """
     An auth scheme resolver that determines the auth scheme for each
     operation.

@@ -158,7 +158,13 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                             .addDependency(SmithyPythonDependency.SMITHY_CORE)
                             .build())
                     .build();
-            var authSchemeResolverSymbol = CodegenUtils.getHttpAuthSchemeResolverSymbol(context.settings());
+            // The declared field/override type is the protocol so any conforming resolver
+            // is accepted without subclassing the generated default.
+            var authSchemeResolverInterfaceSymbol = Symbol.builder()
+                    .name("AuthSchemeResolver")
+                    .namespace("smithy_core.interfaces.auth", ".")
+                    .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                    .build();
             var overridesTypeName = "_" + asyncConfigSymbol.getName() + "Overrides";
 
             writer.addStdlibImport("typing", "ClassVar");
@@ -177,7 +183,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                 writer.write("auth_schemes: dict[$T, $T] | None",
                         RuntimeTypes.SHAPE_ID,
                         authSchemeSymbol);
-                writer.write("auth_scheme_resolver: $T | None", authSchemeResolverSymbol);
+                writer.write("auth_scheme_resolver: $T | None", authSchemeResolverInterfaceSymbol);
             }
             for (ConfigProperty property : pluginProperties.values()) {
                 if (!PREDEFINED_CONFIG_FIELDS.contains(property.name())) {
@@ -221,7 +227,7 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                 writer.writeDocs("A map of auth scheme ids to auth schemes.", context);
                 writer.write("");
 
-                writer.write("auth_scheme_resolver: $T | None = None", authSchemeResolverSymbol);
+                writer.write("auth_scheme_resolver: $T | None = None", authSchemeResolverInterfaceSymbol);
                 writer.writeDocs("An auth scheme resolver that determines the auth scheme "
                         + "for each operation.", context);
                 writer.write("");
