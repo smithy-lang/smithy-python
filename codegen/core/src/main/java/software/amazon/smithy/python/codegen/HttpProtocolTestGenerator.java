@@ -435,6 +435,27 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     """);
             return;
         }
+        if (contentType.equals("application/cbor")) {
+            // CBOR admits several encodings of the same value (definite vs indefinite
+            // length, map key order, integer width), so compare the decoded structures
+            // rather than the raw bytes.
+            writer.addDependency(SmithyPythonDependency.SMITHY_CBOR);
+            writer.addImport("smithy_cbor", "loads", "_cbor_loads");
+            writer.addDependency(SmithyPythonDependency.SMITHY_TEST);
+            writer.addImport(SmithyPythonDependency.SMITHY_TEST.packageName(), "deep_equal");
+            writer.addStdlibImport("typing", "Any");
+            writer.write("""
+                    actual_body: Any = (
+                        _cbor_loads(actual_body_content) if actual_body_content else {}
+                    )
+                    expected_body: Any = (
+                        _cbor_loads(expected_body_content) if expected_body_content else {}
+                    )
+                    assert deep_equal(actual_body, expected_body)
+
+                    """);
+            return;
+        }
         if (contentType.equals("application/x-www-form-urlencoded")) {
             writer.addStdlibImport("urllib.parse", "parse_qsl");
             writer.write("""
