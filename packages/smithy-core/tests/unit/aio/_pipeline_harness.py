@@ -6,10 +6,13 @@ from typing import Any, Self, cast
 from smithy_core import URI
 from smithy_core.aio.client import ClientCall, RequestPipeline
 from smithy_core.aio.interfaces import ClientProtocol
+from smithy_core.aio.interfaces.retries import RetryStrategy
+from smithy_core.aio.retries import SimpleRetryStrategy
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import TypeRegistry
 from smithy_core.endpoints import EndpointResolverParams
 from smithy_core.interceptors import InterceptorChain
+from smithy_core.response import EMPTY_RESPONSE_METADATA, ResponseMetadata
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
@@ -41,6 +44,9 @@ class StubInput:
 
 
 class StubOutput:
+    # Declared the same way codegen declares it on generated operation outputs.
+    response_metadata: ResponseMetadata = EMPTY_RESPONSE_METADATA
+
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
         return cls()
@@ -55,6 +61,15 @@ class StubEvent:
         return cls()
 
 
+_UNARY_INPUT_SCHEMA = Schema.collection(
+    id=ShapeID("com.example#UnaryInput"),
+    members={"message": {"target": _STRING}},
+)
+_UNARY_OUTPUT_SCHEMA = Schema.collection(
+    id=ShapeID("com.example#UnaryOutput"),
+    members={"message": {"target": _STRING}},
+)
+
 OPERATION = APIOperation(
     input=StubInput,
     output=StubOutput,
@@ -64,6 +79,23 @@ OPERATION = APIOperation(
     ),
     input_schema=_INPUT_SCHEMA,
     output_schema=_OUTPUT_SCHEMA,
+    error_registry=TypeRegistry({}),
+    effective_auth_schemes=[],
+    error_schemas=[],
+)
+
+# ``ClientCall.retryable()`` is False for operations with a streaming input, so
+# OPERATION above never enters the retry loop. This one has no input stream and so
+# exercises it.
+UNARY_OPERATION = APIOperation(
+    input=StubInput,
+    output=StubOutput,
+    schema=Schema(
+        id=ShapeID("com.example#UnaryOperation"),
+        shape_type=ShapeType.OPERATION,
+    ),
+    input_schema=_UNARY_INPUT_SCHEMA,
+    output_schema=_UNARY_OUTPUT_SCHEMA,
     error_registry=TypeRegistry({}),
     effective_auth_schemes=[],
     error_schemas=[],
@@ -115,6 +147,14 @@ class StubProtocol:
         self.deserialize_response_calls = 0
         self.create_event_publisher_calls = 0
         self.create_event_receiver_calls = 0
+        self.extract_response_metadata_calls = 0
+        # What extraction yields; the values tests assert on.
+        self.stub_response_metadata = ResponseMetadata(
+            request_id="stub-request-id",
+            extended_request_id="stub-extended-request-id",
+            http_status_code=200,
+        )
+        self.extract_response_metadata_error: Exception | None = None
 
     @property
     def id(self) -> ShapeID:
@@ -131,6 +171,12 @@ class StubProtocol:
     async def deserialize_response(self, **kwargs: Any) -> StubOutput:
         self.deserialize_response_calls += 1
         return StubOutput()
+
+    def extract_response_metadata(self, **kwargs: Any) -> ResponseMetadata:
+        self.extract_response_metadata_calls += 1
+        if self.extract_response_metadata_error is not None:
+            raise self.extract_response_metadata_error
+        return self.stub_response_metadata
 
     def create_event_publisher(self, **kwargs: Any) -> StubEventPublisher:
         self.create_event_publisher_calls += 1
@@ -192,6 +238,26 @@ def pipeline_harness(transport: UndeclaredTransport) -> PipelineHarness:
         transport=transport,
     )
     return PipelineHarness(protocol=protocol, transport=transport, pipeline=pipeline)
+
+
+def retryable_client_call(
+    retry_strategy: RetryStrategy | None = None,
+) -> ClientCall[Any, Any]:
+    """A call that goes through the retry loop, unlike :py:func:`client_call`.
+
+    Defaults to a strategy that allows a single attempt, so the loop gives up after
+    the first failure rather than sleeping through retries.
+    """
+    return ClientCall(
+        input=StubInput(),
+        operation=UNARY_OPERATION,
+        context=TypedProperties(),
+        interceptor=InterceptorChain([]),
+        auth_scheme_resolver=StubAuthResolver(),
+        supported_auth_schemes={},
+        endpoint_resolver=StubEndpointResolver(),
+        retry_strategy=retry_strategy or SimpleRetryStrategy(max_attempts=1),
+    )
 
 
 def client_call() -> ClientCall[Any, Any]:

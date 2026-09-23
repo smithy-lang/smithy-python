@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Added `extract_response_metadata()` to the `ClientProtocol`. Implementations that extend `HttpClientProtocol` inherit a working one and need no change. Protocols that implement `ClientProtocol` directly must add it."
+}

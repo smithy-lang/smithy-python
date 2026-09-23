@@ -53,5 +53,12 @@ public class PythonCodegenTest {
         var config = Files.readString(tempDir.resolve("src/weather/config.py"));
         assertTrue(config.contains("self.transport = transport or AIOHTTPClient()"));
         assertFalse(config.contains("self.transport = transport or AWSCRTHTTPClient()"));
+
+        // An output that models a "responseMetadata" member gets both the SDK-reserved
+        // response_metadata attribute and the escaped modeled member, so neither shadows
+        // the other.
+        var models = Files.readString(tempDir.resolve("src/weather/models.py"));
+        assertTrue(models.contains("response_metadata: ResponseMetadata"));
+        assertTrue(models.contains("response_metadata_:"));
     }
 }

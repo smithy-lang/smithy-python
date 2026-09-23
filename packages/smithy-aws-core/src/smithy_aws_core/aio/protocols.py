@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 from collections.abc import Callable
+from dataclasses import replace
 from inspect import iscoroutinefunction
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, ClassVar, Final
@@ -23,10 +24,11 @@ from smithy_core.exceptions import (
 )
 from smithy_core.interfaces import TypedProperties, URI
 from smithy_core.prelude import DOCUMENT
+from smithy_core.response import ResponseMetadata
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import SerializeableShape
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.types import TimestampFormat
+from smithy_core.types import PropertyKey, TimestampFormat
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPRequest as _HTTPRequest
 from smithy_http.aio.interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
@@ -37,9 +39,15 @@ from smithy_http.aio.protocols import (
 from smithy_http.deserializers import HTTPResponseDeserializer
 
 from .._private.query.errors import create_aws_query_error
+from .._private.query.metadata import parse_aws_query_request_id
 from .._private.query.serializers import QueryShapeSerializer
 from ..traits import AwsJson1_0Trait, AwsJson1_1Trait, AwsQueryTrait, RestJson1Trait
-from ..utils import parse_document_discriminator, parse_error_code, parse_retry_after
+from ..utils import (
+    parse_document_discriminator,
+    parse_error_code,
+    parse_response_metadata,
+    parse_retry_after,
+)
 
 try:
     from smithy_json import JSONCodec, JSONDocument
@@ -139,7 +147,24 @@ else:
         pass
 
 
-class RestJsonClientProtocol(HttpBindingClientProtocol):
+class _AWSResponseMetadataMixin:
+    """Adds AWS request identifiers to extracted response metadata.
+
+    Mixed into each AWS protocol ahead of its HTTP base class, which supplies
+    only the status code. AWS protocols do not share a common base, so this is
+    applied per protocol.
+    """
+
+    def extract_response_metadata(
+        self,
+        *,
+        response: HTTPResponse,
+        context: TypedProperties,
+    ) -> ResponseMetadata:
+        return parse_response_metadata(response)
+
+
+class RestJsonClientProtocol(_AWSResponseMetadataMixin, HttpBindingClientProtocol):
     """An implementation of the aws.protocols#restJson1 protocol."""
 
     _id: Final = RestJson1Trait.id
@@ -252,7 +277,7 @@ class RestJsonClientProtocol(HttpBindingClientProtocol):
         )
 
 
-class _AWSJSONClientProtocol(HttpClientProtocol):
+class _AWSJSONClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
     _error_identifier: Final = AWSErrorIdentifier()
 
     _id: ClassVar[ShapeID]
@@ -451,7 +476,15 @@ class AwsJson11ClientProtocol(_AWSJSONClientProtocol):
     _content_type: ClassVar[str] = "application/x-amz-json-1.1"
 
 
-class AwsQueryClientProtocol(HttpClientProtocol):
+_QUERY_REQUEST_ID = PropertyKey(key="aws_query_request_id", value_type=str)
+"""Where :py:class:`AwsQueryClientProtocol` records a body-sourced request ID.
+
+The body is only available while deserializing, so the value is stored there for
+``extract_response_metadata`` to read back.
+"""
+
+
+class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
     """An implementation of the aws.protocols#awsQuery protocol."""
 
     _id: Final = AwsQueryTrait.id
@@ -474,6 +507,28 @@ class AwsQueryClientProtocol(HttpClientProtocol):
     @property
     def content_type(self) -> str:
         return self._content_type
+
+    def extract_response_metadata(
+        self,
+        *,
+        response: HTTPResponse,
+        context: TypedProperties,
+    ) -> ResponseMetadata:
+        """Report the request ID, using the one recorded from the body as a fallback.
+
+        awsQuery normally carries the identifier in the body rather than a header, so
+        the mixin's header lookup usually finds nothing and the body value recorded
+        during deserialization is used. A header still wins when a service sends one.
+        """
+        metadata = _AWSResponseMetadataMixin.extract_response_metadata(
+            self, response=response, context=context
+        )
+        if metadata.request_id is not None:
+            return metadata
+        request_id = context.get(_QUERY_REQUEST_ID)
+        if request_id is None:
+            return metadata
+        return replace(metadata, request_id=request_id)
 
     def serialize_request[
         OperationInput: SerializeableShape,
@@ -524,6 +579,16 @@ class AwsQueryClientProtocol(HttpClientProtocol):
         context: TypedProperties,
     ) -> OperationOutput:
         body = await response.consume_body_async()
+
+        # Recorded before any branch below returns or raises, so successes, empty
+        # outputs and errors alike can report the identifier. Retry attempts share
+        # one properties object, so a body without an ID must clear any value a
+        # previous attempt left behind rather than let it be reported as this one's.
+        request_id = parse_aws_query_request_id(body)
+        if request_id is not None:
+            context[_QUERY_REQUEST_ID] = request_id
+        else:
+            context.pop(_QUERY_REQUEST_ID, None)
 
         if not self._is_success(operation, context, response):
             raise await self._create_error(
