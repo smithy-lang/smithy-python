@@ -1,0 +1,8 @@
+{
+  "changes": [
+    {
+      "type": "feature",
+      "description": "Added a naive `RpcV2CborClientProtocol` for the `smithy.protocols#rpcv2Cbor` protocol (optional `cbor` extra)."
+    }
+  ]
+}
