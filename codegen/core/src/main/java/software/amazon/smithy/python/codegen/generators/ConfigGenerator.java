@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.TreeSet;
+import java.util.function.Consumer;
 import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
@@ -163,7 +164,25 @@ public final class ConfigGenerator implements Runnable {
         return properties;
     }
 
-    private static List<ConfigProperty> getAuthProperties(GenerationContext context) {
+    private static List<ConfigProperty> getAuthProperties(GenerationContext context, boolean hasAuth) {
+        Consumer<PythonWriter> authSchemesInit = hasAuth
+                ? writer -> writeDefaultAuthSchemes(context, writer)
+                : writer -> writer.write("self.auth_schemes = auth_schemes or {}");
+
+        Symbol resolverType = hasAuth
+                ? CodegenUtils.getHttpAuthSchemeResolverSymbol(context.settings())
+                : Symbol.builder()
+                        .name("DefaultAuthResolver")
+                        .namespace("smithy_core.auth", ".")
+                        .addDependency(SmithyPythonDependency.SMITHY_CORE)
+                        .build();
+        Consumer<PythonWriter> resolverInit = hasAuth
+                ? writer -> writer.write(
+                        "self.auth_scheme_resolver = auth_scheme_resolver or HTTPAuthSchemeResolver()")
+                : writer -> writer.write(
+                        "self.auth_scheme_resolver = auth_scheme_resolver or $T()",
+                        resolverType);
+
         return List.of(
                 ConfigProperty.builder()
                         .name("auth_schemes")
@@ -187,16 +206,15 @@ public final class ConfigGenerator implements Runnable {
                                 .build())
                         .documentation("A map of auth scheme ids to auth schemes.")
                         .nullable(false)
-                        .initialize(writer -> writeDefaultAuthSchemes(context, writer))
+                        .initialize(authSchemesInit)
                         .build(),
                 ConfigProperty.builder()
                         .name("auth_scheme_resolver")
-                        .type(CodegenUtils.getHttpAuthSchemeResolverSymbol(context.settings()))
+                        .type(resolverType)
                         .documentation(
                                 "An auth scheme resolver that determines the auth scheme for each operation.")
                         .nullable(false)
-                        .initialize(writer -> writer.write(
-                                "self.auth_scheme_resolver = auth_scheme_resolver or HTTPAuthSchemeResolver()"))
+                        .initialize(resolverInit)
                         .build());
     }
 
@@ -297,10 +315,14 @@ public final class ConfigGenerator implements Runnable {
         properties.addAll(BASE_PROPERTIES);
         properties.addAll(getProtocolProperties(context));
 
-        // Add in auth configuration if the service supports auth.
+        // The client pipeline always requires auth_schemes and an auth_scheme_resolver,
+        // so these are always emitted; a service declaring no auth (e.g. a generic
+        // rpcv2Cbor service) falls back to smithy_core's DefaultAuthResolver and an empty
+        // scheme map so the client can still construct.
         var serviceIndex = ServiceIndex.of(context.model());
-        if (!serviceIndex.getAuthSchemes(settings.service()).isEmpty()) {
-            properties.addAll(getAuthProperties(context));
+        boolean hasAuth = !serviceIndex.getAuthSchemes(settings.service()).isEmpty();
+        properties.addAll(getAuthProperties(context, hasAuth));
+        if (hasAuth) {
             writer.onSection(new AddAuthHelper());
         }
 
