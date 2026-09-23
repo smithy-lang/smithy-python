@@ -17,6 +17,7 @@ from smithy_http.aio.interfaces import (
     HTTPResponse as _smithy_http_aio_interfaces_HTTPResponse,
 )
 from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfiguration
+from smithy_test import deep_equal
 
 from awsjson11.client import AsyncJsonProtocolClient
 from awsjson11.config import AsyncJsonProtocolConfig
@@ -100,7 +101,7 @@ async def test_aws_json11_date_time_with_negative_offset_response_datetime_offse
             datetime_=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json11_date_time_with_positive_offset_response_datetime_offsets() -> (
@@ -136,7 +137,7 @@ async def test_aws_json11_date_time_with_positive_offset_response_datetime_offse
             datetime_=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_sends_requests_to_slash_request_empty_operation() -> None:
@@ -391,7 +392,7 @@ async def test_handles_empty_output_shape_response_empty_operation() -> None:
     else:
         expected = EmptyOperationOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_handles_unexpected_json_output_response_empty_operation() -> None:
@@ -424,7 +425,7 @@ async def test_handles_unexpected_json_output_response_empty_operation() -> None
     else:
         expected = EmptyOperationOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_json_1_1_service_responds_with_no_payload_response_empty_operation() -> (
@@ -461,7 +462,7 @@ async def test_json_1_1_service_responds_with_no_payload_response_empty_operatio
     else:
         expected = EmptyOperationOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 @mark.xfail()
@@ -656,7 +657,7 @@ async def test_aws_json11_date_time_with_fractional_seconds_response_fractional_
             datetime_=datetime(2000, 1, 2, 20, 34, 56, 123000, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json11_invalid_greeting_error_error_greeting_with_errors() -> None:
@@ -1326,7 +1327,7 @@ async def test_aws_json11_enums_response_json_enums() -> None:
             foo_enum_map={"hi": "Foo", "zero": "0"},
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json11_int_enums_request_json_int_enums() -> None:
@@ -1447,7 +1448,7 @@ async def test_aws_json11_int_enums_response_json_int_enums() -> None:
             int_enum_map={"a": 1, "b": 2},
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json11_serialize_string_union_value_request_json_unions() -> None:
@@ -2173,7 +2174,7 @@ async def test_aws_json11_deserialize_string_union_value_response_json_unions() 
     else:
         expected = JsonUnionsOutput(contents=MyUnionStringValue(value="foo"))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json11_deserialize_boolean_union_value_response_json_unions() -> (
@@ -2204,7 +2205,7 @@ async def test_aws_json11_deserialize_boolean_union_value_response_json_unions()
     else:
         expected = JsonUnionsOutput(contents=MyUnionBooleanValue(value=True))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json11_deserialize_number_union_value_response_json_unions() -> None:
@@ -2233,7 +2234,7 @@ async def test_aws_json11_deserialize_number_union_value_response_json_unions() 
     else:
         expected = JsonUnionsOutput(contents=MyUnionNumberValue(value=1))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json11_deserialize_blob_union_value_response_json_unions() -> None:
@@ -2262,7 +2263,7 @@ async def test_aws_json11_deserialize_blob_union_value_response_json_unions() ->
     else:
         expected = JsonUnionsOutput(contents=MyUnionBlobValue(value=b"foo"))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json11_deserialize_timestamp_union_value_response_json_unions() -> (
@@ -2297,7 +2298,7 @@ async def test_aws_json11_deserialize_timestamp_union_value_response_json_unions
             )
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json11_deserialize_enum_union_value_response_json_unions() -> None:
@@ -2326,7 +2327,7 @@ async def test_aws_json11_deserialize_enum_union_value_response_json_unions() ->
     else:
         expected = JsonUnionsOutput(contents=MyUnionEnumValue(value="Foo"))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json11_deserialize_list_union_value_response_json_unions() -> None:
@@ -2355,7 +2356,7 @@ async def test_aws_json11_deserialize_list_union_value_response_json_unions() ->
     else:
         expected = JsonUnionsOutput(contents=MyUnionListValue(value=["foo", "bar"]))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json11_deserialize_map_union_value_response_json_unions() -> None:
@@ -2386,7 +2387,7 @@ async def test_aws_json11_deserialize_map_union_value_response_json_unions() -> 
             contents=MyUnionMapValue(value={"foo": "bar", "spam": "eggs"})
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json11_deserialize_structure_union_value_response_json_unions() -> (
@@ -2419,7 +2420,7 @@ async def test_aws_json11_deserialize_structure_union_value_response_json_unions
             contents=MyUnionStructureValue(value=GreetingStruct(hi="hello"))
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json11_deserialize_ignore_type_response_json_unions() -> None:
@@ -2450,7 +2451,7 @@ async def test_aws_json11_deserialize_ignore_type_response_json_unions() -> None
             contents=MyUnionStructureValue(value=GreetingStruct(hi="hello"))
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_serializes_string_shapes_request_kitchen_sink_operation() -> None:
@@ -4671,7 +4672,7 @@ async def test_parses_operations_with_empty_json_bodies_response_kitchen_sink_op
     else:
         expected = KitchenSinkOperationOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_string_shapes_response_kitchen_sink_operation() -> None:
@@ -4700,7 +4701,7 @@ async def test_parses_string_shapes_response_kitchen_sink_operation() -> None:
     else:
         expected = KitchenSinkOperationOutput(string="string-value")
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_integer_shapes_response_kitchen_sink_operation() -> None:
@@ -4729,7 +4730,7 @@ async def test_parses_integer_shapes_response_kitchen_sink_operation() -> None:
     else:
         expected = KitchenSinkOperationOutput(integer=1234)
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_long_shapes_response_kitchen_sink_operation() -> None:
@@ -4758,7 +4759,7 @@ async def test_parses_long_shapes_response_kitchen_sink_operation() -> None:
     else:
         expected = KitchenSinkOperationOutput(long=1234567890123456789)
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_float_shapes_response_kitchen_sink_operation() -> None:
@@ -4787,7 +4788,7 @@ async def test_parses_float_shapes_response_kitchen_sink_operation() -> None:
     else:
         expected = KitchenSinkOperationOutput(float_=float(1234.5))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_double_shapes_response_kitchen_sink_operation() -> None:
@@ -4816,7 +4817,7 @@ async def test_parses_double_shapes_response_kitchen_sink_operation() -> None:
     else:
         expected = KitchenSinkOperationOutput(double=float(1.2345678912345679e8))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_boolean_shapes_true_response_kitchen_sink_operation() -> None:
@@ -4845,7 +4846,7 @@ async def test_parses_boolean_shapes_true_response_kitchen_sink_operation() -> N
     else:
         expected = KitchenSinkOperationOutput(boolean=True)
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_boolean_false_response_kitchen_sink_operation() -> None:
@@ -4874,7 +4875,7 @@ async def test_parses_boolean_false_response_kitchen_sink_operation() -> None:
     else:
         expected = KitchenSinkOperationOutput(boolean=False)
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_blob_shapes_response_kitchen_sink_operation() -> None:
@@ -4903,7 +4904,7 @@ async def test_parses_blob_shapes_response_kitchen_sink_operation() -> None:
     else:
         expected = KitchenSinkOperationOutput(blob=b"binary-value")
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_timestamp_shapes_response_kitchen_sink_operation() -> None:
@@ -4934,7 +4935,7 @@ async def test_parses_timestamp_shapes_response_kitchen_sink_operation() -> None
             timestamp=datetime(2000, 1, 2, 20, 34, 56, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_iso8601_timestamps_response_kitchen_sink_operation() -> None:
@@ -4965,7 +4966,7 @@ async def test_parses_iso8601_timestamps_response_kitchen_sink_operation() -> No
             iso8601_timestamp=datetime(2000, 1, 2, 20, 34, 56, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_httpdate_timestamps_response_kitchen_sink_operation() -> None:
@@ -4996,7 +4997,7 @@ async def test_parses_httpdate_timestamps_response_kitchen_sink_operation() -> N
             httpdate_timestamp=datetime(2000, 1, 2, 20, 34, 56, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_list_shapes_response_kitchen_sink_operation() -> None:
@@ -5025,7 +5026,7 @@ async def test_parses_list_shapes_response_kitchen_sink_operation() -> None:
     else:
         expected = KitchenSinkOperationOutput(list_of_strings=["abc", "mno", "xyz"])
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_list_of_map_shapes_response_kitchen_sink_operation() -> None:
@@ -5056,7 +5057,7 @@ async def test_parses_list_of_map_shapes_response_kitchen_sink_operation() -> No
             list_of_maps_of_strings=[{"size": "large"}, {"color": "red"}]
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_list_of_list_shapes_response_kitchen_sink_operation() -> None:
@@ -5087,7 +5088,7 @@ async def test_parses_list_of_list_shapes_response_kitchen_sink_operation() -> N
             list_of_lists=[["abc", "mno", "xyz"], ["hjk", "qrs", "tuv"]]
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_list_of_structure_shapes_response_kitchen_sink_operation() -> (
@@ -5123,7 +5124,7 @@ async def test_parses_list_of_structure_shapes_response_kitchen_sink_operation()
             ]
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_list_of_recursive_structure_shapes_response_kitchen_sink_operation() -> (
@@ -5162,7 +5163,7 @@ async def test_parses_list_of_recursive_structure_shapes_response_kitchen_sink_o
             ]
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_map_shapes_response_kitchen_sink_operation() -> None:
@@ -5193,7 +5194,7 @@ async def test_parses_map_shapes_response_kitchen_sink_operation() -> None:
             map_of_strings={"size": "large", "color": "red"}
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_map_of_list_shapes_response_kitchen_sink_operation() -> None:
@@ -5227,7 +5228,7 @@ async def test_parses_map_of_list_shapes_response_kitchen_sink_operation() -> No
             }
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_map_of_map_shapes_response_kitchen_sink_operation() -> None:
@@ -5261,7 +5262,7 @@ async def test_parses_map_of_map_shapes_response_kitchen_sink_operation() -> Non
             }
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_map_of_structure_shapes_response_kitchen_sink_operation() -> None:
@@ -5295,7 +5296,7 @@ async def test_parses_map_of_structure_shapes_response_kitchen_sink_operation() 
             }
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_map_of_recursive_structure_shapes_response_kitchen_sink_operation() -> (
@@ -5336,7 +5337,7 @@ async def test_parses_map_of_recursive_structure_shapes_response_kitchen_sink_op
             }
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_parses_the_request_id_from_the_response_response_kitchen_sink_operation() -> (
@@ -5370,7 +5371,7 @@ async def test_parses_the_request_id_from_the_response_response_kitchen_sink_ope
     else:
         expected = KitchenSinkOperationOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json11_structures_dont_serialize_null_values_request_null_operation() -> (
@@ -5478,7 +5479,7 @@ async def test_aws_json11_structures_dont_deserialize_null_values_response_null_
     else:
         expected = NullOperationOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_can_call_operation_with_no_input_or_output_request_operation_with_optional_input_output() -> (
@@ -5742,7 +5743,7 @@ async def test_put_and_get_inline_documents_input_response_put_and_get_inline_do
             inline_document=Document({"foo": "bar"})
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 @mark.xfail()
@@ -5896,7 +5897,6 @@ async def test_sdk_appends_gzip_and_ignores_http_provided_encoding_aws_json1_1_r
         )
 
 
-@mark.xfail()
 async def test_aws_json11_supports_na_n_float_inputs_request_simple_scalar_properties() -> (
     None
 ):
@@ -6140,7 +6140,6 @@ async def test_aws_json11_supports_negative_infinity_float_inputs_request_simple
         )
 
 
-@mark.xfail()
 async def test_aws_json11_supports_na_n_float_inputs_response_simple_scalar_properties() -> (
     None
 ):
@@ -6171,7 +6170,7 @@ async def test_aws_json11_supports_na_n_float_inputs_response_simple_scalar_prop
             float_value=float("nan"), double_value=float("nan")
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json11_supports_infinity_float_inputs_response_simple_scalar_properties() -> (
@@ -6204,7 +6203,7 @@ async def test_aws_json11_supports_infinity_float_inputs_response_simple_scalar_
             float_value=float("inf"), double_value=float("inf")
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json11_supports_negative_infinity_float_inputs_response_simple_scalar_properties() -> (
@@ -6237,7 +6236,7 @@ async def test_aws_json11_supports_negative_infinity_float_inputs_response_simpl
             float_value=float("-inf"), double_value=float("-inf")
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json11_sparse_maps_serialize_null_values_request_sparse_nulls_operation() -> (
@@ -6424,7 +6423,7 @@ async def test_aws_json11_sparse_maps_deserialize_null_values_response_sparse_nu
     else:
         expected = SparseNullsOperationOutput(sparse_string_map={"foo": None})
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json11_sparse_lists_deserialize_null_response_sparse_nulls_operation() -> (
@@ -6455,7 +6454,7 @@ async def test_aws_json11_sparse_lists_deserialize_null_response_sparse_nulls_op
     else:
         expected = SparseNullsOperationOutput(sparse_string_list=[None])
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 class TestHttpServiceError(ServiceError):

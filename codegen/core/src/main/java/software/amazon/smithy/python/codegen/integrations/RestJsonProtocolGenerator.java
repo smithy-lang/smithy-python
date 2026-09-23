@@ -31,12 +31,6 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
 public class RestJsonProtocolGenerator implements ProtocolGenerator {
 
     private static final Set<String> TESTS_TO_SKIP = Set.of(
-            // These two tests essentially try to assert nan == nan,
-            // which is never true. We should update the generator to
-            // make specific assertions for these.
-            "RestJsonSupportsNaNFloatHeaderOutputs",
-            "RestJsonSupportsNaNFloatInputs",
-
             // This requires support of idempotency autofill
             "RestJsonQueryIdempotencyTokenAutoFill",
 

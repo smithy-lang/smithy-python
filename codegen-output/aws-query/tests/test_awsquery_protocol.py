@@ -15,6 +15,7 @@ from smithy_http.aio.interfaces import (
     HTTPResponse as _smithy_http_aio_interfaces_HTTPResponse,
 )
 from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfiguration
+from smithy_test import deep_equal
 
 from awsquery.client import AsyncQueryProtocolClient
 from awsquery.config import AsyncQueryProtocolConfig
@@ -120,7 +121,7 @@ async def test_aws_query_date_time_with_negative_offset_response_datetime_offset
             datetime_=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_query_date_time_with_positive_offset_response_datetime_offsets() -> (
@@ -156,7 +157,7 @@ async def test_aws_query_date_time_with_positive_offset_response_datetime_offset
             datetime_=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_empty_input_and_empty_output_request_empty_input_and_empty_output() -> (
@@ -263,7 +264,7 @@ async def test_query_empty_input_and_empty_output_response_empty_input_and_empty
     else:
         expected = EmptyInputAndEmptyOutputOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 @mark.xfail()
@@ -461,7 +462,7 @@ async def test_query_query_flattened_xml_map_response_flattened_xml_map() -> Non
     else:
         expected = FlattenedXmlMapOutput(my_map={"foo": "Foo", "baz": "Baz"})
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_query_flattened_xml_map_with_xml_name_response_flattened_xml_map_with_xml_name() -> (
@@ -492,7 +493,7 @@ async def test_query_query_flattened_xml_map_with_xml_name_response_flattened_xm
     else:
         expected = FlattenedXmlMapWithXmlNameOutput(my_map={"a": "A", "b": "B"})
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_query_flattened_xml_map_with_xml_namespace_response_flattened_xml_map_with_xml_namespace() -> (
@@ -526,7 +527,7 @@ async def test_query_query_flattened_xml_map_with_xml_namespace_response_flatten
     else:
         expected = FlattenedXmlMapWithXmlNamespaceOutput(my_map={"a": "A", "b": "B"})
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_query_date_time_with_fractional_seconds_response_fractional_seconds() -> (
@@ -562,7 +563,7 @@ async def test_aws_query_date_time_with_fractional_seconds_response_fractional_s
             datetime_=datetime(2000, 1, 2, 20, 34, 56, 123000, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_greeting_with_errors_response_greeting_with_errors() -> None:
@@ -594,7 +595,7 @@ async def test_query_greeting_with_errors_response_greeting_with_errors() -> Non
     else:
         expected = GreetingWithErrorsOutput(greeting="Hello")
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_invalid_greeting_error_error_greeting_with_errors() -> None:
@@ -781,7 +782,7 @@ async def test_query_ignores_wrapping_xml_name_response_ignores_wrapping_xml_nam
     else:
         expected = IgnoresWrappingXmlNameOutput(foo="bar")
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_nested_structures_request_nested_structures() -> None:
@@ -966,7 +967,7 @@ async def test_query_no_input_and_no_output_response_no_input_and_no_output() ->
     else:
         expected = NoInputAndNoOutputOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_no_input_and_no_output_with_response_metadata_response_no_input_and_no_output() -> (
@@ -997,7 +998,7 @@ async def test_query_no_input_and_no_output_with_response_metadata_response_no_i
     else:
         expected = NoInputAndNoOutputOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_no_input_and_output_request_no_input_and_output() -> None:
@@ -1100,7 +1101,7 @@ async def test_query_no_input_and_output_response_no_input_and_output() -> None:
     else:
         expected = NoInputAndOutputOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 @mark.xfail()
@@ -2721,7 +2722,7 @@ async def test_query_recursive_shapes_response_recursive_xml_shapes() -> None:
             )
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_simple_input_params_strings_request_simple_input_params() -> None:
@@ -3643,10 +3644,9 @@ async def test_query_simple_scalar_properties_response_simple_scalar_xml_propert
             double_value=float(6.5),
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
-@mark.xfail()
 async def test_aws_query_supports_na_n_float_outputs_response_simple_scalar_xml_properties() -> (
     None
 ):
@@ -3677,7 +3677,7 @@ async def test_aws_query_supports_na_n_float_outputs_response_simple_scalar_xml_
             float_value=float("nan"), double_value=float("nan")
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_query_supports_infinity_float_outputs_response_simple_scalar_xml_properties() -> (
@@ -3710,7 +3710,7 @@ async def test_aws_query_supports_infinity_float_outputs_response_simple_scalar_
             float_value=float("inf"), double_value=float("inf")
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_query_supports_negative_infinity_float_outputs_response_simple_scalar_xml_properties() -> (
@@ -3743,7 +3743,7 @@ async def test_aws_query_supports_negative_infinity_float_outputs_response_simpl
             float_value=float("-inf"), double_value=float("-inf")
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_xml_blobs_response_xml_blobs() -> None:
@@ -3772,7 +3772,7 @@ async def test_query_xml_blobs_response_xml_blobs() -> None:
     else:
         expected = XmlBlobsOperationOutput(data=b"value")
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_xml_empty_blobs_response_xml_empty_blobs() -> None:
@@ -3801,7 +3801,7 @@ async def test_query_xml_empty_blobs_response_xml_empty_blobs() -> None:
     else:
         expected = XmlEmptyBlobsOutput(data=b"")
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_xml_empty_self_closed_blobs_response_xml_empty_blobs() -> None:
@@ -3830,7 +3830,7 @@ async def test_query_xml_empty_self_closed_blobs_response_xml_empty_blobs() -> N
     else:
         expected = XmlEmptyBlobsOutput(data=b"")
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_xml_empty_lists_response_xml_empty_lists() -> None:
@@ -3859,7 +3859,7 @@ async def test_query_xml_empty_lists_response_xml_empty_lists() -> None:
     else:
         expected = XmlEmptyListsOutput(string_list=[], string_set=[])
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_xml_empty_maps_response_xml_empty_maps() -> None:
@@ -3888,7 +3888,7 @@ async def test_query_xml_empty_maps_response_xml_empty_maps() -> None:
     else:
         expected = XmlEmptyMapsOutput(my_map={})
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_xml_empty_self_closed_maps_response_xml_empty_maps() -> None:
@@ -3917,7 +3917,7 @@ async def test_query_xml_empty_self_closed_maps_response_xml_empty_maps() -> Non
     else:
         expected = XmlEmptyMapsOutput(my_map={})
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_xml_enums_response_xml_enums() -> None:
@@ -3953,7 +3953,7 @@ async def test_query_xml_enums_response_xml_enums() -> None:
             foo_enum_map={"hi": "Foo", "zero": "0"},
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_xml_int_enums_response_xml_int_enums() -> None:
@@ -3989,7 +3989,7 @@ async def test_query_xml_int_enums_response_xml_int_enums() -> None:
             int_enum_map={"a": 1, "b": 2},
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_xml_lists_response_xml_lists() -> None:
@@ -4039,7 +4039,7 @@ async def test_query_xml_lists_response_xml_lists() -> None:
             ],
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_xml_maps_response_xml_maps() -> None:
@@ -4070,7 +4070,7 @@ async def test_query_xml_maps_response_xml_maps() -> None:
             my_map={"foo": GreetingStruct(hi="there"), "baz": GreetingStruct(hi="bye")}
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_query_xml_maps_xml_name_response_xml_maps_xml_name() -> None:
@@ -4101,7 +4101,7 @@ async def test_query_query_xml_maps_xml_name_response_xml_maps_xml_name() -> Non
             my_map={"foo": GreetingStruct(hi="there"), "baz": GreetingStruct(hi="bye")}
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_xml_namespaces_response_xml_namespaces() -> None:
@@ -4132,7 +4132,7 @@ async def test_query_xml_namespaces_response_xml_namespaces() -> None:
             nested=XmlNamespaceNested(foo="Foo", values=["Bar", "Baz"])
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_xml_timestamps_response_xml_timestamps() -> None:
@@ -4163,7 +4163,7 @@ async def test_query_xml_timestamps_response_xml_timestamps() -> None:
             normal=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_xml_timestamps_with_date_time_format_response_xml_timestamps() -> (
@@ -4199,7 +4199,7 @@ async def test_query_xml_timestamps_with_date_time_format_response_xml_timestamp
             date_time=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_xml_timestamps_with_date_time_on_target_format_response_xml_timestamps() -> (
@@ -4235,7 +4235,7 @@ async def test_query_xml_timestamps_with_date_time_on_target_format_response_xml
             date_time_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_xml_timestamps_with_epoch_seconds_format_response_xml_timestamps() -> (
@@ -4268,7 +4268,7 @@ async def test_query_xml_timestamps_with_epoch_seconds_format_response_xml_times
             epoch_seconds=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_xml_timestamps_with_epoch_seconds_on_target_format_response_xml_timestamps() -> (
@@ -4304,7 +4304,7 @@ async def test_query_xml_timestamps_with_epoch_seconds_on_target_format_response
             epoch_seconds_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_xml_timestamps_with_http_date_format_response_xml_timestamps() -> (
@@ -4337,7 +4337,7 @@ async def test_query_xml_timestamps_with_http_date_format_response_xml_timestamp
             http_date=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_query_xml_timestamps_with_http_date_on_target_format_response_xml_timestamps() -> (
@@ -4370,7 +4370,7 @@ async def test_query_xml_timestamps_with_http_date_on_target_format_response_xml
             http_date_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 class TestHttpServiceError(ServiceError):

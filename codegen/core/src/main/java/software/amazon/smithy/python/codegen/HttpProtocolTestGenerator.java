@@ -405,8 +405,22 @@ public final class HttpProtocolTestGenerator implements Runnable {
         }
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
         writer.write("actual_body_content = await $T(actual.body or b'').read()", RuntimeTypes.ASYNC_BYTES_READER);
-        writer.write("expected_body_content = b$S", testCase.getBody().get());
+        writer.write("expected_body_content = $C", (Runnable) () -> writeTestBody(testCase, writer));
         compareMediaBlob(testCase, writer);
+    }
+
+    private void writeTestBody(HttpMessageTestCase testCase, PythonWriter writer) {
+        String body = testCase.getBody().orElse("");
+        if (isBinaryMediaType(testCase.getBodyMediaType().orElse(""))) {
+            writer.addStdlibImport("base64");
+            writer.writeInline("base64.b64decode(b$S)", body);
+        } else {
+            writer.writeInline("b$S", body);
+        }
+    }
+
+    private boolean isBinaryMediaType(String mediaType) {
+        return mediaType.equals("application/cbor");
     }
 
     private void compareMediaBlob(HttpMessageTestCase testCase, PythonWriter writer) {
@@ -449,7 +463,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                     transport = $T(
                                         status=$L,
                                         headers=$J,
-                                        body=b$S,
+                                        body=$C,
                                     ),
                                     ${C|}
                                 )
@@ -458,7 +472,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
                                 testCase.getCode(),
                                 CodegenUtils.toTuples(testCase.getHeaders()),
-                                testCase.getBody().filter(body -> !body.isEmpty()).orElse(""),
+                                (Runnable) () -> writeTestBody(testCase, writer),
                                 (Runnable) this::writeSigV4TestConfig);
                     }));
                     // Create an empty input object to pass
@@ -505,7 +519,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                     transport = $T(
                                         status=$L,
                                         headers=$J,
-                                        body=b$S,
+                                        body=$C,
                                     ),
                                     ${C|}
                                 )
@@ -514,7 +528,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
                                 testCase.getCode(),
                                 CodegenUtils.toTuples(testCase.getHeaders()),
-                                testCase.getBody().orElse(""),
+                                (Runnable) () -> writeTestBody(testCase, writer),
                                 (Runnable) this::writeSigV4TestConfig);
                     }));
                     // Create an empty input object to pass
@@ -550,7 +564,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 .findAny();
 
         if (streamBinding.isEmpty()) {
-            writer.write("assert actual == expected\n");
+            writeDeepEqualAssertion(writer, "actual", "expected");
             return;
         }
 
@@ -573,8 +587,14 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 compareMediaBlob(testCase, writer);
                 continue;
             }
-            writer.write("assert actual.$1L == expected.$1L\n", memberName);
+            writeDeepEqualAssertion(writer, "actual." + memberName, "expected." + memberName);
         }
+    }
+
+    private void writeDeepEqualAssertion(PythonWriter writer, String actual, String expected) {
+        writer.addDependency(SmithyPythonDependency.SMITHY_TEST);
+        writer.addImport(SmithyPythonDependency.SMITHY_TEST.packageName(), "deep_equal");
+        writer.write("assert deep_equal($L, $L)", actual, expected);
     }
 
     // Only generate test cases when protocol matches the target protocol.

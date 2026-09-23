@@ -26,10 +26,6 @@ public final class AwsQueryProtocolGenerator implements ProtocolGenerator {
             // TODO: support idempotency token autofill
             "QueryProtocolIdempotencyTokenAutoFill",
 
-            // This test asserts nan == nan, which is never true.
-            // We should update the generator to make specific assertions for these.
-            "AwsQuerySupportsNaNFloatOutputs",
-
             // TODO: support of the endpoint trait
             "AwsQueryEndpointTraitWithHostLabel",
             "AwsQueryEndpointTrait");
