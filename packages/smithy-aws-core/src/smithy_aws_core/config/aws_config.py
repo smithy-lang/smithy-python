@@ -330,6 +330,8 @@ class AsyncAwsConfig:
             # check for overrides first
             if field_name in overrides:
                 value = overrides[field_name]
+                if spec.converter is not None:
+                    value = spec.converter(value)
                 setattr(self, field_name, value)
                 self._sources[field_name] = ConfigSource.OVERRIDE
             # check in resolver

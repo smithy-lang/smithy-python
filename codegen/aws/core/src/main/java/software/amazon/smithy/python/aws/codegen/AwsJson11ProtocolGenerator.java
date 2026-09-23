@@ -12,7 +12,6 @@ import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.ApplicationProtocol;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.HttpProtocolTestGenerator;
-import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.generators.ProtocolGenerator;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
@@ -52,9 +51,7 @@ public final class AwsJson11ProtocolGenerator implements ProtocolGenerator {
     public void initializeProtocol(GenerationContext context, PythonWriter writer) {
         writer.addDependency(AwsPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("json"));
         writer.addImport("smithy_aws_core.aio.protocols", "AwsJson11ClientProtocol");
-        var serviceSymbol = context.symbolProvider().toSymbol(context.settings().service(context.model()));
-        var serviceSchema = serviceSymbol.expectProperty(SymbolProperties.SCHEMA);
-        writer.write("AwsJson11ClientProtocol($T)", serviceSchema);
+        writer.write("AwsJson11ClientProtocol(_PROTOCOL_SETTINGS)");
     }
 
     @Override

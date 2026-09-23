@@ -12,8 +12,8 @@ from smithy_aws_core.aio.protocols import (
     AwsJson11ClientProtocol,
     AWSJSONDocument,
     AwsQueryClientProtocol,
+    ProtocolSettings,
 )
-from smithy_aws_core.traits import AwsQueryTrait
 from smithy_core import URI as _URI
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import TypeRegistry
@@ -125,11 +125,6 @@ _INPUT_SCHEMA = Schema.collection(
     id=ShapeID("com.test#TestInput"),
     members={"name": {"target": STRING}},
 )
-_SERVICE_SCHEMA = Schema.collection(
-    id=ShapeID("com.test#QueryService"),
-    shape_type=ShapeType.SERVICE,
-    traits=[AwsQueryTrait(None)],
-)
 _INVALID_ACTION_ERROR_SCHEMA = Schema.collection(
     id=ShapeID("com.test#InvalidActionError"),
     traits=[
@@ -207,7 +202,7 @@ def _mock_operation(
 
 def _aws_json11_protocol() -> AwsJson11ClientProtocol:
     return AwsJson11ClientProtocol(
-        Schema(id=ShapeID("com.test#JsonService"), shape_type=ShapeType.SERVICE)
+        ProtocolSettings(namespace="com.test", service_target="JsonService")
     )
 
 
@@ -481,7 +476,11 @@ async def test_aws_json11_raises_parse_error_for_invalid_error_body() -> None:
 
 
 async def test_aws_query_serializes_base_request_shape() -> None:
-    protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
+    protocol = AwsQueryClientProtocol(
+        ProtocolSettings(
+            namespace="com.test", service_target="QueryService", version="2020-01-08"
+        )
+    )
     request = protocol.serialize_request(
         operation=_mock_operation(_operation_schema("TestOperation")),
         input=_TestInput(name="example"),
@@ -501,7 +500,11 @@ async def test_aws_query_serializes_base_request_shape() -> None:
 
 
 async def test_aws_query_resolves_modeled_error_from_query_error_trait() -> None:
-    protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
+    protocol = AwsQueryClientProtocol(
+        ProtocolSettings(
+            namespace="com.test", service_target="QueryService", version="2020-01-08"
+        )
+    )
     with pytest.raises(_ModeledQueryError) as exc_info:
         await protocol.deserialize_response(
             operation=_mock_operation(
@@ -529,7 +532,11 @@ async def test_aws_query_resolves_modeled_error_from_query_error_trait() -> None
 async def test_aws_query_resolves_modeled_error_from_default_namespace_fallback() -> (
     None
 ):
-    protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
+    protocol = AwsQueryClientProtocol(
+        ProtocolSettings(
+            namespace="com.test", service_target="QueryService", version="2020-01-08"
+        )
+    )
     with pytest.raises(_ModeledQueryError) as exc_info:
         await protocol.deserialize_response(
             operation=_mock_operation(_operation_schema("FailingOperation")),
@@ -552,7 +559,11 @@ async def test_aws_query_resolves_modeled_error_from_default_namespace_fallback(
 
 
 async def test_aws_query_returns_generic_error_for_unknown_code() -> None:
-    protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
+    protocol = AwsQueryClientProtocol(
+        ProtocolSettings(
+            namespace="com.test", service_target="QueryService", version="2020-01-08"
+        )
+    )
     with pytest.raises(CallError) as exc_info:
         await protocol.deserialize_response(
             operation=_mock_operation(_operation_schema("FailingOperation")),
