@@ -159,11 +159,17 @@ public final class RuntimeTypes {
             "RestJsonClientProtocol",
             SmithyPythonDependency.SMITHY_AWS_CORE);
 
-    // smithy_aws_core.aio.protocols
+    // smithy_core.aio.interfaces
     public static final Symbol PROTOCOL_SETTINGS = createSymbol(
-            "aio.protocols",
+            "aio.interfaces",
             "ProtocolSettings",
-            SmithyPythonDependency.SMITHY_AWS_CORE);
+            SmithyPythonDependency.SMITHY_CORE);
+
+    // smithy_http.aio.protocols
+    public static final Symbol RPC_V2_CBOR_CLIENT_PROTOCOL = createSymbol(
+            "aio.protocols",
+            "RpcV2CborClientProtocol",
+            SmithyPythonDependency.SMITHY_HTTP);
 
     // smithy_aws_core.identity 
     public static final Symbol STATIC_CREDENTIALS_RESOLVER = createSymbol(
