@@ -1639,7 +1639,7 @@ class Defaults:
 
     default_boolean: bool = True
 
-    default_list: list[str] = field(default_factory=list[str])
+    default_list: list[str] = field(default_factory=lambda: [])
 
     default_document_map: Document = field(default_factory=lambda: Document(dict()))
 
@@ -1667,7 +1667,7 @@ class Defaults:
 
     default_double: float = 1.0
 
-    default_map: dict[str, str] = field(default_factory=dict[str, str])
+    default_map: dict[str, str] = field(default_factory=lambda: {})
 
     default_enum: str = TestEnum("FOO")
 
@@ -13017,7 +13017,7 @@ class OperationWithDefaultsOutput:
 
     default_boolean: bool = True
 
-    default_list: list[str] = field(default_factory=list[str])
+    default_list: list[str] = field(default_factory=lambda: [])
 
     default_document_map: Document = field(default_factory=lambda: Document(dict()))
 
@@ -13045,7 +13045,7 @@ class OperationWithDefaultsOutput:
 
     default_double: float = 1.0
 
-    default_map: dict[str, str] = field(default_factory=dict[str, str])
+    default_map: dict[str, str] = field(default_factory=lambda: {})
 
     default_enum: str = TestEnum("FOO")
 
@@ -13381,9 +13381,9 @@ class TopLevel:
 
     dialog: Dialog
 
-    dialog_list: list[Dialog] = field(default_factory=list[Dialog])
+    dialog_list: list[Dialog] = field(default_factory=lambda: [])
 
-    dialog_map: dict[str, Dialog] = field(default_factory=dict[str, Dialog])
+    dialog_map: dict[str, Dialog] = field(default_factory=lambda: {})
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(_SCHEMA_TOP_LEVEL, self)
@@ -13473,9 +13473,9 @@ class OperationWithNestedStructureOutput:
 
     dialog: Dialog
 
-    dialog_list: list[Dialog] = field(default_factory=list[Dialog])
+    dialog_list: list[Dialog] = field(default_factory=lambda: [])
 
-    dialog_map: dict[str, Dialog] = field(default_factory=dict[str, Dialog])
+    dialog_map: dict[str, Dialog] = field(default_factory=lambda: {})
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(_SCHEMA_OPERATION_WITH_NESTED_STRUCTURE_OUTPUT, self)
