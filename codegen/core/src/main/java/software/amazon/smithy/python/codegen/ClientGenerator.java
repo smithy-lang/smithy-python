@@ -267,8 +267,6 @@ final class ClientGenerator implements Runnable {
                     """, operationDocs, writer.consumer(operationInput::writeDocs), outputDocs);
         });
 
-        operationInput.writeInput(writer);
-
         // Operation-scoped plugins are collected per-operation. Service-scoped plugins
         // are stored in self._client_plugins (built once in __init__).
         var defaultPlugins = new LinkedHashSet<SymbolReference>();
@@ -281,6 +279,8 @@ final class ClientGenerator implements Runnable {
         }
 
         writer.putContext("operation", symbolProvider.toSymbol(operation));
+        // Built after the closed check so a closed client raises before any work is done.
+        writer.putContext("input", writer.consumer(operationInput::writeInput));
         // Every local below is underscore-prefixed so that it can't collide with a modeled
         // member's keyword. See OperationInputGenerator.RESERVED before adding a new one.
         writer.write(
@@ -290,6 +290,7 @@ final class ClientGenerator implements Runnable {
                                 "Cannot invoke an operation on a client that has been closed."
                             )
 
+                        ${input:C|}
                         _operation_plugins: list[$8T] = [
                             $1C
                         ]

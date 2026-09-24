@@ -166,11 +166,33 @@ public final class HttpProtocolTestGenerator implements Runnable {
         }
     }
 
+    /**
+     * Binds the {@code operationArguments} context to the keywords that pass {@code params}
+     * to the operation.
+     *
+     * <p>The values are written straight into the call rather than into an input object that
+     * the call then unpacks, so the test reads like the code a customer would write, and
+     * members the test case says nothing about go through the same defaulting.
+     */
+    private void writeOperationArguments(OperationShape operation, ObjectNode params) {
+        var operationInput = new OperationInputGenerator(context, operation);
+        writer.putContext("operationArguments",
+                writer.consumer(w -> operationInput.writeArguments(w, params, this::writeArgumentValue)));
+    }
+
+    private void writeArgumentValue(PythonWriter writer, MemberShape member, Node value) {
+        var target = model.expectShape(member.getTarget());
+        // Document values are node literals, so they need wrapping the way the visitor
+        // wraps them for structure members.
+        var formatString = target.isDocumentShape()
+                ? writer.format("$T", RuntimeTypes.DOCUMENT) + "($C)"
+                : "$C";
+        writer.writeInline(formatString, (Runnable) () -> value.accept(new ValueNodeVisitor(target)));
+    }
+
     // See also: https://smithy.io/2.0/additional-specs/http-protocol-compliance-tests.html#httprequesttests-trait
     private void generateRequestTest(OperationShape operation, HttpRequestTestCase testCase) {
-        writer.putContext("operationArguments",
-                writer.consumer(w -> new OperationInputGenerator(context, operation)
-                        .writeArguments(w, "input_")));
+        writeOperationArguments(operation, testCase.getParams());
         writeTestBlock(
                 testCase,
                 String.format("%s_request_%s", testCase.getId(), operation.getId().getName()),
@@ -202,11 +224,6 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 RuntimeTypes.SIMPLE_RETRY_STRATEGY,
                                 (Runnable) this::writeSigV4TestConfig);
                     }));
-
-                    // Generate the input using the expected shape and params
-                    var inputShape = model.expectShape(operation.getInputShape(), StructureShape.class);
-                    writer.write("input_ = $C\n",
-                            (Runnable) () -> testCase.getParams().accept(new ValueNodeVisitor(inputShape)));
 
                     // Execute the command, and catch the expected exception
                     writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail");
@@ -441,9 +458,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
     // See also: https://smithy.io/2.0/additional-specs/http-protocol-compliance-tests.html#httpresponsetests-trait
     private void generateResponseTest(OperationShape operation, HttpResponseTestCase testCase) {
-        writer.putContext("operationArguments",
-                writer.consumer(w -> new OperationInputGenerator(context, operation)
-                        .writeArguments(w, "input_")));
+        // Response tests don't exercise input, so the operation is called with no arguments.
+        writeOperationArguments(operation, Node.objectNode());
         writeTestBlock(
                 testCase,
                 String.format("%s_response_%s", testCase.getId(), operation.getId().getName()),
@@ -469,12 +485,7 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 testCase.getBody().filter(body -> !body.isEmpty()).orElse(""),
                                 (Runnable) this::writeSigV4TestConfig);
                     }));
-                    // Create an empty input object to pass
-                    var inputShape = model.expectShape(operation.getInputShape(), StructureShape.class);
                     var outputShape = model.expectShape(operation.getOutputShape(), StructureShape.class);
-                    writer.write("input_ = $C\n",
-                            (Runnable) () -> (ObjectNode.builder().build()).accept(new ValueNodeVisitor(inputShape)));
-
                     // Execute the command, fail if unexpected exception
                     writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail", "fail");
                     writer.write("""
@@ -503,9 +514,8 @@ public final class HttpProtocolTestGenerator implements Runnable {
             StructureShape error,
             HttpResponseTestCase testCase
     ) {
-        writer.putContext("operationArguments",
-                writer.consumer(w -> new OperationInputGenerator(context, operation)
-                        .writeArguments(w, "input_")));
+        // Error tests don't exercise input, so the operation is called with no arguments.
+        writeOperationArguments(operation, Node.objectNode());
         writeTestBlock(testCase,
                 String.format("%s_error_%s", testCase.getId(), operation.getId().getName()),
                 testFilter.test(error, testCase),
@@ -530,10 +540,6 @@ public final class HttpProtocolTestGenerator implements Runnable {
                                 testCase.getBody().orElse(""),
                                 (Runnable) this::writeSigV4TestConfig);
                     }));
-                    // Create an empty input object to pass
-                    var inputShape = model.expectShape(operation.getInputShape(), StructureShape.class);
-                    writer.write("input_ = $C\n",
-                            (Runnable) () -> (Node.objectNode()).accept(new ValueNodeVisitor(inputShape)));
                     // Execute the command, fail if unexpected exception
                     writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail", "fail");
                     writer.write(

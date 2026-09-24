@@ -10,6 +10,8 @@ import java.util.Map;
 import java.util.Set;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.model.knowledge.NullableIndex;
+import software.amazon.smithy.model.node.Node;
+import software.amazon.smithy.model.node.ObjectNode;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.OperationShape;
 import software.amazon.smithy.model.shapes.StructureShape;
@@ -150,10 +152,22 @@ final class OperationInputGenerator {
                     invocations.""");
     }
 
-    void writeArguments(PythonWriter writer, String inputVariable) {
-        parameters.forEach((member, name) -> writer.write("$L=$L.$L,",
-                name,
-                inputVariable,
-                context.symbolProvider().toMemberName(member)));
+    /** Writes one member's value as the right-hand side of a keyword argument. */
+    @FunctionalInterface
+    interface MemberValueWriter {
+        void write(PythonWriter writer, MemberShape member, Node value);
+    }
+
+    /**
+     * Writes the keyword arguments that pass {@code values} to this operation.
+     *
+     * <p>Members {@code values} says nothing about are omitted rather than passed
+     * explicitly, so the call exercises the same defaulting an ordinary caller gets.
+     */
+    void writeArguments(PythonWriter writer, ObjectNode values, MemberValueWriter valueWriter) {
+        parameters.forEach((member, name) -> values.getMember(member.getMemberName())
+                .ifPresent(value -> writer.write("$L=$C,",
+                        name,
+                        (Runnable) () -> valueWriter.write(writer, member, value))));
     }
 }
