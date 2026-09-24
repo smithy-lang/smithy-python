@@ -418,6 +418,15 @@ class AsyncAwsConfig:
                 f"'{type(self).__name__}' has no config field '{name}'"
             )
 
+        # Apply the field's converter so a post-resolution assignment
+        # (e.g. config.protocol = SomeProtocolClass) is coerced the same way an
+        # override passed to resolve() is. Without this the raw value is stored
+        # and only fails later in the request pipeline. Converters are
+        # idempotent, so re-applying to an already-converted value is a no-op.
+        spec = self.__class__._FIELDS.get(name)
+        if spec is not None and spec.converter is not None and value is not UNSET:
+            value = spec.converter(value)
+
         # Block override for credentials after resolution
         if (
             name in _CREDENTIAL_FIELDS
@@ -432,12 +441,7 @@ class AsyncAwsConfig:
             )
 
         # Mark as override only if the field is in _FIELDS and was already resolved
-        if (
-            name in self.__class__._FIELDS
-            and hasattr(self, "_sources")
-            and name in self._sources
-        ):
-            spec = self.__class__._FIELDS[name]
+        if spec is not None and hasattr(self, "_sources") and name in self._sources:
             if spec.validator is not None:
                 spec.validator(value)
             self._sources[name] = ConfigSource.OVERRIDE
