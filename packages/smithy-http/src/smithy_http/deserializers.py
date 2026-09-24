@@ -16,8 +16,6 @@ from smithy_core.interfaces import is_bytes_reader, is_streaming_blob
 from smithy_core.schemas import Schema
 from smithy_core.shapes import ShapeType
 from smithy_core.traits import (
-    HTTPHeaderTrait,
-    HTTPPrefixHeadersTrait,
     HTTPTrait,
     MediaTypeTrait,
     TimestampFormatTrait,
@@ -26,8 +24,9 @@ from smithy_core.types import TimestampFormat
 from smithy_core.utils import ensure_utc, strict_parse_bool, strict_parse_float
 
 from .aio.interfaces import HTTPResponse
-from .bindings import Binding, ResponseBindingMatcher
+from .bindings import Binding
 from .interfaces import Field, Fields
+from .schema_extensions import HTTP_BINDING_SCHEMA_EXTENSION
 from .utils import split_header
 
 if TYPE_CHECKING:
@@ -39,7 +38,7 @@ __all__ = ["HTTPResponseDeserializer"]
 
 
 class HTTPResponseDeserializer(SpecificShapeDeserializer):
-    """Binds :py:class:`HTTPResponse` properties to a DeserializableShape."""
+    """Deserialize HTTP response bindings through the shape deserializer contract."""
 
     # Note: caller will have to read the body if it's async and not streaming
     def __init__(
@@ -66,40 +65,43 @@ class HTTPResponseDeserializer(SpecificShapeDeserializer):
     def read_struct(
         self, schema: Schema, consumer: Callable[[Schema, ShapeDeserializer], None]
     ) -> None:
-        binding_matcher = ResponseBindingMatcher(schema)
+        binding_metadata = schema.get_extension(HTTP_BINDING_SCHEMA_EXTENSION)
 
-        for member in schema.members.values():
-            match binding_matcher.match(member):
+        for member, binding, name, is_list in binding_metadata.response_bound_members:
+            match binding:
                 case Binding.HEADER:
-                    trait = member.expect_trait(HTTPHeaderTrait)
-                    header = self._response.fields.entries.get(trait.key.lower())
+                    assert name is not None  # noqa: S101
+                    header = self._response.fields.entries.get(name)
                     if header is not None:
-                        if member.shape_type is ShapeType.LIST:
+                        if is_list:
                             consumer(member, HTTPHeaderListDeserializer(header))
                         else:
-                            consumer(member, HTTPHeaderDeserializer(header.as_string()))
+                            consumer(
+                                member,
+                                HTTPHeaderDeserializer(header.as_string()),
+                            )
                 case Binding.PREFIX_HEADERS:
-                    trait = member.expect_trait(HTTPPrefixHeadersTrait)
+                    assert name is not None  # noqa: S101
                     consumer(
                         member,
-                        HTTPHeaderMapDeserializer(self._response.fields, trait.prefix),
+                        HTTPHeaderMapDeserializer(self._response.fields, name),
                     )
                 case Binding.STATUS:
                     consumer(
-                        member, HTTPResponseCodeDeserializer(self._response.status)
+                        member,
+                        HTTPResponseCodeDeserializer(self._response.status),
                     )
                 case Binding.PAYLOAD:
-                    if binding_matcher.event_stream_member is None:
-                        assert binding_matcher.payload_member is not None  # noqa: S101
-                        if self._should_read_payload(binding_matcher.payload_member):
-                            deserializer = self._create_payload_deserializer(
-                                binding_matcher.payload_member
-                            )
-                            consumer(binding_matcher.payload_member, deserializer)
+                    if (
+                        binding_metadata.event_stream_member is None
+                        and self._should_read_payload(member)
+                    ):
+                        deserializer = self._create_payload_deserializer(member)
+                        consumer(member, deserializer)
                 case _:
                     pass
 
-        if binding_matcher.has_body and not self._has_empty_body(
+        if binding_metadata.has_response_body and not self._has_empty_body(
             self._response, self._body
         ):
             deserializer = self._create_body_deserializer()
