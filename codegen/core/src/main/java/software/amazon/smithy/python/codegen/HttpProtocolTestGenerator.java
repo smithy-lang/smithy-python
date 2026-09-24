@@ -168,6 +168,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
     // See also: https://smithy.io/2.0/additional-specs/http-protocol-compliance-tests.html#httprequesttests-trait
     private void generateRequestTest(OperationShape operation, HttpRequestTestCase testCase) {
+        writer.putContext("operationArguments",
+                writer.consumer(w -> new OperationInputGenerator(context, operation)
+                        .writeArguments(w, "input_")));
         writeTestBlock(
                 testCase,
                 String.format("%s_request_%s", testCase.getId(), operation.getId().getName()),
@@ -211,7 +214,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     writer.addStdlibImport("urllib.parse", "parse_qsl");
                     writer.write("""
                             try:
-                                await client.$1T(input_)
+                                await client.$1T(
+                                    ${operationArguments:C|}
+                                )
                                 fail("Expected '$2T' exception to be thrown!")
                             except $2T as err:
                                 actual = err.request
@@ -436,6 +441,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
     // See also: https://smithy.io/2.0/additional-specs/http-protocol-compliance-tests.html#httpresponsetests-trait
     private void generateResponseTest(OperationShape operation, HttpResponseTestCase testCase) {
+        writer.putContext("operationArguments",
+                writer.consumer(w -> new OperationInputGenerator(context, operation)
+                        .writeArguments(w, "input_")));
         writeTestBlock(
                 testCase,
                 String.format("%s_response_%s", testCase.getId(), operation.getId().getName()),
@@ -471,7 +479,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail", "fail");
                     writer.write("""
                             try:
-                                actual = await client.$T(input_)
+                                actual = await client.$T(
+                                    ${operationArguments:C|}
+                                )
                             except Exception as err:
                                 fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
                             else:
@@ -493,6 +503,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
             StructureShape error,
             HttpResponseTestCase testCase
     ) {
+        writer.putContext("operationArguments",
+                writer.consumer(w -> new OperationInputGenerator(context, operation)
+                        .writeArguments(w, "input_")));
         writeTestBlock(testCase,
                 String.format("%s_error_%s", testCase.getId(), operation.getId().getName()),
                 testFilter.test(error, testCase),
@@ -526,7 +539,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     writer.write(
                             """
                                     try:
-                                        await client.$1T(input_)
+                                        await client.$1T(
+                                            ${operationArguments:C|}
+                                        )
                                         fail("Expected '$2L' exception to be thrown!")
                                     except Exception as err:
                                         if type(err).__name__ != $2S:

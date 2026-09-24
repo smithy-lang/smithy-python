@@ -45,7 +45,12 @@ resource City {
 @http(code: 200, method: "POST", uri: "/test-union-list")
 operation TestUnionListOperation {
     input := {
-        inputList: UnionList
+        /// The values supplied by the caller.
+        inputList: UnionList = []
+        document: Document = {}
+        plugins: String
+        plugins_: String
+        self: String
     }
     output := {
         response: String

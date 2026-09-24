@@ -263,8 +263,12 @@ the service immediately, without waiting for the initial response. This is
 critical because there are existing services that require one or more events to
 be sent before they start sending responses.
 
+Initial request members are keyword arguments, as with other client operations.
+Streaming events are sent through the returned stream rather than passed as an
+operation argument.
+
 ```python
-with await client.duplex_operation(DuplexInput(spam="eggs")) as stream:
+with await client.duplex_operation(spam="eggs") as stream:
     stream.input_stream.send(FooEvent(foo="bar"))
 
     initial, output_stream = await stream.await_output()
