@@ -418,11 +418,8 @@ class AsyncAwsConfig:
                 f"'{type(self).__name__}' has no config field '{name}'"
             )
 
-        # Apply the field's converter so a post-resolution assignment
-        # (e.g. config.protocol = SomeProtocolClass) is coerced the same way an
-        # override passed to resolve() is. Without this the raw value is stored
-        # and only fails later in the request pipeline. Converters are
-        # idempotent, so re-applying to an already-converted value is a no-op.
+        # Apply the field's converter so a post-resolution assignment coerces
+        # the same way an override passed to resolve() does.
         spec = self.__class__._FIELDS.get(name)
         if spec is not None and spec.converter is not None and value is not UNSET:
             value = spec.converter(value)

@@ -247,12 +247,6 @@ public final class ConfigGenerator implements Runnable {
         context.writerDelegator().useFileWriter(config.getDefinitionFile(), config.getNamespace(), writer -> {
             writeInterceptorsType(writer);
 
-            // Stage the module-level protocol settings the protocol constructors read,
-            // so a consumer can select a protocol by class alone (e.g.
-            // protocol=AwsQueryClientProtocol) without importing private schema modules.
-            // The bag is the UNION across every protocol the service resolves, not just
-            // the default -- a runtime override to a non-default protocol instantiates
-            // against this same bag, so its metadata must already be present.
             stageProtocolSettings(context, writer);
 
             // AWS services generate only the async config subclass.
@@ -289,10 +283,8 @@ public final class ConfigGenerator implements Runnable {
         });
     }
 
-    // Emit the shared _PROTOCOL_SETTINGS bag as the union of the metadata every protocol
-    // the service resolves needs, so a runtime override to a non-default protocol finds
-    // its fields present. NAMESPACE and SERVICE_TARGET are always emitted; the rest are
-    // opted into by whichever resolved protocol's generator requires them.
+    // Emit the shared _PROTOCOL_SETTINGS bag as the union of the fields every protocol
+    // the service resolves needs.
     private void stageProtocolSettings(GenerationContext context, PythonWriter writer) {
         var generator = context.protocolGenerator();
         if (generator == null) {
