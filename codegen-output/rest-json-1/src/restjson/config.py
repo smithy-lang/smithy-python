@@ -3,7 +3,11 @@
 from dataclasses import dataclass, field
 from typing import Any, Callable, ClassVar, Self, TypeAlias, Union, Unpack
 
-from smithy_aws_core.aio.protocols import RestJsonClientProtocol
+from smithy_aws_core.aio.protocols import (
+    ProtocolConstructor,
+    ProtocolSettings,
+    RestJsonClientProtocol,
+)
 from smithy_aws_core.auth import SigV4AuthScheme
 from smithy_aws_core.config import AwsConfigOverrides, FileSystem
 from smithy_aws_core.config.aws_config import AsyncAwsConfig
@@ -20,7 +24,6 @@ from smithy_core.interceptors import Interceptor
 from smithy_core.shapes import ShapeID
 from smithy_http.aio.aiohttp import AIOHTTPClient
 
-from ._private.schemas import REST_JSON as _SCHEMA_REST_JSON
 from .auth import HTTPAuthSchemeResolver
 from .models import (
     AllQueryStringTypesInput,
@@ -539,11 +542,16 @@ _ServiceInterceptor = Union[
     Interceptor[TimestampFormatHeadersInput, TimestampFormatHeadersOutput, Any, Any],
     Interceptor[UnitInputAndOutputInput, UnitInputAndOutputOutput, Any, Any],
 ]
+_PROTOCOL_SETTINGS = ProtocolSettings(
+    namespace="aws.protocoltests.restjson", service_target="RestJson"
+)
 
 
 class _AsyncRestJsonProtocolConfigOverrides(AwsConfigOverrides, total=False):
     endpoint_resolver: EndpointResolver | None
-    protocol: ClientProtocol[Any, Any] | None
+    protocol: (
+        ClientProtocol[Any, Any] | ProtocolConstructor[ClientProtocol[Any, Any]] | None
+    )
     auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]] | None
     auth_scheme_resolver: HTTPAuthSchemeResolver | None
 
@@ -559,7 +567,11 @@ class AsyncRestJsonProtocolConfig(AsyncAwsConfig):
     """
 
     protocol: ClientProtocol[Any, Any] | None = None
-    """The protocol to serialize and deserialize requests with."""
+    """
+    Pass a protocol class reference from smithy_aws_core.aio.protocols to
+    select the protocol, e.g. protocol=AwsJson10ClientProtocol. For custom
+    protocols a protocol instance may also be passed.
+    """
 
     interceptors: list[_ServiceInterceptor] = field(default_factory=lambda: [])
     """
@@ -623,7 +635,8 @@ class AsyncRestJsonProtocolConfig(AsyncAwsConfig):
             )
         ),
         "protocol": FieldSpec(
-            default_factory=lambda: RestJsonClientProtocol(_SCHEMA_REST_JSON)
+            default_factory=lambda: RestJsonClientProtocol(_PROTOCOL_SETTINGS),
+            converter=lambda p: p(_PROTOCOL_SETTINGS) if isinstance(p, type) else p,
         ),
         "auth_schemes": FieldSpec(
             default_factory=lambda: {

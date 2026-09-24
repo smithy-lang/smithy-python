@@ -1058,3 +1058,61 @@ class TestResolveEndpointUri:
             ctx = SharedConfigContext(fs=NullFileSystem())
             result = await resolve_endpoint_uri(ctx)
             assert result.value is UNSET
+
+
+class TestSetattrConverter:
+    """A post-resolution field assignment must honor the FieldSpec.converter,
+    so `config.field = <class>` coerces the same way an override to resolve()
+    would, instead of storing the raw value and failing later in the pipeline.
+    """
+
+    def _make_config_class(self):
+        from dataclasses import dataclass
+        from typing import ClassVar
+
+        from smithy_aws_core.config.types import FieldSpec
+
+        @dataclass(kw_only=True, init=False)
+        class _ConverterConfig(AsyncAwsConfig):
+            _FIELDS: ClassVar[dict[str, FieldSpec]] = {
+                "region": FieldSpec(default=None),
+                # int() coerces a class/str into an instance the same way the
+                # protocol converter turns a protocol class into an instance.
+                "coerced": FieldSpec(default=None, converter=lambda v: int(v)),
+            }
+
+        return _ConverterConfig
+
+    def _make_instance(self):
+        cls = self._make_config_class()
+        return cls._create_instance()  # pyright: ignore[reportPrivateUsage]
+
+    def test_setattr_applies_converter_post_resolution(self):
+        instance = self._make_instance()
+
+        instance.coerced = "42"  # type: ignore[attr-defined]
+
+        assert instance.coerced == 42  # type: ignore[attr-defined]
+
+    def test_setattr_passes_through_when_already_converted(self):
+        instance = self._make_instance()
+
+        instance.coerced = 7  # type: ignore[attr-defined]
+
+        assert instance.coerced == 7  # type: ignore[attr-defined]
+
+    def test_setattr_leaves_converterless_field_untouched(self):
+        instance = self._make_instance()
+
+        instance.region = "us-west-2"
+
+        assert instance.region == "us-west-2"
+
+    def test_setattr_does_not_convert_unset_sentinel(self):
+        instance = self._make_instance()
+
+        # An explicit assignment of the UNSET sentinel must bypass the
+        # converter (converters assume a real value).
+        instance.coerced = UNSET  # type: ignore[attr-defined]
+
+        assert instance.coerced is UNSET  # type: ignore[attr-defined]

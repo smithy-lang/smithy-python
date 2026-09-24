@@ -10,8 +10,8 @@ import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.ApplicationProtocol;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.HttpProtocolTestGenerator;
-import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.generators.ProtocolGenerator;
+import software.amazon.smithy.python.codegen.generators.ProtocolSettingsField;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
@@ -47,11 +47,13 @@ public final class AwsQueryProtocolGenerator implements ProtocolGenerator {
     @Override
     public void initializeProtocol(GenerationContext context, PythonWriter writer) {
         writer.addDependency(AwsPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("xml"));
-        var service = context.settings().service(context.model());
-        var serviceSymbol = context.symbolProvider().toSymbol(service);
-        var serviceSchema = serviceSymbol.expectProperty(SymbolProperties.SCHEMA);
-        var version = service.getVersion();
-        writer.write("$1T($2T, $3S)", AwsRuntimeTypes.AWS_QUERY_CLIENT_PROTOCOL, serviceSchema, version);
+        writer.write("$T(_PROTOCOL_SETTINGS)", AwsRuntimeTypes.AWS_QUERY_CLIENT_PROTOCOL);
+    }
+
+    @Override
+    public Set<ProtocolSettingsField> requiredProtocolSettings(GenerationContext context) {
+        // awsQuery needs the service version to form the request Version parameter.
+        return Set.of(ProtocolSettingsField.VERSION);
     }
 
     @Override

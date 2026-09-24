@@ -3,7 +3,11 @@
 from dataclasses import dataclass, field
 from typing import Any, Callable, ClassVar, Self, TypeAlias, Union, Unpack
 
-from smithy_aws_core.aio.protocols import AwsJson11ClientProtocol
+from smithy_aws_core.aio.protocols import (
+    AwsJson11ClientProtocol,
+    ProtocolConstructor,
+    ProtocolSettings,
+)
 from smithy_aws_core.auth import SigV4AuthScheme
 from smithy_aws_core.config import AwsConfigOverrides, FileSystem
 from smithy_aws_core.config.aws_config import AsyncAwsConfig
@@ -20,7 +24,6 @@ from smithy_core.interceptors import Interceptor
 from smithy_core.shapes import ShapeID
 from smithy_http.aio.aiohttp import AIOHTTPClient
 
-from ._private.schemas import JSON_PROTOCOL as _SCHEMA_JSON_PROTOCOL
 from .auth import HTTPAuthSchemeResolver
 from .models import (
     ContentTypeParametersInput,
@@ -94,11 +97,16 @@ _ServiceInterceptor = Union[
     Interceptor[SimpleScalarPropertiesInput, SimpleScalarPropertiesOutput, Any, Any],
     Interceptor[SparseNullsOperationInput, SparseNullsOperationOutput, Any, Any],
 ]
+_PROTOCOL_SETTINGS = ProtocolSettings(
+    namespace="aws.protocoltests.json", service_target="JsonProtocol"
+)
 
 
 class _AsyncJsonProtocolConfigOverrides(AwsConfigOverrides, total=False):
     endpoint_resolver: EndpointResolver | None
-    protocol: ClientProtocol[Any, Any] | None
+    protocol: (
+        ClientProtocol[Any, Any] | ProtocolConstructor[ClientProtocol[Any, Any]] | None
+    )
     auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]] | None
     auth_scheme_resolver: HTTPAuthSchemeResolver | None
 
@@ -114,7 +122,11 @@ class AsyncJsonProtocolConfig(AsyncAwsConfig):
     """
 
     protocol: ClientProtocol[Any, Any] | None = None
-    """The protocol to serialize and deserialize requests with."""
+    """
+    Pass a protocol class reference from smithy_aws_core.aio.protocols to
+    select the protocol, e.g. protocol=AwsJson10ClientProtocol. For custom
+    protocols a protocol instance may also be passed.
+    """
 
     interceptors: list[_ServiceInterceptor] = field(default_factory=lambda: [])
     """
@@ -178,7 +190,8 @@ class AsyncJsonProtocolConfig(AsyncAwsConfig):
             )
         ),
         "protocol": FieldSpec(
-            default_factory=lambda: AwsJson11ClientProtocol(_SCHEMA_JSON_PROTOCOL)
+            default_factory=lambda: AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            converter=lambda p: p(_PROTOCOL_SETTINGS) if isinstance(p, type) else p,
         ),
         "auth_schemes": FieldSpec(
             default_factory=lambda: {

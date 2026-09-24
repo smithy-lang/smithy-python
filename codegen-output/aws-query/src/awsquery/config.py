@@ -3,7 +3,11 @@
 from dataclasses import dataclass, field
 from typing import Any, Callable, ClassVar, Self, TypeAlias, Union, Unpack
 
-from smithy_aws_core.aio.protocols import AwsQueryClientProtocol
+from smithy_aws_core.aio.protocols import (
+    AwsQueryClientProtocol,
+    ProtocolConstructor,
+    ProtocolSettings,
+)
 from smithy_aws_core.auth import SigV4AuthScheme
 from smithy_aws_core.config import AwsConfigOverrides, FileSystem
 from smithy_aws_core.config.aws_config import AsyncAwsConfig
@@ -20,7 +24,6 @@ from smithy_core.interceptors import Interceptor
 from smithy_core.shapes import ShapeID
 from smithy_http.aio.aiohttp import AIOHTTPClient
 
-from ._private.schemas import AWS_QUERY as _SCHEMA_AWS_QUERY
 from .auth import HTTPAuthSchemeResolver
 from .models import (
     DatetimeOffsetsInput,
@@ -148,11 +151,16 @@ _ServiceInterceptor = Union[
     Interceptor[XmlNamespacesInput, XmlNamespacesOutput, Any, Any],
     Interceptor[XmlTimestampsInput, XmlTimestampsOutput, Any, Any],
 ]
+_PROTOCOL_SETTINGS = ProtocolSettings(
+    namespace="aws.protocoltests.query", service_target="AwsQuery", version="2020-01-08"
+)
 
 
 class _AsyncQueryProtocolConfigOverrides(AwsConfigOverrides, total=False):
     endpoint_resolver: EndpointResolver | None
-    protocol: ClientProtocol[Any, Any] | None
+    protocol: (
+        ClientProtocol[Any, Any] | ProtocolConstructor[ClientProtocol[Any, Any]] | None
+    )
     auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]] | None
     auth_scheme_resolver: HTTPAuthSchemeResolver | None
 
@@ -168,7 +176,11 @@ class AsyncQueryProtocolConfig(AsyncAwsConfig):
     """
 
     protocol: ClientProtocol[Any, Any] | None = None
-    """The protocol to serialize and deserialize requests with."""
+    """
+    Pass a protocol class reference from smithy_aws_core.aio.protocols to
+    select the protocol, e.g. protocol=AwsJson10ClientProtocol. For custom
+    protocols a protocol instance may also be passed.
+    """
 
     interceptors: list[_ServiceInterceptor] = field(default_factory=lambda: [])
     """
@@ -232,9 +244,8 @@ class AsyncQueryProtocolConfig(AsyncAwsConfig):
             )
         ),
         "protocol": FieldSpec(
-            default_factory=lambda: AwsQueryClientProtocol(
-                _SCHEMA_AWS_QUERY, "2020-01-08"
-            )
+            default_factory=lambda: AwsQueryClientProtocol(_PROTOCOL_SETTINGS),
+            converter=lambda p: p(_PROTOCOL_SETTINGS) if isinstance(p, type) else p,
         ),
         "auth_schemes": FieldSpec(
             default_factory=lambda: {

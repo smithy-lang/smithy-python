@@ -13,6 +13,7 @@ import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
+import software.amazon.smithy.model.shapes.ShapeId;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
@@ -126,9 +127,27 @@ public final class ConfigGenerator implements Runnable {
                                 .namespace("smithy_core.aio.interfaces", ".")
                                 .build())
                         .build())
-                .documentation("The protocol to serialize and deserialize requests with.")
+                .inputType(Symbol.builder()
+                        .name("ClientProtocol[Any, Any] | ProtocolConstructor[ClientProtocol[Any, Any]]")
+                        .addReference(Symbol.builder()
+                                .name("ClientProtocol")
+                                .namespace("smithy_core.aio.interfaces", ".")
+                                .build())
+                        .addReference(Symbol.builder()
+                                .name("ProtocolConstructor")
+                                .namespace("smithy_aws_core.aio.protocols", ".")
+                                .addDependency(SmithyPythonDependency.SMITHY_AWS_CORE)
+                                .build())
+                        .build())
+                .documentation("Pass a protocol class reference from smithy_aws_core.aio.protocols "
+                        + "to select the protocol, e.g. protocol=AwsJson10ClientProtocol. For custom "
+                        + "protocols a protocol instance may also be passed.")
                 .initialize(w -> {
-                    w.write("self.protocol = protocol or ${C|}",
+                    w.addStdlibImport("typing", "cast");
+                    w.write("""
+                            if isinstance(protocol, type):
+                                protocol = protocol(_PROTOCOL_SETTINGS)
+                            self.protocol = cast("ClientProtocol[Any, Any]", protocol) or ${C|}""",
                             w.consumer(writer -> context.protocolGenerator().initializeProtocol(context, writer)));
                 });
 
@@ -228,6 +247,8 @@ public final class ConfigGenerator implements Runnable {
         context.writerDelegator().useFileWriter(config.getDefinitionFile(), config.getNamespace(), writer -> {
             writeInterceptorsType(writer);
 
+            stageProtocolSettings(context, writer);
+
             // AWS services generate only the async config subclass.
             if (asyncConfigForPlugin.isEmpty()) {
                 generateConfig(context, writer);
@@ -260,6 +281,48 @@ public final class ConfigGenerator implements Runnable {
                     Operation-level plugins apply only to a single operation invocation.
                     """, context);
         });
+    }
+
+    // Emit the shared _PROTOCOL_SETTINGS bag as the union of the fields every protocol
+    // the service resolves needs.
+    private void stageProtocolSettings(GenerationContext context, PythonWriter writer) {
+        var generator = context.protocolGenerator();
+        if (generator == null) {
+            return;
+        }
+
+        // Map every generator any integration supplies to its protocol trait id, then
+        // ask each protocol the service resolves what extra fields it needs.
+        var generators = new java.util.HashMap<ShapeId, ProtocolGenerator>();
+        for (var integration : context.integrations()) {
+            for (var g : integration.getProtocolGenerators()) {
+                generators.put(g.getProtocol(), g);
+            }
+        }
+
+        var required = java.util.EnumSet.of(
+                ProtocolSettingsField.NAMESPACE,
+                ProtocolSettingsField.SERVICE_TARGET);
+        var service = context.settings().service(context.model());
+        var resolved = ServiceIndex.of(context.model()).getProtocols(service).keySet();
+        for (var protocolId : resolved) {
+            var g = generators.get(protocolId);
+            if (g != null) {
+                required.addAll(g.requiredProtocolSettings(context));
+            }
+        }
+
+        var args = new ArrayList<Object>();
+        var params = new StringBuilder("namespace=$S, service_target=$S");
+        args.add(service.getId().getNamespace());
+        args.add(service.getId().getName());
+        if (required.contains(ProtocolSettingsField.VERSION)) {
+            params.append(", version=$S");
+            args.add(service.getVersion());
+        }
+
+        args.add(0, RuntimeTypes.PROTOCOL_SETTINGS);
+        writer.write("_PROTOCOL_SETTINGS = $T(" + params + ")", args.toArray());
     }
 
     private void writeInterceptorsType(PythonWriter writer) {
@@ -361,7 +424,7 @@ public final class ConfigGenerator implements Runnable {
 
     private void writeInitParams(PythonWriter writer, Collection<ConfigProperty> properties) {
         for (ConfigProperty property : properties) {
-            writer.write("$L: $T | None = None,", property.name(), property.type());
+            writer.write("$L: $T | None = None,", property.name(), property.inputType());
         }
     }
 

@@ -1,6 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 from collections.abc import Callable
+from dataclasses import dataclass
 from inspect import iscoroutinefunction
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, ClassVar, Final
@@ -23,7 +24,7 @@ from smithy_core.exceptions import (
 )
 from smithy_core.interfaces import TypedProperties, URI
 from smithy_core.prelude import DOCUMENT
-from smithy_core.schemas import APIOperation, Schema
+from smithy_core.schemas import APIOperation
 from smithy_core.serializers import SerializeableShape
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.types import TimestampFormat
@@ -99,6 +100,31 @@ def _assert_event_stream() -> None:
         )
 
 
+@dataclass(kw_only=True, frozen=True)
+class ProtocolSettings:
+    """Service-level metadata for constructing a protocol.
+
+    Lets a consumer select a protocol by class alone (e.g.
+    ``protocol=AwsQueryClientProtocol``) without importing a private schema module.
+    """
+
+    namespace: str
+    """The service's Smithy namespace, e.g. ``com.amazonaws.sqs``."""
+
+    service_target: str
+    """The service shape name, used as the ``X-Amz-Target`` prefix by RPC protocols."""
+
+    version: str | None = None
+    """The service API version. Required by awsQuery; unused by other protocols."""
+
+
+type ProtocolConstructor[T] = Callable[[ProtocolSettings], T]
+"""A callable that builds a protocol instance from ``ProtocolSettings``.
+
+A protocol class satisfies this, since calling the class constructs an instance.
+"""
+
+
 class AWSErrorIdentifier(HTTPErrorIdentifier):
     _HEADER_KEY: Final = "x-amzn-errortype"
 
@@ -146,15 +172,11 @@ class RestJsonClientProtocol(HttpBindingClientProtocol):
     _content_type: Final = "application/json"
     _error_identifier: Final = AWSErrorIdentifier()
 
-    def __init__(self, service_schema: Schema) -> None:
-        """Initialize a RestJsonClientProtocol.
-
-        :param service: The schema for the service to interact with.
-        """
+    def __init__(self, settings: ProtocolSettings) -> None:
         _assert_json()
         self._codec: Final = JSONCodec(
             document_class=AWSJSONDocument,
-            default_namespace=service_schema.id.namespace,
+            default_namespace=settings.namespace,
             default_timestamp_format=TimestampFormat.EPOCH_SECONDS,
         )
 
@@ -258,12 +280,12 @@ class _AWSJSONClientProtocol(HttpClientProtocol):
     _id: ClassVar[ShapeID]
     _content_type: ClassVar[str]
 
-    def __init__(self, service_schema: Schema) -> None:
+    def __init__(self, settings: ProtocolSettings) -> None:
         _assert_json()
-        self._service_name: Final = service_schema.id.name
+        self._service_name: Final = settings.service_target
         self._codec: Final = JSONCodec(
             document_class=AWSJSONDocument,
-            default_namespace=service_schema.id.namespace,
+            default_namespace=settings.namespace,
             default_timestamp_format=TimestampFormat.EPOCH_SECONDS,
             use_json_name=False,
         )
@@ -457,10 +479,15 @@ class AwsQueryClientProtocol(HttpClientProtocol):
     _id: Final = AwsQueryTrait.id
     _content_type: Final = "application/x-www-form-urlencoded"
 
-    def __init__(self, service_schema: Schema, version: str) -> None:
+    def __init__(self, settings: ProtocolSettings) -> None:
         _assert_xml()
-        self._default_namespace: Final = service_schema.id.namespace
-        self._version: Final = version
+        if settings.version is None:
+            raise ExpectationNotMetError(
+                "The awsQuery protocol requires a service version, but "
+                "ProtocolSettings.version was None."
+            )
+        self._default_namespace: Final = settings.namespace
+        self._version: Final = settings.version
         self._codec: Final = XMLCodec(default_namespace=self._default_namespace)
 
     @property

@@ -1,0 +1,4 @@
+{
+  "type": "breaking",
+  "description": "Make runtime protocol configuration user-friendly by not requiring protocol metadata"
+}

@@ -330,6 +330,8 @@ class AsyncAwsConfig:
             # check for overrides first
             if field_name in overrides:
                 value = overrides[field_name]
+                if spec.converter is not None:
+                    value = spec.converter(value)
                 setattr(self, field_name, value)
                 self._sources[field_name] = ConfigSource.OVERRIDE
             # check in resolver
@@ -416,6 +418,12 @@ class AsyncAwsConfig:
                 f"'{type(self).__name__}' has no config field '{name}'"
             )
 
+        # Apply the field's converter so a post-resolution assignment coerces
+        # the same way an override passed to resolve() does.
+        spec = self.__class__._FIELDS.get(name)
+        if spec is not None and spec.converter is not None and value is not UNSET:
+            value = spec.converter(value)
+
         # Block override for credentials after resolution
         if (
             name in _CREDENTIAL_FIELDS
@@ -430,12 +438,7 @@ class AsyncAwsConfig:
             )
 
         # Mark as override only if the field is in _FIELDS and was already resolved
-        if (
-            name in self.__class__._FIELDS
-            and hasattr(self, "_sources")
-            and name in self._sources
-        ):
-            spec = self.__class__._FIELDS[name]
+        if spec is not None and hasattr(self, "_sources") and name in self._sources:
             if spec.validator is not None:
                 spec.validator(value)
             self._sources[name] = ConfigSource.OVERRIDE
