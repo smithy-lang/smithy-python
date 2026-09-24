@@ -207,41 +207,31 @@ final class ClientGenerator implements Runnable {
     private void generateOperation(PythonWriter writer, OperationShape operation) {
         var operationSymbol = symbolProvider.toSymbol(operation);
         var operationMethodSymbol = operationSymbol.expectProperty(OPERATION_METHOD);
-        var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
-
-        var input = model.expectShape(operation.getInputShape());
-        var inputSymbol = symbolProvider.toSymbol(input);
 
         var output = model.expectShape(operation.getOutputShape());
         var outputSymbol = symbolProvider.toSymbol(output);
 
-        writer.putContext("input", inputSymbol);
         writer.putContext("output", outputSymbol);
-        writer.putContext("plugin", pluginSymbol);
         writer.putContext("operationName", operationMethodSymbol.getName());
+        writer.putContext("parameters",
+                writer.consumer(new OperationInputGenerator(context, operation)::writeParameters));
         writer.write("""
                 async def ${operationName:L}(
-                    self,
-                    input: ${input:T},
-                    plugins: list[${plugin:T}] | None = None
+                    ${parameters:C|}
                 ) -> ${output:T}:
                     ${C|}
                     return await pipeline(call)
                 """,
-                writer.consumer(w -> writeSharedOperationInit(w, operation, input, output)));
-    }
-
-    private void writeSharedOperationInit(PythonWriter writer, OperationShape operation, Shape input, Shape output) {
-        writeSharedOperationInit(writer, operation, input, output, null);
+                writer.consumer(w -> writeSharedOperationInit(w, operation, output, null)));
     }
 
     private void writeSharedOperationInit(
             PythonWriter writer,
             OperationShape operation,
-            Shape input,
             Shape output,
             String eventStreamOutputDocs
     ) {
+        var operationInput = new OperationInputGenerator(context, operation);
         writer.writeMultiLineDocs(() -> {
             var operationDocs = writer.formatDocs(operation.getTrait(DocumentationTrait.class)
                     .map(StringTrait::getValue)
@@ -249,9 +239,7 @@ final class ClientGenerator implements Runnable {
                             operation.getId().getName())),
                     context);
 
-            var inputSymbolName = symbolProvider.toSymbol(input).getName();
             var outputSymbolName = symbolProvider.toSymbol(output).getName();
-            var inputDocs = String.format("An instance of `%s`.", inputSymbolName);
             var outputDocs = eventStreamOutputDocs != null ? eventStreamOutputDocs
                     : String.format("An instance of `%s`.", outputSymbolName);
 
@@ -259,8 +247,7 @@ final class ClientGenerator implements Runnable {
                     $L
 
                     Args:
-                        input:
-                            $L
+                        ${C|}
                         plugins:
                             A list of callables that modify the configuration dynamically.
                             Changes made by these plugins only apply for the duration of the
@@ -269,8 +256,10 @@ final class ClientGenerator implements Runnable {
 
                     Returns:
                         ${L|}
-                    """, operationDocs, inputDocs, outputDocs);
+                    """, operationDocs, writer.consumer(operationInput::writeDocs), outputDocs);
         });
+
+        operationInput.writeInput(writer);
 
         // Operation-scoped plugins are collected per-operation. Service-scoped plugins
         // are stored in self._client_plugins (built once in __init__).
@@ -361,12 +350,8 @@ final class ClientGenerator implements Runnable {
         writer.putContext("operation", operationSymbol);
         var operationMethodSymbol = operationSymbol.expectProperty(OPERATION_METHOD);
         writer.putContext("operationName", operationMethodSymbol.getName());
-        var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
-        writer.putContext("plugin", pluginSymbol);
-
-        var input = model.expectShape(operation.getInputShape());
-        var inputSymbol = symbolProvider.toSymbol(input);
-        writer.putContext("input", inputSymbol);
+        writer.putContext("parameters",
+                writer.consumer(new OperationInputGenerator(context, operation)::writeParameters));
 
         var eventStreamIndex = EventStreamIndex.of(model);
         var inputStreamSymbol = eventStreamIndex.getInputInfo(operation)
@@ -397,9 +382,7 @@ final class ClientGenerator implements Runnable {
                 var outputDocs = "A `DuplexEventStream` for bidirectional streaming.";
                 writer.write("""
                         async def ${operationName:L}(
-                            self,
-                            input: ${input:T},
-                            plugins: list[${plugin:T}] | None = None
+                            ${parameters:C|}
                         ) -> ${duplexEventStream:T}[${inputStream:T}, ${outputStream:T}, ${output:T}]:
                             ${C|}
                             return await pipeline.duplex_stream(
@@ -409,15 +392,13 @@ final class ClientGenerator implements Runnable {
                                 ${outputStreamDeserializer:T}().deserialize
                             )
                         """,
-                        writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, outputDocs)));
+                        writer.consumer(w -> writeSharedOperationInit(w, operation, output, outputDocs)));
             } else {
                 writer.putContext("inputEventStream", RuntimeTypes.INPUT_EVENT_STREAM);
                 var outputDocs = "An `InputEventStream` for client-to-server streaming.";
                 writer.write("""
                         async def ${operationName:L}(
-                            self,
-                            input: ${input:T},
-                            plugins: list[${plugin:T}] | None = None
+                            ${parameters:C|}
                         ) -> ${inputEventStream:T}[${inputStream:T}, ${output:T}]:
                             ${C|}
                             return await pipeline.input_stream(
@@ -425,16 +406,14 @@ final class ClientGenerator implements Runnable {
                                 ${inputStream:T}
                             )
                         """,
-                        writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, outputDocs)));
+                        writer.consumer(w -> writeSharedOperationInit(w, operation, output, outputDocs)));
             }
         } else {
             writer.putContext("outputEventStream", RuntimeTypes.OUTPUT_EVENT_STREAM);
             var outputDocs = "An `OutputEventStream` for server-to-client streaming.";
             writer.write("""
                     async def ${operationName:L}(
-                        self,
-                        input: ${input:T},
-                        plugins: list[${plugin:T}] | None = None
+                        ${parameters:C|}
                     ) -> ${outputEventStream:T}[${outputStream:T}, ${output:T}]:
                         ${C|}
                         return await pipeline.output_stream(
@@ -443,7 +422,7 @@ final class ClientGenerator implements Runnable {
                             ${outputStreamDeserializer:T}().deserialize
                         )
                     """,
-                    writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, outputDocs)));
+                    writer.consumer(w -> writeSharedOperationInit(w, operation, output, outputDocs)));
         }
     }
 }

@@ -6,7 +6,6 @@ package software.amazon.smithy.python.codegen.generators;
 
 import static software.amazon.smithy.python.codegen.CodegenUtils.isErrorMessage;
 
-import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
@@ -19,7 +18,6 @@ import java.util.stream.Collectors;
 import software.amazon.smithy.codegen.core.SymbolProvider;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.knowledge.NullableIndex;
-import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.StructureShape;
@@ -31,6 +29,7 @@ import software.amazon.smithy.model.traits.SensitiveTrait;
 import software.amazon.smithy.model.traits.StreamingTrait;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.GenerationContext;
+import software.amazon.smithy.python.codegen.MemberDefault;
 import software.amazon.smithy.python.codegen.PythonSettings;
 import software.amazon.smithy.python.codegen.RequiredMemberTargetIndex;
 import software.amazon.smithy.python.codegen.RuntimeTypes;
@@ -219,17 +218,18 @@ public final class StructureGenerator implements Runnable {
             var defaultKey = "default";
             if (member.hasTrait(DefaultTrait.class)) {
 
-                defaultValue = getDefaultValue(writer, member);
+                var memberDefault = MemberDefault.of(context, writer, member);
+                defaultValue = memberDefault.value();
                 // A `@default: null` member is nullable and resolves to None, so
-                // it needs `| None` like a member with no default. Documents are
-                // excluded: a null document default is a non-None Document(None),
-                // built via default_factory below.
-                if (!target.isDocumentShape()
-                        && member.expectTrait(DefaultTrait.class).toNode().isNullNode()) {
+                // it needs `| None` like a member with no default.
+                if (memberDefault.nullable()) {
                     writer.putContext("nullable", true);
                 }
-                if (target.isDocumentShape() || defaultValue.startsWith("list[") || defaultValue.startsWith("dict[")) {
+                if (memberDefault.factory()) {
+                    // Mutable defaults must be built per instance, and dataclasses
+                    // want a callable to do it with.
                     writer.addStdlibImport("dataclasses", "field");
+                    defaultValue = "lambda: " + defaultValue;
                     defaultKey = "default_factory";
                     requiresField = true;
                 }
@@ -280,60 +280,6 @@ public final class StructureGenerator implements Runnable {
     private boolean filterEventStreamMember(MemberShape member) {
         var target = model.expectShape(member.getTarget());
         return !(target.isUnionShape() && target.hasTrait(StreamingTrait.class));
-    }
-
-    private String getDefaultValue(PythonWriter writer, MemberShape member) {
-        // The default value is defined in the model is a exposed as generic
-        // json, so we need to convert it to the proper type based on the target.
-        // see: https://smithy.io/2.0/spec/type-refinement-traits.html#smithy-api-default-trait
-        var defaultNode = member.expectTrait(DefaultTrait.class).toNode();
-        var target = model.expectShape(member.getTarget());
-        // A null default marks the member nullable and resolves to None. Documents are
-        // excluded since their null default is a non-None Document(None) (see the branch below).
-        if (!target.isDocumentShape() && defaultNode.isNullNode()) {
-            return "None";
-        }
-        if (target.isTimestampShape()) {
-            ZonedDateTime value = CodegenUtils.parseTimestampNode(model, member, defaultNode);
-            return CodegenUtils.getDatetimeConstructor(writer, value);
-        } else if (target.isBlobShape()) {
-            writer.addStdlibImport("base64", "b64decode");
-            return String.format("b64decode(\"%s\")", defaultNode.expectStringNode().getValue());
-        } else if (target.isEnumShape()) {
-            // Wrap rather than emit a bare string so the value matches the field type.
-            var enumSymbol = symbolProvider.toSymbol(target)
-                    .expectProperty(SymbolProperties.ENUM_SYMBOL);
-            return String.format("%s(\"%s\")",
-                    writer.format("$T", enumSymbol),
-                    defaultNode.expectStringNode().getValue());
-        } else if (target.isIntEnumShape()) {
-            var enumSymbol = symbolProvider.toSymbol(target)
-                    .expectProperty(SymbolProperties.ENUM_SYMBOL);
-            return String.format("%s(%s)",
-                    writer.format("$T", enumSymbol),
-                    defaultNode.expectNumberNode().getValue());
-        }
-
-        if (target.isDocumentShape()) {
-            var docSymbol = RuntimeTypes.DOCUMENT;
-            var docName = writer.format("$T", docSymbol);
-            return String.format("lambda: %s(%s)", docName, switch (defaultNode.getType()) {
-                case NULL -> "None";
-                case BOOLEAN -> defaultNode.expectBooleanNode().getValue() ? "True" : "False";
-                case ARRAY -> "list()";
-                case OBJECT -> "dict()";
-                default -> Node.printJson(defaultNode);
-            });
-        }
-
-        // A null default is handled by the guard above, so it can't reach here.
-        return switch (defaultNode.getType()) {
-            case BOOLEAN -> defaultNode.expectBooleanNode().getValue() ? "True" : "False";
-            // These will be given to a default_factory in field. They're inherently empty, so no need to
-            // worry about any potential values.
-            case ARRAY, OBJECT -> symbolProvider.toSymbol(target).getName();
-            default -> Node.printJson(defaultNode);
-        };
     }
 
     private void generateSerializeMethod() {
