@@ -268,16 +268,16 @@ Streaming events are sent through the returned stream rather than passed as an
 operation argument.
 
 ```python
-with await client.duplex_operation(spam="eggs") as stream:
+async with await client.duplex_operation(spam="eggs") as stream:
     stream.input_stream.send(FooEvent(foo="bar"))
 
     initial, output_stream = await stream.await_output()
 
-    for event in output_stream:
+    async for event in output_stream:
         handle_event(event)
 
 
-with await client.input_operation() as stream:
+async with await client.input_operation() as stream:
     stream.input_stream.send(FooEvent(foo="bar"))
 ```
 
@@ -288,8 +288,8 @@ lack of an input stream means that the service has nothing to wait on from the
 client before sending responses.
 
 ```python
-with await client.output_operation() as stream:
-    for event in output_stream:
+async with await client.output_operation() as stream:
+    async for event in stream.output_stream:
         handle_event(event)
 ```
 

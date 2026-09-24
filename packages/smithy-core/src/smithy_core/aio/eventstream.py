@@ -20,33 +20,38 @@ class DuplexEventStream[
 
     .. code-block:: python
 
+        import asyncio
+
+
+        async def handle_output(stream: DuplexEventStream) -> None:
+            _, output_stream = await stream.await_output()
+            async for event in output_stream:
+                match event:
+                    case MessageStreamMessage():
+                        print(event.value)
+                    case MessageStreamShutdown():
+                        return
+                    case _:
+                        stream.input_stream.send(
+                            MessageStreamMessage(
+                                "Unknown message type received. Shutting down."
+                            )
+                        )
+                        return
+
+
         async def main():
             client = ChatClient()
-            input = StreamMessagesInput(chat_room="aws-python-sdk", username="hunter7")
 
-            async with client.stream_messages(input=input) as stream:
+            async with client.stream_messages(
+                chat_room="aws-python-sdk", username="hunter7"
+            ) as stream:
                 stream.input_stream.send(
                     MessageStreamMessage("Chat logger starting up.")
                 )
                 response_task = asyncio.create_task(handle_output(stream))
                 stream.input_stream.send(MessageStreamMessage("Chat logger active."))
-                await response_handler
-
-            async def handle_output(stream: EventStream) -> None:
-                _, output_stream = await stream.await_output()
-                async for event in output_stream:
-                    match event:
-                        case MessageStreamMessage():
-                            print(event.value)
-                        case MessageStreamShutdown():
-                            return
-                        case _:
-                            stream.input_stream.send(
-                                MessageStreamMessage(
-                                    "Unknown message type received. Shutting down."
-                                )
-                            )
-                            return
+                await response_task
     """
 
     input_stream: EventPublisher[IE]
@@ -128,9 +133,10 @@ class InputEventStream[IE: SerializeableShape, O]:
 
         async def main():
             client = ChatClient()
-            input = PublishMessagesInput(chat_room="aws-python-sdk", username="hunter7")
 
-            async with client.publish_messages(input=input) as stream:
+            async with client.publish_messages(
+                chat_room="aws-python-sdk", username="hunter7"
+            ) as stream:
                 stream.input_stream.send(
                     MessageStreamMessage("High severity ticket alert!")
                 )
@@ -194,9 +200,8 @@ class OutputEventStream[OE: DeserializeableShape, O: DeserializeableShape]:
 
         async def main():
             client = ChatClient()
-            input = ReceiveMessagesInput(chat_room="aws-python-sdk")
 
-            async with client.receive_messages(input=input) as stream:
+            async with client.receive_messages(chat_room="aws-python-sdk") as stream:
                 async for event in stream.output_stream:
                     match event:
                         case MessageStreamMessage():
