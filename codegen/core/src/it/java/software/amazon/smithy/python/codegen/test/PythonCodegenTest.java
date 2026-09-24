@@ -115,6 +115,12 @@ public class PythonCodegenTest {
         assertTrue(models.contains("input_list: list[UnionListMember] = field(default_factory=lambda: [])"));
         assertTrue(models.contains("document: Document = field(default_factory=lambda: Document(dict()))"));
 
+        // `plugins` is documented by the same generator that documents members, so `Args:`
+        // has content even for an input with no members. Undocumented members are left out
+        // rather than given filler text.
+        assertFalse(client.contains("Args:\n\n"));
+        assertFalse(client.contains("input member."));
+
         var config = Files.readString(tempDir.resolve("src/weather/config.py"));
         assertTrue(config.contains("self.transport = transport or AIOHTTPClient()"));
         assertFalse(config.contains("self.transport = transport or AWSCRTHTTPClient()"));

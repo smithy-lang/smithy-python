@@ -126,15 +126,28 @@ final class OperationInputGenerator {
         writer.dedent().write(")");
     }
 
+    /**
+     * Writes the whole {@code Args:} body, including the {@code plugins} control parameter.
+     *
+     * <p>{@code plugins} lives here rather than in the caller's template so that this is
+     * never empty, which would leave a stray blank line under {@code Args:}.
+     */
     void writeDocs(PythonWriter writer) {
         parameters.forEach((member, name) -> {
-            var docs = member.getMemberTrait(context.model(), DocumentationTrait.class)
-                    .map(DocumentationTrait::getValue)
-                    .orElse("The `" + context.symbolProvider().toMemberName(member) + "` input member.");
-            writer.write("$L:", name).indent();
-            writer.write("${L|}", writer.formatDocs(docs, context));
-            writer.dedent();
+            // Undocumented members are left out entirely. Restating the name the reader
+            // just read is worse than an absence, because it looks like documentation.
+            member.getMemberTrait(context.model(), DocumentationTrait.class).ifPresent(docs -> {
+                writer.write("$L:", name).indent();
+                writer.write("${L|}", writer.formatDocs(docs.getValue(), context));
+                writer.dedent();
+            });
         });
+        writer.write("""
+                plugins:
+                    A list of callables that modify the configuration dynamically.
+                    Changes made by these plugins only apply for the duration of the
+                    operation execution and will not affect any other operation
+                    invocations.""");
     }
 
     void writeArguments(PythonWriter writer, String inputVariable) {
