@@ -53,7 +53,7 @@ public class PythonCodegenTest {
         // Ordinary, empty, and streaming operations all construct inputs from keywords.
         assertFalse(client.contains("input: GetCityInput"));
         assertTrue(client.contains("city_id: str | None = None"));
-        assertTrue(client.contains("input = GetCurrentTimeInput()"));
+        assertTrue(client.contains("_input = GetCurrentTimeInput()"));
         assertFalse(client.contains("input: StreamAtmosphericConditionsInput"));
         assertFalse(client.contains("stream: AtmosphericConditions"));
         assertTrue(client.contains("async def test_union_list_operation(\n        self,\n        *,"));
@@ -76,11 +76,39 @@ public class PythonCodegenTest {
         assertTrue(client.contains("input_list=input_list"));
         assertTrue(client.contains("document=document"));
 
-        // SDK controls and colliding model members remain separate.
+        // Only `self` and `plugins` are reserved, and escaping is closed over trailing
+        // underscores, so a member named `plugins_` keeps its own keyword.
+        assertTrue(client.contains("plugins_: str | None = None"));
         assertTrue(client.contains("plugins__: str | None = None"));
-        assertTrue(client.contains("plugins=plugins__"));
-        assertTrue(client.contains("plugins_=plugins_"));
-        assertTrue(client.contains("self=self_"));
+        assertTrue(client.contains("plugins=plugins_,"));
+        assertTrue(client.contains("plugins_=plugins__,"));
+        assertTrue(client.contains("self=self_,"));
+
+        // Python keywords are escaped once, by the symbol provider. The parameter escape
+        // leaves the result alone rather than compounding on it.
+        assertTrue(client.contains("class_: str | None = None"));
+        assertTrue(client.contains("class_=class_,"));
+        assertTrue(client.contains("from_=from_,"));
+        assertTrue(client.contains("async_=async_,"));
+        assertFalse(client.contains("class__"));
+
+        // Only `self` and `plugins` are reserved. Members named after the locals the
+        // operation body binds keep their own names, because those locals are underscored.
+        assertTrue(client.contains("input: str | None = None"));
+        assertTrue(client.contains("input=input,"));
+        assertTrue(client.contains("config=config,"));
+        assertTrue(client.contains("pipeline=pipeline,"));
+        assertTrue(client.contains("call=call,"));
+        assertTrue(client.contains("deepcopy=deepcopy,"));
+        assertTrue(client.contains("retry_strategy=retry_strategy,"));
+        assertTrue(client.contains("operation_plugins=operation_plugins,"));
+
+        // Operation bodies bind only underscored locals, so members keep their own names
+        // regardless of what the pipeline needs or which plugins matched the operation.
+        assertTrue(client.contains("from copy import deepcopy as _deepcopy"));
+        assertTrue(client.contains("_config = _deepcopy(self._config)"));
+        assertTrue(client.contains("return await _pipeline(_call)"));
+        assertTrue(client.contains("user_agent_plugin as _user_agent_plugin"));
 
         // Dataclass fields wrap the same default expressions in a factory callable.
         var models = Files.readString(tempDir.resolve("src/weather/models.py"));

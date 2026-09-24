@@ -51,6 +51,22 @@ operation TestUnionListOperation {
         plugins: String
         plugins_: String
         self: String
+
+        // Python keywords are escaped by the symbol provider, before the operation
+        // parameter escape runs. The two must not compound.
+        class: String
+        from: String
+        async: String
+
+        // The operation body binds all of these, under a leading underscore. They are
+        // not reserved, so they reach the caller spelled exactly as modeled.
+        input: String
+        config: String
+        pipeline: String
+        call: String
+        deepcopy: String
+        retryStrategy: String
+        operationPlugins: String
     }
     output := {
         response: String

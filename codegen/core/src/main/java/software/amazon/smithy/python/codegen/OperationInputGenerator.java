@@ -4,10 +4,11 @@
  */
 package software.amazon.smithy.python.codegen;
 
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.model.knowledge.NullableIndex;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.OperationShape;
@@ -19,6 +20,20 @@ import software.amazon.smithy.python.codegen.writer.PythonWriter;
 
 /** Keeps operation declarations, model construction, and generated callers in agreement. */
 final class OperationInputGenerator {
+
+    /**
+     * The only names a generated operation method binds that a modeled member could plausibly
+     * take: {@code self} and the {@code plugins} control parameter.
+     *
+     * <p>Every other name the operation body binds or references is either underscore-prefixed
+     * ({@code _input}, {@code _config}, {@code _pipeline}, the imported {@code _deepcopy} and
+     * plugin aliases) or not spelled like a member name, which is always snake case
+     * ({@code Plugin}, {@code ClientCall}, the operation schema constant). Template authors
+     * must keep it that way: a new lowercase local in the operation body needs a leading
+     * underscore, not an entry here, because entries here change the client's public API.
+     */
+    private static final Set<String> RESERVED = Set.of("self", "plugins");
+
     private final GenerationContext context;
     private final StructureShape input;
     private final Map<MemberShape, String> parameters = new LinkedHashMap<>();
@@ -26,42 +41,49 @@ final class OperationInputGenerator {
     OperationInputGenerator(GenerationContext context, OperationShape operation) {
         this.context = context;
         input = context.model().expectShape(operation.getInputShape(), StructureShape.class);
-        // Also avoid reassigning typed parameters to unrelated pipeline locals.
-        var reserved = new HashSet<>(Set.of("self",
-                "plugins",
-                "deepcopy",
-                "input",
-                "operation_plugins",
-                "config",
-                "plugin",
-                "retry_strategy",
-                "pipeline",
-                "call"));
-        // Integration plugins are referenced inside the method too. A modeled
-        // parameter must not shadow one of their imported function names.
-        for (var integration : context.integrations()) {
-            for (var plugin : integration.getClientPlugins(context)) {
-                if (plugin.matchesOperation(context.model(), context.settings().service(context.model()), operation)) {
-                    plugin.getPythonPlugin().ifPresent(symbol -> reserved.add(symbol.getAlias()));
-                }
-            }
-        }
         var members = input.members().stream().filter(member -> {
             var target = context.model().expectShape(member.getTarget());
             return !(target.isUnionShape() && target.hasTrait(StreamingTrait.class));
         }).toList();
-        var used = new HashSet<>(reserved);
-        members.forEach(member -> used.add(context.symbolProvider().toMemberName(member)));
+        var claimedBy = new HashMap<String, MemberShape>();
         for (var member : members) {
-            var name = context.symbolProvider().toMemberName(member);
-            if (reserved.contains(name)) {
-                do {
-                    name += "_";
-                } while (used.contains(name));
+            var name = parameterName(context.symbolProvider().toMemberName(member));
+            var previous = claimedBy.put(name, member);
+            if (previous != null) {
+                // Two members of the same shape normalize to one Python name, so one would
+                // silently overwrite the other. This breaks the dataclass too, but the
+                // operation method is where it's cheapest to say so.
+                throw new CodegenException(String.format(
+                        "Members `%s` and `%s` of %s both become the parameter `%s` of operation %s.",
+                        previous.getMemberName(),
+                        member.getMemberName(),
+                        input.getId(),
+                        name,
+                        operation.getId()));
             }
-            used.add(name);
             parameters.put(member, name);
         }
+    }
+
+    /**
+     * Maps a member's Python name to the keyword the operation method accepts for it.
+     *
+     * <p>This is a pure function of the member's own name, so adding a member to a shape
+     * can never rename another member's keyword. The mapping is injective: an escaped name
+     * always satisfies the escape condition itself, so it can never equal an unescaped one.
+     */
+    // Package-private for testing.
+    static String parameterName(String memberName) {
+        // Stripping trailing underscores keeps the escape closed, so `plugins` becomes
+        // `plugins_` without stealing the keyword an existing `plugins_` member owns.
+        var stem = memberName;
+        while (stem.endsWith("_")) {
+            stem = stem.substring(0, stem.length() - 1);
+        }
+        if (RESERVED.contains(stem) || memberName.startsWith("_")) {
+            return memberName + "_";
+        }
+        return memberName;
     }
 
     void writeParameters(PythonWriter writer) {
@@ -97,7 +119,7 @@ final class OperationInputGenerator {
                         """, name, MemberDefault.of(context, writer, member).value());
             }
         });
-        writer.write("input = $T(", context.symbolProvider().toSymbol(input)).indent();
+        writer.write("_input = $T(", context.symbolProvider().toSymbol(input)).indent();
         parameters.forEach((member, name) -> writer.write("$L=$L,",
                 context.symbolProvider().toMemberName(member),
                 name));
