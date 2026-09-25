@@ -6,17 +6,14 @@
 
 ### Breaking Changes
 
-* Regenerated client operations accept input members as keyword-only arguments
-  instead of an input object. Both spellings of the old call break:
-  `client.echo_message(EchoMessageInput(message="spam"))` and
-  `client.echo_message(input=EchoMessageInput(message="spam"))` become
+* Changed generated client operations to accept input members as keyword-only
+  arguments instead of an input object, so
+  `client.echo_message(EchoMessageInput(message="spam"))` becomes
   `client.echo_message(message="spam")`. Operations with no input members no
-  longer need an empty input object. Per-operation `plugins` must also be passed
-  by keyword; an input member named `plugins` or `self` takes a trailing
-  underscore, as `plugins_` or `self_`. The input classes themselves remain
-  exported and unchanged, as do nested models, output types, and existing input
-  defaults and nullability. Published clients are unaffected until regenerated
-  with this change.
+  longer need an empty input object, and per-operation `plugins` must now be
+  passed by keyword. An input member named `plugins` or `self` becomes
+  `plugins_` or `self_`. Nested models, output types, and the input classes
+  themselves are unchanged.
 
 ## v0.5.0
 
