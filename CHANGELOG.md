@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## v0.6.0
+
 ### Breaking Changes
 
 * Regenerated client operations accept input members as keyword-only arguments
