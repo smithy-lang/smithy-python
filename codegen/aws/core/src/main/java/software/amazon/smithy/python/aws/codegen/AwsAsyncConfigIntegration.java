@@ -146,8 +146,8 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                             .build())
                     .addReference(Symbol.builder()
                             .name("ProtocolConstructor")
-                            .namespace("smithy_aws_core.aio.protocols", ".")
-                            .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                            .namespace("smithy_core.aio.interfaces", ".")
+                            .addDependency(SmithyPythonDependency.SMITHY_CORE)
                             .build())
                     .build();
             var authSchemeSymbol = Symbol.builder()
