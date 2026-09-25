@@ -81,7 +81,8 @@ final class ClientGenerator implements Runnable {
             var isAsyncConfig = asyncConfigSymbol.isPresent();
             var configSym = asyncConfigSymbol.orElse(configSymbol);
             writer.addStdlibImport("asyncio");
-            writer.addStdlibImport("copy", "deepcopy");
+            // Imported privately: operation methods call it alongside modeled parameters.
+            writer.addStdlibImport("copy", "deepcopy", "_deepcopy");
 
             writer.write("""
                     def __init__(
@@ -108,7 +109,7 @@ final class ClientGenerator implements Runnable {
                                         ${6C|}
                                     else:
                                         # Copy so plugins don't mutate the caller's config.
-                                        config = deepcopy(self._config)
+                                        config = _deepcopy(self._config)
                                     for plugin in self._client_plugins:
                                         plugin(config)
                                     if self._plugins:
@@ -181,8 +182,20 @@ final class ClientGenerator implements Runnable {
 
     private void writeDefaultPlugins(PythonWriter writer, Collection<SymbolReference> plugins) {
         for (SymbolReference plugin : plugins) {
-            writer.write("$T,", plugin);
+            writer.write("$T,", privateAlias(plugin));
         }
+    }
+
+    /**
+     * Re-aliases a plugin reference so it imports under a leading underscore.
+     *
+     * <p>Operation-scoped plugins are referenced from inside generated operation methods,
+     * whose other names are modeled. Importing them privately means a modeled member named
+     * {@code user_agent_plugin} can't shadow one, and, more importantly, that no member's
+     * keyword depends on which plugins happened to match its operation.
+     */
+    private static SymbolReference privateAlias(SymbolReference plugin) {
+        return plugin.toBuilder().alias("_" + plugin.getAlias()).build();
     }
 
     private void writeConstructorDocs(PythonWriter writer, String clientName) {
@@ -207,41 +220,31 @@ final class ClientGenerator implements Runnable {
     private void generateOperation(PythonWriter writer, OperationShape operation) {
         var operationSymbol = symbolProvider.toSymbol(operation);
         var operationMethodSymbol = operationSymbol.expectProperty(OPERATION_METHOD);
-        var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
-
-        var input = model.expectShape(operation.getInputShape());
-        var inputSymbol = symbolProvider.toSymbol(input);
 
         var output = model.expectShape(operation.getOutputShape());
         var outputSymbol = symbolProvider.toSymbol(output);
 
-        writer.putContext("input", inputSymbol);
         writer.putContext("output", outputSymbol);
-        writer.putContext("plugin", pluginSymbol);
         writer.putContext("operationName", operationMethodSymbol.getName());
+        writer.putContext("parameters",
+                writer.consumer(new OperationInputGenerator(context, operation)::writeParameters));
         writer.write("""
                 async def ${operationName:L}(
-                    self,
-                    input: ${input:T},
-                    plugins: list[${plugin:T}] | None = None
+                    ${parameters:C|}
                 ) -> ${output:T}:
                     ${C|}
-                    return await pipeline(call)
+                    return await _pipeline(_call)
                 """,
-                writer.consumer(w -> writeSharedOperationInit(w, operation, input, output)));
-    }
-
-    private void writeSharedOperationInit(PythonWriter writer, OperationShape operation, Shape input, Shape output) {
-        writeSharedOperationInit(writer, operation, input, output, null);
+                writer.consumer(w -> writeSharedOperationInit(w, operation, output, null)));
     }
 
     private void writeSharedOperationInit(
             PythonWriter writer,
             OperationShape operation,
-            Shape input,
             Shape output,
             String eventStreamOutputDocs
     ) {
+        var operationInput = new OperationInputGenerator(context, operation);
         writer.writeMultiLineDocs(() -> {
             var operationDocs = writer.formatDocs(operation.getTrait(DocumentationTrait.class)
                     .map(StringTrait::getValue)
@@ -249,9 +252,7 @@ final class ClientGenerator implements Runnable {
                             operation.getId().getName())),
                     context);
 
-            var inputSymbolName = symbolProvider.toSymbol(input).getName();
             var outputSymbolName = symbolProvider.toSymbol(output).getName();
-            var inputDocs = String.format("An instance of `%s`.", inputSymbolName);
             var outputDocs = eventStreamOutputDocs != null ? eventStreamOutputDocs
                     : String.format("An instance of `%s`.", outputSymbolName);
 
@@ -259,17 +260,11 @@ final class ClientGenerator implements Runnable {
                     $L
 
                     Args:
-                        input:
-                            $L
-                        plugins:
-                            A list of callables that modify the configuration dynamically.
-                            Changes made by these plugins only apply for the duration of the
-                            operation execution and will not affect any other operation
-                            invocations.
+                        ${C|}
 
                     Returns:
                         ${L|}
-                    """, operationDocs, inputDocs, outputDocs);
+                    """, operationDocs, writer.consumer(operationInput::writeDocs), outputDocs);
         });
 
         // Operation-scoped plugins are collected per-operation. Service-scoped plugins
@@ -284,8 +279,10 @@ final class ClientGenerator implements Runnable {
         }
 
         writer.putContext("operation", symbolProvider.toSymbol(operation));
-        writer.addStdlibImport("copy", "deepcopy");
-
+        // Built after the closed check so a closed client raises before any work is done.
+        writer.putContext("input", writer.consumer(operationInput::writeInput));
+        // Every local below is underscore-prefixed so that it can't collide with a modeled
+        // member's keyword. See OperationInputGenerator.RESERVED before adding a new one.
         writer.write(
                 """
                         if self._closed:
@@ -293,50 +290,51 @@ final class ClientGenerator implements Runnable {
                                 "Cannot invoke an operation on a client that has been closed."
                             )
 
-                        operation_plugins: list[Plugin] = [
+                        ${input:C|}
+                        _operation_plugins: list[$8T] = [
                             $1C
                         ]
                         if plugins:
-                            operation_plugins.extend(plugins)
+                            _operation_plugins.extend(plugins)
                         await self._ensure_setup()
                         assert self._config is not None
-                        if operation_plugins:
+                        if _operation_plugins:
                             # Keep operation-plugin mutations scoped to this call.
-                            config = deepcopy(self._config)
-                            for plugin in operation_plugins:
-                                plugin(config)
+                            _config = _deepcopy(self._config)
+                            for _plugin in _operation_plugins:
+                                _plugin(_config)
                         else:
-                            config = self._config
+                            _config = self._config
                         if (
-                            config.protocol is None
-                            or config.transport is None
-                            or config.endpoint_resolver is None
-                            or config.auth_scheme_resolver is None
-                            or config.auth_schemes is None
+                            _config.protocol is None
+                            or _config.transport is None
+                            or _config.endpoint_resolver is None
+                            or _config.auth_scheme_resolver is None
+                            or _config.auth_schemes is None
                         ):
                             raise $2T(
                                 "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
                                 " and auth_schemes MUST be set on the config to make calls."
                             )
 
-                        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
-                            retry_strategy=config.retry_strategy,
+                        _retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+                            retry_strategy=_config.retry_strategy,
                             ${7C|}
                         )
 
-                        pipeline = $3T(
-                            protocol=config.protocol,
-                            transport=config.transport
+                        _pipeline = $3T(
+                            protocol=_config.protocol,
+                            transport=_config.transport
                         )
-                        call = $4T(
-                            input=input,
+                        _call = $4T(
+                            input=_input,
                             operation=${operation:T},
-                            context=$5T({"config": config}),
-                            interceptor=$6T(config.interceptors),
-                            auth_scheme_resolver=config.auth_scheme_resolver,
-                            supported_auth_schemes=config.auth_schemes,
-                            endpoint_resolver=config.endpoint_resolver,
-                            retry_strategy=retry_strategy,
+                            context=$5T({"config": _config}),
+                            interceptor=$6T(_config.interceptors),
+                            auth_scheme_resolver=_config.auth_scheme_resolver,
+                            supported_auth_schemes=_config.auth_schemes,
+                            endpoint_resolver=_config.endpoint_resolver,
+                            retry_strategy=_retry_strategy,
                         )
                         """,
                 writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)),
@@ -347,10 +345,11 @@ final class ClientGenerator implements Runnable {
                 RuntimeTypes.INTERCEPTOR_CHAIN,
                 writer.consumer(w -> {
                     if (CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model()).isPresent()) {
-                        w.write("retry_mode=config.retry_mode,");
-                        w.write("max_attempts=config.max_attempts,");
+                        w.write("retry_mode=_config.retry_mode,");
+                        w.write("max_attempts=_config.max_attempts,");
                     }
-                }));
+                }),
+                CodegenUtils.getPluginSymbol(context.settings()));
 
     }
 
@@ -361,12 +360,8 @@ final class ClientGenerator implements Runnable {
         writer.putContext("operation", operationSymbol);
         var operationMethodSymbol = operationSymbol.expectProperty(OPERATION_METHOD);
         writer.putContext("operationName", operationMethodSymbol.getName());
-        var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
-        writer.putContext("plugin", pluginSymbol);
-
-        var input = model.expectShape(operation.getInputShape());
-        var inputSymbol = symbolProvider.toSymbol(input);
-        writer.putContext("input", inputSymbol);
+        writer.putContext("parameters",
+                writer.consumer(new OperationInputGenerator(context, operation)::writeParameters));
 
         var eventStreamIndex = EventStreamIndex.of(model);
         var inputStreamSymbol = eventStreamIndex.getInputInfo(operation)
@@ -397,53 +392,47 @@ final class ClientGenerator implements Runnable {
                 var outputDocs = "A `DuplexEventStream` for bidirectional streaming.";
                 writer.write("""
                         async def ${operationName:L}(
-                            self,
-                            input: ${input:T},
-                            plugins: list[${plugin:T}] | None = None
+                            ${parameters:C|}
                         ) -> ${duplexEventStream:T}[${inputStream:T}, ${outputStream:T}, ${output:T}]:
                             ${C|}
-                            return await pipeline.duplex_stream(
-                                call,
+                            return await _pipeline.duplex_stream(
+                                _call,
                                 ${inputStream:T},
                                 ${outputStream:T},
                                 ${outputStreamDeserializer:T}().deserialize
                             )
                         """,
-                        writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, outputDocs)));
+                        writer.consumer(w -> writeSharedOperationInit(w, operation, output, outputDocs)));
             } else {
                 writer.putContext("inputEventStream", RuntimeTypes.INPUT_EVENT_STREAM);
                 var outputDocs = "An `InputEventStream` for client-to-server streaming.";
                 writer.write("""
                         async def ${operationName:L}(
-                            self,
-                            input: ${input:T},
-                            plugins: list[${plugin:T}] | None = None
+                            ${parameters:C|}
                         ) -> ${inputEventStream:T}[${inputStream:T}, ${output:T}]:
                             ${C|}
-                            return await pipeline.input_stream(
-                                call,
+                            return await _pipeline.input_stream(
+                                _call,
                                 ${inputStream:T}
                             )
                         """,
-                        writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, outputDocs)));
+                        writer.consumer(w -> writeSharedOperationInit(w, operation, output, outputDocs)));
             }
         } else {
             writer.putContext("outputEventStream", RuntimeTypes.OUTPUT_EVENT_STREAM);
             var outputDocs = "An `OutputEventStream` for server-to-client streaming.";
             writer.write("""
                     async def ${operationName:L}(
-                        self,
-                        input: ${input:T},
-                        plugins: list[${plugin:T}] | None = None
+                        ${parameters:C|}
                     ) -> ${outputEventStream:T}[${outputStream:T}, ${output:T}]:
                         ${C|}
-                        return await pipeline.output_stream(
-                            call,
+                        return await _pipeline.output_stream(
+                            _call,
                             ${outputStream:T},
                             ${outputStreamDeserializer:T}().deserialize
                         )
                     """,
-                    writer.consumer(w -> writeSharedOperationInit(w, operation, input, output, outputDocs)));
+                    writer.consumer(w -> writeSharedOperationInit(w, operation, output, outputDocs)));
         }
     }
 }

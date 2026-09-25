@@ -64,15 +64,23 @@ public class AwsCodegenTest {
                 "for plugin in self._client_plugins:",
                 "for plugin in self._plugins:",
                 "self._config = config",
-                "if operation_plugins:",
-                "config = deepcopy(self._config)",
-                "for plugin in operation_plugins:",
-                "config = self._config");
+                "if _operation_plugins:",
+                "_config = _deepcopy(self._config)",
+                "for _plugin in _operation_plugins:",
+                "_config = self._config");
         assertFalse(client.contains("plugin(self._config)"));
-        assertTrue(client.contains("retry_mode=config.retry_mode"));
-        assertTrue(client.contains("max_attempts=config.max_attempts"));
-        assertFalse(client.contains("getattr(config, \"retry_mode\""));
-        assertFalse(client.contains("getattr(config, \"max_attempts\""));
+        assertTrue(client.contains("retry_mode=_config.retry_mode"));
+        assertTrue(client.contains("max_attempts=_config.max_attempts"));
+        assertFalse(client.contains("getattr(_config, \"retry_mode\""));
+        assertFalse(client.contains("getattr(_config, \"max_attempts\""));
+
+        // Operation bodies bind only underscored locals, so a modeled member can't shadow one.
+        assertTrue(client.contains("from copy import deepcopy as _deepcopy"));
+        assertTrue(client.contains("_operation_plugins: list["));
+        // Plugins are imported privately so a modeled member can't shadow one, and so no
+        // member's keyword depends on which plugins matched its operation.
+        assertTrue(client.contains("aws_user_agent_plugin as _aws_user_agent_plugin"));
+        assertTrue(client.contains("_aws_user_agent_plugin,"));
     }
 
     private static void assertInOrder(String value, String... fragments) {

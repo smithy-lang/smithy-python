@@ -162,18 +162,20 @@ import asyncio
 
 from echo.client import EchoService
 from echo.config import Config
-from echo.models import EchoMessageInput
 
 
 async def main() -> None:
     async with EchoService(Config(endpoint_uri="https://example.com/")) as client:
-        response = await client.echo_message(EchoMessageInput(message="spam"))
+        response = await client.echo_message(message="spam")
         print(response.message)
 
 
 if __name__ == "__main__":
     asyncio.run(main())
 ```
+
+Generated operations take input members as keyword-only arguments. Nested values
+and returned outputs still use generated models.
 
 #### pandoc CLI
 

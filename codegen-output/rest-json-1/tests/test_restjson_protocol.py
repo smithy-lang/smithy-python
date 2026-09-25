@@ -22,77 +22,37 @@ from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfigura
 from restjson.client import AsyncRestJsonProtocolClient
 from restjson.config import AsyncRestJsonProtocolConfig
 from restjson.models import (
-    AllQueryStringTypesInput,
     ClientOptionalDefaults,
-    ConstantAndVariableQueryStringInput,
-    ConstantQueryStringInput,
-    DatetimeOffsetsInput,
     DatetimeOffsetsOutput,
     Defaults,
     Dialog,
-    DocumentTypeAsMapValueInput,
     DocumentTypeAsMapValueOutput,
-    DocumentTypeAsPayloadInput,
     DocumentTypeAsPayloadOutput,
-    DocumentTypeInput,
     DocumentTypeOutput,
-    EmptyInputAndEmptyOutputInput,
     EmptyInputAndEmptyOutputOutput,
-    EndpointOperationInput,
-    EndpointWithHostLabelOperationInput,
     Farewell,
-    FractionalSecondsInput,
     FractionalSecondsOutput,
     GreetingStruct,
-    GreetingWithErrorsInput,
     GreetingWithErrorsOutput,
-    HostWithPathOperationInput,
-    HttpChecksumRequiredInput,
-    HttpEmptyPrefixHeadersInput,
     HttpEmptyPrefixHeadersOutput,
-    HttpEnumPayloadInput,
     HttpEnumPayloadOutput,
-    HttpPayloadTraitsInput,
     HttpPayloadTraitsOutput,
-    HttpPayloadTraitsWithMediaTypeInput,
     HttpPayloadTraitsWithMediaTypeOutput,
-    HttpPayloadWithStructureInput,
     HttpPayloadWithStructureOutput,
-    HttpPayloadWithUnionInput,
     HttpPayloadWithUnionOutput,
-    HttpPrefixHeadersInResponseInput,
     HttpPrefixHeadersInResponseOutput,
-    HttpPrefixHeadersInput,
     HttpPrefixHeadersOutput,
-    HttpQueryParamsOnlyOperationInput,
-    HttpRequestWithFloatLabelsInput,
-    HttpRequestWithGreedyLabelInPathInput,
-    HttpRequestWithLabelsAndTimestampFormatInput,
-    HttpRequestWithLabelsInput,
-    HttpRequestWithRegexLiteralInput,
-    HttpResponseCodeInput,
     HttpResponseCodeOutput,
-    HttpStringPayloadInput,
     HttpStringPayloadOutput,
-    IgnoreQueryParamsInResponseInput,
     IgnoreQueryParamsInResponseOutput,
-    InputAndOutputWithHeadersInput,
     InputAndOutputWithHeadersOutput,
-    JsonBlobsInput,
     JsonBlobsOutput,
-    JsonEnumsInput,
     JsonEnumsOutput,
-    JsonIntEnumsInput,
     JsonIntEnumsOutput,
-    JsonListsInput,
     JsonListsOutput,
-    JsonMapsInput,
     JsonMapsOutput,
-    JsonTimestampsInput,
     JsonTimestampsOutput,
-    JsonUnionsInput,
     JsonUnionsOutput,
-    MediaTypeHeaderInput,
     MediaTypeHeaderOutput,
     MyUnionBlobValue,
     MyUnionBooleanValue,
@@ -107,54 +67,26 @@ from restjson.models import (
     MyUnionUnionValue,
     NestedPayload,
     NestedUnionStringValue,
-    NoInputAndNoOutputInput,
     NoInputAndNoOutputOutput,
-    NoInputAndOutputInput,
     NoInputAndOutputOutput,
-    NullAndEmptyHeadersClientInput,
-    OmitsNullSerializesEmptyStringInput,
-    OmitsSerializingEmptyListsInput,
-    OperationWithDefaultsInput,
     OperationWithDefaultsOutput,
-    OperationWithNestedStructureInput,
     OperationWithNestedStructureOutput,
     PayloadConfig,
     PlayerActionQuit,
-    PostPlayerActionInput,
     PostPlayerActionOutput,
-    PostUnionWithJsonNameInput,
     PostUnionWithJsonNameOutput,
-    PutWithContentEncodingInput,
-    QueryIdempotencyTokenAutoFillInput,
-    QueryParamsAsStringListMapInput,
-    QueryPrecedenceInput,
-    RecursiveShapesInput,
     RecursiveShapesInputOutputNested1,
     RecursiveShapesInputOutputNested2,
     RecursiveShapesOutput,
     RenamedGreeting,
     ServiceError,
-    SimpleScalarPropertiesInput,
     SimpleScalarPropertiesOutput,
-    SparseJsonListsInput,
     SparseJsonListsOutput,
-    SparseJsonMapsInput,
     SparseJsonMapsOutput,
-    StreamingTraitsInput,
     StreamingTraitsOutput,
-    StreamingTraitsRequireLengthInput,
-    StreamingTraitsWithMediaTypeInput,
     StreamingTraitsWithMediaTypeOutput,
     StructureListMember,
-    TestBodyStructureInput,
     TestConfig,
-    TestGetNoInputNoPayloadInput,
-    TestGetNoPayloadInput,
-    TestPayloadBlobInput,
-    TestPayloadStructureInput,
-    TestPostNoInputNoPayloadInput,
-    TestPostNoPayloadInput,
-    TimestampFormatHeadersInput,
     TimestampFormatHeadersOutput,
     TopLevel,
     UnionPayloadGreeting,
@@ -162,7 +94,6 @@ from restjson.models import (
     UnionWithJsonNameBaz,
     UnionWithJsonNameFoo,
     Unit,
-    UnitInputAndOutputInput,
     UnitInputAndOutputOutput,
 )
 
@@ -183,61 +114,59 @@ async def test_rest_json_all_query_string_types_request_all_query_string_types()
         )
     )
 
-    input_ = AllQueryStringTypesInput(
-        query_string="Hello there",
-        query_string_list=["a", "b", "c"],
-        query_string_set=["a", "b", "c"],
-        query_byte=1,
-        query_short=2,
-        query_integer=3,
-        query_integer_list=[1, 2, 3],
-        query_integer_set=[1, 2, 3],
-        query_long=4,
-        query_float=float(1.1),
-        query_double=float(1.1),
-        query_double_list=[float(1.1), float(2.1), float(3.1)],
-        query_boolean=True,
-        query_boolean_list=[True, False, True],
-        query_timestamp=datetime(1970, 1, 1, 0, 0, 1, 0, timezone.utc),
-        query_timestamp_list=[
-            datetime(1970, 1, 1, 0, 0, 1, 0, timezone.utc),
-            datetime(1970, 1, 1, 0, 0, 2, 0, timezone.utc),
-            datetime(1970, 1, 1, 0, 0, 3, 0, timezone.utc),
-        ],
-        query_enum="Foo",
-        query_enum_list=["Foo", "Baz", "Bar"],
-        query_integer_enum=1,
-        query_integer_enum_list=[1, 2, 3],
-        query_params_map_of_string_list={
-            "String": ["Hello there"],
-            "StringList": ["a", "b", "c"],
-            "StringSet": ["a", "b", "c"],
-            "Byte": ["1"],
-            "Short": ["2"],
-            "Integer": ["3"],
-            "IntegerList": ["1", "2", "3"],
-            "IntegerSet": ["1", "2", "3"],
-            "Long": ["4"],
-            "Float": ["1.1"],
-            "Double": ["1.1"],
-            "DoubleList": ["1.1", "2.1", "3.1"],
-            "Boolean": ["true"],
-            "BooleanList": ["true", "false", "true"],
-            "Timestamp": ["1970-01-01T00:00:01Z"],
-            "TimestampList": [
-                "1970-01-01T00:00:01Z",
-                "1970-01-01T00:00:02Z",
-                "1970-01-01T00:00:03Z",
-            ],
-            "Enum": ["Foo"],
-            "EnumList": ["Foo", "Baz", "Bar"],
-            "IntegerEnum": ["1"],
-            "IntegerEnumList": ["1", "2", "3"],
-        },
-    )
-
     try:
-        await client.all_query_string_types(input_)
+        await client.all_query_string_types(
+            query_string="Hello there",
+            query_string_list=["a", "b", "c"],
+            query_string_set=["a", "b", "c"],
+            query_byte=1,
+            query_short=2,
+            query_integer=3,
+            query_integer_list=[1, 2, 3],
+            query_integer_set=[1, 2, 3],
+            query_long=4,
+            query_float=float(1.1),
+            query_double=float(1.1),
+            query_double_list=[float(1.1), float(2.1), float(3.1)],
+            query_boolean=True,
+            query_boolean_list=[True, False, True],
+            query_timestamp=datetime(1970, 1, 1, 0, 0, 1, 0, timezone.utc),
+            query_timestamp_list=[
+                datetime(1970, 1, 1, 0, 0, 1, 0, timezone.utc),
+                datetime(1970, 1, 1, 0, 0, 2, 0, timezone.utc),
+                datetime(1970, 1, 1, 0, 0, 3, 0, timezone.utc),
+            ],
+            query_enum="Foo",
+            query_enum_list=["Foo", "Baz", "Bar"],
+            query_integer_enum=1,
+            query_integer_enum_list=[1, 2, 3],
+            query_params_map_of_string_list={
+                "String": ["Hello there"],
+                "StringList": ["a", "b", "c"],
+                "StringSet": ["a", "b", "c"],
+                "Byte": ["1"],
+                "Short": ["2"],
+                "Integer": ["3"],
+                "IntegerList": ["1", "2", "3"],
+                "IntegerSet": ["1", "2", "3"],
+                "Long": ["4"],
+                "Float": ["1.1"],
+                "Double": ["1.1"],
+                "DoubleList": ["1.1", "2.1", "3.1"],
+                "Boolean": ["true"],
+                "BooleanList": ["true", "false", "true"],
+                "Timestamp": ["1970-01-01T00:00:01Z"],
+                "TimestampList": [
+                    "1970-01-01T00:00:01Z",
+                    "1970-01-01T00:00:02Z",
+                    "1970-01-01T00:00:03Z",
+                ],
+                "Enum": ["Foo"],
+                "EnumList": ["Foo", "Baz", "Bar"],
+                "IntegerEnum": ["1"],
+                "IntegerEnumList": ["1", "2", "3"],
+            },
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -343,15 +272,13 @@ async def test_rest_json_query_string_map_request_all_query_string_types() -> No
         )
     )
 
-    input_ = AllQueryStringTypesInput(
-        query_params_map_of_string_list={
-            "QueryParamsStringKeyA": ["Foo"],
-            "QueryParamsStringKeyB": ["Bar"],
-        }
-    )
-
     try:
-        await client.all_query_string_types(input_)
+        await client.all_query_string_types(
+            query_params_map_of_string_list={
+                "QueryParamsStringKeyA": ["Foo"],
+                "QueryParamsStringKeyB": ["Bar"],
+            }
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -421,13 +348,11 @@ async def test_rest_json_query_string_escaping_request_all_query_string_types() 
         )
     )
 
-    input_ = AllQueryStringTypesInput(
-        query_string=" %:/?#[]@!$&'()*+,;=😹",
-        query_params_map_of_string_list={"String": [" %:/?#[]@!$&'()*+,;=😹"]},
-    )
-
     try:
-        await client.all_query_string_types(input_)
+        await client.all_query_string_types(
+            query_string=" %:/?#[]@!$&'()*+,;=😹",
+            query_params_map_of_string_list={"String": [" %:/?#[]@!$&'()*+,;=😹"]},
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -498,14 +423,12 @@ async def test_rest_json_supports_na_n_float_query_values_request_all_query_stri
         )
     )
 
-    input_ = AllQueryStringTypesInput(
-        query_float=float("nan"),
-        query_double=float("nan"),
-        query_params_map_of_string_list={"Float": ["NaN"], "Double": ["NaN"]},
-    )
-
     try:
-        await client.all_query_string_types(input_)
+        await client.all_query_string_types(
+            query_float=float("nan"),
+            query_double=float("nan"),
+            query_params_map_of_string_list={"Float": ["NaN"], "Double": ["NaN"]},
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -574,14 +497,15 @@ async def test_rest_json_supports_infinity_float_query_values_request_all_query_
         )
     )
 
-    input_ = AllQueryStringTypesInput(
-        query_float=float("inf"),
-        query_double=float("inf"),
-        query_params_map_of_string_list={"Float": ["Infinity"], "Double": ["Infinity"]},
-    )
-
     try:
-        await client.all_query_string_types(input_)
+        await client.all_query_string_types(
+            query_float=float("inf"),
+            query_double=float("inf"),
+            query_params_map_of_string_list={
+                "Float": ["Infinity"],
+                "Double": ["Infinity"],
+            },
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -650,17 +574,15 @@ async def test_rest_json_supports_negative_infinity_float_query_values_request_a
         )
     )
 
-    input_ = AllQueryStringTypesInput(
-        query_float=float("-inf"),
-        query_double=float("-inf"),
-        query_params_map_of_string_list={
-            "Float": ["-Infinity"],
-            "Double": ["-Infinity"],
-        },
-    )
-
     try:
-        await client.all_query_string_types(input_)
+        await client.all_query_string_types(
+            query_float=float("-inf"),
+            query_double=float("-inf"),
+            query_params_map_of_string_list={
+                "Float": ["-Infinity"],
+                "Double": ["-Infinity"],
+            },
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -729,14 +651,12 @@ async def test_rest_json_zero_and_false_query_values_request_all_query_string_ty
         )
     )
 
-    input_ = AllQueryStringTypesInput(
-        query_integer=0,
-        query_boolean=False,
-        query_params_map_of_string_list={"Integer": ["0"], "Boolean": ["false"]},
-    )
-
     try:
-        await client.all_query_string_types(input_)
+        await client.all_query_string_types(
+            query_integer=0,
+            query_boolean=False,
+            query_params_map_of_string_list={"Integer": ["0"], "Boolean": ["false"]},
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -805,10 +725,8 @@ async def test_rest_json_constant_and_variable_query_string_missing_one_value_re
         )
     )
 
-    input_ = ConstantAndVariableQueryStringInput(baz="bam")
-
     try:
-        await client.constant_and_variable_query_string(input_)
+        await client.constant_and_variable_query_string(baz="bam")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -877,10 +795,8 @@ async def test_rest_json_constant_and_variable_query_string_all_values_request_c
         )
     )
 
-    input_ = ConstantAndVariableQueryStringInput(baz="bam", maybe_set="yes")
-
     try:
-        await client.constant_and_variable_query_string(input_)
+        await client.constant_and_variable_query_string(baz="bam", maybe_set="yes")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -947,10 +863,8 @@ async def test_rest_json_constant_query_string_request_constant_query_string() -
         )
     )
 
-    input_ = ConstantQueryStringInput(hello="hi")
-
     try:
-        await client.constant_query_string(input_)
+        await client.constant_query_string(hello="hi")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -1025,10 +939,8 @@ async def test_rest_json_date_time_with_negative_offset_response_datetime_offset
         )
     )
 
-    input_ = DatetimeOffsetsInput()
-
     try:
-        actual = await client.datetime_offsets(input_)
+        actual = await client.datetime_offsets()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -1061,10 +973,8 @@ async def test_rest_json_date_time_with_positive_offset_response_datetime_offset
         )
     )
 
-    input_ = DatetimeOffsetsInput()
-
     try:
-        actual = await client.datetime_offsets(input_)
+        actual = await client.datetime_offsets()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -1092,12 +1002,10 @@ async def test_document_type_input_with_object_request_document_type() -> None:
         )
     )
 
-    input_ = DocumentTypeInput(
-        string_value="string", document_value=Document({"foo": "bar"})
-    )
-
     try:
-        await client.document_type(input_)
+        await client.document_type(
+            string_value="string", document_value=Document({"foo": "bar"})
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -1166,10 +1074,10 @@ async def test_document_input_with_string_request_document_type() -> None:
         )
     )
 
-    input_ = DocumentTypeInput(string_value="string", document_value=Document("hello"))
-
     try:
-        await client.document_type(input_)
+        await client.document_type(
+            string_value="string", document_value=Document("hello")
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -1240,10 +1148,8 @@ async def test_document_input_with_number_request_document_type() -> None:
         )
     )
 
-    input_ = DocumentTypeInput(string_value="string", document_value=Document(10))
-
     try:
-        await client.document_type(input_)
+        await client.document_type(string_value="string", document_value=Document(10))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -1314,10 +1220,8 @@ async def test_document_input_with_boolean_request_document_type() -> None:
         )
     )
 
-    input_ = DocumentTypeInput(string_value="string", document_value=Document(True))
-
     try:
-        await client.document_type(input_)
+        await client.document_type(string_value="string", document_value=Document(True))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -1388,13 +1292,11 @@ async def test_document_input_with_list_request_document_type() -> None:
         )
     )
 
-    input_ = DocumentTypeInput(
-        string_value="string",
-        document_value=Document([True, "hi", [1, 2], {"foo": {"baz": [3, 4]}}]),
-    )
-
     try:
-        await client.document_type(input_)
+        await client.document_type(
+            string_value="string",
+            document_value=Document([True, "hi", [1, 2], {"foo": {"baz": [3, 4]}}]),
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -1469,10 +1371,8 @@ async def test_document_output_response_document_type() -> None:
         )
     )
 
-    input_ = DocumentTypeInput()
-
     try:
-        actual = await client.document_type(input_)
+        actual = await client.document_type()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -1500,10 +1400,8 @@ async def test_document_output_string_response_document_type() -> None:
         )
     )
 
-    input_ = DocumentTypeInput()
-
     try:
-        actual = await client.document_type(input_)
+        actual = await client.document_type()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -1531,10 +1429,8 @@ async def test_document_output_number_response_document_type() -> None:
         )
     )
 
-    input_ = DocumentTypeInput()
-
     try:
-        actual = await client.document_type(input_)
+        actual = await client.document_type()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -1562,10 +1458,8 @@ async def test_document_output_boolean_response_document_type() -> None:
         )
     )
 
-    input_ = DocumentTypeInput()
-
     try:
-        actual = await client.document_type(input_)
+        actual = await client.document_type()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -1593,10 +1487,8 @@ async def test_document_output_array_response_document_type() -> None:
         )
     )
 
-    input_ = DocumentTypeInput()
-
     try:
-        actual = await client.document_type(input_)
+        actual = await client.document_type()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -1623,16 +1515,14 @@ async def test_document_type_as_map_value_input_request_document_type_as_map_val
         )
     )
 
-    input_ = DocumentTypeAsMapValueInput(
-        doc_valued_map={
-            "foo": Document({"f": 1, "o": 2}),
-            "bar": Document(["b", "a", "r"]),
-            "baz": Document("BAZ"),
-        }
-    )
-
     try:
-        await client.document_type_as_map_value(input_)
+        await client.document_type_as_map_value(
+            doc_valued_map={
+                "foo": Document({"f": 1, "o": 2}),
+                "bar": Document(["b", "a", "r"]),
+                "baz": Document("BAZ"),
+            }
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -1706,10 +1596,8 @@ async def test_document_type_as_map_value_output_response_document_type_as_map_v
         )
     )
 
-    input_ = DocumentTypeAsMapValueInput()
-
     try:
-        actual = await client.document_type_as_map_value(input_)
+        actual = await client.document_type_as_map_value()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -1740,10 +1628,8 @@ async def test_document_type_as_payload_input_request_document_type_as_payload()
         )
     )
 
-    input_ = DocumentTypeAsPayloadInput(document_value=Document({"foo": "bar"}))
-
     try:
-        await client.document_type_as_payload(input_)
+        await client.document_type_as_payload(document_value=Document({"foo": "bar"}))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -1817,10 +1703,8 @@ async def test_document_type_as_payload_input_string_request_document_type_as_pa
         )
     )
 
-    input_ = DocumentTypeAsPayloadInput(document_value=Document("hello"))
-
     try:
-        await client.document_type_as_payload(input_)
+        await client.document_type_as_payload(document_value=Document("hello"))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -1894,10 +1778,8 @@ async def test_document_type_as_payload_output_response_document_type_as_payload
         )
     )
 
-    input_ = DocumentTypeAsPayloadInput()
-
     try:
-        actual = await client.document_type_as_payload(input_)
+        actual = await client.document_type_as_payload()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -1925,10 +1807,8 @@ async def test_document_type_as_payload_output_string_response_document_type_as_
         )
     )
 
-    input_ = DocumentTypeAsPayloadInput()
-
     try:
-        actual = await client.document_type_as_payload(input_)
+        actual = await client.document_type_as_payload()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -1957,10 +1837,8 @@ async def test_rest_json_empty_input_and_empty_output_request_empty_input_and_em
         )
     )
 
-    input_ = EmptyInputAndEmptyOutputInput()
-
     try:
-        await client.empty_input_and_empty_output(input_)
+        await client.empty_input_and_empty_output()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -2033,10 +1911,8 @@ async def test_rest_json_empty_input_and_empty_output_response_empty_input_and_e
         )
     )
 
-    input_ = EmptyInputAndEmptyOutputInput()
-
     try:
-        actual = await client.empty_input_and_empty_output(input_)
+        actual = await client.empty_input_and_empty_output()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -2063,10 +1939,8 @@ async def test_rest_json_empty_input_and_empty_output_json_object_output_respons
         )
     )
 
-    input_ = EmptyInputAndEmptyOutputInput()
-
     try:
-        actual = await client.empty_input_and_empty_output(input_)
+        actual = await client.empty_input_and_empty_output()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -2093,10 +1967,8 @@ async def test_rest_json_endpoint_trait_request_endpoint_operation() -> None:
         )
     )
 
-    input_ = EndpointOperationInput()
-
     try:
-        await client.endpoint_operation(input_)
+        await client.endpoint_operation()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -2170,10 +2042,8 @@ async def test_rest_json_endpoint_trait_with_host_label_request_endpoint_with_ho
         )
     )
 
-    input_ = EndpointWithHostLabelOperationInput(label="bar")
-
     try:
-        await client.endpoint_with_host_label_operation(input_)
+        await client.endpoint_with_host_label_operation(label="bar")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -2250,10 +2120,8 @@ async def test_rest_json_date_time_with_fractional_seconds_response_fractional_s
         )
     )
 
-    input_ = FractionalSecondsInput()
-
     try:
-        actual = await client.fractional_seconds(input_)
+        actual = await client.fractional_seconds()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -2284,10 +2152,8 @@ async def test_rest_json_greeting_with_errors_response_greeting_with_errors() ->
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        actual = await client.greeting_with_errors(input_)
+        actual = await client.greeting_with_errors()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -2316,10 +2182,8 @@ async def test_rest_json_greeting_with_errors_no_payload_response_greeting_with_
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        actual = await client.greeting_with_errors(input_)
+        actual = await client.greeting_with_errors()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -2348,10 +2212,8 @@ async def test_rest_json_invalid_greeting_error_error_greeting_with_errors() -> 
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        await client.greeting_with_errors(input_)
+        await client.greeting_with_errors()
         fail("Expected 'InvalidGreeting' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "InvalidGreeting":
@@ -2383,10 +2245,8 @@ async def test_rest_json_complex_error_with_no_message_error_greeting_with_error
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        await client.greeting_with_errors(input_)
+        await client.greeting_with_errors()
         fail("Expected 'ComplexError' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "ComplexError":
@@ -2416,10 +2276,8 @@ async def test_rest_json_empty_complex_error_with_no_message_error_greeting_with
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        await client.greeting_with_errors(input_)
+        await client.greeting_with_errors()
         fail("Expected 'ComplexError' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "ComplexError":
@@ -2448,10 +2306,8 @@ async def test_rest_json_foo_error_using_x_amzn_error_type_error_greeting_with_e
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        await client.greeting_with_errors(input_)
+        await client.greeting_with_errors()
         fail("Expected 'FooError' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "FooError":
@@ -2490,10 +2346,8 @@ async def test_rest_json_foo_error_using_x_amzn_error_type_with_uri_error_greeti
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        await client.greeting_with_errors(input_)
+        await client.greeting_with_errors()
         fail("Expected 'FooError' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "FooError":
@@ -2530,10 +2384,8 @@ async def test_rest_json_foo_error_using_x_amzn_error_type_with_uri_and_namespac
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        await client.greeting_with_errors(input_)
+        await client.greeting_with_errors()
         fail("Expected 'FooError' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "FooError":
@@ -2569,10 +2421,8 @@ async def test_rest_json_foo_error_using_x_amzn_error_type_with_uri_and_differen
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        await client.greeting_with_errors(input_)
+        await client.greeting_with_errors()
         fail("Expected 'FooError' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "FooError":
@@ -2604,10 +2454,8 @@ async def test_rest_json_foo_error_using_code_error_greeting_with_errors() -> No
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        await client.greeting_with_errors(input_)
+        await client.greeting_with_errors()
         fail("Expected 'FooError' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "FooError":
@@ -2639,10 +2487,8 @@ async def test_rest_json_foo_error_using_code_and_namespace_error_greeting_with_
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        await client.greeting_with_errors(input_)
+        await client.greeting_with_errors()
         fail("Expected 'FooError' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "FooError":
@@ -2675,10 +2521,8 @@ async def test_rest_json_foo_error_using_code_uri_and_namespace_error_greeting_w
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        await client.greeting_with_errors(input_)
+        await client.greeting_with_errors()
         fail("Expected 'FooError' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "FooError":
@@ -2706,10 +2550,8 @@ async def test_rest_json_foo_error_with_dunder_type_error_greeting_with_errors()
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        await client.greeting_with_errors(input_)
+        await client.greeting_with_errors()
         fail("Expected 'FooError' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "FooError":
@@ -2741,10 +2583,8 @@ async def test_rest_json_foo_error_with_dunder_type_and_namespace_error_greeting
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        await client.greeting_with_errors(input_)
+        await client.greeting_with_errors()
         fail("Expected 'FooError' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "FooError":
@@ -2777,10 +2617,8 @@ async def test_rest_json_foo_error_with_dunder_type_uri_and_namespace_error_gree
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        await client.greeting_with_errors(input_)
+        await client.greeting_with_errors()
         fail("Expected 'FooError' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "FooError":
@@ -2814,10 +2652,8 @@ async def test_rest_json_foo_error_with_nested_type_property_error_greeting_with
         )
     )
 
-    input_ = GreetingWithErrorsInput()
-
     try:
-        await client.greeting_with_errors(input_)
+        await client.greeting_with_errors()
         fail("Expected 'FooError' exception to be thrown!")
     except Exception as err:
         if type(err).__name__ != "FooError":
@@ -2840,10 +2676,8 @@ async def test_rest_json_host_with_path_request_host_with_path_operation() -> No
         )
     )
 
-    input_ = HostWithPathOperationInput()
-
     try:
-        await client.host_with_path_operation(input_)
+        await client.host_with_path_operation()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -2913,10 +2747,8 @@ async def test_rest_json_http_checksum_required_request_http_checksum_required()
         )
     )
 
-    input_ = HttpChecksumRequiredInput(foo="base64 encoded md5 checksum")
-
     try:
-        await client.http_checksum_required(input_)
+        await client.http_checksum_required(foo="base64 encoded md5 checksum")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -2990,12 +2822,10 @@ async def test_rest_json_http_empty_prefix_headers_request_client_request_http_e
         )
     )
 
-    input_ = HttpEmptyPrefixHeadersInput(
-        prefix_headers={"x-foo": "Foo", "hello": "Hello"}, specific_header="There"
-    )
-
     try:
-        await client.http_empty_prefix_headers(input_)
+        await client.http_empty_prefix_headers(
+            prefix_headers={"x-foo": "Foo", "hello": "Hello"}, specific_header="There"
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -3065,10 +2895,8 @@ async def test_rest_json_http_empty_prefix_headers_response_client_response_http
         )
     )
 
-    input_ = HttpEmptyPrefixHeadersInput()
-
     try:
-        actual = await client.http_empty_prefix_headers(input_)
+        actual = await client.http_empty_prefix_headers()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3092,10 +2920,8 @@ async def test_rest_json_enum_payload_request_request_http_enum_payload() -> Non
         )
     )
 
-    input_ = HttpEnumPayloadInput(payload="enumvalue")
-
     try:
-        await client.http_enum_payload(input_)
+        await client.http_enum_payload(payload="enumvalue")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -3162,10 +2988,8 @@ async def test_rest_json_enum_payload_response_response_http_enum_payload() -> N
         )
     )
 
-    input_ = HttpEnumPayloadInput()
-
     try:
-        actual = await client.http_enum_payload(input_)
+        actual = await client.http_enum_payload()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3190,10 +3014,8 @@ async def test_rest_json_http_payload_traits_with_blob_request_http_payload_trai
         )
     )
 
-    input_ = HttpPayloadTraitsInput(foo="Foo", blob=b"blobby blob blob")
-
     try:
-        await client.http_payload_traits(input_)
+        await client.http_payload_traits(foo="Foo", blob=b"blobby blob blob")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -3265,10 +3087,8 @@ async def test_rest_json_http_payload_traits_with_no_blob_body_request_http_payl
         )
     )
 
-    input_ = HttpPayloadTraitsInput(foo="Foo")
-
     try:
-        await client.http_payload_traits(input_)
+        await client.http_payload_traits(foo="Foo")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -3338,10 +3158,8 @@ async def test_rest_json_http_payload_traits_with_blob_response_http_payload_tra
         )
     )
 
-    input_ = HttpPayloadTraitsInput()
-
     try:
-        actual = await client.http_payload_traits(input_)
+        actual = await client.http_payload_traits()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3367,10 +3185,8 @@ async def test_rest_json_http_payload_traits_with_no_blob_body_response_http_pay
         )
     )
 
-    input_ = HttpPayloadTraitsInput()
-
     try:
-        actual = await client.http_payload_traits(input_)
+        actual = await client.http_payload_traits()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3395,10 +3211,10 @@ async def test_rest_json_http_payload_traits_with_media_type_with_blob_request_h
         )
     )
 
-    input_ = HttpPayloadTraitsWithMediaTypeInput(foo="Foo", blob=b"blobby blob blob")
-
     try:
-        await client.http_payload_traits_with_media_type(input_)
+        await client.http_payload_traits_with_media_type(
+            foo="Foo", blob=b"blobby blob blob"
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -3473,10 +3289,8 @@ async def test_rest_json_http_payload_traits_with_media_type_with_blob_response_
         )
     )
 
-    input_ = HttpPayloadTraitsWithMediaTypeInput()
-
     try:
-        actual = await client.http_payload_traits_with_media_type(input_)
+        actual = await client.http_payload_traits_with_media_type()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3503,12 +3317,10 @@ async def test_rest_json_http_payload_with_structure_request_http_payload_with_s
         )
     )
 
-    input_ = HttpPayloadWithStructureInput(
-        nested=NestedPayload(greeting="hello", name="Phreddy")
-    )
-
     try:
-        await client.http_payload_with_structure(input_)
+        await client.http_payload_with_structure(
+            nested=NestedPayload(greeting="hello", name="Phreddy")
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -3582,10 +3394,8 @@ async def test_rest_json_http_payload_with_structure_response_http_payload_with_
         )
     )
 
-    input_ = HttpPayloadWithStructureInput()
-
     try:
-        actual = await client.http_payload_with_structure(input_)
+        actual = await client.http_payload_with_structure()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3611,10 +3421,8 @@ async def test_rest_json_http_payload_with_structure_and_empty_response_body_res
         )
     )
 
-    input_ = HttpPayloadWithStructureInput()
-
     try:
-        actual = await client.http_payload_with_structure(input_)
+        actual = await client.http_payload_with_structure()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3639,10 +3447,8 @@ async def test_rest_json_http_payload_with_union_request_http_payload_with_union
         )
     )
 
-    input_ = HttpPayloadWithUnionInput(nested=UnionPayloadGreeting(value="hello"))
-
     try:
-        await client.http_payload_with_union(input_)
+        await client.http_payload_with_union(nested=UnionPayloadGreeting(value="hello"))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -3713,10 +3519,8 @@ async def test_rest_json_http_payload_with_unset_union_request_http_payload_with
         )
     )
 
-    input_ = HttpPayloadWithUnionInput()
-
     try:
-        await client.http_payload_with_union(input_)
+        await client.http_payload_with_union()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -3788,10 +3592,8 @@ async def test_rest_json_http_payload_with_union_response_http_payload_with_unio
         )
     )
 
-    input_ = HttpPayloadWithUnionInput()
-
     try:
-        actual = await client.http_payload_with_union(input_)
+        actual = await client.http_payload_with_union()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3819,10 +3621,8 @@ async def test_rest_json_http_payload_with_unset_union_response_http_payload_wit
         )
     )
 
-    input_ = HttpPayloadWithUnionInput()
-
     try:
-        actual = await client.http_payload_with_union(input_)
+        actual = await client.http_payload_with_union()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -3847,12 +3647,10 @@ async def test_rest_json_http_prefix_headers_are_present_request_http_prefix_hea
         )
     )
 
-    input_ = HttpPrefixHeadersInput(
-        foo="Foo", foo_map={"abc": "Abc value", "def": "Def value"}
-    )
-
     try:
-        await client.http_prefix_headers(input_)
+        await client.http_prefix_headers(
+            foo="Foo", foo_map={"abc": "Abc value", "def": "Def value"}
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -3925,10 +3723,8 @@ async def test_rest_json_http_prefix_headers_are_not_present_request_http_prefix
         )
     )
 
-    input_ = HttpPrefixHeadersInput(foo="Foo", foo_map={})
-
     try:
-        await client.http_prefix_headers(input_)
+        await client.http_prefix_headers(foo="Foo", foo_map={})
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -3997,10 +3793,8 @@ async def test_rest_json_http_prefix_empty_headers_request_http_prefix_headers()
         )
     )
 
-    input_ = HttpPrefixHeadersInput(foo_map={"abc": ""})
-
     try:
-        await client.http_prefix_headers(input_)
+        await client.http_prefix_headers(foo_map={"abc": ""})
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -4076,10 +3870,8 @@ async def test_rest_json_http_prefix_headers_are_present_response_http_prefix_he
         )
     )
 
-    input_ = HttpPrefixHeadersInput()
-
     try:
-        actual = await client.http_prefix_headers(input_)
+        actual = await client.http_prefix_headers()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -4107,10 +3899,8 @@ async def test_http_prefix_headers_response_response_http_prefix_headers_in_resp
         )
     )
 
-    input_ = HttpPrefixHeadersInResponseInput()
-
     try:
-        actual = await client.http_prefix_headers_in_response(input_)
+        actual = await client.http_prefix_headers_in_response()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -4140,10 +3930,8 @@ async def test_http_query_params_only_request_request_http_query_params_only_ope
         )
     )
 
-    input_ = HttpQueryParamsOnlyOperationInput(query_map={"a": "b", "c": "d"})
-
     try:
-        await client.http_query_params_only_operation(input_)
+        await client.http_query_params_only_operation(query_map={"a": "b", "c": "d"})
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -4208,10 +3996,8 @@ async def test_http_query_params_only_empty_request_request_http_query_params_on
         )
     )
 
-    input_ = HttpQueryParamsOnlyOperationInput(query_map={})
-
     try:
-        await client.http_query_params_only_operation(input_)
+        await client.http_query_params_only_operation(query_map={})
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -4276,10 +4062,10 @@ async def test_rest_json_supports_na_n_float_labels_request_http_request_with_fl
         )
     )
 
-    input_ = HttpRequestWithFloatLabelsInput(float_=float("nan"), double=float("nan"))
-
     try:
-        await client.http_request_with_float_labels(input_)
+        await client.http_request_with_float_labels(
+            float_=float("nan"), double=float("nan")
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -4348,10 +4134,10 @@ async def test_rest_json_supports_infinity_float_labels_request_http_request_wit
         )
     )
 
-    input_ = HttpRequestWithFloatLabelsInput(float_=float("inf"), double=float("inf"))
-
     try:
-        await client.http_request_with_float_labels(input_)
+        await client.http_request_with_float_labels(
+            float_=float("inf"), double=float("inf")
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -4420,10 +4206,10 @@ async def test_rest_json_supports_negative_infinity_float_labels_request_http_re
         )
     )
 
-    input_ = HttpRequestWithFloatLabelsInput(float_=float("-inf"), double=float("-inf"))
-
     try:
-        await client.http_request_with_float_labels(input_)
+        await client.http_request_with_float_labels(
+            float_=float("-inf"), double=float("-inf")
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -4492,10 +4278,10 @@ async def test_rest_json_http_request_with_greedy_label_in_path_request_http_req
         )
     )
 
-    input_ = HttpRequestWithGreedyLabelInPathInput(foo="hello/escape", baz="there/guy")
-
     try:
-        await client.http_request_with_greedy_label_in_path(input_)
+        await client.http_request_with_greedy_label_in_path(
+            foo="hello/escape", baz="there/guy"
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -4567,19 +4353,17 @@ async def test_rest_json_input_with_headers_and_all_params_request_http_request_
         )
     )
 
-    input_ = HttpRequestWithLabelsInput(
-        string="string",
-        short=1,
-        integer=2,
-        long=3,
-        float_=float(4.1),
-        double=float(5.1),
-        boolean=True,
-        timestamp=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
-    )
-
     try:
-        await client.http_request_with_labels(input_)
+        await client.http_request_with_labels(
+            string="string",
+            short=1,
+            integer=2,
+            long=3,
+            float_=float(4.1),
+            double=float(5.1),
+            boolean=True,
+            timestamp=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -4651,19 +4435,17 @@ async def test_rest_json_http_request_label_escaping_request_http_request_with_l
         )
     )
 
-    input_ = HttpRequestWithLabelsInput(
-        string=" %:/?#[]@!$&'()*+,;=😹",
-        short=1,
-        integer=2,
-        long=3,
-        float_=float(4.1),
-        double=float(5.1),
-        boolean=True,
-        timestamp=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
-    )
-
     try:
-        await client.http_request_with_labels(input_)
+        await client.http_request_with_labels(
+            string=" %:/?#[]@!$&'()*+,;=😹",
+            short=1,
+            integer=2,
+            long=3,
+            float_=float(4.1),
+            double=float(5.1),
+            boolean=True,
+            timestamp=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -4735,18 +4517,16 @@ async def test_rest_json_http_request_with_labels_and_timestamp_format_request_h
         )
     )
 
-    input_ = HttpRequestWithLabelsAndTimestampFormatInput(
-        member_epoch_seconds=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
-        member_http_date=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
-        member_date_time=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
-        default_format=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
-        target_epoch_seconds=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
-        target_http_date=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
-        target_date_time=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
-    )
-
     try:
-        await client.http_request_with_labels_and_timestamp_format(input_)
+        await client.http_request_with_labels_and_timestamp_format(
+            member_epoch_seconds=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            member_http_date=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            member_date_time=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            default_format=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            target_epoch_seconds=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            target_http_date=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            target_date_time=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -4818,10 +4598,8 @@ async def test_rest_json_tolerates_regex_chars_in_segments_request_http_request_
         )
     )
 
-    input_ = HttpRequestWithRegexLiteralInput(str_="abc")
-
     try:
-        await client.http_request_with_regex_literal(input_)
+        await client.http_request_with_regex_literal(str_="abc")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -4895,10 +4673,8 @@ async def test_rest_json_http_response_code_response_http_response_code() -> Non
         )
     )
 
-    input_ = HttpResponseCodeInput()
-
     try:
-        actual = await client.http_response_code(input_)
+        actual = await client.http_response_code()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -4925,10 +4701,8 @@ async def test_rest_json_http_response_code_with_no_payload_response_http_respon
         )
     )
 
-    input_ = HttpResponseCodeInput()
-
     try:
-        actual = await client.http_response_code(input_)
+        actual = await client.http_response_code()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -4950,10 +4724,8 @@ async def test_rest_json_string_payload_request_request_http_string_payload() ->
         )
     )
 
-    input_ = HttpStringPayloadInput(payload="rawstring")
-
     try:
-        await client.http_string_payload(input_)
+        await client.http_string_payload(payload="rawstring")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -5020,10 +4792,8 @@ async def test_rest_json_string_payload_response_response_http_string_payload() 
         )
     )
 
-    input_ = HttpStringPayloadInput()
-
     try:
-        actual = await client.http_string_payload(input_)
+        actual = await client.http_string_payload()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -5056,10 +4826,8 @@ async def test_rest_json_ignore_query_params_in_response_response_ignore_query_p
         )
     )
 
-    input_ = IgnoreQueryParamsInResponseInput()
-
     try:
-        actual = await client.ignore_query_params_in_response(input_)
+        actual = await client.ignore_query_params_in_response()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -5084,14 +4852,12 @@ async def test_rest_json_input_and_output_with_string_headers_request_input_and_
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput(
-        header_string="Hello",
-        header_string_list=["a", "b", "c"],
-        header_string_set=["a", "b", "c"],
-    )
-
     try:
-        await client.input_and_output_with_headers(input_)
+        await client.input_and_output_with_headers(
+            header_string="Hello",
+            header_string_list=["a", "b", "c"],
+            header_string_set=["a", "b", "c"],
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -5168,10 +4934,10 @@ async def test_rest_json_input_and_output_with_quoted_string_headers_request_inp
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput(header_string_list=["b,c", '"def"', "a"])
-
     try:
-        await client.input_and_output_with_headers(input_)
+        await client.input_and_output_with_headers(
+            header_string_list=["b,c", '"def"', "a"]
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -5244,18 +5010,16 @@ async def test_rest_json_input_and_output_with_numeric_headers_request_input_and
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput(
-        header_byte=1,
-        header_short=123,
-        header_integer=123,
-        header_long=123,
-        header_float=float(1.1),
-        header_double=float(1.1),
-        header_integer_list=[1, 2, 3],
-    )
-
     try:
-        await client.input_and_output_with_headers(input_)
+        await client.input_and_output_with_headers(
+            header_byte=1,
+            header_short=123,
+            header_integer=123,
+            header_long=123,
+            header_float=float(1.1),
+            header_double=float(1.1),
+            header_integer_list=[1, 2, 3],
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -5334,14 +5098,12 @@ async def test_rest_json_input_and_output_with_boolean_headers_request_input_and
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput(
-        header_true_bool=True,
-        header_false_bool=False,
-        header_boolean_list=[True, False, True],
-    )
-
     try:
-        await client.input_and_output_with_headers(input_)
+        await client.input_and_output_with_headers(
+            header_true_bool=True,
+            header_false_bool=False,
+            header_boolean_list=[True, False, True],
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -5416,15 +5178,13 @@ async def test_rest_json_input_and_output_with_timestamp_headers_request_input_a
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput(
-        header_timestamp_list=[
-            datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
-            datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
-        ]
-    )
-
     try:
-        await client.input_and_output_with_headers(input_)
+        await client.input_and_output_with_headers(
+            header_timestamp_list=[
+                datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+                datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            ]
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -5496,12 +5256,10 @@ async def test_rest_json_input_and_output_with_enum_headers_request_input_and_ou
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput(
-        header_enum="Foo", header_enum_list=["Foo", "Bar", "Baz"]
-    )
-
     try:
-        await client.input_and_output_with_headers(input_)
+        await client.input_and_output_with_headers(
+            header_enum="Foo", header_enum_list=["Foo", "Bar", "Baz"]
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -5575,12 +5333,10 @@ async def test_rest_json_input_and_output_with_int_enum_headers_request_input_an
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput(
-        header_integer_enum=1, header_integer_enum_list=[1, 2, 3]
-    )
-
     try:
-        await client.input_and_output_with_headers(input_)
+        await client.input_and_output_with_headers(
+            header_integer_enum=1, header_integer_enum_list=[1, 2, 3]
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -5654,12 +5410,10 @@ async def test_rest_json_supports_na_n_float_header_inputs_request_input_and_out
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput(
-        header_float=float("nan"), header_double=float("nan")
-    )
-
     try:
-        await client.input_and_output_with_headers(input_)
+        await client.input_and_output_with_headers(
+            header_float=float("nan"), header_double=float("nan")
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -5731,12 +5485,10 @@ async def test_rest_json_supports_infinity_float_header_inputs_request_input_and
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput(
-        header_float=float("inf"), header_double=float("inf")
-    )
-
     try:
-        await client.input_and_output_with_headers(input_)
+        await client.input_and_output_with_headers(
+            header_float=float("inf"), header_double=float("inf")
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -5808,12 +5560,10 @@ async def test_rest_json_supports_negative_infinity_float_header_inputs_request_
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput(
-        header_float=float("-inf"), header_double=float("-inf")
-    )
-
     try:
-        await client.input_and_output_with_headers(input_)
+        await client.input_and_output_with_headers(
+            header_float=float("-inf"), header_double=float("-inf")
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -5892,10 +5642,8 @@ async def test_rest_json_input_and_output_with_string_headers_response_input_and
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput()
-
     try:
-        actual = await client.input_and_output_with_headers(input_)
+        actual = await client.input_and_output_with_headers()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -5927,10 +5675,8 @@ async def test_rest_json_input_and_output_with_quoted_string_headers_response_in
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput()
-
     try:
-        actual = await client.input_and_output_with_headers(input_)
+        actual = await client.input_and_output_with_headers()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -5968,10 +5714,8 @@ async def test_rest_json_input_and_output_with_numeric_headers_response_input_an
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput()
-
     try:
-        actual = await client.input_and_output_with_headers(input_)
+        actual = await client.input_and_output_with_headers()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -6011,10 +5755,8 @@ async def test_rest_json_input_and_output_with_boolean_headers_response_input_an
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput()
-
     try:
-        actual = await client.input_and_output_with_headers(input_)
+        actual = await client.input_and_output_with_headers()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -6051,10 +5793,8 @@ async def test_rest_json_input_and_output_with_timestamp_headers_response_input_
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput()
-
     try:
-        actual = await client.input_and_output_with_headers(input_)
+        actual = await client.input_and_output_with_headers()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -6087,10 +5827,8 @@ async def test_rest_json_input_and_output_with_enum_headers_response_input_and_o
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput()
-
     try:
-        actual = await client.input_and_output_with_headers(input_)
+        actual = await client.input_and_output_with_headers()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -6120,10 +5858,8 @@ async def test_rest_json_input_and_output_with_int_enum_headers_response_input_a
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput()
-
     try:
-        actual = await client.input_and_output_with_headers(input_)
+        actual = await client.input_and_output_with_headers()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -6152,10 +5888,8 @@ async def test_rest_json_supports_na_n_float_header_outputs_response_input_and_o
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput()
-
     try:
-        actual = await client.input_and_output_with_headers(input_)
+        actual = await client.input_and_output_with_headers()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -6185,10 +5919,8 @@ async def test_rest_json_supports_infinity_float_header_outputs_response_input_a
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput()
-
     try:
-        actual = await client.input_and_output_with_headers(input_)
+        actual = await client.input_and_output_with_headers()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -6218,10 +5950,8 @@ async def test_rest_json_supports_negative_infinity_float_header_outputs_respons
         )
     )
 
-    input_ = InputAndOutputWithHeadersInput()
-
     try:
-        actual = await client.input_and_output_with_headers(input_)
+        actual = await client.input_and_output_with_headers()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -6246,10 +5976,8 @@ async def test_rest_json_json_blobs_request_json_blobs() -> None:
         )
     )
 
-    input_ = JsonBlobsInput(data=b"value")
-
     try:
-        await client.json_blobs(input_)
+        await client.json_blobs(data=b"value")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -6321,10 +6049,8 @@ async def test_rest_json_json_blobs_response_json_blobs() -> None:
         )
     )
 
-    input_ = JsonBlobsInput()
-
     try:
-        actual = await client.json_blobs(input_)
+        actual = await client.json_blobs()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -6347,17 +6073,15 @@ async def test_rest_json_json_enums_request_json_enums() -> None:
         )
     )
 
-    input_ = JsonEnumsInput(
-        foo_enum1="Foo",
-        foo_enum2="0",
-        foo_enum3="1",
-        foo_enum_list=["Foo", "0"],
-        foo_enum_set=["Foo", "0"],
-        foo_enum_map={"hi": "Foo", "zero": "0"},
-    )
-
     try:
-        await client.json_enums(input_)
+        await client.json_enums(
+            foo_enum1="Foo",
+            foo_enum2="0",
+            foo_enum3="1",
+            foo_enum_list=["Foo", "0"],
+            foo_enum_set=["Foo", "0"],
+            foo_enum_map={"hi": "Foo", "zero": "0"},
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -6429,10 +6153,8 @@ async def test_rest_json_json_enums_response_json_enums() -> None:
         )
     )
 
-    input_ = JsonEnumsInput()
-
     try:
-        actual = await client.json_enums(input_)
+        actual = await client.json_enums()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -6462,17 +6184,15 @@ async def test_rest_json_json_int_enums_request_json_int_enums() -> None:
         )
     )
 
-    input_ = JsonIntEnumsInput(
-        integer_enum1=1,
-        integer_enum2=2,
-        integer_enum3=3,
-        integer_enum_list=[1, 2, 3],
-        integer_enum_set=[1, 2],
-        integer_enum_map={"abc": 1, "def": 2},
-    )
-
     try:
-        await client.json_int_enums(input_)
+        await client.json_int_enums(
+            integer_enum1=1,
+            integer_enum2=2,
+            integer_enum3=3,
+            integer_enum_list=[1, 2, 3],
+            integer_enum_set=[1, 2],
+            integer_enum_map={"abc": 1, "def": 2},
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -6544,10 +6264,8 @@ async def test_rest_json_json_int_enums_response_json_int_enums() -> None:
         )
     )
 
-    input_ = JsonIntEnumsInput()
-
     try:
-        actual = await client.json_int_enums(input_)
+        actual = await client.json_int_enums()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -6577,26 +6295,24 @@ async def test_rest_json_lists_request_json_lists() -> None:
         )
     )
 
-    input_ = JsonListsInput(
-        string_list=["foo", "bar"],
-        string_set=["foo", "bar"],
-        integer_list=[1, 2],
-        boolean_list=[True, False],
-        timestamp_list=[
-            datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc),
-            datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc),
-        ],
-        enum_list=["Foo", "0"],
-        int_enum_list=[1, 2],
-        nested_string_list=[["foo", "bar"], ["baz", "qux"]],
-        structure_list=[
-            StructureListMember(a="1", b="2"),
-            StructureListMember(a="3", b="4"),
-        ],
-    )
-
     try:
-        await client.json_lists(input_)
+        await client.json_lists(
+            string_list=["foo", "bar"],
+            string_set=["foo", "bar"],
+            integer_list=[1, 2],
+            boolean_list=[True, False],
+            timestamp_list=[
+                datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc),
+                datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc),
+            ],
+            enum_list=["Foo", "0"],
+            int_enum_list=[1, 2],
+            nested_string_list=[["foo", "bar"], ["baz", "qux"]],
+            structure_list=[
+                StructureListMember(a="1", b="2"),
+                StructureListMember(a="3", b="4"),
+            ],
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -6665,10 +6381,8 @@ async def test_rest_json_lists_empty_request_json_lists() -> None:
         )
     )
 
-    input_ = JsonListsInput(string_list=[])
-
     try:
-        await client.json_lists(input_)
+        await client.json_lists(string_list=[])
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -6740,10 +6454,8 @@ async def test_rest_json_lists_response_json_lists() -> None:
         )
     )
 
-    input_ = JsonListsInput()
-
     try:
-        actual = await client.json_lists(input_)
+        actual = await client.json_lists()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -6785,10 +6497,8 @@ async def test_rest_json_lists_empty_response_json_lists() -> None:
         )
     )
 
-    input_ = JsonListsInput()
-
     try:
-        actual = await client.json_lists(input_)
+        actual = await client.json_lists()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -6811,15 +6521,13 @@ async def test_rest_json_json_maps_request_json_maps() -> None:
         )
     )
 
-    input_ = JsonMapsInput(
-        dense_struct_map={
-            "foo": GreetingStruct(hi="there"),
-            "baz": GreetingStruct(hi="bye"),
-        }
-    )
-
     try:
-        await client.json_maps(input_)
+        await client.json_maps(
+            dense_struct_map={
+                "foo": GreetingStruct(hi="there"),
+                "baz": GreetingStruct(hi="bye"),
+            }
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -6888,10 +6596,10 @@ async def test_rest_json_serializes_zero_values_in_maps_request_json_maps() -> N
         )
     )
 
-    input_ = JsonMapsInput(dense_number_map={"x": 0}, dense_boolean_map={"x": False})
-
     try:
-        await client.json_maps(input_)
+        await client.json_maps(
+            dense_number_map={"x": 0}, dense_boolean_map={"x": False}
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -6960,10 +6668,8 @@ async def test_rest_json_serializes_dense_set_map_request_json_maps() -> None:
         )
     )
 
-    input_ = JsonMapsInput(dense_set_map={"x": [], "y": ["a", "b"]})
-
     try:
-        await client.json_maps(input_)
+        await client.json_maps(dense_set_map={"x": [], "y": ["a", "b"]})
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -7035,10 +6741,8 @@ async def test_rest_json_json_maps_response_json_maps() -> None:
         )
     )
 
-    input_ = JsonMapsInput()
-
     try:
-        actual = await client.json_maps(input_)
+        actual = await client.json_maps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -7069,10 +6773,8 @@ async def test_rest_json_deserializes_zero_values_in_maps_response_json_maps() -
         )
     )
 
-    input_ = JsonMapsInput()
-
     try:
-        actual = await client.json_maps(input_)
+        actual = await client.json_maps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -7100,10 +6802,8 @@ async def test_rest_json_deserializes_dense_set_map_response_json_maps() -> None
         )
     )
 
-    input_ = JsonMapsInput()
-
     try:
-        actual = await client.json_maps(input_)
+        actual = await client.json_maps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -7126,12 +6826,10 @@ async def test_rest_json_json_timestamps_request_json_timestamps() -> None:
         )
     )
 
-    input_ = JsonTimestampsInput(
-        normal=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
-    )
-
     try:
-        await client.json_timestamps(input_)
+        await client.json_timestamps(
+            normal=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -7205,12 +6903,10 @@ async def test_rest_json_json_timestamps_with_date_time_format_request_json_time
         )
     )
 
-    input_ = JsonTimestampsInput(
-        date_time=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
-    )
-
     try:
-        await client.json_timestamps(input_)
+        await client.json_timestamps(
+            date_time=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -7284,12 +6980,10 @@ async def test_rest_json_json_timestamps_with_date_time_on_target_format_request
         )
     )
 
-    input_ = JsonTimestampsInput(
-        date_time_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
-    )
-
     try:
-        await client.json_timestamps(input_)
+        await client.json_timestamps(
+            date_time_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -7360,12 +7054,10 @@ async def test_rest_json_json_timestamps_with_epoch_seconds_format_request_json_
         )
     )
 
-    input_ = JsonTimestampsInput(
-        epoch_seconds=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
-    )
-
     try:
-        await client.json_timestamps(input_)
+        await client.json_timestamps(
+            epoch_seconds=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -7439,12 +7131,10 @@ async def test_rest_json_json_timestamps_with_epoch_seconds_on_target_format_req
         )
     )
 
-    input_ = JsonTimestampsInput(
-        epoch_seconds_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
-    )
-
     try:
-        await client.json_timestamps(input_)
+        await client.json_timestamps(
+            epoch_seconds_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -7515,12 +7205,10 @@ async def test_rest_json_json_timestamps_with_http_date_format_request_json_time
         )
     )
 
-    input_ = JsonTimestampsInput(
-        http_date=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
-    )
-
     try:
-        await client.json_timestamps(input_)
+        await client.json_timestamps(
+            http_date=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -7591,12 +7279,10 @@ async def test_rest_json_json_timestamps_with_http_date_on_target_format_request
         )
     )
 
-    input_ = JsonTimestampsInput(
-        http_date_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
-    )
-
     try:
-        await client.json_timestamps(input_)
+        await client.json_timestamps(
+            http_date_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -7670,10 +7356,8 @@ async def test_rest_json_json_timestamps_response_json_timestamps() -> None:
         )
     )
 
-    input_ = JsonTimestampsInput()
-
     try:
-        actual = await client.json_timestamps(input_)
+        actual = await client.json_timestamps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -7706,10 +7390,8 @@ async def test_rest_json_json_timestamps_with_date_time_format_response_json_tim
         )
     )
 
-    input_ = JsonTimestampsInput()
-
     try:
-        actual = await client.json_timestamps(input_)
+        actual = await client.json_timestamps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -7742,10 +7424,8 @@ async def test_rest_json_json_timestamps_with_date_time_on_target_format_respons
         )
     )
 
-    input_ = JsonTimestampsInput()
-
     try:
-        actual = await client.json_timestamps(input_)
+        actual = await client.json_timestamps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -7775,10 +7455,8 @@ async def test_rest_json_json_timestamps_with_epoch_seconds_format_response_json
         )
     )
 
-    input_ = JsonTimestampsInput()
-
     try:
-        actual = await client.json_timestamps(input_)
+        actual = await client.json_timestamps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -7811,10 +7489,8 @@ async def test_rest_json_json_timestamps_with_epoch_seconds_on_target_format_res
         )
     )
 
-    input_ = JsonTimestampsInput()
-
     try:
-        actual = await client.json_timestamps(input_)
+        actual = await client.json_timestamps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -7844,10 +7520,8 @@ async def test_rest_json_json_timestamps_with_http_date_format_response_json_tim
         )
     )
 
-    input_ = JsonTimestampsInput()
-
     try:
-        actual = await client.json_timestamps(input_)
+        actual = await client.json_timestamps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -7877,10 +7551,8 @@ async def test_rest_json_json_timestamps_with_http_date_on_target_format_respons
         )
     )
 
-    input_ = JsonTimestampsInput()
-
     try:
-        actual = await client.json_timestamps(input_)
+        actual = await client.json_timestamps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -7905,10 +7577,8 @@ async def test_rest_json_serialize_string_union_value_request_json_unions() -> N
         )
     )
 
-    input_ = JsonUnionsInput(contents=MyUnionStringValue(value="foo"))
-
     try:
-        await client.json_unions(input_)
+        await client.json_unions(contents=MyUnionStringValue(value="foo"))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -7979,10 +7649,8 @@ async def test_rest_json_serialize_boolean_union_value_request_json_unions() -> 
         )
     )
 
-    input_ = JsonUnionsInput(contents=MyUnionBooleanValue(value=True))
-
     try:
-        await client.json_unions(input_)
+        await client.json_unions(contents=MyUnionBooleanValue(value=True))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -8053,10 +7721,8 @@ async def test_rest_json_serialize_number_union_value_request_json_unions() -> N
         )
     )
 
-    input_ = JsonUnionsInput(contents=MyUnionNumberValue(value=1))
-
     try:
-        await client.json_unions(input_)
+        await client.json_unions(contents=MyUnionNumberValue(value=1))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -8127,10 +7793,8 @@ async def test_rest_json_serialize_blob_union_value_request_json_unions() -> Non
         )
     )
 
-    input_ = JsonUnionsInput(contents=MyUnionBlobValue(value=b"foo"))
-
     try:
-        await client.json_unions(input_)
+        await client.json_unions(contents=MyUnionBlobValue(value=b"foo"))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -8201,14 +7865,12 @@ async def test_rest_json_serialize_timestamp_union_value_request_json_unions() -
         )
     )
 
-    input_ = JsonUnionsInput(
-        contents=MyUnionTimestampValue(
-            value=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
-        )
-    )
-
     try:
-        await client.json_unions(input_)
+        await client.json_unions(
+            contents=MyUnionTimestampValue(
+                value=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+            )
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -8279,10 +7941,8 @@ async def test_rest_json_serialize_enum_union_value_request_json_unions() -> Non
         )
     )
 
-    input_ = JsonUnionsInput(contents=MyUnionEnumValue(value="Foo"))
-
     try:
-        await client.json_unions(input_)
+        await client.json_unions(contents=MyUnionEnumValue(value="Foo"))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -8353,10 +8013,8 @@ async def test_rest_json_serialize_list_union_value_request_json_unions() -> Non
         )
     )
 
-    input_ = JsonUnionsInput(contents=MyUnionListValue(value=["foo", "bar"]))
-
     try:
-        await client.json_unions(input_)
+        await client.json_unions(contents=MyUnionListValue(value=["foo", "bar"]))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -8427,12 +8085,10 @@ async def test_rest_json_serialize_map_union_value_request_json_unions() -> None
         )
     )
 
-    input_ = JsonUnionsInput(
-        contents=MyUnionMapValue(value={"foo": "bar", "spam": "eggs"})
-    )
-
     try:
-        await client.json_unions(input_)
+        await client.json_unions(
+            contents=MyUnionMapValue(value={"foo": "bar", "spam": "eggs"})
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -8501,12 +8157,10 @@ async def test_rest_json_serialize_structure_union_value_request_json_unions() -
         )
     )
 
-    input_ = JsonUnionsInput(
-        contents=MyUnionStructureValue(value=GreetingStruct(hi="hello"))
-    )
-
     try:
-        await client.json_unions(input_)
+        await client.json_unions(
+            contents=MyUnionStructureValue(value=GreetingStruct(hi="hello"))
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -8577,14 +8231,12 @@ async def test_rest_json_serialize_renamed_structure_union_value_request_json_un
         )
     )
 
-    input_ = JsonUnionsInput(
-        contents=MyUnionRenamedStructureValue(
-            value=RenamedGreeting(salutation="hello!")
-        )
-    )
-
     try:
-        await client.json_unions(input_)
+        await client.json_unions(
+            contents=MyUnionRenamedStructureValue(
+                value=RenamedGreeting(salutation="hello!")
+            )
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -8653,12 +8305,10 @@ async def test_rest_json_serialize_nested_union_value_request_json_unions() -> N
         )
     )
 
-    input_ = JsonUnionsInput(
-        contents=MyUnionUnionValue(value=NestedUnionStringValue(value="foo"))
-    )
-
     try:
-        await client.json_unions(input_)
+        await client.json_unions(
+            contents=MyUnionUnionValue(value=NestedUnionStringValue(value="foo"))
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -8730,10 +8380,8 @@ async def test_rest_json_deserialize_string_union_value_response_json_unions() -
         )
     )
 
-    input_ = JsonUnionsInput()
-
     try:
-        actual = await client.json_unions(input_)
+        actual = await client.json_unions()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -8759,10 +8407,8 @@ async def test_rest_json_deserialize_boolean_union_value_response_json_unions() 
         )
     )
 
-    input_ = JsonUnionsInput()
-
     try:
-        actual = await client.json_unions(input_)
+        actual = await client.json_unions()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -8788,10 +8434,8 @@ async def test_rest_json_deserialize_number_union_value_response_json_unions() -
         )
     )
 
-    input_ = JsonUnionsInput()
-
     try:
-        actual = await client.json_unions(input_)
+        actual = await client.json_unions()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -8817,10 +8461,8 @@ async def test_rest_json_deserialize_blob_union_value_response_json_unions() -> 
         )
     )
 
-    input_ = JsonUnionsInput()
-
     try:
-        actual = await client.json_unions(input_)
+        actual = await client.json_unions()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -8848,10 +8490,8 @@ async def test_rest_json_deserialize_timestamp_union_value_response_json_unions(
         )
     )
 
-    input_ = JsonUnionsInput()
-
     try:
-        actual = await client.json_unions(input_)
+        actual = await client.json_unions()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -8881,10 +8521,8 @@ async def test_rest_json_deserialize_enum_union_value_response_json_unions() -> 
         )
     )
 
-    input_ = JsonUnionsInput()
-
     try:
-        actual = await client.json_unions(input_)
+        actual = await client.json_unions()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -8910,10 +8548,8 @@ async def test_rest_json_deserialize_list_union_value_response_json_unions() -> 
         )
     )
 
-    input_ = JsonUnionsInput()
-
     try:
-        actual = await client.json_unions(input_)
+        actual = await client.json_unions()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -8939,10 +8575,8 @@ async def test_rest_json_deserialize_map_union_value_response_json_unions() -> N
         )
     )
 
-    input_ = JsonUnionsInput()
-
     try:
-        actual = await client.json_unions(input_)
+        actual = await client.json_unions()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -8972,10 +8606,8 @@ async def test_rest_json_deserialize_structure_union_value_response_json_unions(
         )
     )
 
-    input_ = JsonUnionsInput()
-
     try:
-        actual = await client.json_unions(input_)
+        actual = await client.json_unions()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -9003,10 +8635,8 @@ async def test_rest_json_deserialize_nested_union_value_response_json_unions() -
         )
     )
 
-    input_ = JsonUnionsInput()
-
     try:
-        actual = await client.json_unions(input_)
+        actual = await client.json_unions()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -9034,10 +8664,8 @@ async def test_rest_json_deserialize_ignore_type_response_json_unions() -> None:
         )
     )
 
-    input_ = JsonUnionsInput()
-
     try:
-        actual = await client.json_unions(input_)
+        actual = await client.json_unions()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -9062,10 +8690,8 @@ async def test_media_type_header_input_base64_request_media_type_header() -> Non
         )
     )
 
-    input_ = MediaTypeHeaderInput(json="true")
-
     try:
-        await client.media_type_header(input_)
+        await client.media_type_header(json="true")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -9133,10 +8759,8 @@ async def test_media_type_header_output_base64_response_media_type_header() -> N
         )
     )
 
-    input_ = MediaTypeHeaderInput()
-
     try:
-        actual = await client.media_type_header(input_)
+        actual = await client.media_type_header()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -9164,10 +8788,8 @@ async def test_rest_json_no_input_and_no_output_request_no_input_and_no_output()
         )
     )
 
-    input_ = NoInputAndNoOutputInput()
-
     try:
-        await client.no_input_and_no_output(input_)
+        await client.no_input_and_no_output()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -9238,10 +8860,8 @@ async def test_rest_json_no_input_and_no_output_response_no_input_and_no_output(
         )
     )
 
-    input_ = NoInputAndNoOutputInput()
-
     try:
-        actual = await client.no_input_and_no_output(input_)
+        actual = await client.no_input_and_no_output()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -9267,10 +8887,8 @@ async def test_rest_json_no_input_and_output_request_no_input_and_output() -> No
         )
     )
 
-    input_ = NoInputAndOutputInput()
-
     try:
-        await client.no_input_and_output(input_)
+        await client.no_input_and_output()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -9343,10 +8961,8 @@ async def test_rest_json_no_input_and_output_with_json_response_no_input_and_out
         )
     )
 
-    input_ = NoInputAndOutputInput()
-
     try:
-        actual = await client.no_input_and_output(input_)
+        actual = await client.no_input_and_output()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -9373,10 +8989,8 @@ async def test_rest_json_no_input_and_output_no_payload_response_no_input_and_ou
         )
     )
 
-    input_ = NoInputAndOutputInput()
-
     try:
-        actual = await client.no_input_and_output(input_)
+        actual = await client.no_input_and_output()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -9404,10 +9018,8 @@ async def test_rest_json_null_and_empty_headers_request_null_and_empty_headers_c
         )
     )
 
-    input_ = NullAndEmptyHeadersClientInput(a=None, b="", c=[])
-
     try:
-        await client.null_and_empty_headers_client(input_)
+        await client.null_and_empty_headers_client(a=None, b="", c=[])
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -9476,10 +9088,8 @@ async def test_rest_json_omits_null_query_request_omits_null_serializes_empty_st
         )
     )
 
-    input_ = OmitsNullSerializesEmptyStringInput(null_value=None)
-
     try:
-        await client.omits_null_serializes_empty_string(input_)
+        await client.omits_null_serializes_empty_string(null_value=None)
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -9548,10 +9158,8 @@ async def test_rest_json_serializes_empty_query_value_request_omits_null_seriali
         )
     )
 
-    input_ = OmitsNullSerializesEmptyStringInput(empty_string="")
-
     try:
-        await client.omits_null_serializes_empty_string(input_)
+        await client.omits_null_serializes_empty_string(empty_string="")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -9620,18 +9228,16 @@ async def test_rest_json_omits_empty_list_query_values_request_omits_serializing
         )
     )
 
-    input_ = OmitsSerializingEmptyListsInput(
-        query_string_list=[],
-        query_integer_list=[],
-        query_double_list=[],
-        query_boolean_list=[],
-        query_timestamp_list=[],
-        query_enum_list=[],
-        query_integer_enum_list=[],
-    )
-
     try:
-        await client.omits_serializing_empty_lists(input_)
+        await client.omits_serializing_empty_lists(
+            query_string_list=[],
+            query_integer_list=[],
+            query_double_list=[],
+            query_boolean_list=[],
+            query_timestamp_list=[],
+            query_enum_list=[],
+            query_integer_enum_list=[],
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -9701,10 +9307,8 @@ async def test_rest_json_client_populates_default_values_in_input_request_operat
         )
     )
 
-    input_ = OperationWithDefaultsInput(defaults=Defaults())
-
     try:
-        await client.operation_with_defaults(input_)
+        await client.operation_with_defaults(defaults=Defaults())
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -9776,10 +9380,8 @@ async def test_rest_json_client_skips_top_level_default_values_in_input_request_
         )
     )
 
-    input_ = OperationWithDefaultsInput()
-
     try:
-        await client.operation_with_defaults(input_)
+        await client.operation_with_defaults()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -9851,41 +9453,39 @@ async def test_rest_json_client_uses_explicitly_provided_member_values_over_defa
         )
     )
 
-    input_ = OperationWithDefaultsInput(
-        defaults=Defaults(
-            default_string="bye",
-            default_boolean=True,
-            default_list=["a"],
-            default_document_map=Document({"name": "Jack"}),
-            default_document_string=Document("bye"),
-            default_document_boolean=Document(True),
-            default_document_list=Document(["b"]),
-            default_null_document=Document("notNull"),
-            default_timestamp=datetime(1970, 1, 1, 0, 0, 1, 0, timezone.utc),
-            default_blob=b"hi",
-            default_byte=2,
-            default_short=2,
-            default_integer=20,
-            default_long=200,
-            default_float=float(2.0),
-            default_double=float(2.0),
-            default_map={"name": "Jack"},
-            default_enum="BAR",
-            default_int_enum=2,
-            empty_string="foo",
-            false_boolean=True,
-            empty_blob=b"hi",
-            zero_byte=1,
-            zero_short=1,
-            zero_integer=1,
-            zero_long=1,
-            zero_float=float(1.0),
-            zero_double=float(1.0),
-        )
-    )
-
     try:
-        await client.operation_with_defaults(input_)
+        await client.operation_with_defaults(
+            defaults=Defaults(
+                default_string="bye",
+                default_boolean=True,
+                default_list=["a"],
+                default_document_map=Document({"name": "Jack"}),
+                default_document_string=Document("bye"),
+                default_document_boolean=Document(True),
+                default_document_list=Document(["b"]),
+                default_null_document=Document("notNull"),
+                default_timestamp=datetime(1970, 1, 1, 0, 0, 1, 0, timezone.utc),
+                default_blob=b"hi",
+                default_byte=2,
+                default_short=2,
+                default_integer=20,
+                default_long=200,
+                default_float=float(2.0),
+                default_double=float(2.0),
+                default_map={"name": "Jack"},
+                default_enum="BAR",
+                default_int_enum=2,
+                empty_string="foo",
+                false_boolean=True,
+                empty_blob=b"hi",
+                zero_byte=1,
+                zero_short=1,
+                zero_integer=1,
+                zero_long=1,
+                zero_float=float(1.0),
+                zero_double=float(1.0),
+            )
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -9959,12 +9559,10 @@ async def test_rest_json_client_uses_explicitly_provided_values_in_top_level_req
         )
     )
 
-    input_ = OperationWithDefaultsInput(
-        top_level_default="hi", other_top_level_default=0
-    )
-
     try:
-        await client.operation_with_defaults(input_)
+        await client.operation_with_defaults(
+            top_level_default="hi", other_top_level_default=0
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -10041,12 +9639,10 @@ async def test_rest_json_client_ignores_non_top_level_defaults_on_members_with_c
         )
     )
 
-    input_ = OperationWithDefaultsInput(
-        client_optional_defaults=ClientOptionalDefaults()
-    )
-
     try:
-        await client.operation_with_defaults(input_)
+        await client.operation_with_defaults(
+            client_optional_defaults=ClientOptionalDefaults()
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -10118,10 +9714,8 @@ async def test_rest_json_client_populates_defaults_values_when_missing_in_respon
         )
     )
 
-    input_ = OperationWithDefaultsInput()
-
     try:
-        actual = await client.operation_with_defaults(input_)
+        actual = await client.operation_with_defaults()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -10180,10 +9774,8 @@ async def test_rest_json_client_ignores_default_values_if_member_values_are_pres
         )
     )
 
-    input_ = OperationWithDefaultsInput()
-
     try:
-        actual = await client.operation_with_defaults(input_)
+        actual = await client.operation_with_defaults()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -10237,30 +9829,28 @@ async def test_rest_json_client_populates_nested_default_values_when_missing_req
         )
     )
 
-    input_ = OperationWithNestedStructureInput(
-        top_level=TopLevel(
-            dialog=Dialog(language="en"),
-            dialog_list=[
-                Dialog(),
-                Dialog(farewell=Farewell()),
-                Dialog(
-                    language="it",
-                    greeting="ciao",
-                    farewell=Farewell(phrase="arrivederci"),
-                ),
-            ],
-            dialog_map={
-                "emptyDialog": Dialog(),
-                "partialEmptyDialog": Dialog(language="en", farewell=Farewell()),
-                "nonEmptyDialog": Dialog(
-                    greeting="konnichiwa", farewell=Farewell(phrase="sayonara")
-                ),
-            },
-        )
-    )
-
     try:
-        await client.operation_with_nested_structure(input_)
+        await client.operation_with_nested_structure(
+            top_level=TopLevel(
+                dialog=Dialog(language="en"),
+                dialog_list=[
+                    Dialog(),
+                    Dialog(farewell=Farewell()),
+                    Dialog(
+                        language="it",
+                        greeting="ciao",
+                        farewell=Farewell(phrase="arrivederci"),
+                    ),
+                ],
+                dialog_map={
+                    "emptyDialog": Dialog(),
+                    "partialEmptyDialog": Dialog(language="en", farewell=Farewell()),
+                    "nonEmptyDialog": Dialog(
+                        greeting="konnichiwa", farewell=Farewell(phrase="sayonara")
+                    ),
+                },
+            )
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -10334,10 +9924,8 @@ async def test_rest_json_client_populates_nested_defaults_when_missing_in_respon
         )
     )
 
-    input_ = OperationWithNestedStructureInput()
-
     try:
-        actual = await client.operation_with_nested_structure(input_)
+        actual = await client.operation_with_nested_structure()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -10382,10 +9970,8 @@ async def test_rest_json_input_union_with_unit_member_request_post_player_action
         )
     )
 
-    input_ = PostPlayerActionInput(action=PlayerActionQuit(value=Unit()))
-
     try:
-        await client.post_player_action(input_)
+        await client.post_player_action(action=PlayerActionQuit(value=Unit()))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -10459,10 +10045,8 @@ async def test_rest_json_output_union_with_unit_member_response_post_player_acti
         )
     )
 
-    input_ = PostPlayerActionInput()
-
     try:
-        actual = await client.post_player_action(input_)
+        actual = await client.post_player_action()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -10487,10 +10071,8 @@ async def test_post_union_with_json_name_request1_request_post_union_with_json_n
         )
     )
 
-    input_ = PostUnionWithJsonNameInput(value=UnionWithJsonNameFoo(value="hi"))
-
     try:
-        await client.post_union_with_json_name(input_)
+        await client.post_union_with_json_name(value=UnionWithJsonNameFoo(value="hi"))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -10561,10 +10143,8 @@ async def test_post_union_with_json_name_request2_request_post_union_with_json_n
         )
     )
 
-    input_ = PostUnionWithJsonNameInput(value=UnionWithJsonNameBaz(value="hi"))
-
     try:
-        await client.post_union_with_json_name(input_)
+        await client.post_union_with_json_name(value=UnionWithJsonNameBaz(value="hi"))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -10635,10 +10215,8 @@ async def test_post_union_with_json_name_request3_request_post_union_with_json_n
         )
     )
 
-    input_ = PostUnionWithJsonNameInput(value=UnionWithJsonNameBar(value="hi"))
-
     try:
-        await client.post_union_with_json_name(input_)
+        await client.post_union_with_json_name(value=UnionWithJsonNameBar(value="hi"))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -10712,10 +10290,8 @@ async def test_post_union_with_json_name_response1_response_post_union_with_json
         )
     )
 
-    input_ = PostUnionWithJsonNameInput()
-
     try:
-        actual = await client.post_union_with_json_name(input_)
+        actual = await client.post_union_with_json_name()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -10743,10 +10319,8 @@ async def test_post_union_with_json_name_response2_response_post_union_with_json
         )
     )
 
-    input_ = PostUnionWithJsonNameInput()
-
     try:
-        actual = await client.post_union_with_json_name(input_)
+        actual = await client.post_union_with_json_name()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -10774,10 +10348,8 @@ async def test_post_union_with_json_name_response3_response_post_union_with_json
         )
     )
 
-    input_ = PostUnionWithJsonNameInput()
-
     try:
-        actual = await client.post_union_with_json_name(input_)
+        actual = await client.post_union_with_json_name()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -10806,12 +10378,10 @@ async def test_sdk_applied_content_encoding_rest_json1_request_put_with_content_
         )
     )
 
-    input_ = PutWithContentEncodingInput(
-        data="RjCEL3kBwqPivZUXGiyA5JCujtWgJAkKRlnTEsNYfBRGOS0f7LT6R3bCSOXeJ4auSHzQ4BEZZTklUyj5\n1HEojihShQC2jkQJrNdGOZNSW49yRO0XbnGmeczUHbZqZRelLFKW4xjru9uTuB8lFCtwoGgciFsgqTF8\n5HYcoqINTRxuAwGuRUMoNO473QT0BtCQoKUkAyVaypG0hBZdGNoJhunBfW0d3HWTYlzz9pXElyZhq3C1\n2PDB17GEoOYXmTxDecysmPOdo5z6T0HFhujfeJFIQQ8dirmXcG4F3v0bZdf6AZ3jsiVh6RnEXIPxPbOi\ngIXDWTMUr4Pg3f2LdYCM01eAb2qTdgsEN0MUDhEIfn68I2tnWvcozyUFpg1ez6pyWP8ssWVfFrckREIM\nMb0cTUVqSVSM8bnFiF9SoXM6ZoGMKfX1mT708OYk7SqZ1JlCTkecDJDoR5ED2q2MWKUGR6jjnEV0GtD8\nWJO6AcF0DptY9Hk16Bav3z6c5FeBvrGDrxTFVgRUk8SychzjrcqJ4qskwN8rL3zslC0oqobQRnLFOvwJ\nprSzBIwdH2yAuxokXAdVRa1u9NGNRvfWJfKkwbbVz8yV76RUF9KNhAUmwyYDrLnxNj8ROl8B7dv8Gans\n7Bit52wcdiJyjBW1pAodB7zqqVwtBx5RaSpF7kEMXexYXp9N0J1jlXzdeg5Wgg4pO7TJNr2joiPVAiFf\nefwMMCNBkYx2z7cRxVxCJZMXXzxSKMGgdTN24bJ5UgE0TxyV52RC0wGWG49S1x5jGrvmxKCIgYPs0w3Z\n0I3XcdB0WEj4x4xRztB9Cx2Mc4qFYQdzS9kOioAgNBti1rBySZ8lFZM2zqxvBsJTTJsmcKPr1crqiXjM\noVWdM4ObOO6QA7Pu4c1hT68CrTmbcecjFcxHkgsqdixnFtN6keMGL9Z2YMjZOjYYzbUEwLJqUVWalkIB\nBkgBRqZpzxx5nB5t0qDH35KjsfKM5cinQaFoRq9y9Z82xdCoKZOsUbxZkk1kVmy1jPDCBhkhixkc5PKS\nFoSKTbeK7kuCEZCtR9OfF2k2MqbygGFsFu2sgb1Zn2YdDbaRwRGeaLhswta09UNSMUo8aTixgoYVHxwy\nvraLB6olPSPegeLOnmBeWyKmEfPdbpdGm4ev4vA2AUFuLIeFz0LkCSN0NgQMrr8ALEm1UNpJLReg1ZAX\nzZh7gtQTZUaBVdMJokaJpLk6FPxSA6zkwB5TegSqhrFIsmvpY3VNWmTUq7H0iADdh3dRQ8Is97bTsbwu\nvAEOjh4FQ9wPSFzEtcSJeYQft5GfWYPisDImjjvHVFshFFkNy2nN18pJmhVPoJc456tgbdfEIdGhIADC\n6UPcSSzE1FxlPpILqZrp3i4NvvKoiOa4a8tnALd2XRHHmsvALn2Wmfu07b86gZlu4yOyuUFNoWI6tFvd\nbHnqSJYNQlFESv13gJw609DBzNnrIgBGYBAcDRrIGAnflRKwVDUnDFrUQmE8xNG6jRlyb1p2Y2RrfBtG\ncKqhuGNiT2DfxpY89ektZ98waPhJrFEPJToNH8EADzBorh3T0h4YP1IeLmaI7SOxeuVrk1kjRqMK0rUB\nlUJgJNtCE35jCyoHMwPQlyi78ZaVv8COVQ24zcGpw0MTy6JUsDzAC3jLNY6xCb40SZV9XzG7nWvXA5Ej\nYC1gTXxF4AtFexIdDZ4RJbtYMyXt8LsEJerwwpkfqvDwsiFuqYC6vIn9RoZO5kI0F35XtUITDQYKZ4eq\nWBV0itxTyyR5Rp6g30pZEmEqOusDaIh96CEmHpOBYAQZ7u1QTfzRdysIGMpzbx5gj9Dxm2PO1glWzY7P\nlVqQiBlXSGDOkBkrB6SkiAxknt9zsPdTTsf3r3nid4hdiPrZmGWNgjOO1khSxZSzBdltrCESNnQmlnP5\nZOHA0eSYXwy8j4od5ZmjA3IpFOEPW2MutMbxIbJpg5dIx2x7WxespftenRLgl3CxcpPDcnb9w8LCHBg7\nSEjrEer6Y8wVLFWsQiv6nTdCPZz9cGqwgtCaiHRy8lTWFgdfWd397vw9rduGld3uUFeFRGjYrphqEmHi\nhiG0GhE6wRFVUsGJtvOCYkVREvbEdxPFeJvlAvOcs9HKbtptlTusvYB86vR2bNcIY4f5JZu2X6sGa354\n7LRk0ps2zqYjat3hMR7XDC8KiKceBteFsXoDjfVxTYKelpedTxqWAafrKhaoAVuNM98PSnkuIWGzjSUC\nNsDJTt6vt1D1afBVPWVmnQ7ZQdtEtLIEwAWYjemAztreELIr1E9fPEILm1Ke4KctP9I0I72Dh4eylNZD\n0DEr2Hg7cWFckuZ0Av5d0IPRARXikEGDHl8uh12TXL9v2Uh0ZVSJMEYvxGSbZvkWz8TjWSk3hKA2a7GL\nJm3Ho7e1C34gE1XRGcEthxvURxt4OKBqN3ZNaMIuDTWinoQAutMcUqtm4MoL7RGPiCHUrvTwQPSirsmA\nQmOEu8nOpnP77Fivh9jLGx5ta7nL6jrsWUsBqiN1lzpdPYLRR4mUIAj6sNWiDEk4pkbHSMEcqbWw6Zl7\npsEyPDHalCNhWMA3RSK3skURzQDZ0oBV5W7vjVIZ4d3uCKsk6zrzEI9u5mx7p9RdNKodXfzqYt0ULdtc\n3RW0hIfw2KvrO3BD2QrtgAkfrFBGVvlJSUoh0MvLz8DeXxfuiuq9Ttu7wvsqVI4Piah6WNEXtHHGPJO3\nGhc75Bnv2To4VS2v8rmyKAPIIVTuYBHZN6sZ4FhFzbrslCIdk0eadaU60naqiNWU3CsxplIYGyeThmJ7\n9u4h6Y2OmiPZjFPS2bAzwgAozYTVefII9aEaWZ0hxHZeu1FW7r79dkdO73ZqRfas9u8Z7LLBPCw5pV0F\n5I0pHDgNb6MogoxF4NZJfVtIX1vCHhhVLrXjrYNJU2fD9Fw8kT8Ie2HDBJnqAvYKmryQ1r9ulo3Me3rH\nq9s2Y5uCDxu9iQNhnpwIm57WYGFeqd2fnQeY2IziD3Jgx0KSrmOH0jgi0RwJyfGXaORPq3bQQqljuACo\nkO6io9t5VI8PbNxSHTRbtYiPciUslbT0g7SpCLrRPOBRJ4DDk56pjghpeoUagJ5xJ4wjBzBuXnAGkNnP\nTfpiuz2r3oSBAi8sB9wiYK2z9sp4gZyQsqdVNzAEgKatOxBRBmJCBYpjO98ZQrF83XApPpfFg0ujB2PW\n1iYF9NkgwIKB5oB6KVTOmSKJk11mVermPgeugHbzdd2zUP6fP8fWbhseqk2t8ahGvqjs2CDHFIWXl5jc\nfCknbykE3ANt7lnAfJQ2ddduLGiqrX4HWx6jcWw08Es6BkleO0IDbaWrb95d5isvFlzJsf0TyDIXF4uq\nbBDCi0XPWqtRJ2iqmnJa2GbBe9GmAOWMkBFSilMyC4sR395WSDpD56fx0NGoU6cHrRu9xF2Bgh7RGSfl\nch2GXEeE02fDpSHFNvJBlOEqqfkIX6oCa6KY9NThqeIjYsT184XR2ZI7akXRaw1gMOGpk4FmUxk6WIuX\n4ei1SLQgSdl7OEdRtJklZ76eFrMbkJQ2TDhu8f7mVuiy53GUMIvCrP9xYGZGmCIDm2e4U2BDi3F7C5xK\n3bDZXwlQp6z4BSqTy2OVEWxXUJfjPMOL5Mc7AvDeKtxAS73pVIv0HgHIa4NBAdC7uLG0zXuu1FF6z2XY\nyUhk03fMZhYe7vVxsul3WE7U01fuN8z2y0eKwBW1RFBE1eKIaR9Y01sIWQWbSrfHfDrdZiElhmhHehfs\n0EfrR4sLYdQshJuvhTeKGJDaEhtPQwwJ9mUYGtuCL9RozWx1XI4bHNlzBTW0BVokYiJGlPe7wdxNzJD7\nJgS7Lwv6jGKngVf86imGZyzqwiteWFPdNUoWdTvUPSMO5xIUK9mo5QpwbBOAmyYzVq42o3Qs90N9khEV\nU36LB99fw8PtGHH5wsCHshfauwnNPj0blGXzke0kQ4JNCVH7Jtn0Y0aeejkSxFtwtxoYs6zHl1Lxxpsd\nsw5vBy49CEtoltDW367lVAwDjWdx20msGB7qJCkEDrzu7EXSO22782QX9NBRcN9ppX0C25I0FMA4Wnhz\n9zIpiXRrsTH35jzM8Cjt4EVLGNU3O0HuEvAer3cENnMJtngdrT86ox3fihMQbiuy4Bh4DEcP5in2VjbT\n3qbnoCNvOi8Fmmf7KlGlWAOceL5OHVE5lljjQEMzEQOCEgrk5mDKgwSBJQBNauIDSC1a5iEQjB8Xxp4C\nqeKyyWY9IOntNrtU5ny4lNprHJd36dKFeBLKcGCOvgHBXdOZloMF0YTRExw7hreEO9IoTGVHJ4teWsNr\nHdtagUHjkeZkdMMfnUGNv5aBNtFMqhcZH6EitEa9lGPkKBbJpoom3u8D8EHSIF1H5EZqqx9TLY5hWAIG\nPwJ4qwkpCGw5rCLVrjw7ARKukIFzNULANqjHUMcJ002TlUosJM4xJ4aAgckpLVGOGuPDhGAAexEcQmbg\nUsZdmqQrtuVUyyLteLbLbqtR6CTlcAIwY3xyMCmPgyefE0FEUODBoxQtRUuYTL9RC5o1sYb2PvcxUQfb\niJFi2CAl99pAzcckU2qVCxniARslIxM5pmMRGsQX9ZzYAfZrbg6ce6S74I8UMlgRQ2QVyvUjKKOE6IrJ\nLng370emHfe5m6LZULD5YiZutkD5ipjL2Bz77DvTE5kNPUhuoKBcTJcUgytfXAKUTWOcRKNlq0GImrxM\nJfr7AWbLFFNKGLeTrVDBwpcokJCv0zcOKWe8fd2xkeXkZTdmM66IgM27cyYmtQ6YF26Kd0qrWJeVZJV9\n3fyLYYvKN5csbRY2BHoYE5ERARRW65IrpkXMf48OrCXMtDIP0Z7wxI9DiTeKKeH4uuguhCJnwzR3WxLA\nVU6eBJEd7ZjS6JA83w7decq8uDI7LGKjcz1FySp3B7fE9DkHRGXxbsL7Fjar6vW2mAv8CuvI20B6jctp\n2yLDs24sPfB3sSxrrlhbuT1m6DZqiN0dl6umKx7NGZhmOTVGr20jfcxhqPQwTJfd7kel4rvxip4BqkvT\n7STy8knJ2BXGyJeNgwo1PXUZRDVy0LCTsSF1RFuRZe8cktHl9lgw8ntdPn1pVFL0MwJkJfdXBNUp5gNv\n50FTkrpo1t6wq4CVbcfj2XOrOzvBUzNH26sXGABI1gGxCdp2jEZrHgqQaWIaTJVTuguZhxqDvdYsrwFW\nYN58uuNcKHIrGdRSigyZInwQDYk0pjcqdSeU0WVU3Y9htzZBR7XRaCJr5YTZvq7fwermb5tuwb37lPLq\nB2IGg0iftkVbXaSyfCwVaRbfLBb88so0QqpmJGirFu8FcDiXOV1zTr8yW9XLdYQuUjh43xrXLdgsuYff\nCagInUk1eU1aLjVZoJRsNmStmOEpAqlYMwTvx7w6j2f421Cxr5cNZBIVlAxlXN2QiDqJ9v3sHhHkTanc\nlQuH8ptUyX8qncpBuXXBn7cSez9N0EoxCBl1GHUagbjstgJo4gzLvTmVIY6MiWYOBitzNUHfyqKwtKUr\nVoSCdZcGeA9lHUPA7PUprRRaT3m1hGKPyshtVS2ikG48w3oVerln1N1qGdtz46gZCrndw3LZ1B362RfW\nzDPuXbpsyLsRMTt1Rz1oKHRXp3iE41hkhQH6pxlvyCW2INnHt5XU8zRamOB3oW0udOhMpQFDjRkOcy06\nb4t0QTHvoRqmBna3WXzIMZyeK3GChF5eF8oDXRbjhk7BB6YKCgqwWUzEJ5K47HMSlhFkBUjaPRjdGM0z\nzOMwhW6b1NvSwP7XM1P5yi1oPvOspts1vr29SXqrMMrBhVogeodWyd69NqrO4jkyBxKmlXifoTowpfiY\n2cUCE0XMZqxUN39LCP09JqZifaEcBEo3mgtm1tWu5QR2GNq7UyQf4RIPSDOpDCAtwoPhRgdT1lJdcj4U\nlnH0wrJ8Uwu7c08L7ErnIrDATqCrOjpSbzGP1xHENABYONC4TknFPrJ8pe40A8fzGT0qBw9mAM1SKcHO\nfoiLcMC9AjHTqJzDG3xplSLPG9or2rMeq7Fzp9r0y7uJRMxgg51EbjfvYlH466A3ggvL2WQlDXjJqPW3\nBJGWAWDNN9LK8f46bADKPxakpkx23S9O47rGSXfDhVSIZsDympxWX1UOzWwMZRHkofVeKqizgbKkGgUT\nWykE9gRoRAOd9wfHZDYKa9i0LaPDiaUMvnU1gdBIqIoiVsdJ9swX47oxvMtOxtcS0zlD6llDkBuIiU5g\nPwRCYmtkkb25c8iRJXwGFPjI1wJ34I1z1ENicPdosPiUe9ZC2jnXIKzEdv01x2ER7DNDF3yxOwOhxNxI\nGqsmC92j25UQQFu9ZstOZ28AoCkuOYs0Uycm5u8jR1T39dMBwrko09rC65ENLnsxM8oebmyFCPiGJ1ED\n5Xqc9qZ237f1OnETAoEOwqUSvrdPTv56U7hV91EMTyC812MLQpr2710E3VVpsUCUMNhIxdt7UXZ1UNFb\njgzpZLXnf4DHrv6B7kq6UI50KMxcw1HZE2GpODfUTzNFLaqdrvzxKe5eUWdcojBaRbD4fFdVYJTElYDH\nNNVh6ofkoeWcs9CWGFmSBe0T4K8phFeygQg0prKMELNEy6qENzVtG9ZDcqj3a7L6ZLtvq50anWp7fAVu\nfwz55g4iM2Z2fA0pnwHDL7tt67zTxGITvsnJsZSpeq1EQsZcwtkBV9liu7Rl7jiVT1IIRtchB8TsTiaA\nwVHIQQ9RIOTiPQdKNqi1kC9iGlUqWK93gblNWlBw1eYB9Wk8FQogutwTf0caNMx8D4nPbANcmOOlskIy\nzALh15OlTrWnhP95rf08AN2J026zDE2DUF9k0eCevYBQIDjqKNW4XCZnjbHoIcKzbY5VzPbMs3ZyMz8K\nSucBmgPg6wrSK5ykbkapS5vuqvXc9GbjQJ8bPNzoxoWGyjbZvDs2OBrIqBmcQb2DLJ8v38McQ4mC4UsS\njf4PyfSCtpk274QZjvLCZbLiCBxQegk7jUU0NmTFJAcYCxd9xMWdlFkiszcltT2YzwuFFz7iA6aa4n5L\nHpBNfUA01GcAi1aCMYhmooS4zSlYcSOZkovMz36U3Fd9WtqIEOJLi7HMgHQDgNMdK6DTzAdHQtxerxVF\nHJnPrfNVG7270r3bp0bPnLNYLhObbAn6zqSAUeLtI2Y4KJDjBKCAh2vvYGbu0e2REYJWRj7MkGevsSSy\nb1kCXLt6tKGWAb7lt5c0xyJgUIJW7pdtnwgT0ZCa24BecCAwNnG5U2EwQbcjZGsFxqNGfaemd3oFEhES\nBaE0Fxms9UKTnMafu8wvZ2xymMrUduuRzOjDeX7oD5YsLC88V8CGMLxbbxIpt94KGykbr6e7L0R4oZl1\ntKMgFwQ2p9Txdbp0Y293LcsJymKizqI0F2xEp7y4SmWOJqHZtsbz80wVV9nv41CvtfxuSoGZJ5cNB7pI\nBgzNcQCeH3Jt0RaGGwboxxpuFbzilmkMFXxJm87tD4WNgu01nHfGCKeQcySEBZpVfJgi6sDFJ8uWnvKm\n9mPLHurtWzEfKqUEa1iC71bXjw5wrvhv9BYW8JSUELHmDquftQyKdq0DZXhULMHGQLf4e95WIaoA14LL\nbThz77kuhKULPTu2MNrBUKGorurhGugo5gs4ZUezSsUOe3KxYdrFMdGgny1GgTxMSMTp2RAZytKjv4kQ\nVx7XgzvpQLIbDjUPAkJv6lScwIRq1W3Ne0Rh0V6Bmn6U5uIuWnJjULmbaQiSODj3z0mAZvak0mSWIGwT\nTX83HztcC4W7e1f6a1thmcc5K61Icehla2hBELWPpixTkyC4eEVmk9Rq0m0ZXtx0JX2ZQXqXDEyePyMe\nJ70sdSzXk72zusqhY4yuOMGgbYNHqxOToK6NxujR7e4dV3Wk5JnSUthym8scjcPeCiKDNY4cHfTMnDXJ\n9zLVy01LtNKYpJ1s8FxVxigmxQNKEbIamxhx6yqwGC4aiISVOOUEjvNOdaUfXfUsE6jEwtwxyGxjlRK1\ncLyxXttq4QWN6PehgHv7jXykzPjInbEysebFvvPOOMdunmJvcCNMSvjUda8fL6xfGo0FDrLg8XZipd6S\noPVdYtyIM1Dg40KbBA3JuumPYtXuJaHrZnjZmdnM5OVo4ZNxktfCVT0c6bnD4bAeyn4bYt1ZPaX6hQHh\nJtvNYfpD0ONYlmqKuToQAMlz52Fh6bj45EbX89L5eLlSpWeyBlGotzriB0EPlclrGi5l2B5oPb1aB1ag\nyyYuu44l0F1oOVYnBIZsxIsHVITxi9lEuVPFkWASOUNuVQXfM4n5hxWR9qtuKnIcPsvbJsv1U10XlKh3\nKisqPhHU15xrCLr5gwFxPUKiNTLUBrkzgBOHXPVsHcLCiSD0YU56TRGfvEom43TWUKPPfl9Z54tgVQuT\njCRlaljAzeniQIcbbHZnn3f0HxbDG3DFYqWSxNrXabHhRsIOhhUHSPENyhGSTVO5t0XX5CdMspJPCd02\n3Oqv32ccbUK4O3YH6LEvp0WO3kSl5n50odVkI9B0i0iq4UPFGMkM8bEQJbgJoOH71P10vtdevJFQE4g2\nyhimiM53ZJRWgSZveHtENZc0Gjo0F9eioak9BnPpY1QxAFPC817svuhEstcU69bLCA4D1rO5R8AuIIBq\nyQJcifFLvbpAEYTLKJqysZrU8EEl3TSdC13A9hZvk4NC8VGEDAxcNrKw313dZp17kZPO5HSd1y6sljAW\nA9M1d6FMYV5SlBWf3WZNCUPS7qKNlda2YBsC6IUVB363f5RLGQOQHwbaijBSRCkrVoRxBHtc0Bd5J9V9\nP5uMTXkpZOxRcCQvImGgcmGuxxLb5zTqfS2xu7v3Sf3IIesSt9tVzcEcdbEvLGVJkLk4mb3G30DbIbri\nPZ09JkweDvMaQ3bxT2nfkz3Ilihkw9jqikkCCCz7E8h6z6KbhQErEW9VzJZzMCgJsyPjFam6iNwpe07S\nhyOvNVw2t9wpzL5xM11DvVzQwDaWEytNRHzDBs4KwEtpI2IpjUyVZHSwA0UGqqkzoCgrJFlNOvPlXqcS\nIcREouUIBmuttkrhPWJtSxOOgpsdvBR3kTOzAXNzSKxoaBAb0c5SDMUc6FIyGA8x5wg5DkUgjFUUodEt\nOYaB2VHVePW9mxHeBTdKWLzJow4ZZvjnoBuVigXljKCNh137ckV2y3Yg3Xi4UzJEI2V5Rw9AfnMs7xUw\nVHOFCg189maD3bmZAe7b4eaGZhyy4HVKjqCXmIH7vsEjRvbnfB0SQxxpuqBDJbHNCtW4vM643ZQQBVPP\na7oXSQIq9w2dHp0A7dtkocCZdQp9FKR9XdJAFIbVSHzIF1ZogeZlc0pXuNE0tagvD57xwDRFkAuoQyMu\nYDdZasXrpSmEE5UjHVkyYsISn8QsfXurzDybX468aoRoks654jjmRY5zi1oB8TcMdC2c3sicNaqfeuhd\nH1nPX7l4RpdqWMR7gGx9slXtG8S3KxpOi4qCD7yg3saD66nun4dzksQURoTUdXyrJR5UpHsfIlTF1aJa\nMdXyQtQnrkl00TeghQd00rRFZsCnhi0qrCSKiBfB2EVrd9RPpbgwJGZHuIQecdBmNetc2ylSEClqVBPR\nGOPPIxrnswEZjmnS0jxKW9VSM1QVxSPJnPFswCqT95SoKD6CP4xdX28WIUGiNaIKodXXJHEIsXBCxLsr\nPwWPCtoplC6hhpKmW5dQo92iCTyY2KioKzO8XR6FKm6qonMKVEwQNtlYE9c97KMtEnp25VOdMP46SQXS\nYsSVp7vm8LP87VYI8SOKcW3s2oedYFtt45rvDzoTF0GmS6wELQ9uo98HhjQAI1Dt91cgjJOwygNmLoZE\nX5K2zQiNA163uMCl5xzaBqY4YTL0wgALg3IFdYSp0RFYLWdt6IxoGI1tnoxcjlUEPo5eGIc3mS3SmaLn\nOdumfUQQ4Jgmgaa5anUVQsfBDrlAN5oaX7O0JO71SSPSWiHBsT9WIPy2J1Cace9ZZLRxblFPSXcvsuHh\nhvnhWQltEDAe7MgvkFQ8lGVFa8jhzijoF9kLmMhMILSzYnfXnZPNP7TlAAwlLHK1RqlpHskJqb6CPpGP\nQvOAhEMsM3zJ2KejZx0esxkjxA0ZufVvGAMN3vTUMplQaF4RiQkp9fzBXf3CMk01dWjOMMIEXTeKzIQe\nEcffzjixWU9FpAyGp2rVl4ETRgqljOGw4UgK31r0ZIEGnH0xGz1FtbW1OcQM008JVujRqulCucEMmntr\n"
-    )
-
     try:
-        await client.put_with_content_encoding(input_)
+        await client.put_with_content_encoding(
+            data="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\n"
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -10882,13 +10452,11 @@ async def test_sdk_appended_gzip_after_provided_encoding_rest_json1_request_put_
         )
     )
 
-    input_ = PutWithContentEncodingInput(
-        encoding="custom",
-        data="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\n",
-    )
-
     try:
-        await client.put_with_content_encoding(input_)
+        await client.put_with_content_encoding(
+            encoding="custom",
+            data="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\n",
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -10954,10 +10522,8 @@ async def test_rest_json_query_idempotency_token_auto_fill_request_query_idempot
         )
     )
 
-    input_ = QueryIdempotencyTokenAutoFillInput()
-
     try:
-        await client.query_idempotency_token_auto_fill(input_)
+        await client.query_idempotency_token_auto_fill()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -11028,12 +10594,10 @@ async def test_rest_json_query_idempotency_token_auto_fill_is_set_request_query_
         )
     )
 
-    input_ = QueryIdempotencyTokenAutoFillInput(
-        token="00000000-0000-4000-8000-000000000000"
-    )
-
     try:
-        await client.query_idempotency_token_auto_fill(input_)
+        await client.query_idempotency_token_auto_fill(
+            token="00000000-0000-4000-8000-000000000000"
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -11104,10 +10668,10 @@ async def test_rest_json_query_params_string_list_map_request_query_params_as_st
         )
     )
 
-    input_ = QueryParamsAsStringListMapInput(qux="named", foo={"baz": ["bar", "qux"]})
-
     try:
-        await client.query_params_as_string_list_map(input_)
+        await client.query_params_as_string_list_map(
+            qux="named", foo={"baz": ["bar", "qux"]}
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -11174,12 +10738,10 @@ async def test_rest_json_query_precedence_request_query_precedence() -> None:
         )
     )
 
-    input_ = QueryPrecedenceInput(
-        foo="named", baz={"bar": "fromMap", "qux": "alsoFromMap"}
-    )
-
     try:
-        await client.query_precedence(input_)
+        await client.query_precedence(
+            foo="named", baz={"bar": "fromMap", "qux": "alsoFromMap"}
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -11246,20 +10808,18 @@ async def test_rest_json_recursive_shapes_request_recursive_shapes() -> None:
         )
     )
 
-    input_ = RecursiveShapesInput(
-        nested=RecursiveShapesInputOutputNested1(
-            foo="Foo1",
-            nested=RecursiveShapesInputOutputNested2(
-                bar="Bar1",
-                recursive_member=RecursiveShapesInputOutputNested1(
-                    foo="Foo2", nested=RecursiveShapesInputOutputNested2(bar="Bar2")
-                ),
-            ),
-        )
-    )
-
     try:
-        await client.recursive_shapes(input_)
+        await client.recursive_shapes(
+            nested=RecursiveShapesInputOutputNested1(
+                foo="Foo1",
+                nested=RecursiveShapesInputOutputNested2(
+                    bar="Bar1",
+                    recursive_member=RecursiveShapesInputOutputNested1(
+                        foo="Foo2", nested=RecursiveShapesInputOutputNested2(bar="Bar2")
+                    ),
+                ),
+            )
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -11331,10 +10891,8 @@ async def test_rest_json_recursive_shapes_response_recursive_shapes() -> None:
         )
     )
 
-    input_ = RecursiveShapesInput()
-
     try:
-        actual = await client.recursive_shapes(input_)
+        actual = await client.recursive_shapes()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -11369,21 +10927,19 @@ async def test_rest_json_simple_scalar_properties_request_simple_scalar_properti
         )
     )
 
-    input_ = SimpleScalarPropertiesInput(
-        foo="Foo",
-        string_value="string",
-        true_boolean_value=True,
-        false_boolean_value=False,
-        byte_value=1,
-        short_value=2,
-        integer_value=3,
-        long_value=4,
-        float_value=float(5.5),
-        double_value=float(6.5),
-    )
-
     try:
-        await client.simple_scalar_properties(input_)
+        await client.simple_scalar_properties(
+            foo="Foo",
+            string_value="string",
+            true_boolean_value=True,
+            false_boolean_value=False,
+            byte_value=1,
+            short_value=2,
+            integer_value=3,
+            long_value=4,
+            float_value=float(5.5),
+            double_value=float(6.5),
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -11457,10 +11013,8 @@ async def test_rest_json_doesnt_serialize_null_structure_values_request_simple_s
         )
     )
 
-    input_ = SimpleScalarPropertiesInput(string_value=None)
-
     try:
-        await client.simple_scalar_properties(input_)
+        await client.simple_scalar_properties(string_value=None)
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -11532,12 +11086,10 @@ async def test_rest_json_supports_na_n_float_inputs_request_simple_scalar_proper
         )
     )
 
-    input_ = SimpleScalarPropertiesInput(
-        float_value=float("nan"), double_value=float("nan")
-    )
-
     try:
-        await client.simple_scalar_properties(input_)
+        await client.simple_scalar_properties(
+            float_value=float("nan"), double_value=float("nan")
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -11610,12 +11162,10 @@ async def test_rest_json_supports_infinity_float_inputs_request_simple_scalar_pr
         )
     )
 
-    input_ = SimpleScalarPropertiesInput(
-        float_value=float("inf"), double_value=float("inf")
-    )
-
     try:
-        await client.simple_scalar_properties(input_)
+        await client.simple_scalar_properties(
+            float_value=float("inf"), double_value=float("inf")
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -11688,12 +11238,10 @@ async def test_rest_json_supports_negative_infinity_float_inputs_request_simple_
         )
     )
 
-    input_ = SimpleScalarPropertiesInput(
-        float_value=float("-inf"), double_value=float("-inf")
-    )
-
     try:
-        await client.simple_scalar_properties(input_)
+        await client.simple_scalar_properties(
+            float_value=float("-inf"), double_value=float("-inf")
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -11769,10 +11317,8 @@ async def test_rest_json_simple_scalar_properties_response_simple_scalar_propert
         )
     )
 
-    input_ = SimpleScalarPropertiesInput()
-
     try:
-        actual = await client.simple_scalar_properties(input_)
+        actual = await client.simple_scalar_properties()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -11811,10 +11357,8 @@ async def test_rest_json_doesnt_deserialize_null_structure_values_response_simpl
         )
     )
 
-    input_ = SimpleScalarPropertiesInput()
-
     try:
-        actual = await client.simple_scalar_properties(input_)
+        actual = await client.simple_scalar_properties()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -11843,10 +11387,8 @@ async def test_rest_json_supports_na_n_float_inputs_response_simple_scalar_prope
         )
     )
 
-    input_ = SimpleScalarPropertiesInput()
-
     try:
-        actual = await client.simple_scalar_properties(input_)
+        actual = await client.simple_scalar_properties()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -11876,10 +11418,8 @@ async def test_rest_json_supports_infinity_float_inputs_response_simple_scalar_p
         )
     )
 
-    input_ = SimpleScalarPropertiesInput()
-
     try:
-        actual = await client.simple_scalar_properties(input_)
+        actual = await client.simple_scalar_properties()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -11909,10 +11449,8 @@ async def test_rest_json_supports_negative_infinity_float_inputs_response_simple
         )
     )
 
-    input_ = SimpleScalarPropertiesInput()
-
     try:
-        actual = await client.simple_scalar_properties(input_)
+        actual = await client.simple_scalar_properties()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -11939,12 +11477,10 @@ async def test_rest_json_sparse_lists_serialize_null_request_sparse_json_lists()
         )
     )
 
-    input_ = SparseJsonListsInput(
-        sparse_string_list=[None, "hi"], sparse_short_list=[None, 2]
-    )
-
     try:
-        await client.sparse_json_lists(input_)
+        await client.sparse_json_lists(
+            sparse_string_list=[None, "hi"], sparse_short_list=[None, 2]
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -12018,10 +11554,8 @@ async def test_rest_json_sparse_lists_serialize_null_response_sparse_json_lists(
         )
     )
 
-    input_ = SparseJsonListsInput()
-
     try:
-        actual = await client.sparse_json_lists(input_)
+        actual = await client.sparse_json_lists()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -12046,15 +11580,13 @@ async def test_rest_json_sparse_json_maps_request_sparse_json_maps() -> None:
         )
     )
 
-    input_ = SparseJsonMapsInput(
-        sparse_struct_map={
-            "foo": GreetingStruct(hi="there"),
-            "baz": GreetingStruct(hi="bye"),
-        }
-    )
-
     try:
-        await client.sparse_json_maps(input_)
+        await client.sparse_json_maps(
+            sparse_struct_map={
+                "foo": GreetingStruct(hi="there"),
+                "baz": GreetingStruct(hi="bye"),
+            }
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -12125,15 +11657,13 @@ async def test_rest_json_serializes_sparse_null_map_values_request_sparse_json_m
         )
     )
 
-    input_ = SparseJsonMapsInput(
-        sparse_struct_map={"x": None},
-        sparse_number_map={"x": None},
-        sparse_boolean_map={"x": None},
-        sparse_string_map={"x": None},
-    )
-
     try:
-        await client.sparse_json_maps(input_)
+        await client.sparse_json_maps(
+            sparse_struct_map={"x": None},
+            sparse_number_map={"x": None},
+            sparse_boolean_map={"x": None},
+            sparse_string_map={"x": None},
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -12204,12 +11734,10 @@ async def test_rest_json_serializes_zero_values_in_sparse_maps_request_sparse_js
         )
     )
 
-    input_ = SparseJsonMapsInput(
-        sparse_number_map={"x": 0}, sparse_boolean_map={"x": False}
-    )
-
     try:
-        await client.sparse_json_maps(input_)
+        await client.sparse_json_maps(
+            sparse_number_map={"x": 0}, sparse_boolean_map={"x": False}
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -12278,10 +11806,8 @@ async def test_rest_json_serializes_sparse_set_map_request_sparse_json_maps() ->
         )
     )
 
-    input_ = SparseJsonMapsInput(sparse_set_map={"x": [], "y": ["a", "b"]})
-
     try:
-        await client.sparse_json_maps(input_)
+        await client.sparse_json_maps(sparse_set_map={"x": [], "y": ["a", "b"]})
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -12352,10 +11878,10 @@ async def test_rest_json_serializes_sparse_set_map_and_retains_null_request_spar
         )
     )
 
-    input_ = SparseJsonMapsInput(sparse_set_map={"x": [], "y": ["a", "b"], "z": None})
-
     try:
-        await client.sparse_json_maps(input_)
+        await client.sparse_json_maps(
+            sparse_set_map={"x": [], "y": ["a", "b"], "z": None}
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -12427,10 +11953,8 @@ async def test_rest_json_sparse_json_maps_response_sparse_json_maps() -> None:
         )
     )
 
-    input_ = SparseJsonMapsInput()
-
     try:
-        actual = await client.sparse_json_maps(input_)
+        actual = await client.sparse_json_maps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -12463,10 +11987,8 @@ async def test_rest_json_deserializes_sparse_null_map_values_response_sparse_jso
         )
     )
 
-    input_ = SparseJsonMapsInput()
-
     try:
-        actual = await client.sparse_json_maps(input_)
+        actual = await client.sparse_json_maps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -12499,10 +12021,8 @@ async def test_rest_json_deserializes_zero_values_in_sparse_maps_response_sparse
         )
     )
 
-    input_ = SparseJsonMapsInput()
-
     try:
-        actual = await client.sparse_json_maps(input_)
+        actual = await client.sparse_json_maps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -12532,10 +12052,8 @@ async def test_rest_json_deserializes_sparse_set_map_response_sparse_json_maps()
         )
     )
 
-    input_ = SparseJsonMapsInput()
-
     try:
-        actual = await client.sparse_json_maps(input_)
+        actual = await client.sparse_json_maps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -12563,10 +12081,8 @@ async def test_rest_json_deserializes_sparse_set_map_and_retains_null_response_s
         )
     )
 
-    input_ = SparseJsonMapsInput()
-
     try:
-        actual = await client.sparse_json_maps(input_)
+        actual = await client.sparse_json_maps()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -12591,10 +12107,8 @@ async def test_rest_json_streaming_traits_with_blob_request_streaming_traits() -
         )
     )
 
-    input_ = StreamingTraitsInput(foo="Foo", blob=b"blobby blob blob")
-
     try:
-        await client.streaming_traits(input_)
+        await client.streaming_traits(foo="Foo", blob=b"blobby blob blob")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -12666,10 +12180,8 @@ async def test_rest_json_streaming_traits_with_no_blob_body_request_streaming_tr
         )
     )
 
-    input_ = StreamingTraitsInput(foo="Foo")
-
     try:
-        await client.streaming_traits(input_)
+        await client.streaming_traits(foo="Foo")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -12742,10 +12254,8 @@ async def test_rest_json_streaming_traits_with_blob_response_streaming_traits() 
         )
     )
 
-    input_ = StreamingTraitsInput()
-
     try:
-        actual = await client.streaming_traits(input_)
+        actual = await client.streaming_traits()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -12777,10 +12287,8 @@ async def test_rest_json_streaming_traits_with_no_blob_body_response_streaming_t
         )
     )
 
-    input_ = StreamingTraitsInput()
-
     try:
-        actual = await client.streaming_traits(input_)
+        actual = await client.streaming_traits()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -12811,10 +12319,10 @@ async def test_rest_json_streaming_traits_require_length_with_blob_request_strea
         )
     )
 
-    input_ = StreamingTraitsRequireLengthInput(foo="Foo", blob=b"blobby blob blob")
-
     try:
-        await client.streaming_traits_require_length(input_)
+        await client.streaming_traits_require_length(
+            foo="Foo", blob=b"blobby blob blob"
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -12886,10 +12394,8 @@ async def test_rest_json_streaming_traits_require_length_with_no_blob_body_reque
         )
     )
 
-    input_ = StreamingTraitsRequireLengthInput(foo="Foo")
-
     try:
-        await client.streaming_traits_require_length(input_)
+        await client.streaming_traits_require_length(foo="Foo")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -12958,10 +12464,10 @@ async def test_rest_json_streaming_traits_with_media_type_with_blob_request_stre
         )
     )
 
-    input_ = StreamingTraitsWithMediaTypeInput(foo="Foo", blob=b"blobby blob blob")
-
     try:
-        await client.streaming_traits_with_media_type(input_)
+        await client.streaming_traits_with_media_type(
+            foo="Foo", blob=b"blobby blob blob"
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -13036,10 +12542,8 @@ async def test_rest_json_streaming_traits_with_media_type_with_blob_response_str
         )
     )
 
-    input_ = StreamingTraitsWithMediaTypeInput()
-
     try:
-        actual = await client.streaming_traits_with_media_type(input_)
+        actual = await client.streaming_traits_with_media_type()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -13070,10 +12574,8 @@ async def test_rest_json_test_body_structure_request_test_body_structure() -> No
         )
     )
 
-    input_ = TestBodyStructureInput(test_config=TestConfig(timeout=10))
-
     try:
-        await client.test_body_structure(input_)
+        await client.test_body_structure(test_config=TestConfig(timeout=10))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -13142,10 +12644,8 @@ async def test_rest_json_http_with_empty_body_request_test_body_structure() -> N
         )
     )
 
-    input_ = TestBodyStructureInput()
-
     try:
-        await client.test_body_structure(input_)
+        await client.test_body_structure()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -13219,10 +12719,8 @@ async def test_rest_json_http_get_with_no_input_request_test_get_no_input_no_pay
         )
     )
 
-    input_ = TestGetNoInputNoPayloadInput()
-
     try:
-        await client.test_get_no_input_no_payload(input_)
+        await client.test_get_no_input_no_payload()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -13291,10 +12789,8 @@ async def test_rest_json_http_get_with_no_modeled_body_request_test_get_no_paylo
         )
     )
 
-    input_ = TestGetNoPayloadInput()
-
     try:
-        await client.test_get_no_payload(input_)
+        await client.test_get_no_payload()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -13363,10 +12859,8 @@ async def test_rest_json_http_get_with_header_member_no_modeled_body_request_tes
         )
     )
 
-    input_ = TestGetNoPayloadInput(test_id="t-12345")
-
     try:
-        await client.test_get_no_payload(input_)
+        await client.test_get_no_payload(test_id="t-12345")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -13435,10 +12929,8 @@ async def test_rest_json_http_with_empty_blob_payload_request_test_payload_blob(
         )
     )
 
-    input_ = TestPayloadBlobInput()
-
     try:
-        await client.test_payload_blob(input_)
+        await client.test_payload_blob()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -13505,10 +12997,8 @@ async def test_rest_json_test_payload_blob_request_test_payload_blob() -> None:
         )
     )
 
-    input_ = TestPayloadBlobInput(content_type="image/jpg", data=b"1234")
-
     try:
-        await client.test_payload_blob(input_)
+        await client.test_payload_blob(content_type="image/jpg", data=b"1234")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -13578,10 +13068,8 @@ async def test_rest_json_http_with_empty_structure_payload_request_test_payload_
         )
     )
 
-    input_ = TestPayloadStructureInput()
-
     try:
-        await client.test_payload_structure(input_)
+        await client.test_payload_structure()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -13652,10 +13140,8 @@ async def test_rest_json_test_payload_structure_request_test_payload_structure()
         )
     )
 
-    input_ = TestPayloadStructureInput(payload_config=PayloadConfig(data=25))
-
     try:
-        await client.test_payload_structure(input_)
+        await client.test_payload_structure(payload_config=PayloadConfig(data=25))
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -13727,10 +13213,8 @@ async def test_rest_json_http_with_headers_but_no_payload_request_test_payload_s
         )
     )
 
-    input_ = TestPayloadStructureInput(test_id="t-12345")
-
     try:
-        await client.test_payload_structure(input_)
+        await client.test_payload_structure(test_id="t-12345")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -13807,10 +13291,8 @@ async def test_rest_json_http_post_with_no_input_request_test_post_no_input_no_p
         )
     )
 
-    input_ = TestPostNoInputNoPayloadInput()
-
     try:
-        await client.test_post_no_input_no_payload(input_)
+        await client.test_post_no_input_no_payload()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -13879,10 +13361,8 @@ async def test_rest_json_http_post_with_no_modeled_body_request_test_post_no_pay
         )
     )
 
-    input_ = TestPostNoPayloadInput()
-
     try:
-        await client.test_post_no_payload(input_)
+        await client.test_post_no_payload()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -13951,10 +13431,8 @@ async def test_rest_json_http_with_post_header_member_no_modeled_body_request_te
         )
     )
 
-    input_ = TestPostNoPayloadInput(test_id="t-12345")
-
     try:
-        await client.test_post_no_payload(input_)
+        await client.test_post_no_payload(test_id="t-12345")
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -14023,18 +13501,16 @@ async def test_rest_json_timestamp_format_headers_request_timestamp_format_heade
         )
     )
 
-    input_ = TimestampFormatHeadersInput(
-        member_epoch_seconds=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
-        member_http_date=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
-        member_date_time=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
-        default_format=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
-        target_epoch_seconds=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
-        target_http_date=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
-        target_date_time=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
-    )
-
     try:
-        await client.timestamp_format_headers(input_)
+        await client.timestamp_format_headers(
+            member_epoch_seconds=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            member_http_date=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            member_date_time=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            default_format=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            target_epoch_seconds=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            target_http_date=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            target_date_time=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+        )
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -14122,10 +13598,8 @@ async def test_rest_json_timestamp_format_headers_response_timestamp_format_head
         )
     )
 
-    input_ = TimestampFormatHeadersInput()
-
     try:
-        actual = await client.timestamp_format_headers(input_)
+        actual = await client.timestamp_format_headers()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:
@@ -14160,10 +13634,8 @@ async def test_rest_json_unit_input_and_output_request_unit_input_and_output() -
         )
     )
 
-    input_ = UnitInputAndOutputInput()
-
     try:
-        await client.unit_input_and_output(input_)
+        await client.unit_input_and_output()
         fail("Expected 'TestHttpServiceError' exception to be thrown!")
     except TestHttpServiceError as err:
         actual = err.request
@@ -14234,10 +13706,8 @@ async def test_rest_json_unit_input_and_output_no_output_response_unit_input_and
         )
     )
 
-    input_ = UnitInputAndOutputInput()
-
     try:
-        actual = await client.unit_input_and_output(input_)
+        actual = await client.unit_input_and_output()
     except Exception as err:
         fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
     else:

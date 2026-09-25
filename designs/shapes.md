@@ -284,14 +284,15 @@ aware of when using dicts.
 
 Default values use python's built-in default values system. Shapes that have
 immutable defaults, such as integers, have their values directly assigned.
-Shapes that can have immutable defaults (i.e. lists, maps, and documents) make
-use of dataclass `field`s and their `default_factory` as necessary.
+Shapes whose defaults are mutable (i.e. lists, maps, and documents) make use of
+dataclass `field`s and their `default_factory`, so that each instance gets its own
+value rather than sharing one.
 
 ```python
 @dataclass(kw_only=True)
 class StructWithDefaults:
     default_int: int = 7
-    default_list: list[int] = field(default_factory=list)
+    default_list: list[int] = field(default_factory=lambda: [])
 ```
 
 ### Sensitive Members
