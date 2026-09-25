@@ -1,6 +1,7 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from collections.abc import AsyncIterable, Callable
+from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, Literal, Protocol, runtime_checkable
 
 from ...documents import TypeRegistry
@@ -107,6 +108,31 @@ class DuplexClientTransport[I: Request, O: Response](ClientTransport[I, O], Prot
     """
 
     SUPPORTS_DUPLEX_STREAMING: Literal[True]
+
+
+@dataclass(kw_only=True, frozen=True)
+class ProtocolSettings:
+    """Service-level metadata for constructing a protocol.
+
+    Lets a consumer select a protocol by class alone (e.g.
+    ``protocol=AwsQueryClientProtocol``) without importing a private schema module.
+    """
+
+    namespace: str
+    """The service's Smithy namespace, e.g. ``com.amazonaws.sqs``."""
+
+    service_target: str
+    """The service shape name, used as the ``X-Amz-Target`` prefix by RPC protocols."""
+
+    version: str | None = None
+    """The service API version. Required by awsQuery; unused by other protocols."""
+
+
+type ProtocolConstructor[T] = Callable[[ProtocolSettings], T]
+"""A callable that builds a protocol instance from ``ProtocolSettings``.
+
+A protocol class satisfies this, since calling the class constructs an instance.
+"""
 
 
 class ClientProtocol[I: Request, O: Response](Protocol):
