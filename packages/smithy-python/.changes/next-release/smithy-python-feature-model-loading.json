@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added JSON AST model loading, service resolution via an optional `--service` option, and generated-shape selection with name-conflict detection."
+}

@@ -19,8 +19,9 @@ generates a standalone package containing only data shapes. Both commands accept
 the following process options:
 
 * `--model PATH` reads a JSON AST from a file instead of standard input.
-* `--output PATH` selects the output directory. It defaults to the Smithy run
-  plugin's output directory (`SMITHY_PLUGIN_DIR`) when invoked by Smithy.
+* `--output PATH` selects the output directory. It is required for direct
+  invocation and MUST NOT be used when the Smithy run plugin supplies the output
+  directory (`SMITHY_PLUGIN_DIR`).
 
 Settings specific to each artifact will be added with the functionality that
 consumes them.
@@ -103,6 +104,8 @@ Smithy process's `PATH`. Smithy passes no arguments other than those in
 
 When invoked by Smithy, the CLI reads one JSON AST document from standard input.
 The document represents the model after projection transforms have been applied.
+Only Smithy 2.x JSON ASTs are supported; a document declaring another `smithy`
+version is rejected with an error that names the version.
 
 Smithy serializes only what a shape introduces, so shapes that use mixins arrive
 without their inherited members, traits, and properties, and traits added to
