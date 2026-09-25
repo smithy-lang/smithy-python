@@ -17,6 +17,7 @@ from smithy_http.aio.interfaces import (
     HTTPResponse as _smithy_http_aio_interfaces_HTTPResponse,
 )
 from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfiguration
+from smithy_test import deep_equal
 
 from awsjson10.client import AsyncJSONRPC10Client
 from awsjson10.config import AsyncJSONRPC10Config
@@ -173,7 +174,7 @@ async def test_aws_json10_empty_input_and_empty_output_send_json_object_response
     else:
         expected = EmptyInputAndEmptyOutputOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 @mark.xfail()
@@ -1679,7 +1680,7 @@ async def test_aws_json10_deserialize_string_union_value_response_json_unions() 
     else:
         expected = JsonUnionsOutput(contents=MyUnionStringValue(value="foo"))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_deserialize_boolean_union_value_response_json_unions() -> (
@@ -1710,7 +1711,7 @@ async def test_aws_json10_deserialize_boolean_union_value_response_json_unions()
     else:
         expected = JsonUnionsOutput(contents=MyUnionBooleanValue(value=True))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_deserialize_number_union_value_response_json_unions() -> None:
@@ -1739,7 +1740,7 @@ async def test_aws_json10_deserialize_number_union_value_response_json_unions() 
     else:
         expected = JsonUnionsOutput(contents=MyUnionNumberValue(value=1))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_deserialize_blob_union_value_response_json_unions() -> None:
@@ -1768,7 +1769,7 @@ async def test_aws_json10_deserialize_blob_union_value_response_json_unions() ->
     else:
         expected = JsonUnionsOutput(contents=MyUnionBlobValue(value=b"foo"))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_deserialize_timestamp_union_value_response_json_unions() -> (
@@ -1803,7 +1804,7 @@ async def test_aws_json10_deserialize_timestamp_union_value_response_json_unions
             )
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_deserialize_enum_union_value_response_json_unions() -> None:
@@ -1832,7 +1833,7 @@ async def test_aws_json10_deserialize_enum_union_value_response_json_unions() ->
     else:
         expected = JsonUnionsOutput(contents=MyUnionEnumValue(value="Foo"))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_deserialize_int_enum_union_value_response_json_unions() -> (
@@ -1863,7 +1864,7 @@ async def test_aws_json10_deserialize_int_enum_union_value_response_json_unions(
     else:
         expected = JsonUnionsOutput(contents=MyUnionIntEnumValue(value=1))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_deserialize_list_union_value_response_json_unions() -> None:
@@ -1892,7 +1893,7 @@ async def test_aws_json10_deserialize_list_union_value_response_json_unions() ->
     else:
         expected = JsonUnionsOutput(contents=MyUnionListValue(value=["foo", "bar"]))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_deserialize_map_union_value_response_json_unions() -> None:
@@ -1923,7 +1924,7 @@ async def test_aws_json10_deserialize_map_union_value_response_json_unions() -> 
             contents=MyUnionMapValue(value={"foo": "bar", "spam": "eggs"})
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_deserialize_structure_union_value_response_json_unions() -> (
@@ -1956,7 +1957,7 @@ async def test_aws_json10_deserialize_structure_union_value_response_json_unions
             contents=MyUnionStructureValue(value=GreetingStruct(hi="hello"))
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_deserialize_ignore_type_response_json_unions() -> None:
@@ -1987,7 +1988,7 @@ async def test_aws_json10_deserialize_ignore_type_response_json_unions() -> None
             contents=MyUnionStructureValue(value=GreetingStruct(hi="hello"))
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_deserialize_allow_nulls_response_json_unions() -> None:
@@ -2018,7 +2019,7 @@ async def test_aws_json10_deserialize_allow_nulls_response_json_unions() -> None
             contents=MyUnionStructureValue(value=GreetingStruct(hi="hello"))
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_must_always_send_empty_json_payload_request_no_input_and_no_output() -> (
@@ -2137,7 +2138,7 @@ async def test_aws_json10_handles_empty_output_shape_response_no_input_and_no_ou
     else:
         expected = NoInputAndNoOutputOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_handles_unexpected_json_output_response_no_input_and_no_output() -> (
@@ -2172,7 +2173,7 @@ async def test_aws_json10_handles_unexpected_json_output_response_no_input_and_n
     else:
         expected = NoInputAndNoOutputOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_service_responds_with_no_payload_response_no_input_and_no_output() -> (
@@ -2209,7 +2210,7 @@ async def test_aws_json10_service_responds_with_no_payload_response_no_input_and
     else:
         expected = NoInputAndNoOutputOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_no_input_and_output_request_no_input_and_output() -> None:
@@ -2313,7 +2314,7 @@ async def test_aws_json10_no_input_and_output_response_no_input_and_output() -> 
     else:
         expected = NoInputAndOutputOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 @mark.xfail()
@@ -2799,7 +2800,7 @@ async def test_aws_json10_client_populates_defaults_values_when_missing_in_respo
             zero_double=float(0.0),
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_client_ignores_default_values_if_member_values_are_present_in_response_response_operation_with_defaults() -> (
@@ -2862,7 +2863,7 @@ async def test_aws_json10_client_ignores_default_values_if_member_values_are_pre
             zero_double=float(1.0),
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_client_populates_nested_default_values_when_missing_request_operation_with_nested_structure() -> (
@@ -3009,7 +3010,7 @@ async def test_aws_json10_client_populates_nested_defaults_when_missing_in_respo
             },
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_client_error_corrects_when_server_fails_to_serialize_required_values_response_operation_with_required_members() -> (
@@ -3053,7 +3054,7 @@ async def test_aws_json10_client_error_corrects_when_server_fails_to_serialize_r
             required_map={},
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_client_error_corrects_with_default_values_when_server_fails_to_serialize_required_values_response_operation_with_required_members_with_defaults() -> (
@@ -3102,7 +3103,7 @@ async def test_aws_json10_client_error_corrects_with_default_values_when_server_
             required_int_enum=1,
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 @mark.xfail()
@@ -3333,7 +3334,6 @@ async def test_non_query_compatible_aws_json10_forbids_query_mode_header_request
         )
 
 
-@mark.xfail()
 async def test_aws_json10_supports_na_n_float_inputs_request_simple_scalar_properties() -> (
     None
 ):
@@ -3577,7 +3577,6 @@ async def test_aws_json10_supports_negative_infinity_float_inputs_request_simple
         )
 
 
-@mark.xfail()
 async def test_aws_json10_supports_na_n_float_inputs_response_simple_scalar_properties() -> (
     None
 ):
@@ -3608,7 +3607,7 @@ async def test_aws_json10_supports_na_n_float_inputs_response_simple_scalar_prop
             float_value=float("nan"), double_value=float("nan")
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_supports_infinity_float_inputs_response_simple_scalar_properties() -> (
@@ -3641,7 +3640,7 @@ async def test_aws_json10_supports_infinity_float_inputs_response_simple_scalar_
             float_value=float("inf"), double_value=float("inf")
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_aws_json10_supports_negative_infinity_float_inputs_response_simple_scalar_properties() -> (
@@ -3674,7 +3673,7 @@ async def test_aws_json10_supports_negative_infinity_float_inputs_response_simpl
             float_value=float("-inf"), double_value=float("-inf")
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 class TestHttpServiceError(ServiceError):

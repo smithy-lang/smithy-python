@@ -65,6 +65,15 @@ public final class SmithyPythonDependency {
             false);
 
     /**
+     * Test-support helpers shared by generated clients (e.g. deep_equal).
+     */
+    public static final PythonDependency SMITHY_TEST = new PythonDependency(
+            "smithy_test",
+            "~=0.0.1",
+            Type.TEST_DEPENDENCY,
+            false);
+
+    /**
      * EventStream implementations for application/vnd.amazon.eventstream.
      */
     public static final PythonDependency SMITHY_AWS_EVENT_STREAM = new PythonDependency(

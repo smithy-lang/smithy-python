@@ -18,6 +18,7 @@ from smithy_http.aio.interfaces import (
     HTTPResponse as _smithy_http_aio_interfaces_HTTPResponse,
 )
 from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfiguration
+from smithy_test import deep_equal
 
 from restjson.client import AsyncRestJsonProtocolClient
 from restjson.config import AsyncRestJsonProtocolConfig
@@ -1036,7 +1037,7 @@ async def test_rest_json_date_time_with_negative_offset_response_datetime_offset
             datetime_=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_date_time_with_positive_offset_response_datetime_offsets() -> (
@@ -1072,7 +1073,7 @@ async def test_rest_json_date_time_with_positive_offset_response_datetime_offset
             datetime_=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_document_type_input_with_object_request_document_type() -> None:
@@ -1480,7 +1481,7 @@ async def test_document_output_response_document_type() -> None:
             string_value="string", document_value=Document({"foo": "bar"})
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_document_output_string_response_document_type() -> None:
@@ -1511,7 +1512,7 @@ async def test_document_output_string_response_document_type() -> None:
             string_value="string", document_value=Document("hello")
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_document_output_number_response_document_type() -> None:
@@ -1542,7 +1543,7 @@ async def test_document_output_number_response_document_type() -> None:
             string_value="string", document_value=Document(10)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_document_output_boolean_response_document_type() -> None:
@@ -1573,7 +1574,7 @@ async def test_document_output_boolean_response_document_type() -> None:
             string_value="string", document_value=Document(False)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_document_output_array_response_document_type() -> None:
@@ -1604,7 +1605,7 @@ async def test_document_output_array_response_document_type() -> None:
             string_value="string", document_value=Document([True, False])
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_document_type_as_map_value_input_request_document_type_as_map_value() -> (
@@ -1721,7 +1722,7 @@ async def test_document_type_as_map_value_output_response_document_type_as_map_v
             }
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_document_type_as_payload_input_request_document_type_as_payload() -> (
@@ -1903,7 +1904,7 @@ async def test_document_type_as_payload_output_response_document_type_as_payload
     else:
         expected = DocumentTypeAsPayloadOutput(document_value=Document({"foo": "bar"}))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_document_type_as_payload_output_string_response_document_type_as_payload() -> (
@@ -1934,7 +1935,7 @@ async def test_document_type_as_payload_output_string_response_document_type_as_
     else:
         expected = DocumentTypeAsPayloadOutput(document_value=Document("hello"))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_empty_input_and_empty_output_request_empty_input_and_empty_output() -> (
@@ -2042,7 +2043,7 @@ async def test_rest_json_empty_input_and_empty_output_response_empty_input_and_e
     else:
         expected = EmptyInputAndEmptyOutputOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_empty_input_and_empty_output_json_object_output_response_empty_input_and_empty_output() -> (
@@ -2072,7 +2073,7 @@ async def test_rest_json_empty_input_and_empty_output_json_object_output_respons
     else:
         expected = EmptyInputAndEmptyOutputOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 @mark.xfail()
@@ -2261,7 +2262,7 @@ async def test_rest_json_date_time_with_fractional_seconds_response_fractional_s
             datetime_=datetime(2000, 1, 2, 20, 34, 56, 123000, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_greeting_with_errors_response_greeting_with_errors() -> None:
@@ -2293,7 +2294,7 @@ async def test_rest_json_greeting_with_errors_response_greeting_with_errors() ->
     else:
         expected = GreetingWithErrorsOutput(greeting="Hello")
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_greeting_with_errors_no_payload_response_greeting_with_errors() -> (
@@ -2325,7 +2326,7 @@ async def test_rest_json_greeting_with_errors_no_payload_response_greeting_with_
     else:
         expected = GreetingWithErrorsOutput(greeting="Hello")
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_invalid_greeting_error_error_greeting_with_errors() -> None:
@@ -3076,7 +3077,7 @@ async def test_rest_json_http_empty_prefix_headers_response_client_response_http
             prefix_headers={"x-foo": "Foo", "hello": "There"}, specific_header="There"
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_enum_payload_request_request_http_enum_payload() -> None:
@@ -3171,7 +3172,7 @@ async def test_rest_json_enum_payload_response_response_http_enum_payload() -> N
     else:
         expected = HttpEnumPayloadOutput(payload="enumvalue")
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_http_payload_traits_with_blob_request_http_payload_traits() -> (
@@ -3347,7 +3348,7 @@ async def test_rest_json_http_payload_traits_with_blob_response_http_payload_tra
     else:
         expected = HttpPayloadTraitsOutput(foo="Foo", blob=b"blobby blob blob")
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_http_payload_traits_with_no_blob_body_response_http_payload_traits() -> (
@@ -3376,7 +3377,7 @@ async def test_rest_json_http_payload_traits_with_no_blob_body_response_http_pay
     else:
         expected = HttpPayloadTraitsOutput(foo="Foo", blob=b"")
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_http_payload_traits_with_media_type_with_blob_request_http_payload_traits_with_media_type() -> (
@@ -3484,7 +3485,7 @@ async def test_rest_json_http_payload_traits_with_media_type_with_blob_response_
             foo="Foo", blob=b"blobby blob blob"
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_http_payload_with_structure_request_http_payload_with_structure() -> (
@@ -3593,7 +3594,7 @@ async def test_rest_json_http_payload_with_structure_response_http_payload_with_
             nested=NestedPayload(greeting="hello", name="Phreddy")
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_http_payload_with_structure_and_empty_response_body_response_http_payload_with_structure() -> (
@@ -3620,7 +3621,7 @@ async def test_rest_json_http_payload_with_structure_and_empty_response_body_res
     else:
         expected = HttpPayloadWithStructureOutput(nested=None)
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_http_payload_with_union_request_http_payload_with_union() -> (
@@ -3799,7 +3800,7 @@ async def test_rest_json_http_payload_with_union_response_http_payload_with_unio
             nested=UnionPayloadGreeting(value="hello")
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_http_payload_with_unset_union_response_http_payload_with_union() -> (
@@ -3828,7 +3829,7 @@ async def test_rest_json_http_payload_with_unset_union_response_http_payload_wit
     else:
         expected = HttpPayloadWithUnionOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_http_prefix_headers_are_present_request_http_prefix_headers() -> (
@@ -4087,7 +4088,7 @@ async def test_rest_json_http_prefix_headers_are_present_response_http_prefix_he
             foo="Foo", foo_map={"abc": "Abc value", "def": "Def value"}
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_http_prefix_headers_response_response_http_prefix_headers_in_response() -> (
@@ -4118,7 +4119,7 @@ async def test_http_prefix_headers_response_response_http_prefix_headers_in_resp
             prefix_headers={"x-foo": "Foo", "hello": "Hello"}
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_http_query_params_only_request_request_http_query_params_only_operation() -> (
@@ -4904,7 +4905,7 @@ async def test_rest_json_http_response_code_response_http_response_code() -> Non
     else:
         expected = HttpResponseCodeOutput(status=201)
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_http_response_code_with_no_payload_response_http_response_code() -> (
@@ -4934,7 +4935,7 @@ async def test_rest_json_http_response_code_with_no_payload_response_http_respon
     else:
         expected = HttpResponseCodeOutput(status=201)
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_string_payload_request_request_http_string_payload() -> None:
@@ -5029,7 +5030,7 @@ async def test_rest_json_string_payload_response_response_http_string_payload() 
     else:
         expected = HttpStringPayloadOutput(payload="rawstring")
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_ignore_query_params_in_response_response_ignore_query_params_in_response() -> (
@@ -5065,7 +5066,7 @@ async def test_rest_json_ignore_query_params_in_response_response_ignore_query_p
     else:
         expected = IgnoreQueryParamsInResponseOutput(baz="bam")
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_input_and_output_with_string_headers_request_input_and_output_with_headers() -> (
@@ -5905,7 +5906,7 @@ async def test_rest_json_input_and_output_with_string_headers_response_input_and
             header_string_set=["a", "b", "c"],
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_input_and_output_with_quoted_string_headers_response_input_and_output_with_headers() -> (
@@ -5938,7 +5939,7 @@ async def test_rest_json_input_and_output_with_quoted_string_headers_response_in
             header_string_list=["b,c", '"def"', "a"]
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_input_and_output_with_numeric_headers_response_input_and_output_with_headers() -> (
@@ -5985,7 +5986,7 @@ async def test_rest_json_input_and_output_with_numeric_headers_response_input_an
             header_integer_list=[1, 2, 3],
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_input_and_output_with_boolean_headers_response_input_and_output_with_headers() -> (
@@ -6024,7 +6025,7 @@ async def test_rest_json_input_and_output_with_boolean_headers_response_input_an
             header_boolean_list=[True, False, True],
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_input_and_output_with_timestamp_headers_response_input_and_output_with_headers() -> (
@@ -6065,7 +6066,7 @@ async def test_rest_json_input_and_output_with_timestamp_headers_response_input_
             ]
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_input_and_output_with_enum_headers_response_input_and_output_with_headers() -> (
@@ -6098,7 +6099,7 @@ async def test_rest_json_input_and_output_with_enum_headers_response_input_and_o
             header_enum="Foo", header_enum_list=["Foo", "Bar", "Baz"]
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_input_and_output_with_int_enum_headers_response_input_and_output_with_headers() -> (
@@ -6131,10 +6132,9 @@ async def test_rest_json_input_and_output_with_int_enum_headers_response_input_a
             header_integer_enum=1, header_integer_enum_list=[1, 2, 3]
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
-@mark.xfail()
 async def test_rest_json_supports_na_n_float_header_outputs_response_input_and_output_with_headers() -> (
     None
 ):
@@ -6163,7 +6163,7 @@ async def test_rest_json_supports_na_n_float_header_outputs_response_input_and_o
             header_float=float("nan"), header_double=float("nan")
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_supports_infinity_float_header_outputs_response_input_and_output_with_headers() -> (
@@ -6196,7 +6196,7 @@ async def test_rest_json_supports_infinity_float_header_outputs_response_input_a
             header_float=float("inf"), header_double=float("inf")
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_supports_negative_infinity_float_header_outputs_response_input_and_output_with_headers() -> (
@@ -6229,7 +6229,7 @@ async def test_rest_json_supports_negative_infinity_float_header_outputs_respons
             header_float=float("-inf"), header_double=float("-inf")
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_json_blobs_request_json_blobs() -> None:
@@ -6330,7 +6330,7 @@ async def test_rest_json_json_blobs_response_json_blobs() -> None:
     else:
         expected = JsonBlobsOutput(data=b"value")
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_json_enums_request_json_enums() -> None:
@@ -6445,7 +6445,7 @@ async def test_rest_json_json_enums_response_json_enums() -> None:
             foo_enum_map={"hi": "Foo", "zero": "0"},
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_json_int_enums_request_json_int_enums() -> None:
@@ -6560,7 +6560,7 @@ async def test_rest_json_json_int_enums_response_json_int_enums() -> None:
             integer_enum_map={"abc": 1, "def": 2},
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_lists_request_json_lists() -> None:
@@ -6765,7 +6765,7 @@ async def test_rest_json_lists_response_json_lists() -> None:
             ],
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_lists_empty_response_json_lists() -> None:
@@ -6794,7 +6794,7 @@ async def test_rest_json_lists_empty_response_json_lists() -> None:
     else:
         expected = JsonListsOutput(string_list=[])
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_json_maps_request_json_maps() -> None:
@@ -7049,7 +7049,7 @@ async def test_rest_json_json_maps_response_json_maps() -> None:
             }
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_deserializes_zero_values_in_maps_response_json_maps() -> None:
@@ -7080,7 +7080,7 @@ async def test_rest_json_deserializes_zero_values_in_maps_response_json_maps() -
             dense_number_map={"x": 0}, dense_boolean_map={"x": False}
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_deserializes_dense_set_map_response_json_maps() -> None:
@@ -7109,7 +7109,7 @@ async def test_rest_json_deserializes_dense_set_map_response_json_maps() -> None
     else:
         expected = JsonMapsOutput(dense_set_map={"x": [], "y": ["a", "b"]})
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_json_timestamps_request_json_timestamps() -> None:
@@ -7681,7 +7681,7 @@ async def test_rest_json_json_timestamps_response_json_timestamps() -> None:
             normal=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_json_timestamps_with_date_time_format_response_json_timestamps() -> (
@@ -7717,7 +7717,7 @@ async def test_rest_json_json_timestamps_with_date_time_format_response_json_tim
             date_time=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_json_timestamps_with_date_time_on_target_format_response_json_timestamps() -> (
@@ -7753,7 +7753,7 @@ async def test_rest_json_json_timestamps_with_date_time_on_target_format_respons
             date_time_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_json_timestamps_with_epoch_seconds_format_response_json_timestamps() -> (
@@ -7786,7 +7786,7 @@ async def test_rest_json_json_timestamps_with_epoch_seconds_format_response_json
             epoch_seconds=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_json_timestamps_with_epoch_seconds_on_target_format_response_json_timestamps() -> (
@@ -7822,7 +7822,7 @@ async def test_rest_json_json_timestamps_with_epoch_seconds_on_target_format_res
             epoch_seconds_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_json_timestamps_with_http_date_format_response_json_timestamps() -> (
@@ -7855,7 +7855,7 @@ async def test_rest_json_json_timestamps_with_http_date_format_response_json_tim
             http_date=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_json_timestamps_with_http_date_on_target_format_response_json_timestamps() -> (
@@ -7888,7 +7888,7 @@ async def test_rest_json_json_timestamps_with_http_date_on_target_format_respons
             http_date_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_serialize_string_union_value_request_json_unions() -> None:
@@ -8739,7 +8739,7 @@ async def test_rest_json_deserialize_string_union_value_response_json_unions() -
     else:
         expected = JsonUnionsOutput(contents=MyUnionStringValue(value="foo"))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_deserialize_boolean_union_value_response_json_unions() -> None:
@@ -8768,7 +8768,7 @@ async def test_rest_json_deserialize_boolean_union_value_response_json_unions() 
     else:
         expected = JsonUnionsOutput(contents=MyUnionBooleanValue(value=True))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_deserialize_number_union_value_response_json_unions() -> None:
@@ -8797,7 +8797,7 @@ async def test_rest_json_deserialize_number_union_value_response_json_unions() -
     else:
         expected = JsonUnionsOutput(contents=MyUnionNumberValue(value=1))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_deserialize_blob_union_value_response_json_unions() -> None:
@@ -8826,7 +8826,7 @@ async def test_rest_json_deserialize_blob_union_value_response_json_unions() -> 
     else:
         expected = JsonUnionsOutput(contents=MyUnionBlobValue(value=b"foo"))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_deserialize_timestamp_union_value_response_json_unions() -> (
@@ -8861,7 +8861,7 @@ async def test_rest_json_deserialize_timestamp_union_value_response_json_unions(
             )
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_deserialize_enum_union_value_response_json_unions() -> None:
@@ -8890,7 +8890,7 @@ async def test_rest_json_deserialize_enum_union_value_response_json_unions() -> 
     else:
         expected = JsonUnionsOutput(contents=MyUnionEnumValue(value="Foo"))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_deserialize_list_union_value_response_json_unions() -> None:
@@ -8919,7 +8919,7 @@ async def test_rest_json_deserialize_list_union_value_response_json_unions() -> 
     else:
         expected = JsonUnionsOutput(contents=MyUnionListValue(value=["foo", "bar"]))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_deserialize_map_union_value_response_json_unions() -> None:
@@ -8950,7 +8950,7 @@ async def test_rest_json_deserialize_map_union_value_response_json_unions() -> N
             contents=MyUnionMapValue(value={"foo": "bar", "spam": "eggs"})
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_deserialize_structure_union_value_response_json_unions() -> (
@@ -8983,7 +8983,7 @@ async def test_rest_json_deserialize_structure_union_value_response_json_unions(
             contents=MyUnionStructureValue(value=GreetingStruct(hi="hello"))
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_deserialize_nested_union_value_response_json_unions() -> None:
@@ -9014,7 +9014,7 @@ async def test_rest_json_deserialize_nested_union_value_response_json_unions() -
             contents=MyUnionUnionValue(value=NestedUnionStringValue(value="foo"))
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_deserialize_ignore_type_response_json_unions() -> None:
@@ -9045,7 +9045,7 @@ async def test_rest_json_deserialize_ignore_type_response_json_unions() -> None:
             contents=MyUnionStructureValue(value=GreetingStruct(hi="hello"))
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_media_type_header_input_base64_request_media_type_header() -> None:
@@ -9142,7 +9142,7 @@ async def test_media_type_header_output_base64_response_media_type_header() -> N
     else:
         expected = MediaTypeHeaderOutput(json="true")
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_no_input_and_no_output_request_no_input_and_no_output() -> (
@@ -9247,7 +9247,7 @@ async def test_rest_json_no_input_and_no_output_response_no_input_and_no_output(
     else:
         expected = NoInputAndNoOutputOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_no_input_and_output_request_no_input_and_output() -> None:
@@ -9352,7 +9352,7 @@ async def test_rest_json_no_input_and_output_with_json_response_no_input_and_out
     else:
         expected = NoInputAndOutputOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_no_input_and_output_no_payload_response_no_input_and_output() -> (
@@ -9382,7 +9382,7 @@ async def test_rest_json_no_input_and_output_no_payload_response_no_input_and_ou
     else:
         expected = NoInputAndOutputOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_null_and_empty_headers_request_null_and_empty_headers_client() -> (
@@ -10155,7 +10155,7 @@ async def test_rest_json_client_populates_defaults_values_when_missing_in_respon
             zero_double=float(0.0),
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_client_ignores_default_values_if_member_values_are_present_in_response_response_operation_with_defaults() -> (
@@ -10218,7 +10218,7 @@ async def test_rest_json_client_ignores_default_values_if_member_values_are_pres
             zero_double=float(1.0),
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_client_populates_nested_default_values_when_missing_request_operation_with_nested_structure() -> (
@@ -10363,7 +10363,7 @@ async def test_rest_json_client_populates_nested_defaults_when_missing_in_respon
             },
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_input_union_with_unit_member_request_post_player_action() -> (
@@ -10468,7 +10468,7 @@ async def test_rest_json_output_union_with_unit_member_response_post_player_acti
     else:
         expected = PostPlayerActionOutput(action=PlayerActionQuit(value=Unit()))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_post_union_with_json_name_request1_request_post_union_with_json_name() -> (
@@ -10721,7 +10721,7 @@ async def test_post_union_with_json_name_response1_response_post_union_with_json
     else:
         expected = PostUnionWithJsonNameOutput(value=UnionWithJsonNameFoo(value="hi"))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_post_union_with_json_name_response2_response_post_union_with_json_name() -> (
@@ -10752,7 +10752,7 @@ async def test_post_union_with_json_name_response2_response_post_union_with_json
     else:
         expected = PostUnionWithJsonNameOutput(value=UnionWithJsonNameBaz(value="hi"))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_post_union_with_json_name_response3_response_post_union_with_json_name() -> (
@@ -10783,7 +10783,7 @@ async def test_post_union_with_json_name_response3_response_post_union_with_json
     else:
         expected = PostUnionWithJsonNameOutput(value=UnionWithJsonNameBar(value="hi"))
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 @mark.xfail()
@@ -11350,7 +11350,7 @@ async def test_rest_json_recursive_shapes_response_recursive_shapes() -> None:
             )
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_simple_scalar_properties_request_simple_scalar_properties() -> (
@@ -11515,7 +11515,6 @@ async def test_rest_json_doesnt_serialize_null_structure_values_request_simple_s
         )
 
 
-@mark.xfail()
 async def test_rest_json_supports_na_n_float_inputs_request_simple_scalar_properties() -> (
     None
 ):
@@ -11789,7 +11788,7 @@ async def test_rest_json_simple_scalar_properties_response_simple_scalar_propert
             double_value=float(6.5),
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_doesnt_deserialize_null_structure_values_response_simple_scalar_properties() -> (
@@ -11820,10 +11819,9 @@ async def test_rest_json_doesnt_deserialize_null_structure_values_response_simpl
     else:
         expected = SimpleScalarPropertiesOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
-@mark.xfail()
 async def test_rest_json_supports_na_n_float_inputs_response_simple_scalar_properties() -> (
     None
 ):
@@ -11854,7 +11852,7 @@ async def test_rest_json_supports_na_n_float_inputs_response_simple_scalar_prope
             float_value=float("nan"), double_value=float("nan")
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_supports_infinity_float_inputs_response_simple_scalar_properties() -> (
@@ -11887,7 +11885,7 @@ async def test_rest_json_supports_infinity_float_inputs_response_simple_scalar_p
             float_value=float("inf"), double_value=float("inf")
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_supports_negative_infinity_float_inputs_response_simple_scalar_properties() -> (
@@ -11920,7 +11918,7 @@ async def test_rest_json_supports_negative_infinity_float_inputs_response_simple
             float_value=float("-inf"), double_value=float("-inf")
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_sparse_lists_serialize_null_request_sparse_json_lists() -> (
@@ -12029,7 +12027,7 @@ async def test_rest_json_sparse_lists_serialize_null_response_sparse_json_lists(
             sparse_string_list=[None, "hi"], sparse_short_list=[None, 2]
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_sparse_json_maps_request_sparse_json_maps() -> None:
@@ -12441,7 +12439,7 @@ async def test_rest_json_sparse_json_maps_response_sparse_json_maps() -> None:
             }
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_deserializes_sparse_null_map_values_response_sparse_json_maps() -> (
@@ -12477,7 +12475,7 @@ async def test_rest_json_deserializes_sparse_null_map_values_response_sparse_jso
             sparse_string_map={"x": None},
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_deserializes_zero_values_in_sparse_maps_response_sparse_json_maps() -> (
@@ -12510,7 +12508,7 @@ async def test_rest_json_deserializes_zero_values_in_sparse_maps_response_sparse
             sparse_number_map={"x": 0}, sparse_boolean_map={"x": False}
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_deserializes_sparse_set_map_response_sparse_json_maps() -> (
@@ -12541,7 +12539,7 @@ async def test_rest_json_deserializes_sparse_set_map_response_sparse_json_maps()
     else:
         expected = SparseJsonMapsOutput(sparse_set_map={"x": [], "y": ["a", "b"]})
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_deserializes_sparse_set_map_and_retains_null_response_sparse_json_maps() -> (
@@ -12574,7 +12572,7 @@ async def test_rest_json_deserializes_sparse_set_map_and_retains_null_response_s
             sparse_set_map={"x": [], "y": ["a", "b"], "z": None}
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_streaming_traits_with_blob_request_streaming_traits() -> None:
@@ -12751,8 +12749,7 @@ async def test_rest_json_streaming_traits_with_blob_response_streaming_traits() 
     else:
         expected = StreamingTraitsOutput(foo="Foo", blob=b"blobby blob blob")
 
-        assert actual.foo == expected.foo
-
+        assert deep_equal(actual.foo, expected.foo)
         assert isinstance(actual.blob, AsyncByteStream)
         actual_body_content = await actual.blob.read()
         expected_body_content = await AsyncBytesReader(expected.blob).read()
@@ -12786,8 +12783,7 @@ async def test_rest_json_streaming_traits_with_no_blob_body_response_streaming_t
     else:
         expected = StreamingTraitsOutput(foo="Foo", blob=b"")
 
-        assert actual.foo == expected.foo
-
+        assert deep_equal(actual.foo, expected.foo)
         assert isinstance(actual.blob, AsyncByteStream)
         actual_body_content = await actual.blob.read()
         expected_body_content = await AsyncBytesReader(expected.blob).read()
@@ -13047,8 +13043,7 @@ async def test_rest_json_streaming_traits_with_media_type_with_blob_response_str
             foo="Foo", blob=b"blobby blob blob"
         )
 
-        assert actual.foo == expected.foo
-
+        assert deep_equal(actual.foo, expected.foo)
         assert isinstance(actual.blob, AsyncByteStream)
         actual_body_content = await actual.blob.read()
         expected_body_content = await AsyncBytesReader(expected.blob).read()
@@ -14139,7 +14134,7 @@ async def test_rest_json_timestamp_format_headers_response_timestamp_format_head
             target_date_time=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
         )
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 async def test_rest_json_unit_input_and_output_request_unit_input_and_output() -> None:
@@ -14243,7 +14238,7 @@ async def test_rest_json_unit_input_and_output_no_output_response_unit_input_and
     else:
         expected = UnitInputAndOutputOutput()
 
-        assert actual == expected
+        assert deep_equal(actual, expected)
 
 
 class TestHttpServiceError(ServiceError):
