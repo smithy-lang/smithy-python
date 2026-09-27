@@ -10,14 +10,19 @@ the generator needs shape types the runtime does not (such as `member` and
 version.
 
 ```python
-from smithy_python.model import StructureShape, load_model
+from pathlib import Path
 
-model = load_model(json_ast_bytes)
-for service in model.services():
-    ...
-shape = model.expect_shape("com.example#Thing", StructureShape)
-for name, member in shape.members.items():
-    target = model.get_target(member)
+from smithy_python.model import OperationShape, StructureShape, load_model
+
+model = load_model(Path("model.json").read_bytes())
+
+(service,) = model.services()
+for operation_id in service.operations:
+    operation = model.expect_shape(operation_id, OperationShape)
+    request = model.expect_shape(operation.input, StructureShape)
+    for name, member in request.members.items():
+        target = model.get_target(member)
+        print(operation.id.name, name, target.type, member.has_trait("required"))
 ```
 
 ## Loading
