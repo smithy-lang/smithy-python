@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added a stdlib-only native Python symbol provider with deterministic declaration and member naming, structured type references, service renames, collision diagnostics, sparse collections, and recursive type support."
+}
