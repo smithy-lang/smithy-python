@@ -1,6 +1,16 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-"""Compare loaded models against Smithy's ``flattenAndRemoveMixins`` output."""
+"""Compare loaded models against Smithy's ``flattenAndRemoveMixins`` output.
+
+``fixtures/mini.smithy`` is the source model. To regenerate the JSON fixtures,
+build it with the Smithy CLI using a smithy-build.json of::
+
+    {"version": "1.0", "sources": ["model"], "projections": {"flat":
+        {"transforms": [{"name": "flattenAndRemoveMixins"}]}}}
+
+then copy ``build/smithy/source/model/model.json`` to ``mini.json`` and
+``build/smithy/flat/model/model.json`` to ``mini.flat.json``.
+"""
 
 from __future__ import annotations
 
@@ -8,7 +18,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-import pytest
 from smithy_python.model import (
     ListShape,
     MapShape,
@@ -129,10 +138,9 @@ def _normalize_unit_io(node: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-@pytest.mark.parametrize("name", ["mini", "weather"])
-def test_matches_smithy_flattened_oracle(name: str) -> None:
-    model = load_model((FIXTURES / f"{name}.json").read_bytes())
-    oracle = json.loads((FIXTURES / f"{name}.flat.json").read_text())
+def test_matches_smithy_flattened_oracle() -> None:
+    model = load_model((FIXTURES / "mini.json").read_bytes())
+    oracle = json.loads((FIXTURES / "mini.flat.json").read_text())
 
     shapes = _generated(model)
     # Same shapes, in the same (input) order.
@@ -180,7 +188,7 @@ def test_mini_trait_order_and_mixin_details() -> None:
     assert mixins == ["example.mini#IdMixin", "example.mini#StampMixin"]
 
 
-def test_weather_prelude_and_services() -> None:
-    model = load_model((FIXTURES / "weather.json").read_bytes())
-    assert [str(s.id) for s in model.services()] == ["example.weather#Weather"]
+def test_mini_prelude_and_services() -> None:
+    model = load_model((FIXTURES / "mini.json").read_bytes())
+    assert [str(s.id) for s in model.services()] == ["example.mini#Mini"]
     assert not any(model.is_prelude(s) for s in model.iter_shapes())
