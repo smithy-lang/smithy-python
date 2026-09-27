@@ -9,7 +9,7 @@ These selection failures are invocation errors (exit 2).
 
 ## API and traversal
 
-`smithy_python.selection.select_shapes(model, service_id=None,
+`smithy_python.selection.select_shapes(model, *, service_id=None,
 require_service=False)` returns a frozen `Selection` containing the resolved
 `service`, a tuple of eligible `shapes`, and `excluded_count`. Clients pass
 `require_service=True`. The API has no I/O and reuses the loaded shape objects.
@@ -39,7 +39,7 @@ shapes outside the closure; the CLI reports it to stderr only when nonzero.
 
 All eligible data shapes are selected. Names are grouped case-insensitively;
 any conflicting groups produce a `ModelError` listing every conflicting ID
-(exit 1). Excluded shapes do not participate. This check is intentionally not
+(exit 1). Ineligible shapes do not participate. This check is intentionally not
 run when a service resolves: Smithy validation is responsible for service name
 semantics, and selection is not a general validator or symbol provider.
 
