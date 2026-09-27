@@ -1,84 +1,78 @@
-# Native Python Symbols
+# Native Python symbols
 
-`smithy_python.symbols` provides `SymbolProvider(model, selection, *, package)` and
-frozen, hashable `TypeReference(name, module=None, arguments=(), nullable=False)`.
-It uses only the standard library. Pass a loaded Model and its existing Selection;
-it does not select shapes again, mutate either input, or generate files.
+`SymbolProvider` answers three questions for the Python generator:
 
-## Contract
+* What should a generated class or enum be called?
+* What should a field or enum constant be called?
+* What Python type represents a value?
 
-* `declaration_name(id)` names selected structures, unions, enums and intEnums.
-  Only these supported declarations occupy `<package>.models`.
-* `member_name(member_id)` names structure/union fields or enum/intEnum constants.
-  List/map member names are not generated declarations and are rejected.
-* `type_reference(id)` resolves a top-level data shape. To resolve a field's type,
-  pass its `MemberShape.target`, not its member ID. Requiredness, defaults and
-  field optionality are deliberately outside this API.
+Pass a loaded model, a selection made from that model, and the destination package:
+`SymbolProvider(model, selection, *, package)`. The provider does not select more
+shapes, change the model, import packages, or write files. It uses only the
+standard library.
 
-IDs can be absolute strings or `ShapeId` values. Relative/malformed IDs raise
-`InvalidShapeIdError`; missing shapes raise `ShapeNotFoundError`. Unselected
-non-prelude shapes, control shapes, mixins, trait definitions, inappropriate
-method requests and unsupported types raise `ModelError`. Prelude primitive
-references and Unit work without selection. A manually narrowed Selection is
-honored: references to omitted non-prelude targets fail rather than widening it.
-The Model and Selection must describe the same loaded model.
+## Names and types
 
-Package segments must be Python identifiers, not Python 3.12 hard keywords
-(including their Unicode NFKC equivalents); invalid packages raise `ValueError`.
-The supplied package spelling is preserved. Soft keywords are accepted. No
-package is imported or checked for installation.
+Use full Smithy IDs, such as `example#Response`, or equivalent `ShapeId` objects.
+A `$` identifies a member inside a shape: `example#Response$statusCode` is the
+`statusCode` field of `Response`.
+
+| Method | Question | Example result |
+| --- | --- | --- |
+| `declaration_name("example#Response")` | What do we call the generated definition? | `"Response"` |
+| `member_name("example#Response$statusCode")` | What do we call this field? | `"status_code"` |
+| `type_reference("smithy.api#Integer")` | What type of value does it hold? | `TypeReference("int", "builtins")` |
+
+`declaration_name` names structures, unions, enums and integer enums. Their
+future definitions belong in `<package>.models`. Primitive aliases, lists and
+maps do not get separate definitions: a list of strings is `list[str]`, not a
+new class.
+
+`member_name` names structure/union fields and enum constants. A list's internal
+`member` and a map's `key` and `value` describe their contents, not Python fields,
+so this method rejects them. A structure field that holds a list still has a
+name: `Response$tags` can become `tags: list[str]`.
+
+To find a field's type, pass the shape it points to (`member.target`), not the
+field's own ID (`member.id`). Whether the field is required, has a default, or
+can be omitted is a separate decision for the future structure generator.
 
 ```python
-from smithy_python.model import load_model
+from smithy_python.model import MemberShape, load_model
 from smithy_python.selection import select_shapes
 from smithy_python.symbols import SymbolProvider, TypeReference
 
 model = load_model('''{
   "smithy": "2.0",
   "shapes": {
-    "example#HTTPServer": {
+    "example#HTTPResponse": {
       "type": "structure",
-      "members": {"getURL": {"target": "smithy.api#String"}}
-    },
-    "example#Servers": {
-      "type": "list",
-      "member": {"target": "example#HTTPServer"},
-      "traits": {"smithy.api#sparse": {}}
+      "members": {"statusCode": {"target": "smithy.api#Integer"}}
     }
   }
 }''')
 symbols = SymbolProvider(model, select_shapes(model), package="example.client")
-assert symbols.declaration_name("example#HTTPServer") == "HTTPServer"
-assert symbols.member_name("example#HTTPServer$getURL") == "get_url"
-assert symbols.type_reference("example#Servers") == TypeReference(
-    "list", "builtins",
-    (TypeReference("HTTPServer", "example.client.models", nullable=True),),
-)
+member = model.expect_shape("example#HTTPResponse$statusCode", MemberShape)
+
+assert symbols.declaration_name("example#HTTPResponse") == "HTTPResponse"
+assert symbols.member_name(member.id) == "status_code"
+assert symbols.type_reference(member.target) == TypeReference("int", "builtins")
 ```
 
-## Naming and collisions
+## Naming rules
 
-The selected service's rename is applied to declarations before normalization;
-without a service the original shape name is used. IDs, member names in the
-model, enum values and wire names are never changed.
+Apply the selected service's rename first, if present. Otherwise use the shape's
+original name. Python naming never changes Smithy IDs, wire names or enum values.
 
-For declarations, split on underscores, uppercase the first character of each
-nonempty part, and join without changing the remaining capitals. Existing
-acronyms are preserved; lowercase words do not acquire invented acronyms.
-For fields and enum constants, split an uppercase run before its final capital
-when followed by lowercase; then split lowercase-or-digit followed by uppercase.
-Join lowercase words with underscores for fields, or uppercase words for constants.
-Empty words are discarded, including leading/trailing underscores. Prefix `_` if the result
-starts with a digit. Append `_` for an exact Python 3.12 hard keyword, using a
-frozen explicit list, not the interpreter's keyword module. Soft keywords
-`match`, `case`, `type`, `_` are not reserved. Special Python names such as
-`__init__`, `_name_`, and `__private` lose their underscore wrappers, avoiding
-magic methods, enum sunder names and name mangling. Empty or non-ASCII-identifier
-rename words fail with the original ID; leading-digit renames are supported.
+For class and enum names, remove underscores and uppercase the first character
+of each nonempty part, preserving its remaining capitals. Fields use snake_case;
+enum constants use UPPER_SNAKE_CASE. Split words at lowercase-or-digit to uppercase
+boundaries, and before the last capital of an uppercase run followed by lowercase.
 
-| Input | Declaration | Field | Enum constant |
+| Input | Class or enum | Field | Enum constant |
 | --- | --- | --- | --- |
 | HTTPServer | HTTPServer | http_server | HTTP_SERVER |
+| http_server | HttpServer | http_server | HTTP_SERVER |
 | getURL | GetURL | get_url | GET_URL |
 | HTTP2Server | HTTP2Server | http2_server | HTTP2_SERVER |
 | getURL2Value | GetURL2Value | get_url2_value | GET_URL2_VALUE |
@@ -88,60 +82,108 @@ rename words fail with the original ID; leading-digit renames are supported.
 | None | None_ | none | NONE |
 | match | Match | match | MATCH |
 
-For a leading-digit rename, `2HTTPServer` becomes `_2HTTPServer`.
+Discard empty underscore-separated parts, including leading/trailing underscores.
+This avoids Python's special treatment of names such as `__init__` and `__private`.
+Append `_` if the result is a reserved Python word. The reserved-word list is fixed
+at Python 3.12 so results do not depend on the Python version running codegen.
+Names such as `match`, `case` and `type` are valid Python field names and do not
+need a trailing underscore.
 
-Construction checks supported generated declarations in one module scope and
-members in each separate declaration scope, after escaping. A collision raises
-`ModelError` with both original IDs and the resulting Python name; the first
-conflict follows selection and member order, independent of lookup order.
-No numbering, builtin ban, speculative reservations or import-name collision
-checks are performed. Primitive aliases and collections have no declarations.
-Imported Document and generated Document retain different modules.
+Rename values may contain only ASCII letters, digits and underscores, and must
+contain at least one letter or digit. If removing leading underscores would leave
+a digit at the start, keep one underscore: `_2HTTPServer` stays `_2HTTPServer`.
 
-## Type references and recursion
+When constructed, the provider checks names for every selected, supported
+declaration and its members. Invalid renames fail here. Two declarations cannot
+have the same Python name in the generated models module; two fields or constants
+cannot have the same name within one declaration. A collision raises `ModelError`
+with both Smithy IDs and the conflicting name. The first conflict follows model
+selection and member order. No numbered suffixes are added to hide collisions.
 
-`name` and `module` identify a type, `arguments` is an ordered tuple of nested
-references, and `nullable=True` means this reference also permits None. The only
-provider-produced reference without a module is `TypeReference("None")` for
-Unit. There is no arbitrary metadata, import rendering or annotation-string API.
+Builtin names such as `list` are allowed. References to identically named types
+from different modules remain distinct; the future writer must handle import
+aliases or qualified names.
 
-| Smithy type | Symbolic Python type |
+## Type references
+
+`TypeReference(name, module=None, arguments=(), nullable=False)` is an immutable,
+hashable description of a type, not a Python annotation string. `name` and
+`module` identify the type; `arguments` holds its element, key or value types.
+`nullable=True` means the value can also be `None`.
+
+For example, `list[str]` is represented as:
+
+```python
+TypeReference("list", "builtins", (TypeReference("str", "builtins"),))
+```
+
+| Smithy type | Python value type |
 | --- | --- |
-| boolean | builtins.bool |
-| string | builtins.str |
-| byte, short, integer, long, bigInteger | builtins.int |
-| float, double | builtins.float |
-| ordinary blob | builtins.bytes |
+| boolean | bool |
+| string, enum | str |
+| byte, short, integer, long, bigInteger, intEnum | int |
+| float, double | float |
+| ordinary blob | bytes |
 | bigDecimal | decimal.Decimal |
 | timestamp | datetime.datetime |
 | document | smithy_core.documents.Document |
 | structure, union | `<package>.models.<Declaration>` |
-| enum | builtins.str |
-| intEnum | builtins.int |
-| list | builtins.list with one argument |
-| map | builtins.dict with key and value arguments |
+| list | list[T] |
+| map | dict[K, V] |
 | smithy.api#Unit | None |
 
-Enum declarations still have names and constants, but value references use
-`str` or `int`, including inside collections, so annotations permit unknown
-future values. For example, `declaration_name(Color)` returns `Color` while
-`type_reference(Color)` returns `TypeReference("str", "builtins")`. This does
-not implement runtime deserialization or validation.
+`T`, `K` and `V` stand for element, key and value types. References to Python's
+built-in types record `"builtins"` as their module; generated annotations can
+use the usual short names.
 
-Ordinary primitive aliases resolve to their underlying type. Sparse lists mark
-only the element reference nullable; sparse maps mark only the value reference
-nullable, including nested collections. These module names are symbolic strings:
-codegen never imports runtime packages.
+Enums still have named declarations and constants, but their values use `str` or
+`int` so fields can hold values added by the service in the future. For example,
+`declaration_name("example#Color")` returns `"Color"`, while
+`type_reference("example#Color")` returns `TypeReference("str", "builtins")`.
+The same rule applies inside collections. Runtime validation and deserialization
+are not implemented here.
 
-Named references terminate traversal; self/mutual recursion and recursion through
-collections do not create cyclic symbol objects. Collection expansion uses an
-iterative postorder worklist with per-call results, not the Python call stack.
-Collection-only cycles raise `ModelError` with the cycle IDs, excluding any
-noncyclic prefix. Failed lookups cannot
-poison subsequent resolutions. Streaming blobs and unions are rejected when
-resolved (including through collections), not treated as ordinary types. They
-do not reserve declarations at construction. Resolving a named structure does
-not inspect its fields; consumers must resolve field targets separately.
+A sparse list permits `None` elements; a sparse map permits `None` values, not
+keys. Each collection controls its own sparseness. An outer sparse list can
+contain `None` instead of an inner list without allowing `None` inside that inner
+list. The provider uses `nullable` only for these collection entries, not to
+decide whether structure fields are optional.
 
-No service/operation/resource symbols, writers, CLI integration, schemas,
-serializers, dependency tracking, plugins, or runtime dependencies are added.
+Module names are recorded without importing anything. `Unit`, which represents
+no value, is the only result without a module: `TypeReference("None")`.
+
+## Recursion and unsupported shapes
+
+Structures and unions resolve to named references without expanding their
+fields. This supports types such as `Node` containing `list[Node]`. Callers
+resolve each field's target separately.
+
+Collection expansion does not use Python recursion. A cycle made entirely of
+collections, such as two lists containing each other, raises `ModelError` with
+the IDs in the cycle. A failed lookup does not affect later lookups.
+
+Streaming types are deferred until their Python interfaces are defined. The
+provider rejects streaming blobs and event-stream unions rather than treating
+them as ordinary values.
+
+## Inputs and errors
+
+The model and selection must come from the same load; the provider does not
+check this precondition. Requests for shapes outside the selection fail rather
+than silently adding them. Smithy's built-in types, such as `String`, `Integer`
+and `Unit`, remain available without selecting them for generation.
+
+* Malformed or incomplete IDs raise `InvalidShapeIdError`.
+* IDs absent from the model raise `ShapeNotFoundError`.
+* Unsupported or unselected shapes and invalid method requests raise `ModelError`.
+  For example, `type_reference` requires a shape ID, not a member ID;
+  `member_name` requires a supported field or constant; `declaration_name`
+  requires a generated definition. Services, operations, resources, mixins and
+  trait definitions do not have data symbols.
+
+The package is a dotted Python name such as `example.client`. Each part must be
+a valid Python identifier and cannot be a reserved word such as `class`.
+Alternative Unicode spellings that Python converts to reserved words are also
+rejected: `ｃｌａｓｓ` is treated as `class` for this check. Invalid packages raise
+`ValueError`. Other accepted spellings are preserved. Names such as `match` are
+allowed. The package need not exist or be installed.

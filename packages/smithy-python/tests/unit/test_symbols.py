@@ -17,6 +17,7 @@ def model_with(shapes: dict[str, object]) -> Model:
     ("source", "declaration", "field", "constant"),
     [
         ("HTTPServer", "HTTPServer", "http_server", "HTTP_SERVER"),
+        ("_2HTTPServer", "_2HTTPServer", "_2_http_server", "_2_HTTP_SERVER"),
         ("getURL", "GetURL", "get_url", "GET_URL"),
         ("HTTP_Server", "HTTPServer", "http_server", "HTTP_SERVER"),
         ("http_server", "HttpServer", "http_server", "HTTP_SERVER"),
@@ -375,7 +376,7 @@ def test_invalid_package(package: str) -> None:
 
 @pytest.mark.parametrize(
     "name,expected",
-    [("2HTTPServer", "_2HTTPServer"), ("__init__", "Init"), ("None", "None_")],
+    [("_2HTTPServer", "_2HTTPServer"), ("__init__", "Init"), ("None", "None_")],
 )
 def test_rename_normalization(name: str, expected: str) -> None:
     from smithy_python.model import ServiceShape
