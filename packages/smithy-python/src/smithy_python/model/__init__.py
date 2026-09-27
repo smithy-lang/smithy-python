@@ -14,6 +14,7 @@ from ._shape_id import ShapeId
 from ._shapes import (
     EnumShape,
     IntEnumShape,
+    JsonValue,
     ListShape,
     MapShape,
     MemberShape,
@@ -26,12 +27,14 @@ from ._shapes import (
     SimpleShape,
     StructureShape,
     UnionShape,
+    to_json,
 )
 
 __all__ = [
     "EnumShape",
     "IntEnumShape",
     "InvalidShapeIdError",
+    "JsonValue",
     "ListShape",
     "MapShape",
     "MemberShape",
@@ -49,4 +52,5 @@ __all__ = [
     "StructureShape",
     "UnionShape",
     "load_model",
+    "to_json",
 ]

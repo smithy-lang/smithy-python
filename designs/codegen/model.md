@@ -29,9 +29,10 @@ AST.
 
 Loading performs only the checks needed to build a well-formed model:
 
-* The document is a JSON object with a supported `smithy` version (`2`, `2.0`,
-  `1`, or `1.0`; no Smithy 1.0 semantic conversions are performed). `NaN` and
-  `Infinity` are rejected because they are not JSON.
+* The document is a JSON object with a Smithy 2.x `smithy` version. Smithy 1.0
+  ASTs are rejected rather than loaded with 2.0 semantics, which would silently
+  produce a different model. `NaN` and `Infinity` are rejected because they are
+  not JSON.
 * Every shape has a known type and a valid shape ID, and every member has a
   target.
 * Every member target and shape relationship (service, resource, and operation
@@ -69,10 +70,12 @@ fields rather than JSON properties:
 An operation without `input` or `output` reports `smithy.api#Unit`, as in the
 Smithy semantic model.
 
-Trait values are kept as the JSON values decoded from the AST. The model does
-not define typed trait classes; stages that need a trait interpret its value.
-Shapes, collections, and relationships are read-only, but trait and metadata
-values are ordinary `dict` and `list` objects that consumers MUST NOT modify.
+Trait and metadata values are the JSON values from the AST, made deeply
+immutable: objects are read-only mappings and arrays are tuples. Values
+inherited from a mixin are shared by every shape that uses it, so a mutable
+value would let one consumer change another shape's traits. `to_json` returns
+a mutable copy, for example to serialize a value. The model does not define
+typed trait classes; stages that need a trait interpret its value.
 
 `ShapeId` is a frozen, hashable value with `namespace`, `name`, and an optional
 `member`. It sorts by namespace, name, and member. `has_trait` and `get_trait`

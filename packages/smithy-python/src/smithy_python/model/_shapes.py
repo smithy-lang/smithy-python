@@ -4,7 +4,7 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from enum import StrEnum
 from types import MappingProxyType
@@ -12,8 +12,22 @@ from typing import Final
 
 from ._shape_id import PRELUDE_NAMESPACE, ShapeId, as_shape_id
 
-type Node = None | bool | int | float | str | Sequence[Node] | Mapping[str, Node]
-"""A JSON node value exactly as decoded from the JSON AST (dicts and lists)."""
+type Node = None | bool | int | float | str | tuple[Node, ...] | Mapping[str, Node]
+"""A deeply immutable JSON value: arrays are tuples, objects read-only mappings."""
+
+type JsonValue = (
+    None | bool | int | float | str | list[JsonValue] | dict[str, JsonValue]
+)
+"""A mutable JSON value, as produced by :func:`to_json`."""
+
+
+def to_json(node: Node) -> JsonValue:
+    """Return a mutable copy of a node, e.g. for ``json.dumps`` or editing."""
+    if isinstance(node, Mapping):
+        return {k: to_json(v) for k, v in node.items()}
+    if isinstance(node, tuple):
+        return [to_json(v) for v in node]
+    return node
 
 
 class ShapeType(StrEnum):
@@ -75,8 +89,8 @@ class Shape:
 
     Shapes are already mixin-flattened: ``members`` and ``traits`` include
     everything inherited from mixins, in a deterministic order. Instances are
-    immutable by convention; trait and metadata node values are the decoded
-    JSON dicts/lists and must not be mutated. Equality is identity.
+    immutable; trait values are deeply frozen :data:`Node` values (use
+    :func:`to_json` for a mutable copy). Equality is identity.
     """
 
     id: ShapeId

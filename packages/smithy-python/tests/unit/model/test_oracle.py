@@ -21,6 +21,7 @@ from smithy_python.model import (
     ShapeId,
     ShapeType,
     load_model,
+    to_json,
 )
 
 FIXTURES = Path(__file__).parent / "fixtures"
@@ -34,7 +35,7 @@ def _ref(shape_id: ShapeId) -> dict[str, str]:
 def _member(member: MemberShape) -> dict[str, Any]:
     node: dict[str, Any] = {"target": str(member.target)}
     if member.traits:
-        node["traits"] = {str(k): v for k, v in member.traits.items()}
+        node["traits"] = {str(k): to_json(v) for k, v in member.traits.items()}
     return node
 
 
@@ -101,7 +102,7 @@ def _to_ast(shape: Shape) -> dict[str, Any]:
                     name: _member(m) for name, m in shape.members.items()
                 }
     if shape.traits:
-        node["traits"] = {str(k): v for k, v in shape.traits.items()}
+        node["traits"] = {str(k): to_json(v) for k, v in shape.traits.items()}
     return node
 
 
@@ -136,7 +137,7 @@ def test_matches_smithy_flattened_oracle(name: str) -> None:
     shapes = _generated(model)
     # Same shapes, in the same (input) order.
     assert list(shapes) == list(oracle["shapes"])
-    assert model.metadata == oracle.get("metadata", {})
+    assert to_json(model.metadata) == oracle.get("metadata", {})
 
     for shape_id, expected in oracle["shapes"].items():
         expected = _normalize_unit_io(expected)

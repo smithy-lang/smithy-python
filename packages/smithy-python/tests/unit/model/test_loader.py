@@ -4,7 +4,8 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from collections.abc import Mapping
+from typing import Any, cast
 
 import pytest
 from smithy_python.model import (
@@ -15,6 +16,7 @@ from smithy_python.model import (
     MemberShape,
     Model,
     ModelError,
+    Node,
     OperationShape,
     ResourceShape,
     ServiceShape,
@@ -332,9 +334,9 @@ def test_member_trait_and_node_order_preserved() -> None:
     model = load_model(json.dumps(raw))
     assert list(model.metadata) == ["zeta", "alpha", "mid"]
     alpha = model.metadata["alpha"]
-    assert isinstance(alpha, dict)
+    assert isinstance(alpha, Mapping)
     assert list(alpha) == ["z", "a"]
-    assert alpha["a"] == [3, 1, 2]
+    assert alpha["a"] == (3, 1, 2)
 
     s = model.expect_shape(_id("S"), StructureShape)
     assert list(s.members) == ["zulu", "alpha", "mike"]
@@ -344,11 +346,11 @@ def test_member_trait_and_node_order_preserved() -> None:
     ]
     assert [k.name for k in s.traits] == ["zTrait", "aTrait", "mTrait"]
     z_trait = s.get_trait("com.example#zTrait")
-    assert isinstance(z_trait, dict)
+    assert isinstance(z_trait, Mapping)
     assert list(z_trait) == ["y", "b", "a"]
-    assert z_trait["b"] == [{"q": 1, "c": 2}]
+    assert z_trait["b"] == ({"q": 1, "c": 2},)
     assert list(z_trait["b"][0]) == ["q", "c"]  # type: ignore[index]
-    assert s.get_trait("com.example#aTrait") == [3, 2, 1]
+    assert s.get_trait("com.example#aTrait") == (3, 2, 1)
 
     assert list(model.expect_shape(_id("U"), UnionShape).members) == ["z", "a"]
     assert list(model.expect_shape(_id("E"), EnumShape).members) == ["Z", "A"]
@@ -405,10 +407,78 @@ def test_relative_ids_in_ast_are_rejected() -> None:
 # --- Loading inputs -----------------------------------------------------------
 
 
-@pytest.mark.parametrize("version", ["2.0", "2", "1.0", "1"])
+@pytest.mark.parametrize("version", ["2.0", "2", "2.1"])
 def test_accepted_versions(version: str) -> None:
     model = load_model(json.dumps({"smithy": version, "shapes": {}}).encode())
     assert model.smithy_version == version
+
+
+@pytest.mark.parametrize("version", ["1.0", "1", "3.0", "20", ""])
+def test_rejects_versions_other_than_smithy_2(version: str) -> None:
+    # Smithy 1.0 has different semantics (e.g. set shapes, boxing), so loading
+    # it as 2.0 would silently produce a wrong model.
+    with pytest.raises(ModelError, match="Smithy 2"):
+        load_model(json.dumps({"smithy": version, "shapes": {}}).encode())
+
+
+def test_trait_and_metadata_values_are_deeply_immutable() -> None:
+    model = load_model(
+        {
+            "smithy": "2.0",
+            "metadata": {"m": {"list": [1, {"k": "v"}]}},
+            "shapes": {
+                f"{NS}#S": {
+                    "type": "string",
+                    "traits": {"com.example#t": {"b": [3, 1], "a": {"y": 1, "x": 2}}},
+                },
+                f"{NS}#t": {"type": "structure", "members": {}},
+            },
+        }
+    )
+    value = model.get_shape(_id("S")).get_trait("com.example#t")
+    assert isinstance(value, Mapping)
+    assert list(value) == ["b", "a"]
+    assert value["b"] == (3, 1)
+    assert list(cast(Mapping[str, Node], value["a"])) == ["y", "x"]
+    with pytest.raises(TypeError):
+        value["new"] = 1  # type: ignore[index]
+    with pytest.raises(TypeError):
+        cast(dict[str, Node], value["a"])["x"] = 3
+    with pytest.raises(AttributeError):
+        value["b"].append(4)  # type: ignore[union-attr]
+
+    meta = model.metadata["m"]
+    assert isinstance(meta, Mapping)
+    assert meta["list"] == (1, {"k": "v"})
+    with pytest.raises(TypeError):
+        cast(dict[str, Node], cast(tuple[Node, ...], meta["list"])[1])["k"] = "w"
+
+
+def test_values_inherited_from_mixins_cannot_leak_between_shapes() -> None:
+    model = _load(
+        {
+            f"{NS}#M": {
+                "type": "structure",
+                "members": {},
+                "traits": {"smithy.api#mixin": {}, "smithy.api#tags": ["shared"]},
+            },
+            f"{NS}#A": {
+                "type": "structure",
+                "mixins": [{"target": f"{NS}#M"}],
+                "members": {},
+            },
+            f"{NS}#B": {
+                "type": "structure",
+                "mixins": [{"target": f"{NS}#M"}],
+                "members": {},
+            },
+        }
+    )
+    tags = model.get_shape(_id("A")).get_trait("tags")
+    assert tags == ("shared",)
+    with pytest.raises(AttributeError):
+        tags.append("oops")  # type: ignore[union-attr]
+    assert model.get_shape(_id("B")).get_trait("tags") == ("shared",)
 
 
 def test_loads_bytes_str_and_mapping() -> None:

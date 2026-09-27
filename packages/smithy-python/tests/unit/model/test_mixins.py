@@ -371,7 +371,7 @@ def test_apply_onto_non_mixin_shapes() -> None:
         "smithy.api#required",
     ]
     # Array trait values are concatenated per the apply spec.
-    assert member.get_trait(f"{NS}#tags") == ["a", "b"]
+    assert member.get_trait(f"{NS}#tags") == ("a", "b")
     assert member.get_trait("smithy.api#documentation") == "new"
     lst = model.expect_shape(_id("L"), ListShape)
     assert lst.member.get_trait("smithy.api#length") == {"max": 3}

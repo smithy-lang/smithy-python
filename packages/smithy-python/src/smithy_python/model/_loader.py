@@ -25,7 +25,7 @@ first introduced and takes the value from the last writer.
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from types import MappingProxyType
 from typing import Final, cast
@@ -48,7 +48,8 @@ from ._shapes import (
     SimpleShape,
 )
 
-SUPPORTED_VERSIONS: Final = frozenset({"2.0", "2", "1.0", "1"})
+# Smithy 1.0 differs semantically (set shapes, boxing), so only 2.x is loaded.
+SUPPORTED_MAJOR_VERSION: Final = "2"
 
 type _Json = dict[str, object]
 type _Traits = dict[ShapeId, Node]
@@ -99,12 +100,12 @@ def load_model(source: bytes | str | Mapping[str, object]) -> Model:
     version = root.get("smithy")
     if not isinstance(version, str):
         raise ModelError('Smithy JSON AST model must contain a "smithy" version string')
-    if version not in SUPPORTED_VERSIONS:
+    if version.partition(".")[0] != SUPPORTED_MAJOR_VERSION:
         raise ModelError(
-            f"Unsupported Smithy version {version!r}; expected one of "
-            f"{', '.join(sorted(SUPPORTED_VERSIONS))}"
+            f"Unsupported Smithy version {version!r}: only Smithy "
+            f"{SUPPORTED_MAJOR_VERSION}.x JSON ASTs are supported"
         )
-    metadata = _object(root.get("metadata", {}), '"metadata"')
+    metadata = _freeze(_object(root.get("metadata", {}), '"metadata"'))
     shapes_node = _object(root.get("shapes", {}), '"shapes"')
 
     raw_shapes: dict[ShapeId, _RawShape] = {}
@@ -199,9 +200,24 @@ def _parse_ref(value: object, what: str) -> ShapeId:
 def _parse_traits(value: object, owner: str) -> _Traits:
     node = _object(value, f'{owner}: "traits"')
     return {
-        _parse_id(key, f"{owner}: trait"): cast(Node, trait)
-        for key, trait in node.items()
+        _parse_id(key, f"{owner}: trait"): _freeze(trait) for key, trait in node.items()
     }
+
+
+def _freeze(value: object) -> Node:
+    """Copy a decoded JSON value into a deeply immutable form.
+
+    Objects become read-only mappings (keeping key order) and arrays become
+    tuples. Values inherited through mixins are shared between shapes, so
+    freezing them keeps one consumer from changing another shape's traits.
+    """
+    if isinstance(value, Mapping):
+        return MappingProxyType(
+            {k: _freeze(v) for k, v in cast(Mapping[str, object], value).items()}
+        )
+    if isinstance(value, list | tuple):
+        return tuple(_freeze(v) for v in cast(Sequence[object], value))
+    return cast(Node, value)
 
 
 def _parse_member(container: ShapeId, name: str, value: object) -> _RawMember:
@@ -307,8 +323,8 @@ def _merge_applied(traits: _Traits, applied: Mapping[ShapeId, Node]) -> None:
     """Merge applied traits; array values are concatenated as the spec requires."""
     for key, value in applied.items():
         existing = traits.get(key)
-        if isinstance(existing, list) and isinstance(value, list):
-            traits[key] = [*existing, *value]
+        if isinstance(existing, tuple) and isinstance(value, tuple):
+            traits[key] = (*existing, *value)
         else:
             traits[key] = value
 
@@ -338,7 +354,7 @@ def _inheritable_traits(mixin: _RawShape) -> _Traits:
     mixin_trait = mixin.traits.get(MIXIN_TRAIT)
     if isinstance(mixin_trait, Mapping):
         local_traits = cast(Mapping[str, Node], mixin_trait).get("localTraits", [])
-        if isinstance(local_traits, list):
+        if isinstance(local_traits, tuple):
             for trait in local_traits:
                 local.add(_parse_id(trait, f"Mixin {mixin.id}: localTraits"))
     return {k: v for k, v in mixin.traits.items() if k not in local}
