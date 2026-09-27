@@ -48,11 +48,11 @@ model = load_model('''{
   }
 }''')
 symbols = SymbolProvider(model, select_shapes(model), package="example.client")
-assert symbols.declaration_name("example#HTTPServer") == "HttpServer"
+assert symbols.declaration_name("example#HTTPServer") == "HTTPServer"
 assert symbols.member_name("example#HTTPServer$getURL") == "get_url"
 assert symbols.type_reference("example#Servers") == TypeReference(
     "list", "builtins",
-    (TypeReference("HttpServer", "example.client.models", nullable=True),),
+    (TypeReference("HTTPServer", "example.client.models", nullable=True),),
 )
 ```
 
@@ -62,11 +62,13 @@ The selected service's rename is applied to declarations before normalization;
 without a service the original shape name is used. IDs, member names in the
 model, enum values and wire names are never changed.
 
-Split an uppercase run before its final capital when followed by lowercase;
-then split lowercase-or-digit followed by uppercase. Underscores separate words:
-empty words are discarded, including leading/trailing underscores. Digits stay
-with the preceding word (except the digit-to-capital boundary). Lowercase words
-are joined in PascalCase, snake_case or UPPER_SNAKE_CASE. Prefix `_` if the result
+For declarations, split on underscores, uppercase the first character of each
+nonempty part, and join without changing the remaining capitals. Existing
+acronyms are preserved; lowercase words do not acquire invented acronyms.
+For fields and enum constants, split an uppercase run before its final capital
+when followed by lowercase; then split lowercase-or-digit followed by uppercase.
+Join lowercase words with underscores for fields, or uppercase words for constants.
+Empty words are discarded, including leading/trailing underscores. Prefix `_` if the result
 starts with a digit. Append `_` for an exact Python 3.12 hard keyword, using a
 frozen explicit list, not the interpreter's keyword module. Soft keywords
 `match`, `case`, `type`, `_` are not reserved. Special Python names such as
@@ -76,17 +78,17 @@ rename words fail with the original ID; leading-digit renames are supported.
 
 | Input | Declaration | Field | Enum constant |
 | --- | --- | --- | --- |
-| HTTPServer | HttpServer | http_server | HTTP_SERVER |
-| getURL | GetUrl | get_url | GET_URL |
-| HTTP2Server | Http2Server | http2_server | HTTP2_SERVER |
-| getURL2Value | GetUrl2Value | get_url2_value | GET_URL2_VALUE |
+| HTTPServer | HTTPServer | http_server | HTTP_SERVER |
+| getURL | GetURL | get_url | GET_URL |
+| HTTP2Server | HTTP2Server | http2_server | HTTP2_SERVER |
+| getURL2Value | GetURL2Value | get_url2_value | GET_URL2_VALUE |
 | __some__name__ | SomeName | some_name | SOME_NAME |
 | __init__ | Init | init | INIT |
 | class | Class | class_ | CLASS |
 | None | None_ | none | NONE |
 | match | Match | match | MATCH |
 
-For a leading-digit rename, `2HTTPServer` becomes `_2HttpServer`.
+For a leading-digit rename, `2HTTPServer` becomes `_2HTTPServer`.
 
 Construction checks supported generated declarations in one module scope and
 members in each separate declaration scope, after escaping. A collision raises
@@ -113,10 +115,18 @@ Unit. There is no arbitrary metadata, import rendering or annotation-string API.
 | bigDecimal | decimal.Decimal |
 | timestamp | datetime.datetime |
 | document | smithy_core.documents.Document |
-| structure, union, enum, intEnum | `<package>.models.<Declaration>` |
+| structure, union | `<package>.models.<Declaration>` |
+| enum | builtins.str |
+| intEnum | builtins.int |
 | list | builtins.list with one argument |
 | map | builtins.dict with key and value arguments |
 | smithy.api#Unit | None |
+
+Enum declarations still have names and constants, but value references use
+`str` or `int`, including inside collections, so annotations permit unknown
+future values. For example, `declaration_name(Color)` returns `Color` while
+`type_reference(Color)` returns `TypeReference("str", "builtins")`. This does
+not implement runtime deserialization or validation.
 
 Ordinary primitive aliases resolve to their underlying type. Sparse lists mark
 only the element reference nullable; sparse maps mark only the value reference
