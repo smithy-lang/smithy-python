@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added a native Python writer with structured annotations, deterministic collision-safe imports, indentation contexts, and forward-reference support."
+}
