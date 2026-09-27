@@ -1,4 +1,4 @@
 {
   "type": "feature",
-  "description": "Added service and data-shape selection for the native Python generator, including --service for client and types commands, service closure filtering, and standalone types name conflict diagnostics. Code generation remains unimplemented."
+  "description": "Added service and data-shape selection for the native Python generator, including `--service` for `client` and `types` commands, service closure filtering, and standalone types name conflict diagnostics."
 }
