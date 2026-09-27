@@ -28,6 +28,7 @@ from smithy_python.model import (
     StructureShape,
     UnionShape,
     load_model,
+    to_json,
 )
 
 NS = "com.example"
@@ -349,7 +350,8 @@ def test_member_trait_and_node_order_preserved() -> None:
     assert isinstance(z_trait, Mapping)
     assert list(z_trait) == ["y", "b", "a"]
     assert z_trait["b"] == ({"q": 1, "c": 2},)
-    assert list(z_trait["b"][0]) == ["q", "c"]  # type: ignore[index]
+    nested = cast(tuple[Node, ...], z_trait["b"])[0]
+    assert list(cast(Mapping[str, Node], nested)) == ["q", "c"]
     assert s.get_trait("com.example#aTrait") == (3, 2, 1)
 
     assert list(model.expect_shape(_id("U"), UnionShape).members) == ["z", "a"]
@@ -441,17 +443,30 @@ def test_trait_and_metadata_values_are_deeply_immutable() -> None:
     assert value["b"] == (3, 1)
     assert list(cast(Mapping[str, Node], value["a"])) == ["y", "x"]
     with pytest.raises(TypeError):
-        value["new"] = 1  # type: ignore[index]
+        value["new"] = 1  # type: ignore
     with pytest.raises(TypeError):
         cast(dict[str, Node], value["a"])["x"] = 3
     with pytest.raises(AttributeError):
-        value["b"].append(4)  # type: ignore[union-attr]
+        value["b"].append(4)  # type: ignore
 
     meta = model.metadata["m"]
     assert isinstance(meta, Mapping)
     assert meta["list"] == (1, {"k": "v"})
     with pytest.raises(TypeError):
         cast(dict[str, Node], cast(tuple[Node, ...], meta["list"])[1])["k"] = "w"
+
+
+def test_to_json_returns_mutable_copy_in_order() -> None:
+    node = load_model(
+        {"smithy": "2.0", "metadata": {"m": {"b": [1, {"y": 2, "x": 3}], "a": None}}}
+    ).metadata["m"]
+    copy = to_json(node)
+    assert copy == {"b": [1, {"y": 2, "x": 3}], "a": None}
+    assert isinstance(copy, dict)
+    assert list(copy) == ["b", "a"]
+    assert isinstance(copy["b"], list)
+    copy["b"].append(4)
+    assert node == {"b": (1, {"y": 2, "x": 3}), "a": None}
 
 
 def test_values_inherited_from_mixins_cannot_leak_between_shapes() -> None:
@@ -477,7 +492,7 @@ def test_values_inherited_from_mixins_cannot_leak_between_shapes() -> None:
     tags = model.get_shape(_id("A")).get_trait("tags")
     assert tags == ("shared",)
     with pytest.raises(AttributeError):
-        tags.append("oops")  # type: ignore[union-attr]
+        tags.append("oops")  # type: ignore
     assert model.get_shape(_id("B")).get_trait("tags") == ("shared",)
 
 
