@@ -61,3 +61,4 @@ behavior of generated packages.
 ## Designs
 
 * [Code Generator CLI](cli.md)
+* [Service and Data-Shape Selection](selection.md)

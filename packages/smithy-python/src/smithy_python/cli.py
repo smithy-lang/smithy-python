@@ -15,6 +15,7 @@ from . import __version__
 from .environment import PluginEnvironment
 from .exceptions import CodegenError, InvalidInvocationError
 from .model import load_model
+from .selection import select_shapes
 
 _GENERATION_NOT_IMPLEMENTED: Final = (
     "smithy-python: error: {artifact} generation is not implemented yet\n"
@@ -53,11 +54,24 @@ def main(
         return 1
 
     try:
-        load_model(invocation.model_source)
+        model = load_model(invocation.model_source)
+        selection = select_shapes(
+            model,
+            service_id=args.service,
+            require_service=invocation.artifact == "client",
+        )
+    except InvalidInvocationError as error:
+        sys.stderr.write(f"smithy-python: error: {error}\n")
+        return 2
     except CodegenError as error:
         sys.stderr.write(f"smithy-python: error: {error}\n")
         return 1
 
+    if selection.excluded_count and selection.service is not None:
+        sys.stderr.write(
+            f"smithy-python: excluded {selection.excluded_count} eligible data shape(s) "
+            f"outside the closure of service {selection.service.id}\n"
+        )
     sys.stderr.write(_GENERATION_NOT_IMPLEMENTED.format(artifact=args.artifact))
     return 1
 
@@ -89,6 +103,11 @@ def _create_parser() -> argparse.ArgumentParser:
 def _common_artifact_options() -> argparse.ArgumentParser:
     """Build a parent parser with the options shared by every artifact."""
     parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument(
+        "--service",
+        metavar="SHAPE_ID",
+        help="Absolute service shape ID; defaults to the sole non-mixin service.",
+    )
     parser.add_argument(
         "--model",
         type=Path,
