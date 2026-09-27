@@ -10,7 +10,7 @@ from typing import Final, Self
 
 from ..exceptions import InvalidShapeIdError
 
-_IDENTIFIER: Final = r"_*[A-Za-z][A-Za-z0-9_]*"
+_IDENTIFIER: Final = r"(?:[A-Za-z]|_+[A-Za-z0-9])[A-Za-z0-9_]*"
 _IDENTIFIER_RE: Final = re.compile(_IDENTIFIER)
 _NAMESPACE_RE: Final = re.compile(rf"{_IDENTIFIER}(?:\.{_IDENTIFIER})*")
 
