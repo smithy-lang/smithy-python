@@ -49,6 +49,8 @@ class TypeReference:
 _PRIMITIVES = {
     ShapeType.BOOLEAN: TypeReference("bool", "builtins"),
     ShapeType.STRING: TypeReference("str", "builtins"),
+    ShapeType.ENUM: TypeReference("str", "builtins"),
+    ShapeType.INT_ENUM: TypeReference("int", "builtins"),
     **dict.fromkeys(
         (
             ShapeType.BYTE,
@@ -69,10 +71,12 @@ _PRIMITIVES = {
 
 
 def _name(value: str, *, pascal: bool = False, constant: bool = False) -> str:
-    value = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", value)
-    value = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", value)
-    words = [word.lower() for word in value.split("_") if word]
-    result = "".join(word.capitalize() for word in words) if pascal else "_".join(words)
+    if pascal:
+        result = "".join(word[:1].upper() + word[1:] for word in value.split("_"))
+    else:
+        value = re.sub(r"([A-Z]+)([A-Z][a-z])", r"\1_\2", value)
+        value = re.sub(r"([a-z0-9])([A-Z])", r"\1_\2", value)
+        result = "_".join(word.lower() for word in value.split("_") if word)
     if constant:
         result = result.upper()
     if result[:1].isdigit():
@@ -148,7 +152,7 @@ class SymbolProvider:
         return result
 
     def type_reference(self, shape_id: ShapeId | str) -> TypeReference:
-        """Resolve a data shape to an immutable symbolic Python type."""
+        """Resolve a value type; enums use str/int to permit unknown values."""
         root = self._model.get_shape(shape_id).id
         resolved: dict[ShapeId, TypeReference] = {}
         active: dict[ShapeId, None] = {}
@@ -192,7 +196,7 @@ class SymbolProvider:
                     pending.extend((target, False) for target in reversed(targets))
             elif current == ShapeId("smithy.api", "Unit"):
                 resolved[current] = TypeReference("None")
-            elif shape.type in _NAMED:
+            elif shape.type in (ShapeType.STRUCTURE, ShapeType.UNION):
                 resolved[current] = TypeReference(
                     self.declaration_name(current), f"{self._package}.models"
                 )

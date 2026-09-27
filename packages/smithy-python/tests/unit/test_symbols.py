@@ -16,10 +16,12 @@ def model_with(shapes: dict[str, object]) -> Model:
 @pytest.mark.parametrize(
     ("source", "declaration", "field", "constant"),
     [
-        ("HTTPServer", "HttpServer", "http_server", "HTTP_SERVER"),
-        ("getURL", "GetUrl", "get_url", "GET_URL"),
-        ("HTTP2Server", "Http2Server", "http2_server", "HTTP2_SERVER"),
-        ("getURL2Value", "GetUrl2Value", "get_url2_value", "GET_URL2_VALUE"),
+        ("HTTPServer", "HTTPServer", "http_server", "HTTP_SERVER"),
+        ("getURL", "GetURL", "get_url", "GET_URL"),
+        ("HTTP_Server", "HTTPServer", "http_server", "HTTP_SERVER"),
+        ("http_server", "HttpServer", "http_server", "HTTP_SERVER"),
+        ("HTTP2Server", "HTTP2Server", "http2_server", "HTTP2_SERVER"),
+        ("getURL2Value", "GetURL2Value", "get_url2_value", "GET_URL2_VALUE"),
         ("__some__name__", "SomeName", "some_name", "SOME_NAME"),
         ("__init__", "Init", "init", "INIT"),
         ("_value", "Value", "value", "VALUE"),
@@ -69,9 +71,11 @@ def test_names(source: str, declaration: str, field: str, constant: str) -> None
         ("bigDecimal", "Decimal", "decimal"),
         ("timestamp", "datetime", "datetime"),
         ("document", "Document", "smithy_core.documents"),
+        ("enum", "str", "builtins"),
+        ("intEnum", "int", "builtins"),
         *[
-            (kind, "HttpServer", "example.client.models")
-            for kind in ("structure", "union", "enum", "intEnum")
+            (kind, "HTTPServer", "example.client.models")
+            for kind in ("structure", "union")
         ],
     ],
 )
@@ -87,10 +91,66 @@ def test_type_references(kind: str, name: str, module: str) -> None:
     assert hash(ref) == hash(TypeReference(name, module))
     with pytest.raises(FrozenInstanceError):
         setattr(ref, "name", "Changed")
-    if module != "example.client.models":
+    if module != "example.client.models" and kind not in ("enum", "intEnum"):
         prelude_name = kind[0].upper() + kind[1:]
         assert symbols.type_reference(f"smithy.api#{prelude_name}") == ref
     assert symbols.type_reference("smithy.api#Unit") == TypeReference("None")
+
+
+@pytest.mark.parametrize("kind,primitive", [("enum", "str"), ("intEnum", "int")])
+@pytest.mark.parametrize("sparse", [False, True])
+def test_enum_value_references(kind: str, primitive: str, sparse: bool) -> None:
+    from smithy_python.symbols import TypeReference
+
+    traits: dict[str, object] = {"smithy.api#sparse": {}} if sparse else {}
+    model = model_with(
+        {
+            "example#HTTPStatus": {
+                "type": kind,
+                "members": {
+                    "OK": {
+                        "target": "smithy.api#Unit",
+                        "traits": {
+                            "smithy.api#enumValue": "ok" if kind == "enum" else 200
+                        },
+                    }
+                },
+            },
+            "example#Statuses": {
+                "type": "list",
+                "member": {"target": "example#HTTPStatus"},
+                "traits": traits,
+            },
+            "example#Index": {
+                "type": "map",
+                "key": {"target": "smithy.api#String"},
+                "value": {"target": "example#Statuses"},
+                "traits": traits,
+            },
+            "example#Response": {
+                "type": "structure",
+                "members": {"status": {"target": "example#HTTPStatus"}},
+            },
+        }
+    )
+    symbols = SymbolProvider(model, select_shapes(model), package="pkg")
+    assert symbols.declaration_name("example#HTTPStatus") == "HTTPStatus"
+    assert symbols.member_name("example#HTTPStatus$OK") == "OK"
+    target = model.expect_shape("example#Response$status", MemberShape).target
+    assert symbols.type_reference(target) == TypeReference(primitive, "builtins")
+    assert symbols.type_reference("example#Index") == TypeReference(
+        "dict",
+        "builtins",
+        (
+            TypeReference("str", "builtins"),
+            TypeReference(
+                "list",
+                "builtins",
+                (TypeReference(primitive, "builtins", nullable=sparse),),
+                nullable=sparse,
+            ),
+        ),
+    )
 
 
 def test_service_rename_only_changes_declaration() -> None:
@@ -113,9 +173,9 @@ def test_service_rename_only_changes_declaration() -> None:
     )
     selection = select_shapes(model)
     symbols = SymbolProvider(model, selection, package="pkg")
-    assert symbols.declaration_name("example#Original") == "HttpServer"
+    assert symbols.declaration_name("example#Original") == "HTTPServer"
     assert symbols.type_reference("example#Original") == TypeReference(
-        "HttpServer", "pkg.models"
+        "HTTPServer", "pkg.models"
     )
     without_service = SymbolProvider(
         model, Selection(None, selection.shapes, 0), package="pkg"
@@ -248,19 +308,19 @@ def test_declaration_collisions_after_rename() -> None:
                 "type": "service",
                 "rename": {"example#Second": "HTTPServer"},
             },
-            "example#Http_Server": {"type": "structure"},
+            "example#HTTP_Server": {"type": "structure"},
             "example#Second": {"type": "enum"},
         }
     )
     selection = Selection(
         model.expect_shape("example#Service", ServiceShape),
-        (model.get_shape("example#Http_Server"), model.get_shape("example#Second")),
+        (model.get_shape("example#HTTP_Server"), model.get_shape("example#Second")),
         0,
     )
     with pytest.raises(ModelError) as error:
         SymbolProvider(model, selection, package="pkg")
-    assert "'HttpServer'" in str(error.value)
-    assert "example#Http_Server" in str(error.value)
+    assert "'HTTPServer'" in str(error.value)
+    assert "example#HTTP_Server" in str(error.value)
     assert "example#Second" in str(error.value)
 
 
@@ -270,7 +330,7 @@ def test_only_emitted_declarations_collide() -> None:
     model = model_with(
         {
             "example#HTTPServer": {"type": "string"},
-            "example#Http_Server": {"type": "structure"},
+            "example#HTTP_Server": {"type": "structure"},
             "example#Document": {
                 "type": "structure",
                 "members": {
@@ -315,7 +375,7 @@ def test_invalid_package(package: str) -> None:
 
 @pytest.mark.parametrize(
     "name,expected",
-    [("2HTTPServer", "_2HttpServer"), ("__init__", "Init"), ("None", "None_")],
+    [("2HTTPServer", "_2HTTPServer"), ("__init__", "Init"), ("None", "None_")],
 )
 def test_rename_normalization(name: str, expected: str) -> None:
     from smithy_python.model import ServiceShape
