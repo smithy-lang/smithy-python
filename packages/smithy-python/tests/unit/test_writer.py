@@ -74,6 +74,31 @@ def test_nested_forward_and_mutual_annotations(
     assert get_type_hints(server) == {"node": node}
 
 
+@pytest.mark.parametrize(
+    "name",
+    [
+        "PythonFinalizationError",  # Added in Python 3.13.
+        "_IncompleteInputError",  # Added in Python 3.13.
+        "ImportCycleError",  # Added in Python 3.15.
+        "__lazy_import__",  # Added in Python 3.15.
+        "frozendict",  # Added in Python 3.15.
+        "sentinel",  # Added in Python 3.15.
+        "WindowsError",  # Windows-only, present throughout Python 3.12-3.15.
+    ],
+)
+def test_imports_reserve_builtins_across_supported_versions(
+    name: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    external = ModuleType("external")
+    setattr(external, name, str)
+    monkeypatch.setitem(sys.modules, "external", external)
+    writer = PythonWriter("written_models")
+    writer.line("value: ", TypeReference(name, "external"))
+    assert f"from external import {name} as _external_{name}" in writer.render()
+    module = load_written_module(writer, tmp_path, monkeypatch)
+    assert get_type_hints(module) == {"value": str}
+
+
 def test_indentation_restored_after_exception() -> None:
     writer = PythonWriter("models")
     with pytest.raises(RuntimeError), writer.indent():
