@@ -38,8 +38,10 @@ class Node:
 `PythonWriter(module, *, declarations=(), local_names=())` takes the destination
 module name and the names the caller will use. Supply valid Python names.
 `declarations` contains module-level names. Duplicates raise `CodegenError`.
-`local_names` contains field and local names from across the module. Repeated
-local names are allowed because different classes can have the same field name.
+`local_names` contains field and local names that can shadow annotations across
+the module. Do not automatically include enum constants or other class members
+that are not in an annotation's scope. Repeated local names are allowed because
+different classes can have the same field name.
 The symbol provider already checks for duplicate fields within a declaration.
 
 * `line(*parts)` joins strings and type references without separators at the
@@ -84,7 +86,9 @@ regardless of the order they were written.
 A field named `list` makes builtin list references use `_builtins.list[T]`, with
 `import builtins as _builtins`. An alias that still collides raises
 `CodegenError`. The writer never adds numbered suffixes or renames declarations.
-The builtin-name list is fixed to Python 3.12, independent of the host version.
+The builtin-name list combines Python 3.12 through 3.15, including
+platform-specific names, so imports do not depend on the generator host.
+Update the list when adding support for another Python version.
 
 Comparisons follow Python's treatment of identifier spellings. For example,
 `K` and `K` bind the same name and cannot be separate declarations. Original

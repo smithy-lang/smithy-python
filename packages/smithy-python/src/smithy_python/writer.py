@@ -12,29 +12,30 @@ from unicodedata import normalize
 from .exceptions import CodegenError
 from .symbols import TypeReference
 
-# Python 3.12 builtins, fixed so planning does not depend on the generator host.
+# Union of Python 3.12-3.15 builtins, including platform-specific names.
+# Keep this fixed so import planning does not depend on the generator host.
 _BUILTINS = frozenset(
     "ArithmeticError AssertionError AttributeError BaseException BaseExceptionGroup "
     "BlockingIOError BrokenPipeError BufferError BytesWarning ChildProcessError "
     "ConnectionAbortedError ConnectionError ConnectionRefusedError ConnectionResetError "
     "DeprecationWarning EOFError Ellipsis EncodingWarning EnvironmentError Exception "
     "ExceptionGroup False FileExistsError FileNotFoundError FloatingPointError "
-    "FutureWarning GeneratorExit IOError ImportError ImportWarning IndentationError "
+    "FutureWarning GeneratorExit IOError ImportCycleError ImportError ImportWarning IndentationError "
     "IndexError InterruptedError IsADirectoryError KeyError KeyboardInterrupt "
     "LookupError MemoryError ModuleNotFoundError NameError None NotADirectoryError "
     "NotImplemented NotImplementedError OSError OverflowError PendingDeprecationWarning "
-    "PermissionError ProcessLookupError RecursionError ReferenceError ResourceWarning "
+    "PermissionError ProcessLookupError PythonFinalizationError RecursionError ReferenceError ResourceWarning "
     "RuntimeError RuntimeWarning StopAsyncIteration StopIteration SyntaxError "
     "SyntaxWarning SystemError SystemExit TabError TimeoutError True TypeError "
     "UnboundLocalError UnicodeDecodeError UnicodeEncodeError UnicodeError "
     "UnicodeTranslateError UnicodeWarning UserWarning ValueError Warning WindowsError "
-    "ZeroDivisionError __build_class__ __debug__ __doc__ __import__ __loader__ "
+    "ZeroDivisionError _IncompleteInputError __build_class__ __debug__ __doc__ __import__ __lazy_import__ __loader__ "
     "__name__ __package__ __spec__ abs aiter all anext any ascii bin bool breakpoint "
     "bytearray bytes callable chr classmethod compile complex copyright credits "
-    "delattr dict dir divmod enumerate eval exec exit filter float format frozenset "
+    "delattr dict dir divmod enumerate eval exec exit filter float format frozendict frozenset "
     "getattr globals hasattr hash help hex id input int isinstance issubclass iter "
     "len license list locals map max memoryview min next object oct open ord pow "
-    "print property quit range repr reversed round set setattr slice sorted "
+    "print property quit range repr reversed round sentinel set setattr slice sorted "
     "staticmethod str sum super tuple type vars zip".split()
 )
 
