@@ -4,13 +4,15 @@ from dataclasses import replace
 from typing import Any
 
 import pytest
+from smithy_core.documents import TypeRegistry
 from smithy_core.exceptions import ExpectationNotMetError
-from smithy_core.schemas import Schema
+from smithy_core.schemas import APIOperation, Schema
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import (
     DynamicTrait,
     InternalTrait,
     SensitiveTrait,
+    Trait,
 )
 
 ID: ShapeID = ShapeID("ns.foo#bar")
@@ -171,3 +173,29 @@ def test_contains(item: Any, contains: bool):
     )
 
     assert (item in schema) == contains
+
+
+def test_operation_idempotency_token_member():
+    input_schema = Schema.collection(
+        id=ShapeID("com.example#OperationInput"),
+        members={
+            "other": {"target": STRING},
+            "token": {
+                "target": STRING,
+                "traits": [Trait.new(id=ShapeID("smithy.api#idempotencyToken"))],
+            },
+        },
+    )
+    operation = APIOperation[Any, Any](
+        input=object,
+        output=object,
+        schema=Schema(
+            id=ShapeID("com.example#Operation"), shape_type=ShapeType.OPERATION
+        ),
+        input_schema=input_schema,
+        output_schema=input_schema,
+        error_registry=TypeRegistry({}),
+        effective_auth_schemes=[],
+        error_schemas=[],
+    )
+    assert operation.idempotency_token_member is input_schema.members["token"]
