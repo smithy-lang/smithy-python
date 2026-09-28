@@ -93,7 +93,7 @@ class Trait:
 
 
 @dataclass(init=False, frozen=True)
-class DefaultTrait(Trait, id=ShapeID("smithy.appi#default")):
+class DefaultTrait(Trait, id=ShapeID("smithy.api#default")):
     @property
     def value(self) -> "DocumentValue":
         return self.document_value
@@ -161,7 +161,7 @@ class RequiresLengthTrait(Trait, id=ShapeID("smithy.api#requiresLength")):
 
 
 @dataclass(init=False, frozen=True)
-class UnitTypeTrait(Trait, id=ShapeID("smithy.api#UnitTypeTrait")):
+class UnitTypeTrait(Trait, id=ShapeID("smithy.api#unitType")):
     def __post_init__(self):
         assert self.document_value is None
 
@@ -203,7 +203,7 @@ class JSONNameTrait(Trait, id=ShapeID("smithy.api#jsonName")):
 
 
 @dataclass(init=False, frozen=True)
-class IdempotencyTokenTrait(Trait, id=ShapeID("smithy.api#IdempotencyToken")):
+class IdempotencyTokenTrait(Trait, id=ShapeID("smithy.api#idempotencyToken")):
     def __post_init__(self):
         assert self.document_value is None
 

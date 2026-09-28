@@ -3,13 +3,16 @@
 from dataclasses import dataclass
 
 import pytest
+from smithy_core.prelude import UNIT
 from smithy_core.shapes import ShapeID
 from smithy_core.traits import (
+    DefaultTrait,
     DynamicTrait,
     ErrorFault,
     ErrorTrait,
     JSONNameTrait,
     Trait,
+    UnitTypeTrait,
 )
 
 
@@ -38,6 +41,17 @@ def test_trait_factory_constructs_new_trait():
     trait = Trait.new(trait_id)
     assert isinstance(trait, NewTrait)
     assert NewTrait.id is trait_id
+
+
+def test_trait_factory_constructs_default_trait():
+    trait = Trait.new(ShapeID("smithy.api#default"), 0)
+    assert isinstance(trait, DefaultTrait)
+    assert trait.value == 0
+
+
+def test_unit_schema_uses_canonical_trait_id():
+    trait = UNIT.get_trait(ShapeID("smithy.api#unitType"))
+    assert isinstance(trait, UnitTypeTrait)
 
 
 def test_cant_construct_base_trait():
