@@ -8,12 +8,7 @@ from typing import TYPE_CHECKING, Any, ClassVar, Final
 from smithy_core import URI as _URI
 from smithy_core.aio.interfaces import (
     AsyncWriter,
-)
-from smithy_core.aio.interfaces import (
-    ProtocolConstructor as ProtocolConstructor,
-)
-from smithy_core.aio.interfaces import (
-    ProtocolSettings as ProtocolSettings,
+    ProtocolSettings,
 )
 from smithy_core.aio.interfaces.auth import AuthScheme
 from smithy_core.aio.interfaces.eventstream import EventPublisher, EventReceiver

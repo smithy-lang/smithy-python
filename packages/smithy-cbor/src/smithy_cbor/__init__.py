@@ -9,12 +9,11 @@ from smithy_core.serializers import ShapeSerializer
 
 from ._private.deserializers import CBORShapeDeserializer as _CBORShapeDeserializer
 from ._private.generic import loads as loads
-from ._private.generic import strip_default_members as strip_default_members
 from ._private.serializers import CBORShapeSerializer as _CBORShapeSerializer
 from .settings import CBORSettings
 
 __version__ = "0.0.1"
-__all__ = ("CBORCodec", "CBORSettings", "loads", "strip_default_members")
+__all__ = ("CBORCodec", "CBORSettings", "loads")
 
 
 class CBORCodec(Codec):

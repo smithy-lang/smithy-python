@@ -3,11 +3,7 @@
 from dataclasses import dataclass, field
 from typing import Any, Callable, ClassVar, Self, TypeAlias, Union, Unpack
 
-from smithy_aws_core.aio.protocols import (
-    ProtocolConstructor,
-    ProtocolSettings,
-    RestJsonClientProtocol,
-)
+from smithy_aws_core.aio.protocols import RestJsonClientProtocol
 from smithy_aws_core.auth import SigV4AuthScheme
 from smithy_aws_core.config import AwsConfigOverrides, FileSystem
 from smithy_aws_core.config.aws_config import AsyncAwsConfig
@@ -17,7 +13,12 @@ from smithy_aws_core.endpoints.standard_regional import (
     StandardRegionalEndpointsResolver,
 )
 from smithy_aws_core.identity import AWSCredentialsIdentity, AWSIdentityProperties
-from smithy_core.aio.interfaces import ClientProtocol, EndpointResolver
+from smithy_core.aio.interfaces import (
+    ClientProtocol,
+    EndpointResolver,
+    ProtocolConstructor,
+    ProtocolSettings,
+)
 from smithy_core.aio.interfaces.auth import AuthScheme
 from smithy_core.aio.interfaces.identity import IdentityResolver
 from smithy_core.interceptors import Interceptor

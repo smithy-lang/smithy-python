@@ -20,6 +20,7 @@ from smithy_core.interfaces import BytesWriter
 from smithy_core.schemas import Schema
 from smithy_core.serializers import MapSerializer, ShapeSerializer
 from smithy_core.shapes import ShapeType
+from smithy_core.utils import ensure_utc
 
 from ..settings import CBORSettings
 
@@ -228,7 +229,7 @@ class CBORShapeSerializer(ShapeSerializer):
     def write_timestamp(self, schema: "Schema", value: datetime.datetime) -> None:
         # timestampFormat MUST NOT be respected.
         self.write(_encode_head(_MAJOR_TAG, _TAG_EPOCH))
-        self.write_float(schema, value.timestamp())
+        self.write_float(schema, ensure_utc(value).timestamp())
 
     def write_document(self, schema: "Schema", value: "Document") -> None:
         raise NotImplementedError(
