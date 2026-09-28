@@ -57,38 +57,6 @@ type _Traits = dict[ShapeId, Node]
 _LIFECYCLE: Final = ("create", "put", "read", "update", "delete", "list")
 
 
-@dataclass(slots=True)
-class _RawMember:
-    target: ShapeId
-    traits: _Traits
-
-
-@dataclass(slots=True)
-class _RawShape:
-    id: ShapeId
-    type: ShapeType
-    traits: _Traits = field(default_factory=dict[ShapeId, Node])
-    mixins: list[ShapeId] = field(default_factory=list[ShapeId])
-    members: dict[str, _RawMember] = field(default_factory=dict[str, _RawMember])
-    # Service / resource / operation properties. ``None`` means "not set".
-    version: str | None = None
-    refs: dict[str, ShapeId] = field(default_factory=dict[str, ShapeId])
-    """Single references: resource lifecycle operations, operation input/output."""
-    ref_lists: dict[str, list[ShapeId]] = field(
-        default_factory=dict[str, list[ShapeId]]
-    )
-    """operations, resources, errors, collectionOperations."""
-    named_refs: dict[str, dict[str, ShapeId]] = field(
-        default_factory=dict[str, dict[str, ShapeId]]
-    )
-    """identifiers, properties."""
-    rename: dict[ShapeId, str] = field(default_factory=dict[ShapeId, str])
-    applied_member_traits: dict[str, _Traits] = field(
-        default_factory=dict[str, _Traits]
-    )
-    """Traits applied to members this shape does not declare locally."""
-
-
 def load_model(source: bytes | str | Mapping[str, object]) -> Model:
     """Load a Smithy JSON AST model.
 
@@ -145,6 +113,38 @@ def load_model(source: bytes | str | Mapping[str, object]) -> Model:
         metadata=cast(Mapping[str, Node], metadata),
         shapes={shape_id: _build(raw) for shape_id, raw in flat.items()},
     )
+
+
+@dataclass(slots=True)
+class _RawMember:
+    target: ShapeId
+    traits: _Traits
+
+
+@dataclass(slots=True)
+class _RawShape:
+    id: ShapeId
+    type: ShapeType
+    traits: _Traits = field(default_factory=dict[ShapeId, Node])
+    mixins: list[ShapeId] = field(default_factory=list[ShapeId])
+    members: dict[str, _RawMember] = field(default_factory=dict[str, _RawMember])
+    # Service / resource / operation properties. ``None`` means "not set".
+    version: str | None = None
+    refs: dict[str, ShapeId] = field(default_factory=dict[str, ShapeId])
+    """Single references: resource lifecycle operations, operation input/output."""
+    ref_lists: dict[str, list[ShapeId]] = field(
+        default_factory=dict[str, list[ShapeId]]
+    )
+    """operations, resources, errors, collectionOperations."""
+    named_refs: dict[str, dict[str, ShapeId]] = field(
+        default_factory=dict[str, dict[str, ShapeId]]
+    )
+    """identifiers, properties."""
+    rename: dict[ShapeId, str] = field(default_factory=dict[ShapeId, str])
+    applied_member_traits: dict[str, _Traits] = field(
+        default_factory=dict[str, _Traits]
+    )
+    """Traits applied to members this shape does not declare locally."""
 
 
 # --- Decoding -----------------------------------------------------------------
