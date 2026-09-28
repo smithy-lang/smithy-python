@@ -92,7 +92,10 @@ Update the list when adding support for another Python version.
 
 Comparisons follow Python's treatment of identifier spellings. For example,
 `K` and `K` bind the same name and cannot be separate declarations. Original
-spellings, including `_2HTTPServer`, are retained in emitted source.
+spellings, including `_2HTTPServer`, are retained in emitted source. Module names
+follow the same comparison rules, so equivalent spellings do not cause self-imports.
+Equivalent references share one import, using the lexicographically smallest
+supplied module/name pair so the choice does not depend on reference order.
 
 A same-module reference also listed in `local_names` raises `CodegenError`.
 This first version does not add self-imports or aliases for local declarations.
