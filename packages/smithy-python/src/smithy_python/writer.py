@@ -55,7 +55,7 @@ class PythonWriter:
         declarations: Iterable[str] = (),
         local_names: Iterable[str] = (),
     ) -> None:
-        self._module = module
+        self._module = _binding(module)
         self._declarations: set[str] = set()
         for name in declarations:
             binding = _binding(name)
@@ -95,8 +95,19 @@ class PythonWriter:
                 )
             identities.add((ref.module, ref.name))
             pending.extend(ref.arguments)
+        # Equivalent Python identifiers share one import. Pick a supplied spelling
+        # deterministically, without rewriting the caller's source names.
+        representatives: dict[tuple[str | None, str], tuple[str | None, str]] = {}
+        for module, name in sorted(
+            identities, key=lambda item: (item[0] or "", item[1])
+        ):
+            identity = (
+                _binding(module) if module is not None else None,
+                _binding(name),
+            )
+            representatives.setdefault(identity, (module, name))
         current_names = {
-            _binding(name) for module, name in identities if module == self._module
+            name for module, name in representatives if module == self._module
         }
         for name in sorted(current_names & self._local_names):
             raise CodegenError(
@@ -105,8 +116,8 @@ class PythonWriter:
         reserved = self._declarations | self._local_names | current_names
         external = sorted(
             (module, name)
-            for module, name in identities
-            if module is not None and module not in ("builtins", self._module)
+            for (module_binding, _), (module, name) in representatives.items()
+            if module is not None and module_binding not in ("builtins", self._module)
         )
         counts = Counter(_binding(name) for _, name in external)
         names: dict[tuple[str | None, str], str] = {}
@@ -126,14 +137,14 @@ class PythonWriter:
                 (module, name, alias, f"from {module} import {name}{suffix}")
             )
         qualify_builtins = False
-        for module, name in identities:
+        for (module_binding, name_binding), (module, name) in representatives.items():
             if module is None:
                 names[(module, name)] = "None"
-            elif module == "builtins":
-                shadowed = _binding(name) in reserved
+            elif module_binding == "builtins":
+                shadowed = name_binding in reserved
                 names[(module, name)] = f"_builtins.{name}" if shadowed else name
                 qualify_builtins |= shadowed
-            elif module == self._module:
+            elif module_binding == self._module:
                 names[(module, name)] = name
         if qualify_builtins:
             imports.append(
@@ -153,6 +164,12 @@ class PythonWriter:
                     f"Import binding {alias!r} for {owner} conflicts with {conflict}"
                 )
             bindings[binding] = owner
+        for module, name in identities:
+            identity = (
+                _binding(module) if module is not None else None,
+                _binding(name),
+            )
+            names[(module, name)] = names[representatives[identity]]
         return names, [statement for _, _, _, statement in imports]
 
     @staticmethod

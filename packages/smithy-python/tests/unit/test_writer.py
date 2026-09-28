@@ -1,7 +1,9 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+import builtins
 import importlib.util
+import re
 import sys
 from decimal import Decimal
 from pathlib import Path
@@ -18,6 +20,8 @@ def load_written_module(
 ) -> ModuleType:
     path = directory / "written_models.py"
     path.write_text(writer.render(), encoding="utf-8")
+    # Repeated renders can have the same size and filesystem timestamp.
+    Path(importlib.util.cache_from_source(str(path))).unlink(missing_ok=True)
     spec = importlib.util.spec_from_file_location("written_models", path)
     assert spec is not None and spec.loader is not None
     module = importlib.util.module_from_spec(spec)
@@ -158,15 +162,28 @@ def test_shadowed_references_load(
     }
 
 
-def test_all_colliding_imports_are_aliased() -> None:
+def test_all_colliding_imports_are_aliased(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    alpha = ModuleType("alpha.models")
+    beta = ModuleType("beta.models")
+    setattr(alpha, "Thing", str)
+    setattr(beta, "Thing", int)
+    monkeypatch.setitem(sys.modules, "alpha.models", alpha)
+    monkeypatch.setitem(sys.modules, "beta.models", beta)
     for modules in (("alpha.models", "beta.models"), ("beta.models", "alpha.models")):
         writer = PythonWriter("models")
-        for module in modules:
-            writer.line("value: ", TypeReference("Thing", module))
+        for index, module in enumerate(modules):
+            writer.line(f"value_{index}: ", TypeReference("Thing", module))
         source = writer.render()
         assert "from alpha.models import Thing as _alpha_models_Thing" in source
         assert "from beta.models import Thing as _beta_models_Thing" in source
         assert source.index("from alpha") < source.index("from beta")
+        result = load_written_module(writer, tmp_path, monkeypatch)
+        assert get_type_hints(result) == {
+            f"value_{index}": str if module == "alpha.models" else int
+            for index, module in enumerate(modules)
+        }
 
 
 @pytest.mark.parametrize("name", ["str", "list", "open", "Exception"])
@@ -177,21 +194,31 @@ def test_external_builtin_name_is_aliased(name: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "declarations,locals_,refs,conflict",
+    "declarations,locals_,refs,prefix",
     [
         (
             ("Decimal", "_decimal_Decimal"),
             (),
             (TypeReference("Decimal", "decimal"),),
-            "_decimal_Decimal",
+            "Import binding '_decimal_Decimal' for",
         ),
-        ((), ("list", "_builtins"), (TypeReference("list", "builtins"),), "_builtins"),
-        (("Node",), ("Node",), (TypeReference("Node", "models"),), "Node"),
+        (
+            (),
+            ("list", "_builtins"),
+            (TypeReference("list", "builtins"),),
+            "Import binding '_builtins' for",
+        ),
+        (
+            ("Node",),
+            ("Node",),
+            (TypeReference("Node", "models"),),
+            "Same-module reference models.Node conflicts with local name",
+        ),
         (
             (),
             (),
             (TypeReference("Thing", "a.b"), TypeReference("Thing", "a_b")),
-            "_a_b_Thing",
+            "Import binding '_a_b_Thing' for",
         ),
         (
             ("Decimal",),
@@ -200,37 +227,40 @@ def test_external_builtin_name_is_aliased(name: str) -> None:
                 TypeReference("Decimal", "decimal"),
                 TypeReference("_decimal_Decimal", "other"),
             ),
-            "_decimal_Decimal",
+            "Import binding '_decimal_Decimal' for",
         ),
         (
             (),
             ("list",),
             (TypeReference("list", "builtins"), TypeReference("_builtins", "other")),
-            "_builtins",
+            "Import binding '_builtins' for",
         ),
-        (("Node", "Node"), (), (), "Node"),
-        (("K", "\u212a"), (), (), "\u212a"),
         (
             ("Decimal", "_\uff44\uff45\uff43\uff49\uff4d\uff41\uff4c_Decimal"),
             (),
             (TypeReference("Decimal", "decimal"),),
-            "_decimal_Decimal",
+            "Import binding '_decimal_Decimal' for",
         ),
-        (("K",), ("\u212a",), (TypeReference("K", "models"),), "K"),
+        (
+            ("K",),
+            ("\u212a",),
+            (TypeReference("K", "models"),),
+            "Same-module reference models.K conflicts with local name",
+        ),
     ],
 )
 def test_binding_conflicts(
     declarations: tuple[str, ...],
     locals_: tuple[str, ...],
     refs: tuple[TypeReference, ...],
-    conflict: str,
+    prefix: str,
 ) -> None:
     from smithy_python.exceptions import CodegenError
 
-    with pytest.raises(CodegenError, match=conflict):
-        writer = PythonWriter("models", declarations=declarations, local_names=locals_)
-        for ref in refs:
-            writer.line("value: ", ref)
+    writer = PythonWriter("models", declarations=declarations, local_names=locals_)
+    for ref in refs:
+        writer.line("value: ", ref)
+    with pytest.raises(CodegenError, match="^" + re.escape(prefix)):
         writer.render()
 
 
@@ -246,6 +276,68 @@ def test_equivalent_import_names_are_aliased() -> None:
         "from external import \uff53\uff54\uff52 as _external_\uff53\uff54\uff52"
         in source
     )
+
+
+@pytest.mark.parametrize("names", [("Node", "Node"), ("K", "\u212a")])
+def test_duplicate_declarations_fail_at_construction(names: tuple[str, str]) -> None:
+    from smithy_python.exceptions import CodegenError
+
+    message = f"Duplicate generated declaration: {names[1]!r}"
+    with pytest.raises(CodegenError, match="^" + re.escape(message) + "$"):
+        PythonWriter("models", declarations=names)
+
+
+def test_builtin_names_cover_running_interpreter() -> None:
+    writer = PythonWriter("models")
+    for name in dir(builtins):
+        writer.line("value: ", TypeReference(name, "external"))
+    source = writer.render()
+    for name in dir(builtins):
+        assert f"from external import {name} as _external_{name}\n" in source
+
+
+@pytest.mark.parametrize("module", ["written_models", "\uff57ritten_models"])
+def test_equivalent_current_module_names(
+    module: str, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    writer = PythonWriter(module, declarations=("Node",))
+    writer.line("class Node:")
+    with writer.indent():
+        writer.line(
+            "child: ", TypeReference("Node", "\uff57ritten_models", nullable=True)
+        )
+    result = load_written_module(writer, tmp_path, monkeypatch)
+    assert get_type_hints(result.Node) == {"child": result.Node | None}
+
+
+def test_equivalent_external_identities_are_deduplicated(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    refs = (
+        TypeReference("Decimal", "decimal"),
+        TypeReference("\uff24ecimal", "\uff44ecimal"),
+    )
+    outputs: list[str] = []
+    for order in (refs, tuple(reversed(refs))):
+        writer = PythonWriter("written_models")
+        for index, ref in enumerate(order):
+            writer.line(f"value_{index}: ", ref)
+        source = writer.render()
+        assert source.count("from decimal import Decimal") == 1
+        outputs.append(source)
+        module = load_written_module(writer, tmp_path, monkeypatch)
+        assert get_type_hints(module) == {"value_0": Decimal, "value_1": Decimal}
+    assert outputs[0] == outputs[1]
+
+
+def test_equivalent_builtin_module_name(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    writer = PythonWriter("written_models")
+    writer.line("value: ", TypeReference("str", "\uff42uiltins"))
+    assert "import str" not in writer.render()
+    module = load_written_module(writer, tmp_path, monkeypatch)
+    assert get_type_hints(module) == {"value": str}
 
 
 def test_current_module_reference_reserves_its_binding() -> None:
