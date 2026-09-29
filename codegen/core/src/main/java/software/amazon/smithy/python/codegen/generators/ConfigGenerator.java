@@ -136,8 +136,8 @@ public final class ConfigGenerator implements Runnable {
                                 .build())
                         .addReference(Symbol.builder()
                                 .name("ProtocolConstructor")
-                                .namespace("smithy_aws_core.aio.protocols", ".")
-                                .addDependency(SmithyPythonDependency.SMITHY_AWS_CORE)
+                                .namespace("smithy_core.aio.interfaces", ".")
+                                .addDependency(SmithyPythonDependency.SMITHY_CORE)
                                 .build())
                         .build())
                 .documentation("Pass a protocol class reference from smithy_aws_core.aio.protocols "

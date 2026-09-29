@@ -67,6 +67,10 @@ test-py: ## Runs tests for the python packages.
 	uv run pytest packages
 
 
+benchmark: ## Runs ser/deser throughput benchmarks (coverage disabled; not part of CI or the default test run).
+	uv run pytest packages/*/tests/benchmark --no-cov -s -q
+
+
 build-py: ## Builds the python packages.
 	uv build --all-packages 
 

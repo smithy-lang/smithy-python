@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added `ProtocolSettings` and `ProtocolConstructor` to `smithy_core.aio.interfaces`, letting a consumer select a protocol by class alone without importing a private schema module."
+}
