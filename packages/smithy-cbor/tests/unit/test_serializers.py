@@ -107,7 +107,7 @@ def test_list_vector() -> None:
             ls.write_integer(INTEGER, 2)
             ls.write_integer(INTEGER, 3)
 
-    assert _encode(write) == b"\x9f\x01\x02\x03\xff"
+    assert _encode(write) == b"\x83\x01\x02\x03"
 
 
 def test_struct_vector() -> None:
@@ -121,4 +121,4 @@ def test_struct_vector() -> None:
             st.write_integer(schema.members["x"], 1)
             st.write_integer(schema.members["y"], 2)
 
-    assert _encode(write) == b"\xbf\x61\x78\x01\x61\x79\x02\xff"
+    assert _encode(write) == b"\xa2\x61\x78\x01\x61\x79\x02"

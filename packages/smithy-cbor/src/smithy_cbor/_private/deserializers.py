@@ -6,6 +6,7 @@ import datetime
 import struct as _struct
 from collections.abc import Callable
 from decimal import Decimal
+from typing import override
 
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import Document
@@ -44,181 +45,131 @@ _TAG_DECIMAL_FRACTION = 4
 # ends indefinite item
 _BREAK = 0xFF
 
+# Initial byte of a CBOR null (major 7, simple value 22).
+_NULL_BYTE = (_MAJOR_SIMPLE << 5) | _SIMPLE_NULL
+
 
 class CBORDecodeError(SmithyError):
     pass
 
 
-class _Cursor:
-    def __init__(self, data: bytes) -> None:
-        self._data = data
-        self._pos = 0
-
-    def _take(self, n: int) -> bytes:
-        end = self._pos + n
-        if end > len(self._data):
-            raise CBORDecodeError("Unexpected end of CBOR input.")
-        chunk = self._data[self._pos : end]
-        self._pos = end
-        return chunk
-
-    def peek_byte(self) -> int:
-        if self._pos >= len(self._data):
-            raise CBORDecodeError("Unexpected end of CBOR input.")
-        return self._data[self._pos]
-
-    def read_head(self) -> tuple[int, int]:
-        """For indefinite-length items the argument is returned as ``-1``."""
-        major, _ai, arg = self.read_head_ai()
-        return major, arg
-
-    def read_head_ai(self) -> tuple[int, int, int]:
-        """The additional-info byte is needed to recover a float's width, since the
-        argument alone does not carry it. For indefinite-length items the argument is
-        returned as ``-1``.
-        """
-        initial = self._take(1)[0]
-        major = initial >> 5
-        ai = initial & 0x1F
-        if ai < _W_1BYTE:
-            return major, ai, ai
-        if ai == _W_1BYTE:
-            return major, ai, self._take(1)[0]
-        if ai == _W_2BYTE:
-            return major, ai, int.from_bytes(self._take(2), "big")
-        if ai == _W_4BYTE:
-            return major, ai, int.from_bytes(self._take(4), "big")
-        if ai == _W_8BYTE:
-            return major, ai, int.from_bytes(self._take(8), "big")
-        if ai == _INDEFINITE:
-            return major, ai, -1
-        raise CBORDecodeError(f"Reserved additional-information value: {ai}")
-
-    def take(self, n: int) -> bytes:
-        return self._take(n)
-
-    def at_break(self) -> bool:
-        return self._pos < len(self._data) and self._data[self._pos] == _BREAK
-
-    def consume_break(self) -> None:
-        self._take(1)
-
-
 class CBORShapeDeserializer(ShapeDeserializer):
     def __init__(self, source: BytesReader, settings: CBORSettings) -> None:
         self._settings = settings
-        self._cursor = _Cursor(source.read())
+        self._data = source.read()
+        self._len: int = len(self._data)
+        self._pos: int = 0
 
-    def _expect(self, major: int) -> int:
-        found_major, arg = self._cursor.read_head()
-        while found_major == _MAJOR_TAG:
-            found_major, arg = self._cursor.read_head()
-        if found_major != major:
-            raise CBORDecodeError(
-                f"Expected CBOR major type {major}, found {found_major}."
-            )
-        return arg
-
+    @override
     def read_struct(
         self,
-        schema: "Schema",
-        consumer: Callable[["Schema", "ShapeDeserializer"], None],
+        schema: Schema,
+        consumer: Callable[[Schema, ShapeDeserializer], None],
     ) -> None:
         count = self._expect(_MAJOR_MAP)
-        members = schema.members
+        members_get = schema.members.get
+        cursor = self
+        read_text = self._read_text
+        skip_value = self._skip_value
+        read_null = self.read_null
 
-        def read_pair() -> None:
-            key = self._read_text()
-            member = members.get(key)
+        indefinite = count == -1
+        remaining = count
+        while True:
+            if indefinite:
+                if cursor._at_break():
+                    cursor._consume_break()
+                    break
+            else:
+                if remaining <= 0:
+                    break
+                remaining -= 1
+            key = read_text()
+            member = members_get(key)
             if member is None:
-                # Unrecognized member: skip its value to stay aligned.
-                self._skip_value()
-            elif self.is_null():
-                # A null member value is equivalent to an absent member.
-                self.read_null()
+                skip_value()
+            elif cursor._at_null():
+                read_null()
             else:
                 consumer(member, self)
 
-        if count == -1:
-            while not self._cursor.at_break():
-                read_pair()
-            self._cursor.consume_break()
-        else:
-            for _ in range(count):
-                read_pair()
-
+    @override
     def read_list(
-        self, schema: "Schema", consumer: Callable[["ShapeDeserializer"], None]
+        self, schema: Schema, consumer: Callable[[ShapeDeserializer], None]
     ) -> None:
         count = self._expect(_MAJOR_ARRAY)
         if count == -1:
-            while not self._cursor.at_break():
+            while not self._at_break():
                 consumer(self)
-            self._cursor.consume_break()
+            self._consume_break()
         else:
             for _ in range(count):
                 consumer(self)
 
+    @override
     def read_map(
         self,
-        schema: "Schema",
-        consumer: Callable[[str, "ShapeDeserializer"], None],
+        schema: Schema,
+        consumer: Callable[[str, ShapeDeserializer], None],
     ) -> None:
         count = self._expect(_MAJOR_MAP)
         if count == -1:
-            while not self._cursor.at_break():
+            while not self._at_break():
                 key = self._read_text()
                 consumer(key, self)
-            self._cursor.consume_break()
+            self._consume_break()
         else:
             for _ in range(count):
                 key = self._read_text()
                 consumer(key, self)
 
-    # --- scalars ------------------------------------------------------------
-
+    @override
     def is_null(self) -> bool:
-        initial = self._cursor.peek_byte()
+        initial = self._peek_byte()
         return initial == ((_MAJOR_SIMPLE << 5) | _SIMPLE_NULL)
 
+    @override
     def read_null(self) -> None:
-        major, arg = self._cursor.read_head()
+        major, arg = self._read_head()
         if major != _MAJOR_SIMPLE or arg != _SIMPLE_NULL:
             raise CBORDecodeError("Expected CBOR null.")
 
-    def read_boolean(self, schema: "Schema") -> bool:
-        major, arg = self._cursor.read_head()
+    @override
+    def read_boolean(self, schema: Schema) -> bool:
+        major, arg = self._read_head()
         if major != _MAJOR_SIMPLE or arg not in (_SIMPLE_FALSE, _SIMPLE_TRUE):
             raise CBORDecodeError("Expected CBOR boolean.")
         return arg == _SIMPLE_TRUE
 
-    def read_blob(self, schema: "Schema") -> bytes:
+    @override
+    def read_blob(self, schema: Schema) -> bytes:
         return self._read_string_bytes(_MAJOR_BYTES)
 
-    def read_integer(self, schema: "Schema") -> int:
-        major, arg = self._cursor.read_head()
+    @override
+    def read_integer(self, schema: Schema) -> int:
+        major, arg = self._read_head()
         if major == _MAJOR_UINT:
             return arg
         if major == _MAJOR_NEGINT:
             return -1 - arg
         raise CBORDecodeError(f"Expected CBOR integer, found major type {major}.")
 
-    def read_float(self, schema: "Schema") -> float:
-        major, ai, arg = self._cursor.read_head_ai()
+    @override
+    def read_float(self, schema: Schema) -> float:
+        major, add_info, arg = self._read_head_add_info()
         if major != _MAJOR_SIMPLE:
             raise CBORDecodeError("Expected CBOR float.")
-        # read_head_ai consumed the payload as a big-endian int, so the argument value
-        # IS the raw IEEE bit pattern; reinterpret it by the width the ai byte encodes.
-        if ai == _W_8BYTE:  # double
+        if add_info == _W_8BYTE:  # double
             return _struct.unpack(">d", arg.to_bytes(8, "big"))[0]
-        if ai == _W_4BYTE:  # single
+        if add_info == _W_4BYTE:  # single
             return _struct.unpack(">f", arg.to_bytes(4, "big"))[0]
-        if ai == _W_2BYTE:  # half
+        if add_info == _W_2BYTE:  # half
             return _decode_half(arg.to_bytes(2, "big"))
-        raise CBORDecodeError(f"Unexpected float additional-info: {ai}.")
+        raise CBORDecodeError(f"Unexpected float additional-info: {add_info}.")
 
-    def read_big_integer(self, schema: "Schema") -> int:
-        major, tag = self._cursor.read_head()
+    @override
+    def read_big_integer(self, schema: Schema) -> int:
+        major, tag = self._read_head()
         if major != _MAJOR_TAG or tag not in (
             _TAG_UNSIGNED_BIGNUM,
             _TAG_NEGATIVE_BIGNUM,
@@ -227,8 +178,9 @@ class CBORShapeDeserializer(ShapeDeserializer):
         magnitude = int.from_bytes(self.read_blob(schema), "big")
         return magnitude if tag == _TAG_UNSIGNED_BIGNUM else -1 - magnitude
 
-    def read_big_decimal(self, schema: "Schema") -> Decimal:
-        major, tag = self._cursor.read_head()
+    @override
+    def read_big_decimal(self, schema: Schema) -> Decimal:
+        major, tag = self._read_head()
         if major != _MAJOR_TAG or tag != _TAG_DECIMAL_FRACTION:
             raise CBORDecodeError("Expected CBOR decimal-fraction tag.")
         count = self._expect(_MAJOR_ARRAY)
@@ -238,20 +190,23 @@ class CBORShapeDeserializer(ShapeDeserializer):
         mantissa = self.read_integer(schema)
         return Decimal(mantissa).scaleb(exponent)
 
-    def read_string(self, schema: "Schema") -> str:
+    @override
+    def read_string(self, schema: Schema) -> str:
         return self._read_text()
 
-    def read_document(self, schema: "Schema") -> "Document":
+    @override
+    def read_document(self, schema: Schema) -> Document:
         raise NotImplementedError(
-            "The rpcv2Cbor protocol does not support document types."
+            "This version of the Smithy RPCv2 CBOR protocol does not support document types."
         )
 
-    def read_timestamp(self, schema: "Schema") -> datetime.datetime:
-        major, tag = self._cursor.read_head()
+    @override
+    def read_timestamp(self, schema: Schema) -> datetime.datetime:
+        major, tag = self._read_head()
         if major != _MAJOR_TAG or tag != _TAG_EPOCH:
             raise CBORDecodeError("Expected CBOR epoch-timestamp tag.")
         # The tagged value is an int or float number of epoch seconds.
-        peek_major = self._cursor.peek_byte() >> 5
+        peek_major = self._peek_byte() >> 5
         if peek_major in (_MAJOR_UINT, _MAJOR_NEGINT):
             seconds: float = self.read_integer(schema)
         else:
@@ -259,52 +214,56 @@ class CBORShapeDeserializer(ShapeDeserializer):
         return datetime.datetime.fromtimestamp(seconds, tz=datetime.UTC)
 
     def _read_text(self) -> str:
+        text = self._try_read_text()
+        if text is not None:
+            return text
         return self._read_string_bytes(_MAJOR_TEXT).decode("utf-8")
 
     def _read_string_bytes(self, major: int) -> bytes:
         """An indefinite-length string (RFC 8949 §3.2.3) is a sequence of definite-length
         chunks of the same major type, terminated by a break.
         """
-        found_major, arg = self._cursor.read_head()
+        found_major, arg = self._read_head()
         while found_major == _MAJOR_TAG:
-            found_major, arg = self._cursor.read_head()
+            found_major, arg = self._read_head()
         if found_major != major:
             raise CBORDecodeError(
                 f"Expected CBOR major type {major}, found {found_major}."
             )
         if arg != -1:
-            return self._cursor.take(arg)
+            return self._take(arg)
         chunks = bytearray()
-        while not self._cursor.at_break():
-            chunk_major, chunk_len = self._cursor.read_head()
+        while not self._at_break():
+            chunk_major, chunk_len = self._read_head()
             if chunk_major != major:
                 raise CBORDecodeError(
                     "Indefinite-length string chunk has mismatched major type."
                 )
-            chunks += self._cursor.take(chunk_len)
-        self._cursor.consume_break()
+            chunks += self._take(chunk_len)
+        self._consume_break()
         return bytes(chunks)
 
     def _skip_value(self) -> None:
-        major, arg = self._cursor.read_head()
+        """e.g. unrecognized member."""
+        major, arg = self._read_head()
         if major in (_MAJOR_UINT, _MAJOR_NEGINT):
             return
         if major in (_MAJOR_BYTES, _MAJOR_TEXT):
-            self._cursor.take(arg)
+            self._take(arg)
         elif major == _MAJOR_ARRAY:
             if arg == -1:
-                while not self._cursor.at_break():
+                while not self._at_break():
                     self._skip_value()
-                self._cursor.consume_break()
+                self._consume_break()
             else:
                 for _ in range(arg):
                     self._skip_value()
         elif major == _MAJOR_MAP:
             if arg == -1:
-                while not self._cursor.at_break():
+                while not self._at_break():
                     self._skip_value()
                     self._skip_value()
-                self._cursor.consume_break()
+                self._consume_break()
             else:
                 for _ in range(arg):
                     self._skip_value()
@@ -313,11 +272,148 @@ class CBORShapeDeserializer(ShapeDeserializer):
             self._skip_value()
         elif major == _MAJOR_SIMPLE:
             if arg == _W_2BYTE:
-                self._cursor.take(2)
+                self._take(2)
             elif arg == _W_4BYTE:
-                self._cursor.take(4)
+                self._take(4)
             elif arg == _W_8BYTE:
-                self._cursor.take(8)
+                self._take(8)
+
+    def _expect(self, major: int) -> int:
+        found_major, arg = self._read_head()
+        while found_major == _MAJOR_TAG:
+            found_major, arg = self._read_head()
+        if found_major != major:
+            raise CBORDecodeError(
+                f"Expected CBOR major type {major}, found {found_major}."
+            )
+        return arg
+
+    def _take(self, n: int) -> bytes:
+        end = self._pos + n
+        if end > self._len:
+            raise CBORDecodeError("Unexpected end of CBOR input.")
+        chunk = self._data[self._pos : end]
+        self._pos = end
+        return chunk
+
+    def _peek_byte(self) -> int:
+        pos = self._pos
+        if pos >= self._len:
+            raise CBORDecodeError("Unexpected end of CBOR input.")
+        return self._data[pos]
+
+    def _read_head(self) -> tuple[int, int]:
+        """For indefinite-length items the argument is returned as ``-1``."""
+        data = self._data
+        pos = self._pos
+        if pos >= self._len:
+            raise CBORDecodeError("Unexpected end of CBOR input.")
+        initial = data[pos]
+        major = initial >> 5
+        add_info = initial & 0x1F
+        if add_info < _W_1BYTE:
+            self._pos = pos + 1
+            return major, add_info
+        if add_info == _W_1BYTE:
+            end = pos + 2
+            if end > self._len:
+                raise CBORDecodeError("Unexpected end of CBOR input.")
+            self._pos = end
+            return major, data[pos + 1]
+        if add_info == _W_2BYTE:
+            width = 2
+        elif add_info == _W_4BYTE:
+            width = 4
+        elif add_info == _W_8BYTE:
+            width = 8
+        elif add_info == _INDEFINITE:
+            self._pos = pos + 1
+            return major, -1
+        else:
+            raise CBORDecodeError(f"Reserved additional-information value: {add_info}")
+        start = pos + 1
+        end = start + width
+        if end > self._len:
+            raise CBORDecodeError("Unexpected end of CBOR input.")
+        self._pos = end
+        return major, int.from_bytes(data[start:end], "big")
+
+    def _read_head_add_info(self) -> tuple[int, int, int]:
+        """Returns (major, add_info, arg): major type, raw additional-info bits, and the
+        decoded argument. add_info is kept to recover a float's width, which arg alone
+        loses; arg is -1 for an indefinite-length item.
+        """
+        data = self._data
+        pos = self._pos
+        if pos >= self._len:
+            raise CBORDecodeError("Unexpected end of CBOR input.")
+        initial = data[pos]
+        major = initial >> 5
+        add_info = initial & 0x1F
+        if add_info < _W_1BYTE:
+            self._pos = pos + 1
+            return major, add_info, add_info
+        if add_info == _W_1BYTE:
+            end = pos + 2
+            if end > self._len:
+                raise CBORDecodeError("Unexpected end of CBOR input.")
+            self._pos = end
+            return major, add_info, data[pos + 1]
+        if add_info == _W_2BYTE:
+            width = 2
+        elif add_info == _W_4BYTE:
+            width = 4
+        elif add_info == _W_8BYTE:
+            width = 8
+        elif add_info == _INDEFINITE:
+            self._pos = pos + 1
+            return major, add_info, -1
+        else:
+            raise CBORDecodeError(f"Reserved additional-information value: {add_info}")
+        start = pos + 1
+        end = start + width
+        if end > self._len:
+            raise CBORDecodeError("Unexpected end of CBOR input.")
+        self._pos = end
+        return major, add_info, int.from_bytes(data[start:end], "big")
+
+    def _at_break(self) -> bool:
+        pos = self._pos
+        return pos < self._len and self._data[pos] == _BREAK
+
+    def _consume_break(self) -> None:
+        self._take(1)
+
+    def _try_read_text(self) -> str | None:
+        """Fast path for a definite-length text string (major 3, no tag prefix), which
+        is every struct key and every string value in practice. Returns ``None`` when
+        the next item is not such a string, so the caller falls back to the general path.
+        """
+        data = self._data
+        pos = self._pos
+        if pos >= self._len:
+            return None
+        initial = data[pos]
+        if (initial >> 5) != _MAJOR_TEXT:
+            return None
+        add_info = initial & 0x1F
+        if add_info < _W_1BYTE:
+            start = pos + 1
+            end = start + add_info
+        elif add_info == _W_1BYTE and pos + 1 < self._len:
+            length = data[pos + 1]
+            start = pos + 2
+            end = start + length
+        else:
+            return None
+        if end > self._len:
+            return None
+        self._pos = end
+        return data[start:end].decode("utf-8")
+
+    def _at_null(self) -> bool:
+        pos = self._pos
+        return pos < self._len and self._data[pos] == _NULL_BYTE
 
 
 def _decode_half(data: bytes) -> float:
