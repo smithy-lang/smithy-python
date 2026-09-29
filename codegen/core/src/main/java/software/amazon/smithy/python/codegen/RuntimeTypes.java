@@ -165,6 +165,12 @@ public final class RuntimeTypes {
             "ProtocolSettings",
             SmithyPythonDependency.SMITHY_CORE);
 
+    // smithy_http.aio.protocols
+    public static final Symbol RPC_V2_CBOR_CLIENT_PROTOCOL = createSymbol(
+            "aio.protocols",
+            "RpcV2CborClientProtocol",
+            SmithyPythonDependency.SMITHY_HTTP);
+
     // smithy_aws_core.identity 
     public static final Symbol STATIC_CREDENTIALS_RESOLVER = createSymbol(
             "identity",
