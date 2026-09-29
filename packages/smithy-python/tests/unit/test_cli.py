@@ -12,7 +12,7 @@ import pytest
 from smithy_python import __version__
 from smithy_python.cli import main
 
-VALID_MODEL = '{"smithy": "2.0", "shapes": {}}'
+VALID_MODEL = '{"smithy": "2.0", "shapes": {"example#Service": {"type": "service"}}}'
 
 
 class _InteractiveStdin(BytesIO):

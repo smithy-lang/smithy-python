@@ -30,12 +30,14 @@ consumes them.
 The CLI does not require a service to be named. It resolves the service to
 generate as follows:
 
-* `--service SHAPE_ID` selects a specific service shape. The shape MUST exist in
-  the model and MUST be a service.
-* When `--service` is omitted and the model contains exactly one service shape,
-  that service is used.
-* When `--service` is omitted and the model contains more than one service
-  shape, the command fails with an invocation error that lists the candidates.
+* `--service SHAPE_ID` selects a specific service shape. The ID MUST be absolute
+  and MUST NOT identify a member. The shape MUST exist in the model and MUST be
+  a service that is not marked `@mixin`.
+* When `--service` is omitted and the model contains exactly one non-mixin
+  service shape, that service is used.
+* When `--service` is omitted and the model contains more than one non-mixin
+  service shape, the command fails with an invocation error that lists the
+  candidates.
 
 The `client` artifact requires a resolved service. The `types` artifact does
 not. The CLI MUST NOT synthesize a placeholder service to satisfy generation.
