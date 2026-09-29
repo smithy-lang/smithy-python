@@ -40,8 +40,14 @@ from smithy_http.aio.protocols import (
 from smithy_http.deserializers import HTTPResponseDeserializer
 
 from .._private.query.errors import create_aws_query_error
-from .._private.query.serializers import QueryShapeSerializer
-from ..traits import AwsJson1_0Trait, AwsJson1_1Trait, AwsQueryTrait, RestJson1Trait
+from .._private.query.serializers import Ec2QueryShapeSerializer, QueryShapeSerializer
+from ..traits import (
+    AwsJson1_0Trait,
+    AwsJson1_1Trait,
+    AwsQueryTrait,
+    Ec2QueryTrait,
+    RestJson1Trait,
+)
 from ..utils import parse_document_discriminator, parse_error_code, parse_retry_after
 
 try:
@@ -453,7 +459,7 @@ class AwsJson11ClientProtocol(_AWSJSONClientProtocol):
 class AwsQueryClientProtocol(HttpClientProtocol):
     """An implementation of the aws.protocols#awsQuery protocol."""
 
-    _id: Final = AwsQueryTrait.id
+    _id: ClassVar[ShapeID] = AwsQueryTrait.id
     _content_type: Final = "application/x-www-form-urlencoded"
 
     def __init__(self, settings: ProtocolSettings) -> None:
@@ -492,10 +498,9 @@ class AwsQueryClientProtocol(HttpClientProtocol):
     ) -> HTTPRequest:
         sink = BytesIO()
         params: list[tuple[str, str]] = []
-        serializer = QueryShapeSerializer(
+        serializer = self._create_serializer(
             sink=sink,
             action=self._action_name(operation),
-            version=self._version,
             params=params,
         )
         input.serialize(serializer)
@@ -581,6 +586,17 @@ class AwsQueryClientProtocol(HttpClientProtocol):
             retry_after=parse_retry_after(response),
         )
 
+    def _create_serializer(
+        self,
+        *,
+        sink: BytesIO,
+        action: str,
+        params: list[tuple[str, str]],
+    ) -> QueryShapeSerializer:
+        return QueryShapeSerializer(
+            sink=sink, action=action, version=self._version, params=params
+        )
+
     def _action_name(
         self,
         operation: APIOperation[SerializeableShape, DeserializeableShape],
@@ -602,3 +618,34 @@ class AwsQueryClientProtocol(HttpClientProtocol):
 
     def _error_wrapper_elements(self) -> tuple[str, ...]:
         return ("ErrorResponse", "Error")
+
+
+class Ec2QueryClientProtocol(AwsQueryClientProtocol):
+    """An implementation of the aws.protocols#ec2Query protocol.
+
+    An EC2-specific extension of awsQuery: input keys resolve via ``@ec2QueryName``
+    and lists are always flattened; responses have no ``Result`` wrapper and errors
+    nest under ``<Response><Errors><Error>``.
+    """
+
+    _id: ClassVar[ShapeID] = Ec2QueryTrait.id
+
+    def _create_serializer(
+        self,
+        *,
+        sink: BytesIO,
+        action: str,
+        params: list[tuple[str, str]],
+    ) -> QueryShapeSerializer:
+        return Ec2QueryShapeSerializer(
+            sink=sink, action=action, version=self._version, params=params
+        )
+
+    def _response_wrapper_elements(
+        self,
+        operation: APIOperation[SerializeableShape, DeserializeableShape],
+    ) -> tuple[str, ...]:
+        return (f"{operation.schema.id.name}Response",)
+
+    def _error_wrapper_elements(self) -> tuple[str, ...]:
+        return ("Response", "Errors", "Error")

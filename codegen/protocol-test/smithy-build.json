@@ -89,6 +89,28 @@
                 }
             }
         },
+        "ec2-query": {
+            "transforms": [
+                {
+                    "name": "includeServices",
+                    "args": {
+                        "services": [
+                            "aws.protocoltests.ec2#AwsEc2"
+                        ]
+                    }
+                },
+                {
+                    "name": "removeUnusedShapes"
+                }
+            ],
+            "plugins": {
+                "python-client-codegen": {
+                    "service": "aws.protocoltests.ec2#AwsEc2",
+                    "module": "ec2query",
+                    "moduleVersion": "0.0.1"
+                }
+            }
+        },
         "rpcv2-cbor": {
             "transforms": [
                 {

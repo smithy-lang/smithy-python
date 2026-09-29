@@ -119,6 +119,24 @@ class AwsQueryErrorTrait(Trait, id=ShapeID("aws.protocols#awsQueryError")):
         return self.document_value["httpResponseCode"]  # type: ignore
 
 
+@dataclass(frozen=True)
+class Ec2QueryTrait(Trait, id=ShapeID("aws.protocols#ec2Query")):
+    def __post_init__(self):
+        assert self.document_value is None
+
+
+@dataclass(init=False, frozen=True)
+class Ec2QueryNameTrait(Trait, id=ShapeID("aws.protocols#ec2QueryName")):
+    document_value: str | None = None
+
+    def __post_init__(self):
+        assert isinstance(self.document_value, str)
+
+    @property
+    def value(self) -> str:
+        return self.document_value  # type: ignore
+
+
 @dataclass(init=False, frozen=True)
 class SigV4Trait(Trait, id=ShapeID("aws.auth#sigv4")):
     def __post_init__(self):
