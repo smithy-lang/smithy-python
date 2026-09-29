@@ -12,6 +12,8 @@ import pytest
 from smithy_python import __version__
 from smithy_python.cli import main
 
+VALID_MODEL = '{"smithy": "2.0", "shapes": {}}'
+
 
 class _InteractiveStdin(BytesIO):
     def isatty(self) -> bool:
@@ -39,7 +41,7 @@ def test_generation_commands_are_explicitly_unavailable(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     model = tmp_path / "model.json"
-    model.write_text("{}")
+    model.write_text(VALID_MODEL)
 
     assert (
         main(
@@ -96,11 +98,53 @@ def test_run_plugin_invocation_reads_standard_input(
         main(
             ("generate", "client"),
             environ={"SMITHY_PLUGIN_DIR": str(tmp_path)},
-            stdin=BytesIO(b"{}"),
+            stdin=BytesIO(VALID_MODEL.encode()),
         )
         == 1
     )
     assert "generation is not implemented yet" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize(
+    ("source", "expected"),
+    [
+        (b"{not json", "Invalid JSON"),
+        (b"[]", "must be a JSON object"),
+        (b"{}", "smithy"),
+        (
+            b'{"smithy": "2.0", "shapes": {"a#B": {"type": "list",'
+            b' "member": {"target": "a#Missing"}}}}',
+            "a#B$member",
+        ),
+    ],
+)
+def test_invalid_model_is_a_model_failure(
+    source: bytes,
+    expected: str,
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    model = tmp_path / "model.json"
+    model.write_bytes(source)
+
+    assert (
+        main(
+            (
+                "generate",
+                "types",
+                "--model",
+                str(model),
+                "--output",
+                str(tmp_path / "output"),
+            ),
+            environ={},
+        )
+        == 1
+    )
+    err = capsys.readouterr().err
+    assert err.startswith("smithy-python: error: ")
+    assert expected in err
+    assert "not implemented" not in err
 
 
 @pytest.mark.parametrize("option", ["--model", "--output"])

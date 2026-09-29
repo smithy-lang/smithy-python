@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added a Smithy JSON AST model loader with an embedded prelude, mixin flattening, and apply support."
+}

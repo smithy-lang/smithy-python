@@ -14,6 +14,7 @@ from typing import BinaryIO, Final
 from . import __version__
 from .environment import PluginEnvironment
 from .exceptions import CodegenError, InvalidInvocationError
+from .model import load_model
 
 _GENERATION_NOT_IMPLEMENTED: Final = (
     "smithy-python: error: {artifact} generation is not implemented yet\n"
@@ -43,11 +44,17 @@ def main(
         return error.code if isinstance(error.code, int) else 1
 
     try:
-        _resolve_invocation(args, environ=environ, stdin=stdin)
+        invocation = _resolve_invocation(args, environ=environ, stdin=stdin)
     except InvalidInvocationError as error:
         sys.stderr.write(f"smithy-python: error: {error}\n")
         return 2
     except (CodegenError, OSError) as error:
+        sys.stderr.write(f"smithy-python: error: {error}\n")
+        return 1
+
+    try:
+        load_model(invocation.model_source)
+    except CodegenError as error:
         sys.stderr.write(f"smithy-python: error: {error}\n")
         return 1
 

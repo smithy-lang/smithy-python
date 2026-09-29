@@ -13,3 +13,15 @@ class CodegenError(SmithyPythonError):
 
 class InvalidInvocationError(SmithyPythonError):
     """Raised when command-line inputs do not form a valid invocation."""
+
+
+class ModelError(CodegenError):
+    """Raised when a Smithy model cannot be loaded or navigated."""
+
+
+class InvalidShapeIdError(ModelError, ValueError):
+    """Raised when a string is not a valid Smithy shape ID."""
+
+
+class ShapeNotFoundError(ModelError, LookupError):
+    """Raised when a shape ID does not resolve to a shape in the model."""
