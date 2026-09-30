@@ -26,10 +26,8 @@ from smithy_core.interfaces import (
     is_streaming_blob,
 )
 from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
-from smithy_core.prelude import DOCUMENT
-from smithy_core.response import ResponseMetadata
-from smithy_core.schemas import APIOperation
 from smithy_core.prelude import DOCUMENT, UNIT
+from smithy_core.response import ResponseMetadata
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import SerializeableShape
 from smithy_core.shapes import ShapeID

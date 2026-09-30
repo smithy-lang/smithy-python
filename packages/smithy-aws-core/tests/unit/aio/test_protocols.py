@@ -588,7 +588,11 @@ async def test_aws_query_returns_generic_error_for_unknown_code() -> None:
 
 
 async def test_aws_query_reports_request_id_from_the_response_body() -> None:
-    protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
+    protocol = AwsQueryClientProtocol(
+        ProtocolSettings(
+            namespace="com.test", service_target="QueryService", version="2020-01-08"
+        )
+    )
     context = TypedProperties()
     response = HTTPResponse(
         status=400,
@@ -619,7 +623,11 @@ async def test_aws_query_reports_request_id_from_the_response_body() -> None:
 
 
 async def test_aws_query_prefers_a_request_id_header_when_one_is_sent() -> None:
-    protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
+    protocol = AwsQueryClientProtocol(
+        ProtocolSettings(
+            namespace="com.test", service_target="QueryService", version="2020-01-08"
+        )
+    )
     context = TypedProperties()
     response = HTTPResponse(
         status=400,
@@ -637,7 +645,11 @@ async def test_aws_query_prefers_a_request_id_header_when_one_is_sent() -> None:
 
 
 async def test_aws_query_reports_no_request_id_when_the_body_has_none() -> None:
-    protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
+    protocol = AwsQueryClientProtocol(
+        ProtocolSettings(
+            namespace="com.test", service_target="QueryService", version="2020-01-08"
+        )
+    )
     response = HTTPResponse(
         status=200, fields=tuples_to_fields([]), body=b"<Response/>"
     )
@@ -649,7 +661,11 @@ async def test_aws_query_reports_no_request_id_when_the_body_has_none() -> None:
 
 
 async def test_aws_query_does_not_report_a_previous_attempts_request_id() -> None:
-    protocol = AwsQueryClientProtocol(_SERVICE_SCHEMA, "2020-01-08")
+    protocol = AwsQueryClientProtocol(
+        ProtocolSettings(
+            namespace="com.test", service_target="QueryService", version="2020-01-08"
+        )
+    )
     context = TypedProperties()
 
     first = HTTPResponse(

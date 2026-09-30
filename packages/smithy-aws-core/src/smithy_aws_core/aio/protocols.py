@@ -27,9 +27,8 @@ from smithy_core.exceptions import (
 )
 from smithy_core.interfaces import TypedProperties, URI
 from smithy_core.prelude import DOCUMENT
-from smithy_core.schemas import APIOperation
 from smithy_core.response import ResponseMetadata
-from smithy_core.schemas import APIOperation, Schema
+from smithy_core.schemas import APIOperation
 from smithy_core.serializers import SerializeableShape
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.types import PropertyKey, TimestampFormat
