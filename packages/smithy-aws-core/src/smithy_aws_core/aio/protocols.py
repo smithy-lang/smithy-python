@@ -466,7 +466,7 @@ class AwsQueryClientProtocol(HttpClientProtocol):
         _assert_xml()
         if settings.version is None:
             raise ExpectationNotMetError(
-                "The awsQuery protocol requires a service version, but "
+                f"The {self._id.name} protocol requires a service version, but "
                 "ProtocolSettings.version was None."
             )
         self._default_namespace: Final = settings.namespace
