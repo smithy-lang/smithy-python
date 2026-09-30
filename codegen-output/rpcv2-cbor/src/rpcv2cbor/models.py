@@ -418,7 +418,7 @@ class Defaults:
 
     default_boolean: bool = True
 
-    default_list: list[str] = field(default_factory=list[str])
+    default_list: list[str] = field(default_factory=lambda: [])
 
     default_timestamp: datetime = datetime(1970, 1, 1, 0, 0, 0, 0, timezone.utc)
 
@@ -436,7 +436,7 @@ class Defaults:
 
     default_double: float = 1.0
 
-    default_map: dict[str, str] = field(default_factory=dict[str, str])
+    default_map: dict[str, str] = field(default_factory=lambda: {})
 
     default_enum: str = TestEnum("FOO")
 
@@ -1333,7 +1333,7 @@ class OperationWithDefaultsOutput:
 
     default_boolean: bool = True
 
-    default_list: list[str] = field(default_factory=list[str])
+    default_list: list[str] = field(default_factory=lambda: [])
 
     default_timestamp: datetime = datetime(1970, 1, 1, 0, 0, 0, 0, timezone.utc)
 
@@ -1351,7 +1351,7 @@ class OperationWithDefaultsOutput:
 
     default_double: float = 1.0
 
-    default_map: dict[str, str] = field(default_factory=dict[str, str])
+    default_map: dict[str, str] = field(default_factory=lambda: {})
 
     default_enum: str = TestEnum("FOO")
 
