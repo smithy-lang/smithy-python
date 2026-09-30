@@ -23,6 +23,8 @@ from smithy_core.traits import TimestampFormatTrait, XMLFlattenedTrait, XMLNameT
 from smithy_core.types import TimestampFormat
 from smithy_core.utils import serialize_float
 
+from ...traits import Ec2QueryNameTrait
+
 
 def _percent_encode_query(value: str) -> str:
     """Encode a query key or value using RFC 3986 percent-encoding."""
@@ -34,6 +36,21 @@ def _resolve_name(schema: Schema, default: str) -> str:
     if (xml_name := schema.get_trait(XMLNameTrait)) is not None:
         return xml_name.value
     return default
+
+
+def _capitalize(value: str) -> str:
+    """Uppercase the first character, leaving the rest untouched."""
+    return value[:1].upper() + value[1:] if value else value
+
+
+def _resolve_ec2_name(schema: Schema, default: str) -> str:
+    """Resolve an ec2Query key: ``@ec2QueryName``, else capitalized ``@xmlName``,
+    else the capitalized default."""
+    if (ec2_name := schema.get_trait(Ec2QueryNameTrait)) is not None:
+        return ec2_name.value
+    if (xml_name := schema.get_trait(XMLNameTrait)) is not None:
+        return _capitalize(xml_name.value)
+    return _capitalize(default)
 
 
 def _is_flattened(schema: Schema) -> bool:
@@ -241,3 +258,85 @@ class QueryMapSerializer(MapSerializer):
 
         self._parent.child(*entry_path, self._key_name).append(key)
         value_writer(self._parent.child(*entry_path, self._value_name))
+
+
+class Ec2QueryShapeSerializer(QueryShapeSerializer):
+    """Serializes Smithy shapes into AWS EC2 Query form parameters.
+
+    Differs from :class:`QueryShapeSerializer` in key resolution (``@ec2QueryName``,
+    else capitalized ``@xmlName``, else the capitalized member name) and in that lists
+    are always flattened.
+    """
+
+    def child(self, *segments: str) -> "Ec2QueryShapeSerializer":
+        return Ec2QueryShapeSerializer(
+            sink=self._sink,
+            path=(*self._path, *segments),
+            params=self._params,
+            default_timestamp_format=self._default_timestamp_format,
+        )
+
+    def begin_struct(self, schema: Schema) -> AbstractContextManager[ShapeSerializer]:
+        return Ec2QueryStructSerializer(self)
+
+    def begin_list(
+        self, schema: Schema, size: int
+    ) -> AbstractContextManager[ShapeSerializer]:
+        # ec2Query omits empty lists entirely, unlike awsQuery.
+        return Ec2QueryListSerializer(self)
+
+    def begin_map(
+        self, schema: Schema, size: int
+    ) -> AbstractContextManager[MapSerializer]:
+        raise SerializationError("The ec2Query protocol does not support maps.")
+
+
+class Ec2QueryStructSerializer(InterceptingSerializer):
+    def __init__(self, parent: Ec2QueryShapeSerializer) -> None:
+        self._parent = parent
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        pass
+
+    def before(self, schema: Schema) -> ShapeSerializer:
+        return self._parent.child(
+            _resolve_ec2_name(schema, schema.expect_member_name())
+        )
+
+    def after(self, schema: Schema) -> None:
+        pass
+
+
+class Ec2QueryListSerializer(InterceptingSerializer):
+    """Serializes list entries as ``<key>.<1-index>``; ec2Query lists are always
+    flattened, so the member name and its traits have no effect."""
+
+    def __init__(self, parent: Ec2QueryShapeSerializer) -> None:
+        self._parent = parent
+        self._index = 0
+
+    def __enter__(self) -> Self:
+        return self
+
+    def __exit__(
+        self,
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
+    ) -> None:
+        pass
+
+    def before(self, schema: Schema) -> ShapeSerializer:
+        self._index += 1
+        return self._parent.child(str(self._index))
+
+    def after(self, schema: Schema) -> None:
+        pass
