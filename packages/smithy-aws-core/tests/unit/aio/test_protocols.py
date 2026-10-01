@@ -697,6 +697,59 @@ async def test_aws_query_does_not_report_a_previous_attempts_request_id() -> Non
     assert metadata.request_id is None
 
 
+async def test_aws_query_does_not_report_a_previous_attempts_request_id_when_body_read_fails() -> (
+    None
+):
+    protocol = AwsQueryClientProtocol(
+        ProtocolSettings(
+            namespace="com.test", service_target="QueryService", version="2020-01-08"
+        )
+    )
+    context = TypedProperties()
+
+    first = HTTPResponse(
+        status=400,
+        fields=tuples_to_fields([]),
+        body=(
+            b"<ErrorResponse><Error><Code>InvalidAction</Code>"
+            b"<message>throttled</message></Error>"
+            b"<RequestId>attempt-1-id</RequestId></ErrorResponse>"
+        ),
+    )
+    await _deserialize_query_error(protocol, first, context)
+    assert (
+        protocol.extract_response_metadata(response=first, context=context).request_id
+        == "attempt-1-id"
+    )
+
+    # A later attempt receives a response but fails while reading the body, before
+    # it can record (or clear) its own request ID. The earlier attempt's ID must
+    # not survive into this attempt's metadata.
+    class _BrokenBody:
+        async def read(self) -> bytes:
+            raise OSError("connection reset while reading body")
+
+    second = HTTPResponse(
+        status=500, fields=tuples_to_fields([]), body=cast(Any, _BrokenBody())
+    )
+    with pytest.raises(OSError):
+        await protocol.deserialize_response(
+            operation=_mock_operation(
+                _operation_schema("FailingOperation"),
+                error_schemas=[_INVALID_ACTION_ERROR_SCHEMA],
+            ),
+            request=cast(HTTPRequest, Mock()),
+            response=second,
+            error_registry=TypeRegistry(
+                {ShapeID("com.test#InvalidActionError"): _ModeledQueryError}
+            ),
+            context=context,
+        )
+
+    metadata = protocol.extract_response_metadata(response=second, context=context)
+    assert metadata.request_id is None
+
+
 async def _deserialize_query_error(
     protocol: AwsQueryClientProtocol,
     response: HTTPResponse,

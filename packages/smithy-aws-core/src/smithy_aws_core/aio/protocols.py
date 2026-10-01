@@ -42,6 +42,7 @@ from smithy_http.aio.protocols import (
 from smithy_http.deserializers import HTTPResponseDeserializer
 
 from .._private.query.errors import create_aws_query_error
+from .._private.query.metadata import parse_aws_query_request_id
 from .._private.query.serializers import Ec2QueryShapeSerializer, QueryShapeSerializer
 from ..traits import (
     AwsJson1_0Trait,
@@ -50,10 +51,6 @@ from ..traits import (
     Ec2QueryTrait,
     RestJson1Trait,
 )
-from ..utils import parse_document_discriminator, parse_error_code, parse_retry_after
-from .._private.query.metadata import parse_aws_query_request_id
-from .._private.query.serializers import QueryShapeSerializer
-from ..traits import AwsJson1_0Trait, AwsJson1_1Trait, AwsQueryTrait, RestJson1Trait
 from ..utils import (
     parse_document_discriminator,
     parse_error_code,
@@ -590,17 +587,17 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
         error_registry: TypeRegistry,
         context: TypedProperties,
     ) -> OperationOutput:
+        # Cleared up front, before the body read, so a prior attempt's value is
+        # dropped even if this attempt fails before recording its own.
+        context.pop(_QUERY_REQUEST_ID, None)
+
         body = await response.consume_body_async()
 
         # Recorded before any branch below returns or raises, so successes, empty
-        # outputs and errors alike can report the identifier. Retry attempts share
-        # one properties object, so a body without an ID must clear any value a
-        # previous attempt left behind rather than let it be reported as this one's.
+        # outputs and errors alike can report the identifier.
         request_id = parse_aws_query_request_id(body)
         if request_id is not None:
             context[_QUERY_REQUEST_ID] = request_id
-        else:
-            context.pop(_QUERY_REQUEST_ID, None)
 
         if not self._is_success(operation, context, response):
             raise await self._create_error(
