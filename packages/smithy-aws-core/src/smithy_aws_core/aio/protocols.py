@@ -1,7 +1,7 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 from collections.abc import Callable
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from inspect import iscoroutinefunction
 from io import BytesIO
 from typing import TYPE_CHECKING, Any, ClassVar, Final
@@ -481,7 +481,24 @@ class AwsJson11ClientProtocol(_AWSJSONClientProtocol):
     _content_type: ClassVar[str] = "application/x-amz-json-1.1"
 
 
-_QUERY_REQUEST_ID = PropertyKey(key="aws_query_request_id", value_type=str)
+@dataclass(frozen=True)
+class _RecordedQueryRequestId:
+    """A body-sourced request ID bound to the response it was parsed from.
+
+    Retry attempts share one properties object, so the ID is tagged with its
+    source response. ``extract_response_metadata`` only trusts it for that exact
+    response, so a later attempt that fails before recording its own ID (for
+    example, when a pre-deserialization hook raises) cannot surface an earlier
+    attempt's ID.
+    """
+
+    response: HTTPResponse
+    value: str
+
+
+_QUERY_REQUEST_ID = PropertyKey(
+    key="aws_query_request_id", value_type=_RecordedQueryRequestId
+)
 """Where :py:class:`AwsQueryClientProtocol` records a body-sourced request ID.
 
 The body is only available while deserializing, so the value is stored there for
@@ -535,10 +552,13 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
         )
         if metadata.request_id is not None:
             return metadata
-        request_id = context.get(_QUERY_REQUEST_ID)
-        if request_id is None:
+        # Relies on transport_response identity being preserved from
+        # deserialize_response through to here; if that ever changes, this safely
+        # reports no ID rather than a wrong one.
+        recorded = context.get(_QUERY_REQUEST_ID)
+        if recorded is None or recorded.response is not response:
             return metadata
-        return replace(metadata, request_id=request_id)
+        return replace(metadata, request_id=recorded.value)
 
     def serialize_request[
         OperationInput: SerializeableShape,
@@ -587,17 +607,14 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
         error_registry: TypeRegistry,
         context: TypedProperties,
     ) -> OperationOutput:
-        # Cleared up front, before the body read, so a prior attempt's value is
-        # dropped even if this attempt fails before recording its own.
-        context.pop(_QUERY_REQUEST_ID, None)
-
         body = await response.consume_body_async()
 
         # Recorded before any branch below returns or raises, so successes, empty
-        # outputs and errors alike can report the identifier.
+        # outputs and errors alike can report the identifier. Bound to this
+        # response so extraction never attributes it to a different attempt.
         request_id = parse_aws_query_request_id(body)
         if request_id is not None:
-            context[_QUERY_REQUEST_ID] = request_id
+            context[_QUERY_REQUEST_ID] = _RecordedQueryRequestId(response, request_id)
 
         if not self._is_success(operation, context, response):
             raise await self._create_error(
