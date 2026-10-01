@@ -1,496 +1,243 @@
 # HTTP Binding Serialization and Deserialization
 
-## Status
+## Abstract
 
-Draft.
+HTTP protocols divide structure members between transport locations such as
+headers, labels, query parameters, and the message body. Determining that
+division requires inspecting schema traits, but binding-relevant schema state
+is stable and reused across requests.
 
-## Summary
+This design derives HTTP binding metadata once per schema and stores it in a
+typed schema extension. HTTP serializers and deserializers use the cached
+metadata to route members, while document codecs remain responsible only for
+encoding and decoding payload contents.
 
-`HTTPBindingSerializer` routes generated input members to HTTP headers, URI
-components, and payloads. `HTTPResponseDeserializer` reads response bindings.
-Both use schema-cached `HTTPBindingSchemaMetadata`. Each schema derives and
-caches its binding map once.
+## Goals
 
-Generated structures keep the existing `serialize()`, `serialize_members()`,
-and `deserialize()` interfaces. HTTP protocols call `serialize_members()`
-directly for generated inputs and use `serialize()` as a compatibility path
-for handwritten inputs. Document codecs continue to handle document payloads.
-The change requires no generator updates.
+* Separate HTTP location routing from document encoding.
+* Amortize binding discovery across requests and protocol instances.
+* Preserve modeled member order when dispatching deserialized values.
+* Keep `smithy-core` independent of HTTP-specific metadata.
+* Share one canonical schema with every codec and protocol component.
 
-### Request flow
+This design does not introduce generated protocol-specific serde, filtered
+document schemas, or schema extensions for document codecs.
 
-```text
-Generated input.serialize_members()
-                  |
-                  v
-        HTTPBindingSerializer
-                  |
-       cached member route table
-          /       |        \
-         v        v         v
-   HTTP fields   URI    payload codec
-         \        |         /
-                  v
-             HTTPRequest
-```
+## Background
 
-### Response flow
+HTTP binding traits determine whether a member belongs in a header, query
+string, URI label, response status, explicit payload, or implicit document
+body. Existing binding matchers derive this information by walking the
+structure schema.
 
-```text
-HTTPResponse
-     |
-     v
-HTTPResponseDeserializer
-     |
-cached headers/status/payload/body bindings
-     |                          |
-     v                          v
-location deserializers    payload codec
-     |                          |
-     +------------+-------------+
-                  v
-       generated deserialize()
-```
+Repeating that work for each request or response has two costs:
 
-## Motivation
+1. Trait classification and matcher allocation are repeated even though the
+   binding-relevant schema state does not change.
+2. Response deserialization scans every structure member to find the small
+   subset bound outside the document body.
 
-The current request and response paths construct binding matchers for each
-serde operation. Response deserialization also walks every structure member
-before it delegates document members to the payload codec. Generated schemas
-remain stable during client execution, so the runtime can store these derived
-bindings on each schema.
-
-Calling `serialize_members()` directly removes the root `begin_struct()` call
-for generated inputs. Cached binding metadata removes repeated trait
-classification and matcher allocation. Existing serializer, deserializer, and
-codec contracts remain unchanged.
-
-## Scope
-
-* Lazy extension caching on `Schema`.
-* Cached request and response HTTP binding metadata.
-* Generic request serialization through `HTTPBindingSerializer`.
-* Cached response binding lookup in `HTTPResponseDeserializer` and
-  `HTTPResponseSerializer`.
-* A `serialize()` compatibility path for handwritten inputs.
-
-JSON, XML, and query codecs keep their current interfaces. Generated
-deserialization keeps its callback contract. Structure construction hooks and
-filtered document schemas require separate designs.
-
-## Existing Generated Interface
-
-Generated structures provide the required runtime interface:
-
-```python
-class ExampleInput:
-    SCHEMA: ClassVar[Schema]
-
-    def serialize(self, serializer: ShapeSerializer) -> None:
-        with serializer.begin_struct(self.SCHEMA) as struct_serializer:
-            self.serialize_members(struct_serializer)
-
-    def serialize_members(self, serializer: ShapeSerializer) -> None:
-        ...
-```
-
-`serialize()` remains the general entry point for serializing a complete shape.
-`serialize_members()` remains the efficient entry point for a runtime that has
-already opened or otherwise established the containing structure.
-
-HTTP request serialization uses `serialize_members()` because the HTTP binding
-serializer owns the request and document-body structure state. Other callers
-can continue to use `serialize()`.
-
-Generated deserialization remains:
-
-```python
-class ExampleOutput:
-    @classmethod
-    def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
-        kwargs: dict[str, Any] = {}
-        deserializer.read_struct(cls.SCHEMA, consumer=...)
-        return cls(**kwargs)
-```
-
-`HTTPResponseDeserializer` implements this existing callback-based interface.
+Request and response routing must be modeled separately. For example,
+`@httpQuery` is a request binding, but the same member is a document-body
+member when its structure is used as an operation output.
 
 ## Schema Extensions
 
-### Core API
-
-A schema extension is a shared, typed descriptor with a provider:
+`smithy-core` provides a transport-neutral mechanism for attaching derived
+metadata to a schema:
 
 ```python
 @dataclass(frozen=True, slots=True, eq=False)
 class SchemaExtension[T]:
     provider: Callable[[Schema], T]
-```
 
-Schemas expose:
 
-```python
 class Schema:
     def get_extension[T](self, extension: SchemaExtension[T]) -> T:
         ...
 ```
 
-The HTTP runtime creates one extension descriptor:
+An extension descriptor combines a cache key with the function that derives
+its value. Descriptors compare by identity, so independently defined
+extensions cannot collide because they use the same provider type or schema
+shape ID.
 
-```python
-HTTP_BINDING_SCHEMA_EXTENSION = SchemaExtension(
-    _build_http_binding_schema_metadata
-)
-```
+Extension values are built lazily and cached on the schema. Laziness avoids
+adding HTTP work to schemas that are never used by an HTTP protocol and allows
+other packages to define extensions without registration in `smithy-core`.
 
-Every HTTP protocol instance uses the module-level descriptor. Each schema
-caches one `HTTPBindingSchemaMetadata` value for that descriptor.
+The cache is not part of a schema's semantic dataclass state. It does not
+participate in equality, representation, serialization through
+`dataclasses.asdict`, or construction through `dataclasses.replace`.
 
-### Cache Requirements
+Cache misses are lock-free. Concurrent callers may derive the same value more
+than once, after which one complete value is retained. Providers therefore
+must be deterministic and should return immutable values without externally
+visible construction side effects.
 
-`Schema` allocates its extension dictionary on first use and keys entries by
-descriptor identity. Providers publish complete values. Concurrent cache
-misses may invoke a provider more than once, which avoids a lock on the lookup
-path.
+## HTTP Binding Metadata
 
-The cache is an implementation attribute. It stays out of schema equality,
-representation, `dataclasses.fields()`, `dataclasses.asdict()`, and the
-generated constructor. `dataclasses.replace()` creates a schema with an empty
-cache.
+`smithy-http` defines one shared schema extension whose value contains:
 
-Extension values use immutable containers. `HTTPBindingSchemaMetadata` is a
-frozen, slotted dataclass whose collections are tuples.
+* A request binding route indexed by `Schema.member_index`.
+* A response binding route indexed by `Schema.member_index`.
+* Whether request and response structures contain implicit body members.
+* The explicit payload or event-stream member, when present.
+* Non-body response bindings in modeled member order.
+* Pre-normalized response header names and list-header classification.
+* The modeled default response status.
 
-### HTTP Binding Metadata
+The metadata uses tuples and a frozen dataclass so a cached value cannot be
+changed by one protocol instance and observed by another.
 
-The HTTP extension stores both request and response metadata:
+Indexed routing is possible because member indexes are stable within a schema.
+It makes the hot-path decision a tuple lookup followed by dispatch to the
+serializer or deserializer for that HTTP location.
 
-```python
-@dataclass(frozen=True, slots=True)
-class HTTPBindingSchemaMetadata:
-    request_bindings: tuple[Binding, ...]
-    response_bindings: tuple[Binding, ...]
+The ordered response entries serve a different purpose from the indexed route
+table. They let deserialization visit only transport-bound members while
+preserving the order in which the structure schema presents those members.
 
-    has_request_body: bool
-    has_response_body: bool
+## Separation of Responsibilities
 
-    payload_member: Schema | None
-    event_stream_member: Schema | None
+The HTTP binding layer owns concerns that depend on HTTP traits:
 
-    response_bound_members: tuple[
-        tuple[Schema, Binding, str | None, bool], ...
-    ]
-    response_status: int
-```
+* Selecting the serializer or deserializer for each binding location.
+* Constructing the URI, fields, status, and body stream.
+* Choosing between an implicit document body, explicit payload, streaming
+  payload, and event stream.
+* Applying HTTP content type and content length rules.
 
-`request_bindings` and `response_bindings` are indexed by
-`Schema.member_index`. They are separate because a trait such as `@httpQuery`
-is a request binding but is treated as a document-body member if the same
-structure is used as an output.
+The payload codec owns concerns that depend on the document protocol:
 
-Response-bound entries retain schema-member order and precompute:
+* Encoding document-bound members.
+* Decoding document-bound members.
+* Encoding or decoding aggregate explicit payloads.
 
-* The member schema.
-* The response binding.
-* The normalized lowercase header name.
-* Whether the member is list-valued.
-
-The name field stores the prefix for prefix-header entries and is `None` for
-status and payload bindings. This ordered tuple avoids scanning body members
-while preserving the existing deserializer consumer order.
-
-Callers use `HTTPBindingSchemaMetadata` instead of repeating trait inspection.
-New fields require a benchmark that identifies repeated work in a serde path.
-
-### Document Body Metadata
-
-The extension records whether request and response structures contain document
-body members. Document codecs continue to receive the original structure
-schema.
-
-The original schema preserves codec behavior and keeps one effective schema per
-Smithy shape ID. Filtered document schemas require an explicit schema identity
-contract for codecs.
+This boundary allows the same HTTP routing machinery to be paired with JSON,
+XML, query, or other document codecs. It also prevents codecs from needing to
+understand URI or field bindings.
 
 ## Request Serialization
 
-### `HTTPBindingSerializer`
+The request binding serializer is driven by a structure's member walk. For
+each member, it uses the cached request route to select a location-specific
+serializer:
 
-`HTTPBindingSerializer` is a structure-member serializer and request builder:
-
-```python
-class HTTPBindingSerializer(InterceptingSerializer):
-    def __init__(
-        self,
-        *,
-        payload_codec: Codec,
-        schema: Schema,
-        http_trait: HTTPTrait,
-        endpoint_trait: EndpointTrait | None = None,
-        omit_empty_payload: bool = True,
-    ) -> None:
-        ...
-
-    def build_request(self) -> HTTPRequest:
-        ...
+```text
+structure member
+      |
+      v
+cached request route
+  |     |      |       |
+header query  label   payload codec
 ```
 
-The constructor:
+The binding layer establishes payload state before members are written and
+finalizes the HTTP request afterward. This is necessary because transport
+metadata and document contents are produced during the same member walk.
 
-1. Gets the cached `HTTPBindingSchemaMetadata`.
-2. Creates serializers for headers, query parameters, path labels, and host
-   labels.
-3. Selects the payload mode:
-   * Event stream.
-   * Raw `@httpPayload`.
-   * Structured `@httpPayload`.
-   * Implicit document body.
-4. Opens the document-body structure when required.
+There are four payload modes:
 
-Generated `serialize_members()` calls the normal `ShapeSerializer` methods.
-`HTTPBindingSerializer.before()` performs an indexed route lookup and returns
-the serializer for that binding:
+* Implicit document bodies send unbound request members to the payload codec.
+* Explicit aggregate payloads send the payload member to the payload codec.
+* Explicit scalar or blob payloads use raw payload handling.
+* Event streams use the event-stream body abstraction.
 
-```python
-def before(self, schema: Schema) -> ShapeSerializer:
-    binding = self._binding_metadata.request_bindings[
-        schema.expect_member_index()
-    ]
-    match binding:
-        case Binding.HEADER | Binding.PREFIX_HEADERS:
-            return self.header_serializer
-        case Binding.QUERY | Binding.QUERY_PARAMS:
-            return self.query_serializer
-        case Binding.LABEL:
-            return self.path_serializer
-        case Binding.HOST:
-            return self.host_prefix_serializer
-        case _:
-            return self._payload_serializer
-```
-
-`build_request()`:
-
-* Closes an implicit document-body structure.
-* Resolves the final payload stream.
-* Adds the payload content type and known content length.
-* Resolves the host prefix, path, and query string.
-* Returns an `HTTPRequest`.
-
-If member serialization raises, `abort()` closes the document serializer with
-the active exception information.
-
-### Protocol Integration
-
-The generated fast path is:
-
-```python
-serializer = HTTPBindingSerializer(
-    payload_codec=self.payload_codec,
-    schema=operation.input_schema,
-    http_trait=operation.schema.expect_trait(HTTPTrait),
-    endpoint_trait=operation.schema.get_trait(EndpointTrait),
-)
-input.serialize_members(serializer)
-return serializer.build_request()
-```
-
-The protocol still supports handwritten `SerializeableShape`
-implementations that do not implement `SerializeableStruct`:
-
-```python
-if isinstance(input, SerializeableStruct):
-    input.serialize_members(serializer)
-    return serializer.build_request()
-
-legacy = HTTPRequestSerializer(...)
-input.serialize(legacy)
-if legacy.result is None:
-    raise ExpectationNotMetError("Expected a serialized HTTP request.")
-return legacy.result
-```
-
-Generated operation inputs are structures and use the direct path. Handwritten
-inputs that only implement `serialize()` use `HTTPRequestSerializer`.
-
-### Compatibility Facade
-
-`HTTPRequestSerializer` remains available with its existing constructor and
-`result` behavior. Its `begin_struct()` implementation delegates to
-`HTTPBindingSerializer`.
-
-Callers can continue to instantiate `HTTPRequestSerializer` or pass it to a
-generated shape's `serialize()` method.
+An absent implicit body can be omitted without invoking the codec. Explicit
+payloads continue to use their modeled media type and length requirements.
 
 ## Response Deserialization
 
-### `HTTPResponseDeserializer`
+Response deserialization first visits the cached, ordered set of non-body
+bindings. Header, prefix-header, status, and explicit-payload values are sent
+to their location-specific deserializers.
 
-`HTTPResponseDeserializer` keeps its public name and constructor. It implements
-`ShapeDeserializer` and uses cached binding metadata.
+If the structure has implicit document-body members and the response body is
+not empty, the payload codec then reads the document using the same structure
+schema and consumer. This avoids a full member scan in the HTTP layer without
+changing the order or ownership of decoded values.
 
-`read_struct()` performs three steps:
-
-1. Gets the cached `HTTPBindingSchemaMetadata`.
-2. Reads precomputed non-body response bindings in schema-member order.
-3. Delegates the original response schema to the payload codec when document
-   body members are present.
-
-The cached tuple contains only transport-bound members. `read_struct()` visits
-those members directly, then delegates document members to the payload codec.
-Location-specific `ShapeDeserializer` implementations continue to read scalar
-and collection values.
+An explicit aggregate payload is decoded by the payload codec using the
+payload member schema. Scalar, blob, streaming, and event-stream payloads use
+their corresponding transport representations.
 
 ## Response Serialization
 
-`HTTPResponseSerializer` uses the same `HTTPBindingSchemaMetadata`:
+Response serialization uses the same extension value as request serialization
+and response deserialization. The response route table selects headers,
+response status, and payload members, while the cached body flag determines
+whether the document codec needs to be opened.
 
-* `response_bindings` route members.
-* `has_response_body` determines whether the payload codec is invoked.
-* `response_status` provides the modeled default.
-* Request and response serialization share payload and event-stream metadata.
+Sharing one metadata value keeps request and response classification rules
+together while retaining separate route tables for their direction-specific
+semantics.
 
-`HTTPResponseSerializer` retains its public name and constructor.
+## Schema Identity
 
-`HTTPResponseBindingSerializer` is an implementation helper and consumes the
-cached binding metadata directly.
+Document codecs receive the canonical structure or payload-member schema
+rather than an HTTP-filtered copy.
 
-## Payload Modes
+Using the canonical schema has two benefits:
 
-### Implicit Document Body
+* A Smithy shape has one effective runtime schema identity.
+* Schema-local caches can be shared across HTTP and document processing.
 
-The HTTP binding serializer routes document-body members to the serializer
-created by the payload codec. The codec receives the original structure schema.
+A filtered schema could make body membership explicit to a codec, but it would
+also create multiple schemas with the same Smithy shape ID. That requires a
+broader contract for schema identity, equality, recursive references, and
+extension ownership. Filtered document schemas are therefore deferred until
+that contract is defined.
 
-`omit_empty_payload` controls whether the serializer writes an empty body.
+## Tradeoffs
 
-### Explicit Payload
+Schema-local caching retains derived metadata for the lifetime of a schema.
+This is appropriate for generated schemas, which are long-lived and reused,
+but increases their memory footprint after an extension is accessed.
 
-String, enum, and blob payloads use raw payload serialization. Their default
-content types are:
+Lock-free initialization keeps cache hits and misses simple, at the cost of
+allowing duplicate provider work during a concurrent first access. HTTP
+metadata construction is deterministic and bounded by the number of members,
+so duplicate first-use work is preferable to a lock on every schema.
 
-| Shape | Content type |
-|---|---|
-| String or enum | `text/plain` |
-| Blob | `application/octet-stream` |
-
-`@mediaType` overrides the default.
-
-The payload codec serializes and deserializes aggregate payloads with the
-payload member schema.
-
-### Streaming Payload
-
-A streaming blob passes through without buffering. For `@requiresLength`, the
-runtime uses an existing `Content-Length` field or calls `tell()` and `seek()`
-on a synchronous stream. It raises `SerializationError` when neither source
-provides a length.
-
-### Event Stream
-
-Event-stream payloads retain the existing writable/readable async body
-behavior. Event message serialization and deserialization remain the
-responsibility of the event-stream runtime.
-
-## Compatibility
-
-Generated models already provide `serialize()`, `serialize_members()`,
-`deserialize()`, and schemas with stable member indexes. The protocol selects a
-different existing method, so generated output stays unchanged.
-
-| Caller | Expected result |
-|---|---|
-| Generated SDK input | Uses `serialize_members()` fast path |
-| Generated SDK output | Uses existing `deserialize()` callback path |
-| Handwritten shape with both serialization methods | Uses fast path |
-| Handwritten shape with only `serialize()` | Uses compatibility facade |
-| Direct `HTTPRequestSerializer` user | Existing API remains available |
-| Direct `HTTPRequestBindingSerializer` user | Existing constructor remains available |
-| Direct `HTTPResponseDeserializer` user | Existing name uses the cached implementation |
-
-Document codecs receive the original root schema. This preserves wire behavior
-for responses whose document body also contains transport-bound members.
-
-## Relationship to smithy-java and smithy-php
-
-smithy-java and smithy-php separate HTTP location routing from document codec
-logic and derive binding knowledge from model metadata. Smithy Python uses
-`SchemaExtension` for that metadata and keeps its existing
-`ShapeSerializer` and `ShapeDeserializer` contracts.
-
-Python member schemas carry `Schema.member_index`, which indexes request and
-response route tables. Generated deserialization keeps the consumer callback
-instead of filling a positional member buffer.
-
-## Performance
-
-The Rest JSON benchmark ran on an x86 benchmark instance. It uses the
-`AwsSdkPerformanceBenchmarkModels` artifacts and exercises the complete client
-protocol path. Each case used 5,000 warmup iterations and 10,000 measured
-iterations.
-
-| Group | Geometric mean p50 change |
-|---|---:|
-| Request serialization | 49.7% faster |
-| Response deserialization | 45.2% faster |
-| All 10 Rest JSON cases | 47.5% faster |
-
-| Case | Before | After | Change |
-|---|---:|---:|---:|
-| Serialize CopyObject baseline | 33.94 us | 13.85 us | 59.2% faster |
-| Serialize CopyObject M | 109.66 us | 87.23 us | 20.5% faster |
-| Serialize PutObject S | 38.72 us | 17.89 us | 53.8% faster |
-| Serialize PutObject M | 39.35 us | 18.18 us | 53.8% faster |
-| Serialize PutObject L | 38.91 us | 18.06 us | 53.6% faster |
-| Deserialize CopyObject baseline | 24.52 us | 12.26 us | 50.0% faster |
-| Deserialize CopyObject M | 68.39 us | 51.71 us | 24.4% faster |
-| Deserialize GetObject S | 56.43 us | 29.00 us | 48.6% faster |
-| Deserialize GetObject M | 57.17 us | 28.33 us | 50.4% faster |
-| Deserialize GetObject L | 56.82 us | 29.05 us | 48.9% faster |
-
-The direct `serialize_members()` call removes the root structure wrapper.
-Cached route tables remove matcher construction. Ordered response metadata
-visits transport-bound members directly and stores normalized header names.
-
-## Validation
-
-* Package tests: 1,994 passed and 9 skipped.
-* Generated AWS JSON 1.0, AWS JSON 1.1, AWS Query, and Rest JSON protocol suites
-  passed.
-* Ruff and Pyright passed.
-* All Python packages built.
-* All 64 serde artifact cases passed validation.
+Keeping HTTP metadata in `smithy-http` preserves the dependency boundary, but
+means the HTTP package requires a version of `smithy-core` that provides the
+schema extension API.
 
 ## Alternatives
 
-### Rebuild Matchers for Each Operation
+### Rebuild Binding Matchers for Every Message
 
-This keeps the current control flow but repeats trait classification and schema
-walks. The x86 Rest JSON benchmark measures the cost removed by cached metadata.
+This keeps all derived state local to one serde operation, but repeats schema
+walks, trait inspection, and matcher allocation for stable schemas.
 
-### Generate Protocol Serde
+### Cache on Protocol or Codec Instances
 
-Generated HTTP routing duplicates protocol logic in each client and increases
-generated package size. Shared runtime components keep routing behavior in one
-package.
+Instance-local caches avoid changing `Schema`, but duplicate metadata across
+protocol and codec instances. They also require each component to define cache
+identity and lifetime independently.
 
-### Cache Metadata on Codec Instances
+### Add HTTP Fields Directly to `Schema`
 
-A codec-local cache duplicates schema metadata across codec instances and
-requires the runtime to manage each cache's lifetime. The schema-local cache
-shares one value across protocol instances.
+Placing route tables on `Schema` would make lookup direct, but would couple
+`smithy-core` to HTTP traits and require core changes for future
+transport-specific metadata.
 
-### Store HTTP Fields Directly on `Schema`
+### Generate HTTP Binding Serde
 
-HTTP fields on `Schema` couple smithy-core to HTTP transport concerns. Typed
-extensions keep the core schema transport-neutral.
+Generated routing can avoid runtime trait inspection, but duplicates protocol
+logic in every generated client and increases generated package size. Shared
+runtime routing keeps behavior and fixes centralized.
+
+### Pass Filtered Schemas to Document Codecs
+
+Filtered schemas make the body subset explicit, but introduce multiple runtime
+schemas for one Smithy shape. This alternative remains possible after schema
+identity and extension-sharing semantics are defined.
 
 ## Future Work
 
-* Add schema-attached target type and structure construction hooks.
-* Deserialize into positional member buffers before constructing structures.
-* Add timestamp or collection metadata when a benchmark identifies repeated
-  formatting work.
-* Define codec schema identity before adding filtered document schemas.
-* Apply schema extensions to JSON, XML, and query codecs.
-* Audit external matcher usage before changing matcher visibility.
+* Define schema identity rules that permit filtered or projected schemas.
+* Apply schema extensions to repeated metadata derivation in document codecs.
+* Cache additional formatting metadata when benchmarks identify repeated
+  work.
