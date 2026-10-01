@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added schema-cached HTTP binding serialization and deserialization."
+}
