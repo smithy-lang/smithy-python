@@ -4,6 +4,7 @@ import dataclasses
 import math
 from collections.abc import Mapping, Sequence
 from typing import cast
+from xml.dom.minidom import Element, Node, parseString
 
 
 def deep_equal(a: object, b: object) -> bool:
@@ -34,3 +35,33 @@ def deep_equal(a: object, b: object) -> bool:
     if isinstance(a, bool) != isinstance(b, bool):
         return False
     return (isinstance(a, type(b)) or isinstance(b, type(a))) and a == b  # pyright: ignore[reportUnknownArgumentType]
+
+
+def xml_equal(a: bytes, b: bytes) -> bool:
+    """Semantic equality for XML documents.
+
+    Only the order of same-named sibling elements (such as list items) is
+    significant; structure members, attributes, whitespace-only text, and
+    whitespace around text may differ. Namespace declarations are compared as
+    attributes.
+    """
+    return _canonical_xml(a) == _canonical_xml(b)
+
+
+def _canonical_xml(document: bytes) -> object:
+    root = parseString(document).documentElement  # noqa: S318
+    assert root is not None  # noqa: S101
+    return _canonical_element(root)
+
+
+def _canonical_element(element: Element) -> object:
+    text: str = ""
+    children: list[tuple[str, object]] = []
+    for node in element.childNodes:
+        if node.nodeType in (Node.TEXT_NODE, Node.CDATA_SECTION_NODE):
+            text += cast(str, node.data)  # type: ignore
+        elif node.nodeType == Node.ELEMENT_NODE:
+            children.append((node.tagName, _canonical_element(node)))
+    # A stable sort keeps same-named siblings in document order.
+    children.sort(key=lambda child: child[0])
+    return (element.tagName, dict(element.attributes.items()), text.strip(), children)

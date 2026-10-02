@@ -128,6 +128,10 @@ class ProtocolSettings:
     version: str | None = None
     """The service API version. Required by awsQuery; unused by other protocols."""
 
+    xml_namespace: str | None = None
+    """The URI of the service's ``@xmlNamespace``, applied by restXml to request
+    payloads that don't declare their own namespace."""
+
 
 type ProtocolConstructor[T] = Callable[[ProtocolSettings], T]
 """A callable that builds a protocol instance from ``ProtocolSettings``.
