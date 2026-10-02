@@ -47,8 +47,8 @@ public class PythonCodegenTest {
         var client = Files.readString(tempDir.resolve("src/weather/client.py"));
         assertFalse(client.contains("retry_mode="));
         assertFalse(client.contains("max_attempts="));
-        assertTrue(client.contains("async def close(self) -> None:"));
-        assertTrue(client.contains("if self._closed:"));
+        assertTrue(client.contains("(AsyncClient):"));
+        assertTrue(client.contains("await self._prepare_call("));
 
         var config = Files.readString(tempDir.resolve("src/weather/config.py"));
         assertTrue(config.contains("self.transport = transport or AIOHTTPClient()"));
