@@ -92,6 +92,8 @@ public final class RuntimeTypes {
             createSymbol("aio.client", "ClientCall", SmithyPythonDependency.SMITHY_CORE);
     public static final Symbol REQUEST_PIPELINE =
             createSymbol("aio.client", "RequestPipeline", SmithyPythonDependency.SMITHY_CORE);
+    public static final Symbol ASYNC_CLIENT =
+            createSymbol("aio.client", "AsyncClient", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_core.aio.eventstream
     public static final Symbol DUPLEX_EVENT_STREAM =
