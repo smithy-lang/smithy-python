@@ -16,4 +16,5 @@ dependencies {
     implementation(libs.smithy.protocol.traits)
     // We have this because we're using RestJson1 as a 'generic' protocol.
     implementation(libs.smithy.aws.traits)
+    implementation(libs.smithy.rules.engine)
 }

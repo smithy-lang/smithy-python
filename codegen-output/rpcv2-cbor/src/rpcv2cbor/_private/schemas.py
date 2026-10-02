@@ -3346,6 +3346,59 @@ RPC_V2_PROTOCOL = Schema(
     traits=[
         Trait.new(id=ShapeID("smithy.api#title"), value="RpcV2 Protocol Service"),
         Trait.new(id=ShapeID("smithy.protocols#rpcv2Cbor")),
+        Trait.new(
+            id=ShapeID("smithy.rules#endpointBdd"),
+            value=MappingProxyType(
+                {
+                    "version": "1.1",
+                    "parameters": MappingProxyType(
+                        {
+                            "endpoint": MappingProxyType(
+                                {
+                                    "builtIn": "SDK::Endpoint",
+                                    "required": False,
+                                    "documentation": "Endpoint used for making requests. Should be formatted as a URI.",
+                                    "type": "string",
+                                }
+                            )
+                        }
+                    ),
+                    "conditions": (
+                        MappingProxyType(
+                            {
+                                "fn": "isSet",
+                                "argv": (MappingProxyType({"ref": "endpoint"}),),
+                            }
+                        ),
+                    ),
+                    "results": (
+                        MappingProxyType(
+                            {
+                                "conditions": (),
+                                "endpoint": MappingProxyType(
+                                    {
+                                        "url": MappingProxyType({"ref": "endpoint"}),
+                                        "properties": MappingProxyType({}),
+                                        "headers": MappingProxyType({}),
+                                    }
+                                ),
+                                "type": "endpoint",
+                            }
+                        ),
+                        MappingProxyType(
+                            {
+                                "conditions": (),
+                                "error": "(default endpointRuleSet) endpoint is not set - you must configure an endpoint.",
+                                "type": "error",
+                            }
+                        ),
+                    ),
+                    "root": 2,
+                    "nodeCount": 2,
+                    "nodes": "/////wAAAAH/////AAAAAAX14QEF9eEC",
+                }
+            ),
+        ),
     ],
 )
 

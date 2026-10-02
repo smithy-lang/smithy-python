@@ -19,6 +19,8 @@ smithy-protocol-tests = { module = "software.amazon.smithy:smithy-protocol-tests
 smithy-protocol-traits = { module = "software.amazon.smithy:smithy-protocol-traits", version.ref = "smithy" }
 smithy-protocol-test-traits = { module = "software.amazon.smithy:smithy-protocol-test-traits", version.ref = "smithy"}
 smithy-waiters = { module = "software.amazon.smithy:smithy-waiters", version.ref = "smithy" }
+smithy-rules-engine = { module = "software.amazon.smithy:smithy-rules-engine", version.ref = "smithy" }
+smithy-aws-endpoints = { module = "software.amazon.smithy:smithy-aws-endpoints", version.ref = "smithy" }
 
 # Test dependencies
 junit-bom = { module = "org.junit:junit-bom", version.ref = "junit5" }
