@@ -2,18 +2,19 @@
 #  SPDX-License-Identifier: Apache-2.0
 """CBOR shape serializer.
 
-Naive, non-streaming: aggregates are buffered so their length can be written as the
-header. Correctness first; the byte layout is not yet minimally encoded.
+Aggregates are definite-length: lists and maps take their element count up front, and
+structs reserve a header slot sized for the schema's max member count, then patch the
+actual present-member count into it on close.
 """
 
 import datetime
 import struct as _struct
 from collections.abc import Callable
-from contextlib import AbstractContextManager
+from contextlib import AbstractContextManager, nullcontext
 from decimal import Decimal
 from io import BytesIO
 from types import TracebackType
-from typing import Self
+from typing import Self, override
 
 from smithy_core.documents import Document
 from smithy_core.interfaces import BytesWriter
@@ -50,14 +51,111 @@ _W_1BYTE = 24
 _W_2BYTE = 25
 _W_4BYTE = 26
 _W_8BYTE = 27
-_INDEFINITE = 31
 
-# Indefinite-length aggregate markers.
-_INDEFINITE_ARRAY = bytes((_MAJOR_ARRAY | _INDEFINITE,))  # 0x9F: indefinite array
-_INDEFINITE_MAP = bytes((_MAJOR_MAP | _INDEFINITE,))  # 0xBF: indefinite-length map
-_BREAK = bytes(
-    (_MAJOR_SIMPLE | _INDEFINITE,)
-)  # 0xFF: "break" ending an indefinite item
+
+class CBORShapeSerializer(ShapeSerializer):
+    def __init__(self, sink: BytesWriter, settings: CBORSettings) -> None:
+        self._sink = sink
+        self.settings = settings
+
+    def write(self, data: bytes) -> None:
+        self._sink.write(data)
+
+    @override
+    def begin_struct(self, schema: Schema) -> AbstractContextManager[ShapeSerializer]:
+        return _CBORStructSerializer(self, self._sink, schema)
+
+    @override
+    def begin_list(
+        self, schema: Schema, size: int
+    ) -> AbstractContextManager[ShapeSerializer]:
+        # A definite-length list needs no per-element framing or close step, and a value
+        # encodes identically inside a collection or not, so elements reuse this same
+        # serializer; only the header is context-specific.
+        self.write(_encode_head(_MAJOR_ARRAY, size))
+        return nullcontext(self)
+
+    @override
+    def begin_map(
+        self, schema: Schema, size: int
+    ) -> AbstractContextManager[MapSerializer]:
+        self.write(_encode_head(_MAJOR_MAP, size))
+        return nullcontext(_CBORMapSerializer(self))
+
+    @override
+    def write_null(self, schema: Schema) -> None:
+        self.write(bytes((_MAJOR_SIMPLE | _SIMPLE_NULL,)))
+
+    @override
+    def write_boolean(self, schema: Schema, value: bool) -> None:
+        self.write(bytes((_MAJOR_SIMPLE | (_SIMPLE_TRUE if value else _SIMPLE_FALSE),)))
+
+    @override
+    def write_integer(self, schema: Schema, value: int) -> None:
+        self.write(_encode_int(value))
+
+    @override
+    def write_float(self, schema: Schema, value: float) -> None:
+        # A `float` shape encodes as IEEE single (major 7, add_info 26); `double` as
+        # IEEE double (add_info 27). Half-precision is not emitted. NaN/Infinity
+        # round-trip through struct.pack unchanged.
+        if schema.shape_type is ShapeType.FLOAT:
+            self.write(bytes((_MAJOR_SIMPLE | 26,)) + _struct.pack(">f", value))
+        else:
+            self.write(bytes((_MAJOR_SIMPLE | 27,)) + _struct.pack(">d", value))
+
+    @override
+    def write_big_integer(self, schema: Schema, value: int) -> None:
+        if value >= 0:
+            tag, magnitude = _TAG_UNSIGNED_BIGNUM, value
+        else:
+            tag, magnitude = _TAG_NEGATIVE_BIGNUM, -1 - value
+        length = (magnitude.bit_length() + 7) // 8
+        payload = magnitude.to_bytes(length, "big")
+        self.write(_encode_head(_MAJOR_TAG, tag))
+        self.write(_encode_head(_MAJOR_BYTES, len(payload)))
+        self.write(payload)
+
+    @override
+    def write_big_decimal(self, schema: Schema, value: Decimal) -> None:
+        sign, digits, exponent = value.as_tuple()
+        if not isinstance(exponent, int):  # "n"/"N"/"F" for special values
+            raise ValueError(f"Cannot CBOR-encode non-finite Decimal: {value!r}")
+        mantissa = int("".join(map(str, digits)) or "0")
+        if sign:
+            mantissa = -mantissa
+        self.write(_encode_head(_MAJOR_TAG, _TAG_DECIMAL_FRACTION))
+        self.write(_encode_head(_MAJOR_ARRAY, 2))
+        self.write(_encode_int(exponent))
+        self.write(_encode_int(mantissa))
+
+    @override
+    def write_string(self, schema: Schema, value: str) -> None:
+        encoded = value.encode("utf-8")
+        self.write(_encode_head(_MAJOR_TEXT, len(encoded)))
+        self.write(encoded)
+
+    @override
+    def write_blob(self, schema: Schema, value: bytes) -> None:
+        self.write(_encode_head(_MAJOR_BYTES, len(value)))
+        self.write(value)
+
+    @override
+    def write_timestamp(self, schema: Schema, value: datetime.datetime) -> None:
+        # timestampFormat MUST NOT be respected.
+        self.write(_encode_head(_MAJOR_TAG, _TAG_EPOCH))
+        self.write_float(schema, ensure_utc(value).timestamp())
+
+    @override
+    def write_document(self, schema: Schema, value: Document) -> None:
+        raise NotImplementedError(
+            "The rpcv2Cbor protocol does not support document types."
+        )
+
+    @override
+    def flush(self) -> None:
+        # BytesWriter has no flush; the sink is written to directly.
+        pass
 
 
 def _encode_head(major: int, arg: int) -> bytes:
@@ -73,6 +171,37 @@ def _encode_head(major: int, arg: int) -> bytes:
     return bytes((major | _W_8BYTE,)) + arg.to_bytes(8, "big")
 
 
+def _head_width(arg: int) -> int:
+    """Bytes _encode_head needs for arg. A struct reserves this for its MAX member count
+    up front, then patches the actual (<=) count into that width on close.
+    """
+    if arg < _W_1BYTE:
+        return 1
+    if arg < 0x100:
+        return 2
+    if arg < 0x10000:
+        return 3
+    if arg < 0x100000000:
+        return 5
+    return 9
+
+
+def _write_head_fixed(
+    buf: memoryview, offset: int, major: int, arg: int, width: int
+) -> None:
+    """Patches a definite header of exactly `width` bytes into `buf` at `offset`.
+
+    CBOR allows a non-minimal length form, so an over-reserved width just holds the same
+    count in a wider encoding (e.g. 5 as 0xb8 0x05, not the minimal 0xa5) -- no gap.
+    """
+    if width == 1:
+        buf[offset] = major | arg
+        return
+    add_info = {2: _W_1BYTE, 3: _W_2BYTE, 5: _W_4BYTE, 9: _W_8BYTE}[width]
+    buf[offset] = major | add_info
+    buf[offset + 1 : offset + width] = arg.to_bytes(width - 1, "big")
+
+
 def _encode_int(value: int) -> bytes:
     if value >= 0:
         return _encode_head(_MAJOR_UINT, value)
@@ -80,177 +209,43 @@ def _encode_int(value: int) -> bytes:
     return _encode_head(_MAJOR_NEGINT, -1 - value)
 
 
-# Bare major-type values (not shifted) for the byte-level scanner below.
-_M_BYTES = 2
-_M_TEXT = 3
-_M_ARRAY = 4
-_M_MAP = 5
-_M_TAG = 6
+# Attribute name under which a member schema's pre-encoded CBOR key (text header +
+# UTF-8 name) is memoized. Member schemas are long-lived and shared, so encoding the
+# key once per schema removes a per-serialization encode + head allocation.
+_CBOR_KEY_ATTR = "_cbor_encoded_key"
 
 
-def _scan_head(data: bytes, pos: int) -> tuple[int, int, int]:
-    """For indefinite-length items the argument is -1."""
-    initial = data[pos]
-    major = initial >> 5
-    ai = initial & 0x1F
-    pos += 1
-    if ai < _W_1BYTE:
-        return major, ai, pos
-    if ai == _W_1BYTE:
-        return major, data[pos], pos + 1
-    if ai == _W_2BYTE:
-        return major, int.from_bytes(data[pos : pos + 2], "big"), pos + 2
-    if ai == _W_4BYTE:
-        return major, int.from_bytes(data[pos : pos + 4], "big"), pos + 4
-    if ai == _W_8BYTE:
-        return major, int.from_bytes(data[pos : pos + 8], "big"), pos + 8
-    if ai == _INDEFINITE:
-        return major, -1, pos
-    raise ValueError(f"Reserved CBOR additional-information value: {ai}")
-
-
-def _scan_item(data: bytes, pos: int) -> int:
-    major, arg, pos = _scan_head(data, pos)
-    if major in (_M_BYTES, _M_TEXT):
-        return pos + arg
-    if major == _M_ARRAY:
-        if arg == -1:
-            while data[pos] != 0xFF:
-                pos = _scan_item(data, pos)
-            return pos + 1
-        for _ in range(arg):
-            pos = _scan_item(data, pos)
-        return pos
-    if major == _M_MAP:
-        if arg == -1:
-            while data[pos] != 0xFF:
-                pos = _scan_item(data, pos)
-                pos = _scan_item(data, pos)
-            return pos + 1
-        for _ in range(arg):
-            pos = _scan_item(data, pos)
-            pos = _scan_item(data, pos)
-        return pos
-    if major == _M_TAG:
-        return _scan_item(data, pos)
-    # Ints (major 0/1) and simple/float (major 7): the head already consumed any
-    # 1/2/4/8-byte payload, so the item ends here.
-    return pos
-
-
-def _split_map_pairs(data: bytes) -> list[tuple[bytes, bytes]]:
-    """Used to reorder a struct's buffered members by their (text) member-name key."""
-    pairs: list[tuple[bytes, bytes]] = []
-    pos = 0
-    end = len(data)
-    while pos < end:
-        key_end = _scan_item(data, pos)
-        value_end = _scan_item(data, key_end)
-        pairs.append((data[pos:key_end], data[key_end:value_end]))
-        pos = value_end
-    return pairs
-
-
-class CBORShapeSerializer(ShapeSerializer):
-    def __init__(self, sink: BytesWriter, settings: CBORSettings) -> None:
-        self._sink = sink
-        self.settings = settings
-
-    def write(self, data: bytes) -> None:
-        self._sink.write(data)
-
-    def begin_struct(
-        self, schema: "Schema"
-    ) -> AbstractContextManager["ShapeSerializer"]:
-        return _CBORStructSerializer(self)
-
-    def begin_list(
-        self, schema: "Schema", size: int
-    ) -> AbstractContextManager["ShapeSerializer"]:
-        self.write(_INDEFINITE_ARRAY)
-        return _CBORListSerializer(self)
-
-    def begin_map(
-        self, schema: "Schema", size: int
-    ) -> AbstractContextManager["MapSerializer"]:
-        self.write(_INDEFINITE_MAP)
-        return _CBORMapSerializer(self)
-
-    def write_null(self, schema: "Schema") -> None:
-        self.write(bytes((_MAJOR_SIMPLE | _SIMPLE_NULL,)))
-
-    def write_boolean(self, schema: "Schema", value: bool) -> None:
-        self.write(bytes((_MAJOR_SIMPLE | (_SIMPLE_TRUE if value else _SIMPLE_FALSE),)))
-
-    def write_integer(self, schema: "Schema", value: int) -> None:
-        self.write(_encode_int(value))
-
-    def write_float(self, schema: "Schema", value: float) -> None:
-        # A `float` shape encodes as IEEE single (major 7, ai 26); `double` as IEEE
-        # double (ai 27). Half-precision is not emitted. NaN/Infinity round-trip through
-        # struct.pack unchanged.
-        if schema.shape_type is ShapeType.FLOAT:
-            self.write(bytes((_MAJOR_SIMPLE | 26,)) + _struct.pack(">f", value))
-        else:
-            self.write(bytes((_MAJOR_SIMPLE | 27,)) + _struct.pack(">d", value))
-
-    def write_big_integer(self, schema: "Schema", value: int) -> None:
-        if value >= 0:
-            tag, magnitude = _TAG_UNSIGNED_BIGNUM, value
-        else:
-            tag, magnitude = _TAG_NEGATIVE_BIGNUM, -1 - value
-        length = (magnitude.bit_length() + 7) // 8
-        payload = magnitude.to_bytes(length, "big")
-        self.write(_encode_head(_MAJOR_TAG, tag))
-        self.write(_encode_head(_MAJOR_BYTES, len(payload)))
-        self.write(payload)
-
-    def write_big_decimal(self, schema: "Schema", value: Decimal) -> None:
-        sign, digits, exponent = value.as_tuple()
-        if not isinstance(exponent, int):  # "n"/"N"/"F" for special values
-            raise ValueError(f"Cannot CBOR-encode non-finite Decimal: {value!r}")
-        mantissa = int("".join(map(str, digits)) or "0")
-        if sign:
-            mantissa = -mantissa
-        self.write(_encode_head(_MAJOR_TAG, _TAG_DECIMAL_FRACTION))
-        self.write(_encode_head(_MAJOR_ARRAY, 2))
-        self.write(_encode_int(exponent))
-        self.write(_encode_int(mantissa))
-
-    def write_string(self, schema: "Schema", value: str) -> None:
-        encoded = value.encode("utf-8")
-        self.write(_encode_head(_MAJOR_TEXT, len(encoded)))
-        self.write(encoded)
-
-    def write_blob(self, schema: "Schema", value: bytes) -> None:
-        self.write(_encode_head(_MAJOR_BYTES, len(value)))
-        self.write(value)
-
-    def write_timestamp(self, schema: "Schema", value: datetime.datetime) -> None:
-        # timestampFormat MUST NOT be respected.
-        self.write(_encode_head(_MAJOR_TAG, _TAG_EPOCH))
-        self.write_float(schema, ensure_utc(value).timestamp())
-
-    def write_document(self, schema: "Schema", value: "Document") -> None:
-        raise NotImplementedError(
-            "The rpcv2Cbor protocol does not support document types."
-        )
-
-    def flush(self) -> None:
-        # BytesWriter has no flush; the sink is written to directly.
-        pass
+def _encoded_member_key(schema: Schema) -> bytes:
+    key = getattr(schema, _CBOR_KEY_ATTR, None)
+    if key is None:
+        encoded = schema.expect_member_name().encode("utf-8")
+        key = _encode_head(_MAJOR_TEXT, len(encoded)) + encoded
+        # Schema is a frozen dataclass; object.__setattr__ is its own escape hatch.
+        object.__setattr__(schema, _CBOR_KEY_ATTR, key)
+    return key
 
 
 class _CBORStructSerializer(ShapeSerializer):
-    """Members are re-sorted by name on close so the wire bytes match the protocol-test
-    vectors, which order map keys lexicographically. CBOR maps are unordered, so this
-    only affects byte-exactness, not meaning.
+    """Emits definite-length map. Reserves the full memberCount worth of byte-width
+    and writes the actual member count back to that position when completing the struct.
+    This may waste up to 1 byte in edge-case conditions, but minimizes overall work.
     """
 
-    def __init__(self, parent: CBORShapeSerializer) -> None:
+    def __init__(
+        self, parent: CBORShapeSerializer, sink: BytesWriter, schema: Schema
+    ) -> None:
         self._parent = parent
-        self._buffer = BytesIO()
-        self._member = CBORShapeSerializer(self._buffer, parent.settings)
+        # Reserve-and-patch needs a seekable buffer; Codec.serialize always supplies a
+        # BytesIO, and rpcv2Cbor has no streaming-serialize path that would not.
+        if not isinstance(sink, BytesIO):
+            raise TypeError(
+                "CBOR struct serialization requires a seekable BytesIO sink."
+            )
+        self._sink: BytesIO = sink
+        self._width = _head_width(len(schema.members))
+        self._offset = sink.tell()
+        sink.write(bytes(self._width))  # reserved header slot, patched on close
+        self._count = 0
 
     def __enter__(self) -> Self:
         return self
@@ -263,170 +258,98 @@ class _CBORStructSerializer(ShapeSerializer):
     ) -> None:
         if exc_value is not None:
             return
-        pairs = _split_map_pairs(self._buffer.getvalue())
-        pairs.sort(key=lambda pair: pair[0])
-        self._parent.write(_INDEFINITE_MAP)
-        for key_bytes, value_bytes in pairs:
-            self._parent.write(key_bytes)
-            self._parent.write(value_bytes)
-        self._parent.write(_BREAK)
+        buf = self._sink.getbuffer()
+        _write_head_fixed(buf, self._offset, _MAJOR_MAP, self._count, self._width)
+        buf.release()
 
-    def _write_key(self, schema: "Schema") -> None:
-        member_name = schema.expect_member_name()
-        encoded = member_name.encode("utf-8")
-        self._buffer.write(_encode_head(_MAJOR_TEXT, len(encoded)))
-        self._buffer.write(encoded)
-
-    def begin_struct(
-        self, schema: "Schema"
-    ) -> AbstractContextManager["ShapeSerializer"]:
+    @override
+    def begin_struct(self, schema: Schema) -> AbstractContextManager[ShapeSerializer]:
         self._write_key(schema)
-        return self._member.begin_struct(schema)
+        return self._parent.begin_struct(schema)
 
+    @override
     def begin_list(
-        self, schema: "Schema", size: int
-    ) -> AbstractContextManager["ShapeSerializer"]:
+        self, schema: Schema, size: int
+    ) -> AbstractContextManager[ShapeSerializer]:
         self._write_key(schema)
-        return self._member.begin_list(schema, size)
+        return self._parent.begin_list(schema, size)
 
+    @override
     def begin_map(
-        self, schema: "Schema", size: int
-    ) -> AbstractContextManager["MapSerializer"]:
+        self, schema: Schema, size: int
+    ) -> AbstractContextManager[MapSerializer]:
         self._write_key(schema)
-        return self._member.begin_map(schema, size)
+        return self._parent.begin_map(schema, size)
 
-    def write_null(self, schema: "Schema") -> None:
+    @override
+    def write_null(self, schema: Schema) -> None:
         self._write_key(schema)
-        self._member.write_null(schema)
+        self._parent.write_null(schema)
 
-    def write_boolean(self, schema: "Schema", value: bool) -> None:
+    @override
+    def write_boolean(self, schema: Schema, value: bool) -> None:
         self._write_key(schema)
-        self._member.write_boolean(schema, value)
+        self._parent.write_boolean(schema, value)
 
-    def write_integer(self, schema: "Schema", value: int) -> None:
+    @override
+    def write_integer(self, schema: Schema, value: int) -> None:
         self._write_key(schema)
-        self._member.write_integer(schema, value)
+        self._parent.write_integer(schema, value)
 
-    def write_float(self, schema: "Schema", value: float) -> None:
+    @override
+    def write_float(self, schema: Schema, value: float) -> None:
         self._write_key(schema)
-        self._member.write_float(schema, value)
+        self._parent.write_float(schema, value)
 
-    def write_big_integer(self, schema: "Schema", value: int) -> None:
+    @override
+    def write_big_integer(self, schema: Schema, value: int) -> None:
         self._write_key(schema)
-        self._member.write_big_integer(schema, value)
+        self._parent.write_big_integer(schema, value)
 
-    def write_big_decimal(self, schema: "Schema", value: Decimal) -> None:
+    @override
+    def write_big_decimal(self, schema: Schema, value: Decimal) -> None:
         self._write_key(schema)
-        self._member.write_big_decimal(schema, value)
+        self._parent.write_big_decimal(schema, value)
 
-    def write_string(self, schema: "Schema", value: str) -> None:
+    @override
+    def write_string(self, schema: Schema, value: str) -> None:
         self._write_key(schema)
-        self._member.write_string(schema, value)
+        self._parent.write_string(schema, value)
 
-    def write_blob(self, schema: "Schema", value: bytes) -> None:
+    @override
+    def write_blob(self, schema: Schema, value: bytes) -> None:
         self._write_key(schema)
-        self._member.write_blob(schema, value)
+        self._parent.write_blob(schema, value)
 
-    def write_timestamp(self, schema: "Schema", value: datetime.datetime) -> None:
+    @override
+    def write_timestamp(self, schema: Schema, value: datetime.datetime) -> None:
         self._write_key(schema)
-        self._member.write_timestamp(schema, value)
+        self._parent.write_timestamp(schema, value)
 
-    def write_document(self, schema: "Schema", value: "Document") -> None:
+    @override
+    def write_document(self, schema: Schema, value: Document) -> None:
         raise NotImplementedError(
             "The rpcv2Cbor protocol does not support document types."
         )
 
+    @override
     def flush(self) -> None:
         pass
 
+    def _write_key(self, schema: Schema) -> None:
+        self._count += 1
+        self._sink.write(_encoded_member_key(schema))
 
-class _CBORListSerializer(ShapeSerializer):
-    """Serializes as an indefinite-length array (0x9F ... 0xFF), so no size is needed;
-    elements go straight to the sink, closed by a break byte.
+
+class _CBORMapSerializer(MapSerializer):
+    """The definite-length map header (from `size`) is written by `begin_map` before
+    this is constructed; entries stream straight to the sink.
     """
 
     def __init__(self, parent: CBORShapeSerializer) -> None:
         self._parent = parent
 
-    def __enter__(self) -> Self:
-        return self
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        traceback: TracebackType | None,
-    ) -> None:
-        if exc_value is not None:
-            return
-        self._parent.write(_BREAK)
-
-    def begin_struct(
-        self, schema: "Schema"
-    ) -> AbstractContextManager["ShapeSerializer"]:
-        return self._parent.begin_struct(schema)
-
-    def begin_list(
-        self, schema: "Schema", size: int
-    ) -> AbstractContextManager["ShapeSerializer"]:
-        return self._parent.begin_list(schema, size)
-
-    def begin_map(
-        self, schema: "Schema", size: int
-    ) -> AbstractContextManager["MapSerializer"]:
-        return self._parent.begin_map(schema, size)
-
-    def write_null(self, schema: "Schema") -> None:
-        self._parent.write_null(schema)
-
-    def write_boolean(self, schema: "Schema", value: bool) -> None:
-        self._parent.write_boolean(schema, value)
-
-    def write_integer(self, schema: "Schema", value: int) -> None:
-        self._parent.write_integer(schema, value)
-
-    def write_float(self, schema: "Schema", value: float) -> None:
-        self._parent.write_float(schema, value)
-
-    def write_big_integer(self, schema: "Schema", value: int) -> None:
-        self._parent.write_big_integer(schema, value)
-
-    def write_big_decimal(self, schema: "Schema", value: Decimal) -> None:
-        self._parent.write_big_decimal(schema, value)
-
-    def write_string(self, schema: "Schema", value: str) -> None:
-        self._parent.write_string(schema, value)
-
-    def write_blob(self, schema: "Schema", value: bytes) -> None:
-        self._parent.write_blob(schema, value)
-
-    def write_timestamp(self, schema: "Schema", value: datetime.datetime) -> None:
-        self._parent.write_timestamp(schema, value)
-
-    def write_document(self, schema: "Schema", value: "Document") -> None:
-        self._parent.write_document(schema, value)
-
-    def flush(self) -> None:
-        pass
-
-
-class _CBORMapSerializer(MapSerializer):
-    def __init__(self, parent: CBORShapeSerializer) -> None:
-        self._parent = parent
-
-    def __enter__(self) -> Self:
-        return self
-
-    def __exit__(
-        self,
-        exc_type: type[BaseException] | None,
-        exc_value: BaseException | None,
-        traceback: TracebackType | None,
-    ) -> None:
-        if exc_value is not None:
-            return
-        self._parent.write(_BREAK)
-
+    @override
     def entry(self, key: str, value_writer: Callable[[ShapeSerializer], None]) -> None:
         encoded = key.encode("utf-8")
         self._parent.write(_encode_head(_MAJOR_TEXT, len(encoded)))
