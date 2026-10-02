@@ -16,6 +16,7 @@ def deep_equal(a: object, b: object) -> bool:
         return all(
             deep_equal(getattr(a, f.name), getattr(b, f.name))
             for f in dataclasses.fields(a)
+            if f.compare
         )
     if isinstance(a, (list, tuple)) and isinstance(b, (list, tuple)):
         a_seq = cast(Sequence[object], a)

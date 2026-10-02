@@ -269,6 +269,8 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         output_context = await self._handle_execution(call, request_future)
         output_context = self._finalize_execution(call, output_context)
 
+        self._attach_response_metadata(output_context)
+
         if isinstance(output_context.response, Exception):
             e = output_context.response
             if not isinstance(e, SmithyError):
@@ -276,6 +278,41 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             raise e
 
         return output_context.response, output_context  # type: ignore
+
+    def _attach_response_metadata[I: SerializeableShape, O: DeserializeableShape](
+        self,
+        output_context: OutputContext[I, O, TRequest | None, TResponse | None],
+    ) -> None:
+        """Attach metadata about the transport response to the result or error.
+
+        This runs for successes and failures alike, so that request identifiers
+        stay available to callers for debugging. Results that do not carry the
+        attribute are left untouched, as are cases where no response was received
+        at all.
+        """
+        result = output_context.response
+        transport_response = output_context.transport_response
+
+        # Only reachable for errors raised before a response arrived, such as a
+        # connection timeout. The default empty metadata is left in place, where
+        # a null status code records that nothing came back.
+        if transport_response is None:
+            return
+
+        if not hasattr(result, "response_metadata"):
+            return
+
+        try:
+            metadata = self.protocol.extract_response_metadata(
+                response=transport_response,
+                context=output_context.properties,
+            )
+            setattr(result, "response_metadata", metadata)
+        except Exception as e:
+            # Metadata is diagnostic and must never fail a call. Both statements
+            # above can raise: a broken protocol, or the assignment itself if the
+            # output shape is frozen.
+            _LOGGER.debug("Unable to attach response metadata: %s", e)
 
     async def _handle_execution[I: SerializeableShape, O: DeserializeableShape](
         self,
@@ -378,7 +415,9 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                         and retry_error.retry_after is not None
                     ):
                         await sleep(retry_error.retry_after)
-                    raise output_context.response
+                    # Keeps the final attempt's response, so throttling and 5xx
+                    # failures still carry a request ID when _execute_request raises.
+                    return output_context
 
                 _LOGGER.debug(
                     "Retry needed. Attempting request #%s in %.4f seconds.",
@@ -398,6 +437,9 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         request_future: Future[RequestContext[I, TRequest]] | None,
     ) -> OutputContext[I, O, TRequest, TResponse | None]:
         output_context: OutputContext[I, O, TRequest, TResponse | None]
+        # A modeled error arrives after the response does, so the response is kept
+        # here to report alongside it. Stays None if nothing came back.
+        transport_response: TResponse | None = None
         try:
             interceptor = call.interceptor
             interceptor.read_before_attempt(request_context)
@@ -513,6 +555,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                     response_context
                 ),
             )
+            transport_response = response_context.transport_response
 
             interceptor.read_before_deserialization(response_context)
 
@@ -544,7 +587,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 request=request_context.request,
                 response=e,
                 transport_request=request_context.transport_request,
-                transport_response=None,
+                transport_response=transport_response,
                 properties=request_context.properties,
             )
 

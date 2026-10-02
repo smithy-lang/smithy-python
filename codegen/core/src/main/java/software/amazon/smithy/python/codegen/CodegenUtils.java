@@ -55,6 +55,18 @@ public final class CodegenUtils {
      */
     public static final int MAX_PREFERRED_LINE_LENGTH = 88;
 
+    /**
+     * The name of the attribute carrying response metadata on operation outputs
+     * and modeled errors.
+     *
+     * <p>Declared on {@code CallError} for errors and emitted onto operation
+     * outputs by the structure generator. Because a service is free to model a
+     * member of the same name, the name is reserved on the members of those
+     * shapes and escaped if it collides. Both the emitter and the escaper read it
+     * from here so that they cannot disagree.
+     */
+    public static final String RESPONSE_METADATA_MEMBER = "response_metadata";
+
     static final Set<String> ERROR_MESSAGE_MEMBER_NAMES = SetUtils.of(
             "errormessage",
             "error_message",

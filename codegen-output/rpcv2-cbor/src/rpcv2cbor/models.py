@@ -10,6 +10,7 @@ from typing import Any, Literal, Self, Union
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import TypeRegistry
 from smithy_core.exceptions import ModeledError, SerializationError
+from smithy_core.response import EMPTY_RESPONSE_METADATA, ResponseMetadata
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID
@@ -876,6 +877,17 @@ class EmptyInputOutputInput:
 class EmptyInputOutputOutput:
     """Dataclass for EmptyInputOutputOutput structure."""
 
+    response_metadata: ResponseMetadata = field(
+        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    )
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(_SCHEMA_EMPTY_INPUT_OUTPUT_OUTPUT, self)
 
@@ -943,6 +955,17 @@ class Float16Output:
     """Dataclass for Float16Output structure."""
 
     value: float | None = None
+
+    response_metadata: ResponseMetadata = field(
+        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    )
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(_SCHEMA_FLOAT16_OUTPUT, self)
@@ -1017,6 +1040,17 @@ class FractionalSecondsOutput:
     """Dataclass for FractionalSecondsOutput structure."""
 
     datetime_: datetime | None = None
+
+    response_metadata: ResponseMetadata = field(
+        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    )
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(_SCHEMA_FRACTIONAL_SECONDS_OUTPUT, self)
@@ -1093,6 +1127,17 @@ class GreetingWithErrorsOutput:
     """Dataclass for GreetingWithErrorsOutput structure."""
 
     greeting: str | None = None
+
+    response_metadata: ResponseMetadata = field(
+        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    )
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(_SCHEMA_GREETING_WITH_ERRORS_OUTPUT, self)
@@ -1211,6 +1256,17 @@ class NoInputOutputInput:
 @dataclass(kw_only=True)
 class NoInputOutputOutput:
     """Dataclass for NoInputOutputOutput structure."""
+
+    response_metadata: ResponseMetadata = field(
+        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    )
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(_SCHEMA_NO_INPUT_OUTPUT_OUTPUT, self)
@@ -1374,6 +1430,17 @@ class OperationWithDefaultsOutput:
     zero_float: float = 0.0
 
     zero_double: float = 0.0
+
+    response_metadata: ResponseMetadata = field(
+        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    )
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(_SCHEMA_OPERATION_WITH_DEFAULTS_OUTPUT, self)
@@ -1673,6 +1740,17 @@ class OptionalInputOutputOutput:
 
     value: str | None = None
 
+    response_metadata: ResponseMetadata = field(
+        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    )
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(_SCHEMA_OPTIONAL_INPUT_OUTPUT_OUTPUT, self)
 
@@ -1832,6 +1910,17 @@ class RpcV2CborDenseMapsOutput:
     dense_string_map: dict[str, str] | None = None
 
     dense_set_map: dict[str, list[str]] | None = None
+
+    response_metadata: ResponseMetadata = field(
+        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    )
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(_SCHEMA_RPC_V2_CBOR_DENSE_MAPS_OUTPUT, self)
@@ -2419,6 +2508,17 @@ class RpcV2CborListsOutput:
 
     blob_list: list[bytes] | None = None
 
+    response_metadata: ResponseMetadata = field(
+        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    )
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(_SCHEMA_RPC_V2_CBOR_LISTS_OUTPUT, self)
 
@@ -2925,6 +3025,17 @@ class RpcV2CborSparseMapsOutput:
 
     sparse_set_map: dict[str, list[str] | None] | None = None
 
+    response_metadata: ResponseMetadata = field(
+        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    )
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(_SCHEMA_RPC_V2_CBOR_SPARSE_MAPS_OUTPUT, self)
 
@@ -3190,6 +3301,17 @@ class RpcV2CborUnionsOutput:
 
     other_value: str | None = None
 
+    response_metadata: ResponseMetadata = field(
+        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    )
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(_SCHEMA_RPC_V2_CBOR_UNIONS_OUTPUT, self)
 
@@ -3426,6 +3548,17 @@ class SimpleScalarPropertiesOutput:
     string_value: str | None = None
 
     blob_value: bytes | None = None
+
+    response_metadata: ResponseMetadata = field(
+        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    )
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(_SCHEMA_SIMPLE_SCALAR_PROPERTIES_OUTPUT, self)
@@ -3672,6 +3805,17 @@ class SparseNullsOperationOutput:
 
     sparse_string_map: dict[str, str | None] | None = None
 
+    response_metadata: ResponseMetadata = field(
+        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    )
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
+
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(_SCHEMA_SPARSE_NULLS_OPERATION_OUTPUT, self)
 
@@ -3881,6 +4025,17 @@ class RecursiveShapesOutput:
     """Dataclass for RecursiveShapesOutput structure."""
 
     nested: "RecursiveShapesInputOutputNested1 | None" = None
+
+    response_metadata: ResponseMetadata = field(
+        default=EMPTY_RESPONSE_METADATA, repr=False, compare=False
+    )
+    """
+    Metadata about the response that produced this output.
+
+    Use this to recover the request identifiers a service's support team
+    needs in order to investigate a call. Members of the metadata are
+    individually optional.
+    """
 
     def serialize(self, serializer: ShapeSerializer):
         serializer.write_struct(_SCHEMA_RECURSIVE_SHAPES_OUTPUT, self)
