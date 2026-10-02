@@ -342,15 +342,6 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             try:
                 # Rate limiting before request (adaptive only)
                 await self._handle_pre_request_rate_limiting(retry_strategy)
-
-                output_context = await self._handle_attempt(
-                    call,
-                    replace(
-                        request_context,
-                        transport_request=copy(request_context.transport_request),
-                    ),
-                    request_future,
-                )
             except TimeoutError as timeout_error:
                 error = CallError(
                     fault="client",
@@ -373,6 +364,15 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                     retry_token.retry_delay,
                 )
                 continue  # Skip to next retry iteration
+
+            output_context = await self._handle_attempt(
+                call,
+                replace(
+                    request_context,
+                    transport_request=copy(request_context.transport_request),
+                ),
+                request_future,
+            )
 
             if isinstance(output_context.response, Exception):
                 # Update rate limiter after failed response (adaptive only)
