@@ -6,7 +6,7 @@ from asyncio import Future, sleep
 from collections.abc import Awaitable, Callable, Sequence
 from copy import copy
 from dataclasses import dataclass, field, replace
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, Self
 
 from .. import URI
 from ..auth import AuthParams
@@ -21,6 +21,7 @@ from ..exceptions import (
 from ..interceptors import (
     InputContext,
     Interceptor,
+    InterceptorChain,
     OutputContext,
     RequestContext,
     ResponseContext,
@@ -31,6 +32,7 @@ from ..schemas import APIOperation
 from ..serializers import SerializeableShape
 from ..shapes import ShapeID
 from ..types import PropertyKey
+from ..types import TypedProperties as _TypedProperties
 from .eventstream import DuplexEventStream, InputEventStream, OutputEventStream
 from .interfaces import (
     ClientProtocol,
@@ -42,7 +44,8 @@ from .interfaces import (
 from .interfaces.auth import AuthScheme
 from .interfaces.eventstream import EventReceiver
 from .interfaces.retries import RetryStrategy
-from .utils import seek
+from .retries import RetryStrategyResolver
+from .utils import close, seek
 
 if TYPE_CHECKING:
     from typing_extensions import TypeForm
@@ -651,3 +654,65 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             output_context = replace(output_context, response=e)
 
         return output_context
+
+
+class AsyncClient:
+    """Shared async client machinery: lifecycle, setup gating, and call dispatch."""
+
+    def __init__(self) -> None:
+        self._derive_lock = asyncio.Lock()
+        self._setup_done = False
+        self._closed = False
+        self._transport: ClientTransport[Any, Any] | None = None
+        self._retry_strategy_resolver = RetryStrategyResolver()
+
+    def _build_call[I: SerializeableShape, O: DeserializeableShape](
+        self,
+        input: I,
+        operation: APIOperation[I, O],
+        *,
+        config: Any,
+        protocol: ClientProtocol[Any, Any],
+        transport: ClientTransport[Any, Any],
+        endpoint_resolver: EndpointResolver,
+        auth_scheme_resolver: AuthSchemeResolver,
+        auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]],
+        interceptors: list[Interceptor[Any, Any, Any, Any]],
+        retry_strategy: RetryStrategy,
+    ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
+        """Build the pipeline and call from already-resolved pieces."""
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+        pipeline = RequestPipeline(protocol=protocol, transport=transport)
+        call = ClientCall(
+            input=input,
+            operation=operation,
+            context=_TypedProperties({"config": config}),
+            interceptor=InterceptorChain(interceptors),
+            auth_scheme_resolver=auth_scheme_resolver,
+            supported_auth_schemes=auth_schemes,
+            endpoint_resolver=endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+        return pipeline, call
+
+    async def close(self) -> None:
+        """Close this client and any resources held by its transport."""
+        if self._closed:
+            return
+        async with self._derive_lock:
+            if self._closed:
+                return
+            self._closed = True
+            if self._setup_done and self._transport is not None:
+                await close(self._transport)
+
+    async def __aenter__(self) -> Self:
+        if self._closed:
+            raise RuntimeError("Cannot enter a client that has been closed.")
+        return self
+
+    async def __aexit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        await self.close()
