@@ -456,6 +456,14 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     """);
             return;
         }
+        if (contentType.equals("application/xml") || contentType.endsWith("+xml")) {
+            // Compare the parsed documents so formatting whitespace and attribute order
+            // don't matter.
+            writer.addDependency(SmithyPythonDependency.SMITHY_TEST);
+            writer.addImport(SmithyPythonDependency.SMITHY_TEST.packageName(), "xml_equal");
+            writer.write("assert xml_equal(actual_body_content, expected_body_content)\n");
+            return;
+        }
         if (contentType.equals("application/x-www-form-urlencoded")) {
             writer.addStdlibImport("urllib.parse", "parse_qsl");
             writer.write("""

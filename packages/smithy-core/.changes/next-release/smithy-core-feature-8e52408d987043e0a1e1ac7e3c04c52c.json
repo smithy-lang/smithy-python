@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added `xml_namespace` to `ProtocolSettings`, used by restXml as the default namespace of request payloads."
+}

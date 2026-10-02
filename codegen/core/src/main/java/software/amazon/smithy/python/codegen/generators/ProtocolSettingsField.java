@@ -13,5 +13,6 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
 public enum ProtocolSettingsField {
     NAMESPACE,
     SERVICE_TARGET,
-    VERSION
+    VERSION,
+    XML_NAMESPACE
 }

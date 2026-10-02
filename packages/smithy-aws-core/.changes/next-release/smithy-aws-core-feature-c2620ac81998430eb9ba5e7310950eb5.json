@@ -1,0 +1,4 @@
+{
+  "type": "feature",
+  "description": "Added `RestXmlClientProtocol`, an implementation of the `aws.protocols#restXml` protocol."
+}

@@ -26,6 +26,11 @@ public final class AwsRuntimeTypes {
             "aio.protocols",
             "Ec2QueryClientProtocol");
 
+    // smithy_aws_core.aio.protocols
+    public static final Symbol REST_XML_CLIENT_PROTOCOL = createSymbol(
+            "aio.protocols",
+            "RestXmlClientProtocol");
+
     // smithy_aws_core.endpoints.standard_regional
     public static final Symbol STANDARD_REGIONAL_ENDPOINTS_RESOLVER = createSymbol(
             "endpoints.standard_regional",
