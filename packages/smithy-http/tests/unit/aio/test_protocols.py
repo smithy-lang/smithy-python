@@ -14,7 +14,7 @@ from smithy_core.interfaces import URI as URIInterface
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import HTTPTrait
+from smithy_core.traits import HTTPPayloadTrait, HTTPTrait, StreamingTrait
 from smithy_core.types import TypedProperties
 from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest, HTTPResponse
@@ -82,6 +82,15 @@ class MockBindingProtocol(HttpBindingClientProtocol):
         return self._error_identifier
 
 
+class BufferTrackingBindingProtocol(MockBindingProtocol):
+    def __init__(self) -> None:
+        self.buffer_calls = 0
+
+    async def _buffer_async_body(self, stream: Any) -> Any:
+        self.buffer_calls += 1
+        return await super()._buffer_async_body(stream)
+
+
 class LegacyInput:
     SCHEMA = Schema.collection(id=ShapeID("ns.foo#LegacyInput"))
 
@@ -113,6 +122,27 @@ class MockOutput:
     @classmethod
     def deserialize(cls, deserializer: ShapeDeserializer) -> Self:
         return cls()
+
+
+class StreamingOutput(MockOutput):
+    SCHEMA = Schema.collection(
+        id=ShapeID("ns.foo#StreamingOutput"),
+        members={
+            "payload": {
+                "target": Schema(
+                    id=ShapeID("ns.foo#StreamingBlob"),
+                    shape_type=ShapeType.BLOB,
+                    traits=[StreamingTrait()],
+                ),
+                "traits": [HTTPPayloadTrait()],
+            }
+        },
+    )
+
+
+class AsyncBody:
+    async def read(self, size: int = -1) -> bytes:
+        return b"{}"
 
 
 def test_http_binding_protocol_falls_back_to_legacy_serialize() -> None:
@@ -171,6 +201,56 @@ def test_http_binding_protocol_uses_structure_fast_path() -> None:
     assert input.serialize_members_called
     assert request.method == "POST"
     assert request.destination.path == "/structure"
+
+
+@pytest.mark.parametrize(
+    ("output", "expected_buffer_calls"),
+    [(MockOutput, 1), (StreamingOutput, 0)],
+)
+async def test_deserialize_response_uses_cached_streaming_member(
+    monkeypatch: pytest.MonkeyPatch,
+    output: type[MockOutput],
+    expected_buffer_calls: int,
+) -> None:
+    def fail_if_scanned(_: APIOperation[Any, Any]) -> None:
+        pytest.fail("output_stream_member should not be scanned")
+
+    monkeypatch.setattr(
+        APIOperation,
+        "output_stream_member",
+        property(fail_if_scanned),
+    )
+    operation = APIOperation(
+        input=LegacyInput,
+        output=output,
+        schema=Schema(
+            id=ShapeID("ns.foo#DeserializeOperation"),
+            shape_type=ShapeType.OPERATION,
+            traits=[HTTPTrait({"method": "GET", "code": 200, "uri": "/"})],
+        ),
+        input_schema=LegacyInput.SCHEMA,
+        output_schema=output.SCHEMA,
+        error_registry=TypeRegistry({}),
+        effective_auth_schemes=[],
+        error_schemas=[],
+    )
+    request = HTTPRequest(
+        destination=URI(host="example.com"),
+        method="GET",
+        fields=Fields(),
+    )
+    response = HTTPResponse(body=AsyncBody(), status=200, fields=Fields())
+    protocol = BufferTrackingBindingProtocol()
+
+    await protocol.deserialize_response(
+        operation=operation,
+        request=request,
+        response=response,
+        error_registry=TypeRegistry({}),
+        context=TypedProperties(),
+    )
+
+    assert protocol.buffer_calls == expected_buffer_calls
 
 
 @pytest.mark.parametrize(

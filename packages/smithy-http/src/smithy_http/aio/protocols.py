@@ -23,7 +23,6 @@ from smithy_core.interfaces import (
     SeekableBytesReader,
     TypedProperties,
     URI,
-    is_streaming_blob,
 )
 from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
 from smithy_core.prelude import DOCUMENT, UNIT
@@ -33,13 +32,15 @@ from smithy_core.serializers import SerializeableShape, SerializeableStruct
 from smithy_core.shapes import ShapeID
 from smithy_core.traits import (
     ORIGINAL_SHAPE_ID,
-    EndpointTrait,
-    HTTPTrait,
     RpcV2CborTrait,
 )
 
 from .. import tuples_to_fields
 from ..deserializers import HTTPResponseDeserializer
+from ..schema_extensions import (
+    HTTP_BINDING_SCHEMA_EXTENSION,
+    HTTP_OPERATION_SCHEMA_EXTENSION,
+)
 from ..serializers import HTTPBindingSerializer, HTTPRequestSerializer
 from . import HTTPRequest as _HTTPRequest
 from .interfaces import HTTPErrorIdentifier, HTTPRequest, HTTPResponse
@@ -125,12 +126,15 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         endpoint: URI,
         context: TypedProperties,
     ) -> HTTPRequest:
+        operation_metadata = operation.schema.get_extension(
+            HTTP_OPERATION_SCHEMA_EXTENSION
+        )
         if isinstance(input, SerializeableStruct):
             serializer = HTTPBindingSerializer(
                 payload_codec=self.payload_codec,
                 schema=operation.input_schema,
-                http_trait=operation.schema.expect_trait(HTTPTrait),
-                endpoint_trait=operation.schema.get_trait(EndpointTrait),
+                http_trait=operation_metadata.http_trait,
+                operation_metadata=operation_metadata,
             )
             try:
                 input.serialize_members(serializer)
@@ -141,8 +145,8 @@ class HttpBindingClientProtocol(HttpClientProtocol):
 
         serializer = HTTPRequestSerializer(
             payload_codec=self.payload_codec,
-            http_trait=operation.schema.expect_trait(HTTPTrait),
-            endpoint_trait=operation.schema.get_trait(EndpointTrait),
+            http_trait=operation_metadata.http_trait,
+            operation_metadata=operation_metadata,
         )
         input.serialize(serializer)
         if serializer.result is None:
@@ -175,12 +179,14 @@ class HttpBindingClientProtocol(HttpClientProtocol):
 
         # if body is not streaming and is async, we have to buffer it
         body: SyncStreamingBlob | None = None
-        if not operation.output_stream_member and not is_streaming_blob(body):
+        response_metadata = operation.output_schema.get_extension(
+            HTTP_BINDING_SCHEMA_EXTENSION
+        ).response
+        if response_metadata.streaming_member is None:
             body = await self._buffer_async_body(response.body)
 
         deserializer = HTTPResponseDeserializer(
             payload_codec=self.payload_codec,
-            http_trait=operation.schema.expect_trait(HTTPTrait),
             response=response,
             body=body,
         )
@@ -258,7 +264,6 @@ class HttpBindingClientProtocol(HttpClientProtocol):
 
             deserializer = HTTPResponseDeserializer(
                 payload_codec=self.payload_codec,
-                http_trait=operation.schema.expect_trait(HTTPTrait),
                 response=response,
                 body=response_body,
             )

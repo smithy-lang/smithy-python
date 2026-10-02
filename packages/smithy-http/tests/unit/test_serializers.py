@@ -1457,7 +1457,6 @@ def empty_prefix_header_ser_cases() -> list[HTTPMessageTestCase]:
                     [
                         ("foo", "bar"),
                         ("baz", "bam"),
-                        ("string", "string"),
                     ]
                 ),
             ),
@@ -1960,6 +1959,52 @@ async def test_serialize_request_omitting_empty_payload() -> None:
     assert actual_body_value == b""
 
 
+async def test_query_params_respect_explicit_and_literal_precedence() -> None:
+    shape = HTTPQuery(
+        string_member="named",
+        string_map_member={
+            "string": "fromMap",
+            "literal": "fromMap",
+            "other": "fromMap",
+        },
+    )
+    serializer = HTTPBindingSerializer(
+        payload_codec=JSONCodec(),
+        schema=shape.SCHEMA,
+        http_trait=HTTPTrait(
+            {
+                "method": "POST",
+                "code": 200,
+                "uri": "/?literal=fixed",
+            }
+        ),
+    )
+
+    shape.serialize_members(serializer)
+    request = serializer.build_request()
+
+    assert request.destination.query == "literal=fixed&string=named&other=fromMap"
+
+
+async def test_specific_header_takes_precedence_over_empty_prefix_map() -> None:
+    shape = HTTPEmptyPrefixHeaders(
+        string_member="specific",
+        string_map_member={"string": "fromMap", "other": "fromMap"},
+    )
+    serializer = HTTPBindingSerializer(
+        payload_codec=JSONCodec(),
+        schema=shape.SCHEMA,
+        http_trait=HTTPTrait({"method": "POST", "code": 200, "uri": "/"}),
+    )
+
+    shape.serialize_members(serializer)
+    request = serializer.build_request()
+
+    assert request.fields == tuples_to_fields(
+        [("string", "specific"), ("other", "fromMap")]
+    )
+
+
 RESPONSE_SER_CASES: list[HTTPMessageTestCase] = (
     header_cases() + empty_prefix_header_ser_cases() + payload_cases()
 )
@@ -2090,6 +2135,79 @@ def test_deserialize_response_preserves_bound_member_order() -> None:
     )
 
     assert seen == ["status", "header"]
+
+
+def test_deserialize_response_filters_transport_members_from_body() -> None:
+    schema = Schema.collection(
+        id=ShapeID("com.smithy#FilteredOutput"),
+        members={
+            "header": {
+                "target": STRING,
+                "traits": [HTTPHeaderTrait("x-value")],
+            },
+            "body": {"target": STRING},
+        },
+    )
+    body = b'{"header":"from-body","body":"payload"}'
+    seen: list[tuple[str, str]] = []
+    deserializer = HTTPResponseDeserializer(
+        payload_codec=JSONCodec(),
+        response=_HTTPResponse(
+            body=body,
+            status=200,
+            fields=tuples_to_fields([("x-value", "from-header")]),
+        ),
+        body=body,
+    )
+
+    deserializer.read_struct(
+        schema,
+        lambda member, de: seen.append(
+            (member.expect_member_name(), de.read_string(member))
+        ),
+    )
+
+    assert seen == [("header", "from-header"), ("body", "payload")]
+
+
+def test_empty_prefix_headers_omit_restricted_headers() -> None:
+    schema = Schema.collection(
+        id=ShapeID("com.smithy#PrefixOutput"),
+        members={
+            "headers": {
+                "target": STRING_MAP,
+                "traits": [HTTPPrefixHeadersTrait("")],
+            }
+        },
+    )
+    result: dict[str, str] = {}
+    deserializer = HTTPResponseDeserializer(
+        payload_codec=JSONCodec(),
+        response=_HTTPResponse(
+            body=b"",
+            status=200,
+            fields=tuples_to_fields(
+                [
+                    ("authorization", "secret"),
+                    ("content-length", "0"),
+                    ("transfer-encoding", "chunked"),
+                    ("user-agent", "agent"),
+                    ("x-value", "value"),
+                ]
+            ),
+        ),
+        body=b"",
+    )
+
+    def consume(member: Schema, de: ShapeDeserializer) -> None:
+        de.read_map(
+            member,
+            lambda key, value: result.__setitem__(key, value.read_string(STRING)),
+        )
+
+    deserializer.read_struct(schema, consume)
+
+    assert result == {"x-value": "value"}
 
 
 def test_deserialize_recursive_response_uses_original_schema() -> None:

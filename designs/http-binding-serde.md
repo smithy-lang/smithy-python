@@ -7,10 +7,10 @@ headers, labels, query parameters, and the message body. Determining that
 division requires inspecting schema traits, but binding-relevant schema state
 is stable and reused across requests.
 
-This design derives HTTP binding metadata once per schema and stores it in a
-typed schema extension. HTTP serializers and deserializers use the cached
-metadata to route members, while document codecs remain responsible only for
-encoding and decoding payload contents.
+This design derives HTTP binding metadata once per structure and operation
+schema and stores it in typed schema extensions. HTTP serializers and
+deserializers use the cached metadata to route members, while document codecs
+remain responsible only for encoding and decoding payload contents.
 
 ## Goals
 
@@ -77,26 +77,41 @@ visible construction side effects.
 
 ## HTTP Binding Metadata
 
-`smithy-http` defines one shared schema extension whose value contains:
+`smithy-http` defines a shared structure schema extension whose value contains:
 
 * A request binding route indexed by `Schema.member_index`.
 * A response binding route indexed by `Schema.member_index`.
+* Per-member wire names, canonical header names, value shape classification,
+  media types, and effective timestamp formats.
 * Whether request and response structures contain implicit body members.
-* The explicit payload or event-stream member, when present.
+* Body-member masks used to limit document codec values to body bindings.
+* The explicit payload or event-stream member, including precomputed media
+  type, streaming, raw-payload, and length-requirement information.
+* Declared request header and query names used to resolve map-binding
+  precedence.
 * Non-body response bindings in modeled member order.
-* Pre-normalized response header names and list-header classification.
+* A response header lookup table and list-header classification.
 * The modeled default response status.
 
-The metadata uses tuples and a frozen dataclass so a cached value cannot be
-changed by one protocol instance and observed by another.
+An operation schema extension separately caches the resolved `@http` and
+`@endpoint` traits, HTTP method, parsed path, static query string and names,
+response status, host-prefix pattern, and greedy label names.
+
+The metadata uses tuples, immutable collections, read-only mappings, and frozen
+dataclasses so a cached value cannot be changed by one protocol instance and
+observed by another.
 
 Indexed routing is possible because member indexes are stable within a schema.
 It makes the hot-path decision a tuple lookup followed by dispatch to the
 serializer or deserializer for that HTTP location.
 
 The ordered response entries serve a different purpose from the indexed route
-table. They let deserialization visit only transport-bound members while
-preserving the order in which the structure schema presents those members.
+table and response header lookup. They let deserialization visit only
+transport-bound members while preserving the order in which the structure
+schema presents those members. A compact tuple representation of this route is
+used by the deserialization hot path; the richer per-member metadata and header
+lookup remain available without adding attribute or response pre-scan overhead
+to every response.
 
 ## Separation of Responsibilities
 
@@ -120,9 +135,10 @@ understand URI or field bindings.
 
 ## Request Serialization
 
-The request binding serializer is driven by a structure's member walk. For
-each member, it uses the cached request route to select a location-specific
-serializer:
+The request binding serializer is driven by a structure's member walk. For each
+member, it uses the cached request route to select a location-specific
+serializer. Location serializers use the per-member plan rather than
+re-reading binding, timestamp, and media-type traits:
 
 ```text
 structure member
@@ -140,12 +156,18 @@ metadata and document contents are produced during the same member walk.
 There are four payload modes:
 
 * Implicit document bodies send unbound request members to the payload codec.
-* Explicit aggregate payloads send the payload member to the payload codec.
-* Explicit scalar or blob payloads use raw payload handling.
+* Explicit codec-encoded payloads send the `@httpPayload` member to the payload
+  codec using its member schema.
+* Explicit string-like or blob payloads use raw payload handling.
 * Event streams use the event-stream body abstraction.
 
 An absent implicit body can be omitted without invoking the codec. Explicit
 payloads continue to use their modeled media type and length requirements.
+
+Static URI query names and explicit `@httpQuery` names are cached before
+serialization. `@httpQueryParams` entries that collide with either are
+discarded regardless of modeled member order. Explicit `@httpHeader` bindings
+similarly take precedence over colliding `@httpPrefixHeaders` map entries.
 
 ## Response Deserialization
 
@@ -155,12 +177,14 @@ to their location-specific deserializers.
 
 If the structure has implicit document-body members and the response body is
 not empty, the payload codec then reads the document using the same structure
-schema and consumer. This avoids a full member scan in the HTTP layer without
-changing the order or ownership of decoded values.
+schema. A consumer wrapper uses the cached response body-member mask to forward
+only document-bound members. Values present in the document for transport-bound
+members are consumed and discarded so streaming codecs remain synchronized.
+This avoids changing schema identity while preserving HTTP binding ownership.
 
-An explicit aggregate payload is decoded by the payload codec using the
-payload member schema. Scalar, blob, streaming, and event-stream payloads use
-their corresponding transport representations.
+An explicit codec-encoded payload is decoded by the payload codec using the
+payload member schema. String-like and blob payloads use raw payload handling,
+while event-stream payloads use the event-stream body abstraction.
 
 ## Response Serialization
 
@@ -187,7 +211,8 @@ A filtered schema could make body membership explicit to a codec, but it would
 also create multiple schemas with the same Smithy shape ID. That requires a
 broader contract for schema identity, equality, recursive references, and
 extension ownership. Filtered document schemas are therefore deferred until
-that contract is defined.
+that contract is defined. The cached body-member mask provides equivalent
+top-level filtering without changing nested or recursive schema semantics.
 
 ## Tradeoffs
 
@@ -239,5 +264,5 @@ identity and extension-sharing semantics are defined.
 
 * Define schema identity rules that permit filtered or projected schemas.
 * Apply schema extensions to repeated metadata derivation in document codecs.
-* Cache additional formatting metadata when benchmarks identify repeated
-  work.
+* Evaluate codec-specific empty-body caching and generated binding serde when
+  benchmarks justify their additional complexity.

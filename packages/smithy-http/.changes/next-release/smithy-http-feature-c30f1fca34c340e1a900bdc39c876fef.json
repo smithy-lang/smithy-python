@@ -1,4 +1,4 @@
 {
   "type": "feature",
-  "description": "Added schema-cached HTTP binding serialization and deserialization."
+  "description": "Added schema-cached HTTP binding plans for members, operations, payloads, and request and response dispatch."
 }
