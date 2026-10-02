@@ -83,6 +83,62 @@ public class PythonWriterTest {
         assertTrue(out.contains("value: MyStruct"));
     }
 
+    @Test
+    public void testSymbolReferencedByCompositeCollidingWithFrameworkImportIsAliased() {
+        PythonWriter writer = createWriter("aws_sdk_example.client");
+        Symbol framework = frameworkSymbol("smithy_core.documents", "Document");
+        Symbol crossFileGenerated = generatedSymbol("aws_sdk_example.models", "Document");
+
+        writer.write("x: $T", framework);
+        writer.write("y: $T", listOf(crossFileGenerated));
+        writer.write("z: $T", listOf(listOf(crossFileGenerated)));
+        String out = writer.toString();
+        String normalized = normalize(out);
+
+        assertTrue(normalized.contains(
+                "from smithy_core.documents import Document as _smithy_core_documents_Document"));
+        assertTrue(normalized.contains(
+                "from .models import Document as _aws_sdk_example_models_Document"));
+        assertTrue(out.contains("x: _smithy_core_documents_Document"));
+        assertTrue(out.contains("y: list[_aws_sdk_example_models_Document]"));
+        assertTrue(out.contains("z: list[list[_aws_sdk_example_models_Document]]"));
+    }
+
+    @Test
+    public void testCompositeAliasRewritesOnlyWholeNames() {
+        PythonWriter writer = createWriter("aws_sdk_example.client");
+        Symbol framework = frameworkSymbol("smithy_core.documents", "Document");
+        Symbol colliding = generatedSymbol("aws_sdk_example.models", "Document");
+        Symbol similar = generatedSymbol("aws_sdk_example.models", "DocumentList");
+        Symbol composite = Symbol.builder()
+                .name("dict[DocumentList, Document]")
+                .addReference(similar)
+                .addReference(colliding)
+                .build();
+
+        writer.write("x: $T", framework);
+        writer.write("y: $T", composite);
+        String out = writer.toString();
+
+        assertTrue(out.contains("y: dict[DocumentList, _aws_sdk_example_models_Document]"));
+    }
+
+    @Test
+    public void testCompositeWithoutCollisionKeepsPlainNames() {
+        PythonWriter writer = createWriter("aws_sdk_example.client");
+        Symbol crossFileGenerated = generatedSymbol("aws_sdk_example.models", "Document");
+
+        writer.write("y: $T", listOf(crossFileGenerated));
+        String out = writer.toString();
+
+        assertTrue(normalize(out).contains("from .models import Document"));
+        assertTrue(out.contains("y: list[Document]"));
+    }
+
+    private static Symbol listOf(Symbol member) {
+        return Symbol.builder().name("list[" + member.getName() + "]").addReference(member).build();
+    }
+
     private static PythonWriter createWriter(String fullPackageName) {
         PythonSettings settings = mock(PythonSettings.class);
         when(settings.moduleName()).thenReturn(fullPackageName.split("\\.")[0]);

@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+## v0.6.0
+
+### Breaking Changes
+
+* Changed generated client operations to accept input members as keyword-only
+  arguments instead of an input object, so
+  `client.echo_message(EchoMessageInput(message="spam"))` becomes
+  `client.echo_message(message="spam")`. Operations with no input members no
+  longer need an empty input object, and per-operation `plugins` must now be
+  passed by keyword. An input member named `plugins` or `self` becomes
+  `plugins_` or `self_`. Nested models, output types, and the input classes
+  themselves are unchanged.
+
 ## v0.5.0
 
 ### Breaking Changes

@@ -13,6 +13,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import software.amazon.smithy.codegen.core.CodegenException;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.codegen.core.SymbolReference;
@@ -512,14 +514,18 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
          *       with themselves.</li>
          * </ul>
          *
+         * <p>Builtin composites such as {@code list[Foo]} are the exception: their name
+         * embeds the names of the symbols they reference, and those references are
+         * imported. Each referenced name is replaced with its own placeholder so that an
+         * alias applied to its import reaches the composite too.
+         *
          * <p>All other symbols (framework types and generated symbols imported from
          * other files in the same package) are registered in the symbol table so
          * collisions can be detected at {@link PythonWriter#toString()} time.
          */
         private String resolvePlaceholder(Symbol symbol) {
             if (symbol.getNamespace().isEmpty()) {
-                // Builtin — no import statement is produced, so there is no alias to apply.
-                return symbol.getName();
+                return resolveBuiltin(symbol);
             }
             if (symbol.getNamespace().equals(fullPackageName)) {
                 // Defined in the current writer's file — no import needed.
@@ -531,6 +537,30 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
 
             // Return a placeholder that will be resolved in toString().
             return PLACEHOLDER_PREFIX + symbol.getNamespace() + "." + symbol.getName() + PLACEHOLDER_SUFFIX;
+        }
+
+        private String resolveBuiltin(Symbol symbol) {
+            var name = symbol.getName();
+            if (!symbol.getProperty(IMPORTABLE).orElse(true)) {
+                // Its references weren't imported, so there's nothing to alias.
+                return name;
+            }
+            for (var reference : symbol.getReferences()) {
+                if (!reference.hasOption(SymbolReference.ContextOption.USE)) {
+                    continue;
+                }
+                var referenced = reference.getSymbol();
+                var resolved = resolvePlaceholder(referenced);
+                if (!resolved.equals(referenced.getName())) {
+                    // Match whole names only, so `Foo` doesn't rewrite `FooList` or the
+                    // tail of a placeholder written for an earlier reference.
+                    name = Pattern.compile("(?<![\\w." + PLACEHOLDER_PREFIX + "])"
+                            + Pattern.quote(referenced.getName()) + "(?![\\w" + PLACEHOLDER_SUFFIX + "])")
+                            .matcher(name)
+                            .replaceAll(Matcher.quoteReplacement(resolved));
+                }
+            }
+            return name;
         }
     }
 
