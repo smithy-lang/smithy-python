@@ -18,6 +18,7 @@ from smithy_core.traits import HTTPPayloadTrait, HTTPTrait, StreamingTrait
 from smithy_core.types import TypedProperties
 from smithy_http import Field, Fields
 from smithy_http.aio import HTTPRequest, HTTPResponse
+from smithy_http.aio import protocols as protocols_module
 from smithy_http.aio.interfaces import (
     HTTPErrorIdentifier,
 )
@@ -81,6 +82,9 @@ class MockBindingProtocol(HttpBindingClientProtocol):
     def error_identifier(self) -> HTTPErrorIdentifier:
         return self._error_identifier
 
+    async def buffer_body(self, stream: Any) -> Any:
+        return await self._buffer_async_body(stream)
+
 
 class BufferTrackingBindingProtocol(MockBindingProtocol):
     def __init__(self) -> None:
@@ -143,6 +147,26 @@ class StreamingOutput(MockOutput):
 class AsyncBody:
     async def read(self, size: int = -1) -> bytes:
         return b"{}"
+
+
+@pytest.mark.parametrize("body", [b"{}", bytearray(b"{}")])
+async def test_buffer_async_body_fast_paths_synchronous_bytes(
+    monkeypatch: pytest.MonkeyPatch,
+    body: bytes | bytearray,
+) -> None:
+    class FailOnInstanceCheck(type):
+        def __instancecheck__(cls, instance: object) -> bool:
+            pytest.fail("Synchronous byte bodies must not use protocol checks")
+
+    class ProtocolCheck(metaclass=FailOnInstanceCheck):
+        pass
+
+    monkeypatch.setattr(protocols_module, "AsyncByteStream", ProtocolCheck)
+    monkeypatch.setattr(protocols_module, "AsyncIterable", ProtocolCheck)
+
+    result = await MockBindingProtocol().buffer_body(body)
+
+    assert result is body
 
 
 def test_http_binding_protocol_falls_back_to_legacy_serialize() -> None:
