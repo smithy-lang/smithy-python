@@ -339,7 +339,7 @@ def _build_payload_metadata(member: Schema | None) -> HTTPPayloadMetadata | None
 def _build_http_binding_schema_metadata(schema: Schema) -> HTTPBindingSchemaMetadata:
     request_matcher = RequestBindingMatcher(schema)
     response_matcher = ResponseBindingMatcher(schema)
-    members = tuple(schema.members.values())
+    members = schema.members_by_index
     request_bindings = tuple(request_matcher.bindings)
     response_bindings = tuple(response_matcher.bindings)
 

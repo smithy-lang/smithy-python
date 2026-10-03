@@ -5,7 +5,7 @@ from typing import Any
 
 import pytest
 from smithy_core.documents import TypeRegistry
-from smithy_core.exceptions import ExpectationNotMetError
+from smithy_core.exceptions import ExpectationNotMetError, SmithyError
 from smithy_core.schemas import APIOperation, Schema, SchemaExtension
 from smithy_core.shapes import ShapeID, ShapeType
 from smithy_core.traits import (
@@ -68,6 +68,37 @@ def test_schema_extension_is_built_once_and_cached() -> None:
     assert calls == 1
 
 
+def test_schema_extension_caches_none() -> None:
+    calls = 0
+
+    def build_extension(schema: Schema) -> None:
+        nonlocal calls
+        calls += 1
+
+    extension = SchemaExtension(build_extension)
+    schema = Schema(id=ID, shape_type=ShapeType.STRING)
+
+    assert schema.get_extension(extension) is None
+    assert schema.get_extension(extension) is None
+    assert calls == 1
+
+
+def test_schema_extensions_use_dense_indexed_slots() -> None:
+    first = SchemaExtension(lambda schema: ("first", schema.id))
+    schema = Schema(id=ID, shape_type=ShapeType.STRUCTURE)
+
+    assert schema.get_extension(first) == ("first", ID)
+
+    second = SchemaExtension(lambda schema: ("second", schema.id))
+    assert schema.get_extension(second) == ("second", ID)
+
+    extensions: list[Any] = getattr(schema, "_extensions")
+    assert isinstance(extensions, list)
+    assert len(extensions) == second.id + 1
+    assert extensions[first.id] == ("first", ID)
+    assert extensions[second.id] == ("second", ID)
+
+
 def test_schema_extension_cache_is_not_dataclass_state() -> None:
     extension = SchemaExtension(lambda schema: schema)
     schema = Schema(id=ID, shape_type=ShapeType.STRUCTURE)
@@ -90,6 +121,37 @@ def test_members_list():
     )
     schema = Schema(id=ID, shape_type=ShapeType.STRUCTURE, members=[member])
     assert schema.members == {"baz": member}
+
+
+def test_members_by_index_is_dense_and_cached() -> None:
+    first = Schema.member(id=ID.with_member("first"), target=STRING, index=0)
+    second = Schema.member(id=ID.with_member("second"), target=STRING, index=1)
+    schema = Schema(
+        id=ID,
+        shape_type=ShapeType.STRUCTURE,
+        members={"second": second, "first": first},
+    )
+
+    members_by_index = schema.members_by_index
+
+    assert members_by_index == (first, second)
+    assert schema.members_by_index is members_by_index
+    assert "_members_by_index" not in {
+        schema_field.name for schema_field in fields(schema)
+    }
+    assert "_members_by_index" not in asdict(schema)
+
+
+def test_members_by_index_rejects_sparse_indices() -> None:
+    member = Schema.member(id=ID.with_member("member"), target=STRING, index=1)
+    schema = Schema(
+        id=ID,
+        shape_type=ShapeType.STRUCTURE,
+        members={"member": member},
+    )
+
+    with pytest.raises(SmithyError, match="dense and zero-based"):
+        _ = schema.members_by_index
 
 
 def test_expect_member_schema():

@@ -194,6 +194,9 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         return operation.output.deserialize(deserializer)
 
     async def _buffer_async_body(self, stream: AsyncStreamingBlob) -> SyncStreamingBlob:
+        if isinstance(stream, bytes | bytearray):
+            return stream
+
         match stream:
             case AsyncByteStream():
                 if not iscoroutinefunction(stream.read):
