@@ -226,10 +226,18 @@ def tuples_to_fields(
     :param kind: The Field kind to define for all tuples.
     """
     fields = Fields()
+    entries = fields.entries
+    field_kind = kind or "header"
     for name, value in tuples:
-        try:
-            fields[name].add(value)
-        except KeyError:
-            fields[name] = Field(name=name, values=[value], kind=kind or "header")
+        normalized_name = name.lower()
+        field = entries.get(normalized_name)
+        if field is None:
+            entries[normalized_name] = Field(
+                name=name,
+                values=[value],
+                kind=field_kind,
+            )
+        else:
+            field.values.append(value)
 
     return fields

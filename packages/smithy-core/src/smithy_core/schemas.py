@@ -1,8 +1,17 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
-from typing import TYPE_CHECKING, Any, NotRequired, Required, Self, TypedDict, overload
+from itertools import count
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    NotRequired,
+    Required,
+    Self,
+    TypedDict,
+    overload,
+)
 
 from .exceptions import ExpectationNotMetError, SmithyError
 from .shapes import ShapeID, ShapeType
@@ -32,6 +41,9 @@ class Schema:
     members: dict[str, "Schema"] = field(default_factory=dict[str, "Schema"])
     member_target: "Schema | None" = None
     member_index: int | None = None
+    if TYPE_CHECKING:
+        _extensions: list[Any] | tuple[Any, ...]
+        _members_by_index: tuple["Schema", ...] | None
 
     def __init__(
         self,
@@ -95,10 +107,37 @@ class Schema:
         if member_index is not None:
             object.__setattr__(self, "member_index", member_index)
 
+        object.__setattr__(self, "_extensions", _EMPTY_SCHEMA_EXTENSIONS)
+        object.__setattr__(self, "_members_by_index", None)
+
     @property
     def member_name(self) -> str | None:
         """The name of the member, if the shape is the MEMBER type."""
         return self.id.member
+
+    @property
+    def members_by_index(self) -> tuple["Schema", ...]:
+        """Return members in dense member-index order.
+
+        The tuple is built lazily so recursive schemas can finish populating their
+        member map during module initialization. Like schema extension values, it
+        assumes the schema is not mutated after its runtime metadata is first used.
+        """
+        members = self._members_by_index
+        if members is None:
+            members = tuple(
+                sorted(
+                    self.members.values(),
+                    key=lambda member: member.expect_member_index(),
+                )
+            )
+            for index, member in enumerate(members):
+                if member.expect_member_index() != index:
+                    raise SmithyError(
+                        "Schema member indices must be dense and zero-based."
+                    )
+            object.__setattr__(self, "_members_by_index", members)
+        return members
 
     def expect_member_name(self) -> str:
         """Assert the schema is a member schema and return its member name.
@@ -173,6 +212,42 @@ class Schema:
         """
         id = t if isinstance(t, ShapeID) else t.id
         return self.traits[id]
+
+    def get_extension[T](self, extension: "SchemaExtension[T]") -> T:
+        """Get or lazily build metadata associated with this schema.
+
+        Extension descriptors are intended to be shared across all codec and protocol
+        instances. Values are cached per schema after construction. Concurrent cache
+        misses may construct the same value more than once, but subsequent calls return
+        the published cached value.
+
+        :param extension: The shared extension descriptor.
+        :returns: The cached extension value for this schema.
+        """
+        try:
+            value = self._extensions[extension.id]
+        except IndexError:
+            return self._compute_extension(extension)
+
+        if value is _SCHEMA_EXTENSION_NOT_COMPUTED:
+            return self._compute_extension(extension)
+        return value
+
+    def _compute_extension[T](self, extension: "SchemaExtension[T]") -> T:
+        """Grow an extension array or populate an uncomputed extension slot."""
+        extensions = self._extensions
+        extension_id = extension.id
+        if isinstance(extensions, tuple):
+            extensions = [_SCHEMA_EXTENSION_NOT_COMPUTED] * (extension_id + 1)
+            object.__setattr__(self, "_extensions", extensions)
+        elif extension_id >= len(extensions):
+            extensions.extend(
+                [_SCHEMA_EXTENSION_NOT_COMPUTED] * (extension_id + 1 - len(extensions))
+            )
+
+        value = extension.provider(self)
+        extensions[extension_id] = value
+        return value
 
     def __contains__(self, item: Any):
         """Returns whether the schema has the given member or trait."""
@@ -269,6 +344,25 @@ class Schema:
             member_target=target,
             member_index=index,
         )
+
+
+_SCHEMA_EXTENSION_IDS = count()
+_SCHEMA_EXTENSION_NOT_COMPUTED = object()
+_EMPTY_SCHEMA_EXTENSIONS: tuple[Any, ...] = ()
+
+
+@dataclass(frozen=True, slots=True, eq=False)
+class SchemaExtension[T]:
+    """An integer-indexed provider of lazily cached schema metadata."""
+
+    provider: Callable[[Schema], T]
+    """Build the extension value for a schema."""
+
+    id: int = field(init=False)
+    """Unique integer used for direct extension-slot lookup."""
+
+    def __post_init__(self) -> None:
+        object.__setattr__(self, "id", next(_SCHEMA_EXTENSION_IDS))
 
 
 class MemberSchema(TypedDict):
