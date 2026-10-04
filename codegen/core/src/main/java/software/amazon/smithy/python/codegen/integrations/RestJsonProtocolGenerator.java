@@ -80,6 +80,12 @@ public class RestJsonProtocolGenerator implements ProtocolGenerator {
         writer.write("$T(_PROTOCOL_SETTINGS)", RuntimeTypes.REST_JSON_CLIENT_PROTOCOL);
     }
 
+    @Override
+    public void initializeSyncProtocol(GenerationContext context, PythonWriter writer) {
+        writer.addDependency(SmithyPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("json"));
+        writer.write("$T(_PROTOCOL_SETTINGS)", RuntimeTypes.REST_JSON_SYNC_CLIENT_PROTOCOL);
+    }
+
     // This is here rather than in HttpBindingProtocolGenerator because eventually
     // it will need to generate some protocol-specific comparators.
     @Override

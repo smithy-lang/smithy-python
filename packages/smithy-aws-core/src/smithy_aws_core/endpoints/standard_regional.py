@@ -16,7 +16,7 @@ class StandardRegionalEndpointsResolver(EndpointResolver):
     def __init__(self, endpoint_prefix: str = "bedrock-runtime"):
         self._endpoint_prefix = endpoint_prefix
 
-    async def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Endpoint:
+    def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Endpoint:
         if (static_uri := resolve_static_uri(params)) is not None:
             return Endpoint(uri=static_uri)
 

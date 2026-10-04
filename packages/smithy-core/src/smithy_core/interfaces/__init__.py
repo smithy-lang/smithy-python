@@ -7,6 +7,13 @@ from typing import TYPE_CHECKING, Any, Protocol, TypeGuard, overload, runtime_ch
 if TYPE_CHECKING:
     from typing_extensions import TypeForm
 
+    from ..deserializers import DeserializeableShape
+    from ..documents import TypeRegistry
+    from ..endpoints import EndpointResolverParams
+    from ..schemas import APIOperation
+    from ..serializers import SerializeableShape
+    from ..shapes import ShapeID
+
 
 class URI(Protocol):
     """Universal Resource Identifier, target location for a :py:class:`Request`."""
@@ -223,3 +230,86 @@ class TypedProperties(Protocol):
     def keys(self) -> KeysView[str]: ...
     def values(self) -> ValuesView[Any]: ...
     def __contains__(self, key: object) -> bool: ...
+
+
+class Request(Protocol):
+    """Protocol-agnostic representation of a request (synchronous)."""
+
+    destination: URI
+    body: StreamingBlob = b""
+
+    def consume_body(self) -> bytes:
+        """Iterate over the request body and return it as bytes."""
+        ...
+
+
+class Response(Protocol):
+    """Protocol-agnostic representation of a response (synchronous)."""
+
+    @property
+    def body(self) -> StreamingBlob: ...
+
+    def consume_body(self) -> bytes:
+        """Iterate over the response body and return it as bytes."""
+        ...
+
+
+class EndpointResolver(Protocol):
+    """Synchronously resolves an operation's endpoint from given parameters."""
+
+    def resolve_endpoint(self, params: "EndpointResolverParams[Any]") -> Endpoint:
+        """Resolve an endpoint for the given operation.
+
+        :param params: The parameters available to resolve the endpoint.
+        """
+        ...
+
+
+class ClientTransport[I: Request, O: Response](Protocol):
+    """Synchronous protocol-agnostic client transport (e.g. an HTTP client)."""
+
+    TIMEOUT_EXCEPTIONS: tuple[type[Exception], ...]
+
+    def send(self, request: I) -> O:
+        """Send a request over the transport and receive the response."""
+        ...
+
+
+class ClientProtocol[I: Request, O: Response](Protocol):
+    """A protocol used by a synchronous client to communicate with a server."""
+
+    @property
+    def id(self) -> "ShapeID": ...
+
+    def serialize_request[
+        OperationInput: "SerializeableShape",
+        OperationOutput: "DeserializeableShape",
+    ](
+        self,
+        *,
+        operation: "APIOperation[OperationInput, OperationOutput]",
+        input: OperationInput,
+        endpoint: URI,
+        context: "TypedProperties",
+    ) -> I:
+        """Serialize an operation input into a transport request."""
+        ...
+
+    def set_service_endpoint(self, *, request: I, endpoint: Endpoint) -> I:
+        """Update the endpoint of a transport request."""
+        ...
+
+    def deserialize_response[
+        OperationInput: "SerializeableShape",
+        OperationOutput: "DeserializeableShape",
+    ](
+        self,
+        *,
+        operation: "APIOperation[OperationInput, OperationOutput]",
+        request: I,
+        response: O,
+        error_registry: "TypeRegistry",
+        context: "TypedProperties",
+    ) -> OperationOutput:
+        """Deserialize the output from the transport response or raise an exception."""
+        ...

@@ -6,7 +6,7 @@ from asyncio import Future, sleep
 from collections.abc import Awaitable, Callable, Sequence
 from copy import copy
 from dataclasses import dataclass, field, replace
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Any, Self, cast
 
 from .. import URI
 from ..auth import AuthParams
@@ -28,6 +28,7 @@ from ..interceptors import (
 )
 from ..interfaces import Endpoint, TypedProperties
 from ..interfaces.auth import AuthOption, AuthSchemeResolver
+from ..interfaces.retries import RetryStrategy
 from ..schemas import APIOperation
 from ..serializers import SerializeableShape
 from ..shapes import ShapeID
@@ -43,8 +44,8 @@ from .interfaces import (
 )
 from .interfaces.auth import AuthScheme
 from .interfaces.eventstream import EventReceiver
-from .interfaces.retries import RetryStrategy
-from .retries import RetryStrategyResolver
+from .interfaces.retries import AsyncRetryStrategy
+from .retries import AsyncRetryStrategyResolver
 from .utils import close, seek
 
 if TYPE_CHECKING:
@@ -85,8 +86,12 @@ class ClientCall[I: SerializeableShape, O: DeserializeableShape]:
     endpoint_resolver: EndpointResolver
     """The endpoint resolver for the operation."""
 
-    retry_strategy: RetryStrategy
-    """The retry strategy to use for the operation."""
+    retry_strategy: "RetryStrategy | AsyncRetryStrategy"
+    """The retry strategy to use for the operation.
+
+    Statically a union; each pipeline populates and narrows to its own mode's
+    strategy, mirroring the auth-scheme pin-and-narrow at the attempt boundary.
+    """
 
     retry_scope: str | None = None
     """The retry scope for the operation."""
@@ -386,7 +391,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
         if not call.retryable():
             return await self._handle_attempt(call, request_context, request_future)
 
-        retry_strategy = call.retry_strategy
+        retry_strategy = cast(AsyncRetryStrategy, call.retry_strategy)
         retry_token = await retry_strategy.acquire_initial_retry_token(
             token_scope=call.retry_scope
         )
@@ -453,7 +458,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 context=request_context.properties,
             )
             _LOGGER.debug("Calling endpoint resolver with params: %s", endpoint_params)
-            endpoint: Endpoint = await call.endpoint_resolver.resolve_endpoint(
+            endpoint: Endpoint = call.endpoint_resolver.resolve_endpoint(
                 endpoint_params
             )
             _LOGGER.debug("Endpoint resolver result: %s", endpoint)
@@ -664,7 +669,7 @@ class AsyncClient:
         self._setup_done = False
         self._closed = False
         self._transport: ClientTransport[Any, Any] | None = None
-        self._retry_strategy_resolver = RetryStrategyResolver()
+        self._retry_strategy_resolver = AsyncRetryStrategyResolver()
 
     def _build_call[I: SerializeableShape, O: DeserializeableShape](
         self,
@@ -672,7 +677,7 @@ class AsyncClient:
         operation: APIOperation[I, O],
         *,
         config: Any,
-        retry_strategy: RetryStrategy,
+        retry_strategy: AsyncRetryStrategy,
     ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
         """Build the pipeline and call from a resolved config and retry strategy."""
         pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)

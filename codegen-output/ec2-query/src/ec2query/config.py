@@ -3,28 +3,39 @@
 from dataclasses import dataclass, field
 from typing import Any, Callable, ClassVar, Self, TypeAlias, Union, Unpack
 
-from smithy_aws_core.aio.protocols import Ec2QueryClientProtocol
-from smithy_aws_core.auth import SigV4AuthScheme
+from smithy_aws_core.aio.protocols import (
+    Ec2QueryClientProtocol as _smithy_aws_core_aio_protocols_Ec2QueryClientProtocol,
+)
+from smithy_aws_core.auth import AsyncSigV4AuthScheme, SigV4AuthScheme
 from smithy_aws_core.config import AwsConfigOverrides, FileSystem
-from smithy_aws_core.config.aws_config import AsyncAwsConfig
+from smithy_aws_core.config.aws_config import AsyncAwsConfig, AwsConfig, AwsConfigBase
 from smithy_aws_core.config.resolvers import EndpointUriResolver
-from smithy_aws_core.config.types import FieldSpec
 from smithy_aws_core.endpoints.standard_regional import (
     StandardRegionalEndpointsResolver,
 )
 from smithy_aws_core.identity import AWSCredentialsIdentity, AWSIdentityProperties
+from smithy_aws_core.protocols import (
+    Ec2QueryClientProtocol as _smithy_aws_core_protocols_Ec2QueryClientProtocol,
+)
 from smithy_core.aio.interfaces import (
     ClientProtocol,
+    ClientTransport,
     EndpointResolver,
-    ProtocolConstructor,
     ProtocolSettings,
 )
 from smithy_core.aio.interfaces.auth import AuthScheme
 from smithy_core.aio.interfaces.identity import IdentityResolver
+from smithy_core.aio.interfaces.retries import AsyncRetryStrategy
+from smithy_core.config import FieldSpec
 from smithy_core.interceptors import Interceptor
+from smithy_core.interfaces import URI
 from smithy_core.interfaces.auth import AuthSchemeResolver
+from smithy_core.interfaces.retries import RetryStrategy
+from smithy_core.retries import RetryStrategyOptions
 from smithy_core.shapes import ShapeID
 from smithy_http.aio.aiohttp import AIOHTTPClient
+from smithy_http.interfaces import HTTPRequestConfiguration
+from smithy_http.urllib3 import Urllib3HTTPClient
 
 from .auth import HTTPAuthSchemeResolver
 from .models import (
@@ -127,40 +138,13 @@ _PROTOCOL_SETTINGS = ProtocolSettings(
 )
 
 
-class _AsyncEC2ProtocolConfigOverrides(AwsConfigOverrides, total=False):
-    endpoint_resolver: EndpointResolver | None
-    protocol: (
-        ClientProtocol[Any, Any] | ProtocolConstructor[ClientProtocol[Any, Any]] | None
-    )
-    auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]] | None
-    auth_scheme_resolver: AuthSchemeResolver | None
+class _EC2ProtocolConfigOverrides(AwsConfigOverrides, total=False):
+    pass
 
 
 @dataclass(kw_only=True, repr=False, init=False)
-class AsyncEC2ProtocolConfig(AsyncAwsConfig):
-    """EC2 Protocol configuration (async-resolved)."""
-
-    endpoint_resolver: EndpointResolver | None = None
-    """
-    The endpoint resolver used to resolve the final endpoint per-operation
-    based on the configuration.
-    """
-
-    protocol: ClientProtocol[Any, Any] | None = None
-    """
-    Pass a protocol class reference from smithy_aws_core.aio.protocols to
-    select the protocol, e.g. protocol=AwsJson10ClientProtocol. For custom
-    protocols a protocol instance may also be passed.
-    """
-
-    interceptors: list[_ServiceInterceptor] = field(default_factory=lambda: [])
-    """
-    The list of interceptors, which are hooks that are called during the
-    execution of a request.
-    """
-
-    auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]] | None = None
-    """A map of auth scheme ids to auth schemes."""
+class _EC2ProtocolConfigBase(AwsConfigBase):
+    """Shared fields for the sync and async EC2 Protocol config classes."""
 
     auth_scheme_resolver: AuthSchemeResolver | None = None
     """
@@ -168,19 +152,16 @@ class AsyncEC2ProtocolConfig(AsyncAwsConfig):
     operation.
     """
 
+    auth_schemes: dict[ShapeID, AuthScheme[Any, Any, Any, Any]] | None = None
+    """A map of auth scheme ids to auth schemes."""
+
+    aws_access_key_id: str | None = None
+    """The identifier for a secret access key."""
+
     aws_credentials_identity_resolver: (
         IdentityResolver[AWSCredentialsIdentity, AWSIdentityProperties] | None
     ) = None
     """Resolves AWS Credentials. Required for operations that use Sigv4 Auth."""
-
-    region: str | None = None
-    """
-    The AWS region to connect to. The configured region is used to determine
-    the service endpoint.
-    """
-
-    aws_access_key_id: str | None = None
-    """The identifier for a secret access key."""
 
     aws_secret_access_key: str | None = None
     """A secret access key that can be used to sign requests."""
@@ -188,8 +169,44 @@ class AsyncEC2ProtocolConfig(AsyncAwsConfig):
     aws_session_token: str | None = None
     """The session token used with temporary AWS credentials."""
 
-    user_agent_extra: str | None = None
-    """Additional suffix to be added to the User-Agent header."""
+    endpoint_resolver: EndpointResolver | None = None
+    """
+    The endpoint resolver used to resolve the final endpoint per-operation
+    based on the configuration.
+    """
+
+    endpoint_uri: str | URI | None = None
+    """A static URI to route requests to."""
+
+    http_request_config: HTTPRequestConfiguration | None = None
+    """Configuration for individual HTTP requests."""
+
+    interceptors: list[_ServiceInterceptor] = field(default_factory=lambda: [])
+    """
+    The list of interceptors, which are hooks that are called during the
+    execution of a request.
+    """
+
+    protocol: ClientProtocol[Any, Any] | None = None
+    """
+    Pass a protocol class reference to select the protocol, e.g.
+    protocol=AwsJson10ClientProtocol. For custom protocols a protocol
+    instance may also be passed.
+    """
+
+    region: str | None = None
+    """
+    The AWS region to connect to. The configured region is used to determine
+    the service endpoint.
+    """
+
+    retry_strategy: RetryStrategy | AsyncRetryStrategy | RetryStrategyOptions | None = (
+        None
+    )
+    """
+    The retry strategy or options for configuring retry behavior. Can be
+    either a configured RetryStrategy or RetryStrategyOptions to create one.
+    """
 
     sdk_ua_app_id: str | None = None
     """
@@ -197,17 +214,23 @@ class AsyncEC2ProtocolConfig(AsyncAwsConfig):
     header.
     """
 
+    transport: ClientTransport[Any, Any] | None = None
+    """
+    The transport to use to send requests (e.g. an HTTP client). Operations
+    with bidirectional event streams require a DuplexClientTransport, such
+    as AWSCRTHTTPClient. Transports are assumed not to support duplex
+    streaming unless they explicitly set SUPPORTS_DUPLEX_STREAMING to True.
+    """
+
+    user_agent_extra: str | None = None
+    """Additional suffix to be added to the User-Agent header."""
+
     _FIELDS: ClassVar[dict[str, FieldSpec]] = {
-        "aws_credentials_identity_resolver": FieldSpec(default=None),
-        "region": FieldSpec(default=None),
-        "aws_access_key_id": FieldSpec(default=None),
-        "aws_secret_access_key": FieldSpec(default=None),
-        "aws_session_token": FieldSpec(default=None),
-        "user_agent_extra": FieldSpec(default=None),
-        "sdk_ua_app_id": FieldSpec(default=None),
-        **AsyncAwsConfig._FIELDS,
+        **AwsConfigBase._FIELDS,
         "endpoint_uri": FieldSpec(
-            default=None, resolver=EndpointUriResolver("ec2_protocol")
+            default=None,
+            resolver=EndpointUriResolver("ec2_protocol"),
+            async_resolver=EndpointUriResolver("ec2_protocol").resolve_async,
         ),
         "endpoint_resolver": FieldSpec(
             default_factory=lambda: StandardRegionalEndpointsResolver(
@@ -215,16 +238,29 @@ class AsyncEC2ProtocolConfig(AsyncAwsConfig):
             )
         ),
         "protocol": FieldSpec(
-            default_factory=lambda: Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            default_factory=lambda: _smithy_aws_core_protocols_Ec2QueryClientProtocol(
+                _PROTOCOL_SETTINGS
+            ),
+            async_default_factory=lambda: (
+                _smithy_aws_core_aio_protocols_Ec2QueryClientProtocol(
+                    _PROTOCOL_SETTINGS
+                )
+            ),
             converter=lambda p: p(_PROTOCOL_SETTINGS) if isinstance(p, type) else p,
         ),
         "auth_schemes": FieldSpec(
             default_factory=lambda: {
                 ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
-            }
+            },
+            async_default_factory=lambda: {
+                ShapeID("aws.auth#sigv4"): AsyncSigV4AuthScheme(service="ec2query")
+            },
         ),
         "auth_scheme_resolver": FieldSpec(default_factory=HTTPAuthSchemeResolver),
-        "transport": FieldSpec(default_factory=lambda: AIOHTTPClient()),
+        "transport": FieldSpec(
+            default_factory=lambda: Urllib3HTTPClient(),
+            async_default_factory=lambda: AIOHTTPClient(),
+        ),
     }
 
     def set_auth_scheme(self, scheme: AuthScheme[Any, Any, Any, Any]) -> None:
@@ -236,6 +272,35 @@ class AsyncEC2ProtocolConfig(AsyncAwsConfig):
         auth_schemes[scheme.scheme_id] = scheme
         self.auth_schemes = auth_schemes
 
+
+@dataclass(kw_only=True, repr=False, init=False)
+class EC2ProtocolConfig(_EC2ProtocolConfigBase, AwsConfig):
+    """EC2 Protocol configuration (synchronous)."""
+
+    @classmethod
+    def resolve(  # pyright: ignore[reportIncompatibleMethodOverride]
+        cls,
+        *,
+        profile: str | None = None,
+        fs: FileSystem | None = None,
+        config_file_path: str | None = None,
+        credentials_file_path: str | None = None,
+        **overrides: Unpack[_EC2ProtocolConfigOverrides],
+    ) -> Self:
+        """Resolve config from environment, defaults, and explicit overrides."""
+        return cls._resolve(
+            overrides=overrides,
+            profile=profile,
+            fs=fs,
+            config_file_path=config_file_path,
+            credentials_file_path=credentials_file_path,
+        )
+
+
+@dataclass(kw_only=True, repr=False, init=False)
+class AsyncEC2ProtocolConfig(_EC2ProtocolConfigBase, AsyncAwsConfig):
+    """EC2 Protocol configuration (asynchronous)."""
+
     @classmethod
     async def resolve(  # pyright: ignore[reportIncompatibleMethodOverride]
         cls,
@@ -244,18 +309,15 @@ class AsyncEC2ProtocolConfig(AsyncAwsConfig):
         fs: FileSystem | None = None,
         config_file_path: str | None = None,
         credentials_file_path: str | None = None,
-        **overrides: Unpack[_AsyncEC2ProtocolConfigOverrides],
+        **overrides: Unpack[_EC2ProtocolConfigOverrides],
     ) -> Self:
-        """
-        Resolve config from environment, config files, defaults, and explicit
-        overrides.
-        """
-        return await cls._resolve(
+        """Resolve config from environment, defaults, and explicit overrides."""
+        return await cls._resolve_async(
+            overrides=overrides,
             profile=profile,
             fs=fs,
             config_file_path=config_file_path,
             credentials_file_path=credentials_file_path,
-            overrides=overrides,
         )
 
 
