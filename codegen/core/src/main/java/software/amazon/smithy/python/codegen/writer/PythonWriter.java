@@ -208,11 +208,29 @@ public final class PythonWriter extends SymbolWriter<PythonWriter, ImportDeclara
      *
      * <p>For AWS services, expects HTML input. For generic clients, expects CommonMark input.
      *
+     * <p>Quotes that would close the surrounding docstring are escaped. Use
+     * {@link #formatMarkdown} for documentation written outside a docstring.
+     *
      * @param docs Documentation to format.
      * @param context The generation context used to determine service type and formatting.
      * @return Formatted documentation.
      */
     public String formatDocs(String docs, GenerationContext context) {
+        return MarkdownConverter.convertForDocstring(docs, context);
+    }
+
+    /**
+     * Formats documentation from CommonMark or HTML to Markdown for files outside
+     * Python docstrings, such as the README.
+     *
+     * <p>This applies the same conversion as {@link #formatDocs} without escaping
+     * quotes for docstrings.
+     *
+     * @param docs Documentation to format.
+     * @param context The generation context used to determine service type and formatting.
+     * @return Formatted documentation.
+     */
+    public String formatMarkdown(String docs, GenerationContext context) {
         return MarkdownConverter.convert(docs, context);
     }
 

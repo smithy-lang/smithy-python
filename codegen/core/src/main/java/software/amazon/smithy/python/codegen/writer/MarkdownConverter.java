@@ -72,6 +72,21 @@ public final class MarkdownConverter {
     }
 
     /**
+     * Converts documentation like {@link #convert}, then escapes quotes that would
+     * close a surrounding triple-quoted Python docstring.
+     *
+     * <p>Use this for docstrings and {@link #convert} for plain Markdown output
+     * such as the README, where the escaping would show up as literal backslashes.
+     *
+     * @param input The input string (HTML or CommonMark)
+     * @param context The generation context to determine service type
+     * @return Markdown formatted string that is safe to embed in a docstring
+     */
+    public static String convertForDocstring(String input, GenerationContext context) {
+        return escapeDocstringQuotes(convert(input, context));
+    }
+
+    /**
      * Pre-processes input before passing to pandoc.
      *
      * @param input The raw input text
@@ -214,6 +229,36 @@ public final class MarkdownConverter {
                 // else: Markdown-only char, drop the spurious backslash
             }
             m.appendReplacement(sb, Matcher.quoteReplacement("\\".repeat(backslashes) + next));
+        }
+        m.appendTail(sb);
+        return sb.toString();
+    }
+
+    private static final Pattern QUOTE_RUN = Pattern.compile("(\\\\*)(\"+)");
+
+    /**
+     * Escapes quotes that would otherwise close a triple-quoted docstring.
+     *
+     * <p>Pandoc leaves quotes in code verbatim, so a run of three or more
+     * unescaped quotes would end the docstring early, and quotes at the very
+     * end would run into its closing delimiter. Those quotes are escaped;
+     * shorter runs are left alone. A quote after an odd backslash run is
+     * already escaped and does not count toward a run.
+     */
+    private static String escapeDocstringQuotes(String output) {
+        Matcher m = QUOTE_RUN.matcher(output);
+        StringBuilder sb = new StringBuilder();
+        while (m.find()) {
+            String backslashes = m.group(1);
+            String quotes = m.group(2);
+            if (backslashes.length() % 2 != 0) {
+                backslashes += "\"";
+                quotes = quotes.substring(1);
+            }
+            if (quotes.length() >= 3 || (!quotes.isEmpty() && m.end() == output.length())) {
+                quotes = quotes.replace("\"", "\\\"");
+            }
+            m.appendReplacement(sb, Matcher.quoteReplacement(backslashes + quotes));
         }
         m.appendTail(sb);
         return sb.toString();
