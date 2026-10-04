@@ -176,7 +176,7 @@ public class AwsAuthIntegration implements PythonIntegration {
         @Override
         public Symbol getAuthSchemeSymbol(GenerationContext context) {
             return Symbol.builder()
-                    .name("SigV4AuthScheme")
+                    .name("AsyncSigV4AuthScheme")
                     .namespace("smithy_aws_core.auth", ".")
                     .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                     .build();
@@ -186,6 +186,17 @@ public class AwsAuthIntegration implements PythonIntegration {
         public void initializeScheme(GenerationContext context, PythonWriter writer, ServiceShape service) {
             var trait = service.expectTrait(SigV4Trait.class);
             writer.write("$T(service=$S)", getAuthSchemeSymbol(context), trait.getName());
+        }
+
+        @Override
+        public void initializeSyncScheme(GenerationContext context, PythonWriter writer, ServiceShape service) {
+            var trait = service.expectTrait(SigV4Trait.class);
+            var syncScheme = Symbol.builder()
+                    .name("SigV4AuthScheme")
+                    .namespace("smithy_aws_core.auth", ".")
+                    .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
+                    .build();
+            writer.write("$T(service=$S)", syncScheme, trait.getName());
         }
     }
 }

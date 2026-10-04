@@ -35,7 +35,7 @@ async def test_endpoint_provider_with_uri_string() -> None:
         port=8080,
     )
     resolver = StaticEndpointResolver()
-    result = await resolver.resolve_endpoint(params=params)
+    result = resolver.resolve_endpoint(params=params)
     assert result.uri == expected
 
 
@@ -49,5 +49,5 @@ async def test_endpoint_provider_with_uri_object() -> None:
     )
     params = EndpointConfig.params(expected)
     resolver = StaticEndpointResolver()
-    result = await resolver.resolve_endpoint(params=params)
+    result = resolver.resolve_endpoint(params=params)
     assert result.uri == expected

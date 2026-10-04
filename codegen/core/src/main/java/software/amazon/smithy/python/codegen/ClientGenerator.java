@@ -47,20 +47,17 @@ final class ClientGenerator implements Runnable {
     @Override
     public void run() {
         context.writerDelegator().useShapeWriter(service, this::generateService);
+        context.writerDelegator().useShapeWriter(service, this::generateSyncService);
     }
 
     private void generateService(PythonWriter writer) {
         var serviceSymbol = symbolProvider.toSymbol(service);
         writer.addLocallyDefinedSymbol(serviceSymbol);
-        var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
         writer.addLogger();
 
-        // Services with a generated async config resolve lazily on first use;
-        // the rest keep the synchronous constructor with old Config.
-        var asyncConfigSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
-        var isAsyncConfig = asyncConfigSymbol.isPresent();
-        var configSym = asyncConfigSymbol.orElse(configSymbol);
+        // The async client always resolves its async config lazily on first use.
+        var configSym = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
 
         writer.openBlock("class $L($T):",
                 "",
@@ -166,7 +163,9 @@ final class ClientGenerator implements Runnable {
                                         " and auth_schemes MUST be set on the config to make calls."
                                     )
                                 retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
-                                    retry_strategy=config.retry_strategy,
+                                    retry_strategy=cast(
+                                        "$14T | $15T | None", config.retry_strategy
+                                    ),
                                     ${11C|}
                                 )
                                 return self._build_call(
@@ -181,11 +180,7 @@ final class ClientGenerator implements Runnable {
                             writer.consumer(w -> writeConstructorDocs(w, serviceSymbol.getName())),
                             writer.consumer(w -> writeDefaultPlugins(w, servicePlugins)),
                             writer.consumer(w -> {
-                                if (isAsyncConfig) {
-                                    w.write("config = await $T.resolve()", configSym);
-                                } else {
-                                    w.write("config = $T()", configSym);
-                                }
+                                w.write("config = await $T.resolve()", configSym);
                             }),
                             writer.consumer(w -> {
                                 w.pushState(new ClientSetupSection());
@@ -197,13 +192,17 @@ final class ClientGenerator implements Runnable {
                             RuntimeTypes.REQUEST_PIPELINE,
                             RuntimeTypes.CLIENT_CALL,
                             writer.consumer(w -> {
-                                if (isAsyncConfig) {
+                                if (CodegenUtils.isAwsService(context.settings(), context.model())) {
                                     w.write("retry_mode=config.retry_mode,");
                                     w.write("max_attempts=config.max_attempts,");
                                 }
                             }),
                             RuntimeTypes.SERIALIZEABLE_SHAPE,
-                            RuntimeTypes.DESERIALIZEABLE_SHAPE);
+                            RuntimeTypes.DESERIALIZEABLE_SHAPE,
+                            RuntimeTypes.ASYNC_RETRY_STRATEGY,
+                            RuntimeTypes.RETRY_STRATEGY_OPTIONS);
+
+                    writer.addStdlibImport("typing", "cast");
 
                     var topDownIndex = TopDownIndex.of(model);
                     var eventStreamIndex = EventStreamIndex.of(model);
@@ -217,6 +216,210 @@ final class ClientGenerator implements Runnable {
                     }
                 });
 
+    }
+
+    private void generateSyncService(PythonWriter writer) {
+        var serviceSymbol = symbolProvider.toSymbol(service);
+        // The service symbol is Async-prefixed; the sync client takes the canonical
+        // unprefixed name in the same module.
+        var syncName = serviceSymbol.getName().startsWith("Async")
+                ? serviceSymbol.getName().substring("Async".length())
+                : serviceSymbol.getName();
+        var configSym = CodegenUtils.getConfigSymbol(context.settings(), context.model());
+        var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
+        writer.addLogger();
+
+        writer.openBlock("class $L($T):",
+                "",
+                syncName,
+                RuntimeTypes.SYNC_CLIENT,
+                () -> {
+                    var docs = service.getTrait(DocumentationTrait.class)
+                            .map(StringTrait::getValue)
+                            .orElse("Synchronous client for " + service.getId().getName());
+                    writer.writeDocs(docs, context);
+
+                    writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+                    writer.addStdlibImport("typing", "Any");
+
+                    // Collect service-scoped plugins applied once during setup.
+                    var servicePlugins = new LinkedHashSet<SymbolReference>();
+                    for (PythonIntegration integration : context.integrations()) {
+                        for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins(context)) {
+                            if (runtimeClientPlugin.matchesService(model, service)) {
+                                runtimeClientPlugin.getPythonPlugin().ifPresent(servicePlugins::add);
+                            }
+                        }
+                    }
+
+                    writer.addStdlibImport("copy", "deepcopy");
+
+                    writer.write("""
+                            def __init__(
+                                self,
+                                config: $1T | None = None,
+                                plugins: list[$2T] | None = None,
+                            ):
+                                ${3C|}
+                                super().__init__()
+                                self._config = config
+                                self._plugins = plugins
+                                self._client_plugins: list[$2T] = [
+                                    ${4C|}
+                                ]
+
+                            def _ensure_setup(self) -> $1T:
+                                if not self._setup_done:
+                                    with self._derive_lock:
+                                        if self._closed:
+                                            raise RuntimeError(
+                                                "Cannot invoke an operation on a client that has been closed."
+                                            )
+                                        if not self._setup_done:
+                                            if self._config is None:
+                                                config = $1T.resolve()
+                                            else:
+                                                # Copy so plugins don't mutate the caller's config.
+                                                config = deepcopy(self._config)
+                                            # Plugins are typed against the async config but
+                                            # only touch the shared base fields.
+                                            plugin_config = cast("$15T", config)
+                                            for plugin in self._client_plugins:
+                                                plugin(plugin_config)
+                                            if self._plugins:
+                                                for plugin in self._plugins:
+                                                    plugin(plugin_config)
+                                            # Publish state only after setup fully succeeds, so a
+                                            # failed _post_setup leaves the caller's config untouched
+                                            # (no re-applied plugins) and the transport closeable.
+                                            self._post_setup(config)
+                                            self._transport = cast(
+                                                "$12T[Any, Any] | None", config.transport
+                                            )
+                                            self._config = config
+                                            self._setup_done = True
+                                assert self._config is not None
+                                return self._config
+
+                            def _post_setup(self, config: $1T) -> None:
+                                ${5C|}
+
+                            def _prepare_call[
+                                I: $10T, O: $11T
+                            ](
+                                self,
+                                input: I,
+                                operation: $6T[I, O],
+                                default_plugins: list[$2T],
+                                plugins: list[$2T] | None,
+                            ) -> tuple[$7T[Any, Any], $8T[I, O]]:
+                                if self._closed:
+                                    raise RuntimeError(
+                                        "Cannot invoke an operation on a client that has been closed."
+                                    )
+                                config = self._ensure_setup()
+                                if default_plugins or plugins:
+                                    # Keep operation-plugin mutations scoped to this call.
+                                    config = deepcopy(config)
+                                    # Plugins are typed against the async config but
+                                    # only touch the shared base fields.
+                                    plugin_config = cast("$15T", config)
+                                    for plugin in default_plugins:
+                                        plugin(plugin_config)
+                                    if plugins:
+                                        for plugin in plugins:
+                                            plugin(plugin_config)
+                                if (
+                                    config.protocol is None
+                                    or config.transport is None
+                                    or config.endpoint_resolver is None
+                                    or config.auth_scheme_resolver is None
+                                    or config.auth_schemes is None
+                                ):
+                                    raise $9T(
+                                        "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                                        " and auth_schemes MUST be set on the config to make calls."
+                                    )
+                                retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+                                    retry_strategy=cast(
+                                        "$13T | $14T | None", config.retry_strategy
+                                    ),
+                                )
+                                return self._build_call(
+                                    input,
+                                    operation,
+                                    config=config,
+                                    retry_strategy=retry_strategy,
+                                )
+                            """,
+                            configSym,
+                            pluginSymbol,
+                            writer.consumer(w -> writeConstructorDocs(w, syncName)),
+                            writer.consumer(w -> writeDefaultPlugins(w, servicePlugins)),
+                            // The sync client omits the async-only identity-chain setup
+                            // that ClientSetupSection emits; _post_setup is a no-op.
+                            writer.consumer(w -> w.write("pass")),
+                            RuntimeTypes.API_OPERATION,
+                            RuntimeTypes.SYNC_REQUEST_PIPELINE,
+                            RuntimeTypes.CLIENT_CALL,
+                            RuntimeTypes.EXPECTATION_NOT_MET_ERROR,
+                            RuntimeTypes.SERIALIZEABLE_SHAPE,
+                            RuntimeTypes.DESERIALIZEABLE_SHAPE,
+                            RuntimeTypes.SYNC_CLIENT_TRANSPORT,
+                            RuntimeTypes.RETRY_STRATEGY,
+                            RuntimeTypes.RETRY_STRATEGY_OPTIONS,
+                            CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model()));
+
+                    writer.addStdlibImport("typing", "cast");
+
+                    var topDownIndex = TopDownIndex.of(model);
+                    var eventStreamIndex = EventStreamIndex.of(model);
+                    for (OperationShape operation : topDownIndex.getContainedOperations(service)) {
+                        // Streaming operations are async-only; the sync client omits them.
+                        if (eventStreamIndex.getInputInfo(operation).isPresent()
+                                || eventStreamIndex.getOutputInfo(operation).isPresent()) {
+                            continue;
+                        }
+                        generateSyncOperation(writer, operation);
+                    }
+                });
+    }
+
+    private void generateSyncOperation(PythonWriter writer, OperationShape operation) {
+        var operationSymbol = symbolProvider.toSymbol(operation);
+        var operationMethodSymbol = operationSymbol.expectProperty(OPERATION_METHOD);
+        var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
+
+        var input = model.expectShape(operation.getInputShape());
+        var inputSymbol = symbolProvider.toSymbol(input);
+
+        var output = model.expectShape(operation.getOutputShape());
+        var outputSymbol = symbolProvider.toSymbol(output);
+
+        writer.putContext("input", inputSymbol);
+        writer.putContext("output", outputSymbol);
+        writer.putContext("plugin", pluginSymbol);
+        writer.putContext("operationName", operationMethodSymbol.getName());
+        writer.putContext("operation", symbolProvider.toSymbol(operation));
+        writer.write("""
+                def ${operationName:L}(
+                    self,
+                    input: ${input:T},
+                    plugins: list[${plugin:T}] | None = None
+                ) -> ${output:T}:
+                    ${C|}
+                    pipeline, call = self._prepare_call(
+                        input,
+                        ${operation:T},
+                        [
+                            ${C|}
+                        ],
+                        plugins,
+                    )
+                    return pipeline(call)
+                """,
+                writer.consumer(w -> writeOperationDocs(w, operation, input, output)),
+                writer.consumer(w -> writeDefaultOperationPlugins(w, operation)));
     }
 
     private void writeDefaultPlugins(PythonWriter writer, Collection<SymbolReference> plugins) {

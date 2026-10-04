@@ -9,16 +9,36 @@ from typing import Any, cast
 from smithy_aws_core.config import ConfigSource
 from smithy_aws_core.identity import AWSCredentialsIdentity
 from smithy_aws_core.identity.chain import IdentityChain
-from smithy_core.aio.client import AsyncClient, ClientCall, RequestPipeline
+from smithy_core.aio.client import (
+    AsyncClient,
+    ClientCall,
+    RequestPipeline as _smithy_core_aio_client_RequestPipeline,
+)
+from smithy_core.aio.interfaces.retries import AsyncRetryStrategy
+from smithy_core.client import (
+    Client,
+    RequestPipeline as _smithy_core_client_RequestPipeline,
+)
 from smithy_core.deserializers import DeserializeableShape
 from smithy_core.exceptions import ExpectationNotMetError
+from smithy_core.interfaces import ClientTransport
+from smithy_core.interfaces.retries import RetryStrategy
+from smithy_core.retries import RetryStrategyOptions
 from smithy_core.schemas import APIOperation
 from smithy_core.serializers import SerializeableShape
 from smithy_http.aio.interfaces import HTTPClient
 from smithy_http.plugins import user_agent_plugin
 
-from .config import AsyncRestXmlProtocolNamespaceConfig, Plugin
-from .models import SIMPLE_SCALAR_PROPERTIES
+from .config import (
+    AsyncRestXmlProtocolNamespaceConfig,
+    Plugin,
+    RestXmlProtocolNamespaceConfig,
+)
+from .models import (
+    SIMPLE_SCALAR_PROPERTIES,
+    SimpleScalarPropertiesInput,
+    SimpleScalarPropertiesOutput,
+)
 from .user_agent import aws_user_agent_plugin
 
 from typing import TYPE_CHECKING
@@ -111,7 +131,7 @@ class AsyncRestXmlProtocolNamespaceClient(AsyncClient):
         operation: APIOperation[I, O],
         default_plugins: list[Plugin],
         plugins: list[Plugin] | None,
-    ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
+    ) -> tuple[_smithy_core_aio_client_RequestPipeline[Any, Any], ClientCall[I, O]]:
         if self._closed:
             raise RuntimeError(
                 "Cannot invoke an operation on a client that has been closed."
@@ -137,7 +157,10 @@ class AsyncRestXmlProtocolNamespaceClient(AsyncClient):
                 " and auth_schemes MUST be set on the config to make calls."
             )
         retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
-            retry_strategy=config.retry_strategy,
+            retry_strategy=cast(
+                "AsyncRetryStrategy | RetryStrategyOptions | None",
+                config.retry_strategy,
+            ),
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
         )
@@ -167,3 +190,136 @@ class AsyncRestXmlProtocolNamespaceClient(AsyncClient):
             input, SIMPLE_SCALAR_PROPERTIES, [], plugins
         )
         return await pipeline(call)
+
+
+class RestXmlProtocolNamespaceClient(Client):
+    """
+    A REST XML service that sends XML requests and responses. This service
+    and test case is complementary to the test cases in the `restXml`
+    directory, but the service under test here has the `xmlNamespace`
+    trait applied to it. See
+    https://github.com/smithy-lang/smithy/issues/616
+    """
+
+    def __init__(
+        self,
+        config: RestXmlProtocolNamespaceConfig | None = None,
+        plugins: list[Plugin] | None = None,
+    ):
+        """
+        Constructor for `RestXmlProtocolNamespaceClient`.
+
+        Args:
+            config:
+                Optional configuration for the client. Here you can set things like
+                the endpoint for HTTP services or auth credentials.
+            plugins:
+                A list of callables applied once to the client's base configuration.
+                Their changes are inherited by every operation invocation.
+        """
+        super().__init__()
+        self._config = config
+        self._plugins = plugins
+        self._client_plugins: list[Plugin] = [aws_user_agent_plugin, user_agent_plugin]
+
+    def _ensure_setup(self) -> RestXmlProtocolNamespaceConfig:
+        if not self._setup_done:
+            with self._derive_lock:
+                if self._closed:
+                    raise RuntimeError(
+                        "Cannot invoke an operation on a client that has been closed."
+                    )
+                if not self._setup_done:
+                    if self._config is None:
+                        config = RestXmlProtocolNamespaceConfig.resolve()
+                    else:
+                        # Copy so plugins don't mutate the caller's config.
+                        config = deepcopy(self._config)
+                    # Plugins are typed against the async config but
+                    # only touch the shared base fields.
+                    plugin_config = cast("AsyncRestXmlProtocolNamespaceConfig", config)
+                    for plugin in self._client_plugins:
+                        plugin(plugin_config)
+                    if self._plugins:
+                        for plugin in self._plugins:
+                            plugin(plugin_config)
+                    # Publish state only after setup fully succeeds, so a
+                    # failed _post_setup leaves the caller's config untouched
+                    # (no re-applied plugins) and the transport closeable.
+                    self._post_setup(config)
+                    self._transport = cast(
+                        "ClientTransport[Any, Any] | None", config.transport
+                    )
+                    self._config = config
+                    self._setup_done = True
+        assert self._config is not None
+        return self._config
+
+    def _post_setup(self, config: RestXmlProtocolNamespaceConfig) -> None:
+        pass
+
+    def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
+        self,
+        input: I,
+        operation: APIOperation[I, O],
+        default_plugins: list[Plugin],
+        plugins: list[Plugin] | None,
+    ) -> tuple[_smithy_core_client_RequestPipeline[Any, Any], ClientCall[I, O]]:
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+        config = self._ensure_setup()
+        if default_plugins or plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(config)
+            # Plugins are typed against the async config but
+            # only touch the shared base fields.
+            plugin_config = cast("AsyncRestXmlProtocolNamespaceConfig", config)
+            for plugin in default_plugins:
+                plugin(plugin_config)
+            if plugins:
+                for plugin in plugins:
+                    plugin(plugin_config)
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=cast(
+                "RetryStrategy | RetryStrategyOptions | None", config.retry_strategy
+            )
+        )
+        return self._build_call(
+            input, operation, config=config, retry_strategy=retry_strategy
+        )
+
+    def simple_scalar_properties(
+        self, input: SimpleScalarPropertiesInput, plugins: list[Plugin] | None = None
+    ) -> SimpleScalarPropertiesOutput:
+        """
+        Invokes the SimpleScalarProperties operation.
+
+        Args:
+            input:
+                An instance of `SimpleScalarPropertiesInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `SimpleScalarPropertiesOutput`.
+        """
+        pipeline, call = self._prepare_call(
+            input, SIMPLE_SCALAR_PROPERTIES, [], plugins
+        )
+        return pipeline(call)

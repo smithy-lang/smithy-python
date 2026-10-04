@@ -11,7 +11,7 @@ import pytest
 from smithy_core.aio.client import AsyncClient
 from smithy_core.aio.eventstream import DuplexEventStream, InputEventStream
 from smithy_core.aio.interfaces import ClientTransport
-from smithy_core.aio.retries import AdaptiveRetryStrategy, SimpleRetryStrategy
+from smithy_core.aio.retries import AsyncAdaptiveRetryStrategy, AsyncSimpleRetryStrategy
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.auth import AuthOption
 from smithy_core.exceptions import CallError, SmithyError, UnsupportedTransportError
@@ -129,7 +129,7 @@ async def test_response_metadata_kept_when_retry_times_out_waiting_for_send_toke
         raise CallError("Rate exceeded", is_retry_safe=True, is_throttling_error=True)
 
     harness.protocol.deserialize_response = throttle  # type: ignore[method-assign]
-    strategy = AdaptiveRetryStrategy(max_attempts=3)
+    strategy = AsyncAdaptiveRetryStrategy(max_attempts=3)
     timeout = TimeoutError("Failed to acquire 1.0 tokens within 30.0s")
 
     with (
@@ -359,7 +359,7 @@ def _streaming_call_failing_once(
     return replace(
         client_call(),
         operation=operation,
-        retry_strategy=SimpleRetryStrategy(
+        retry_strategy=AsyncSimpleRetryStrategy(
             backoff_strategy=ExponentialRetryBackoffStrategy(backoff_scale_value=0),
             max_attempts=2,
         ),

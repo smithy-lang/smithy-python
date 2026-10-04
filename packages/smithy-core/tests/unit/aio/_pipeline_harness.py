@@ -6,8 +6,8 @@ from typing import Any, Self, cast
 from smithy_core import URI
 from smithy_core.aio.client import ClientCall, RequestPipeline
 from smithy_core.aio.interfaces import ClientProtocol
-from smithy_core.aio.interfaces.retries import RetryStrategy
-from smithy_core.aio.retries import SimpleRetryStrategy
+from smithy_core.aio.interfaces.retries import AsyncRetryStrategy
+from smithy_core.aio.retries import AsyncSimpleRetryStrategy
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.endpoints import EndpointResolverParams
 from smithy_core.interceptors import InterceptorChain
@@ -240,7 +240,7 @@ class StubEndpointResolver:
     def __init__(self) -> None:
         self.resolved_inputs: list[Any] = []
 
-    async def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Any:
+    def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Any:
         self.resolved_inputs.append(params.input)
         return StubEndpoint()
 
@@ -288,7 +288,7 @@ def pipeline_harness(transport: UndeclaredTransport) -> PipelineHarness:
 
 
 def retryable_client_call(
-    retry_strategy: RetryStrategy | None = None,
+    retry_strategy: AsyncRetryStrategy | None = None,
 ) -> ClientCall[Any, Any]:
     """A call that goes through the retry loop, unlike :py:func:`client_call`.
 
@@ -303,7 +303,7 @@ def retryable_client_call(
         auth_scheme_resolver=StubAuthResolver(),
         supported_auth_schemes={},
         endpoint_resolver=StubEndpointResolver(),
-        retry_strategy=retry_strategy or SimpleRetryStrategy(max_attempts=1),
+        retry_strategy=retry_strategy or AsyncSimpleRetryStrategy(max_attempts=1),
     )
 
 

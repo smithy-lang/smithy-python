@@ -4,33 +4,35 @@
  */
 package software.amazon.smithy.python.aws.codegen;
 
-import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import software.amazon.smithy.aws.traits.ServiceTrait;
 import software.amazon.smithy.codegen.core.Symbol;
-import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.python.codegen.CodegenUtils;
-import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.RuntimeTypes;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
+import software.amazon.smithy.python.codegen.generators.ConfigBackend;
 import software.amazon.smithy.python.codegen.integrations.PythonIntegration;
 import software.amazon.smithy.python.codegen.integrations.RuntimeClientPlugin;
-import software.amazon.smithy.python.codegen.sections.AsyncConfigSection;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
-import software.amazon.smithy.utils.CodeInterceptor;
-import software.amazon.smithy.utils.CodeSection;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
 /**
- * AWS integration that generates the async config subclass (e.g., AsyncBedrockRuntimeConfig)
- * inheriting from AsyncAwsConfig with service-specific fields and defaults.
+ * Contributes the AWS resolution backend: the generated config classes inherit the
+ * AWS config bases ({@code AwsConfigBase}/{@code AwsConfig}/{@code AsyncAwsConfig}),
+ * their {@code resolve()} accepts the shared-config-file parameters, and their
+ * {@code _FIELDS} carry the AWS region/endpoint/credential resolvers.
+ *
+ * <p>Class emission stays in the core config generator; this only supplies what is
+ * AWS-specific, so AWS-ness never decides the sync/async shape.
  */
 @SmithyInternalApi
 public class AwsAsyncConfigIntegration implements PythonIntegration {
-    // Keep base fields synchronized with AwsConfigOverrides. The remaining fields are
-    // generated explicitly below.
+
+    // Fields already carried by AwsConfigBase._FIELDS (spread by writeExtraFields). The
+    // core generator skips emitting a _FIELDS entry and overrides key for these.
     private static final Set<String> PREDEFINED_CONFIG_FIELDS = Set.of(
             "region",
             "retry_mode",
@@ -52,212 +54,92 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             "auth_scheme_resolver");
 
     @Override
-    public List<? extends CodeInterceptor<? extends CodeSection, PythonWriter>> interceptors(
-            GenerationContext context
-    ) {
-        return List.of(new AsyncConfigInterceptor(context));
+    public Optional<ConfigBackend> configBackend(GenerationContext context) {
+        if (!CodegenUtils.isAwsService(context.settings(), context.model())) {
+            return Optional.empty();
+        }
+        return Optional.of(new AwsConfigBackend(context));
     }
 
-    private static final class AsyncConfigInterceptor
-            implements CodeInterceptor<AsyncConfigSection, PythonWriter> {
-
+    private static final class AwsConfigBackend implements ConfigBackend {
         private final GenerationContext context;
 
-        AsyncConfigInterceptor(GenerationContext context) {
+        AwsConfigBackend(GenerationContext context) {
             this.context = context;
         }
 
-        @Override
-        public Class<AsyncConfigSection> sectionType() {
-            return AsyncConfigSection.class;
-        }
-
-        @Override
-        public void write(PythonWriter writer, String previousText, AsyncConfigSection section) {
-            // Write any previous content first
-            writer.write(previousText);
-
-            var model = context.model();
-            var service = context.settings().service(model);
-
-            // Gate on the same source of truth the core generators use to decide whether
-            // to emit references to these classes. If it says no symbol is generated, we
-            // must not define one, or the two would disagree.
-            var maybeAsyncConfigSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), model);
-            if (maybeAsyncConfigSymbol.isEmpty()) {
-                return;
-            }
-            var asyncConfigSymbol = maybeAsyncConfigSymbol.get();
-
-            final String serviceId = service.getTrait(ServiceTrait.class)
-                    .map(ServiceTrait::getSdkId)
-                    .orElse(context.settings().service().getName());
-
-            var serviceIndex = ServiceIndex.of(context.model());
-            var hasAuth = !serviceIndex.getAuthSchemes(context.settings().service()).isEmpty();
-            // Preserve the first declaration when plugins contribute duplicate properties.
-            var pluginProperties = new LinkedHashMap<String, ConfigProperty>();
-            for (PythonIntegration integration : context.integrations()) {
-                for (RuntimeClientPlugin plugin : integration.getClientPlugins(context)) {
-                    if (plugin.matchesService(model, service)) {
-                        for (ConfigProperty property : plugin.getConfigProperties()) {
-                            pluginProperties.putIfAbsent(property.name(), property);
-                        }
-                    }
-                }
-            }
-
-            var asyncAwsConfigSymbol = Symbol.builder()
-                    .name("AsyncAwsConfig")
+        private static Symbol awsConfig(String name) {
+            return Symbol.builder()
+                    .name(name)
                     .namespace("smithy_aws_core.config.aws_config", ".")
                     .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                     .build();
-            var awsConfigOverridesSymbol = Symbol.builder()
+        }
+
+        @Override
+        public Symbol baseSymbol() {
+            return awsConfig("AwsConfigBase");
+        }
+
+        @Override
+        public Symbol syncConfigSymbol() {
+            return awsConfig("AwsConfig");
+        }
+
+        @Override
+        public Symbol asyncConfigSymbol() {
+            return awsConfig("AsyncAwsConfig");
+        }
+
+        @Override
+        public Symbol overridesBaseSymbol() {
+            return Symbol.builder()
                     .name("AwsConfigOverrides")
                     .namespace("smithy_aws_core.config", ".")
                     .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                     .build();
-            var fileSystemSymbol = Symbol.builder()
+        }
+
+        @Override
+        public boolean isPredefinedField(String name) {
+            return PREDEFINED_CONFIG_FIELDS.contains(name);
+        }
+
+        @Override
+        public List<ResolveParam> resolveParams() {
+            var fileSystem = Symbol.builder()
                     .name("FileSystem")
                     .namespace("smithy_aws_core.config", ".")
                     .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
                     .build();
+            var str = Symbol.builder().name("str").build();
+            return List.of(
+                    new ResolveParam("profile", str),
+                    new ResolveParam("fs", fileSystem),
+                    new ResolveParam("config_file_path", str),
+                    new ResolveParam("credentials_file_path", str));
+        }
+
+        @Override
+        public void writeExtraFields(GenerationContext context, PythonWriter writer) {
             var fieldSpecSymbol = Symbol.builder()
                     .name("FieldSpec")
-                    .namespace("smithy_aws_core.config.types", ".")
-                    .addDependency(AwsPythonDependency.SMITHY_AWS_CORE)
-                    .build();
-            var protocolSymbol = Symbol.builder()
-                    .name("ClientProtocol[Any, Any]")
-                    .addReference(Symbol.builder()
-                            .name("ClientProtocol")
-                            .namespace("smithy_core.aio.interfaces", ".")
-                            .addDependency(SmithyPythonDependency.SMITHY_CORE)
-                            .build())
-                    .build();
-            // The override accepts a protocol class in addition to an instance; the
-            // resolved dataclass field is always an instance, so it uses protocolSymbol.
-            var protocolInputSymbol = Symbol.builder()
-                    .name("ClientProtocol[Any, Any] | ProtocolConstructor[ClientProtocol[Any, Any]]")
-                    .addReference(Symbol.builder()
-                            .name("ClientProtocol")
-                            .namespace("smithy_core.aio.interfaces", ".")
-                            .addDependency(SmithyPythonDependency.SMITHY_CORE)
-                            .build())
-                    .addReference(Symbol.builder()
-                            .name("ProtocolConstructor")
-                            .namespace("smithy_core.aio.interfaces", ".")
-                            .addDependency(SmithyPythonDependency.SMITHY_CORE)
-                            .build())
-                    .build();
-            var authSchemeSymbol = Symbol.builder()
-                    .name("AuthScheme[Any, Any, Any, Any]")
-                    .addReference(Symbol.builder()
-                            .name("AuthScheme")
-                            .namespace("smithy_core.aio.interfaces.auth", ".")
-                            .addDependency(SmithyPythonDependency.SMITHY_CORE)
-                            .build())
-                    .build();
-            // The declared field/override type is the protocol so any conforming resolver
-            // is accepted without subclassing the generated default.
-            var authSchemeResolverInterfaceSymbol = Symbol.builder()
-                    .name("AuthSchemeResolver")
-                    .namespace("smithy_core.interfaces.auth", ".")
+                    .namespace("smithy_core.config", ".")
                     .addDependency(SmithyPythonDependency.SMITHY_CORE)
                     .build();
-            var overridesTypeName = "_" + asyncConfigSymbol.getName() + "Overrides";
+            var awsConfigBaseSymbol = awsConfig("AwsConfigBase");
+            var service = context.settings().service(context.model());
+            var serviceIndex = software.amazon.smithy.model.knowledge.ServiceIndex.of(context.model());
+            var hasAuth = !serviceIndex.getAuthSchemes(service).isEmpty();
+            final String serviceId = service.getTrait(ServiceTrait.class)
+                    .map(ServiceTrait::getSdkId)
+                    .orElse(service.getId().getName());
 
-            writer.addStdlibImport("typing", "ClassVar");
-            writer.addStdlibImport("typing", "Any");
-            writer.addStdlibImport("typing", "Self");
-            writer.addStdlibImport("typing", "Unpack");
-            writer.addStdlibImport("dataclasses", "dataclass");
-            writer.addStdlibImport("dataclasses", "field");
+            // Spread the AWS base fields first; everything below deliberately overrides
+            // them and so must come after the spread.
+            writer.write("**$T._FIELDS,", awsConfigBaseSymbol);
 
-            writer.write("");
-            writer.write("");
-            writer.openBlock("class $L($T, total=False):", overridesTypeName, awsConfigOverridesSymbol);
-            writer.write("endpoint_resolver: $T | None", RuntimeTypes.ENDPOINT_RESOLVER);
-            writer.write("protocol: $T | None", protocolInputSymbol);
-            if (hasAuth) {
-                writer.write("auth_schemes: dict[$T, $T] | None",
-                        RuntimeTypes.SHAPE_ID,
-                        authSchemeSymbol);
-                writer.write("auth_scheme_resolver: $T | None", authSchemeResolverInterfaceSymbol);
-            }
-            for (ConfigProperty property : pluginProperties.values()) {
-                if (!PREDEFINED_CONFIG_FIELDS.contains(property.name())) {
-                    // Match the nullable dataclass field and FieldSpec below.
-                    writer.write("$L: $T | None", property.name(), property.type());
-                }
-            }
-            writer.closeBlock("");
-            writer.write("");
-
-            // repr=False is required: AsyncAwsConfig defines a __repr__ that filters out
-            // credential fields, and a generated __repr__ on this subclass would shadow it
-            // and leak secrets.
-            writer.write("@dataclass(kw_only=True, repr=False, init=False)");
-            writer.openBlock("class $L($T):", asyncConfigSymbol.getName(), asyncAwsConfigSymbol);
-            writer.writeDocs(serviceId + " configuration (async-resolved).", context);
-            writer.write("");
-
-            // Write service-specific field declarations
-            writer.write("endpoint_resolver: $T | None = None", RuntimeTypes.ENDPOINT_RESOLVER);
-            writer.writeDocs("The endpoint resolver used to resolve the final endpoint per-operation "
-                    + "based on the configuration.", context);
-            writer.write("");
-
-            writer.write("protocol: $T | None = None", protocolSymbol);
-            writer.writeDocs("Pass a protocol class reference from smithy_aws_core.aio.protocols "
-                    + "to select the protocol, e.g. protocol=AwsJson10ClientProtocol. For custom "
-                    + "protocols a protocol instance may also be passed.", context);
-            writer.write("");
-
-            writer.write("interceptors: list[_ServiceInterceptor] = field(default_factory=lambda: [])");
-            writer.writeDocs(
-                    "The list of interceptors, which are hooks that are called during the execution of a request.",
-                    context);
-            writer.write("");
-
-            if (hasAuth) {
-                writer.write("auth_schemes: dict[$T, $T] | None = None",
-                        RuntimeTypes.SHAPE_ID,
-                        authSchemeSymbol);
-                writer.writeDocs("A map of auth scheme ids to auth schemes.", context);
-                writer.write("");
-
-                writer.write("auth_scheme_resolver: $T | None = None", authSchemeResolverInterfaceSymbol);
-                writer.writeDocs("An auth scheme resolver that determines the auth scheme "
-                        + "for each operation.", context);
-                writer.write("");
-            }
-
-            // Plugin-contributed field declarations (e.g., api_key for @httpApiKeyAuth).
-            for (ConfigProperty property : pluginProperties.values()) {
-                writer.write("$L: $T | None = None", property.name(), property.type());
-                writer.writeDocs(property.documentation(), context);
-                writer.write("");
-            }
-
-            // Write _FIELDS class variable with service-specific defaults
-            writer.openBlock("_FIELDS: ClassVar[dict[str, $T]] = {", fieldSpecSymbol);
-
-            // Plugin-contributed FieldSpec entries are emitted before the base class
-            // spread. Some duplicate fields already in AsyncAwsConfig._FIELDS (e.g.,
-            // region, sdk_ua_app_id) — these are harmlessly overwritten by the spread
-            // below. Fields unique to this service (e.g., api_key from @httpApiKeyAuth)
-            // survive and participate in the resolution pipeline.
-            for (String propertyName : pluginProperties.keySet()) {
-                writer.write("\"$L\": $T(default=None),", propertyName, fieldSpecSymbol);
-            }
-
-            writer.write("**$T._FIELDS,", asyncAwsConfigSymbol);
-
-            // Everything below deliberately overrides the base class and so must
-            // stay after the spread.
-
-            // endpoint_uri FieldSpec — overrides base class with service-aware resolver
+            // endpoint_uri — service-aware resolver.
             var endpointUriResolverSymbol = Symbol.builder()
                     .name("EndpointUriResolver")
                     .namespace("smithy_aws_core.config.resolvers", ".")
@@ -268,13 +150,14 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             writer.indent();
             writer.write("default=None,");
             writer.write("resolver=$T($S),", endpointUriResolverSymbol, snakeCaseServiceId);
+            writer.write("async_resolver=$T($S).resolve_async,", endpointUriResolverSymbol, snakeCaseServiceId);
             writer.dedent();
             writer.write("),");
 
-            // endpoint_resolver FieldSpec
+            // endpoint_resolver.
             var endpointPrefix = service.getTrait(ServiceTrait.class)
                     .map(ServiceTrait::getEndpointPrefix)
-                    .orElse(context.settings().service().getName());
+                    .orElse(service.getId().getName());
             writer.write("\"endpoint_resolver\": $T(", fieldSpecSymbol);
             writer.indent();
             writer.write("default_factory=lambda: $T(endpoint_prefix=$S),",
@@ -283,25 +166,28 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
             writer.dedent();
             writer.write("),");
 
-            // protocol FieldSpec
+            // protocol.
             writer.write("\"protocol\": $T(", fieldSpecSymbol);
             writer.indent();
             writer.write("default_factory=lambda: ${C|},",
+                    writer.consumer(w -> context.protocolGenerator().initializeSyncProtocol(context, w)));
+            writer.write("async_default_factory=lambda: ${C|},",
                     writer.consumer(w -> context.protocolGenerator().initializeProtocol(context, w)));
             writer.write("converter=lambda p: p(_PROTOCOL_SETTINGS) if isinstance(p, type) else p,");
             writer.dedent();
             writer.write("),");
 
-            // auth_schemes FieldSpec
+            // auth.
             if (hasAuth) {
                 writer.write("\"auth_schemes\": $T(", fieldSpecSymbol);
                 writer.indent();
                 writer.write("default_factory=lambda: ${C|},",
-                        writer.consumer(w -> writeAsyncDefaultAuthSchemes(context, w)));
+                        writer.consumer(w -> writeDefaultAuthSchemes(context, w, true)));
+                writer.write("async_default_factory=lambda: ${C|},",
+                        writer.consumer(w -> writeDefaultAuthSchemes(context, w, false)));
                 writer.dedent();
                 writer.write("),");
 
-                // auth_scheme_resolver FieldSpec
                 writer.write("\"auth_scheme_resolver\": $T(", fieldSpecSymbol);
                 writer.indent();
                 writer.write("default_factory=$T,",
@@ -310,60 +196,18 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                 writer.write("),");
             }
 
-            // transport FieldSpec
+            // transport.
             writer.write("\"transport\": $T(", fieldSpecSymbol);
             writer.indent();
+            writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("urllib3"));
+            writer.write("default_factory=lambda: $T(),", RuntimeTypes.URLLIB3_CLIENT);
             writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("aiohttp"));
-            writer.write("default_factory=lambda: $T(),", RuntimeTypes.AIOHTTP_CLIENT);
+            writer.write("async_default_factory=lambda: $T(),", RuntimeTypes.AIOHTTP_CLIENT);
             writer.dedent();
             writer.write("),");
-
-            writer.closeBlock("}");
-            writer.write("");
-            if (hasAuth) {
-                writer.write("def set_auth_scheme(self, scheme: $T) -> None:", authSchemeSymbol);
-                writer.indent();
-                writer.writeDocs("""
-                        Set an auth scheme implementation using its scheme ID.
-
-                        :param scheme: The auth scheme to add or replace.
-                        """, context);
-                writer.write("auth_schemes = dict(self.auth_schemes or {})");
-                writer.write("auth_schemes[scheme.scheme_id] = scheme");
-                writer.write("self.auth_schemes = auth_schemes");
-                writer.dedent();
-                writer.write("");
-            }
-            writer.write("@classmethod");
-            writer.write("async def resolve(  # pyright: ignore[reportIncompatibleMethodOverride]");
-            writer.indent();
-            writer.write("cls,");
-            writer.write("*,");
-            writer.write("profile: str | None = None,");
-            writer.write("fs: $T | None = None,", fileSystemSymbol);
-            writer.write("config_file_path: str | None = None,");
-            writer.write("credentials_file_path: str | None = None,");
-            writer.write("**overrides: Unpack[$L],", overridesTypeName);
-            writer.dedent();
-            writer.write(") -> Self:");
-            writer.indent();
-            writer.writeDocs(
-                    "Resolve config from environment, config files, defaults, and explicit overrides.",
-                    context);
-            writer.write("return await cls._resolve(");
-            writer.indent();
-            writer.write("profile=profile,");
-            writer.write("fs=fs,");
-            writer.write("config_file_path=config_file_path,");
-            writer.write("credentials_file_path=credentials_file_path,");
-            writer.write("overrides=overrides,");
-            writer.dedent();
-            writer.write(")");
-            writer.dedent();
-            writer.closeBlock("");
         }
 
-        private static void writeAsyncDefaultAuthSchemes(GenerationContext context, PythonWriter writer) {
+        private static void writeDefaultAuthSchemes(GenerationContext context, PythonWriter writer, boolean sync) {
             var service = context.settings().service(context.model());
             writer.openBlock("{");
             for (PythonIntegration integration : context.integrations()) {
@@ -373,12 +217,17 @@ public class AwsAsyncConfigIntegration implements PythonIntegration {
                         writer.write("$T($S): ${C|},",
                                 RuntimeTypes.SHAPE_ID,
                                 scheme.getAuthTrait(),
-                                writer.consumer(w -> scheme.initializeScheme(context, writer, service)));
+                                writer.consumer(w -> {
+                                    if (sync) {
+                                        scheme.initializeSyncScheme(context, w, service);
+                                    } else {
+                                        scheme.initializeScheme(context, w, service);
+                                    }
+                                }));
                     }
                 }
             }
             writer.closeBlock("}");
         }
-
     }
 }
