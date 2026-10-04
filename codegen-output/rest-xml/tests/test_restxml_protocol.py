@@ -4,10 +4,17 @@ from datetime import datetime, timezone
 from urllib.parse import parse_qsl
 
 from pytest import fail, mark, raises
-from smithy_aws_core.identity import StaticCredentialsResolver
-from smithy_core.aio.retries import SimpleRetryStrategy
+from smithy_aws_core.auth.sigv4 import SigV4AuthScheme
+from smithy_aws_core.identity.static import (
+    AsyncStaticCredentialsResolver,
+    StaticCredentialsResolver,
+)
+from smithy_aws_core.protocols import RestXmlClientProtocol
+from smithy_core.aio.retries import AsyncSimpleRetryStrategy
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.aio.utils import async_list
+from smithy_core.retries import SimpleRetryStrategy
+from smithy_core.shapes import ShapeID
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPResponse as _smithy_http_aio_HTTPResponse
 from smithy_http.aio.interfaces import (
@@ -17,8 +24,12 @@ from smithy_http.aio.interfaces import (
 from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfiguration
 from smithy_test import deep_equal, xml_equal
 
-from restxml.client import AsyncRestXmlProtocolClient
-from restxml.config import AsyncRestXmlProtocolConfig
+from restxml.client import AsyncRestXmlProtocolClient, RestXmlProtocolClient
+from restxml.config import (
+    AsyncRestXmlProtocolConfig,
+    RestXmlProtocolConfig,
+    _PROTOCOL_SETTINGS,
+)
 from restxml.models import (
     AllQueryStringTypesInput,
     BodyWithXmlNameInput,
@@ -158,12 +169,12 @@ async def test_all_query_string_types_request_all_query_string_types() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -291,12 +302,12 @@ async def test_rest_xml_query_string_map_request_all_query_string_types() -> Non
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -369,12 +380,12 @@ async def test_rest_xml_query_string_escaping_request_all_query_string_types() -
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -443,12 +454,12 @@ async def test_rest_xml_supports_na_n_float_query_values_request_all_query_strin
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -517,12 +528,12 @@ async def test_rest_xml_supports_infinity_float_query_values_request_all_query_s
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -591,12 +602,12 @@ async def test_rest_xml_supports_negative_infinity_float_query_values_request_al
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -665,12 +676,12 @@ async def test_rest_xml_zero_and_false_query_values_request_all_query_string_typ
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -735,12 +746,12 @@ async def test_body_with_xml_name_request_body_with_xml_name() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -805,7 +816,7 @@ async def test_body_with_xml_name_response_body_with_xml_name() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<Ahoy><nested><name>Phreddy</name></nested></Ahoy>",
@@ -813,7 +824,7 @@ async def test_body_with_xml_name_response_body_with_xml_name() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -836,12 +847,12 @@ async def test_constant_and_variable_query_string_missing_one_value_request_cons
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -908,12 +919,12 @@ async def test_constant_and_variable_query_string_all_values_request_constant_an
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -978,12 +989,12 @@ async def test_constant_query_string_request_constant_query_string() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1053,7 +1064,7 @@ async def test_rest_xml_date_time_with_negative_offset_response_datetime_offsets
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<DatetimeOffsetsOutput>\n    <datetime>2019-12-16T22:48:18-01:00</datetime>\n</DatetimeOffsetsOutput>\n",
@@ -1061,7 +1072,7 @@ async def test_rest_xml_date_time_with_negative_offset_response_datetime_offsets
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1089,7 +1100,7 @@ async def test_rest_xml_date_time_with_positive_offset_response_datetime_offsets
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<DatetimeOffsetsOutput>\n    <datetime>2019-12-17T00:48:18+01:00</datetime>\n</DatetimeOffsetsOutput>\n",
@@ -1097,7 +1108,7 @@ async def test_rest_xml_date_time_with_positive_offset_response_datetime_offsets
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1122,12 +1133,12 @@ async def test_empty_input_and_empty_output_request_empty_input_and_empty_output
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1194,11 +1205,11 @@ async def test_empty_input_and_empty_output_response_empty_input_and_empty_outpu
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(status=200, headers=[], body=b""),
+            transport=ResponseTestAsyncHTTPClient(status=200, headers=[], body=b""),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1223,12 +1234,12 @@ async def test_rest_xml_endpoint_trait_request_endpoint_operation() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1302,12 +1313,12 @@ async def test_rest_xml_endpoint_trait_with_host_label_and_http_binding_request_
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1379,12 +1390,12 @@ async def test_rest_xml_endpoint_trait_with_host_label_request_endpoint_with_hos
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1449,12 +1460,12 @@ async def test_flattened_xml_map_request_flattened_xml_map() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1519,7 +1530,7 @@ async def test_flattened_xml_map_response_flattened_xml_map() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<FlattenedXmlMapResponse>\n    <myMap>\n        <key>foo</key>\n        <value>Foo</value>\n    </myMap>\n    <myMap>\n        <key>baz</key>\n        <value>Baz</value>\n    </myMap>\n</FlattenedXmlMapResponse>",
@@ -1527,7 +1538,7 @@ async def test_flattened_xml_map_response_flattened_xml_map() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1550,12 +1561,12 @@ async def test_flattened_xml_map_with_xml_name_request_flattened_xml_map_with_xm
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1622,7 +1633,7 @@ async def test_flattened_xml_map_with_xml_name_response_flattened_xml_map_with_x
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<FlattenedXmlMapWithXmlNameResponse>\n    <KVP>\n        <K>a</K>\n        <V>A</V>\n    </KVP>\n    <KVP>\n        <K>b</K>\n        <V>B</V>\n    </KVP>\n</FlattenedXmlMapWithXmlNameResponse>",
@@ -1630,7 +1641,7 @@ async def test_flattened_xml_map_with_xml_name_response_flattened_xml_map_with_x
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1656,7 +1667,7 @@ async def test_rest_xml_flattened_xml_map_with_xml_namespace_response_flattened_
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b'<FlattenedXmlMapWithXmlNamespaceOutput>\n    <KVP xmlns="https://the-member.example.com">\n        <K xmlns="https://the-key.example.com">a</K>\n        <V xmlns="https://the-value.example.com">A</V>\n    </KVP>\n    <KVP xmlns="https://the-member.example.com">\n        <K xmlns="https://the-key.example.com">b</K>\n        <V xmlns="https://the-value.example.com">B</V>\n    </KVP>\n</FlattenedXmlMapWithXmlNamespaceOutput>',
@@ -1664,7 +1675,7 @@ async def test_rest_xml_flattened_xml_map_with_xml_namespace_response_flattened_
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1690,7 +1701,7 @@ async def test_rest_xml_date_time_with_fractional_seconds_response_fractional_se
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<FractionalSecondsOutput>\n    <datetime>2000-01-02T20:34:56.123Z</datetime>\n</FractionalSecondsOutput>\n",
@@ -1698,7 +1709,7 @@ async def test_rest_xml_date_time_with_fractional_seconds_response_fractional_se
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1724,13 +1735,13 @@ async def test_greeting_with_errors_response_greeting_with_errors() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200, headers=[("X-Greeting", "Hello")], body=b""
             ),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1751,7 +1762,7 @@ async def test_invalid_greeting_error_error_greeting_with_errors() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=400,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<ErrorResponse>\n   <Error>\n      <Type>Sender</Type>\n      <Code>InvalidGreeting</Code>\n      <Message>Hi</Message>\n      <AnotherSetting>setting</AnotherSetting>\n   </Error>\n   <RequestId>foo-id</RequestId>\n</ErrorResponse>\n",
@@ -1759,7 +1770,7 @@ async def test_invalid_greeting_error_error_greeting_with_errors() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1779,7 +1790,7 @@ async def test_complex_error_error_greeting_with_errors() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=403,
                 headers=[("Content-Type", "application/xml"), ("X-Header", "Header")],
                 body=b"<ErrorResponse>\n   <Error>\n      <Type>Sender</Type>\n      <Code>ComplexError</Code>\n      <Message>Hi</Message>\n      <TopLevel>Top level</TopLevel>\n      <Nested>\n          <Foo>bar</Foo>\n      </Nested>\n   </Error>\n   <RequestId>foo-id</RequestId>\n</ErrorResponse>\n",
@@ -1787,7 +1798,7 @@ async def test_complex_error_error_greeting_with_errors() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1810,12 +1821,12 @@ async def test_http_empty_prefix_headers_request_client_request_http_empty_prefi
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1884,13 +1895,13 @@ async def test_http_empty_prefix_headers_response_client_response_http_empty_pre
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200, headers=[("hello", "There"), ("x-foo", "Foo")], body=b""
             ),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1912,12 +1923,12 @@ async def test_rest_xml_enum_payload_request_request_http_enum_payload() -> None
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1981,13 +1992,13 @@ async def test_rest_xml_enum_payload_response_response_http_enum_payload() -> No
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200, headers=[("Content-Type", "text/plain")], body=b"enumvalue"
             ),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2008,12 +2019,12 @@ async def test_http_payload_traits_with_blob_request_http_payload_traits() -> No
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2080,12 +2091,12 @@ async def test_http_payload_traits_with_no_blob_body_request_http_payload_traits
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2150,13 +2161,13 @@ async def test_http_payload_traits_with_blob_response_http_payload_traits() -> N
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200, headers=[("X-Foo", "Foo")], body=b"blobby blob blob"
             ),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2179,13 +2190,13 @@ async def test_http_payload_traits_with_no_blob_body_response_http_payload_trait
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200, headers=[("X-Foo", "Foo")], body=b""
             ),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2208,12 +2219,12 @@ async def test_http_payload_traits_with_media_type_with_blob_request_http_payloa
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2283,7 +2294,7 @@ async def test_http_payload_traits_with_media_type_with_blob_response_http_paylo
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/plain"), ("X-Foo", "Foo")],
                 body=b"blobby blob blob",
@@ -2291,7 +2302,7 @@ async def test_http_payload_traits_with_media_type_with_blob_response_http_paylo
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2319,12 +2330,12 @@ async def test_http_payload_with_member_xml_name_request_http_payload_with_membe
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2396,7 +2407,7 @@ async def test_http_payload_with_member_xml_name_response_http_payload_with_memb
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<Hola><name>Phreddy</name></Hola>",
@@ -2404,7 +2415,7 @@ async def test_http_payload_with_member_xml_name_response_http_payload_with_memb
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2429,12 +2440,12 @@ async def test_http_payload_with_structure_request_http_payload_with_structure()
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2503,7 +2514,7 @@ async def test_http_payload_with_structure_response_http_payload_with_structure(
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<NestedPayload>\n    <greeting>hello</greeting>\n    <name>Phreddy</name>\n</NestedPayload>\n",
@@ -2511,7 +2522,7 @@ async def test_http_payload_with_structure_response_http_payload_with_structure(
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2536,12 +2547,12 @@ async def test_rest_xml_http_payload_with_union_request_http_payload_with_union(
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2610,12 +2621,12 @@ async def test_rest_xml_http_payload_with_unset_union_request_http_payload_with_
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2682,7 +2693,7 @@ async def test_rest_xml_http_payload_with_union_response_http_payload_with_union
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<UnionPayload>\n    <greeting>hello</greeting>\n</UnionPayload>",
@@ -2690,7 +2701,7 @@ async def test_rest_xml_http_payload_with_union_response_http_payload_with_union
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2715,13 +2726,13 @@ async def test_rest_xml_http_payload_with_unset_union_response_http_payload_with
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200, headers=[("Content-Length", "0")], body=b""
             ),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2745,12 +2756,12 @@ async def test_http_payload_with_xml_name_request_http_payload_with_xml_name() -
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2818,7 +2829,7 @@ async def test_http_payload_with_xml_name_response_http_payload_with_xml_name() 
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<Hello><name>Phreddy</name></Hello>",
@@ -2826,7 +2837,7 @@ async def test_http_payload_with_xml_name_response_http_payload_with_xml_name() 
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2854,12 +2865,12 @@ async def test_http_payload_with_xml_namespace_request_http_payload_with_xml_nam
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2931,7 +2942,7 @@ async def test_http_payload_with_xml_namespace_response_http_payload_with_xml_na
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b'<PayloadWithXmlNamespace xmlns="http://foo.com">\n    <name>Phreddy</name>\n</PayloadWithXmlNamespace>',
@@ -2939,7 +2950,7 @@ async def test_http_payload_with_xml_namespace_response_http_payload_with_xml_na
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2967,12 +2978,12 @@ async def test_http_payload_with_xml_namespace_and_prefix_request_http_payload_w
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3044,7 +3055,7 @@ async def test_http_payload_with_xml_namespace_and_prefix_response_http_payload_
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b'<PayloadWithXmlNamespaceAndPrefix xmlns:baz="http://foo.com">\n    <name>Phreddy</name>\n</PayloadWithXmlNamespaceAndPrefix>',
@@ -3052,7 +3063,7 @@ async def test_http_payload_with_xml_namespace_and_prefix_response_http_payload_
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3075,12 +3086,12 @@ async def test_http_prefix_headers_are_present_request_http_prefix_headers() -> 
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3153,12 +3164,12 @@ async def test_http_prefix_headers_are_not_present_request_http_prefix_headers()
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3223,12 +3234,12 @@ async def test_http_prefix_empty_headers_request_http_prefix_headers() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3293,7 +3304,7 @@ async def test_http_prefix_headers_are_present_response_http_prefix_headers() ->
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[
                     ("x-foo", "Foo"),
@@ -3305,7 +3316,7 @@ async def test_http_prefix_headers_are_present_response_http_prefix_headers() ->
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3330,13 +3341,13 @@ async def test_http_prefix_headers_are_not_present_response_http_prefix_headers(
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200, headers=[("x-foo", "Foo")], body=b""
             ),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3359,12 +3370,12 @@ async def test_rest_xml_supports_na_n_float_labels_request_http_request_with_flo
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3431,12 +3442,12 @@ async def test_rest_xml_supports_infinity_float_labels_request_http_request_with
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3503,12 +3514,12 @@ async def test_rest_xml_supports_negative_infinity_float_labels_request_http_req
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3575,12 +3586,12 @@ async def test_http_request_with_greedy_label_in_path_request_http_request_with_
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3650,12 +3661,12 @@ async def test_input_with_headers_and_all_params_request_http_request_with_label
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3732,12 +3743,12 @@ async def test_http_request_label_escaping_request_http_request_with_labels() ->
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3816,12 +3827,12 @@ async def test_http_request_with_labels_and_timestamp_format_request_http_reques
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3897,13 +3908,13 @@ async def test_rest_xml_http_response_code_response_http_response_code() -> None
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=201, headers=[("Content-Type", "application/xml")], body=b""
             ),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3923,12 +3934,12 @@ async def test_rest_xml_string_payload_request_request_http_string_payload() -> 
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3992,13 +4003,13 @@ async def test_rest_xml_string_payload_response_response_http_string_payload() -
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200, headers=[("Content-Type", "text/plain")], body=b"rawstring"
             ),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4024,7 +4035,7 @@ async def test_ignore_query_params_in_response_response_ignore_query_params_in_r
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<IgnoreQueryParamsInResponseOutput><baz>bam</baz></IgnoreQueryParamsInResponseOutput>",
@@ -4032,7 +4043,7 @@ async def test_ignore_query_params_in_response_response_ignore_query_params_in_r
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4055,12 +4066,12 @@ async def test_input_and_output_with_string_headers_request_input_and_output_wit
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4139,12 +4150,12 @@ async def test_input_and_output_with_numeric_headers_request_input_and_output_wi
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4229,12 +4240,12 @@ async def test_input_and_output_with_boolean_headers_request_input_and_output_wi
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4311,12 +4322,12 @@ async def test_input_and_output_with_timestamp_headers_request_input_and_output_
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4391,12 +4402,12 @@ async def test_input_and_output_with_enum_headers_request_input_and_output_with_
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4470,12 +4481,12 @@ async def test_rest_xml_supports_na_n_float_header_inputs_request_input_and_outp
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4547,12 +4558,12 @@ async def test_rest_xml_supports_infinity_float_header_inputs_request_input_and_
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4624,12 +4635,12 @@ async def test_rest_xml_supports_negative_infinity_float_header_inputs_request_i
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4701,7 +4712,7 @@ async def test_input_and_output_with_string_headers_response_input_and_output_wi
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[
                     ("X-String", "Hello"),
@@ -4713,7 +4724,7 @@ async def test_input_and_output_with_string_headers_response_input_and_output_wi
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4740,7 +4751,7 @@ async def test_input_and_output_with_numeric_headers_response_input_and_output_w
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[
                     ("X-Byte", "1"),
@@ -4756,7 +4767,7 @@ async def test_input_and_output_with_numeric_headers_response_input_and_output_w
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4787,7 +4798,7 @@ async def test_input_and_output_with_boolean_headers_response_input_and_output_w
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[
                     ("X-Boolean1", "true"),
@@ -4799,7 +4810,7 @@ async def test_input_and_output_with_boolean_headers_response_input_and_output_w
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4826,7 +4837,7 @@ async def test_input_and_output_with_timestamp_headers_response_input_and_output
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[
                     (
@@ -4839,7 +4850,7 @@ async def test_input_and_output_with_timestamp_headers_response_input_and_output
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4867,7 +4878,7 @@ async def test_input_and_output_with_enum_headers_response_input_and_output_with
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("X-Enum", "Foo"), ("X-EnumList", "Foo, Bar, Baz")],
                 body=b"",
@@ -4875,7 +4886,7 @@ async def test_input_and_output_with_enum_headers_response_input_and_output_with
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4900,13 +4911,13 @@ async def test_rest_xml_supports_na_n_float_header_outputs_response_input_and_ou
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200, headers=[("X-Double", "NaN"), ("X-Float", "NaN")], body=b""
             ),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4931,7 +4942,7 @@ async def test_rest_xml_supports_infinity_float_header_outputs_response_input_an
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("X-Double", "Infinity"), ("X-Float", "Infinity")],
                 body=b"",
@@ -4939,7 +4950,7 @@ async def test_rest_xml_supports_infinity_float_header_outputs_response_input_an
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4964,7 +4975,7 @@ async def test_rest_xml_supports_negative_infinity_float_header_outputs_response
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("X-Double", "-Infinity"), ("X-Float", "-Infinity")],
                 body=b"",
@@ -4972,7 +4983,7 @@ async def test_rest_xml_supports_negative_infinity_float_header_outputs_response
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4995,12 +5006,12 @@ async def test_nested_xml_map_request_request_nested_xml_maps() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5068,12 +5079,12 @@ async def test_flat_nested_xml_map_request_request_nested_xml_maps() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5138,7 +5149,7 @@ async def test_nested_xml_map_response_response_nested_xml_maps() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<NestedXmlMapsResponse>\n    <nestedMap>\n        <entry>\n            <key>foo</key>\n            <value>\n                <entry>\n                    <key>bar</key>\n                    <value>Bar</value>\n                </entry>\n            </value>\n        </entry>\n    </nestedMap>\n</NestedXmlMapsResponse>",
@@ -5146,7 +5157,7 @@ async def test_nested_xml_map_response_response_nested_xml_maps() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5170,7 +5181,7 @@ async def test_flat_nested_xml_map_response_response_nested_xml_maps() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<NestedXmlMapsResponse>\n    <flatNestedMap>\n        <key>foo</key>\n        <value>\n            <entry>\n                <key>bar</key>\n                <value>Bar</value>\n            </entry>\n        </value>\n    </flatNestedMap>\n</NestedXmlMapsResponse>",
@@ -5178,7 +5189,7 @@ async def test_flat_nested_xml_map_response_response_nested_xml_maps() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5201,12 +5212,12 @@ async def test_nested_xml_map_with_xml_name_serializes_request_nested_xml_map_wi
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5278,7 +5289,7 @@ async def test_nested_xml_map_with_xml_name_deserializes_response_nested_xml_map
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"    <NestedXmlMapWithXmlNameResponse>\n        <nestedXmlMapWithXmlNameMap>\n            <entry>\n                <OuterKey>foo</OuterKey>\n                <value>\n                    <entry>\n                        <InnerKey>bar</InnerKey>\n                        <InnerValue>Baz</InnerValue>\n                    </entry>\n                    <entry>\n                        <InnerKey>fizz</InnerKey>\n                        <InnerValue>Buzz</InnerValue>\n                    </entry>\n                </value>\n            </entry>\n            <entry>\n                <OuterKey>qux</OuterKey>\n                <value>\n                    <entry>\n                        <InnerKey>foobar</InnerKey>\n                        <InnerValue>Bar</InnerValue>\n                    </entry>\n                    <entry>\n                        <InnerKey>fizzbuzz</InnerKey>\n                        <InnerValue>Buzz</InnerValue>\n                    </entry>\n                </value>\n            </entry>\n        </nestedXmlMapWithXmlNameMap>\n    </NestedXmlMapWithXmlNameResponse>\n",
@@ -5286,7 +5297,7 @@ async def test_nested_xml_map_with_xml_name_deserializes_response_nested_xml_map
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5312,12 +5323,12 @@ async def test_no_input_and_no_output_request_no_input_and_no_output() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5382,11 +5393,11 @@ async def test_no_input_and_no_output_response_no_input_and_no_output() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(status=200, headers=[], body=b""),
+            transport=ResponseTestAsyncHTTPClient(status=200, headers=[], body=b""),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5407,12 +5418,12 @@ async def test_no_input_and_output_request_no_input_and_output() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5477,11 +5488,11 @@ async def test_no_input_and_output_response_no_input_and_output() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(status=200, headers=[], body=b""),
+            transport=ResponseTestAsyncHTTPClient(status=200, headers=[], body=b""),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5505,12 +5516,12 @@ async def test_null_and_empty_headers_request_null_and_empty_headers_client() ->
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5577,12 +5588,12 @@ async def test_rest_xml_omits_null_query_request_omits_null_serializes_empty_str
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5649,12 +5660,12 @@ async def test_rest_xml_serializes_empty_string_request_omits_null_serializes_em
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5725,12 +5736,12 @@ async def test_sdk_applied_content_encoding_rest_xml_request_put_with_content_en
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5801,12 +5812,12 @@ async def test_sdk_appended_gzip_after_provided_encoding_rest_xml_request_put_wi
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5873,12 +5884,12 @@ async def test_query_idempotency_token_auto_fill_request_query_idempotency_token
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5947,12 +5958,12 @@ async def test_query_idempotency_token_auto_fill_is_set_request_query_idempotenc
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6023,12 +6034,12 @@ async def test_rest_xml_query_params_string_list_map_request_query_params_as_str
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6093,12 +6104,12 @@ async def test_rest_xml_query_precedence_request_query_precedence() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6165,12 +6176,12 @@ async def test_recursive_shapes_request_recursive_shapes() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6245,7 +6256,7 @@ async def test_recursive_shapes_response_recursive_shapes() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<RecursiveShapesResponse>\n    <nested>\n        <foo>Foo1</foo>\n        <nested>\n            <bar>Bar1</bar>\n            <recursiveMember>\n                <foo>Foo2</foo>\n                <nested>\n                    <bar>Bar2</bar>\n                </nested>\n            </recursiveMember>\n        </nested>\n    </nested>\n</RecursiveShapesResponse>\n",
@@ -6253,7 +6264,7 @@ async def test_recursive_shapes_response_recursive_shapes() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6284,12 +6295,12 @@ async def test_simple_scalar_properties_request_simple_scalar_properties() -> No
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6370,12 +6381,12 @@ async def test_simple_scalar_properties_with_escaped_character_request_simple_sc
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6445,12 +6456,12 @@ async def test_simple_scalar_properties_with_white_space_request_simple_scalar_p
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6522,12 +6533,12 @@ async def test_simple_scalar_properties_pure_white_space_request_simple_scalar_p
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6597,12 +6608,12 @@ async def test_rest_xml_supports_na_n_float_inputs_request_simple_scalar_propert
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6671,12 +6682,12 @@ async def test_rest_xml_supports_infinity_float_inputs_request_simple_scalar_pro
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6745,12 +6756,12 @@ async def test_rest_xml_supports_negative_infinity_float_inputs_request_simple_s
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6817,7 +6828,7 @@ async def test_simple_scalar_properties_response_simple_scalar_properties() -> N
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml"), ("X-Foo", "Foo")],
                 body=b"<SimpleScalarPropertiesResponse>\n    <stringValue>string</stringValue>\n    <trueBooleanValue>true</trueBooleanValue>\n    <falseBooleanValue>false</falseBooleanValue>\n    <byteValue>1</byteValue>\n    <shortValue>2</shortValue>\n    <integerValue>3</integerValue>\n    <longValue>4</longValue>\n    <floatValue>5.5</floatValue>\n    <DoubleDribble>6.5</DoubleDribble>\n</SimpleScalarPropertiesResponse>\n",
@@ -6825,7 +6836,7 @@ async def test_simple_scalar_properties_response_simple_scalar_properties() -> N
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6866,7 +6877,7 @@ async def test_simple_scalar_properties_complex_escapes_response_simple_scalar_p
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml"), ("X-Foo", "Foo")],
                 body=b"<SimpleScalarPropertiesResponse>\n    <stringValue>escaped data: &amp;lt;&#xD;&#10;</stringValue>\n</SimpleScalarPropertiesResponse>\n",
@@ -6874,7 +6885,7 @@ async def test_simple_scalar_properties_complex_escapes_response_simple_scalar_p
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6899,7 +6910,7 @@ async def test_simple_scalar_properties_with_escaped_character_response_simple_s
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml"), ("X-Foo", "Foo")],
                 body=b"<SimpleScalarPropertiesResponse>\n    <stringValue>&lt;string&gt;</stringValue>\n</SimpleScalarPropertiesResponse>\n",
@@ -6907,7 +6918,7 @@ async def test_simple_scalar_properties_with_escaped_character_response_simple_s
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6933,7 +6944,7 @@ async def test_simple_scalar_properties_with_xml_preamble_response_simple_scalar
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml"), ("X-Foo", "Foo")],
                 body=b'<?xml version = "1.0" encoding = "UTF-8"?>\n<SimpleScalarPropertiesResponse>\n    <![CDATA[characters representing CDATA]]>\n    <stringValue>string</stringValue>\n    <!--xml comment-->\n</SimpleScalarPropertiesResponse>\n',
@@ -6941,7 +6952,7 @@ async def test_simple_scalar_properties_with_xml_preamble_response_simple_scalar
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6964,7 +6975,7 @@ async def test_simple_scalar_properties_with_white_space_response_simple_scalar_
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml"), ("X-Foo", "Foo")],
                 body=b'<?xml version = "1.0" encoding = "UTF-8"?>\n<SimpleScalarPropertiesResponse>\n    <stringValue> string with white    space </stringValue>\n</SimpleScalarPropertiesResponse>\n',
@@ -6972,7 +6983,7 @@ async def test_simple_scalar_properties_with_white_space_response_simple_scalar_
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6997,7 +7008,7 @@ async def test_simple_scalar_properties_pure_white_space_response_simple_scalar_
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml"), ("X-Foo", "Foo")],
                 body=b'<?xml version = "1.0" encoding = "UTF-8"?>\n<SimpleScalarPropertiesResponse>\n    <stringValue>  </stringValue>\n</SimpleScalarPropertiesResponse>\n',
@@ -7005,7 +7016,7 @@ async def test_simple_scalar_properties_pure_white_space_response_simple_scalar_
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7028,7 +7039,7 @@ async def test_rest_xml_supports_na_n_float_outputs_response_simple_scalar_prope
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<SimpleScalarPropertiesResponse>\n    <floatValue>NaN</floatValue>\n    <DoubleDribble>NaN</DoubleDribble>\n</SimpleScalarPropertiesResponse>\n",
@@ -7036,7 +7047,7 @@ async def test_rest_xml_supports_na_n_float_outputs_response_simple_scalar_prope
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7061,7 +7072,7 @@ async def test_rest_xml_supports_infinity_float_outputs_response_simple_scalar_p
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<SimpleScalarPropertiesResponse>\n    <floatValue>Infinity</floatValue>\n    <DoubleDribble>Infinity</DoubleDribble>\n</SimpleScalarPropertiesResponse>\n",
@@ -7069,7 +7080,7 @@ async def test_rest_xml_supports_infinity_float_outputs_response_simple_scalar_p
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7094,7 +7105,7 @@ async def test_rest_xml_supports_negative_infinity_float_outputs_response_simple
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<SimpleScalarPropertiesResponse>\n    <floatValue>-Infinity</floatValue>\n    <DoubleDribble>-Infinity</DoubleDribble>\n</SimpleScalarPropertiesResponse>\n",
@@ -7102,7 +7113,7 @@ async def test_rest_xml_supports_negative_infinity_float_outputs_response_simple
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7125,12 +7136,12 @@ async def test_timestamp_format_headers_request_timestamp_format_headers() -> No
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7211,7 +7222,7 @@ async def test_timestamp_format_headers_response_timestamp_format_headers() -> N
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[
                     ("X-defaultFormat", "Mon, 16 Dec 2019 23:48:18 GMT"),
@@ -7227,7 +7238,7 @@ async def test_timestamp_format_headers_response_timestamp_format_headers() -> N
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7256,12 +7267,12 @@ async def test_xml_attributes_request_xml_attributes() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7329,12 +7340,12 @@ async def test_xml_attributes_with_escaping_request_xml_attributes() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7399,7 +7410,7 @@ async def test_xml_attributes_response_xml_attributes() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b'<XmlAttributesResponse test="test">\n    <foo>hi</foo>\n</XmlAttributesResponse>\n',
@@ -7407,7 +7418,7 @@ async def test_xml_attributes_response_xml_attributes() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7431,12 +7442,12 @@ async def test_xml_attributes_in_middle_request_xml_attributes_in_middle() -> No
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7508,7 +7519,7 @@ async def test_xml_attributes_in_middle_response_xml_attributes_in_middle() -> N
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b'<XmlAttributesInMiddlePayloadResponse test="attributeValue">\n    <foo>Foo</foo>\n    <baz>Baz</baz>\n</XmlAttributesInMiddlePayloadResponse>\n',
@@ -7516,7 +7527,7 @@ async def test_xml_attributes_in_middle_response_xml_attributes_in_middle() -> N
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7541,12 +7552,12 @@ async def test_xml_attributes_on_payload_request_xml_attributes_on_payload() -> 
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7613,7 +7624,7 @@ async def test_xml_attributes_on_payload_response_xml_attributes_on_payload() ->
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b'<XmlAttributesPayloadResponse test="test">\n    <foo>hi</foo>\n</XmlAttributesPayloadResponse>\n',
@@ -7621,7 +7632,7 @@ async def test_xml_attributes_on_payload_response_xml_attributes_on_payload() ->
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7644,12 +7655,12 @@ async def test_xml_blobs_request_xml_blobs() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7716,7 +7727,7 @@ async def test_xml_blobs_response_xml_blobs() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlBlobsResponse>\n    <data>dmFsdWU=</data>\n</XmlBlobsResponse>\n",
@@ -7724,7 +7735,7 @@ async def test_xml_blobs_response_xml_blobs() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7745,7 +7756,7 @@ async def test_xml_empty_blobs_response_xml_empty_blobs() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlEmptyBlobsResponse>\n    <data></data>\n</XmlEmptyBlobsResponse>\n",
@@ -7753,7 +7764,7 @@ async def test_xml_empty_blobs_response_xml_empty_blobs() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7774,7 +7785,7 @@ async def test_xml_empty_self_closed_blobs_response_xml_empty_blobs() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlEmptyBlobsResponse>\n    <data/>\n</XmlEmptyBlobsResponse>\n",
@@ -7782,7 +7793,7 @@ async def test_xml_empty_self_closed_blobs_response_xml_empty_blobs() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7803,12 +7814,12 @@ async def test_xml_empty_lists_request_xml_empty_lists() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7873,7 +7884,7 @@ async def test_xml_empty_lists_response_xml_empty_lists() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlEmptyListsResponse>\n        <stringList/>\n        <stringSet></stringSet>\n</XmlEmptyListsResponse>\n",
@@ -7881,7 +7892,7 @@ async def test_xml_empty_lists_response_xml_empty_lists() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7902,12 +7913,12 @@ async def test_xml_empty_maps_request_xml_empty_maps() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -7974,7 +7985,7 @@ async def test_xml_empty_maps_response_xml_empty_maps() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlEmptyMapsResponse>\n    <myMap></myMap>\n</XmlEmptyMapsResponse>\n",
@@ -7982,7 +7993,7 @@ async def test_xml_empty_maps_response_xml_empty_maps() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8003,7 +8014,7 @@ async def test_xml_empty_self_closed_maps_response_xml_empty_maps() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlEmptyMapsResponse>\n    <myMap/>\n</XmlEmptyMapsResponse>\n",
@@ -8011,7 +8022,7 @@ async def test_xml_empty_self_closed_maps_response_xml_empty_maps() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8032,12 +8043,12 @@ async def test_xml_empty_strings_request_xml_empty_strings() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8102,7 +8113,7 @@ async def test_xml_empty_strings_response_xml_empty_strings() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlEmptyStringsResponse>\n    <emptyString></emptyString>\n</XmlEmptyStringsResponse>\n",
@@ -8110,7 +8121,7 @@ async def test_xml_empty_strings_response_xml_empty_strings() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8131,7 +8142,7 @@ async def test_xml_empty_self_closed_strings_response_xml_empty_strings() -> Non
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlEmptyStringsResponse>\n    <emptyString/>\n</XmlEmptyStringsResponse>\n",
@@ -8139,7 +8150,7 @@ async def test_xml_empty_self_closed_strings_response_xml_empty_strings() -> Non
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8160,12 +8171,12 @@ async def test_xml_enums_request_xml_enums() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8237,7 +8248,7 @@ async def test_xml_enums_response_xml_enums() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlEnumsResponse>\n    <fooEnum1>Foo</fooEnum1>\n    <fooEnum2>0</fooEnum2>\n    <fooEnum3>1</fooEnum3>\n    <fooEnumList>\n        <member>Foo</member>\n        <member>0</member>\n    </fooEnumList>\n    <fooEnumSet>\n        <member>Foo</member>\n        <member>0</member>\n    </fooEnumSet>\n    <fooEnumMap>\n        <entry>\n            <key>hi</key>\n            <value>Foo</value>\n        </entry>\n        <entry>\n            <key>zero</key>\n            <value>0</value>\n        </entry>\n    </fooEnumMap>\n</XmlEnumsResponse>\n",
@@ -8245,7 +8256,7 @@ async def test_xml_enums_response_xml_enums() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8273,12 +8284,12 @@ async def test_xml_int_enums_request_xml_int_enums() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8350,7 +8361,7 @@ async def test_xml_int_enums_response_xml_int_enums() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlIntEnumsResponse>\n    <intEnum1>1</intEnum1>\n    <intEnum2>2</intEnum2>\n    <intEnum3>3</intEnum3>\n    <intEnumList>\n        <member>1</member>\n        <member>2</member>\n    </intEnumList>\n    <intEnumSet>\n        <member>1</member>\n        <member>2</member>\n    </intEnumSet>\n    <intEnumMap>\n        <entry>\n            <key>a</key>\n            <value>1</value>\n        </entry>\n        <entry>\n            <key>b</key>\n            <value>2</value>\n        </entry>\n    </intEnumMap>\n</XmlIntEnumsResponse>\n",
@@ -8358,7 +8369,7 @@ async def test_xml_int_enums_response_xml_int_enums() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8386,12 +8397,12 @@ async def test_xml_lists_request_xml_lists() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8479,7 +8490,7 @@ async def test_xml_lists_response_xml_lists() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b'<XmlListsResponse>\n    <stringList>\n        <member>foo</member>\n        <member>bar</member>\n    </stringList>\n    <stringSet>\n        <member>foo</member>\n        <member>bar</member>\n    </stringSet>\n    <integerList>\n        <member>1</member>\n        <member>2</member>\n    </integerList>\n    <booleanList>\n        <member>true</member>\n        <member>false</member>\n    </booleanList>\n    <timestampList>\n        <member>2014-04-29T18:30:38Z</member>\n        <member>2014-04-29T18:30:38Z</member>\n    </timestampList>\n    <enumList>\n        <member>Foo</member>\n        <member>0</member>\n    </enumList>\n    <intEnumList>\n        <member>1</member>\n        <member>2</member>\n    </intEnumList>\n    <nestedStringList>\n        <member>\n            <member>foo</member>\n            <member>bar</member>\n        </member>\n        <member>\n            <member>baz</member>\n            <member>qux</member>\n        </member>\n    </nestedStringList>\n    <renamed>\n        <item>foo</item>\n        <item>bar</item>\n    </renamed>\n    <flattenedList>hi</flattenedList>\n    <flattenedList>bye</flattenedList>\n    <customName>yep</customName>\n    <customName>nope</customName>\n    <flattenedListWithMemberNamespace xmlns="https://xml-member.example.com">a</flattenedListWithMemberNamespace>\n    <flattenedListWithMemberNamespace xmlns="https://xml-member.example.com">b</flattenedListWithMemberNamespace>\n    <flattenedListWithNamespace>a</flattenedListWithNamespace>\n    <flattenedListWithNamespace>b</flattenedListWithNamespace>\n    <myStructureList>\n        <item>\n            <value>1</value>\n            <other>2</other>\n        </item>\n        <item>\n            <value>3</value>\n            <other>4</other>\n        </item>\n    </myStructureList>\n    <flattenedStructureList>\n        <value>5</value>\n        <other>6</other>\n    </flattenedStructureList>\n    <flattenedStructureList>\n        <value>7</value>\n        <other>8</other>\n    </flattenedStructureList>\n</XmlListsResponse>\n',
@@ -8487,7 +8498,7 @@ async def test_xml_lists_response_xml_lists() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8533,12 +8544,12 @@ async def test_xml_maps_request_xml_maps() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8605,7 +8616,7 @@ async def test_xml_maps_response_xml_maps() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlMapsResponse>\n    <myMap>\n        <entry>\n            <key>foo</key>\n            <value>\n                <hi>there</hi>\n            </value>\n        </entry>\n        <entry>\n            <key>baz</key>\n            <value>\n                <hi>bye</hi>\n            </value>\n        </entry>\n    </myMap>\n</XmlMapsResponse>\n",
@@ -8613,7 +8624,7 @@ async def test_xml_maps_response_xml_maps() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8636,12 +8647,12 @@ async def test_xml_maps_xml_name_request_xml_maps_xml_name() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8708,7 +8719,7 @@ async def test_xml_maps_xml_name_response_xml_maps_xml_name() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlMapsXmlNameResponse>\n    <myMap>\n        <entry>\n            <Attribute>foo</Attribute>\n            <Setting>\n                <hi>there</hi>\n            </Setting>\n        </entry>\n        <entry>\n            <Attribute>baz</Attribute>\n            <Setting>\n                <hi>bye</hi>\n            </Setting>\n        </entry>\n    </myMap>\n</XmlMapsXmlNameResponse>\n",
@@ -8716,7 +8727,7 @@ async def test_xml_maps_xml_name_response_xml_maps_xml_name() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8744,12 +8755,12 @@ async def test_rest_xml_xml_map_with_xml_namespace_request_xml_map_with_xml_name
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8819,7 +8830,7 @@ async def test_rest_xml_xml_map_with_xml_namespace_response_xml_map_with_xml_nam
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b'<XmlMapWithXmlNamespaceResponse>\n    <KVP xmlns="https://the-member.example.com">\n        <entry>\n            <K xmlns="https://the-key.example.com">a</K>\n            <V xmlns="https://the-value.example.com">A</V>\n        </entry>\n        <entry>\n            <K xmlns="https://the-key.example.com">b</K>\n            <V xmlns="https://the-value.example.com">B</V>\n        </entry>\n    </KVP>\n</XmlMapWithXmlNamespaceResponse>',
@@ -8827,7 +8838,7 @@ async def test_rest_xml_xml_map_with_xml_namespace_response_xml_map_with_xml_nam
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8848,12 +8859,12 @@ async def test_xml_namespaces_request_xml_namespaces() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8920,7 +8931,7 @@ async def test_xml_namespaces_response_xml_namespaces() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b'<XmlNamespacesResponse xmlns="http://foo.com">\n    <nested>\n        <foo xmlns:baz="http://baz.com">Foo</foo>\n        <values xmlns="http://qux.com">\n            <member xmlns="http://bux.com">Bar</member>\n            <member xmlns="http://bux.com">Baz</member>\n        </values>\n    </nested>\n</XmlNamespacesResponse>\n',
@@ -8928,7 +8939,7 @@ async def test_xml_namespaces_response_xml_namespaces() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -8951,12 +8962,12 @@ async def test_xml_timestamps_request_xml_timestamps() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -9026,12 +9037,12 @@ async def test_xml_timestamps_with_date_time_format_request_xml_timestamps() -> 
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -9103,12 +9114,12 @@ async def test_xml_timestamps_with_date_time_on_target_format_request_xml_timest
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -9177,12 +9188,12 @@ async def test_xml_timestamps_with_epoch_seconds_format_request_xml_timestamps()
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -9254,12 +9265,12 @@ async def test_xml_timestamps_with_epoch_seconds_on_target_format_request_xml_ti
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -9326,12 +9337,12 @@ async def test_xml_timestamps_with_http_date_format_request_xml_timestamps() -> 
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -9400,12 +9411,12 @@ async def test_xml_timestamps_with_http_date_on_target_format_request_xml_timest
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -9472,7 +9483,7 @@ async def test_xml_timestamps_response_xml_timestamps() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlTimestampsResponse>\n    <normal>2014-04-29T18:30:38Z</normal>\n</XmlTimestampsResponse>\n",
@@ -9480,7 +9491,7 @@ async def test_xml_timestamps_response_xml_timestamps() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -9506,7 +9517,7 @@ async def test_xml_timestamps_with_date_time_format_response_xml_timestamps() ->
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlTimestampsResponse>\n    <dateTime>2014-04-29T18:30:38Z</dateTime>\n</XmlTimestampsResponse>\n",
@@ -9514,7 +9525,7 @@ async def test_xml_timestamps_with_date_time_format_response_xml_timestamps() ->
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -9542,7 +9553,7 @@ async def test_xml_timestamps_with_date_time_on_target_format_response_xml_times
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlTimestampsResponse>\n    <dateTimeOnTarget>2014-04-29T18:30:38Z</dateTimeOnTarget>\n</XmlTimestampsResponse>\n",
@@ -9550,7 +9561,7 @@ async def test_xml_timestamps_with_date_time_on_target_format_response_xml_times
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -9575,7 +9586,7 @@ async def test_xml_timestamps_with_epoch_seconds_format_response_xml_timestamps(
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlTimestampsResponse>\n    <epochSeconds>1398796238</epochSeconds>\n</XmlTimestampsResponse>\n",
@@ -9583,7 +9594,7 @@ async def test_xml_timestamps_with_epoch_seconds_format_response_xml_timestamps(
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -9611,7 +9622,7 @@ async def test_xml_timestamps_with_epoch_seconds_on_target_format_response_xml_t
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlTimestampsResponse>\n    <epochSecondsOnTarget>1398796238</epochSecondsOnTarget>\n</XmlTimestampsResponse>\n",
@@ -9619,7 +9630,7 @@ async def test_xml_timestamps_with_epoch_seconds_on_target_format_response_xml_t
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -9642,7 +9653,7 @@ async def test_xml_timestamps_with_http_date_format_response_xml_timestamps() ->
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlTimestampsResponse>\n    <httpDate>Tue, 29 Apr 2014 18:30:38 GMT</httpDate>\n</XmlTimestampsResponse>\n",
@@ -9650,7 +9661,7 @@ async def test_xml_timestamps_with_http_date_format_response_xml_timestamps() ->
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -9675,7 +9686,7 @@ async def test_xml_timestamps_with_http_date_on_target_format_response_xml_times
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlTimestampsResponse>\n    <httpDateOnTarget>Tue, 29 Apr 2014 18:30:38 GMT</httpDateOnTarget>\n</XmlTimestampsResponse>\n",
@@ -9683,7 +9694,7 @@ async def test_xml_timestamps_with_http_date_on_target_format_response_xml_times
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -9706,12 +9717,12 @@ async def test_xml_unions_with_struct_member_request_xml_unions() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -9789,12 +9800,12 @@ async def test_xml_unions_with_string_member_request_xml_unions() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -9859,12 +9870,12 @@ async def test_xml_unions_with_boolean_member_request_xml_unions() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -9929,12 +9940,12 @@ async def test_xml_unions_with_union_member_request_xml_unions() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -10001,7 +10012,7 @@ async def test_xml_unions_with_struct_member_response_xml_unions() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlUnionsResponse>\n    <unionValue>\n       <structValue>\n          <stringValue>string</stringValue>\n          <booleanValue>true</booleanValue>\n          <byteValue>1</byteValue>\n          <shortValue>2</shortValue>\n          <integerValue>3</integerValue>\n          <longValue>4</longValue>\n          <floatValue>5.5</floatValue>\n          <doubleValue>6.5</doubleValue>\n       </structValue>\n    </unionValue>\n</XmlUnionsResponse>\n",
@@ -10009,7 +10020,7 @@ async def test_xml_unions_with_struct_member_response_xml_unions() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -10043,7 +10054,7 @@ async def test_xml_unions_with_string_member_response_xml_unions() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlUnionsResponse>\n   <unionValue>\n      <stringValue>some string</stringValue>\n   </unionValue>\n</XmlUnionsResponse>\n",
@@ -10051,7 +10062,7 @@ async def test_xml_unions_with_string_member_response_xml_unions() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -10074,7 +10085,7 @@ async def test_xml_unions_with_boolean_member_response_xml_unions() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlUnionsResponse>\n   <unionValue>\n      <booleanValue>true</booleanValue>\n   </unionValue>\n</XmlUnionsResponse>\n",
@@ -10082,7 +10093,7 @@ async def test_xml_unions_with_boolean_member_response_xml_unions() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -10103,7 +10114,7 @@ async def test_xml_unions_with_union_member_response_xml_unions() -> None:
     client = AsyncRestXmlProtocolClient(
         config=await AsyncRestXmlProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml")],
                 body=b"<XmlUnionsResponse>\n   <unionValue>\n      <unionValue>\n         <booleanValue>true</booleanValue>\n      </unionValue>\n   </unionValue>\n</XmlUnionsResponse>\n",
@@ -10111,7 +10122,7 @@ async def test_xml_unions_with_union_member_response_xml_unions() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -10138,7 +10149,7 @@ class TestHttpServiceError(ServiceError):
         self.request = request
 
 
-class RequestTestHTTPClient:
+class RequestTestAsyncHTTPClient:
     """An asynchronous HTTP client solely for testing purposes."""
 
     TIMEOUT_EXCEPTIONS = ()
@@ -10157,7 +10168,7 @@ class RequestTestHTTPClient:
         raise TestHttpServiceError(request)
 
 
-class ResponseTestHTTPClient:
+class ResponseTestAsyncHTTPClient:
     """An asynchronous HTTP client solely for testing purposes."""
 
     TIMEOUT_EXCEPTIONS = ()
@@ -10185,4 +10196,10736 @@ class ResponseTestHTTPClient:
         # Pre-construct the response from the request and return it
         return _smithy_http_aio_HTTPResponse(
             status=self.status, fields=self.fields, body=async_list([self.body])
+        )
+
+
+def test_all_query_string_types_request_all_query_string_types_sync() -> None:
+    """Serializes query string parameters with all supported types"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = AllQueryStringTypesInput(
+        query_string="Hello there",
+        query_string_list=["a", "b", "c"],
+        query_string_set=["a", "b", "c"],
+        query_byte=1,
+        query_short=2,
+        query_integer=3,
+        query_integer_list=[1, 2, 3],
+        query_integer_set=[1, 2, 3],
+        query_long=4,
+        query_float=float(1.1),
+        query_double=float(1.1),
+        query_double_list=[float(1.1), float(2.1), float(3.1)],
+        query_boolean=True,
+        query_boolean_list=[True, False, True],
+        query_timestamp=datetime(1970, 1, 1, 0, 0, 1, 0, timezone.utc),
+        query_timestamp_list=[
+            datetime(1970, 1, 1, 0, 0, 1, 0, timezone.utc),
+            datetime(1970, 1, 1, 0, 0, 2, 0, timezone.utc),
+            datetime(1970, 1, 1, 0, 0, 3, 0, timezone.utc),
+        ],
+        query_enum="Foo",
+        query_enum_list=["Foo", "Baz", "Bar"],
+        query_integer_enum=1,
+        query_integer_enum_list=[1, 2],
+    )
+
+    try:
+        client.all_query_string_types(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/AllQueryStringTypesInput"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = [
+            "String=Hello%20there",
+            "StringList=a",
+            "StringList=b",
+            "StringList=c",
+            "StringSet=a",
+            "StringSet=b",
+            "StringSet=c",
+            "Byte=1",
+            "Short=2",
+            "Integer=3",
+            "IntegerList=1",
+            "IntegerList=2",
+            "IntegerList=3",
+            "IntegerSet=1",
+            "IntegerSet=2",
+            "IntegerSet=3",
+            "Long=4",
+            "Float=1.1",
+            "Double=1.1",
+            "DoubleList=1.1",
+            "DoubleList=2.1",
+            "DoubleList=3.1",
+            "Boolean=true",
+            "BooleanList=true",
+            "BooleanList=false",
+            "BooleanList=true",
+            "Timestamp=1970-01-01T00%3A00%3A01Z",
+            "TimestampList=1970-01-01T00%3A00%3A01Z",
+            "TimestampList=1970-01-01T00%3A00%3A02Z",
+            "TimestampList=1970-01-01T00%3A00%3A03Z",
+            "Enum=Foo",
+            "EnumList=Foo",
+            "EnumList=Baz",
+            "EnumList=Bar",
+            "IntegerEnum=1",
+            "IntegerEnumList=1",
+            "IntegerEnumList=2",
+        ]
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_query_string_map_request_all_query_string_types_sync() -> None:
+    """Handles query string maps"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = AllQueryStringTypesInput(
+        query_params_map_of_strings={
+            "QueryParamsStringKeyA": "Foo",
+            "QueryParamsStringKeyB": "Bar",
+        }
+    )
+
+    try:
+        client.all_query_string_types(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/AllQueryStringTypesInput"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = [
+            "QueryParamsStringKeyA=Foo",
+            "QueryParamsStringKeyB=Bar",
+        ]
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_query_string_escaping_request_all_query_string_types_sync() -> None:
+    """Handles escaping all required characters in the query string."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = AllQueryStringTypesInput(query_string=" %:/?#[]@!$&'()*+,;=😹")
+
+    try:
+        client.all_query_string_types(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/AllQueryStringTypesInput"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = [
+            "String=%20%25%3A%2F%3F%23%5B%5D%40%21%24%26%27%28%29%2A%2B%2C%3B%3D%F0%9F%98%B9"
+        ]
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_supports_na_n_float_query_values_request_all_query_string_types_sync() -> (
+    None
+):
+    """Supports handling NaN float query values."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = AllQueryStringTypesInput(
+        query_float=float("nan"), query_double=float("nan")
+    )
+
+    try:
+        client.all_query_string_types(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/AllQueryStringTypesInput"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = ["Float=NaN", "Double=NaN"]
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_supports_infinity_float_query_values_request_all_query_string_types_sync() -> (
+    None
+):
+    """Supports handling Infinity float query values."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = AllQueryStringTypesInput(
+        query_float=float("inf"), query_double=float("inf")
+    )
+
+    try:
+        client.all_query_string_types(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/AllQueryStringTypesInput"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = ["Float=Infinity", "Double=Infinity"]
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_supports_negative_infinity_float_query_values_request_all_query_string_types_sync() -> (
+    None
+):
+    """Supports handling -Infinity float query values."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = AllQueryStringTypesInput(
+        query_float=float("-inf"), query_double=float("-inf")
+    )
+
+    try:
+        client.all_query_string_types(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/AllQueryStringTypesInput"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = ["Float=-Infinity", "Double=-Infinity"]
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_zero_and_false_query_values_request_all_query_string_types_sync() -> (
+    None
+):
+    """Query values of 0 and false are serialized"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = AllQueryStringTypesInput(query_integer=0, query_boolean=False)
+
+    try:
+        client.all_query_string_types(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/AllQueryStringTypesInput"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = ["Integer=0", "Boolean=false"]
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_body_with_xml_name_request_body_with_xml_name_sync() -> None:
+    """Serializes a payload using a wrapper name based on the xmlName"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = BodyWithXmlNameInput(nested=PayloadWithXmlName(name="Phreddy"))
+
+    try:
+        client.body_with_xml_name(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/BodyWithXmlName"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<Ahoy><nested><name>Phreddy</name></nested></Ahoy>"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_body_with_xml_name_response_body_with_xml_name_sync() -> None:
+    """Serializes a payload using a wrapper name based on the xmlName"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<Ahoy><nested><name>Phreddy</name></nested></Ahoy>",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = BodyWithXmlNameInput()
+
+    try:
+        actual = client.body_with_xml_name(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = BodyWithXmlNameOutput(nested=PayloadWithXmlName(name="Phreddy"))
+
+        assert deep_equal(actual, expected)
+
+
+def test_constant_and_variable_query_string_missing_one_value_request_constant_and_variable_query_string_sync() -> (
+    None
+):
+    """Mixes constant and variable query string parameters"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = ConstantAndVariableQueryStringInput(baz="bam")
+
+    try:
+        client.constant_and_variable_query_string(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/ConstantAndVariableQueryString"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = ["foo=bar", "baz=bam"]
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set(["maybeset"])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_constant_and_variable_query_string_all_values_request_constant_and_variable_query_string_sync() -> (
+    None
+):
+    """Mixes constant and variable query string parameters"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = ConstantAndVariableQueryStringInput(baz="bam", maybe_set="yes")
+
+    try:
+        client.constant_and_variable_query_string(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/ConstantAndVariableQueryString"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = ["foo=bar", "baz=bam", "maybeSet=yes"]
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_constant_query_string_request_constant_query_string_sync() -> None:
+    """Includes constant query string parameters"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = ConstantQueryStringInput(hello="hi")
+
+    try:
+        client.constant_query_string(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/ConstantQueryString/hi"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = ["foo=bar", "hello"]
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_date_time_with_negative_offset_response_datetime_offsets_sync() -> (
+    None
+):
+    """
+    Ensures that clients can correctly parse datetime (timestamps) with
+    offsets
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<DatetimeOffsetsOutput>\n    <datetime>2019-12-16T22:48:18-01:00</datetime>\n</DatetimeOffsetsOutput>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = DatetimeOffsetsInput()
+
+    try:
+        actual = client.datetime_offsets(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = DatetimeOffsetsOutput(
+            datetime_=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_rest_xml_date_time_with_positive_offset_response_datetime_offsets_sync() -> (
+    None
+):
+    """
+    Ensures that clients can correctly parse datetime (timestamps) with
+    offsets
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<DatetimeOffsetsOutput>\n    <datetime>2019-12-17T00:48:18+01:00</datetime>\n</DatetimeOffsetsOutput>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = DatetimeOffsetsInput()
+
+    try:
+        actual = client.datetime_offsets(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = DatetimeOffsetsOutput(
+            datetime_=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_empty_input_and_empty_output_request_empty_input_and_empty_output_sync() -> (
+    None
+):
+    """Empty input serializes no payload"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = EmptyInputAndEmptyOutputInput()
+
+    try:
+        client.empty_input_and_empty_output(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/EmptyInputAndEmptyOutput"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_empty_input_and_empty_output_response_empty_input_and_empty_output_sync() -> (
+    None
+):
+    """Empty output serializes no payload"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(status=200, headers=[], body=b""),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = EmptyInputAndEmptyOutputInput()
+
+    try:
+        actual = client.empty_input_and_empty_output(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = EmptyInputAndEmptyOutputOutput()
+
+        assert deep_equal(actual, expected)
+
+
+@mark.xfail()
+def test_rest_xml_endpoint_trait_request_endpoint_operation_sync() -> None:
+    """
+    Operations can prepend to the given host if they define the endpoint
+    trait.
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = EndpointOperationInput()
+
+    try:
+        client.endpoint_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/EndpointOperation"
+        assert actual.destination.host == "foo.example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+@mark.xfail()
+def test_rest_xml_endpoint_trait_with_host_label_and_http_binding_request_endpoint_with_host_label_header_operation_sync() -> (
+    None
+):
+    """
+    Operations can prepend to the given host if they define the endpoint
+    trait, and can use the host label trait to define further customization
+    based on user input. The label must also be serialized in into any other
+    location it is bound to, such as the body or in this case an http
+    header.
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = EndpointWithHostLabelHeaderOperationInput(account_id="bar")
+
+    try:
+        client.endpoint_with_host_label_header_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/EndpointWithHostLabelHeaderOperation"
+        assert actual.destination.host == "bar.example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("x-amz-account-id", "bar")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+@mark.xfail()
+def test_rest_xml_endpoint_trait_with_host_label_request_endpoint_with_host_label_operation_sync() -> (
+    None
+):
+    """
+    Operations can prepend to the given host if they define the endpoint
+    trait, and can use the host label trait to define further customization
+    based on user input.
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = EndpointWithHostLabelOperationInput(label="bar")
+
+    try:
+        client.endpoint_with_host_label_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/EndpointWithHostLabelOperation"
+        assert actual.destination.host == "foo.bar.example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<EndpointWithHostLabelOperationRequest>\n    <label>bar</label>\n</EndpointWithHostLabelOperationRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_flattened_xml_map_request_flattened_xml_map_sync() -> None:
+    """Serializes flattened XML maps in requests"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = FlattenedXmlMapInput(my_map={"foo": "Foo", "baz": "Baz"})
+
+    try:
+        client.flattened_xml_map(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/FlattenedXmlMap"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<FlattenedXmlMapRequest>\n    <myMap>\n        <key>foo</key>\n        <value>Foo</value>\n    </myMap>\n    <myMap>\n        <key>baz</key>\n        <value>Baz</value>\n    </myMap>\n</FlattenedXmlMapRequest>"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_flattened_xml_map_response_flattened_xml_map_sync() -> None:
+    """Serializes flattened XML maps in responses"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<FlattenedXmlMapResponse>\n    <myMap>\n        <key>foo</key>\n        <value>Foo</value>\n    </myMap>\n    <myMap>\n        <key>baz</key>\n        <value>Baz</value>\n    </myMap>\n</FlattenedXmlMapResponse>",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = FlattenedXmlMapInput()
+
+    try:
+        actual = client.flattened_xml_map(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = FlattenedXmlMapOutput(my_map={"foo": "Foo", "baz": "Baz"})
+
+        assert deep_equal(actual, expected)
+
+
+def test_flattened_xml_map_with_xml_name_request_flattened_xml_map_with_xml_name_sync() -> (
+    None
+):
+    """Serializes flattened XML maps in requests that have xmlName on members"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = FlattenedXmlMapWithXmlNameInput(my_map={"a": "A", "b": "B"})
+
+    try:
+        client.flattened_xml_map_with_xml_name(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/FlattenedXmlMapWithXmlName"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<FlattenedXmlMapWithXmlNameRequest>\n    <KVP>\n        <K>a</K>\n        <V>A</V>\n    </KVP>\n    <KVP>\n        <K>b</K>\n        <V>B</V>\n    </KVP>\n</FlattenedXmlMapWithXmlNameRequest>"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_flattened_xml_map_with_xml_name_response_flattened_xml_map_with_xml_name_sync() -> (
+    None
+):
+    """Serializes flattened XML maps in responses that have xmlName on members"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<FlattenedXmlMapWithXmlNameResponse>\n    <KVP>\n        <K>a</K>\n        <V>A</V>\n    </KVP>\n    <KVP>\n        <K>b</K>\n        <V>B</V>\n    </KVP>\n</FlattenedXmlMapWithXmlNameResponse>",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = FlattenedXmlMapWithXmlNameInput()
+
+    try:
+        actual = client.flattened_xml_map_with_xml_name(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = FlattenedXmlMapWithXmlNameOutput(my_map={"a": "A", "b": "B"})
+
+        assert deep_equal(actual, expected)
+
+
+def test_rest_xml_flattened_xml_map_with_xml_namespace_response_flattened_xml_map_with_xml_namespace_sync() -> (
+    None
+):
+    """
+    Serializes flattened XML maps in responses that have xmlNamespace and
+    xmlName on members
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b'<FlattenedXmlMapWithXmlNamespaceOutput>\n    <KVP xmlns="https://the-member.example.com">\n        <K xmlns="https://the-key.example.com">a</K>\n        <V xmlns="https://the-value.example.com">A</V>\n    </KVP>\n    <KVP xmlns="https://the-member.example.com">\n        <K xmlns="https://the-key.example.com">b</K>\n        <V xmlns="https://the-value.example.com">B</V>\n    </KVP>\n</FlattenedXmlMapWithXmlNamespaceOutput>',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = FlattenedXmlMapWithXmlNamespaceInput()
+
+    try:
+        actual = client.flattened_xml_map_with_xml_namespace(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = FlattenedXmlMapWithXmlNamespaceOutput(my_map={"a": "A", "b": "B"})
+
+        assert deep_equal(actual, expected)
+
+
+def test_rest_xml_date_time_with_fractional_seconds_response_fractional_seconds_sync() -> (
+    None
+):
+    """
+    Ensures that clients can correctly parse datetime timestamps with
+    fractional seconds
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<FractionalSecondsOutput>\n    <datetime>2000-01-02T20:34:56.123Z</datetime>\n</FractionalSecondsOutput>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = FractionalSecondsInput()
+
+    try:
+        actual = client.fractional_seconds(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = FractionalSecondsOutput(
+            datetime_=datetime(2000, 1, 2, 20, 34, 56, 123000, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_greeting_with_errors_response_greeting_with_errors_sync() -> None:
+    """
+    Ensures that operations with errors successfully know how to deserialize
+    the successful response
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200, headers=[("X-Greeting", "Hello")], body=b""
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        actual = client.greeting_with_errors(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = GreetingWithErrorsOutput(greeting="Hello")
+
+        assert deep_equal(actual, expected)
+
+
+def test_invalid_greeting_error_error_greeting_with_errors_sync() -> None:
+    """Parses simple XML errors"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=400,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<ErrorResponse>\n   <Error>\n      <Type>Sender</Type>\n      <Code>InvalidGreeting</Code>\n      <Message>Hi</Message>\n      <AnotherSetting>setting</AnotherSetting>\n   </Error>\n   <RequestId>foo-id</RequestId>\n</ErrorResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        client.greeting_with_errors(input_)
+        fail("Expected 'InvalidGreeting' exception to be thrown!")
+    except Exception as err:
+        if type(err).__name__ != "InvalidGreeting":
+            fail(
+                f"Expected 'InvalidGreeting' exception to be thrown, but received {type(err).__name__}: {err}"
+            )
+
+
+def test_complex_error_error_greeting_with_errors_sync() -> None:
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=403,
+                headers=[("Content-Type", "application/xml"), ("X-Header", "Header")],
+                body=b"<ErrorResponse>\n   <Error>\n      <Type>Sender</Type>\n      <Code>ComplexError</Code>\n      <Message>Hi</Message>\n      <TopLevel>Top level</TopLevel>\n      <Nested>\n          <Foo>bar</Foo>\n      </Nested>\n   </Error>\n   <RequestId>foo-id</RequestId>\n</ErrorResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        client.greeting_with_errors(input_)
+        fail("Expected 'ComplexError' exception to be thrown!")
+    except Exception as err:
+        if type(err).__name__ != "ComplexError":
+            fail(
+                f"Expected 'ComplexError' exception to be thrown, but received {type(err).__name__}: {err}"
+            )
+
+
+def test_http_empty_prefix_headers_request_client_request_http_empty_prefix_headers_sync() -> (
+    None
+):
+    """Serializes all request headers, using specific when present"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpEmptyPrefixHeadersInput(
+        prefix_headers={"x-foo": "Foo", "hello": "Hello"}, specific_header="There"
+    )
+
+    try:
+        client.http_empty_prefix_headers(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/HttpEmptyPrefixHeaders"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("hello", "There"), ("x-foo", "Foo")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_http_empty_prefix_headers_response_client_response_http_empty_prefix_headers_sync() -> (
+    None
+):
+    """Deserializes all response headers with the same for prefix and specific"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200, headers=[("hello", "There"), ("x-foo", "Foo")], body=b""
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpEmptyPrefixHeadersInput()
+
+    try:
+        actual = client.http_empty_prefix_headers(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = HttpEmptyPrefixHeadersOutput(
+            prefix_headers={"x-foo": "Foo", "hello": "There"}, specific_header="There"
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_rest_xml_enum_payload_request_request_http_enum_payload_sync() -> None:
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpEnumPayloadInput(payload="enumvalue")
+
+    try:
+        client.http_enum_payload(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/EnumPayload"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "text/plain")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"enumvalue"
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_enum_payload_response_response_http_enum_payload_sync() -> None:
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200, headers=[("Content-Type", "text/plain")], body=b"enumvalue"
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpEnumPayloadInput()
+
+    try:
+        actual = client.http_enum_payload(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = HttpEnumPayloadOutput(payload="enumvalue")
+
+        assert deep_equal(actual, expected)
+
+
+def test_http_payload_traits_with_blob_request_http_payload_traits_sync() -> None:
+    """Serializes a blob in the HTTP payload"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadTraitsInput(foo="Foo", blob=b"blobby blob blob")
+
+    try:
+        client.http_payload_traits(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/HttpPayloadTraits"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("x-foo", "Foo")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"blobby blob blob"
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_http_payload_traits_with_no_blob_body_request_http_payload_traits_sync() -> (
+    None
+):
+    """Serializes an empty blob in the HTTP payload"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadTraitsInput(foo="Foo")
+
+    try:
+        client.http_payload_traits(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/HttpPayloadTraits"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("x-foo", "Foo")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_http_payload_traits_with_blob_response_http_payload_traits_sync() -> None:
+    """Serializes a blob in the HTTP payload"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200, headers=[("X-Foo", "Foo")], body=b"blobby blob blob"
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadTraitsInput()
+
+    try:
+        actual = client.http_payload_traits(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = HttpPayloadTraitsOutput(foo="Foo", blob=b"blobby blob blob")
+
+        assert deep_equal(actual, expected)
+
+
+def test_http_payload_traits_with_no_blob_body_response_http_payload_traits_sync() -> (
+    None
+):
+    """Serializes an empty blob in the HTTP payload"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200, headers=[("X-Foo", "Foo")], body=b""
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadTraitsInput()
+
+    try:
+        actual = client.http_payload_traits(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = HttpPayloadTraitsOutput(foo="Foo", blob=b"")
+
+        assert deep_equal(actual, expected)
+
+
+def test_http_payload_traits_with_media_type_with_blob_request_http_payload_traits_with_media_type_sync() -> (
+    None
+):
+    """Serializes a blob in the HTTP payload with a content-type"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadTraitsWithMediaTypeInput(foo="Foo", blob=b"blobby blob blob")
+
+    try:
+        client.http_payload_traits_with_media_type(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/HttpPayloadTraitsWithMediaType"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "text/plain"),
+            ("x-foo", "Foo"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"blobby blob blob"
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_http_payload_traits_with_media_type_with_blob_response_http_payload_traits_with_media_type_sync() -> (
+    None
+):
+    """Serializes a blob in the HTTP payload with a content-type"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/plain"), ("X-Foo", "Foo")],
+                body=b"blobby blob blob",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadTraitsWithMediaTypeInput()
+
+    try:
+        actual = client.http_payload_traits_with_media_type(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = HttpPayloadTraitsWithMediaTypeOutput(
+            foo="Foo", blob=b"blobby blob blob"
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_http_payload_with_member_xml_name_request_http_payload_with_member_xml_name_sync() -> (
+    None
+):
+    """
+    Serializes a structure in the payload using a wrapper name based on
+    member xmlName
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadWithMemberXmlNameInput(
+        nested=PayloadWithXmlName(name="Phreddy")
+    )
+
+    try:
+        client.http_payload_with_member_xml_name(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/HttpPayloadWithMemberXmlName"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<Hola><name>Phreddy</name></Hola>"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_http_payload_with_member_xml_name_response_http_payload_with_member_xml_name_sync() -> (
+    None
+):
+    """
+    Serializes a structure in the payload using a wrapper name based on
+    member xmlName
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<Hola><name>Phreddy</name></Hola>",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadWithMemberXmlNameInput()
+
+    try:
+        actual = client.http_payload_with_member_xml_name(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = HttpPayloadWithMemberXmlNameOutput(
+            nested=PayloadWithXmlName(name="Phreddy")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_http_payload_with_structure_request_http_payload_with_structure_sync() -> None:
+    """Serializes a structure in the payload"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadWithStructureInput(
+        nested=NestedPayload(greeting="hello", name="Phreddy")
+    )
+
+    try:
+        client.http_payload_with_structure(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/HttpPayloadWithStructure"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<NestedPayload>\n    <greeting>hello</greeting>\n    <name>Phreddy</name>\n</NestedPayload>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_http_payload_with_structure_response_http_payload_with_structure_sync() -> (
+    None
+):
+    """Serializes a structure in the payload"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<NestedPayload>\n    <greeting>hello</greeting>\n    <name>Phreddy</name>\n</NestedPayload>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadWithStructureInput()
+
+    try:
+        actual = client.http_payload_with_structure(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = HttpPayloadWithStructureOutput(
+            nested=NestedPayload(greeting="hello", name="Phreddy")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_rest_xml_http_payload_with_union_request_http_payload_with_union_sync() -> (
+    None
+):
+    """Serializes a union in the payload."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadWithUnionInput(nested=UnionPayloadGreeting(value="hello"))
+
+    try:
+        client.http_payload_with_union(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/HttpPayloadWithUnion"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b"<UnionPayload>\n    <greeting>hello</greeting>\n</UnionPayload>"
+        )
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_http_payload_with_unset_union_request_http_payload_with_union_sync() -> (
+    None
+):
+    """No payload is sent if the union has no value."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadWithUnionInput()
+
+    try:
+        client.http_payload_with_union(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/HttpPayloadWithUnion"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_http_payload_with_union_response_http_payload_with_union_sync() -> (
+    None
+):
+    """Serializes a union in the payload."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<UnionPayload>\n    <greeting>hello</greeting>\n</UnionPayload>",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadWithUnionInput()
+
+    try:
+        actual = client.http_payload_with_union(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = HttpPayloadWithUnionOutput(
+            nested=UnionPayloadGreeting(value="hello")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_rest_xml_http_payload_with_unset_union_response_http_payload_with_union_sync() -> (
+    None
+):
+    """No payload is sent if the union has no value."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200, headers=[("Content-Length", "0")], body=b""
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadWithUnionInput()
+
+    try:
+        actual = client.http_payload_with_union(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = HttpPayloadWithUnionOutput()
+
+        assert deep_equal(actual, expected)
+
+
+def test_http_payload_with_xml_name_request_http_payload_with_xml_name_sync() -> None:
+    """
+    Serializes a structure in the payload using a wrapper name based on
+    xmlName
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadWithXmlNameInput(nested=PayloadWithXmlName(name="Phreddy"))
+
+    try:
+        client.http_payload_with_xml_name(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/HttpPayloadWithXmlName"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<Hello><name>Phreddy</name></Hello>"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_http_payload_with_xml_name_response_http_payload_with_xml_name_sync() -> None:
+    """
+    Serializes a structure in the payload using a wrapper name based on
+    xmlName
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<Hello><name>Phreddy</name></Hello>",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadWithXmlNameInput()
+
+    try:
+        actual = client.http_payload_with_xml_name(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = HttpPayloadWithXmlNameOutput(
+            nested=PayloadWithXmlName(name="Phreddy")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_http_payload_with_xml_namespace_request_http_payload_with_xml_namespace_sync() -> (
+    None
+):
+    """
+    Serializes a structure in the payload using a wrapper with an XML
+    namespace
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadWithXmlNamespaceInput(
+        nested=PayloadWithXmlNamespace(name="Phreddy")
+    )
+
+    try:
+        client.http_payload_with_xml_namespace(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/HttpPayloadWithXmlNamespace"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'<PayloadWithXmlNamespace xmlns="http://foo.com">\n    <name>Phreddy</name>\n</PayloadWithXmlNamespace>'
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_http_payload_with_xml_namespace_response_http_payload_with_xml_namespace_sync() -> (
+    None
+):
+    """
+    Serializes a structure in the payload using a wrapper with an XML
+    namespace
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b'<PayloadWithXmlNamespace xmlns="http://foo.com">\n    <name>Phreddy</name>\n</PayloadWithXmlNamespace>',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadWithXmlNamespaceInput()
+
+    try:
+        actual = client.http_payload_with_xml_namespace(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = HttpPayloadWithXmlNamespaceOutput(
+            nested=PayloadWithXmlNamespace(name="Phreddy")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_http_payload_with_xml_namespace_and_prefix_request_http_payload_with_xml_namespace_and_prefix_sync() -> (
+    None
+):
+    """
+    Serializes a structure in the payload using a wrapper with an XML
+    namespace
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadWithXmlNamespaceAndPrefixInput(
+        nested=PayloadWithXmlNamespaceAndPrefix(name="Phreddy")
+    )
+
+    try:
+        client.http_payload_with_xml_namespace_and_prefix(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/HttpPayloadWithXmlNamespaceAndPrefix"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'<PayloadWithXmlNamespaceAndPrefix xmlns:baz="http://foo.com">\n    <name>Phreddy</name>\n</PayloadWithXmlNamespaceAndPrefix>'
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_http_payload_with_xml_namespace_and_prefix_response_http_payload_with_xml_namespace_and_prefix_sync() -> (
+    None
+):
+    """
+    Serializes a structure in the payload using a wrapper with an XML
+    namespace
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b'<PayloadWithXmlNamespaceAndPrefix xmlns:baz="http://foo.com">\n    <name>Phreddy</name>\n</PayloadWithXmlNamespaceAndPrefix>',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPayloadWithXmlNamespaceAndPrefixInput()
+
+    try:
+        actual = client.http_payload_with_xml_namespace_and_prefix(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = HttpPayloadWithXmlNamespaceAndPrefixOutput(
+            nested=PayloadWithXmlNamespaceAndPrefix(name="Phreddy")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_http_prefix_headers_are_present_request_http_prefix_headers_sync() -> None:
+    """Adds headers by prefix"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPrefixHeadersInput(
+        foo="Foo", foo_map={"abc": "Abc value", "def": "Def value"}
+    )
+
+    try:
+        client.http_prefix_headers(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/HttpPrefixHeaders"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("x-foo", "Foo"),
+            ("x-foo-abc", "Abc value"),
+            ("x-foo-def", "Def value"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_http_prefix_headers_are_not_present_request_http_prefix_headers_sync() -> None:
+    """No prefix headers are serialized because the value is not present"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPrefixHeadersInput(foo="Foo", foo_map={})
+
+    try:
+        client.http_prefix_headers(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/HttpPrefixHeaders"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("x-foo", "Foo")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_http_prefix_empty_headers_request_http_prefix_headers_sync() -> None:
+    """Serialize prefix headers were the value is present but empty"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPrefixHeadersInput(foo_map={"abc": ""})
+
+    try:
+        client.http_prefix_headers(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/HttpPrefixHeaders"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("x-foo-abc", "")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_http_prefix_headers_are_present_response_http_prefix_headers_sync() -> None:
+    """Adds headers by prefix"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[
+                    ("x-foo", "Foo"),
+                    ("x-foo-abc", "Abc value"),
+                    ("x-foo-def", "Def value"),
+                ],
+                body=b"",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPrefixHeadersInput()
+
+    try:
+        actual = client.http_prefix_headers(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = HttpPrefixHeadersOutput(
+            foo="Foo", foo_map={"abc": "Abc value", "def": "Def value"}
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_http_prefix_headers_are_not_present_response_http_prefix_headers_sync() -> (
+    None
+):
+    """No prefix headers are serialized because the value is empty"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200, headers=[("x-foo", "Foo")], body=b""
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpPrefixHeadersInput()
+
+    try:
+        actual = client.http_prefix_headers(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = HttpPrefixHeadersOutput(foo="Foo", foo_map={})
+
+        assert deep_equal(actual, expected)
+
+
+def test_rest_xml_supports_na_n_float_labels_request_http_request_with_float_labels_sync() -> (
+    None
+):
+    """Supports handling NaN float label values."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpRequestWithFloatLabelsInput(float_=float("nan"), double=float("nan"))
+
+    try:
+        client.http_request_with_float_labels(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/FloatHttpLabels/NaN/NaN"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_supports_infinity_float_labels_request_http_request_with_float_labels_sync() -> (
+    None
+):
+    """Supports handling Infinity float label values."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpRequestWithFloatLabelsInput(float_=float("inf"), double=float("inf"))
+
+    try:
+        client.http_request_with_float_labels(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/FloatHttpLabels/Infinity/Infinity"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_supports_negative_infinity_float_labels_request_http_request_with_float_labels_sync() -> (
+    None
+):
+    """Supports handling -Infinity float label values."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpRequestWithFloatLabelsInput(float_=float("-inf"), double=float("-inf"))
+
+    try:
+        client.http_request_with_float_labels(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/FloatHttpLabels/-Infinity/-Infinity"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_http_request_with_greedy_label_in_path_request_http_request_with_greedy_label_in_path_sync() -> (
+    None
+):
+    """Serializes greedy labels and normal labels"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpRequestWithGreedyLabelInPathInput(foo="hello", baz="there/guy")
+
+    try:
+        client.http_request_with_greedy_label_in_path(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert (
+            actual.destination.path
+            == "/HttpRequestWithGreedyLabelInPath/foo/hello/baz/there/guy"
+        )
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_input_with_headers_and_all_params_request_http_request_with_labels_sync() -> (
+    None
+):
+    """Sends a GET request that uses URI label bindings"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpRequestWithLabelsInput(
+        string="string",
+        short=1,
+        integer=2,
+        long=3,
+        float_=float(4.1),
+        double=float(5.1),
+        boolean=True,
+        timestamp=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+    )
+
+    try:
+        client.http_request_with_labels(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert (
+            actual.destination.path
+            == "/HttpRequestWithLabels/string/1/2/3/4.1/5.1/true/2019-12-16T23%3A48%3A18Z"
+        )
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_http_request_label_escaping_request_http_request_with_labels_sync() -> None:
+    """Sends a GET request that uses URI label bindings"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpRequestWithLabelsInput(
+        string=" %:/?#[]@!$&'()*+,;=😹",
+        short=1,
+        integer=2,
+        long=3,
+        float_=float(4.1),
+        double=float(5.1),
+        boolean=True,
+        timestamp=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+    )
+
+    try:
+        client.http_request_with_labels(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert (
+            actual.destination.path
+            == "/HttpRequestWithLabels/%20%25%3A%2F%3F%23%5B%5D%40%21%24%26%27%28%29%2A%2B%2C%3B%3D%F0%9F%98%B9/1/2/3/4.1/5.1/true/2019-12-16T23%3A48%3A18Z"
+        )
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_http_request_with_labels_and_timestamp_format_request_http_request_with_labels_and_timestamp_format_sync() -> (
+    None
+):
+    """Serializes different timestamp formats in URI labels"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpRequestWithLabelsAndTimestampFormatInput(
+        member_epoch_seconds=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+        member_http_date=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+        member_date_time=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+        default_format=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+        target_epoch_seconds=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+        target_http_date=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+        target_date_time=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+    )
+
+    try:
+        client.http_request_with_labels_and_timestamp_format(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert (
+            actual.destination.path
+            == "/HttpRequestWithLabelsAndTimestampFormat/1576540098/Mon%2C%2016%20Dec%202019%2023%3A48%3A18%20GMT/2019-12-16T23%3A48%3A18Z/2019-12-16T23%3A48%3A18Z/1576540098/Mon%2C%2016%20Dec%202019%2023%3A48%3A18%20GMT/2019-12-16T23%3A48%3A18Z"
+        )
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_http_response_code_response_http_response_code_sync() -> None:
+    """Binds the http response code to an output structure."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=201, headers=[("Content-Type", "application/xml")], body=b""
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpResponseCodeInput()
+
+    try:
+        actual = client.http_response_code(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = HttpResponseCodeOutput(status=201)
+
+        assert deep_equal(actual, expected)
+
+
+def test_rest_xml_string_payload_request_request_http_string_payload_sync() -> None:
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpStringPayloadInput(payload="rawstring")
+
+    try:
+        client.http_string_payload(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/StringPayload"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "text/plain")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"rawstring"
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_string_payload_response_response_http_string_payload_sync() -> None:
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200, headers=[("Content-Type", "text/plain")], body=b"rawstring"
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = HttpStringPayloadInput()
+
+    try:
+        actual = client.http_string_payload(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = HttpStringPayloadOutput(payload="rawstring")
+
+        assert deep_equal(actual, expected)
+
+
+def test_ignore_query_params_in_response_response_ignore_query_params_in_response_sync() -> (
+    None
+):
+    """
+    Query parameters must be ignored when serializing the output of an
+    operation
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<IgnoreQueryParamsInResponseOutput><baz>bam</baz></IgnoreQueryParamsInResponseOutput>",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = IgnoreQueryParamsInResponseInput()
+
+    try:
+        actual = client.ignore_query_params_in_response(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = IgnoreQueryParamsInResponseOutput(baz="bam")
+
+        assert deep_equal(actual, expected)
+
+
+def test_input_and_output_with_string_headers_request_input_and_output_with_headers_sync() -> (
+    None
+):
+    """Tests requests with string header bindings"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = InputAndOutputWithHeadersInput(
+        header_string="Hello",
+        header_string_list=["a", "b", "c"],
+        header_string_set=["a", "b", "c"],
+    )
+
+    try:
+        client.input_and_output_with_headers(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/InputAndOutputWithHeaders"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("x-string", "Hello"),
+            ("x-stringlist", "a"),
+            ("x-stringlist", "b"),
+            ("x-stringlist", "c"),
+            ("x-stringset", "a"),
+            ("x-stringset", "b"),
+            ("x-stringset", "c"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_input_and_output_with_numeric_headers_request_input_and_output_with_headers_sync() -> (
+    None
+):
+    """Tests requests with numeric header bindings"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = InputAndOutputWithHeadersInput(
+        header_byte=1,
+        header_short=123,
+        header_integer=123,
+        header_long=123,
+        header_float=float(1.1),
+        header_double=float(1.1),
+        header_integer_list=[1, 2, 3],
+    )
+
+    try:
+        client.input_and_output_with_headers(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/InputAndOutputWithHeaders"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("x-byte", "1"),
+            ("x-double", "1.1"),
+            ("x-float", "1.1"),
+            ("x-integer", "123"),
+            ("x-integerlist", "1"),
+            ("x-integerlist", "2"),
+            ("x-integerlist", "3"),
+            ("x-long", "123"),
+            ("x-short", "123"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_input_and_output_with_boolean_headers_request_input_and_output_with_headers_sync() -> (
+    None
+):
+    """Tests requests with boolean header bindings"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = InputAndOutputWithHeadersInput(
+        header_true_bool=True,
+        header_false_bool=False,
+        header_boolean_list=[True, False, True],
+    )
+
+    try:
+        client.input_and_output_with_headers(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/InputAndOutputWithHeaders"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("x-boolean1", "true"),
+            ("x-boolean2", "false"),
+            ("x-booleanlist", "true"),
+            ("x-booleanlist", "false"),
+            ("x-booleanlist", "true"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_input_and_output_with_timestamp_headers_request_input_and_output_with_headers_sync() -> (
+    None
+):
+    """Tests requests with timestamp header bindings"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = InputAndOutputWithHeadersInput(
+        header_timestamp_list=[
+            datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+        ]
+    )
+
+    try:
+        client.input_and_output_with_headers(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/InputAndOutputWithHeaders"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("x-timestamplist", "Mon, 16 Dec 2019 23:48:18 GMT"),
+            ("x-timestamplist", "Mon, 16 Dec 2019 23:48:18 GMT"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_input_and_output_with_enum_headers_request_input_and_output_with_headers_sync() -> (
+    None
+):
+    """Tests requests with enum header bindings"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = InputAndOutputWithHeadersInput(
+        header_enum="Foo", header_enum_list=["Foo", "Bar", "Baz"]
+    )
+
+    try:
+        client.input_and_output_with_headers(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/InputAndOutputWithHeaders"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("x-enum", "Foo"),
+            ("x-enumlist", "Foo"),
+            ("x-enumlist", "Bar"),
+            ("x-enumlist", "Baz"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_supports_na_n_float_header_inputs_request_input_and_output_with_headers_sync() -> (
+    None
+):
+    """Supports handling NaN float header values."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = InputAndOutputWithHeadersInput(
+        header_float=float("nan"), header_double=float("nan")
+    )
+
+    try:
+        client.input_and_output_with_headers(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/InputAndOutputWithHeaders"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("x-double", "NaN"),
+            ("x-float", "NaN"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_supports_infinity_float_header_inputs_request_input_and_output_with_headers_sync() -> (
+    None
+):
+    """Supports handling Infinity float header values."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = InputAndOutputWithHeadersInput(
+        header_float=float("inf"), header_double=float("inf")
+    )
+
+    try:
+        client.input_and_output_with_headers(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/InputAndOutputWithHeaders"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("x-double", "Infinity"),
+            ("x-float", "Infinity"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_supports_negative_infinity_float_header_inputs_request_input_and_output_with_headers_sync() -> (
+    None
+):
+    """Supports handling -Infinity float header values."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = InputAndOutputWithHeadersInput(
+        header_float=float("-inf"), header_double=float("-inf")
+    )
+
+    try:
+        client.input_and_output_with_headers(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/InputAndOutputWithHeaders"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("x-double", "-Infinity"),
+            ("x-float", "-Infinity"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_input_and_output_with_string_headers_response_input_and_output_with_headers_sync() -> (
+    None
+):
+    """Tests responses with string header bindings"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[
+                    ("X-String", "Hello"),
+                    ("X-StringList", "a, b, c"),
+                    ("X-StringSet", "a, b, c"),
+                ],
+                body=b"",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = InputAndOutputWithHeadersInput()
+
+    try:
+        actual = client.input_and_output_with_headers(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = InputAndOutputWithHeadersOutput(
+            header_string="Hello",
+            header_string_list=["a", "b", "c"],
+            header_string_set=["a", "b", "c"],
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_input_and_output_with_numeric_headers_response_input_and_output_with_headers_sync() -> (
+    None
+):
+    """Tests responses with numeric header bindings"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[
+                    ("X-Byte", "1"),
+                    ("X-Double", "1.1"),
+                    ("X-Float", "1.1"),
+                    ("X-Integer", "123"),
+                    ("X-IntegerList", "1, 2, 3"),
+                    ("X-Long", "123"),
+                    ("X-Short", "123"),
+                ],
+                body=b"",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = InputAndOutputWithHeadersInput()
+
+    try:
+        actual = client.input_and_output_with_headers(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = InputAndOutputWithHeadersOutput(
+            header_byte=1,
+            header_short=123,
+            header_integer=123,
+            header_long=123,
+            header_float=float(1.1),
+            header_double=float(1.1),
+            header_integer_list=[1, 2, 3],
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_input_and_output_with_boolean_headers_response_input_and_output_with_headers_sync() -> (
+    None
+):
+    """Tests responses with boolean header bindings"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[
+                    ("X-Boolean1", "true"),
+                    ("X-Boolean2", "false"),
+                    ("X-BooleanList", "true, false, true"),
+                ],
+                body=b"",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = InputAndOutputWithHeadersInput()
+
+    try:
+        actual = client.input_and_output_with_headers(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = InputAndOutputWithHeadersOutput(
+            header_true_bool=True,
+            header_false_bool=False,
+            header_boolean_list=[True, False, True],
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_input_and_output_with_timestamp_headers_response_input_and_output_with_headers_sync() -> (
+    None
+):
+    """Tests responses with timestamp header bindings"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[
+                    (
+                        "X-TimestampList",
+                        "Mon, 16 Dec 2019 23:48:18 GMT, Mon, 16 Dec 2019 23:48:18 GMT",
+                    )
+                ],
+                body=b"",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = InputAndOutputWithHeadersInput()
+
+    try:
+        actual = client.input_and_output_with_headers(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = InputAndOutputWithHeadersOutput(
+            header_timestamp_list=[
+                datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+                datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            ]
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_input_and_output_with_enum_headers_response_input_and_output_with_headers_sync() -> (
+    None
+):
+    """Tests responses with enum header bindings"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("X-Enum", "Foo"), ("X-EnumList", "Foo, Bar, Baz")],
+                body=b"",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = InputAndOutputWithHeadersInput()
+
+    try:
+        actual = client.input_and_output_with_headers(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = InputAndOutputWithHeadersOutput(
+            header_enum="Foo", header_enum_list=["Foo", "Bar", "Baz"]
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_rest_xml_supports_na_n_float_header_outputs_response_input_and_output_with_headers_sync() -> (
+    None
+):
+    """Supports handling NaN float header values."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200, headers=[("X-Double", "NaN"), ("X-Float", "NaN")], body=b""
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = InputAndOutputWithHeadersInput()
+
+    try:
+        actual = client.input_and_output_with_headers(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = InputAndOutputWithHeadersOutput(
+            header_float=float("nan"), header_double=float("nan")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_rest_xml_supports_infinity_float_header_outputs_response_input_and_output_with_headers_sync() -> (
+    None
+):
+    """Supports handling Infinity float header values."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("X-Double", "Infinity"), ("X-Float", "Infinity")],
+                body=b"",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = InputAndOutputWithHeadersInput()
+
+    try:
+        actual = client.input_and_output_with_headers(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = InputAndOutputWithHeadersOutput(
+            header_float=float("inf"), header_double=float("inf")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_rest_xml_supports_negative_infinity_float_header_outputs_response_input_and_output_with_headers_sync() -> (
+    None
+):
+    """Supports handling -Infinity float header values."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("X-Double", "-Infinity"), ("X-Float", "-Infinity")],
+                body=b"",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = InputAndOutputWithHeadersInput()
+
+    try:
+        actual = client.input_and_output_with_headers(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = InputAndOutputWithHeadersOutput(
+            header_float=float("-inf"), header_double=float("-inf")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_nested_xml_map_request_request_nested_xml_maps_sync() -> None:
+    """Tests requests with nested maps."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = NestedXmlMapsInput(nested_map={"foo": {"bar": "Bar"}})
+
+    try:
+        client.nested_xml_maps(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/NestedXmlMaps"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<NestedXmlMapsRequest>\n    <nestedMap>\n        <entry>\n            <key>foo</key>\n            <value>\n                <entry>\n                    <key>bar</key>\n                    <value>Bar</value>\n                </entry>\n            </value>\n        </entry>\n    </nestedMap>\n</NestedXmlMapsRequest>"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_flat_nested_xml_map_request_request_nested_xml_maps_sync() -> None:
+    """
+    Tests requests with nested flat maps. Since maps can only be flattened
+    when they're structure members, only the outer map is flat.
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = NestedXmlMapsInput(flat_nested_map={"foo": {"bar": "Bar"}})
+
+    try:
+        client.nested_xml_maps(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/NestedXmlMaps"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<NestedXmlMapsRequest>\n    <flatNestedMap>\n        <key>foo</key>\n        <value>\n            <entry>\n                <key>bar</key>\n                <value>Bar</value>\n            </entry>\n        </value>\n    </flatNestedMap>\n</NestedXmlMapsRequest>"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_nested_xml_map_response_response_nested_xml_maps_sync() -> None:
+    """Tests responses with nested maps."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<NestedXmlMapsResponse>\n    <nestedMap>\n        <entry>\n            <key>foo</key>\n            <value>\n                <entry>\n                    <key>bar</key>\n                    <value>Bar</value>\n                </entry>\n            </value>\n        </entry>\n    </nestedMap>\n</NestedXmlMapsResponse>",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = NestedXmlMapsInput()
+
+    try:
+        actual = client.nested_xml_maps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = NestedXmlMapsOutput(nested_map={"foo": {"bar": "Bar"}})
+
+        assert deep_equal(actual, expected)
+
+
+def test_flat_nested_xml_map_response_response_nested_xml_maps_sync() -> None:
+    """
+    Tests responses with nested flat maps. Since maps can only be flattened
+    when they're structure members, only the outer map is flat.
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<NestedXmlMapsResponse>\n    <flatNestedMap>\n        <key>foo</key>\n        <value>\n            <entry>\n                <key>bar</key>\n                <value>Bar</value>\n            </entry>\n        </value>\n    </flatNestedMap>\n</NestedXmlMapsResponse>",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = NestedXmlMapsInput()
+
+    try:
+        actual = client.nested_xml_maps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = NestedXmlMapsOutput(flat_nested_map={"foo": {"bar": "Bar"}})
+
+        assert deep_equal(actual, expected)
+
+
+def test_nested_xml_map_with_xml_name_serializes_request_nested_xml_map_with_xml_name_sync() -> (
+    None
+):
+    """Serializes nested XML Maps in requests that have xmlName on members"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = NestedXmlMapWithXmlNameInput(
+        nested_xml_map_with_xml_name_map={
+            "foo": {"bar": "Baz", "fizz": "Buzz"},
+            "qux": {"foobar": "Bar", "fizzbuzz": "Buzz"},
+        }
+    )
+
+    try:
+        client.nested_xml_map_with_xml_name(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/NestedXmlMapWithXmlName"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"    <NestedXmlMapWithXmlNameRequest>\n        <nestedXmlMapWithXmlNameMap>\n            <entry>\n                <OuterKey>foo</OuterKey>\n                <value>\n                    <entry>\n                        <InnerKey>bar</InnerKey>\n                        <InnerValue>Baz</InnerValue>\n                    </entry>\n                    <entry>\n                        <InnerKey>fizz</InnerKey>\n                        <InnerValue>Buzz</InnerValue>\n                    </entry>\n                </value>\n            </entry>\n            <entry>\n                <OuterKey>qux</OuterKey>\n                <value>\n                    <entry>\n                        <InnerKey>foobar</InnerKey>\n                        <InnerValue>Bar</InnerValue>\n                    </entry>\n                    <entry>\n                        <InnerKey>fizzbuzz</InnerKey>\n                        <InnerValue>Buzz</InnerValue>\n                    </entry>\n                </value>\n            </entry>\n        </nestedXmlMapWithXmlNameMap>\n    </NestedXmlMapWithXmlNameRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_nested_xml_map_with_xml_name_deserializes_response_nested_xml_map_with_xml_name_sync() -> (
+    None
+):
+    """Serializes nested XML maps in responses that have xmlName on members"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"    <NestedXmlMapWithXmlNameResponse>\n        <nestedXmlMapWithXmlNameMap>\n            <entry>\n                <OuterKey>foo</OuterKey>\n                <value>\n                    <entry>\n                        <InnerKey>bar</InnerKey>\n                        <InnerValue>Baz</InnerValue>\n                    </entry>\n                    <entry>\n                        <InnerKey>fizz</InnerKey>\n                        <InnerValue>Buzz</InnerValue>\n                    </entry>\n                </value>\n            </entry>\n            <entry>\n                <OuterKey>qux</OuterKey>\n                <value>\n                    <entry>\n                        <InnerKey>foobar</InnerKey>\n                        <InnerValue>Bar</InnerValue>\n                    </entry>\n                    <entry>\n                        <InnerKey>fizzbuzz</InnerKey>\n                        <InnerValue>Buzz</InnerValue>\n                    </entry>\n                </value>\n            </entry>\n        </nestedXmlMapWithXmlNameMap>\n    </NestedXmlMapWithXmlNameResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = NestedXmlMapWithXmlNameInput()
+
+    try:
+        actual = client.nested_xml_map_with_xml_name(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = NestedXmlMapWithXmlNameOutput(
+            nested_xml_map_with_xml_name_map={
+                "foo": {"bar": "Baz", "fizz": "Buzz"},
+                "qux": {"foobar": "Bar", "fizzbuzz": "Buzz"},
+            }
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_no_input_and_no_output_request_no_input_and_no_output_sync() -> None:
+    """No input serializes no payload"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = NoInputAndNoOutputInput()
+
+    try:
+        client.no_input_and_no_output(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/NoInputAndNoOutput"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_no_input_and_no_output_response_no_input_and_no_output_sync() -> None:
+    """No output serializes no payload"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(status=200, headers=[], body=b""),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = NoInputAndNoOutputInput()
+
+    try:
+        actual = client.no_input_and_no_output(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = NoInputAndNoOutputOutput()
+
+        assert deep_equal(actual, expected)
+
+
+def test_no_input_and_output_request_no_input_and_output_sync() -> None:
+    """No input serializes no payload"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = NoInputAndOutputInput()
+
+    try:
+        client.no_input_and_output(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/NoInputAndOutputOutput"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_no_input_and_output_response_no_input_and_output_sync() -> None:
+    """Empty output serializes no payload"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(status=200, headers=[], body=b""),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = NoInputAndOutputInput()
+
+    try:
+        actual = client.no_input_and_output(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = NoInputAndOutputOutput()
+
+        assert deep_equal(actual, expected)
+
+
+def test_null_and_empty_headers_request_null_and_empty_headers_client_sync() -> None:
+    """
+    Do not send null values, but do send empty strings and empty lists over
+    the wire in headers
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = NullAndEmptyHeadersClientInput(a=None, b="", c=[])
+
+    try:
+        client.null_and_empty_headers_client(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/NullAndEmptyHeadersClient"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("x-b", "")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set(["x-a"])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_omits_null_query_request_omits_null_serializes_empty_string_sync() -> (
+    None
+):
+    """Omits null query values"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = OmitsNullSerializesEmptyStringInput(null_value=None)
+
+    try:
+        client.omits_null_serializes_empty_string(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/OmitsNullSerializesEmptyString"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_serializes_empty_string_request_omits_null_serializes_empty_string_sync() -> (
+    None
+):
+    """Serializes empty query strings"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = OmitsNullSerializesEmptyStringInput(empty_string="")
+
+    try:
+        client.omits_null_serializes_empty_string(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "GET"
+        assert actual.destination.path == "/OmitsNullSerializesEmptyString"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = ["Empty="]
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+@mark.xfail()
+def test_sdk_applied_content_encoding_rest_xml_request_put_with_content_encoding_sync() -> (
+    None
+):
+    """
+    Compression algorithm encoding is appended to the Content-Encoding
+    header.
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = PutWithContentEncodingInput(
+        data="RjCEL3kBwqPivZUXGiyA5JCujtWgJAkKRlnTEsNYfBRGOS0f7LT6R3bCSOXeJ4auSHzQ4BEZZTklUyj5\n1HEojihShQC2jkQJrNdGOZNSW49yRO0XbnGmeczUHbZqZRelLFKW4xjru9uTuB8lFCtwoGgciFsgqTF8\n5HYcoqINTRxuAwGuRUMoNO473QT0BtCQoKUkAyVaypG0hBZdGNoJhunBfW0d3HWTYlzz9pXElyZhq3C1\n2PDB17GEoOYXmTxDecysmPOdo5z6T0HFhujfeJFIQQ8dirmXcG4F3v0bZdf6AZ3jsiVh6RnEXIPxPbOi\ngIXDWTMUr4Pg3f2LdYCM01eAb2qTdgsEN0MUDhEIfn68I2tnWvcozyUFpg1ez6pyWP8ssWVfFrckREIM\nMb0cTUVqSVSM8bnFiF9SoXM6ZoGMKfX1mT708OYk7SqZ1JlCTkecDJDoR5ED2q2MWKUGR6jjnEV0GtD8\nWJO6AcF0DptY9Hk16Bav3z6c5FeBvrGDrxTFVgRUk8SychzjrcqJ4qskwN8rL3zslC0oqobQRnLFOvwJ\nprSzBIwdH2yAuxokXAdVRa1u9NGNRvfWJfKkwbbVz8yV76RUF9KNhAUmwyYDrLnxNj8ROl8B7dv8Gans\n7Bit52wcdiJyjBW1pAodB7zqqVwtBx5RaSpF7kEMXexYXp9N0J1jlXzdeg5Wgg4pO7TJNr2joiPVAiFf\nefwMMCNBkYx2z7cRxVxCJZMXXzxSKMGgdTN24bJ5UgE0TxyV52RC0wGWG49S1x5jGrvmxKCIgYPs0w3Z\n0I3XcdB0WEj4x4xRztB9Cx2Mc4qFYQdzS9kOioAgNBti1rBySZ8lFZM2zqxvBsJTTJsmcKPr1crqiXjM\noVWdM4ObOO6QA7Pu4c1hT68CrTmbcecjFcxHkgsqdixnFtN6keMGL9Z2YMjZOjYYzbUEwLJqUVWalkIB\nBkgBRqZpzxx5nB5t0qDH35KjsfKM5cinQaFoRq9y9Z82xdCoKZOsUbxZkk1kVmy1jPDCBhkhixkc5PKS\nFoSKTbeK7kuCEZCtR9OfF2k2MqbygGFsFu2sgb1Zn2YdDbaRwRGeaLhswta09UNSMUo8aTixgoYVHxwy\nvraLB6olPSPegeLOnmBeWyKmEfPdbpdGm4ev4vA2AUFuLIeFz0LkCSN0NgQMrr8ALEm1UNpJLReg1ZAX\nzZh7gtQTZUaBVdMJokaJpLk6FPxSA6zkwB5TegSqhrFIsmvpY3VNWmTUq7H0iADdh3dRQ8Is97bTsbwu\nvAEOjh4FQ9wPSFzEtcSJeYQft5GfWYPisDImjjvHVFshFFkNy2nN18pJmhVPoJc456tgbdfEIdGhIADC\n6UPcSSzE1FxlPpILqZrp3i4NvvKoiOa4a8tnALd2XRHHmsvALn2Wmfu07b86gZlu4yOyuUFNoWI6tFvd\nbHnqSJYNQlFESv13gJw609DBzNnrIgBGYBAcDRrIGAnflRKwVDUnDFrUQmE8xNG6jRlyb1p2Y2RrfBtG\ncKqhuGNiT2DfxpY89ektZ98waPhJrFEPJToNH8EADzBorh3T0h4YP1IeLmaI7SOxeuVrk1kjRqMK0rUB\nlUJgJNtCE35jCyoHMwPQlyi78ZaVv8COVQ24zcGpw0MTy6JUsDzAC3jLNY6xCb40SZV9XzG7nWvXA5Ej\nYC1gTXxF4AtFexIdDZ4RJbtYMyXt8LsEJerwwpkfqvDwsiFuqYC6vIn9RoZO5kI0F35XtUITDQYKZ4eq\nWBV0itxTyyR5Rp6g30pZEmEqOusDaIh96CEmHpOBYAQZ7u1QTfzRdysIGMpzbx5gj9Dxm2PO1glWzY7P\nlVqQiBlXSGDOkBkrB6SkiAxknt9zsPdTTsf3r3nid4hdiPrZmGWNgjOO1khSxZSzBdltrCESNnQmlnP5\nZOHA0eSYXwy8j4od5ZmjA3IpFOEPW2MutMbxIbJpg5dIx2x7WxespftenRLgl3CxcpPDcnb9w8LCHBg7\nSEjrEer6Y8wVLFWsQiv6nTdCPZz9cGqwgtCaiHRy8lTWFgdfWd397vw9rduGld3uUFeFRGjYrphqEmHi\nhiG0GhE6wRFVUsGJtvOCYkVREvbEdxPFeJvlAvOcs9HKbtptlTusvYB86vR2bNcIY4f5JZu2X6sGa354\n7LRk0ps2zqYjat3hMR7XDC8KiKceBteFsXoDjfVxTYKelpedTxqWAafrKhaoAVuNM98PSnkuIWGzjSUC\nNsDJTt6vt1D1afBVPWVmnQ7ZQdtEtLIEwAWYjemAztreELIr1E9fPEILm1Ke4KctP9I0I72Dh4eylNZD\n0DEr2Hg7cWFckuZ0Av5d0IPRARXikEGDHl8uh12TXL9v2Uh0ZVSJMEYvxGSbZvkWz8TjWSk3hKA2a7GL\nJm3Ho7e1C34gE1XRGcEthxvURxt4OKBqN3ZNaMIuDTWinoQAutMcUqtm4MoL7RGPiCHUrvTwQPSirsmA\nQmOEu8nOpnP77Fivh9jLGx5ta7nL6jrsWUsBqiN1lzpdPYLRR4mUIAj6sNWiDEk4pkbHSMEcqbWw6Zl7\npsEyPDHalCNhWMA3RSK3skURzQDZ0oBV5W7vjVIZ4d3uCKsk6zrzEI9u5mx7p9RdNKodXfzqYt0ULdtc\n3RW0hIfw2KvrO3BD2QrtgAkfrFBGVvlJSUoh0MvLz8DeXxfuiuq9Ttu7wvsqVI4Piah6WNEXtHHGPJO3\nGhc75Bnv2To4VS2v8rmyKAPIIVTuYBHZN6sZ4FhFzbrslCIdk0eadaU60naqiNWU3CsxplIYGyeThmJ7\n9u4h6Y2OmiPZjFPS2bAzwgAozYTVefII9aEaWZ0hxHZeu1FW7r79dkdO73ZqRfas9u8Z7LLBPCw5pV0F\n5I0pHDgNb6MogoxF4NZJfVtIX1vCHhhVLrXjrYNJU2fD9Fw8kT8Ie2HDBJnqAvYKmryQ1r9ulo3Me3rH\nq9s2Y5uCDxu9iQNhnpwIm57WYGFeqd2fnQeY2IziD3Jgx0KSrmOH0jgi0RwJyfGXaORPq3bQQqljuACo\nkO6io9t5VI8PbNxSHTRbtYiPciUslbT0g7SpCLrRPOBRJ4DDk56pjghpeoUagJ5xJ4wjBzBuXnAGkNnP\nTfpiuz2r3oSBAi8sB9wiYK2z9sp4gZyQsqdVNzAEgKatOxBRBmJCBYpjO98ZQrF83XApPpfFg0ujB2PW\n1iYF9NkgwIKB5oB6KVTOmSKJk11mVermPgeugHbzdd2zUP6fP8fWbhseqk2t8ahGvqjs2CDHFIWXl5jc\nfCknbykE3ANt7lnAfJQ2ddduLGiqrX4HWx6jcWw08Es6BkleO0IDbaWrb95d5isvFlzJsf0TyDIXF4uq\nbBDCi0XPWqtRJ2iqmnJa2GbBe9GmAOWMkBFSilMyC4sR395WSDpD56fx0NGoU6cHrRu9xF2Bgh7RGSfl\nch2GXEeE02fDpSHFNvJBlOEqqfkIX6oCa6KY9NThqeIjYsT184XR2ZI7akXRaw1gMOGpk4FmUxk6WIuX\n4ei1SLQgSdl7OEdRtJklZ76eFrMbkJQ2TDhu8f7mVuiy53GUMIvCrP9xYGZGmCIDm2e4U2BDi3F7C5xK\n3bDZXwlQp6z4BSqTy2OVEWxXUJfjPMOL5Mc7AvDeKtxAS73pVIv0HgHIa4NBAdC7uLG0zXuu1FF6z2XY\nyUhk03fMZhYe7vVxsul3WE7U01fuN8z2y0eKwBW1RFBE1eKIaR9Y01sIWQWbSrfHfDrdZiElhmhHehfs\n0EfrR4sLYdQshJuvhTeKGJDaEhtPQwwJ9mUYGtuCL9RozWx1XI4bHNlzBTW0BVokYiJGlPe7wdxNzJD7\nJgS7Lwv6jGKngVf86imGZyzqwiteWFPdNUoWdTvUPSMO5xIUK9mo5QpwbBOAmyYzVq42o3Qs90N9khEV\nU36LB99fw8PtGHH5wsCHshfauwnNPj0blGXzke0kQ4JNCVH7Jtn0Y0aeejkSxFtwtxoYs6zHl1Lxxpsd\nsw5vBy49CEtoltDW367lVAwDjWdx20msGB7qJCkEDrzu7EXSO22782QX9NBRcN9ppX0C25I0FMA4Wnhz\n9zIpiXRrsTH35jzM8Cjt4EVLGNU3O0HuEvAer3cENnMJtngdrT86ox3fihMQbiuy4Bh4DEcP5in2VjbT\n3qbnoCNvOi8Fmmf7KlGlWAOceL5OHVE5lljjQEMzEQOCEgrk5mDKgwSBJQBNauIDSC1a5iEQjB8Xxp4C\nqeKyyWY9IOntNrtU5ny4lNprHJd36dKFeBLKcGCOvgHBXdOZloMF0YTRExw7hreEO9IoTGVHJ4teWsNr\nHdtagUHjkeZkdMMfnUGNv5aBNtFMqhcZH6EitEa9lGPkKBbJpoom3u8D8EHSIF1H5EZqqx9TLY5hWAIG\nPwJ4qwkpCGw5rCLVrjw7ARKukIFzNULANqjHUMcJ002TlUosJM4xJ4aAgckpLVGOGuPDhGAAexEcQmbg\nUsZdmqQrtuVUyyLteLbLbqtR6CTlcAIwY3xyMCmPgyefE0FEUODBoxQtRUuYTL9RC5o1sYb2PvcxUQfb\niJFi2CAl99pAzcckU2qVCxniARslIxM5pmMRGsQX9ZzYAfZrbg6ce6S74I8UMlgRQ2QVyvUjKKOE6IrJ\nLng370emHfe5m6LZULD5YiZutkD5ipjL2Bz77DvTE5kNPUhuoKBcTJcUgytfXAKUTWOcRKNlq0GImrxM\nJfr7AWbLFFNKGLeTrVDBwpcokJCv0zcOKWe8fd2xkeXkZTdmM66IgM27cyYmtQ6YF26Kd0qrWJeVZJV9\n3fyLYYvKN5csbRY2BHoYE5ERARRW65IrpkXMf48OrCXMtDIP0Z7wxI9DiTeKKeH4uuguhCJnwzR3WxLA\nVU6eBJEd7ZjS6JA83w7decq8uDI7LGKjcz1FySp3B7fE9DkHRGXxbsL7Fjar6vW2mAv8CuvI20B6jctp\n2yLDs24sPfB3sSxrrlhbuT1m6DZqiN0dl6umKx7NGZhmOTVGr20jfcxhqPQwTJfd7kel4rvxip4BqkvT\n7STy8knJ2BXGyJeNgwo1PXUZRDVy0LCTsSF1RFuRZe8cktHl9lgw8ntdPn1pVFL0MwJkJfdXBNUp5gNv\n50FTkrpo1t6wq4CVbcfj2XOrOzvBUzNH26sXGABI1gGxCdp2jEZrHgqQaWIaTJVTuguZhxqDvdYsrwFW\nYN58uuNcKHIrGdRSigyZInwQDYk0pjcqdSeU0WVU3Y9htzZBR7XRaCJr5YTZvq7fwermb5tuwb37lPLq\nB2IGg0iftkVbXaSyfCwVaRbfLBb88so0QqpmJGirFu8FcDiXOV1zTr8yW9XLdYQuUjh43xrXLdgsuYff\nCagInUk1eU1aLjVZoJRsNmStmOEpAqlYMwTvx7w6j2f421Cxr5cNZBIVlAxlXN2QiDqJ9v3sHhHkTanc\nlQuH8ptUyX8qncpBuXXBn7cSez9N0EoxCBl1GHUagbjstgJo4gzLvTmVIY6MiWYOBitzNUHfyqKwtKUr\nVoSCdZcGeA9lHUPA7PUprRRaT3m1hGKPyshtVS2ikG48w3oVerln1N1qGdtz46gZCrndw3LZ1B362RfW\nzDPuXbpsyLsRMTt1Rz1oKHRXp3iE41hkhQH6pxlvyCW2INnHt5XU8zRamOB3oW0udOhMpQFDjRkOcy06\nb4t0QTHvoRqmBna3WXzIMZyeK3GChF5eF8oDXRbjhk7BB6YKCgqwWUzEJ5K47HMSlhFkBUjaPRjdGM0z\nzOMwhW6b1NvSwP7XM1P5yi1oPvOspts1vr29SXqrMMrBhVogeodWyd69NqrO4jkyBxKmlXifoTowpfiY\n2cUCE0XMZqxUN39LCP09JqZifaEcBEo3mgtm1tWu5QR2GNq7UyQf4RIPSDOpDCAtwoPhRgdT1lJdcj4U\nlnH0wrJ8Uwu7c08L7ErnIrDATqCrOjpSbzGP1xHENABYONC4TknFPrJ8pe40A8fzGT0qBw9mAM1SKcHO\nfoiLcMC9AjHTqJzDG3xplSLPG9or2rMeq7Fzp9r0y7uJRMxgg51EbjfvYlH466A3ggvL2WQlDXjJqPW3\nBJGWAWDNN9LK8f46bADKPxakpkx23S9O47rGSXfDhVSIZsDympxWX1UOzWwMZRHkofVeKqizgbKkGgUT\nWykE9gRoRAOd9wfHZDYKa9i0LaPDiaUMvnU1gdBIqIoiVsdJ9swX47oxvMtOxtcS0zlD6llDkBuIiU5g\nPwRCYmtkkb25c8iRJXwGFPjI1wJ34I1z1ENicPdosPiUe9ZC2jnXIKzEdv01x2ER7DNDF3yxOwOhxNxI\nGqsmC92j25UQQFu9ZstOZ28AoCkuOYs0Uycm5u8jR1T39dMBwrko09rC65ENLnsxM8oebmyFCPiGJ1ED\n5Xqc9qZ237f1OnETAoEOwqUSvrdPTv56U7hV91EMTyC812MLQpr2710E3VVpsUCUMNhIxdt7UXZ1UNFb\njgzpZLXnf4DHrv6B7kq6UI50KMxcw1HZE2GpODfUTzNFLaqdrvzxKe5eUWdcojBaRbD4fFdVYJTElYDH\nNNVh6ofkoeWcs9CWGFmSBe0T4K8phFeygQg0prKMELNEy6qENzVtG9ZDcqj3a7L6ZLtvq50anWp7fAVu\nfwz55g4iM2Z2fA0pnwHDL7tt67zTxGITvsnJsZSpeq1EQsZcwtkBV9liu7Rl7jiVT1IIRtchB8TsTiaA\nwVHIQQ9RIOTiPQdKNqi1kC9iGlUqWK93gblNWlBw1eYB9Wk8FQogutwTf0caNMx8D4nPbANcmOOlskIy\nzALh15OlTrWnhP95rf08AN2J026zDE2DUF9k0eCevYBQIDjqKNW4XCZnjbHoIcKzbY5VzPbMs3ZyMz8K\nSucBmgPg6wrSK5ykbkapS5vuqvXc9GbjQJ8bPNzoxoWGyjbZvDs2OBrIqBmcQb2DLJ8v38McQ4mC4UsS\njf4PyfSCtpk274QZjvLCZbLiCBxQegk7jUU0NmTFJAcYCxd9xMWdlFkiszcltT2YzwuFFz7iA6aa4n5L\nHpBNfUA01GcAi1aCMYhmooS4zSlYcSOZkovMz36U3Fd9WtqIEOJLi7HMgHQDgNMdK6DTzAdHQtxerxVF\nHJnPrfNVG7270r3bp0bPnLNYLhObbAn6zqSAUeLtI2Y4KJDjBKCAh2vvYGbu0e2REYJWRj7MkGevsSSy\nb1kCXLt6tKGWAb7lt5c0xyJgUIJW7pdtnwgT0ZCa24BecCAwNnG5U2EwQbcjZGsFxqNGfaemd3oFEhES\nBaE0Fxms9UKTnMafu8wvZ2xymMrUduuRzOjDeX7oD5YsLC88V8CGMLxbbxIpt94KGykbr6e7L0R4oZl1\ntKMgFwQ2p9Txdbp0Y293LcsJymKizqI0F2xEp7y4SmWOJqHZtsbz80wVV9nv41CvtfxuSoGZJ5cNB7pI\nBgzNcQCeH3Jt0RaGGwboxxpuFbzilmkMFXxJm87tD4WNgu01nHfGCKeQcySEBZpVfJgi6sDFJ8uWnvKm\n9mPLHurtWzEfKqUEa1iC71bXjw5wrvhv9BYW8JSUELHmDquftQyKdq0DZXhULMHGQLf4e95WIaoA14LL\nbThz77kuhKULPTu2MNrBUKGorurhGugo5gs4ZUezSsUOe3KxYdrFMdGgny1GgTxMSMTp2RAZytKjv4kQ\nVx7XgzvpQLIbDjUPAkJv6lScwIRq1W3Ne0Rh0V6Bmn6U5uIuWnJjULmbaQiSODj3z0mAZvak0mSWIGwT\nTX83HztcC4W7e1f6a1thmcc5K61Icehla2hBELWPpixTkyC4eEVmk9Rq0m0ZXtx0JX2ZQXqXDEyePyMe\nJ70sdSzXk72zusqhY4yuOMGgbYNHqxOToK6NxujR7e4dV3Wk5JnSUthym8scjcPeCiKDNY4cHfTMnDXJ\n9zLVy01LtNKYpJ1s8FxVxigmxQNKEbIamxhx6yqwGC4aiISVOOUEjvNOdaUfXfUsE6jEwtwxyGxjlRK1\ncLyxXttq4QWN6PehgHv7jXykzPjInbEysebFvvPOOMdunmJvcCNMSvjUda8fL6xfGo0FDrLg8XZipd6S\noPVdYtyIM1Dg40KbBA3JuumPYtXuJaHrZnjZmdnM5OVo4ZNxktfCVT0c6bnD4bAeyn4bYt1ZPaX6hQHh\nJtvNYfpD0ONYlmqKuToQAMlz52Fh6bj45EbX89L5eLlSpWeyBlGotzriB0EPlclrGi5l2B5oPb1aB1ag\nyyYuu44l0F1oOVYnBIZsxIsHVITxi9lEuVPFkWASOUNuVQXfM4n5hxWR9qtuKnIcPsvbJsv1U10XlKh3\nKisqPhHU15xrCLr5gwFxPUKiNTLUBrkzgBOHXPVsHcLCiSD0YU56TRGfvEom43TWUKPPfl9Z54tgVQuT\njCRlaljAzeniQIcbbHZnn3f0HxbDG3DFYqWSxNrXabHhRsIOhhUHSPENyhGSTVO5t0XX5CdMspJPCd02\n3Oqv32ccbUK4O3YH6LEvp0WO3kSl5n50odVkI9B0i0iq4UPFGMkM8bEQJbgJoOH71P10vtdevJFQE4g2\nyhimiM53ZJRWgSZveHtENZc0Gjo0F9eioak9BnPpY1QxAFPC817svuhEstcU69bLCA4D1rO5R8AuIIBq\nyQJcifFLvbpAEYTLKJqysZrU8EEl3TSdC13A9hZvk4NC8VGEDAxcNrKw313dZp17kZPO5HSd1y6sljAW\nA9M1d6FMYV5SlBWf3WZNCUPS7qKNlda2YBsC6IUVB363f5RLGQOQHwbaijBSRCkrVoRxBHtc0Bd5J9V9\nP5uMTXkpZOxRcCQvImGgcmGuxxLb5zTqfS2xu7v3Sf3IIesSt9tVzcEcdbEvLGVJkLk4mb3G30DbIbri\nPZ09JkweDvMaQ3bxT2nfkz3Ilihkw9jqikkCCCz7E8h6z6KbhQErEW9VzJZzMCgJsyPjFam6iNwpe07S\nhyOvNVw2t9wpzL5xM11DvVzQwDaWEytNRHzDBs4KwEtpI2IpjUyVZHSwA0UGqqkzoCgrJFlNOvPlXqcS\nIcREouUIBmuttkrhPWJtSxOOgpsdvBR3kTOzAXNzSKxoaBAb0c5SDMUc6FIyGA8x5wg5DkUgjFUUodEt\nOYaB2VHVePW9mxHeBTdKWLzJow4ZZvjnoBuVigXljKCNh137ckV2y3Yg3Xi4UzJEI2V5Rw9AfnMs7xUw\nVHOFCg189maD3bmZAe7b4eaGZhyy4HVKjqCXmIH7vsEjRvbnfB0SQxxpuqBDJbHNCtW4vM643ZQQBVPP\na7oXSQIq9w2dHp0A7dtkocCZdQp9FKR9XdJAFIbVSHzIF1ZogeZlc0pXuNE0tagvD57xwDRFkAuoQyMu\nYDdZasXrpSmEE5UjHVkyYsISn8QsfXurzDybX468aoRoks654jjmRY5zi1oB8TcMdC2c3sicNaqfeuhd\nH1nPX7l4RpdqWMR7gGx9slXtG8S3KxpOi4qCD7yg3saD66nun4dzksQURoTUdXyrJR5UpHsfIlTF1aJa\nMdXyQtQnrkl00TeghQd00rRFZsCnhi0qrCSKiBfB2EVrd9RPpbgwJGZHuIQecdBmNetc2ylSEClqVBPR\nGOPPIxrnswEZjmnS0jxKW9VSM1QVxSPJnPFswCqT95SoKD6CP4xdX28WIUGiNaIKodXXJHEIsXBCxLsr\nPwWPCtoplC6hhpKmW5dQo92iCTyY2KioKzO8XR6FKm6qonMKVEwQNtlYE9c97KMtEnp25VOdMP46SQXS\nYsSVp7vm8LP87VYI8SOKcW3s2oedYFtt45rvDzoTF0GmS6wELQ9uo98HhjQAI1Dt91cgjJOwygNmLoZE\nX5K2zQiNA163uMCl5xzaBqY4YTL0wgALg3IFdYSp0RFYLWdt6IxoGI1tnoxcjlUEPo5eGIc3mS3SmaLn\nOdumfUQQ4Jgmgaa5anUVQsfBDrlAN5oaX7O0JO71SSPSWiHBsT9WIPy2J1Cace9ZZLRxblFPSXcvsuHh\nhvnhWQltEDAe7MgvkFQ8lGVFa8jhzijoF9kLmMhMILSzYnfXnZPNP7TlAAwlLHK1RqlpHskJqb6CPpGP\nQvOAhEMsM3zJ2KejZx0esxkjxA0ZufVvGAMN3vTUMplQaF4RiQkp9fzBXf3CMk01dWjOMMIEXTeKzIQe\nEcffzjixWU9FpAyGp2rVl4ETRgqljOGw4UgK31r0ZIEGnH0xGz1FtbW1OcQM008JVujRqulCucEMmntr\n"
+    )
+
+    try:
+        client.put_with_content_encoding(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/requestcompression/putcontentwithencoding"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-encoding", "gzip")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+@mark.xfail()
+def test_sdk_appended_gzip_after_provided_encoding_rest_xml_request_put_with_content_encoding_sync() -> (
+    None
+):
+    """
+    Compression algorithm encoding is appended to the Content-Encoding
+    header, and the user-provided content-encoding is in the
+    Content-Encoding header before the request compression encoding from the
+    HTTP binding.
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = PutWithContentEncodingInput(
+        encoding="custom",
+        data="RjCEL3kBwqPivZUXGiyA5JCujtWgJAkKRlnTEsNYfBRGOS0f7LT6R3bCSOXeJ4auSHzQ4BEZZTklUyj5\n1HEojihShQC2jkQJrNdGOZNSW49yRO0XbnGmeczUHbZqZRelLFKW4xjru9uTuB8lFCtwoGgciFsgqTF8\n5HYcoqINTRxuAwGuRUMoNO473QT0BtCQoKUkAyVaypG0hBZdGNoJhunBfW0d3HWTYlzz9pXElyZhq3C1\n2PDB17GEoOYXmTxDecysmPOdo5z6T0HFhujfeJFIQQ8dirmXcG4F3v0bZdf6AZ3jsiVh6RnEXIPxPbOi\ngIXDWTMUr4Pg3f2LdYCM01eAb2qTdgsEN0MUDhEIfn68I2tnWvcozyUFpg1ez6pyWP8ssWVfFrckREIM\nMb0cTUVqSVSM8bnFiF9SoXM6ZoGMKfX1mT708OYk7SqZ1JlCTkecDJDoR5ED2q2MWKUGR6jjnEV0GtD8\nWJO6AcF0DptY9Hk16Bav3z6c5FeBvrGDrxTFVgRUk8SychzjrcqJ4qskwN8rL3zslC0oqobQRnLFOvwJ\nprSzBIwdH2yAuxokXAdVRa1u9NGNRvfWJfKkwbbVz8yV76RUF9KNhAUmwyYDrLnxNj8ROl8B7dv8Gans\n7Bit52wcdiJyjBW1pAodB7zqqVwtBx5RaSpF7kEMXexYXp9N0J1jlXzdeg5Wgg4pO7TJNr2joiPVAiFf\nefwMMCNBkYx2z7cRxVxCJZMXXzxSKMGgdTN24bJ5UgE0TxyV52RC0wGWG49S1x5jGrvmxKCIgYPs0w3Z\n0I3XcdB0WEj4x4xRztB9Cx2Mc4qFYQdzS9kOioAgNBti1rBySZ8lFZM2zqxvBsJTTJsmcKPr1crqiXjM\noVWdM4ObOO6QA7Pu4c1hT68CrTmbcecjFcxHkgsqdixnFtN6keMGL9Z2YMjZOjYYzbUEwLJqUVWalkIB\nBkgBRqZpzxx5nB5t0qDH35KjsfKM5cinQaFoRq9y9Z82xdCoKZOsUbxZkk1kVmy1jPDCBhkhixkc5PKS\nFoSKTbeK7kuCEZCtR9OfF2k2MqbygGFsFu2sgb1Zn2YdDbaRwRGeaLhswta09UNSMUo8aTixgoYVHxwy\nvraLB6olPSPegeLOnmBeWyKmEfPdbpdGm4ev4vA2AUFuLIeFz0LkCSN0NgQMrr8ALEm1UNpJLReg1ZAX\nzZh7gtQTZUaBVdMJokaJpLk6FPxSA6zkwB5TegSqhrFIsmvpY3VNWmTUq7H0iADdh3dRQ8Is97bTsbwu\nvAEOjh4FQ9wPSFzEtcSJeYQft5GfWYPisDImjjvHVFshFFkNy2nN18pJmhVPoJc456tgbdfEIdGhIADC\n6UPcSSzE1FxlPpILqZrp3i4NvvKoiOa4a8tnALd2XRHHmsvALn2Wmfu07b86gZlu4yOyuUFNoWI6tFvd\nbHnqSJYNQlFESv13gJw609DBzNnrIgBGYBAcDRrIGAnflRKwVDUnDFrUQmE8xNG6jRlyb1p2Y2RrfBtG\ncKqhuGNiT2DfxpY89ektZ98waPhJrFEPJToNH8EADzBorh3T0h4YP1IeLmaI7SOxeuVrk1kjRqMK0rUB\nlUJgJNtCE35jCyoHMwPQlyi78ZaVv8COVQ24zcGpw0MTy6JUsDzAC3jLNY6xCb40SZV9XzG7nWvXA5Ej\nYC1gTXxF4AtFexIdDZ4RJbtYMyXt8LsEJerwwpkfqvDwsiFuqYC6vIn9RoZO5kI0F35XtUITDQYKZ4eq\nWBV0itxTyyR5Rp6g30pZEmEqOusDaIh96CEmHpOBYAQZ7u1QTfzRdysIGMpzbx5gj9Dxm2PO1glWzY7P\nlVqQiBlXSGDOkBkrB6SkiAxknt9zsPdTTsf3r3nid4hdiPrZmGWNgjOO1khSxZSzBdltrCESNnQmlnP5\nZOHA0eSYXwy8j4od5ZmjA3IpFOEPW2MutMbxIbJpg5dIx2x7WxespftenRLgl3CxcpPDcnb9w8LCHBg7\nSEjrEer6Y8wVLFWsQiv6nTdCPZz9cGqwgtCaiHRy8lTWFgdfWd397vw9rduGld3uUFeFRGjYrphqEmHi\nhiG0GhE6wRFVUsGJtvOCYkVREvbEdxPFeJvlAvOcs9HKbtptlTusvYB86vR2bNcIY4f5JZu2X6sGa354\n7LRk0ps2zqYjat3hMR7XDC8KiKceBteFsXoDjfVxTYKelpedTxqWAafrKhaoAVuNM98PSnkuIWGzjSUC\nNsDJTt6vt1D1afBVPWVmnQ7ZQdtEtLIEwAWYjemAztreELIr1E9fPEILm1Ke4KctP9I0I72Dh4eylNZD\n0DEr2Hg7cWFckuZ0Av5d0IPRARXikEGDHl8uh12TXL9v2Uh0ZVSJMEYvxGSbZvkWz8TjWSk3hKA2a7GL\nJm3Ho7e1C34gE1XRGcEthxvURxt4OKBqN3ZNaMIuDTWinoQAutMcUqtm4MoL7RGPiCHUrvTwQPSirsmA\nQmOEu8nOpnP77Fivh9jLGx5ta7nL6jrsWUsBqiN1lzpdPYLRR4mUIAj6sNWiDEk4pkbHSMEcqbWw6Zl7\npsEyPDHalCNhWMA3RSK3skURzQDZ0oBV5W7vjVIZ4d3uCKsk6zrzEI9u5mx7p9RdNKodXfzqYt0ULdtc\n3RW0hIfw2KvrO3BD2QrtgAkfrFBGVvlJSUoh0MvLz8DeXxfuiuq9Ttu7wvsqVI4Piah6WNEXtHHGPJO3\nGhc75Bnv2To4VS2v8rmyKAPIIVTuYBHZN6sZ4FhFzbrslCIdk0eadaU60naqiNWU3CsxplIYGyeThmJ7\n9u4h6Y2OmiPZjFPS2bAzwgAozYTVefII9aEaWZ0hxHZeu1FW7r79dkdO73ZqRfas9u8Z7LLBPCw5pV0F\n5I0pHDgNb6MogoxF4NZJfVtIX1vCHhhVLrXjrYNJU2fD9Fw8kT8Ie2HDBJnqAvYKmryQ1r9ulo3Me3rH\nq9s2Y5uCDxu9iQNhnpwIm57WYGFeqd2fnQeY2IziD3Jgx0KSrmOH0jgi0RwJyfGXaORPq3bQQqljuACo\nkO6io9t5VI8PbNxSHTRbtYiPciUslbT0g7SpCLrRPOBRJ4DDk56pjghpeoUagJ5xJ4wjBzBuXnAGkNnP\nTfpiuz2r3oSBAi8sB9wiYK2z9sp4gZyQsqdVNzAEgKatOxBRBmJCBYpjO98ZQrF83XApPpfFg0ujB2PW\n1iYF9NkgwIKB5oB6KVTOmSKJk11mVermPgeugHbzdd2zUP6fP8fWbhseqk2t8ahGvqjs2CDHFIWXl5jc\nfCknbykE3ANt7lnAfJQ2ddduLGiqrX4HWx6jcWw08Es6BkleO0IDbaWrb95d5isvFlzJsf0TyDIXF4uq\nbBDCi0XPWqtRJ2iqmnJa2GbBe9GmAOWMkBFSilMyC4sR395WSDpD56fx0NGoU6cHrRu9xF2Bgh7RGSfl\nch2GXEeE02fDpSHFNvJBlOEqqfkIX6oCa6KY9NThqeIjYsT184XR2ZI7akXRaw1gMOGpk4FmUxk6WIuX\n4ei1SLQgSdl7OEdRtJklZ76eFrMbkJQ2TDhu8f7mVuiy53GUMIvCrP9xYGZGmCIDm2e4U2BDi3F7C5xK\n3bDZXwlQp6z4BSqTy2OVEWxXUJfjPMOL5Mc7AvDeKtxAS73pVIv0HgHIa4NBAdC7uLG0zXuu1FF6z2XY\nyUhk03fMZhYe7vVxsul3WE7U01fuN8z2y0eKwBW1RFBE1eKIaR9Y01sIWQWbSrfHfDrdZiElhmhHehfs\n0EfrR4sLYdQshJuvhTeKGJDaEhtPQwwJ9mUYGtuCL9RozWx1XI4bHNlzBTW0BVokYiJGlPe7wdxNzJD7\nJgS7Lwv6jGKngVf86imGZyzqwiteWFPdNUoWdTvUPSMO5xIUK9mo5QpwbBOAmyYzVq42o3Qs90N9khEV\nU36LB99fw8PtGHH5wsCHshfauwnNPj0blGXzke0kQ4JNCVH7Jtn0Y0aeejkSxFtwtxoYs6zHl1Lxxpsd\nsw5vBy49CEtoltDW367lVAwDjWdx20msGB7qJCkEDrzu7EXSO22782QX9NBRcN9ppX0C25I0FMA4Wnhz\n9zIpiXRrsTH35jzM8Cjt4EVLGNU3O0HuEvAer3cENnMJtngdrT86ox3fihMQbiuy4Bh4DEcP5in2VjbT\n3qbnoCNvOi8Fmmf7KlGlWAOceL5OHVE5lljjQEMzEQOCEgrk5mDKgwSBJQBNauIDSC1a5iEQjB8Xxp4C\nqeKyyWY9IOntNrtU5ny4lNprHJd36dKFeBLKcGCOvgHBXdOZloMF0YTRExw7hreEO9IoTGVHJ4teWsNr\nHdtagUHjkeZkdMMfnUGNv5aBNtFMqhcZH6EitEa9lGPkKBbJpoom3u8D8EHSIF1H5EZqqx9TLY5hWAIG\nPwJ4qwkpCGw5rCLVrjw7ARKukIFzNULANqjHUMcJ002TlUosJM4xJ4aAgckpLVGOGuPDhGAAexEcQmbg\nUsZdmqQrtuVUyyLteLbLbqtR6CTlcAIwY3xyMCmPgyefE0FEUODBoxQtRUuYTL9RC5o1sYb2PvcxUQfb\niJFi2CAl99pAzcckU2qVCxniARslIxM5pmMRGsQX9ZzYAfZrbg6ce6S74I8UMlgRQ2QVyvUjKKOE6IrJ\nLng370emHfe5m6LZULD5YiZutkD5ipjL2Bz77DvTE5kNPUhuoKBcTJcUgytfXAKUTWOcRKNlq0GImrxM\nJfr7AWbLFFNKGLeTrVDBwpcokJCv0zcOKWe8fd2xkeXkZTdmM66IgM27cyYmtQ6YF26Kd0qrWJeVZJV9\n3fyLYYvKN5csbRY2BHoYE5ERARRW65IrpkXMf48OrCXMtDIP0Z7wxI9DiTeKKeH4uuguhCJnwzR3WxLA\nVU6eBJEd7ZjS6JA83w7decq8uDI7LGKjcz1FySp3B7fE9DkHRGXxbsL7Fjar6vW2mAv8CuvI20B6jctp\n2yLDs24sPfB3sSxrrlhbuT1m6DZqiN0dl6umKx7NGZhmOTVGr20jfcxhqPQwTJfd7kel4rvxip4BqkvT\n7STy8knJ2BXGyJeNgwo1PXUZRDVy0LCTsSF1RFuRZe8cktHl9lgw8ntdPn1pVFL0MwJkJfdXBNUp5gNv\n50FTkrpo1t6wq4CVbcfj2XOrOzvBUzNH26sXGABI1gGxCdp2jEZrHgqQaWIaTJVTuguZhxqDvdYsrwFW\nYN58uuNcKHIrGdRSigyZInwQDYk0pjcqdSeU0WVU3Y9htzZBR7XRaCJr5YTZvq7fwermb5tuwb37lPLq\nB2IGg0iftkVbXaSyfCwVaRbfLBb88so0QqpmJGirFu8FcDiXOV1zTr8yW9XLdYQuUjh43xrXLdgsuYff\nCagInUk1eU1aLjVZoJRsNmStmOEpAqlYMwTvx7w6j2f421Cxr5cNZBIVlAxlXN2QiDqJ9v3sHhHkTanc\nlQuH8ptUyX8qncpBuXXBn7cSez9N0EoxCBl1GHUagbjstgJo4gzLvTmVIY6MiWYOBitzNUHfyqKwtKUr\nVoSCdZcGeA9lHUPA7PUprRRaT3m1hGKPyshtVS2ikG48w3oVerln1N1qGdtz46gZCrndw3LZ1B362RfW\nzDPuXbpsyLsRMTt1Rz1oKHRXp3iE41hkhQH6pxlvyCW2INnHt5XU8zRamOB3oW0udOhMpQFDjRkOcy06\nb4t0QTHvoRqmBna3WXzIMZyeK3GChF5eF8oDXRbjhk7BB6YKCgqwWUzEJ5K47HMSlhFkBUjaPRjdGM0z\nzOMwhW6b1NvSwP7XM1P5yi1oPvOspts1vr29SXqrMMrBhVogeodWyd69NqrO4jkyBxKmlXifoTowpfiY\n2cUCE0XMZqxUN39LCP09JqZifaEcBEo3mgtm1tWu5QR2GNq7UyQf4RIPSDOpDCAtwoPhRgdT1lJdcj4U\nlnH0wrJ8Uwu7c08L7ErnIrDATqCrOjpSbzGP1xHENABYONC4TknFPrJ8pe40A8fzGT0qBw9mAM1SKcHO\nfoiLcMC9AjHTqJzDG3xplSLPG9or2rMeq7Fzp9r0y7uJRMxgg51EbjfvYlH466A3ggvL2WQlDXjJqPW3\nBJGWAWDNN9LK8f46bADKPxakpkx23S9O47rGSXfDhVSIZsDympxWX1UOzWwMZRHkofVeKqizgbKkGgUT\nWykE9gRoRAOd9wfHZDYKa9i0LaPDiaUMvnU1gdBIqIoiVsdJ9swX47oxvMtOxtcS0zlD6llDkBuIiU5g\nPwRCYmtkkb25c8iRJXwGFPjI1wJ34I1z1ENicPdosPiUe9ZC2jnXIKzEdv01x2ER7DNDF3yxOwOhxNxI\nGqsmC92j25UQQFu9ZstOZ28AoCkuOYs0Uycm5u8jR1T39dMBwrko09rC65ENLnsxM8oebmyFCPiGJ1ED\n5Xqc9qZ237f1OnETAoEOwqUSvrdPTv56U7hV91EMTyC812MLQpr2710E3VVpsUCUMNhIxdt7UXZ1UNFb\njgzpZLXnf4DHrv6B7kq6UI50KMxcw1HZE2GpODfUTzNFLaqdrvzxKe5eUWdcojBaRbD4fFdVYJTElYDH\nNNVh6ofkoeWcs9CWGFmSBe0T4K8phFeygQg0prKMELNEy6qENzVtG9ZDcqj3a7L6ZLtvq50anWp7fAVu\nfwz55g4iM2Z2fA0pnwHDL7tt67zTxGITvsnJsZSpeq1EQsZcwtkBV9liu7Rl7jiVT1IIRtchB8TsTiaA\nwVHIQQ9RIOTiPQdKNqi1kC9iGlUqWK93gblNWlBw1eYB9Wk8FQogutwTf0caNMx8D4nPbANcmOOlskIy\nzALh15OlTrWnhP95rf08AN2J026zDE2DUF9k0eCevYBQIDjqKNW4XCZnjbHoIcKzbY5VzPbMs3ZyMz8K\nSucBmgPg6wrSK5ykbkapS5vuqvXc9GbjQJ8bPNzoxoWGyjbZvDs2OBrIqBmcQb2DLJ8v38McQ4mC4UsS\njf4PyfSCtpk274QZjvLCZbLiCBxQegk7jUU0NmTFJAcYCxd9xMWdlFkiszcltT2YzwuFFz7iA6aa4n5L\nHpBNfUA01GcAi1aCMYhmooS4zSlYcSOZkovMz36U3Fd9WtqIEOJLi7HMgHQDgNMdK6DTzAdHQtxerxVF\nHJnPrfNVG7270r3bp0bPnLNYLhObbAn6zqSAUeLtI2Y4KJDjBKCAh2vvYGbu0e2REYJWRj7MkGevsSSy\nb1kCXLt6tKGWAb7lt5c0xyJgUIJW7pdtnwgT0ZCa24BecCAwNnG5U2EwQbcjZGsFxqNGfaemd3oFEhES\nBaE0Fxms9UKTnMafu8wvZ2xymMrUduuRzOjDeX7oD5YsLC88V8CGMLxbbxIpt94KGykbr6e7L0R4oZl1\ntKMgFwQ2p9Txdbp0Y293LcsJymKizqI0F2xEp7y4SmWOJqHZtsbz80wVV9nv41CvtfxuSoGZJ5cNB7pI\nBgzNcQCeH3Jt0RaGGwboxxpuFbzilmkMFXxJm87tD4WNgu01nHfGCKeQcySEBZpVfJgi6sDFJ8uWnvKm\n9mPLHurtWzEfKqUEa1iC71bXjw5wrvhv9BYW8JSUELHmDquftQyKdq0DZXhULMHGQLf4e95WIaoA14LL\nbThz77kuhKULPTu2MNrBUKGorurhGugo5gs4ZUezSsUOe3KxYdrFMdGgny1GgTxMSMTp2RAZytKjv4kQ\nVx7XgzvpQLIbDjUPAkJv6lScwIRq1W3Ne0Rh0V6Bmn6U5uIuWnJjULmbaQiSODj3z0mAZvak0mSWIGwT\nTX83HztcC4W7e1f6a1thmcc5K61Icehla2hBELWPpixTkyC4eEVmk9Rq0m0ZXtx0JX2ZQXqXDEyePyMe\nJ70sdSzXk72zusqhY4yuOMGgbYNHqxOToK6NxujR7e4dV3Wk5JnSUthym8scjcPeCiKDNY4cHfTMnDXJ\n9zLVy01LtNKYpJ1s8FxVxigmxQNKEbIamxhx6yqwGC4aiISVOOUEjvNOdaUfXfUsE6jEwtwxyGxjlRK1\ncLyxXttq4QWN6PehgHv7jXykzPjInbEysebFvvPOOMdunmJvcCNMSvjUda8fL6xfGo0FDrLg8XZipd6S\noPVdYtyIM1Dg40KbBA3JuumPYtXuJaHrZnjZmdnM5OVo4ZNxktfCVT0c6bnD4bAeyn4bYt1ZPaX6hQHh\nJtvNYfpD0ONYlmqKuToQAMlz52Fh6bj45EbX89L5eLlSpWeyBlGotzriB0EPlclrGi5l2B5oPb1aB1ag\nyyYuu44l0F1oOVYnBIZsxIsHVITxi9lEuVPFkWASOUNuVQXfM4n5hxWR9qtuKnIcPsvbJsv1U10XlKh3\nKisqPhHU15xrCLr5gwFxPUKiNTLUBrkzgBOHXPVsHcLCiSD0YU56TRGfvEom43TWUKPPfl9Z54tgVQuT\njCRlaljAzeniQIcbbHZnn3f0HxbDG3DFYqWSxNrXabHhRsIOhhUHSPENyhGSTVO5t0XX5CdMspJPCd02\n3Oqv32ccbUK4O3YH6LEvp0WO3kSl5n50odVkI9B0i0iq4UPFGMkM8bEQJbgJoOH71P10vtdevJFQE4g2\nyhimiM53ZJRWgSZveHtENZc0Gjo0F9eioak9BnPpY1QxAFPC817svuhEstcU69bLCA4D1rO5R8AuIIBq\nyQJcifFLvbpAEYTLKJqysZrU8EEl3TSdC13A9hZvk4NC8VGEDAxcNrKw313dZp17kZPO5HSd1y6sljAW\nA9M1d6FMYV5SlBWf3WZNCUPS7qKNlda2YBsC6IUVB363f5RLGQOQHwbaijBSRCkrVoRxBHtc0Bd5J9V9\nP5uMTXkpZOxRcCQvImGgcmGuxxLb5zTqfS2xu7v3Sf3IIesSt9tVzcEcdbEvLGVJkLk4mb3G30DbIbri\nPZ09JkweDvMaQ3bxT2nfkz3Ilihkw9jqikkCCCz7E8h6z6KbhQErEW9VzJZzMCgJsyPjFam6iNwpe07S\nhyOvNVw2t9wpzL5xM11DvVzQwDaWEytNRHzDBs4KwEtpI2IpjUyVZHSwA0UGqqkzoCgrJFlNOvPlXqcS\nIcREouUIBmuttkrhPWJtSxOOgpsdvBR3kTOzAXNzSKxoaBAb0c5SDMUc6FIyGA8x5wg5DkUgjFUUodEt\nOYaB2VHVePW9mxHeBTdKWLzJow4ZZvjnoBuVigXljKCNh137ckV2y3Yg3Xi4UzJEI2V5Rw9AfnMs7xUw\nVHOFCg189maD3bmZAe7b4eaGZhyy4HVKjqCXmIH7vsEjRvbnfB0SQxxpuqBDJbHNCtW4vM643ZQQBVPP\na7oXSQIq9w2dHp0A7dtkocCZdQp9FKR9XdJAFIbVSHzIF1ZogeZlc0pXuNE0tagvD57xwDRFkAuoQyMu\nYDdZasXrpSmEE5UjHVkyYsISn8QsfXurzDybX468aoRoks654jjmRY5zi1oB8TcMdC2c3sicNaqfeuhd\nH1nPX7l4RpdqWMR7gGx9slXtG8S3KxpOi4qCD7yg3saD66nun4dzksQURoTUdXyrJR5UpHsfIlTF1aJa\nMdXyQtQnrkl00TeghQd00rRFZsCnhi0qrCSKiBfB2EVrd9RPpbgwJGZHuIQecdBmNetc2ylSEClqVBPR\nGOPPIxrnswEZjmnS0jxKW9VSM1QVxSPJnPFswCqT95SoKD6CP4xdX28WIUGiNaIKodXXJHEIsXBCxLsr\nPwWPCtoplC6hhpKmW5dQo92iCTyY2KioKzO8XR6FKm6qonMKVEwQNtlYE9c97KMtEnp25VOdMP46SQXS\nYsSVp7vm8LP87VYI8SOKcW3s2oedYFtt45rvDzoTF0GmS6wELQ9uo98HhjQAI1Dt91cgjJOwygNmLoZE\nX5K2zQiNA163uMCl5xzaBqY4YTL0wgALg3IFdYSp0RFYLWdt6IxoGI1tnoxcjlUEPo5eGIc3mS3SmaLn\nOdumfUQQ4Jgmgaa5anUVQsfBDrlAN5oaX7O0JO71SSPSWiHBsT9WIPy2J1Cace9ZZLRxblFPSXcvsuHh\nhvnhWQltEDAe7MgvkFQ8lGVFa8jhzijoF9kLmMhMILSzYnfXnZPNP7TlAAwlLHK1RqlpHskJqb6CPpGP\nQvOAhEMsM3zJ2KejZx0esxkjxA0ZufVvGAMN3vTUMplQaF4RiQkp9fzBXf3CMk01dWjOMMIEXTeKzIQe\nEcffzjixWU9FpAyGp2rVl4ETRgqljOGw4UgK31r0ZIEGnH0xGz1FtbW1OcQM008JVujRqulCucEMmntr\n",
+    )
+
+    try:
+        client.put_with_content_encoding(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/requestcompression/putcontentwithencoding"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-encoding", "custom, gzip")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+@mark.xfail()
+def test_query_idempotency_token_auto_fill_request_query_idempotency_token_auto_fill_sync() -> (
+    None
+):
+    """Automatically adds idempotency token when not set"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = QueryIdempotencyTokenAutoFillInput()
+
+    try:
+        client.query_idempotency_token_auto_fill(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/QueryIdempotencyTokenAutoFill"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = [
+            "token=00000000-0000-4000-8000-000000000000"
+        ]
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_query_idempotency_token_auto_fill_is_set_request_query_idempotency_token_auto_fill_sync() -> (
+    None
+):
+    """Uses the given idempotency token as-is"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = QueryIdempotencyTokenAutoFillInput(
+        token="00000000-0000-4000-8000-000000000000"
+    )
+
+    try:
+        client.query_idempotency_token_auto_fill(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/QueryIdempotencyTokenAutoFill"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = [
+            "token=00000000-0000-4000-8000-000000000000"
+        ]
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_query_params_string_list_map_request_query_params_as_string_list_map_sync() -> (
+    None
+):
+    """Serialize query params from map of list strings"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = QueryParamsAsStringListMapInput(qux="named", foo={"baz": ["bar", "qux"]})
+
+    try:
+        client.query_params_as_string_list_map(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/StringListMap"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = ["corge=named", "baz=bar", "baz=qux"]
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_query_precedence_request_query_precedence_sync() -> None:
+    """Prefer named query parameters when serializing"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = QueryPrecedenceInput(
+        foo="named", baz={"bar": "fromMap", "qux": "alsoFromMap"}
+    )
+
+    try:
+        client.query_precedence(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/Precedence"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = ["bar=named", "qux=alsoFromMap"]
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_recursive_shapes_request_recursive_shapes_sync() -> None:
+    """Serializes recursive structures"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = RecursiveShapesInput(
+        nested=RecursiveShapesInputOutputNested1(
+            foo="Foo1",
+            nested=RecursiveShapesInputOutputNested2(
+                bar="Bar1",
+                recursive_member=RecursiveShapesInputOutputNested1(
+                    foo="Foo2", nested=RecursiveShapesInputOutputNested2(bar="Bar2")
+                ),
+            ),
+        )
+    )
+
+    try:
+        client.recursive_shapes(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/RecursiveShapes"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<RecursiveShapesRequest>\n    <nested>\n        <foo>Foo1</foo>\n        <nested>\n            <bar>Bar1</bar>\n            <recursiveMember>\n                <foo>Foo2</foo>\n                <nested>\n                    <bar>Bar2</bar>\n                </nested>\n            </recursiveMember>\n        </nested>\n    </nested>\n</RecursiveShapesRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_recursive_shapes_response_recursive_shapes_sync() -> None:
+    """Serializes recursive structures"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<RecursiveShapesResponse>\n    <nested>\n        <foo>Foo1</foo>\n        <nested>\n            <bar>Bar1</bar>\n            <recursiveMember>\n                <foo>Foo2</foo>\n                <nested>\n                    <bar>Bar2</bar>\n                </nested>\n            </recursiveMember>\n        </nested>\n    </nested>\n</RecursiveShapesResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = RecursiveShapesInput()
+
+    try:
+        actual = client.recursive_shapes(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = RecursiveShapesOutput(
+            nested=RecursiveShapesInputOutputNested1(
+                foo="Foo1",
+                nested=RecursiveShapesInputOutputNested2(
+                    bar="Bar1",
+                    recursive_member=RecursiveShapesInputOutputNested1(
+                        foo="Foo2", nested=RecursiveShapesInputOutputNested2(bar="Bar2")
+                    ),
+                ),
+            )
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_simple_scalar_properties_request_simple_scalar_properties_sync() -> None:
+    """Serializes simple scalar properties"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput(
+        foo="Foo",
+        string_value="string",
+        true_boolean_value=True,
+        false_boolean_value=False,
+        byte_value=1,
+        short_value=2,
+        integer_value=3,
+        long_value=4,
+        float_value=float(5.5),
+        double_value=float(6.5),
+    )
+
+    try:
+        client.simple_scalar_properties(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/SimpleScalarProperties"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/xml"),
+            ("x-foo", "Foo"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<SimpleScalarPropertiesRequest>\n    <stringValue>string</stringValue>\n    <trueBooleanValue>true</trueBooleanValue>\n    <falseBooleanValue>false</falseBooleanValue>\n    <byteValue>1</byteValue>\n    <shortValue>2</shortValue>\n    <integerValue>3</integerValue>\n    <longValue>4</longValue>\n    <floatValue>5.5</floatValue>\n    <DoubleDribble>6.5</DoubleDribble>\n</SimpleScalarPropertiesRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_simple_scalar_properties_with_escaped_character_request_simple_scalar_properties_sync() -> (
+    None
+):
+    """Serializes string with escaping"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput(foo="Foo", string_value="<string>")
+
+    try:
+        client.simple_scalar_properties(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/SimpleScalarProperties"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/xml"),
+            ("x-foo", "Foo"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<SimpleScalarPropertiesRequest>\n    <stringValue>&lt;string&gt;</stringValue>\n</SimpleScalarPropertiesRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_simple_scalar_properties_with_white_space_request_simple_scalar_properties_sync() -> (
+    None
+):
+    """Serializes string containing white space"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput(
+        foo="Foo", string_value="  string with white    space  "
+    )
+
+    try:
+        client.simple_scalar_properties(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/SimpleScalarProperties"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/xml"),
+            ("x-foo", "Foo"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<SimpleScalarPropertiesRequest>\n    <stringValue>  string with white    space  </stringValue>\n</SimpleScalarPropertiesRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_simple_scalar_properties_pure_white_space_request_simple_scalar_properties_sync() -> (
+    None
+):
+    """Serializes string containing exclusively whitespace"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput(foo="Foo", string_value="   ")
+
+    try:
+        client.simple_scalar_properties(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/SimpleScalarProperties"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/xml"),
+            ("x-foo", "Foo"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<SimpleScalarPropertiesRequest>\n    <stringValue>   </stringValue>\n</SimpleScalarPropertiesRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_supports_na_n_float_inputs_request_simple_scalar_properties_sync() -> (
+    None
+):
+    """Supports handling NaN float values."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput(
+        float_value=float("nan"), double_value=float("nan")
+    )
+
+    try:
+        client.simple_scalar_properties(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/SimpleScalarProperties"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<SimpleScalarPropertiesRequest>\n    <floatValue>NaN</floatValue>\n    <DoubleDribble>NaN</DoubleDribble>\n</SimpleScalarPropertiesRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_supports_infinity_float_inputs_request_simple_scalar_properties_sync() -> (
+    None
+):
+    """Supports handling Infinity float values."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput(
+        float_value=float("inf"), double_value=float("inf")
+    )
+
+    try:
+        client.simple_scalar_properties(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/SimpleScalarProperties"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<SimpleScalarPropertiesRequest>\n    <floatValue>Infinity</floatValue>\n    <DoubleDribble>Infinity</DoubleDribble>\n</SimpleScalarPropertiesRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_supports_negative_infinity_float_inputs_request_simple_scalar_properties_sync() -> (
+    None
+):
+    """Supports handling -Infinity float values."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput(
+        float_value=float("-inf"), double_value=float("-inf")
+    )
+
+    try:
+        client.simple_scalar_properties(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/SimpleScalarProperties"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<SimpleScalarPropertiesRequest>\n    <floatValue>-Infinity</floatValue>\n    <DoubleDribble>-Infinity</DoubleDribble>\n</SimpleScalarPropertiesRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_simple_scalar_properties_response_simple_scalar_properties_sync() -> None:
+    """Serializes simple scalar properties"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml"), ("X-Foo", "Foo")],
+                body=b"<SimpleScalarPropertiesResponse>\n    <stringValue>string</stringValue>\n    <trueBooleanValue>true</trueBooleanValue>\n    <falseBooleanValue>false</falseBooleanValue>\n    <byteValue>1</byteValue>\n    <shortValue>2</shortValue>\n    <integerValue>3</integerValue>\n    <longValue>4</longValue>\n    <floatValue>5.5</floatValue>\n    <DoubleDribble>6.5</DoubleDribble>\n</SimpleScalarPropertiesResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput()
+
+    try:
+        actual = client.simple_scalar_properties(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SimpleScalarPropertiesOutput(
+            foo="Foo",
+            string_value="string",
+            true_boolean_value=True,
+            false_boolean_value=False,
+            byte_value=1,
+            short_value=2,
+            integer_value=3,
+            long_value=4,
+            float_value=float(5.5),
+            double_value=float(6.5),
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_simple_scalar_properties_complex_escapes_response_simple_scalar_properties_sync() -> (
+    None
+):
+    """
+    Serializes string with escaping. This validates the three escape types:
+    literal, decimal and hexadecimal. It also validates that unescaping
+    properly handles the case where unescaping an & produces a newly formed
+    escape sequence (this should not be re-unescaped). Servers may produce
+    different output, this test is designed different unescapes clients must
+    handle
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml"), ("X-Foo", "Foo")],
+                body=b"<SimpleScalarPropertiesResponse>\n    <stringValue>escaped data: &amp;lt;&#xD;&#10;</stringValue>\n</SimpleScalarPropertiesResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput()
+
+    try:
+        actual = client.simple_scalar_properties(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SimpleScalarPropertiesOutput(
+            foo="Foo", string_value="escaped data: &lt;\r\n"
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_simple_scalar_properties_with_escaped_character_response_simple_scalar_properties_sync() -> (
+    None
+):
+    """Serializes string with escaping"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml"), ("X-Foo", "Foo")],
+                body=b"<SimpleScalarPropertiesResponse>\n    <stringValue>&lt;string&gt;</stringValue>\n</SimpleScalarPropertiesResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput()
+
+    try:
+        actual = client.simple_scalar_properties(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SimpleScalarPropertiesOutput(foo="Foo", string_value="<string>")
+
+        assert deep_equal(actual, expected)
+
+
+def test_simple_scalar_properties_with_xml_preamble_response_simple_scalar_properties_sync() -> (
+    None
+):
+    """
+    Serializes simple scalar properties with xml preamble, comments and
+    CDATA
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml"), ("X-Foo", "Foo")],
+                body=b'<?xml version = "1.0" encoding = "UTF-8"?>\n<SimpleScalarPropertiesResponse>\n    <![CDATA[characters representing CDATA]]>\n    <stringValue>string</stringValue>\n    <!--xml comment-->\n</SimpleScalarPropertiesResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput()
+
+    try:
+        actual = client.simple_scalar_properties(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SimpleScalarPropertiesOutput(foo="Foo", string_value="string")
+
+        assert deep_equal(actual, expected)
+
+
+def test_simple_scalar_properties_with_white_space_response_simple_scalar_properties_sync() -> (
+    None
+):
+    """Serializes string containing white space"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml"), ("X-Foo", "Foo")],
+                body=b'<?xml version = "1.0" encoding = "UTF-8"?>\n<SimpleScalarPropertiesResponse>\n    <stringValue> string with white    space </stringValue>\n</SimpleScalarPropertiesResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput()
+
+    try:
+        actual = client.simple_scalar_properties(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SimpleScalarPropertiesOutput(
+            foo="Foo", string_value=" string with white    space "
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_simple_scalar_properties_pure_white_space_response_simple_scalar_properties_sync() -> (
+    None
+):
+    """Serializes string containing white space"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml"), ("X-Foo", "Foo")],
+                body=b'<?xml version = "1.0" encoding = "UTF-8"?>\n<SimpleScalarPropertiesResponse>\n    <stringValue>  </stringValue>\n</SimpleScalarPropertiesResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput()
+
+    try:
+        actual = client.simple_scalar_properties(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SimpleScalarPropertiesOutput(foo="Foo", string_value="  ")
+
+        assert deep_equal(actual, expected)
+
+
+def test_rest_xml_supports_na_n_float_outputs_response_simple_scalar_properties_sync() -> (
+    None
+):
+    """Supports handling NaN float values."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<SimpleScalarPropertiesResponse>\n    <floatValue>NaN</floatValue>\n    <DoubleDribble>NaN</DoubleDribble>\n</SimpleScalarPropertiesResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput()
+
+    try:
+        actual = client.simple_scalar_properties(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SimpleScalarPropertiesOutput(
+            float_value=float("nan"), double_value=float("nan")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_rest_xml_supports_infinity_float_outputs_response_simple_scalar_properties_sync() -> (
+    None
+):
+    """Supports handling Infinity float values."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<SimpleScalarPropertiesResponse>\n    <floatValue>Infinity</floatValue>\n    <DoubleDribble>Infinity</DoubleDribble>\n</SimpleScalarPropertiesResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput()
+
+    try:
+        actual = client.simple_scalar_properties(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SimpleScalarPropertiesOutput(
+            float_value=float("inf"), double_value=float("inf")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_rest_xml_supports_negative_infinity_float_outputs_response_simple_scalar_properties_sync() -> (
+    None
+):
+    """Supports handling -Infinity float values."""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<SimpleScalarPropertiesResponse>\n    <floatValue>-Infinity</floatValue>\n    <DoubleDribble>-Infinity</DoubleDribble>\n</SimpleScalarPropertiesResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput()
+
+    try:
+        actual = client.simple_scalar_properties(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SimpleScalarPropertiesOutput(
+            float_value=float("-inf"), double_value=float("-inf")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_timestamp_format_headers_request_timestamp_format_headers_sync() -> None:
+    """Tests how timestamp request headers are serialized"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = TimestampFormatHeadersInput(
+        member_epoch_seconds=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+        member_http_date=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+        member_date_time=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+        default_format=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+        target_epoch_seconds=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+        target_http_date=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+        target_date_time=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+    )
+
+    try:
+        client.timestamp_format_headers(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/TimestampFormatHeaders"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("x-defaultformat", "Mon, 16 Dec 2019 23:48:18 GMT"),
+            ("x-memberdatetime", "2019-12-16T23:48:18Z"),
+            ("x-memberepochseconds", "1576540098"),
+            ("x-memberhttpdate", "Mon, 16 Dec 2019 23:48:18 GMT"),
+            ("x-targetdatetime", "2019-12-16T23:48:18Z"),
+            ("x-targetepochseconds", "1576540098"),
+            ("x-targethttpdate", "Mon, 16 Dec 2019 23:48:18 GMT"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b""
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_timestamp_format_headers_response_timestamp_format_headers_sync() -> None:
+    """Tests how timestamp response headers are serialized"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[
+                    ("X-defaultFormat", "Mon, 16 Dec 2019 23:48:18 GMT"),
+                    ("X-memberDateTime", "2019-12-16T23:48:18Z"),
+                    ("X-memberEpochSeconds", "1576540098"),
+                    ("X-memberHttpDate", "Mon, 16 Dec 2019 23:48:18 GMT"),
+                    ("X-targetDateTime", "2019-12-16T23:48:18Z"),
+                    ("X-targetEpochSeconds", "1576540098"),
+                    ("X-targetHttpDate", "Mon, 16 Dec 2019 23:48:18 GMT"),
+                ],
+                body=b"",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = TimestampFormatHeadersInput()
+
+    try:
+        actual = client.timestamp_format_headers(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = TimestampFormatHeadersOutput(
+            member_epoch_seconds=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            member_http_date=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            member_date_time=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            default_format=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            target_epoch_seconds=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            target_http_date=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+            target_date_time=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc),
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_attributes_request_xml_attributes_sync() -> None:
+    """Serializes XML attributes on the synthesized document"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlAttributesInput(foo="hi", attr="test")
+
+    try:
+        client.xml_attributes(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/XmlAttributes"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'<XmlAttributesRequest test="test">\n    <foo>hi</foo>\n</XmlAttributesRequest>\n'
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_attributes_with_escaping_request_xml_attributes_sync() -> None:
+    """
+    Serializes XML attributes with escaped characters on the synthesized
+    document
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlAttributesInput(foo="hi", attr="<test&mock>")
+
+    try:
+        client.xml_attributes(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/XmlAttributes"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'<XmlAttributesRequest test="&lt;test&amp;mock&gt;">\n    <foo>hi</foo>\n</XmlAttributesRequest>\n'
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_attributes_response_xml_attributes_sync() -> None:
+    """Serializes simple scalar properties"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b'<XmlAttributesResponse test="test">\n    <foo>hi</foo>\n</XmlAttributesResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlAttributesInput()
+
+    try:
+        actual = client.xml_attributes(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlAttributesOutput(foo="hi", attr="test")
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_attributes_in_middle_request_xml_attributes_in_middle_sync() -> None:
+    """
+    Serializes XML attributes on a payload when the xmlAttribute trait
+    targets a member in the middle of the member list
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlAttributesInMiddleInput(
+        payload=XmlAttributesInMiddlePayloadRequest(
+            foo="Foo", attr="attributeValue", baz="Baz"
+        )
+    )
+
+    try:
+        client.xml_attributes_in_middle(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/XmlAttributesInMiddle"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'<XmlAttributesInMiddlePayloadRequest test="attributeValue">\n    <foo>Foo</foo>\n    <baz>Baz</baz>\n</XmlAttributesInMiddlePayloadRequest>\n'
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_attributes_in_middle_response_xml_attributes_in_middle_sync() -> None:
+    """
+    Deserializes XML attributes on a payload when the xmlAttribute trait
+    targets a member in the middle of the member list
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b'<XmlAttributesInMiddlePayloadResponse test="attributeValue">\n    <foo>Foo</foo>\n    <baz>Baz</baz>\n</XmlAttributesInMiddlePayloadResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlAttributesInMiddleInput()
+
+    try:
+        actual = client.xml_attributes_in_middle(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlAttributesInMiddleOutput(
+            payload=XmlAttributesInMiddlePayloadResponse(
+                foo="Foo", attr="attributeValue", baz="Baz"
+            )
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_attributes_on_payload_request_xml_attributes_on_payload_sync() -> None:
+    """Serializes XML attributes on the synthesized document"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlAttributesOnPayloadInput(
+        payload=XmlAttributesPayloadRequest(foo="hi", attr="test")
+    )
+
+    try:
+        client.xml_attributes_on_payload(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/XmlAttributesOnPayload"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'<XmlAttributesPayloadRequest test="test">\n    <foo>hi</foo>\n</XmlAttributesPayloadRequest>\n'
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_attributes_on_payload_response_xml_attributes_on_payload_sync() -> None:
+    """Serializes simple scalar properties"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b'<XmlAttributesPayloadResponse test="test">\n    <foo>hi</foo>\n</XmlAttributesPayloadResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlAttributesOnPayloadInput()
+
+    try:
+        actual = client.xml_attributes_on_payload(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlAttributesOnPayloadOutput(
+            payload=XmlAttributesPayloadResponse(foo="hi", attr="test")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_blobs_request_xml_blobs_sync() -> None:
+    """Blobs are base64 encoded"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlBlobsInput(data=b"value")
+
+    try:
+        client.xml_blobs(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/XmlBlobs"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b"<XmlBlobsRequest>\n    <data>dmFsdWU=</data>\n</XmlBlobsRequest>\n"
+        )
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_blobs_response_xml_blobs_sync() -> None:
+    """Blobs are base64 encoded"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlBlobsResponse>\n    <data>dmFsdWU=</data>\n</XmlBlobsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlBlobsInput()
+
+    try:
+        actual = client.xml_blobs(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlBlobsOutput(data=b"value")
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_empty_blobs_response_xml_empty_blobs_sync() -> None:
+    """Empty blobs are deserialized as empty string"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlEmptyBlobsResponse>\n    <data></data>\n</XmlEmptyBlobsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlEmptyBlobsInput()
+
+    try:
+        actual = client.xml_empty_blobs(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlEmptyBlobsOutput(data=b"")
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_empty_self_closed_blobs_response_xml_empty_blobs_sync() -> None:
+    """Empty self closed blobs are deserialized as empty string"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlEmptyBlobsResponse>\n    <data/>\n</XmlEmptyBlobsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlEmptyBlobsInput()
+
+    try:
+        actual = client.xml_empty_blobs(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlEmptyBlobsOutput(data=b"")
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_empty_lists_request_xml_empty_lists_sync() -> None:
+    """Serializes Empty XML lists"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlEmptyListsInput(string_list=[], string_set=[])
+
+    try:
+        client.xml_empty_lists(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/XmlEmptyLists"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<XmlEmptyListsRequest>\n        <stringList></stringList>\n        <stringSet></stringSet>\n</XmlEmptyListsRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_empty_lists_response_xml_empty_lists_sync() -> None:
+    """Deserializes Empty XML lists"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlEmptyListsResponse>\n        <stringList/>\n        <stringSet></stringSet>\n</XmlEmptyListsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlEmptyListsInput()
+
+    try:
+        actual = client.xml_empty_lists(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlEmptyListsOutput(string_list=[], string_set=[])
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_empty_maps_request_xml_empty_maps_sync() -> None:
+    """Serializes Empty XML maps"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlEmptyMapsInput(my_map={})
+
+    try:
+        client.xml_empty_maps(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/XmlEmptyMaps"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b"<XmlEmptyMapsRequest>\n    <myMap></myMap>\n</XmlEmptyMapsRequest>\n"
+        )
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_empty_maps_response_xml_empty_maps_sync() -> None:
+    """Deserializes Empty XML maps"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlEmptyMapsResponse>\n    <myMap></myMap>\n</XmlEmptyMapsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlEmptyMapsInput()
+
+    try:
+        actual = client.xml_empty_maps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlEmptyMapsOutput(my_map={})
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_empty_self_closed_maps_response_xml_empty_maps_sync() -> None:
+    """Deserializes Empty Self-closed XML maps"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlEmptyMapsResponse>\n    <myMap/>\n</XmlEmptyMapsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlEmptyMapsInput()
+
+    try:
+        actual = client.xml_empty_maps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlEmptyMapsOutput(my_map={})
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_empty_strings_request_xml_empty_strings_sync() -> None:
+    """Serializes xml empty strings"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlEmptyStringsInput(empty_string="")
+
+    try:
+        client.xml_empty_strings(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/XmlEmptyStrings"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<XmlEmptyStringsRequest>\n    <emptyString></emptyString>\n</XmlEmptyStringsRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_empty_strings_response_xml_empty_strings_sync() -> None:
+    """Deserializes xml empty strings"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlEmptyStringsResponse>\n    <emptyString></emptyString>\n</XmlEmptyStringsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlEmptyStringsInput()
+
+    try:
+        actual = client.xml_empty_strings(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlEmptyStringsOutput(empty_string="")
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_empty_self_closed_strings_response_xml_empty_strings_sync() -> None:
+    """Empty self closed string are deserialized as empty string"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlEmptyStringsResponse>\n    <emptyString/>\n</XmlEmptyStringsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlEmptyStringsInput()
+
+    try:
+        actual = client.xml_empty_strings(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlEmptyStringsOutput(empty_string="")
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_enums_request_xml_enums_sync() -> None:
+    """Serializes simple scalar properties"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlEnumsInput(
+        foo_enum1="Foo",
+        foo_enum2="0",
+        foo_enum3="1",
+        foo_enum_list=["Foo", "0"],
+        foo_enum_set=["Foo", "0"],
+        foo_enum_map={"hi": "Foo", "zero": "0"},
+    )
+
+    try:
+        client.xml_enums(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/XmlEnums"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<XmlEnumsRequest>\n    <fooEnum1>Foo</fooEnum1>\n    <fooEnum2>0</fooEnum2>\n    <fooEnum3>1</fooEnum3>\n    <fooEnumList>\n        <member>Foo</member>\n        <member>0</member>\n    </fooEnumList>\n    <fooEnumSet>\n        <member>Foo</member>\n        <member>0</member>\n    </fooEnumSet>\n    <fooEnumMap>\n        <entry>\n            <key>hi</key>\n            <value>Foo</value>\n        </entry>\n        <entry>\n            <key>zero</key>\n            <value>0</value>\n        </entry>\n    </fooEnumMap>\n</XmlEnumsRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_enums_response_xml_enums_sync() -> None:
+    """Serializes simple scalar properties"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlEnumsResponse>\n    <fooEnum1>Foo</fooEnum1>\n    <fooEnum2>0</fooEnum2>\n    <fooEnum3>1</fooEnum3>\n    <fooEnumList>\n        <member>Foo</member>\n        <member>0</member>\n    </fooEnumList>\n    <fooEnumSet>\n        <member>Foo</member>\n        <member>0</member>\n    </fooEnumSet>\n    <fooEnumMap>\n        <entry>\n            <key>hi</key>\n            <value>Foo</value>\n        </entry>\n        <entry>\n            <key>zero</key>\n            <value>0</value>\n        </entry>\n    </fooEnumMap>\n</XmlEnumsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlEnumsInput()
+
+    try:
+        actual = client.xml_enums(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlEnumsOutput(
+            foo_enum1="Foo",
+            foo_enum2="0",
+            foo_enum3="1",
+            foo_enum_list=["Foo", "0"],
+            foo_enum_set=["Foo", "0"],
+            foo_enum_map={"hi": "Foo", "zero": "0"},
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_int_enums_request_xml_int_enums_sync() -> None:
+    """Serializes simple scalar properties"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlIntEnumsInput(
+        int_enum1=1,
+        int_enum2=2,
+        int_enum3=3,
+        int_enum_list=[1, 2],
+        int_enum_set=[1, 2],
+        int_enum_map={"a": 1, "b": 2},
+    )
+
+    try:
+        client.xml_int_enums(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/XmlIntEnums"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<XmlIntEnumsRequest>\n    <intEnum1>1</intEnum1>\n    <intEnum2>2</intEnum2>\n    <intEnum3>3</intEnum3>\n    <intEnumList>\n        <member>1</member>\n        <member>2</member>\n    </intEnumList>\n    <intEnumSet>\n        <member>1</member>\n        <member>2</member>\n    </intEnumSet>\n    <intEnumMap>\n        <entry>\n            <key>a</key>\n            <value>1</value>\n        </entry>\n        <entry>\n            <key>b</key>\n            <value>2</value>\n        </entry>\n    </intEnumMap>\n</XmlIntEnumsRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_int_enums_response_xml_int_enums_sync() -> None:
+    """Serializes simple scalar properties"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlIntEnumsResponse>\n    <intEnum1>1</intEnum1>\n    <intEnum2>2</intEnum2>\n    <intEnum3>3</intEnum3>\n    <intEnumList>\n        <member>1</member>\n        <member>2</member>\n    </intEnumList>\n    <intEnumSet>\n        <member>1</member>\n        <member>2</member>\n    </intEnumSet>\n    <intEnumMap>\n        <entry>\n            <key>a</key>\n            <value>1</value>\n        </entry>\n        <entry>\n            <key>b</key>\n            <value>2</value>\n        </entry>\n    </intEnumMap>\n</XmlIntEnumsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlIntEnumsInput()
+
+    try:
+        actual = client.xml_int_enums(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlIntEnumsOutput(
+            int_enum1=1,
+            int_enum2=2,
+            int_enum3=3,
+            int_enum_list=[1, 2],
+            int_enum_set=[1, 2],
+            int_enum_map={"a": 1, "b": 2},
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_lists_request_xml_lists_sync() -> None:
+    """Tests for XML list serialization"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlListsInput(
+        string_list=["foo", "bar"],
+        string_set=["foo", "bar"],
+        integer_list=[1, 2],
+        boolean_list=[True, False],
+        timestamp_list=[
+            datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc),
+            datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc),
+        ],
+        enum_list=["Foo", "0"],
+        int_enum_list=[1, 2],
+        nested_string_list=[["foo", "bar"], ["baz", "qux"]],
+        renamed_list_members=["foo", "bar"],
+        flattened_list=["hi", "bye"],
+        flattened_list2=["yep", "nope"],
+        structure_list=[
+            StructureListMember(a="1", b="2"),
+            StructureListMember(a="3", b="4"),
+        ],
+        flattened_structure_list=[
+            StructureListMember(a="5", b="6"),
+            StructureListMember(a="7", b="8"),
+        ],
+    )
+
+    try:
+        client.xml_lists(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/XmlLists"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<XmlListsRequest>\n    <stringList>\n        <member>foo</member>\n        <member>bar</member>\n    </stringList>\n    <stringSet>\n        <member>foo</member>\n        <member>bar</member>\n    </stringSet>\n    <integerList>\n        <member>1</member>\n        <member>2</member>\n    </integerList>\n    <booleanList>\n        <member>true</member>\n        <member>false</member>\n    </booleanList>\n    <timestampList>\n        <member>2014-04-29T18:30:38Z</member>\n        <member>2014-04-29T18:30:38Z</member>\n    </timestampList>\n    <enumList>\n        <member>Foo</member>\n        <member>0</member>\n    </enumList>\n    <intEnumList>\n        <member>1</member>\n        <member>2</member>\n    </intEnumList>\n    <nestedStringList>\n        <member>\n            <member>foo</member>\n            <member>bar</member>\n        </member>\n        <member>\n            <member>baz</member>\n            <member>qux</member>\n        </member>\n    </nestedStringList>\n    <renamed>\n        <item>foo</item>\n        <item>bar</item>\n    </renamed>\n    <flattenedList>hi</flattenedList>\n    <flattenedList>bye</flattenedList>\n    <customName>yep</customName>\n    <customName>nope</customName>\n    <myStructureList>\n        <item>\n            <value>1</value>\n            <other>2</other>\n        </item>\n        <item>\n            <value>3</value>\n            <other>4</other>\n        </item>\n    </myStructureList>\n    <flattenedStructureList>\n        <value>5</value>\n        <other>6</other>\n    </flattenedStructureList>\n    <flattenedStructureList>\n        <value>7</value>\n        <other>8</other>\n    </flattenedStructureList>\n</XmlListsRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_lists_response_xml_lists_sync() -> None:
+    """Tests for XML list serialization"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b'<XmlListsResponse>\n    <stringList>\n        <member>foo</member>\n        <member>bar</member>\n    </stringList>\n    <stringSet>\n        <member>foo</member>\n        <member>bar</member>\n    </stringSet>\n    <integerList>\n        <member>1</member>\n        <member>2</member>\n    </integerList>\n    <booleanList>\n        <member>true</member>\n        <member>false</member>\n    </booleanList>\n    <timestampList>\n        <member>2014-04-29T18:30:38Z</member>\n        <member>2014-04-29T18:30:38Z</member>\n    </timestampList>\n    <enumList>\n        <member>Foo</member>\n        <member>0</member>\n    </enumList>\n    <intEnumList>\n        <member>1</member>\n        <member>2</member>\n    </intEnumList>\n    <nestedStringList>\n        <member>\n            <member>foo</member>\n            <member>bar</member>\n        </member>\n        <member>\n            <member>baz</member>\n            <member>qux</member>\n        </member>\n    </nestedStringList>\n    <renamed>\n        <item>foo</item>\n        <item>bar</item>\n    </renamed>\n    <flattenedList>hi</flattenedList>\n    <flattenedList>bye</flattenedList>\n    <customName>yep</customName>\n    <customName>nope</customName>\n    <flattenedListWithMemberNamespace xmlns="https://xml-member.example.com">a</flattenedListWithMemberNamespace>\n    <flattenedListWithMemberNamespace xmlns="https://xml-member.example.com">b</flattenedListWithMemberNamespace>\n    <flattenedListWithNamespace>a</flattenedListWithNamespace>\n    <flattenedListWithNamespace>b</flattenedListWithNamespace>\n    <myStructureList>\n        <item>\n            <value>1</value>\n            <other>2</other>\n        </item>\n        <item>\n            <value>3</value>\n            <other>4</other>\n        </item>\n    </myStructureList>\n    <flattenedStructureList>\n        <value>5</value>\n        <other>6</other>\n    </flattenedStructureList>\n    <flattenedStructureList>\n        <value>7</value>\n        <other>8</other>\n    </flattenedStructureList>\n</XmlListsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlListsInput()
+
+    try:
+        actual = client.xml_lists(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlListsOutput(
+            string_list=["foo", "bar"],
+            string_set=["foo", "bar"],
+            integer_list=[1, 2],
+            boolean_list=[True, False],
+            timestamp_list=[
+                datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc),
+                datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc),
+            ],
+            enum_list=["Foo", "0"],
+            int_enum_list=[1, 2],
+            nested_string_list=[["foo", "bar"], ["baz", "qux"]],
+            renamed_list_members=["foo", "bar"],
+            flattened_list=["hi", "bye"],
+            flattened_list2=["yep", "nope"],
+            flattened_list_with_member_namespace=["a", "b"],
+            flattened_list_with_namespace=["a", "b"],
+            structure_list=[
+                StructureListMember(a="1", b="2"),
+                StructureListMember(a="3", b="4"),
+            ],
+            flattened_structure_list=[
+                StructureListMember(a="5", b="6"),
+                StructureListMember(a="7", b="8"),
+            ],
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_maps_request_xml_maps_sync() -> None:
+    """Tests for XML map serialization"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlMapsInput(
+        my_map={"foo": GreetingStruct(hi="there"), "baz": GreetingStruct(hi="bye")}
+    )
+
+    try:
+        client.xml_maps(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/XmlMaps"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<XmlMapsRequest>\n    <myMap>\n        <entry>\n            <key>foo</key>\n            <value>\n                <hi>there</hi>\n            </value>\n        </entry>\n        <entry>\n            <key>baz</key>\n            <value>\n                <hi>bye</hi>\n            </value>\n        </entry>\n    </myMap>\n</XmlMapsRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_maps_response_xml_maps_sync() -> None:
+    """Tests for XML map serialization"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlMapsResponse>\n    <myMap>\n        <entry>\n            <key>foo</key>\n            <value>\n                <hi>there</hi>\n            </value>\n        </entry>\n        <entry>\n            <key>baz</key>\n            <value>\n                <hi>bye</hi>\n            </value>\n        </entry>\n    </myMap>\n</XmlMapsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlMapsInput()
+
+    try:
+        actual = client.xml_maps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlMapsOutput(
+            my_map={"foo": GreetingStruct(hi="there"), "baz": GreetingStruct(hi="bye")}
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_maps_xml_name_request_xml_maps_xml_name_sync() -> None:
+    """Serializes XML maps that have xmlName on members"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlMapsXmlNameInput(
+        my_map={"foo": GreetingStruct(hi="there"), "baz": GreetingStruct(hi="bye")}
+    )
+
+    try:
+        client.xml_maps_xml_name(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/XmlMapsXmlName"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<XmlMapsXmlNameRequest>\n    <myMap>\n        <entry>\n            <Attribute>foo</Attribute>\n            <Setting>\n                <hi>there</hi>\n            </Setting>\n        </entry>\n        <entry>\n            <Attribute>baz</Attribute>\n            <Setting>\n                <hi>bye</hi>\n            </Setting>\n        </entry>\n    </myMap>\n</XmlMapsXmlNameRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_maps_xml_name_response_xml_maps_xml_name_sync() -> None:
+    """Serializes XML lists"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlMapsXmlNameResponse>\n    <myMap>\n        <entry>\n            <Attribute>foo</Attribute>\n            <Setting>\n                <hi>there</hi>\n            </Setting>\n        </entry>\n        <entry>\n            <Attribute>baz</Attribute>\n            <Setting>\n                <hi>bye</hi>\n            </Setting>\n        </entry>\n    </myMap>\n</XmlMapsXmlNameResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlMapsXmlNameInput()
+
+    try:
+        actual = client.xml_maps_xml_name(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlMapsXmlNameOutput(
+            my_map={"foo": GreetingStruct(hi="there"), "baz": GreetingStruct(hi="bye")}
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_rest_xml_xml_map_with_xml_namespace_request_xml_map_with_xml_namespace_sync() -> (
+    None
+):
+    """
+    Serializes XML maps in requests that have xmlNamespace and xmlName on
+    members
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlMapWithXmlNamespaceInput(my_map={"a": "A", "b": "B"})
+
+    try:
+        client.xml_map_with_xml_namespace(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/XmlMapWithXmlNamespace"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'<XmlMapWithXmlNamespaceRequest>\n    <KVP xmlns="https://the-member.example.com">\n        <entry>\n            <K xmlns="https://the-key.example.com">a</K>\n            <V xmlns="https://the-value.example.com">A</V>\n        </entry>\n        <entry>\n            <K xmlns="https://the-key.example.com">b</K>\n            <V xmlns="https://the-value.example.com">B</V>\n        </entry>\n    </KVP>\n</XmlMapWithXmlNamespaceRequest>'
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_rest_xml_xml_map_with_xml_namespace_response_xml_map_with_xml_namespace_sync() -> (
+    None
+):
+    """
+    Serializes XML maps in responses that have xmlNamespace and xmlName on
+    members
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b'<XmlMapWithXmlNamespaceResponse>\n    <KVP xmlns="https://the-member.example.com">\n        <entry>\n            <K xmlns="https://the-key.example.com">a</K>\n            <V xmlns="https://the-value.example.com">A</V>\n        </entry>\n        <entry>\n            <K xmlns="https://the-key.example.com">b</K>\n            <V xmlns="https://the-value.example.com">B</V>\n        </entry>\n    </KVP>\n</XmlMapWithXmlNamespaceResponse>',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlMapWithXmlNamespaceInput()
+
+    try:
+        actual = client.xml_map_with_xml_namespace(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlMapWithXmlNamespaceOutput(my_map={"a": "A", "b": "B"})
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_namespaces_request_xml_namespaces_sync() -> None:
+    """Serializes XML namespaces"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlNamespacesInput(
+        nested=XmlNamespaceNested(foo="Foo", values=["Bar", "Baz"])
+    )
+
+    try:
+        client.xml_namespaces(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/XmlNamespaces"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'<XmlNamespacesRequest xmlns="http://foo.com">\n    <nested>\n        <foo xmlns:baz="http://baz.com">Foo</foo>\n        <values xmlns="http://qux.com">\n            <member xmlns="http://bux.com">Bar</member>\n            <member xmlns="http://bux.com">Baz</member>\n        </values>\n    </nested>\n</XmlNamespacesRequest>\n'
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_namespaces_response_xml_namespaces_sync() -> None:
+    """Serializes XML namespaces"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b'<XmlNamespacesResponse xmlns="http://foo.com">\n    <nested>\n        <foo xmlns:baz="http://baz.com">Foo</foo>\n        <values xmlns="http://qux.com">\n            <member xmlns="http://bux.com">Bar</member>\n            <member xmlns="http://bux.com">Baz</member>\n        </values>\n    </nested>\n</XmlNamespacesResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlNamespacesInput()
+
+    try:
+        actual = client.xml_namespaces(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlNamespacesOutput(
+            nested=XmlNamespaceNested(foo="Foo", values=["Bar", "Baz"])
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_timestamps_request_xml_timestamps_sync() -> None:
+    """Tests how normal timestamps are serialized"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput(
+        normal=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+    )
+
+    try:
+        client.xml_timestamps(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/XmlTimestamps"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<XmlTimestampsRequest>\n    <normal>2014-04-29T18:30:38Z</normal>\n</XmlTimestampsRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_timestamps_with_date_time_format_request_xml_timestamps_sync() -> None:
+    """
+    Ensures that the timestampFormat of date-time works like normal
+    timestamps
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput(
+        date_time=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+    )
+
+    try:
+        client.xml_timestamps(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/XmlTimestamps"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<XmlTimestampsRequest>\n    <dateTime>2014-04-29T18:30:38Z</dateTime>\n</XmlTimestampsRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_timestamps_with_date_time_on_target_format_request_xml_timestamps_sync() -> (
+    None
+):
+    """
+    Ensures that the timestampFormat of date-time on the target shape works
+    like normal timestamps
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput(
+        date_time_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+    )
+
+    try:
+        client.xml_timestamps(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/XmlTimestamps"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<XmlTimestampsRequest>\n    <dateTimeOnTarget>2014-04-29T18:30:38Z</dateTimeOnTarget>\n</XmlTimestampsRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_timestamps_with_epoch_seconds_format_request_xml_timestamps_sync() -> None:
+    """Ensures that the timestampFormat of epoch-seconds works"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput(
+        epoch_seconds=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+    )
+
+    try:
+        client.xml_timestamps(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/XmlTimestamps"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<XmlTimestampsRequest>\n    <epochSeconds>1398796238</epochSeconds>\n</XmlTimestampsRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_timestamps_with_epoch_seconds_on_target_format_request_xml_timestamps_sync() -> (
+    None
+):
+    """
+    Ensures that the timestampFormat of epoch-seconds on the target shape
+    works
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput(
+        epoch_seconds_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+    )
+
+    try:
+        client.xml_timestamps(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/XmlTimestamps"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<XmlTimestampsRequest>\n    <epochSecondsOnTarget>1398796238</epochSecondsOnTarget>\n</XmlTimestampsRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_timestamps_with_http_date_format_request_xml_timestamps_sync() -> None:
+    """Ensures that the timestampFormat of http-date works"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput(
+        http_date=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+    )
+
+    try:
+        client.xml_timestamps(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/XmlTimestamps"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<XmlTimestampsRequest>\n    <httpDate>Tue, 29 Apr 2014 18:30:38 GMT</httpDate>\n</XmlTimestampsRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_timestamps_with_http_date_on_target_format_request_xml_timestamps_sync() -> (
+    None
+):
+    """Ensures that the timestampFormat of http-date on the target shape works"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput(
+        http_date_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+    )
+
+    try:
+        client.xml_timestamps(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/XmlTimestamps"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<XmlTimestampsRequest>\n    <httpDateOnTarget>Tue, 29 Apr 2014 18:30:38 GMT</httpDateOnTarget>\n</XmlTimestampsRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_timestamps_response_xml_timestamps_sync() -> None:
+    """Tests how normal timestamps are serialized"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlTimestampsResponse>\n    <normal>2014-04-29T18:30:38Z</normal>\n</XmlTimestampsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput()
+
+    try:
+        actual = client.xml_timestamps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlTimestampsOutput(
+            normal=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_timestamps_with_date_time_format_response_xml_timestamps_sync() -> None:
+    """
+    Ensures that the timestampFormat of date-time works like normal
+    timestamps
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlTimestampsResponse>\n    <dateTime>2014-04-29T18:30:38Z</dateTime>\n</XmlTimestampsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput()
+
+    try:
+        actual = client.xml_timestamps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlTimestampsOutput(
+            date_time=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_timestamps_with_date_time_on_target_format_response_xml_timestamps_sync() -> (
+    None
+):
+    """
+    Ensures that the timestampFormat of date-time on the target shape works
+    like normal timestamps
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlTimestampsResponse>\n    <dateTimeOnTarget>2014-04-29T18:30:38Z</dateTimeOnTarget>\n</XmlTimestampsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput()
+
+    try:
+        actual = client.xml_timestamps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlTimestampsOutput(
+            date_time_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_timestamps_with_epoch_seconds_format_response_xml_timestamps_sync() -> (
+    None
+):
+    """Ensures that the timestampFormat of epoch-seconds works"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlTimestampsResponse>\n    <epochSeconds>1398796238</epochSeconds>\n</XmlTimestampsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput()
+
+    try:
+        actual = client.xml_timestamps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlTimestampsOutput(
+            epoch_seconds=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_timestamps_with_epoch_seconds_on_target_format_response_xml_timestamps_sync() -> (
+    None
+):
+    """
+    Ensures that the timestampFormat of epoch-seconds on the target shape
+    works
+    """
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlTimestampsResponse>\n    <epochSecondsOnTarget>1398796238</epochSecondsOnTarget>\n</XmlTimestampsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput()
+
+    try:
+        actual = client.xml_timestamps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlTimestampsOutput(
+            epoch_seconds_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_timestamps_with_http_date_format_response_xml_timestamps_sync() -> None:
+    """Ensures that the timestampFormat of http-date works"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlTimestampsResponse>\n    <httpDate>Tue, 29 Apr 2014 18:30:38 GMT</httpDate>\n</XmlTimestampsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput()
+
+    try:
+        actual = client.xml_timestamps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlTimestampsOutput(
+            http_date=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_timestamps_with_http_date_on_target_format_response_xml_timestamps_sync() -> (
+    None
+):
+    """Ensures that the timestampFormat of http-date on the target shape works"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlTimestampsResponse>\n    <httpDateOnTarget>Tue, 29 Apr 2014 18:30:38 GMT</httpDateOnTarget>\n</XmlTimestampsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput()
+
+    try:
+        actual = client.xml_timestamps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlTimestampsOutput(
+            http_date_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_unions_with_struct_member_request_xml_unions_sync() -> None:
+    """Serializes union struct member"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlUnionsInput(
+        union_value=XmlUnionShapeStructValue(
+            value=XmlNestedUnionStruct(
+                string_value="string",
+                boolean_value=True,
+                byte_value=1,
+                short_value=2,
+                integer_value=3,
+                long_value=4,
+                float_value=float(5.5),
+                double_value=float(6.5),
+            )
+        )
+    )
+
+    try:
+        client.xml_unions(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/XmlUnions"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<XmlUnionsRequest>\n    <unionValue>\n       <structValue>\n          <stringValue>string</stringValue>\n          <booleanValue>true</booleanValue>\n          <byteValue>1</byteValue>\n          <shortValue>2</shortValue>\n          <integerValue>3</integerValue>\n          <longValue>4</longValue>\n          <floatValue>5.5</floatValue>\n          <doubleValue>6.5</doubleValue>\n       </structValue>\n    </unionValue>\n</XmlUnionsRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_unions_with_string_member_request_xml_unions_sync() -> None:
+    """serialize union string member"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlUnionsInput(union_value=XmlUnionShapeStringValue(value="some string"))
+
+    try:
+        client.xml_unions(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/XmlUnions"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<XmlUnionsRequest>\n   <unionValue>\n      <stringValue>some string</stringValue>\n   </unionValue>\n</XmlUnionsRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_unions_with_boolean_member_request_xml_unions_sync() -> None:
+    """Serializes union boolean member"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlUnionsInput(union_value=XmlUnionShapeBooleanValue(value=True))
+
+    try:
+        client.xml_unions(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/XmlUnions"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<XmlUnionsRequest>\n   <unionValue>\n      <booleanValue>true</booleanValue>\n   </unionValue>\n</XmlUnionsRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_unions_with_union_member_request_xml_unions_sync() -> None:
+    """Serializes union member"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlUnionsInput(
+        union_value=XmlUnionShapeUnionValue(value=XmlUnionShapeBooleanValue(value=True))
+    )
+
+    try:
+        client.xml_unions(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/XmlUnions"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-type", "application/xml")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"<XmlUnionsRequest>\n   <unionValue>\n      <unionValue>\n         <booleanValue>true</booleanValue>\n      </unionValue>\n   </unionValue>\n</XmlUnionsRequest>\n"
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_unions_with_struct_member_response_xml_unions_sync() -> None:
+    """Serializes union struct member"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlUnionsResponse>\n    <unionValue>\n       <structValue>\n          <stringValue>string</stringValue>\n          <booleanValue>true</booleanValue>\n          <byteValue>1</byteValue>\n          <shortValue>2</shortValue>\n          <integerValue>3</integerValue>\n          <longValue>4</longValue>\n          <floatValue>5.5</floatValue>\n          <doubleValue>6.5</doubleValue>\n       </structValue>\n    </unionValue>\n</XmlUnionsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlUnionsInput()
+
+    try:
+        actual = client.xml_unions(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlUnionsOutput(
+            union_value=XmlUnionShapeStructValue(
+                value=XmlNestedUnionStruct(
+                    string_value="string",
+                    boolean_value=True,
+                    byte_value=1,
+                    short_value=2,
+                    integer_value=3,
+                    long_value=4,
+                    float_value=float(5.5),
+                    double_value=float(6.5),
+                )
+            )
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_unions_with_string_member_response_xml_unions_sync() -> None:
+    """Serializes union string member"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlUnionsResponse>\n   <unionValue>\n      <stringValue>some string</stringValue>\n   </unionValue>\n</XmlUnionsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlUnionsInput()
+
+    try:
+        actual = client.xml_unions(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlUnionsOutput(
+            union_value=XmlUnionShapeStringValue(value="some string")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_unions_with_boolean_member_response_xml_unions_sync() -> None:
+    """Serializes union boolean member"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlUnionsResponse>\n   <unionValue>\n      <booleanValue>true</booleanValue>\n   </unionValue>\n</XmlUnionsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlUnionsInput()
+
+    try:
+        actual = client.xml_unions(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlUnionsOutput(union_value=XmlUnionShapeBooleanValue(value=True))
+
+        assert deep_equal(actual, expected)
+
+
+def test_xml_unions_with_union_member_response_xml_unions_sync() -> None:
+    """Serializes union member"""
+    client = RestXmlProtocolClient(
+        config=RestXmlProtocolConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml")],
+                body=b"<XmlUnionsResponse>\n   <unionValue>\n      <unionValue>\n         <booleanValue>true</booleanValue>\n      </unionValue>\n   </unionValue>\n</XmlUnionsResponse>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="restxml")
+            },
+        )
+    )
+
+    input_ = XmlUnionsInput()
+
+    try:
+        actual = client.xml_unions(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlUnionsOutput(
+            union_value=XmlUnionShapeUnionValue(
+                value=XmlUnionShapeBooleanValue(value=True)
+            )
+        )
+
+        assert deep_equal(actual, expected)
+
+
+class RequestTestHTTPClient:
+    """A synchronous HTTP client solely for testing purposes."""
+
+    TIMEOUT_EXCEPTIONS = ()
+
+    def __init__(self, *, client_config: HTTPClientConfiguration | None = None):
+        self._client_config = client_config
+
+    def send(
+        self,
+        request: HTTPRequest,
+        *,
+        request_config: HTTPRequestConfiguration | None = None,
+    ) -> _smithy_http_aio_interfaces_HTTPResponse:
+        # Raise the exception with the request object to bypass actual request handling
+        raise TestHttpServiceError(request)
+
+
+class ResponseTestHTTPClient:
+    """A synchronous HTTP client solely for testing purposes."""
+
+    TIMEOUT_EXCEPTIONS = ()
+
+    def __init__(
+        self,
+        *,
+        client_config: HTTPClientConfiguration | None = None,
+        status: int = 200,
+        headers: list[tuple[str, str]] | None = None,
+        body: bytes = b"",
+    ):
+        self._client_config = client_config
+        self.status = status
+        self.fields = tuples_to_fields(headers or [])
+        self.body = body
+
+    def send(
+        self,
+        request: HTTPRequest,
+        *,
+        request_config: HTTPRequestConfiguration | None = None,
+    ) -> _smithy_http_aio_HTTPResponse:
+        # Pre-construct the response from the request and return it
+        return _smithy_http_aio_HTTPResponse(
+            status=self.status, fields=self.fields, body=self.body
         )

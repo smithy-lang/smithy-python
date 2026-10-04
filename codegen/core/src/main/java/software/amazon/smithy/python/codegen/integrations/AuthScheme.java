@@ -52,4 +52,13 @@ public interface AuthScheme {
 
     // TODO: replace with from_trait
     void initializeScheme(GenerationContext context, PythonWriter writer, ServiceShape service);
+
+    /**
+     * Writes an expression constructing the SYNCHRONOUS auth scheme instance, used by the
+     * generated sync client's config. Defaults to the async initializer; schemes with a
+     * distinct sync implementation override this.
+     */
+    default void initializeSyncScheme(GenerationContext context, PythonWriter writer, ServiceShape service) {
+        initializeScheme(context, writer, service);
+    }
 }

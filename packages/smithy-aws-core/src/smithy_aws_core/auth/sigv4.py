@@ -3,7 +3,12 @@
 import re
 from typing import TYPE_CHECKING, Protocol, Self
 
-from aws_sdk_signers import AsyncEventSigner, AsyncSigV4Signer, SigV4SigningProperties
+from aws_sdk_signers import (
+    AsyncEventSigner,
+    AsyncSigV4Signer,
+    SigV4Signer,
+    SigV4SigningProperties,
+)
 from smithy_core.aio.interfaces.auth import AuthScheme, EventSigner, Signer
 from smithy_core.exceptions import SmithyIdentityError
 from smithy_core.interfaces import TypedProperties as _TypedProperties
@@ -36,10 +41,12 @@ class SigV4Config(Protocol):
 
 SIGV4_CONFIG = PropertyKey(key="config", value_type=SigV4Config)
 
-type SigV4Signer = Signer[HTTPRequest, AWSCredentialsIdentity, SigV4SigningProperties]
+type SigV4SignerProtocol = Signer[
+    HTTPRequest, AWSCredentialsIdentity, SigV4SigningProperties
+]
 
 
-class SigV4AuthScheme(
+class AsyncSigV4AuthScheme(
     AuthScheme[
         HTTPRequest,
         AWSCredentialsIdentity,
@@ -50,13 +57,13 @@ class SigV4AuthScheme(
     """SigV4 AuthScheme."""
 
     scheme_id = SigV4Trait.id
-    _signer: SigV4Signer
+    _signer: SigV4SignerProtocol
 
     def __init__(
         self,
         *,
         service: str,
-        signer: SigV4Signer | None = None,
+        signer: SigV4SignerProtocol | None = None,
     ) -> None:
         """Constructor.
 
@@ -98,7 +105,7 @@ class SigV4AuthScheme(
             "service": self._service,
         }
 
-    def signer(self) -> SigV4Signer:
+    def signer(self) -> SigV4SignerProtocol:
         return self._signer
 
     def event_signer(
@@ -114,6 +121,23 @@ class SigV4AuthScheme(
             initial_signature=signature.encode("utf-8"),
             event_encoder_cls=EventHeaderEncoder,
         )
+
+    @classmethod
+    def from_trait(cls, trait: SigV4Trait, /) -> Self:
+        return cls(service=trait.name)
+
+
+class SigV4AuthScheme(AsyncSigV4AuthScheme):
+    """SigV4 AuthScheme for synchronous clients.
+
+    Identical to :py:class:`AsyncSigV4AuthScheme` except the default signer is the
+    synchronous ``SigV4Signer``; the sync pipeline calls ``sign`` without awaiting.
+    """
+
+    def __init__(
+        self, *, service: str, signer: SigV4SignerProtocol | None = None
+    ) -> None:
+        super().__init__(service=service, signer=signer or SigV4Signer())  # type: ignore[arg-type]
 
     @classmethod
     def from_trait(cls, trait: SigV4Trait, /) -> Self:

@@ -272,14 +272,14 @@ async def test_chained_invalidate() -> None:
         ) -> AWSCredentialsIdentity:
             return _credentials("cached")
 
-        async def invalidate(self) -> None:
+        def invalidate(self) -> None:
             self.invalidated = True
 
     first = _InvalidatingResolver()
     second = _InvalidatingResolver()
     chain = IdentityChain((first, second))
 
-    await chain.invalidate()
+    chain.invalidate()
 
     assert first.invalidated
     assert second.invalidated

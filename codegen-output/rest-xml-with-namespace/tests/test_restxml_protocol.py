@@ -3,10 +3,17 @@
 from urllib.parse import parse_qsl
 
 from pytest import fail, raises
-from smithy_aws_core.identity import StaticCredentialsResolver
-from smithy_core.aio.retries import SimpleRetryStrategy
+from smithy_aws_core.auth.sigv4 import SigV4AuthScheme
+from smithy_aws_core.identity.static import (
+    AsyncStaticCredentialsResolver,
+    StaticCredentialsResolver,
+)
+from smithy_aws_core.protocols import RestXmlClientProtocol
+from smithy_core.aio.retries import AsyncSimpleRetryStrategy
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.aio.utils import async_list
+from smithy_core.retries import SimpleRetryStrategy
+from smithy_core.shapes import ShapeID
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPResponse as _smithy_http_aio_HTTPResponse
 from smithy_http.aio.interfaces import (
@@ -16,8 +23,15 @@ from smithy_http.aio.interfaces import (
 from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfiguration
 from smithy_test import deep_equal, xml_equal
 
-from restxmlwithnamespace.client import AsyncRestXmlProtocolNamespaceClient
-from restxmlwithnamespace.config import AsyncRestXmlProtocolNamespaceConfig
+from restxmlwithnamespace.client import (
+    AsyncRestXmlProtocolNamespaceClient,
+    RestXmlProtocolNamespaceClient,
+)
+from restxmlwithnamespace.config import (
+    AsyncRestXmlProtocolNamespaceConfig,
+    RestXmlProtocolNamespaceConfig,
+    _PROTOCOL_SETTINGS,
+)
 from restxmlwithnamespace.models import (
     NestedWithNamespace,
     ServiceError,
@@ -33,12 +47,12 @@ async def test_xml_namespace_simple_scalar_properties_request_simple_scalar_prop
     client = AsyncRestXmlProtocolNamespaceClient(
         config=await AsyncRestXmlProtocolNamespaceConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -120,7 +134,7 @@ async def test_xml_namespace_simple_scalar_properties_response_simple_scalar_pro
     client = AsyncRestXmlProtocolNamespaceClient(
         config=await AsyncRestXmlProtocolNamespaceConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/xml"), ("X-Foo", "Foo")],
                 body=b'<SimpleScalarPropertiesResponse xmlns="https://example.com">\n    <stringValue>string</stringValue>\n    <trueBooleanValue>true</trueBooleanValue>\n    <falseBooleanValue>false</falseBooleanValue>\n    <byteValue>1</byteValue>\n    <shortValue>2</shortValue>\n    <integerValue>3</integerValue>\n    <longValue>4</longValue>\n    <floatValue>5.5</floatValue>\n    <DoubleDribble>6.5</DoubleDribble>\n    <Nested xmlns:xsi="https://example.com" xsi:someName="nestedAttrValue"></Nested>\n</SimpleScalarPropertiesResponse>\n',
@@ -128,7 +142,7 @@ async def test_xml_namespace_simple_scalar_properties_response_simple_scalar_pro
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -163,7 +177,7 @@ class TestHttpServiceError(ServiceError):
         self.request = request
 
 
-class RequestTestHTTPClient:
+class RequestTestAsyncHTTPClient:
     """An asynchronous HTTP client solely for testing purposes."""
 
     TIMEOUT_EXCEPTIONS = ()
@@ -182,7 +196,7 @@ class RequestTestHTTPClient:
         raise TestHttpServiceError(request)
 
 
-class ResponseTestHTTPClient:
+class ResponseTestAsyncHTTPClient:
     """An asynchronous HTTP client solely for testing purposes."""
 
     TIMEOUT_EXCEPTIONS = ()
@@ -210,4 +224,194 @@ class ResponseTestHTTPClient:
         # Pre-construct the response from the request and return it
         return _smithy_http_aio_HTTPResponse(
             status=self.status, fields=self.fields, body=async_list([self.body])
+        )
+
+
+def test_xml_namespace_simple_scalar_properties_request_simple_scalar_properties_sync() -> (
+    None
+):
+    """Serializes simple scalar properties"""
+    client = RestXmlProtocolNamespaceClient(
+        config=RestXmlProtocolNamespaceConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(
+                    service="restxmlwithnamespace"
+                )
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput(
+        foo="Foo",
+        string_value="string",
+        true_boolean_value=True,
+        false_boolean_value=False,
+        byte_value=1,
+        short_value=2,
+        integer_value=3,
+        long_value=4,
+        float_value=float(5.5),
+        nested=NestedWithNamespace(attr_field="nestedAttrValue"),
+        double_value=float(6.5),
+    )
+
+    try:
+        client.simple_scalar_properties(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "PUT"
+        assert actual.destination.path == "/SimpleScalarProperties"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/xml"),
+            ("x-foo", "Foo"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'<SimpleScalarPropertiesRequest xmlns="https://example.com">\n    <stringValue>string</stringValue>\n    <trueBooleanValue>true</trueBooleanValue>\n    <falseBooleanValue>false</falseBooleanValue>\n    <byteValue>1</byteValue>\n    <shortValue>2</shortValue>\n    <integerValue>3</integerValue>\n    <longValue>4</longValue>\n    <floatValue>5.5</floatValue>\n    <DoubleDribble>6.5</DoubleDribble>\n    <Nested xmlns:xsi="https://example.com" xsi:someName="nestedAttrValue"></Nested>\n</SimpleScalarPropertiesRequest>\n'
+        assert xml_equal(actual_body_content, expected_body_content)
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_xml_namespace_simple_scalar_properties_response_simple_scalar_properties_sync() -> (
+    None
+):
+    """Serializes simple scalar properties"""
+    client = RestXmlProtocolNamespaceClient(
+        config=RestXmlProtocolNamespaceConfig.resolve(
+            protocol=RestXmlClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/xml"), ("X-Foo", "Foo")],
+                body=b'<SimpleScalarPropertiesResponse xmlns="https://example.com">\n    <stringValue>string</stringValue>\n    <trueBooleanValue>true</trueBooleanValue>\n    <falseBooleanValue>false</falseBooleanValue>\n    <byteValue>1</byteValue>\n    <shortValue>2</shortValue>\n    <integerValue>3</integerValue>\n    <longValue>4</longValue>\n    <floatValue>5.5</floatValue>\n    <DoubleDribble>6.5</DoubleDribble>\n    <Nested xmlns:xsi="https://example.com" xsi:someName="nestedAttrValue"></Nested>\n</SimpleScalarPropertiesResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(
+                    service="restxmlwithnamespace"
+                )
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput()
+
+    try:
+        actual = client.simple_scalar_properties(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SimpleScalarPropertiesOutput(
+            foo="Foo",
+            string_value="string",
+            true_boolean_value=True,
+            false_boolean_value=False,
+            byte_value=1,
+            short_value=2,
+            integer_value=3,
+            long_value=4,
+            float_value=float(5.5),
+            nested=NestedWithNamespace(attr_field="nestedAttrValue"),
+            double_value=float(6.5),
+        )
+
+        assert deep_equal(actual, expected)
+
+
+class RequestTestHTTPClient:
+    """A synchronous HTTP client solely for testing purposes."""
+
+    TIMEOUT_EXCEPTIONS = ()
+
+    def __init__(self, *, client_config: HTTPClientConfiguration | None = None):
+        self._client_config = client_config
+
+    def send(
+        self,
+        request: HTTPRequest,
+        *,
+        request_config: HTTPRequestConfiguration | None = None,
+    ) -> _smithy_http_aio_interfaces_HTTPResponse:
+        # Raise the exception with the request object to bypass actual request handling
+        raise TestHttpServiceError(request)
+
+
+class ResponseTestHTTPClient:
+    """A synchronous HTTP client solely for testing purposes."""
+
+    TIMEOUT_EXCEPTIONS = ()
+
+    def __init__(
+        self,
+        *,
+        client_config: HTTPClientConfiguration | None = None,
+        status: int = 200,
+        headers: list[tuple[str, str]] | None = None,
+        body: bytes = b"",
+    ):
+        self._client_config = client_config
+        self.status = status
+        self.fields = tuples_to_fields(headers or [])
+        self.body = body
+
+    def send(
+        self,
+        request: HTTPRequest,
+        *,
+        request_config: HTTPRequestConfiguration | None = None,
+    ) -> _smithy_http_aio_HTTPResponse:
+        # Pre-construct the response from the request and return it
+        return _smithy_http_aio_HTTPResponse(
+            status=self.status, fields=self.fields, body=self.body
         )

@@ -25,6 +25,14 @@ class FileSystem(Protocol):
         """
         ...
 
+    def read_file_sync(self, path: str) -> str | None:
+        """Synchronously read a file's content as UTF-8.
+
+        :param path: Resolved file path.
+        :returns: File content, or None if the file is inaccessible.
+        """
+        ...
+
 
 class DefaultFileSystem:
     """Default filesystem implementation using real disk I/O."""
@@ -43,6 +51,23 @@ class DefaultFileSystem:
                 Path(path).read_text, encoding="utf-8"
             )
             return content
+        except FileNotFoundError:
+            return None
+        except (PermissionError, OSError) as e:
+            logger.warning("Unable to read config file '%s': %s", path, e)
+            return None
+
+    def read_file_sync(self, path: str) -> str | None:
+        """Read a file synchronously from disk.
+
+        Missing files and permission errors return None with a warning.
+        Encoding errors (invalid UTF-8) are raised to the caller.
+
+        :param path: Resolved file path.
+        :returns: File content, or None if the file is inaccessible.
+        """
+        try:
+            return Path(path).read_text(encoding="utf-8")
         except FileNotFoundError:
             return None
         except (PermissionError, OSError) as e:

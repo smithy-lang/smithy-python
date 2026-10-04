@@ -100,8 +100,7 @@ public class ApiGatewayIntegration implements PythonIntegration {
                                                         httpRequest,
                                                         requestContext,
                                                         field,
-                                                        CodegenUtils.getAsyncConfigSymbol(c.settings(), c.model())
-                                                                .orElseThrow());
+                                                        CodegenUtils.getAsyncConfigSymbol(c.settings(), c.model()));
                                             });
                             return List.of(filename);
                         })

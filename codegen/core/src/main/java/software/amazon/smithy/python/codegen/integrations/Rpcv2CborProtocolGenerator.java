@@ -64,6 +64,12 @@ public final class Rpcv2CborProtocolGenerator implements ProtocolGenerator {
     }
 
     @Override
+    public void initializeSyncProtocol(GenerationContext context, PythonWriter writer) {
+        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP.withOptionalDependencies("cbor"));
+        writer.write("$T(_PROTOCOL_SETTINGS)", RuntimeTypes.RPC_V2_CBOR_SYNC_CLIENT_PROTOCOL);
+    }
+
+    @Override
     public Set<ProtocolSettingsField> requiredProtocolSettings(GenerationContext context) {
         // The RPC URI is /service/{service_target}/operation/{name}, and the codec
         // resolves document discriminators against the service namespace.

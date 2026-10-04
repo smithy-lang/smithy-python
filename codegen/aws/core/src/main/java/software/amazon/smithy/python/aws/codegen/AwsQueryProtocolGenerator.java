@@ -47,6 +47,12 @@ public final class AwsQueryProtocolGenerator implements ProtocolGenerator {
     }
 
     @Override
+    public void initializeSyncProtocol(GenerationContext context, PythonWriter writer) {
+        writer.addDependency(AwsPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("xml"));
+        writer.write("$T(_PROTOCOL_SETTINGS)", AwsRuntimeTypes.AWS_QUERY_SYNC_CLIENT_PROTOCOL);
+    }
+
+    @Override
     public Set<ProtocolSettingsField> requiredProtocolSettings(GenerationContext context) {
         // awsQuery needs the service version to form the request Version parameter.
         return Set.of(ProtocolSettingsField.VERSION);

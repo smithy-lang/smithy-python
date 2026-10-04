@@ -8,16 +8,23 @@ from typing import Any, Self, cast
 from smithy_aws_core.config import ConfigSource
 from smithy_aws_core.identity import AWSCredentialsIdentity
 from smithy_aws_core.identity.chain import IdentityChain
-from smithy_core.aio.client import ClientCall, RequestPipeline
-from smithy_core.aio.retries import RetryStrategyResolver
-from smithy_core.aio.utils import close
+from smithy_core.aio.client import (
+    ClientCall,
+    RequestPipeline as _smithy_core_aio_client_RequestPipeline,
+)
+from smithy_core.aio.retries import AsyncRetryStrategyResolver
+from smithy_core.aio.utils import close as _smithy_core_aio_utils_close
+from smithy_core.client import RequestPipeline as _smithy_core_client_RequestPipeline
 from smithy_core.exceptions import ExpectationNotMetError
 from smithy_core.interceptors import InterceptorChain
+from smithy_core.interfaces import ClientProtocol, ClientTransport
+from smithy_core.retries import RetryStrategyResolver
 from smithy_core.types import TypedProperties
+from smithy_core.utils import close as _smithy_core_utils_close
 from smithy_http.aio.interfaces import HTTPClient
 from smithy_http.plugins import user_agent_plugin
 
-from .config import AsyncQueryProtocolConfig, Plugin
+from .config import AsyncQueryProtocolConfig, Plugin, QueryProtocolConfig
 from .models import (
     DATETIME_OFFSETS,
     DatetimeOffsetsInput,
@@ -149,7 +156,7 @@ class AsyncQueryProtocolClient:
         self._derive_lock = asyncio.Lock()
         self._setup_done = False
         self._closed = False
-        self._retry_strategy_resolver = RetryStrategyResolver()
+        self._retry_strategy_resolver = AsyncRetryStrategyResolver()
         self._client_plugins: list[Plugin] = [aws_user_agent_plugin, user_agent_plugin]
 
     async def _ensure_setup(self) -> None:
@@ -198,7 +205,7 @@ class AsyncQueryProtocolClient:
                 return
             self._closed = True
             if self._setup_done and self._config is not None:
-                await close(self._config.transport)
+                await _smithy_core_aio_utils_close(self._config.transport)
 
     async def __aenter__(self) -> Self:
         if self._closed:
@@ -261,7 +268,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=DATETIME_OFFSETS,
@@ -330,7 +339,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=EMPTY_INPUT_AND_EMPTY_OUTPUT,
@@ -397,7 +408,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=ENDPOINT_OPERATION,
@@ -466,7 +479,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=ENDPOINT_WITH_HOST_LABEL_OPERATION,
@@ -533,7 +548,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=FLATTENED_XML_MAP,
@@ -602,7 +619,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=FLATTENED_XML_MAP_WITH_XML_NAME,
@@ -671,7 +690,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=FLATTENED_XML_MAP_WITH_XML_NAMESPACE,
@@ -738,7 +759,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=FRACTIONAL_SECONDS,
@@ -807,7 +830,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=GREETING_WITH_ERRORS,
@@ -874,7 +899,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=HOST_WITH_PATH_OPERATION,
@@ -943,7 +970,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=IGNORES_WRAPPING_XML_NAME,
@@ -1010,7 +1039,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=NESTED_STRUCTURES,
@@ -1080,7 +1111,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=NO_INPUT_AND_NO_OUTPUT,
@@ -1149,7 +1182,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=NO_INPUT_AND_OUTPUT,
@@ -1216,7 +1251,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=PUT_WITH_CONTENT_ENCODING,
@@ -1285,7 +1322,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
@@ -1352,7 +1391,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=QUERY_LISTS,
@@ -1419,7 +1460,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=QUERY_MAPS,
@@ -1489,7 +1532,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=QUERY_TIMESTAMPS,
@@ -1556,7 +1601,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=RECURSIVE_XML_SHAPES,
@@ -1623,7 +1670,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=SIMPLE_INPUT_PARAMS,
@@ -1690,7 +1739,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=SIMPLE_SCALAR_XML_PROPERTIES,
@@ -1757,7 +1808,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=XML_BLOBS,
@@ -1824,7 +1877,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=XML_EMPTY_BLOBS,
@@ -1891,7 +1946,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=XML_EMPTY_LISTS,
@@ -1958,7 +2015,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=XML_EMPTY_MAPS,
@@ -2026,7 +2085,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=XML_ENUMS,
@@ -2094,7 +2155,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=XML_INT_ENUMS,
@@ -2164,7 +2227,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=XML_LISTS,
@@ -2231,7 +2296,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=XML_MAPS,
@@ -2298,7 +2365,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=XML_MAPS_XML_NAME,
@@ -2365,7 +2434,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=XML_NAMESPACES,
@@ -2433,7 +2504,9 @@ class AsyncQueryProtocolClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=XML_TIMESTAMPS,
@@ -2446,3 +2519,2333 @@ class AsyncQueryProtocolClient:
         )
 
         return await pipeline(call)
+
+
+class QueryProtocolClient:
+    """A query service that sends query requests and XML responses."""
+
+    def __init__(
+        self,
+        config: QueryProtocolConfig | None = None,
+        plugins: list[Plugin] | None = None,
+    ):
+        """
+        Constructor for `QueryProtocolClient`.
+
+        Args:
+            config:
+                Optional configuration for the client. Here you can set things like
+                the endpoint for HTTP services or auth credentials.
+            plugins:
+                A list of callables applied once to the client's base configuration.
+                Their changes are inherited by every operation invocation.
+        """
+        self._config = config
+        self._plugins = plugins
+        self._setup_done = False
+        self._closed = False
+        self._retry_strategy_resolver = RetryStrategyResolver()
+        self._client_plugins: list[Plugin] = [aws_user_agent_plugin, user_agent_plugin]
+
+    def _ensure_setup(self) -> None:
+        if not self._setup_done:
+            if self._config is None:
+                config = QueryProtocolConfig.resolve()
+            else:
+                # Copy so plugins don't mutate the caller's config.
+                config = deepcopy(self._config)
+            for plugin in self._client_plugins:
+                plugin(config)
+            if self._plugins:
+                for plugin in self._plugins:
+                    plugin(config)
+            self._config = config
+            self._setup_done = True
+
+    def close(self) -> None:
+        """Close this client and any resources held by its transport."""
+        if self._closed:
+            return
+        self._closed = True
+        if self._setup_done and self._config is not None:
+            _smithy_core_utils_close(self._config.transport)
+
+    def __enter__(self) -> Self:
+        if self._closed:
+            raise RuntimeError("Cannot enter a client that has been closed.")
+        return self
+
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        self.close()
+
+    def datetime_offsets(
+        self, input: DatetimeOffsetsInput, plugins: list[Plugin] | None = None
+    ) -> DatetimeOffsetsOutput:
+        """
+        Invokes the DatetimeOffsets operation.
+
+        Args:
+            input:
+                An instance of `DatetimeOffsetsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `DatetimeOffsetsOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=DATETIME_OFFSETS,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def empty_input_and_empty_output(
+        self, input: EmptyInputAndEmptyOutputInput, plugins: list[Plugin] | None = None
+    ) -> EmptyInputAndEmptyOutputOutput:
+        """
+        The example tests how requests and responses are serialized when
+        there's no request or response members. While this should be rare, code
+        generators must support this.
+
+        Args:
+            input:
+                An instance of `EmptyInputAndEmptyOutputInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EmptyInputAndEmptyOutputOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=EMPTY_INPUT_AND_EMPTY_OUTPUT,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def endpoint_operation(
+        self, input: EndpointOperationInput, plugins: list[Plugin] | None = None
+    ) -> EndpointOperationOutput:
+        """
+        Invokes the EndpointOperation operation.
+
+        Args:
+            input:
+                An instance of `EndpointOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EndpointOperationOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=ENDPOINT_OPERATION,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def endpoint_with_host_label_operation(
+        self,
+        input: EndpointWithHostLabelOperationInput,
+        plugins: list[Plugin] | None = None,
+    ) -> EndpointWithHostLabelOperationOutput:
+        """
+        Invokes the EndpointWithHostLabelOperation operation.
+
+        Args:
+            input:
+                An instance of `EndpointWithHostLabelOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `EndpointWithHostLabelOperationOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=ENDPOINT_WITH_HOST_LABEL_OPERATION,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def flattened_xml_map(
+        self, input: FlattenedXmlMapInput, plugins: list[Plugin] | None = None
+    ) -> FlattenedXmlMapOutput:
+        """
+        Flattened maps
+
+        Args:
+            input:
+                An instance of `FlattenedXmlMapInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `FlattenedXmlMapOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=FLATTENED_XML_MAP,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def flattened_xml_map_with_xml_name(
+        self,
+        input: FlattenedXmlMapWithXmlNameInput,
+        plugins: list[Plugin] | None = None,
+    ) -> FlattenedXmlMapWithXmlNameOutput:
+        """
+        Flattened maps with @xmlName
+
+        Args:
+            input:
+                An instance of `FlattenedXmlMapWithXmlNameInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `FlattenedXmlMapWithXmlNameOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=FLATTENED_XML_MAP_WITH_XML_NAME,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def flattened_xml_map_with_xml_namespace(
+        self,
+        input: FlattenedXmlMapWithXmlNamespaceInput,
+        plugins: list[Plugin] | None = None,
+    ) -> FlattenedXmlMapWithXmlNamespaceOutput:
+        """
+        Flattened maps with @xmlNamespace and @xmlName
+
+        Args:
+            input:
+                An instance of `FlattenedXmlMapWithXmlNamespaceInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `FlattenedXmlMapWithXmlNamespaceOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=FLATTENED_XML_MAP_WITH_XML_NAMESPACE,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def fractional_seconds(
+        self, input: FractionalSecondsInput, plugins: list[Plugin] | None = None
+    ) -> FractionalSecondsOutput:
+        """
+        Invokes the FractionalSeconds operation.
+
+        Args:
+            input:
+                An instance of `FractionalSecondsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `FractionalSecondsOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=FRACTIONAL_SECONDS,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def greeting_with_errors(
+        self, input: GreetingWithErrorsInput, plugins: list[Plugin] | None = None
+    ) -> GreetingWithErrorsOutput:
+        """
+        This operation has three possible return values: 1. A successful
+        response in the form of GreetingWithErrorsOutput 2. An InvalidGreeting
+        error. 3. A BadRequest error.
+
+        Args:
+            input:
+                An instance of `GreetingWithErrorsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `GreetingWithErrorsOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=GREETING_WITH_ERRORS,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def host_with_path_operation(
+        self, input: HostWithPathOperationInput, plugins: list[Plugin] | None = None
+    ) -> HostWithPathOperationOutput:
+        """
+        Invokes the HostWithPathOperation operation.
+
+        Args:
+            input:
+                An instance of `HostWithPathOperationInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `HostWithPathOperationOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=HOST_WITH_PATH_OPERATION,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def ignores_wrapping_xml_name(
+        self, input: IgnoresWrappingXmlNameInput, plugins: list[Plugin] | None = None
+    ) -> IgnoresWrappingXmlNameOutput:
+        """
+        The xmlName trait on the output structure is ignored in AWS Query. The
+        wrapping element is always operation name + \"Response\", and inside of
+        that wrapper is another wrapper named operation name + \"Result\".
+
+        Args:
+            input:
+                An instance of `IgnoresWrappingXmlNameInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `IgnoresWrappingXmlNameOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=IGNORES_WRAPPING_XML_NAME,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def nested_structures(
+        self, input: NestedStructuresInput, plugins: list[Plugin] | None = None
+    ) -> NestedStructuresOutput:
+        """
+        This test serializes nested and recursive structure members.
+
+        Args:
+            input:
+                An instance of `NestedStructuresInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `NestedStructuresOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=NESTED_STRUCTURES,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def no_input_and_no_output(
+        self, input: NoInputAndNoOutputInput, plugins: list[Plugin] | None = None
+    ) -> NoInputAndNoOutputOutput:
+        """
+        The example tests how requests and responses are serialized when
+        there's no request or response payload because the operation has no
+        input or output. While this should be rare, code generators must support
+        this.
+
+        Args:
+            input:
+                An instance of `NoInputAndNoOutputInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `NoInputAndNoOutputOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=NO_INPUT_AND_NO_OUTPUT,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def no_input_and_output(
+        self, input: NoInputAndOutputInput, plugins: list[Plugin] | None = None
+    ) -> NoInputAndOutputOutput:
+        """
+        The example tests how requests and responses are serialized when
+        there's no request payload or response members. While this should be
+        rare, code generators must support this.
+
+        Args:
+            input:
+                An instance of `NoInputAndOutputInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `NoInputAndOutputOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=NO_INPUT_AND_OUTPUT,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def put_with_content_encoding(
+        self, input: PutWithContentEncodingInput, plugins: list[Plugin] | None = None
+    ) -> PutWithContentEncodingOutput:
+        """
+        Invokes the PutWithContentEncoding operation.
+
+        Args:
+            input:
+                An instance of `PutWithContentEncodingInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `PutWithContentEncodingOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=PUT_WITH_CONTENT_ENCODING,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def query_idempotency_token_auto_fill(
+        self,
+        input: QueryIdempotencyTokenAutoFillInput,
+        plugins: list[Plugin] | None = None,
+    ) -> QueryIdempotencyTokenAutoFillOutput:
+        """
+        Automatically adds idempotency tokens.
+
+        Args:
+            input:
+                An instance of `QueryIdempotencyTokenAutoFillInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `QueryIdempotencyTokenAutoFillOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def query_lists(
+        self, input: QueryListsInput, plugins: list[Plugin] | None = None
+    ) -> QueryListsOutput:
+        """
+        This test serializes simple and complex lists.
+
+        Args:
+            input:
+                An instance of `QueryListsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `QueryListsOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=QUERY_LISTS,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def query_maps(
+        self, input: QueryMapsInput, plugins: list[Plugin] | None = None
+    ) -> QueryMapsOutput:
+        """
+        This test serializes simple and complex maps.
+
+        Args:
+            input:
+                An instance of `QueryMapsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `QueryMapsOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=QUERY_MAPS,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def query_timestamps(
+        self, input: QueryTimestampsInput, plugins: list[Plugin] | None = None
+    ) -> QueryTimestampsOutput:
+        """
+        This test serializes timestamps. 1. Timestamps are serialized as RFC
+        3339 date-time values by default. 2. A timestampFormat trait on a member
+        changes the format. 3. A timestampFormat trait on the shape targeted by
+        the member changes the format.
+
+        Args:
+            input:
+                An instance of `QueryTimestampsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `QueryTimestampsOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=QUERY_TIMESTAMPS,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def recursive_xml_shapes(
+        self, input: RecursiveXmlShapesInput, plugins: list[Plugin] | None = None
+    ) -> RecursiveXmlShapesOutput:
+        """
+        Recursive shapes
+
+        Args:
+            input:
+                An instance of `RecursiveXmlShapesInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `RecursiveXmlShapesOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=RECURSIVE_XML_SHAPES,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def simple_input_params(
+        self, input: SimpleInputParamsInput, plugins: list[Plugin] | None = None
+    ) -> SimpleInputParamsOutput:
+        """
+        This test serializes strings, numbers, and boolean values.
+
+        Args:
+            input:
+                An instance of `SimpleInputParamsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `SimpleInputParamsOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=SIMPLE_INPUT_PARAMS,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def simple_scalar_xml_properties(
+        self, input: SimpleScalarXmlPropertiesInput, plugins: list[Plugin] | None = None
+    ) -> SimpleScalarXmlPropertiesOutput:
+        """
+        Invokes the SimpleScalarXmlProperties operation.
+
+        Args:
+            input:
+                An instance of `SimpleScalarXmlPropertiesInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `SimpleScalarXmlPropertiesOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=SIMPLE_SCALAR_XML_PROPERTIES,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def xml_blobs(
+        self, input: XmlBlobsInput, plugins: list[Plugin] | None = None
+    ) -> XmlBlobsOperationOutput:
+        """
+        Blobs are base64 encoded
+
+        Args:
+            input:
+                An instance of `XmlBlobsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlBlobsOperationOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=XML_BLOBS,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def xml_empty_blobs(
+        self, input: XmlEmptyBlobsInput, plugins: list[Plugin] | None = None
+    ) -> XmlEmptyBlobsOutput:
+        """
+        Invokes the XmlEmptyBlobs operation.
+
+        Args:
+            input:
+                An instance of `XmlEmptyBlobsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlEmptyBlobsOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=XML_EMPTY_BLOBS,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def xml_empty_lists(
+        self, input: XmlEmptyListsInput, plugins: list[Plugin] | None = None
+    ) -> XmlEmptyListsOutput:
+        """
+        Invokes the XmlEmptyLists operation.
+
+        Args:
+            input:
+                An instance of `XmlEmptyListsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlEmptyListsOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=XML_EMPTY_LISTS,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def xml_empty_maps(
+        self, input: XmlEmptyMapsInput, plugins: list[Plugin] | None = None
+    ) -> XmlEmptyMapsOutput:
+        """
+        Invokes the XmlEmptyMaps operation.
+
+        Args:
+            input:
+                An instance of `XmlEmptyMapsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlEmptyMapsOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=XML_EMPTY_MAPS,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def xml_enums(
+        self, input: XmlEnumsInput, plugins: list[Plugin] | None = None
+    ) -> XmlEnumsOutput:
+        """
+        This example serializes enums as top level properties, in lists, sets,
+        and maps.
+
+        Args:
+            input:
+                An instance of `XmlEnumsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlEnumsOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=XML_ENUMS,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def xml_int_enums(
+        self, input: XmlIntEnumsInput, plugins: list[Plugin] | None = None
+    ) -> XmlIntEnumsOutput:
+        """
+        This example serializes enums as top level properties, in lists, sets,
+        and maps.
+
+        Args:
+            input:
+                An instance of `XmlIntEnumsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlIntEnumsOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=XML_INT_ENUMS,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def xml_lists(
+        self, input: XmlListsInput, plugins: list[Plugin] | None = None
+    ) -> XmlListsOperationOutput:
+        """
+        This test case serializes XML lists for the following cases for both
+        input and output: 1. Normal XML lists. 2. Normal XML sets. 3. XML lists
+        of lists. 4. XML lists with @xmlName on its members 5. Flattened XML
+        lists. 6. Flattened XML lists with @xmlName. 7. Lists of structures.
+
+        Args:
+            input:
+                An instance of `XmlListsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlListsOperationOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=XML_LISTS,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def xml_maps(
+        self, input: XmlMapsInput, plugins: list[Plugin] | None = None
+    ) -> XmlMapsOperationOutput:
+        """
+        The example tests basic map serialization.
+
+        Args:
+            input:
+                An instance of `XmlMapsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlMapsOperationOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=XML_MAPS,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def xml_maps_xml_name(
+        self, input: XmlMapsXmlNameInput, plugins: list[Plugin] | None = None
+    ) -> XmlMapsXmlNameOutput:
+        """
+        Invokes the XmlMapsXmlName operation.
+
+        Args:
+            input:
+                An instance of `XmlMapsXmlNameInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlMapsXmlNameOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=XML_MAPS_XML_NAME,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def xml_namespaces(
+        self, input: XmlNamespacesInput, plugins: list[Plugin] | None = None
+    ) -> XmlNamespacesOutput:
+        """
+        Invokes the XmlNamespaces operation.
+
+        Args:
+            input:
+                An instance of `XmlNamespacesInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlNamespacesOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=XML_NAMESPACES,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)
+
+    def xml_timestamps(
+        self, input: XmlTimestampsInput, plugins: list[Plugin] | None = None
+    ) -> XmlTimestampsOutput:
+        """
+        This tests how timestamps are serialized, including using the default
+        format of date-time and various @timestampFormat trait values.
+
+        Args:
+            input:
+                An instance of `XmlTimestampsInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `XmlTimestampsOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=XML_TIMESTAMPS,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)

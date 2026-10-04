@@ -19,7 +19,7 @@ class IdentityResolver[I: Identity, IP: Mapping[str, Any]](Protocol):
         """
         ...
 
-    async def invalidate(self) -> None:
+    def invalidate(self) -> None:
         """Discard any cached identity so the next resolution re-reads its source.
 
         Defaults to a no-op for non-refreshable resolvers.

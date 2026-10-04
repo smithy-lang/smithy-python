@@ -5,16 +5,22 @@
 package software.amazon.smithy.python.codegen;
 
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Consumer;
 import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
-import software.amazon.smithy.utils.CodeSection;
 import software.amazon.smithy.utils.SmithyBuilder;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 import software.amazon.smithy.utils.ToSmithyBuilder;
 
 /**
  * Represents a property to be added to the generated client config object.
+ *
+ * <p>A property is a field on the config that participates in the resolution
+ * pipeline. Its value comes, in priority order, from an explicit override, an
+ * optional resolver, or a default. The emitters below write the body of the
+ * corresponding {@code FieldSpec} entry; absent emitters mean a plain
+ * {@code default=None} field.
  */
 @SmithyUnstableApi
 public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
@@ -23,18 +29,19 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
     private final Symbol inputType;
     private final boolean nullable;
     private final String documentation;
-    private final Consumer<PythonWriter> initialize;
+    private final Consumer<PythonWriter> defaultFactory;
+    private final Consumer<PythonWriter> asyncDefaultFactory;
+    private final Consumer<PythonWriter> converter;
 
-    /**
-     * Constructor.
-     */
     private ConfigProperty(Builder builder) {
         this.name = Objects.requireNonNull(builder.name);
         this.type = Objects.requireNonNull(builder.type);
         this.inputType = builder.inputType != null ? builder.inputType : this.type;
         this.nullable = builder.nullable;
         this.documentation = Objects.requireNonNull(builder.documentation);
-        this.initialize = Objects.requireNonNull(builder.initialize);
+        this.defaultFactory = builder.defaultFactory;
+        this.asyncDefaultFactory = builder.asyncDefaultFactory;
+        this.converter = builder.converter;
     }
 
     /**
@@ -52,10 +59,10 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
     }
 
     /**
-     * @return Returns the type accepted by the __init__ parameter.
+     * @return Returns the type accepted as an override for this field.
      *
-     * <p>Defaults to {@link #type()}. Differs when the input type is not the same as
-     * what finalizes on the config.
+     * <p>Defaults to {@link #type()}. Differs when the override type is not the same
+     * as what finalizes on the config.
      */
     public Symbol inputType() {
         return inputType;
@@ -76,24 +83,33 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
     }
 
     /**
-     * Initializes the config field on the config object.
+     * @return The emitter for the field's default_factory body, if any.
      *
-     * <p>This will be wrapped in an {@link InitializeConfigPropertySection}.
-     *
-     * @param writer The writer to write to.
+     * <p>Writes the expression a zero-arg lambda returns, e.g. {@code AIOHTTPClient()}.
+     * Absent means the field defaults to {@code None}.
      */
-    public void initialize(PythonWriter writer) {
-        writer.pushState(new InitializeConfigPropertySection(this));
-        initialize.accept(writer);
-        writer.popState();
+    public Optional<Consumer<PythonWriter>> defaultFactory() {
+        return Optional.ofNullable(defaultFactory);
     }
 
     /**
-     * The section that handles initializing a config property inside __init__.
+     * @return The emitter for the field's async_default_factory body, if any.
      *
-     * @param property The property being initialized.
+     * <p>Set when the async default is loop-bound (e.g. an aiohttp transport) and the
+     * sync resolve path needs a blocking counterpart.
      */
-    public record InitializeConfigPropertySection(ConfigProperty property) implements CodeSection {}
+    public Optional<Consumer<PythonWriter>> asyncDefaultFactory() {
+        return Optional.ofNullable(asyncDefaultFactory);
+    }
+
+    /**
+     * @return The emitter for the field's converter body, if any.
+     *
+     * <p>Writes a one-arg lambda applied to an override before it is set.
+     */
+    public Optional<Consumer<PythonWriter>> converter() {
+        return Optional.ofNullable(converter);
+    }
 
     public static Builder builder() {
         return new Builder();
@@ -107,7 +123,9 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
                 .inputType(inputType)
                 .nullable(nullable)
                 .documentation(documentation)
-                .initialize(initialize);
+                .defaultFactory(defaultFactory)
+                .asyncDefaultFactory(asyncDefaultFactory)
+                .converter(converter);
     }
 
     /**
@@ -119,7 +137,9 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
         private Symbol inputType;
         private boolean nullable = true;
         private String documentation;
-        private Consumer<PythonWriter> initialize = writer -> writer.write("self.$1L = $1L", name);
+        private Consumer<PythonWriter> defaultFactory;
+        private Consumer<PythonWriter> asyncDefaultFactory;
+        private Consumer<PythonWriter> converter;
 
         @Override
         public ConfigProperty build() {
@@ -153,11 +173,9 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
         }
 
         /**
-         * Optionally differentiate the input type of a config property from its resolved type.
+         * Optionally differentiate the override type of a config property from its resolved type.
          *
-         * <p>Used when the input type is not the same as what finalizes on the config.
-         *
-         * @param inputType The type accepted by the __init__ parameter.
+         * @param inputType The type accepted as an override.
          * @return Returns the builder.
          */
         public Builder inputType(Symbol inputType) {
@@ -169,10 +187,6 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
          * Sets whether the config property is nullable.
          *
          * <p>Defaults to true.
-         *
-         * <p>All properties will be optional on the config object's constructor,
-         * regardless of whether this value is true or false. Properties that
-         * are not nullable MUST set a default value in the initialize function.
          *
          * @param nullable Whether the property is nullable.
          * @return Returns the builder.
@@ -194,19 +208,38 @@ public final class ConfigProperty implements ToSmithyBuilder<ConfigProperty> {
         }
 
         /**
-         * Sets the initializer function for the config property.
+         * Sets the emitter for the field's default_factory body.
          *
-         * <p>This will be called when creating the __init__ function for the
-         * client's Config object. It MUST set the property on "self" based
-         * on the optional __init__ parameter of the same name.
+         * <p>Writes the expression a zero-arg lambda returns. Omit for a field
+         * that defaults to {@code None}.
          *
-         * <p>By default, this directly sets whatever value was provided.
-         *
-         * @param initialize The initializer function for the property.
+         * @param defaultFactory Writes the default_factory lambda body.
          * @return Returns the builder.
          */
-        public Builder initialize(Consumer<PythonWriter> initialize) {
-            this.initialize = initialize;
+        public Builder defaultFactory(Consumer<PythonWriter> defaultFactory) {
+            this.defaultFactory = defaultFactory;
+            return this;
+        }
+
+        /**
+         * Sets the emitter for the field's async_default_factory body.
+         *
+         * @param asyncDefaultFactory Writes the async_default_factory lambda body.
+         * @return Returns the builder.
+         */
+        public Builder asyncDefaultFactory(Consumer<PythonWriter> asyncDefaultFactory) {
+            this.asyncDefaultFactory = asyncDefaultFactory;
+            return this;
+        }
+
+        /**
+         * Sets the emitter for the field's converter body.
+         *
+         * @param converter Writes the converter lambda body.
+         * @return Returns the builder.
+         */
+        public Builder converter(Consumer<PythonWriter> converter) {
+            this.converter = converter;
             return this;
         }
     }

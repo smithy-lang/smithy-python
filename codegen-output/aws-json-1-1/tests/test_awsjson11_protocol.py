@@ -5,11 +5,18 @@ import json
 from urllib.parse import parse_qsl
 
 from pytest import fail, mark, raises
-from smithy_aws_core.identity import StaticCredentialsResolver
-from smithy_core.aio.retries import SimpleRetryStrategy
+from smithy_aws_core.auth.sigv4 import SigV4AuthScheme
+from smithy_aws_core.identity.static import (
+    AsyncStaticCredentialsResolver,
+    StaticCredentialsResolver,
+)
+from smithy_aws_core.protocols import AwsJson11ClientProtocol
+from smithy_core.aio.retries import AsyncSimpleRetryStrategy
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.aio.utils import async_list
 from smithy_core.documents import Document
+from smithy_core.retries import SimpleRetryStrategy
+from smithy_core.shapes import ShapeID
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPResponse as _smithy_http_aio_HTTPResponse
 from smithy_http.aio.interfaces import (
@@ -19,8 +26,12 @@ from smithy_http.aio.interfaces import (
 from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfiguration
 from smithy_test import deep_equal
 
-from awsjson11.client import AsyncJsonProtocolClient
-from awsjson11.config import AsyncJsonProtocolConfig
+from awsjson11.client import AsyncJsonProtocolClient, JsonProtocolClient
+from awsjson11.config import (
+    AsyncJsonProtocolConfig,
+    JsonProtocolConfig,
+    _PROTOCOL_SETTINGS,
+)
 from awsjson11.models import (
     DatetimeOffsetsInput,
     DatetimeOffsetsOutput,
@@ -78,7 +89,7 @@ async def test_aws_json11_date_time_with_negative_offset_response_datetime_offse
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'      {\n          "datetime": "2019-12-16T22:48:18-01:00"\n      }\n',
@@ -86,7 +97,7 @@ async def test_aws_json11_date_time_with_negative_offset_response_datetime_offse
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -114,7 +125,7 @@ async def test_aws_json11_date_time_with_positive_offset_response_datetime_offse
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'      {\n          "datetime": "2019-12-17T00:48:18+01:00"\n      }\n',
@@ -122,7 +133,7 @@ async def test_aws_json11_date_time_with_positive_offset_response_datetime_offse
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -145,12 +156,12 @@ async def test_sends_requests_to_slash_request_empty_operation() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -214,12 +225,12 @@ async def test_includes_x_amz_target_and_content_type_request_empty_operation() 
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -291,12 +302,12 @@ async def test_json_1_1_client_sends_empty_payload_for_no_input_shape_request_em
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -371,7 +382,7 @@ async def test_handles_empty_output_shape_response_empty_operation() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b"{}",
@@ -379,7 +390,7 @@ async def test_handles_empty_output_shape_response_empty_operation() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -404,7 +415,7 @@ async def test_handles_unexpected_json_output_response_empty_operation() -> None
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "foo": true\n}',
@@ -412,7 +423,7 @@ async def test_handles_unexpected_json_output_response_empty_operation() -> None
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -441,7 +452,7 @@ async def test_json_1_1_service_responds_with_no_payload_response_empty_operatio
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b"",
@@ -449,7 +460,7 @@ async def test_json_1_1_service_responds_with_no_payload_response_empty_operatio
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -474,12 +485,12 @@ async def test_aws_json11_endpoint_trait_request_endpoint_operation() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -554,12 +565,12 @@ async def test_aws_json11_endpoint_trait_with_host_label_request_endpoint_with_h
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -634,7 +645,7 @@ async def test_aws_json11_date_time_with_fractional_seconds_response_fractional_
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'      {\n          "datetime": "2000-01-02T20:34:56.123Z"\n      }\n',
@@ -642,7 +653,7 @@ async def test_aws_json11_date_time_with_fractional_seconds_response_fractional_
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -665,7 +676,7 @@ async def test_aws_json11_invalid_greeting_error_error_greeting_with_errors() ->
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=400,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "__type": "InvalidGreeting",\n    "Message": "Hi"\n}',
@@ -673,7 +684,7 @@ async def test_aws_json11_invalid_greeting_error_error_greeting_with_errors() ->
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -694,7 +705,7 @@ async def test_aws_json11_complex_error_error_greeting_with_errors() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=400,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "__type": "ComplexError",\n    "TopLevel": "Top level",\n    "Nested": {\n        "Foo": "bar"\n    }\n}',
@@ -702,7 +713,7 @@ async def test_aws_json11_complex_error_error_greeting_with_errors() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -722,7 +733,7 @@ async def test_aws_json11_empty_complex_error_error_greeting_with_errors() -> No
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=400,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "__type": "ComplexError"\n}',
@@ -730,7 +741,7 @@ async def test_aws_json11_empty_complex_error_error_greeting_with_errors() -> No
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -756,13 +767,13 @@ async def test_aws_json11_foo_error_using_x_amzn_error_type_error_greeting_with_
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=500, headers=[("X-Amzn-Errortype", "FooError")], body=b""
             ),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -791,7 +802,7 @@ async def test_aws_json11_foo_error_using_x_amzn_error_type_with_uri_error_greet
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=500,
                 headers=[
                     (
@@ -804,7 +815,7 @@ async def test_aws_json11_foo_error_using_x_amzn_error_type_with_uri_error_greet
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -831,7 +842,7 @@ async def test_aws_json11_foo_error_using_x_amzn_error_type_with_uri_and_namespa
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=500,
                 headers=[
                     (
@@ -844,7 +855,7 @@ async def test_aws_json11_foo_error_using_x_amzn_error_type_with_uri_and_namespa
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -871,7 +882,7 @@ async def test_aws_json11_foo_error_using_code_error_greeting_with_errors() -> N
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=500,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "code": "FooError"\n}',
@@ -879,7 +890,7 @@ async def test_aws_json11_foo_error_using_code_error_greeting_with_errors() -> N
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -906,7 +917,7 @@ async def test_aws_json11_foo_error_using_code_and_namespace_error_greeting_with
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=500,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "code": "aws.protocoltests.json#FooError"\n}',
@@ -914,7 +925,7 @@ async def test_aws_json11_foo_error_using_code_and_namespace_error_greeting_with
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -942,7 +953,7 @@ async def test_aws_json11_foo_error_using_code_uri_and_namespace_error_greeting_
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=500,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "code": "aws.protocoltests.json#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate/"\n}',
@@ -950,7 +961,7 @@ async def test_aws_json11_foo_error_using_code_uri_and_namespace_error_greeting_
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -973,7 +984,7 @@ async def test_aws_json11_foo_error_with_dunder_type_error_greeting_with_errors(
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=500,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "__type": "FooError"\n}',
@@ -981,7 +992,7 @@ async def test_aws_json11_foo_error_with_dunder_type_error_greeting_with_errors(
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1008,7 +1019,7 @@ async def test_aws_json11_foo_error_with_dunder_type_and_namespace_error_greetin
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=500,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "__type": "aws.protocoltests.json#FooError"\n}',
@@ -1016,7 +1027,7 @@ async def test_aws_json11_foo_error_with_dunder_type_and_namespace_error_greetin
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1042,7 +1053,7 @@ async def test_aws_json11_foo_error_with_dunder_type_and_different_namespace_err
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=500,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "__type": "aws.different.namespace#FooError"\n}',
@@ -1050,7 +1061,7 @@ async def test_aws_json11_foo_error_with_dunder_type_and_different_namespace_err
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1078,7 +1089,7 @@ async def test_aws_json11_foo_error_with_dunder_type_uri_and_namespace_error_gre
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=500,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "__type": "aws.protocoltests.json#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate/"\n}',
@@ -1086,7 +1097,7 @@ async def test_aws_json11_foo_error_with_dunder_type_uri_and_namespace_error_gre
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1115,7 +1126,7 @@ async def test_aws_json11_foo_error_with_nested_type_property_error_greeting_wit
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=500,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "__type": "aws.protocoltests.json#FooError",\n    "ErrorDetails": [\n      {\n          "__type": "com.amazon.internal#ErrorDetails",\n          "reason": "Some reason"\n      }\n    ]\n}',
@@ -1123,7 +1134,7 @@ async def test_aws_json11_foo_error_with_nested_type_property_error_greeting_wit
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1144,12 +1155,12 @@ async def test_aws_json11_host_with_path_request_host_with_path_operation() -> N
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/custom",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1217,12 +1228,12 @@ async def test_aws_json11_enums_request_json_enums() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1299,7 +1310,7 @@ async def test_aws_json11_enums_response_json_enums() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "fooEnum1": "Foo",\n    "fooEnum2": "0",\n    "fooEnum3": "1",\n    "fooEnumList": [\n        "Foo",\n        "0"\n    ],\n    "fooEnumSet": [\n        "Foo",\n        "0"\n    ],\n    "fooEnumMap": {\n        "hi": "Foo",\n        "zero": "0"\n    }\n}',
@@ -1307,7 +1318,7 @@ async def test_aws_json11_enums_response_json_enums() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1335,12 +1346,12 @@ async def test_aws_json11_int_enums_request_json_int_enums() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1417,7 +1428,7 @@ async def test_aws_json11_int_enums_response_json_int_enums() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[
                     ("Content-Type", "application/x-amz-json-1.1"),
@@ -1428,7 +1439,7 @@ async def test_aws_json11_int_enums_response_json_int_enums() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1456,12 +1467,12 @@ async def test_aws_json11_serialize_string_union_value_request_json_unions() -> 
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1533,12 +1544,12 @@ async def test_aws_json11_serialize_boolean_union_value_request_json_unions() ->
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1610,12 +1621,12 @@ async def test_aws_json11_serialize_number_union_value_request_json_unions() -> 
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1687,12 +1698,12 @@ async def test_aws_json11_serialize_blob_union_value_request_json_unions() -> No
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1764,12 +1775,12 @@ async def test_aws_json11_serialize_timestamp_union_value_request_json_unions() 
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1845,12 +1856,12 @@ async def test_aws_json11_serialize_enum_union_value_request_json_unions() -> No
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1922,12 +1933,12 @@ async def test_aws_json11_serialize_list_union_value_request_json_unions() -> No
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1999,12 +2010,12 @@ async def test_aws_json11_serialize_map_union_value_request_json_unions() -> Non
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2076,12 +2087,12 @@ async def test_aws_json11_serialize_structure_union_value_request_json_unions() 
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2153,7 +2164,7 @@ async def test_aws_json11_deserialize_string_union_value_response_json_unions() 
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "contents": {\n        "stringValue": "foo"\n    }\n}',
@@ -2161,7 +2172,7 @@ async def test_aws_json11_deserialize_string_union_value_response_json_unions() 
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2184,7 +2195,7 @@ async def test_aws_json11_deserialize_boolean_union_value_response_json_unions()
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "contents": {\n        "booleanValue": true\n    }\n}',
@@ -2192,7 +2203,7 @@ async def test_aws_json11_deserialize_boolean_union_value_response_json_unions()
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2213,7 +2224,7 @@ async def test_aws_json11_deserialize_number_union_value_response_json_unions() 
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "contents": {\n        "numberValue": 1\n    }\n}',
@@ -2221,7 +2232,7 @@ async def test_aws_json11_deserialize_number_union_value_response_json_unions() 
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2242,7 +2253,7 @@ async def test_aws_json11_deserialize_blob_union_value_response_json_unions() ->
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "contents": {\n        "blobValue": "Zm9v"\n    }\n}',
@@ -2250,7 +2261,7 @@ async def test_aws_json11_deserialize_blob_union_value_response_json_unions() ->
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2273,7 +2284,7 @@ async def test_aws_json11_deserialize_timestamp_union_value_response_json_unions
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "contents": {\n        "timestampValue": 1398796238\n    }\n}',
@@ -2281,7 +2292,7 @@ async def test_aws_json11_deserialize_timestamp_union_value_response_json_unions
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2306,7 +2317,7 @@ async def test_aws_json11_deserialize_enum_union_value_response_json_unions() ->
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "contents": {\n        "enumValue": "Foo"\n    }\n}',
@@ -2314,7 +2325,7 @@ async def test_aws_json11_deserialize_enum_union_value_response_json_unions() ->
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2335,7 +2346,7 @@ async def test_aws_json11_deserialize_list_union_value_response_json_unions() ->
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "contents": {\n        "listValue": ["foo", "bar"]\n    }\n}',
@@ -2343,7 +2354,7 @@ async def test_aws_json11_deserialize_list_union_value_response_json_unions() ->
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2364,7 +2375,7 @@ async def test_aws_json11_deserialize_map_union_value_response_json_unions() -> 
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "contents": {\n        "mapValue": {\n            "foo": "bar",\n            "spam": "eggs"\n        }\n    }\n}',
@@ -2372,7 +2383,7 @@ async def test_aws_json11_deserialize_map_union_value_response_json_unions() -> 
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2397,7 +2408,7 @@ async def test_aws_json11_deserialize_structure_union_value_response_json_unions
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "contents": {\n        "structureValue": {\n            "hi": "hello"\n        }\n    }\n}',
@@ -2405,7 +2416,7 @@ async def test_aws_json11_deserialize_structure_union_value_response_json_unions
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2428,7 +2439,7 @@ async def test_aws_json11_deserialize_ignore_type_response_json_unions() -> None
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "contents": {\n        "__type": "aws.protocoltests.json10#MyUnion",\n        "structureValue": {\n            "hi": "hello"\n        }\n    }\n}',
@@ -2436,7 +2447,7 @@ async def test_aws_json11_deserialize_ignore_type_response_json_unions() -> None
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2459,12 +2470,12 @@ async def test_serializes_string_shapes_request_kitchen_sink_operation() -> None
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2536,12 +2547,12 @@ async def test_serializes_string_shapes_with_jsonvalue_trait_request_kitchen_sin
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2613,12 +2624,12 @@ async def test_serializes_integer_shapes_request_kitchen_sink_operation() -> Non
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2688,12 +2699,12 @@ async def test_serializes_long_shapes_request_kitchen_sink_operation() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2763,12 +2774,12 @@ async def test_serializes_float_shapes_request_kitchen_sink_operation() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2838,12 +2849,12 @@ async def test_serializes_double_shapes_request_kitchen_sink_operation() -> None
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2913,12 +2924,12 @@ async def test_serializes_blob_shapes_request_kitchen_sink_operation() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2988,12 +2999,12 @@ async def test_serializes_boolean_shapes_true_request_kitchen_sink_operation() -
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3063,12 +3074,12 @@ async def test_serializes_boolean_shapes_false_request_kitchen_sink_operation() 
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3138,12 +3149,12 @@ async def test_serializes_timestamp_shapes_request_kitchen_sink_operation() -> N
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3217,12 +3228,12 @@ async def test_serializes_timestamp_shapes_with_iso8601_timestampformat_request_
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3296,12 +3307,12 @@ async def test_serializes_timestamp_shapes_with_httpdate_timestampformat_request
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3375,12 +3386,12 @@ async def test_serializes_timestamp_shapes_with_unixtimestamp_timestampformat_re
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3452,12 +3463,12 @@ async def test_serializes_list_shapes_request_kitchen_sink_operation() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3527,12 +3538,12 @@ async def test_serializes_empty_list_shapes_request_kitchen_sink_operation() -> 
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3602,12 +3613,12 @@ async def test_serializes_list_of_map_shapes_request_kitchen_sink_operation() ->
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3683,12 +3694,12 @@ async def test_serializes_list_of_structure_shapes_request_kitchen_sink_operatio
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3768,12 +3779,12 @@ async def test_serializes_list_of_recursive_structure_shapes_request_kitchen_sin
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3849,12 +3860,12 @@ async def test_serializes_map_shapes_request_kitchen_sink_operation() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3924,12 +3935,12 @@ async def test_serializes_empty_map_shapes_request_kitchen_sink_operation() -> N
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3999,12 +4010,12 @@ async def test_serializes_map_of_list_shapes_request_kitchen_sink_operation() ->
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4080,12 +4091,12 @@ async def test_serializes_map_of_structure_shapes_request_kitchen_sink_operation
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4164,12 +4175,12 @@ async def test_serializes_map_of_recursive_structure_shapes_request_kitchen_sink
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4249,12 +4260,12 @@ async def test_serializes_structure_shapes_request_kitchen_sink_operation() -> N
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4326,12 +4337,12 @@ async def test_serializes_structure_members_with_locationname_traits_request_kit
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4405,12 +4416,12 @@ async def test_serializes_empty_structure_shapes_request_kitchen_sink_operation(
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4482,12 +4493,12 @@ async def test_serializes_structure_which_have_no_members_request_kitchen_sink_o
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4559,12 +4570,12 @@ async def test_serializes_recursive_structure_shapes_request_kitchen_sink_operat
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4651,7 +4662,7 @@ async def test_parses_operations_with_empty_json_bodies_response_kitchen_sink_op
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b"{}",
@@ -4659,7 +4670,7 @@ async def test_parses_operations_with_empty_json_bodies_response_kitchen_sink_op
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4680,7 +4691,7 @@ async def test_parses_string_shapes_response_kitchen_sink_operation() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"String":"string-value"}',
@@ -4688,7 +4699,7 @@ async def test_parses_string_shapes_response_kitchen_sink_operation() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4709,7 +4720,7 @@ async def test_parses_integer_shapes_response_kitchen_sink_operation() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"Integer":1234}',
@@ -4717,7 +4728,7 @@ async def test_parses_integer_shapes_response_kitchen_sink_operation() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4738,7 +4749,7 @@ async def test_parses_long_shapes_response_kitchen_sink_operation() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"Long":1234567890123456789}',
@@ -4746,7 +4757,7 @@ async def test_parses_long_shapes_response_kitchen_sink_operation() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4767,7 +4778,7 @@ async def test_parses_float_shapes_response_kitchen_sink_operation() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"Float":1234.5}',
@@ -4775,7 +4786,7 @@ async def test_parses_float_shapes_response_kitchen_sink_operation() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4796,7 +4807,7 @@ async def test_parses_double_shapes_response_kitchen_sink_operation() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"Double":123456789.12345679}',
@@ -4804,7 +4815,7 @@ async def test_parses_double_shapes_response_kitchen_sink_operation() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4825,7 +4836,7 @@ async def test_parses_boolean_shapes_true_response_kitchen_sink_operation() -> N
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"Boolean":true}',
@@ -4833,7 +4844,7 @@ async def test_parses_boolean_shapes_true_response_kitchen_sink_operation() -> N
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4854,7 +4865,7 @@ async def test_parses_boolean_false_response_kitchen_sink_operation() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"Boolean":false}',
@@ -4862,7 +4873,7 @@ async def test_parses_boolean_false_response_kitchen_sink_operation() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4883,7 +4894,7 @@ async def test_parses_blob_shapes_response_kitchen_sink_operation() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"Blob":"YmluYXJ5LXZhbHVl"}',
@@ -4891,7 +4902,7 @@ async def test_parses_blob_shapes_response_kitchen_sink_operation() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4912,7 +4923,7 @@ async def test_parses_timestamp_shapes_response_kitchen_sink_operation() -> None
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"Timestamp":946845296}',
@@ -4920,7 +4931,7 @@ async def test_parses_timestamp_shapes_response_kitchen_sink_operation() -> None
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4943,7 +4954,7 @@ async def test_parses_iso8601_timestamps_response_kitchen_sink_operation() -> No
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"Iso8601Timestamp":"2000-01-02T20:34:56Z"}',
@@ -4951,7 +4962,7 @@ async def test_parses_iso8601_timestamps_response_kitchen_sink_operation() -> No
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -4974,7 +4985,7 @@ async def test_parses_httpdate_timestamps_response_kitchen_sink_operation() -> N
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"HttpdateTimestamp":"Sun, 02 Jan 2000 20:34:56 GMT"}',
@@ -4982,7 +4993,7 @@ async def test_parses_httpdate_timestamps_response_kitchen_sink_operation() -> N
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5005,7 +5016,7 @@ async def test_parses_list_shapes_response_kitchen_sink_operation() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"ListOfStrings":["abc","mno","xyz"]}',
@@ -5013,7 +5024,7 @@ async def test_parses_list_shapes_response_kitchen_sink_operation() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5034,7 +5045,7 @@ async def test_parses_list_of_map_shapes_response_kitchen_sink_operation() -> No
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"ListOfMapsOfStrings":[{"size":"large"},{"color":"red"}]}',
@@ -5042,7 +5053,7 @@ async def test_parses_list_of_map_shapes_response_kitchen_sink_operation() -> No
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5065,7 +5076,7 @@ async def test_parses_list_of_list_shapes_response_kitchen_sink_operation() -> N
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"ListOfLists":[["abc","mno","xyz"],["hjk","qrs","tuv"]]}',
@@ -5073,7 +5084,7 @@ async def test_parses_list_of_list_shapes_response_kitchen_sink_operation() -> N
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5098,7 +5109,7 @@ async def test_parses_list_of_structure_shapes_response_kitchen_sink_operation()
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"ListOfStructs":[{"Value":"value-1"},{"Value":"value-2"}]}',
@@ -5106,7 +5117,7 @@ async def test_parses_list_of_structure_shapes_response_kitchen_sink_operation()
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5134,7 +5145,7 @@ async def test_parses_list_of_recursive_structure_shapes_response_kitchen_sink_o
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"RecursiveList":[{"RecursiveList":[{"RecursiveList":[{"String":"value"}]}]}]}',
@@ -5142,7 +5153,7 @@ async def test_parses_list_of_recursive_structure_shapes_response_kitchen_sink_o
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5171,7 +5182,7 @@ async def test_parses_map_shapes_response_kitchen_sink_operation() -> None:
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"MapOfStrings":{"size":"large","color":"red"}}',
@@ -5179,7 +5190,7 @@ async def test_parses_map_shapes_response_kitchen_sink_operation() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5202,7 +5213,7 @@ async def test_parses_map_of_list_shapes_response_kitchen_sink_operation() -> No
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"MapOfListsOfStrings":{"sizes":["large","small"],"colors":["red","green"]}}',
@@ -5210,7 +5221,7 @@ async def test_parses_map_of_list_shapes_response_kitchen_sink_operation() -> No
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5236,7 +5247,7 @@ async def test_parses_map_of_map_shapes_response_kitchen_sink_operation() -> Non
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"MapOfMaps":{"sizes":{"large":"L","medium":"M"},"colors":{"red":"R","blue":"B"}}}',
@@ -5244,7 +5255,7 @@ async def test_parses_map_of_map_shapes_response_kitchen_sink_operation() -> Non
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5270,7 +5281,7 @@ async def test_parses_map_of_structure_shapes_response_kitchen_sink_operation() 
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"MapOfStructs":{"size":{"Value":"small"},"color":{"Value":"red"}}}',
@@ -5278,7 +5289,7 @@ async def test_parses_map_of_structure_shapes_response_kitchen_sink_operation() 
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5306,7 +5317,7 @@ async def test_parses_map_of_recursive_structure_shapes_response_kitchen_sink_op
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{"RecursiveMap":{"key-1":{"RecursiveMap":{"key-2":{"RecursiveMap":{"key-3":{"String":"value"}}}}}}}',
@@ -5314,7 +5325,7 @@ async def test_parses_map_of_recursive_structure_shapes_response_kitchen_sink_op
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5347,7 +5358,7 @@ async def test_parses_the_request_id_from_the_response_response_kitchen_sink_ope
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[
                     ("Content-Type", "application/x-amz-json-1.1"),
@@ -5358,7 +5369,7 @@ async def test_parses_the_request_id_from_the_response_response_kitchen_sink_ope
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5381,12 +5392,12 @@ async def test_aws_json11_structures_dont_serialize_null_values_request_null_ope
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5458,7 +5469,7 @@ async def test_aws_json11_structures_dont_deserialize_null_values_response_null_
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "string": null\n}',
@@ -5466,7 +5477,7 @@ async def test_aws_json11_structures_dont_deserialize_null_values_response_null_
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5489,12 +5500,12 @@ async def test_can_call_operation_with_no_input_or_output_request_operation_with
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5566,12 +5577,12 @@ async def test_can_call_operation_with_optional_input_request_operation_with_opt
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5643,12 +5654,12 @@ async def test_put_and_get_inline_documents_input_request_put_and_get_inline_doc
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5720,7 +5731,7 @@ async def test_put_and_get_inline_documents_input_response_put_and_get_inline_do
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "inlineDocument": {"foo": "bar"}\n}',
@@ -5728,7 +5739,7 @@ async def test_put_and_get_inline_documents_input_response_put_and_get_inline_do
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5757,12 +5768,12 @@ async def test_sdk_applied_content_encoding_aws_json1_1_request_put_with_content
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5833,12 +5844,12 @@ async def test_sdk_appends_gzip_and_ignores_http_provided_encoding_aws_json1_1_r
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5904,12 +5915,12 @@ async def test_aws_json11_supports_na_n_float_inputs_request_simple_scalar_prope
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -5985,12 +5996,12 @@ async def test_aws_json11_supports_infinity_float_inputs_request_simple_scalar_p
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6066,12 +6077,12 @@ async def test_aws_json11_supports_negative_infinity_float_inputs_request_simple
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6147,7 +6158,7 @@ async def test_aws_json11_supports_na_n_float_inputs_response_simple_scalar_prop
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "floatValue": "NaN",\n    "doubleValue": "NaN"\n}',
@@ -6155,7 +6166,7 @@ async def test_aws_json11_supports_na_n_float_inputs_response_simple_scalar_prop
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6180,7 +6191,7 @@ async def test_aws_json11_supports_infinity_float_inputs_response_simple_scalar_
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "floatValue": "Infinity",\n    "doubleValue": "Infinity"\n}',
@@ -6188,7 +6199,7 @@ async def test_aws_json11_supports_infinity_float_inputs_response_simple_scalar_
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6213,7 +6224,7 @@ async def test_aws_json11_supports_negative_infinity_float_inputs_response_simpl
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "floatValue": "-Infinity",\n    "doubleValue": "-Infinity"\n}',
@@ -6221,7 +6232,7 @@ async def test_aws_json11_supports_negative_infinity_float_inputs_response_simpl
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6246,12 +6257,12 @@ async def test_aws_json11_sparse_maps_serialize_null_values_request_sparse_nulls
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6325,12 +6336,12 @@ async def test_aws_json11_sparse_lists_serialize_null_request_sparse_nulls_opera
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6402,7 +6413,7 @@ async def test_aws_json11_sparse_maps_deserialize_null_values_response_sparse_nu
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "sparseStringMap": {\n        "foo": null\n    }\n}',
@@ -6410,7 +6421,7 @@ async def test_aws_json11_sparse_maps_deserialize_null_values_response_sparse_nu
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6433,7 +6444,7 @@ async def test_aws_json11_sparse_lists_deserialize_null_response_sparse_nulls_op
     client = AsyncJsonProtocolClient(
         config=await AsyncJsonProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "application/x-amz-json-1.1")],
                 body=b'{\n    "sparseStringList": [\n        null\n    ]\n}',
@@ -6441,7 +6452,7 @@ async def test_aws_json11_sparse_lists_deserialize_null_response_sparse_nulls_op
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -6464,7 +6475,7 @@ class TestHttpServiceError(ServiceError):
         self.request = request
 
 
-class RequestTestHTTPClient:
+class RequestTestAsyncHTTPClient:
     """An asynchronous HTTP client solely for testing purposes."""
 
     TIMEOUT_EXCEPTIONS = ()
@@ -6483,7 +6494,7 @@ class RequestTestHTTPClient:
         raise TestHttpServiceError(request)
 
 
-class ResponseTestHTTPClient:
+class ResponseTestAsyncHTTPClient:
     """An asynchronous HTTP client solely for testing purposes."""
 
     TIMEOUT_EXCEPTIONS = ()
@@ -6511,4 +6522,6909 @@ class ResponseTestHTTPClient:
         # Pre-construct the response from the request and return it
         return _smithy_http_aio_HTTPResponse(
             status=self.status, fields=self.fields, body=async_list([self.body])
+        )
+
+
+def test_aws_json11_date_time_with_negative_offset_response_datetime_offsets_sync() -> (
+    None
+):
+    """
+    Ensures that clients can correctly parse datetime (timestamps) with
+    offsets
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'      {\n          "datetime": "2019-12-16T22:48:18-01:00"\n      }\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = DatetimeOffsetsInput()
+
+    try:
+        actual = client.datetime_offsets(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = DatetimeOffsetsOutput(
+            datetime_=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_aws_json11_date_time_with_positive_offset_response_datetime_offsets_sync() -> (
+    None
+):
+    """
+    Ensures that clients can correctly parse datetime (timestamps) with
+    offsets
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'      {\n          "datetime": "2019-12-17T00:48:18+01:00"\n      }\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = DatetimeOffsetsInput()
+
+    try:
+        actual = client.datetime_offsets(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = DatetimeOffsetsOutput(
+            datetime_=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_sends_requests_to_slash_request_empty_operation_sync() -> None:
+    """Sends requests to /"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = EmptyOperationInput()
+
+    try:
+        client.empty_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.EmptyOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_includes_x_amz_target_and_content_type_request_empty_operation_sync() -> None:
+    """Includes X-Amz-Target header and Content-Type"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = EmptyOperationInput()
+
+    try:
+        client.empty_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.EmptyOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_json_1_1_client_sends_empty_payload_for_no_input_shape_request_empty_operation_sync() -> (
+    None
+):
+    """
+    Clients must always send an empty JSON object payload for operations
+    with no input (that is, `{}`). While AWS service implementations
+    support requests with no payload or requests that send `{}`, always
+    sending `{}` from the client is preferred for forward compatibility in
+    case input is ever added to an operation.
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = EmptyOperationInput()
+
+    try:
+        client.empty_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.EmptyOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"{}"
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_handles_empty_output_shape_response_empty_operation_sync() -> None:
+    """
+    When no output is defined, the service is expected to return an empty
+    payload, however, client must ignore a JSON payload if one is returned.
+    This ensures that if output is added later, then it will not break the
+    client.
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b"{}",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = EmptyOperationInput()
+
+    try:
+        actual = client.empty_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = EmptyOperationOutput()
+
+        assert deep_equal(actual, expected)
+
+
+def test_handles_unexpected_json_output_response_empty_operation_sync() -> None:
+    """
+    This client-only test builds on handles_empty_output_shape, by including
+    unexpected fields in the JSON. A client needs to ignore JSON output that
+    is empty or that contains JSON object data.
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "foo": true\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = EmptyOperationInput()
+
+    try:
+        actual = client.empty_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = EmptyOperationOutput()
+
+        assert deep_equal(actual, expected)
+
+
+def test_json_1_1_service_responds_with_no_payload_response_empty_operation_sync() -> (
+    None
+):
+    """
+    When no output is defined, the service is expected to return an empty
+    payload. Despite the lack of a payload, the service is expected to
+    always send a Content-Type header. Clients must handle cases where a
+    service returns a JSON object and where a service returns no JSON at
+    all.
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b"",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = EmptyOperationInput()
+
+    try:
+        actual = client.empty_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = EmptyOperationOutput()
+
+        assert deep_equal(actual, expected)
+
+
+@mark.xfail()
+def test_aws_json11_endpoint_trait_request_endpoint_operation_sync() -> None:
+    """
+    Operations can prepend to the given host if they define the endpoint
+    trait.
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = EndpointOperationInput()
+
+    try:
+        client.endpoint_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "foo.example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.EndpointOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"{}"
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+@mark.xfail()
+def test_aws_json11_endpoint_trait_with_host_label_request_endpoint_with_host_label_operation_sync() -> (
+    None
+):
+    """
+    Operations can prepend to the given host if they define the endpoint
+    trait, and can use the host label trait to define further customization
+    based on user input.
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = EndpointWithHostLabelOperationInput(label="bar")
+
+    try:
+        client.endpoint_with_host_label_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "foo.bar.example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.EndpointWithHostLabelOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"label": "bar"}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_date_time_with_fractional_seconds_response_fractional_seconds_sync() -> (
+    None
+):
+    """
+    Ensures that clients can correctly parse datetime timestamps with
+    fractional seconds
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'      {\n          "datetime": "2000-01-02T20:34:56.123Z"\n      }\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = FractionalSecondsInput()
+
+    try:
+        actual = client.fractional_seconds(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = FractionalSecondsOutput(
+            datetime_=datetime(2000, 1, 2, 20, 34, 56, 123000, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_aws_json11_invalid_greeting_error_error_greeting_with_errors_sync() -> None:
+    """Parses simple JSON errors"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=400,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "__type": "InvalidGreeting",\n    "Message": "Hi"\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        client.greeting_with_errors(input_)
+        fail("Expected 'InvalidGreeting' exception to be thrown!")
+    except Exception as err:
+        if type(err).__name__ != "InvalidGreeting":
+            fail(
+                f"Expected 'InvalidGreeting' exception to be thrown, but received {type(err).__name__}: {err}"
+            )
+
+
+def test_aws_json11_complex_error_error_greeting_with_errors_sync() -> None:
+    """Parses a complex error with no message member"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=400,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "__type": "ComplexError",\n    "TopLevel": "Top level",\n    "Nested": {\n        "Foo": "bar"\n    }\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        client.greeting_with_errors(input_)
+        fail("Expected 'ComplexError' exception to be thrown!")
+    except Exception as err:
+        if type(err).__name__ != "ComplexError":
+            fail(
+                f"Expected 'ComplexError' exception to be thrown, but received {type(err).__name__}: {err}"
+            )
+
+
+def test_aws_json11_empty_complex_error_error_greeting_with_errors_sync() -> None:
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=400,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "__type": "ComplexError"\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        client.greeting_with_errors(input_)
+        fail("Expected 'ComplexError' exception to be thrown!")
+    except Exception as err:
+        if type(err).__name__ != "ComplexError":
+            fail(
+                f"Expected 'ComplexError' exception to be thrown, but received {type(err).__name__}: {err}"
+            )
+
+
+def test_aws_json11_foo_error_using_x_amzn_error_type_error_greeting_with_errors_sync() -> (
+    None
+):
+    """
+    Serializes the X-Amzn-ErrorType header. For an example service, see
+    Amazon EKS.
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=500, headers=[("X-Amzn-Errortype", "FooError")], body=b""
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        client.greeting_with_errors(input_)
+        fail("Expected 'FooError' exception to be thrown!")
+    except Exception as err:
+        if type(err).__name__ != "FooError":
+            fail(
+                f"Expected 'FooError' exception to be thrown, but received {type(err).__name__}: {err}"
+            )
+
+
+def test_aws_json11_foo_error_using_x_amzn_error_type_with_uri_error_greeting_with_errors_sync() -> (
+    None
+):
+    """
+    Some X-Amzn-Errortype headers contain URLs. Clients need to split the
+    URL on ':' and take only the first half of the string. For example,
+    'ValidationException:http://internal.amazon.com/coral/com.amazon.coral.validate/'
+    is to be interpreted as 'ValidationException'. For an example service
+    see Amazon Polly.
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=500,
+                headers=[
+                    (
+                        "X-Amzn-Errortype",
+                        "FooError:http://internal.amazon.com/coral/com.amazon.coral.validate/",
+                    )
+                ],
+                body=b"",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        client.greeting_with_errors(input_)
+        fail("Expected 'FooError' exception to be thrown!")
+    except Exception as err:
+        if type(err).__name__ != "FooError":
+            fail(
+                f"Expected 'FooError' exception to be thrown, but received {type(err).__name__}: {err}"
+            )
+
+
+def test_aws_json11_foo_error_using_x_amzn_error_type_with_uri_and_namespace_error_greeting_with_errors_sync() -> (
+    None
+):
+    """
+    X-Amzn-Errortype might contain a URL and a namespace. Client should
+    extract only the shape name. This is a pathalogical case that might not
+    actually happen in any deployed AWS service.
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=500,
+                headers=[
+                    (
+                        "X-Amzn-Errortype",
+                        "aws.protocoltests.json#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate/",
+                    )
+                ],
+                body=b"",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        client.greeting_with_errors(input_)
+        fail("Expected 'FooError' exception to be thrown!")
+    except Exception as err:
+        if type(err).__name__ != "FooError":
+            fail(
+                f"Expected 'FooError' exception to be thrown, but received {type(err).__name__}: {err}"
+            )
+
+
+def test_aws_json11_foo_error_using_code_error_greeting_with_errors_sync() -> None:
+    """
+    This example uses the 'code' property in the output rather than
+    X-Amzn-Errortype. Some services do this though it's preferable to send
+    the X-Amzn-Errortype. Client implementations must first check for the
+    X-Amzn-Errortype and then check for a top-level 'code' property. For
+    example service see Amazon S3 Glacier.
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=500,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "code": "FooError"\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        client.greeting_with_errors(input_)
+        fail("Expected 'FooError' exception to be thrown!")
+    except Exception as err:
+        if type(err).__name__ != "FooError":
+            fail(
+                f"Expected 'FooError' exception to be thrown, but received {type(err).__name__}: {err}"
+            )
+
+
+def test_aws_json11_foo_error_using_code_and_namespace_error_greeting_with_errors_sync() -> (
+    None
+):
+    """
+    Some services serialize errors using code, and it might contain a
+    namespace. Clients should just take the last part of the string after
+    '#'.
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=500,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "code": "aws.protocoltests.json#FooError"\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        client.greeting_with_errors(input_)
+        fail("Expected 'FooError' exception to be thrown!")
+    except Exception as err:
+        if type(err).__name__ != "FooError":
+            fail(
+                f"Expected 'FooError' exception to be thrown, but received {type(err).__name__}: {err}"
+            )
+
+
+def test_aws_json11_foo_error_using_code_uri_and_namespace_error_greeting_with_errors_sync() -> (
+    None
+):
+    """
+    Some services serialize errors using code, and it might contain a
+    namespace. It also might contain a URI. Clients should just take the
+    last part of the string after '#' and before \":\". This is a
+    pathalogical case that might not occur in any deployed AWS service.
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=500,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "code": "aws.protocoltests.json#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate/"\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        client.greeting_with_errors(input_)
+        fail("Expected 'FooError' exception to be thrown!")
+    except Exception as err:
+        if type(err).__name__ != "FooError":
+            fail(
+                f"Expected 'FooError' exception to be thrown, but received {type(err).__name__}: {err}"
+            )
+
+
+def test_aws_json11_foo_error_with_dunder_type_error_greeting_with_errors_sync() -> (
+    None
+):
+    """Some services serialize errors using __type."""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=500,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "__type": "FooError"\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        client.greeting_with_errors(input_)
+        fail("Expected 'FooError' exception to be thrown!")
+    except Exception as err:
+        if type(err).__name__ != "FooError":
+            fail(
+                f"Expected 'FooError' exception to be thrown, but received {type(err).__name__}: {err}"
+            )
+
+
+def test_aws_json11_foo_error_with_dunder_type_and_namespace_error_greeting_with_errors_sync() -> (
+    None
+):
+    """
+    Some services serialize errors using __type, and it might contain a
+    namespace. Clients should just take the last part of the string after
+    '#'.
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=500,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "__type": "aws.protocoltests.json#FooError"\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        client.greeting_with_errors(input_)
+        fail("Expected 'FooError' exception to be thrown!")
+    except Exception as err:
+        if type(err).__name__ != "FooError":
+            fail(
+                f"Expected 'FooError' exception to be thrown, but received {type(err).__name__}: {err}"
+            )
+
+
+def test_aws_json11_foo_error_with_dunder_type_and_different_namespace_error_greeting_with_errors_sync() -> (
+    None
+):
+    """
+    Because only the part after '#' is considered, an unrecognized
+    namespace should not make a difference.
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=500,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "__type": "aws.different.namespace#FooError"\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        client.greeting_with_errors(input_)
+        fail("Expected 'FooError' exception to be thrown!")
+    except Exception as err:
+        if type(err).__name__ != "FooError":
+            fail(
+                f"Expected 'FooError' exception to be thrown, but received {type(err).__name__}: {err}"
+            )
+
+
+def test_aws_json11_foo_error_with_dunder_type_uri_and_namespace_error_greeting_with_errors_sync() -> (
+    None
+):
+    """
+    Some services serialize errors using __type, and it might contain a
+    namespace. It also might contain a URI. Clients should just take the
+    last part of the string after '#' and before \":\". This is a
+    pathalogical case that might not occur in any deployed AWS service.
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=500,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "__type": "aws.protocoltests.json#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate/"\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        client.greeting_with_errors(input_)
+        fail("Expected 'FooError' exception to be thrown!")
+    except Exception as err:
+        if type(err).__name__ != "FooError":
+            fail(
+                f"Expected 'FooError' exception to be thrown, but received {type(err).__name__}: {err}"
+            )
+
+
+def test_aws_json11_foo_error_with_nested_type_property_error_greeting_with_errors_sync() -> (
+    None
+):
+    """
+    Some services serialize errors using __type, and if the response
+    includes additional shapes that belong to a different namespace
+    there'll be a nested __type property that must not be considered when
+    determining which error to be surfaced. For an example service see
+    Amazon DynamoDB.
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=500,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "__type": "aws.protocoltests.json#FooError",\n    "ErrorDetails": [\n      {\n          "__type": "com.amazon.internal#ErrorDetails",\n          "reason": "Some reason"\n      }\n    ]\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        client.greeting_with_errors(input_)
+        fail("Expected 'FooError' exception to be thrown!")
+    except Exception as err:
+        if type(err).__name__ != "FooError":
+            fail(
+                f"Expected 'FooError' exception to be thrown, but received {type(err).__name__}: {err}"
+            )
+
+
+def test_aws_json11_host_with_path_request_host_with_path_operation_sync() -> None:
+    """Custom endpoints supplied by users can have paths"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/custom",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = HostWithPathOperationInput()
+
+    try:
+        client.host_with_path_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/custom/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.HostWithPathOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"{}"
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_enums_request_json_enums_sync() -> None:
+    """Serializes simple scalar properties"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonEnumsInput(
+        foo_enum1="Foo",
+        foo_enum2="0",
+        foo_enum3="1",
+        foo_enum_list=["Foo", "0"],
+        foo_enum_set=["Foo", "0"],
+        foo_enum_map={"hi": "Foo", "zero": "0"},
+    )
+
+    try:
+        client.json_enums(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.JsonEnums"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{\n    "fooEnum1": "Foo",\n    "fooEnum2": "0",\n    "fooEnum3": "1",\n    "fooEnumList": [\n        "Foo",\n        "0"\n    ],\n    "fooEnumSet": [\n        "Foo",\n        "0"\n    ],\n    "fooEnumMap": {\n        "hi": "Foo",\n        "zero": "0"\n    }\n}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_enums_response_json_enums_sync() -> None:
+    """Serializes simple scalar properties"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "fooEnum1": "Foo",\n    "fooEnum2": "0",\n    "fooEnum3": "1",\n    "fooEnumList": [\n        "Foo",\n        "0"\n    ],\n    "fooEnumSet": [\n        "Foo",\n        "0"\n    ],\n    "fooEnumMap": {\n        "hi": "Foo",\n        "zero": "0"\n    }\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonEnumsInput()
+
+    try:
+        actual = client.json_enums(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = JsonEnumsOutput(
+            foo_enum1="Foo",
+            foo_enum2="0",
+            foo_enum3="1",
+            foo_enum_list=["Foo", "0"],
+            foo_enum_set=["Foo", "0"],
+            foo_enum_map={"hi": "Foo", "zero": "0"},
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_aws_json11_int_enums_request_json_int_enums_sync() -> None:
+    """Serializes simple scalar properties"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonIntEnumsInput(
+        int_enum1=1,
+        int_enum2=2,
+        int_enum3=3,
+        int_enum_list=[1, 2],
+        int_enum_set=[1, 2],
+        int_enum_map={"a": 1, "b": 2},
+    )
+
+    try:
+        client.json_int_enums(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.JsonIntEnums"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{\n    "intEnum1": 1,\n    "intEnum2": 2,\n    "intEnum3": 3,\n    "intEnumList": [\n        1,\n        2\n    ],\n    "intEnumSet": [\n        1,\n        2\n    ],\n    "intEnumMap": {\n        "a": 1,\n        "b": 2\n    }\n}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_int_enums_response_json_int_enums_sync() -> None:
+    """Serializes simple scalar properties"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[
+                    ("Content-Type", "application/x-amz-json-1.1"),
+                    ("X-Amz-Target", "JsonProtocol.JsonIntEnums"),
+                ],
+                body=b'{\n    "intEnum1": 1,\n    "intEnum2": 2,\n    "intEnum3": 3,\n    "intEnumList": [\n        1,\n        2\n    ],\n    "intEnumSet": [\n        1,\n        2\n    ],\n    "intEnumMap": {\n        "a": 1,\n        "b": 2\n    }\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonIntEnumsInput()
+
+    try:
+        actual = client.json_int_enums(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = JsonIntEnumsOutput(
+            int_enum1=1,
+            int_enum2=2,
+            int_enum3=3,
+            int_enum_list=[1, 2],
+            int_enum_set=[1, 2],
+            int_enum_map={"a": 1, "b": 2},
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_aws_json11_serialize_string_union_value_request_json_unions_sync() -> None:
+    """Serializes a string union value"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput(contents=MyUnionStringValue(value="foo"))
+
+    try:
+        client.json_unions(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.JsonUnions"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b'{\n    "contents": {\n        "stringValue": "foo"\n    }\n}'
+        )
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_serialize_boolean_union_value_request_json_unions_sync() -> None:
+    """Serializes a boolean union value"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput(contents=MyUnionBooleanValue(value=True))
+
+    try:
+        client.json_unions(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.JsonUnions"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b'{\n    "contents": {\n        "booleanValue": true\n    }\n}'
+        )
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_serialize_number_union_value_request_json_unions_sync() -> None:
+    """Serializes a number union value"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput(contents=MyUnionNumberValue(value=1))
+
+    try:
+        client.json_unions(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.JsonUnions"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b'{\n    "contents": {\n        "numberValue": 1\n    }\n}'
+        )
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_serialize_blob_union_value_request_json_unions_sync() -> None:
+    """Serializes a blob union value"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput(contents=MyUnionBlobValue(value=b"foo"))
+
+    try:
+        client.json_unions(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.JsonUnions"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b'{\n    "contents": {\n        "blobValue": "Zm9v"\n    }\n}'
+        )
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_serialize_timestamp_union_value_request_json_unions_sync() -> None:
+    """Serializes a timestamp union value"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput(
+        contents=MyUnionTimestampValue(
+            value=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
+    )
+
+    try:
+        client.json_unions(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.JsonUnions"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b'{\n    "contents": {\n        "timestampValue": 1398796238\n    }\n}'
+        )
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_serialize_enum_union_value_request_json_unions_sync() -> None:
+    """Serializes an enum union value"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput(contents=MyUnionEnumValue(value="Foo"))
+
+    try:
+        client.json_unions(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.JsonUnions"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b'{\n    "contents": {\n        "enumValue": "Foo"\n    }\n}'
+        )
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_serialize_list_union_value_request_json_unions_sync() -> None:
+    """Serializes a list union value"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput(contents=MyUnionListValue(value=["foo", "bar"]))
+
+    try:
+        client.json_unions(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.JsonUnions"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b'{\n    "contents": {\n        "listValue": ["foo", "bar"]\n    }\n}'
+        )
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_serialize_map_union_value_request_json_unions_sync() -> None:
+    """Serializes a map union value"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput(
+        contents=MyUnionMapValue(value={"foo": "bar", "spam": "eggs"})
+    )
+
+    try:
+        client.json_unions(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.JsonUnions"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{\n    "contents": {\n        "mapValue": {\n            "foo": "bar",\n            "spam": "eggs"\n        }\n    }\n}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_serialize_structure_union_value_request_json_unions_sync() -> None:
+    """Serializes a structure union value"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput(
+        contents=MyUnionStructureValue(value=GreetingStruct(hi="hello"))
+    )
+
+    try:
+        client.json_unions(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.JsonUnions"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{\n    "contents": {\n        "structureValue": {\n            "hi": "hello"\n        }\n    }\n}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_deserialize_string_union_value_response_json_unions_sync() -> None:
+    """Deserializes a string union value"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "contents": {\n        "stringValue": "foo"\n    }\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput()
+
+    try:
+        actual = client.json_unions(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = JsonUnionsOutput(contents=MyUnionStringValue(value="foo"))
+
+        assert deep_equal(actual, expected)
+
+
+def test_aws_json11_deserialize_boolean_union_value_response_json_unions_sync() -> None:
+    """Deserializes a boolean union value"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "contents": {\n        "booleanValue": true\n    }\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput()
+
+    try:
+        actual = client.json_unions(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = JsonUnionsOutput(contents=MyUnionBooleanValue(value=True))
+
+        assert deep_equal(actual, expected)
+
+
+def test_aws_json11_deserialize_number_union_value_response_json_unions_sync() -> None:
+    """Deserializes a number union value"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "contents": {\n        "numberValue": 1\n    }\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput()
+
+    try:
+        actual = client.json_unions(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = JsonUnionsOutput(contents=MyUnionNumberValue(value=1))
+
+        assert deep_equal(actual, expected)
+
+
+def test_aws_json11_deserialize_blob_union_value_response_json_unions_sync() -> None:
+    """Deserializes a blob union value"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "contents": {\n        "blobValue": "Zm9v"\n    }\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput()
+
+    try:
+        actual = client.json_unions(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = JsonUnionsOutput(contents=MyUnionBlobValue(value=b"foo"))
+
+        assert deep_equal(actual, expected)
+
+
+def test_aws_json11_deserialize_timestamp_union_value_response_json_unions_sync() -> (
+    None
+):
+    """Deserializes a timestamp union value"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "contents": {\n        "timestampValue": 1398796238\n    }\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput()
+
+    try:
+        actual = client.json_unions(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = JsonUnionsOutput(
+            contents=MyUnionTimestampValue(
+                value=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+            )
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_aws_json11_deserialize_enum_union_value_response_json_unions_sync() -> None:
+    """Deserializes an enum union value"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "contents": {\n        "enumValue": "Foo"\n    }\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput()
+
+    try:
+        actual = client.json_unions(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = JsonUnionsOutput(contents=MyUnionEnumValue(value="Foo"))
+
+        assert deep_equal(actual, expected)
+
+
+def test_aws_json11_deserialize_list_union_value_response_json_unions_sync() -> None:
+    """Deserializes a list union value"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "contents": {\n        "listValue": ["foo", "bar"]\n    }\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput()
+
+    try:
+        actual = client.json_unions(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = JsonUnionsOutput(contents=MyUnionListValue(value=["foo", "bar"]))
+
+        assert deep_equal(actual, expected)
+
+
+def test_aws_json11_deserialize_map_union_value_response_json_unions_sync() -> None:
+    """Deserializes a map union value"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "contents": {\n        "mapValue": {\n            "foo": "bar",\n            "spam": "eggs"\n        }\n    }\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput()
+
+    try:
+        actual = client.json_unions(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = JsonUnionsOutput(
+            contents=MyUnionMapValue(value={"foo": "bar", "spam": "eggs"})
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_aws_json11_deserialize_structure_union_value_response_json_unions_sync() -> (
+    None
+):
+    """Deserializes a structure union value"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "contents": {\n        "structureValue": {\n            "hi": "hello"\n        }\n    }\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput()
+
+    try:
+        actual = client.json_unions(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = JsonUnionsOutput(
+            contents=MyUnionStructureValue(value=GreetingStruct(hi="hello"))
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_aws_json11_deserialize_ignore_type_response_json_unions_sync() -> None:
+    """Ignores an unrecognized __type property"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "contents": {\n        "__type": "aws.protocoltests.json10#MyUnion",\n        "structureValue": {\n            "hi": "hello"\n        }\n    }\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = JsonUnionsInput()
+
+    try:
+        actual = client.json_unions(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = JsonUnionsOutput(
+            contents=MyUnionStructureValue(value=GreetingStruct(hi="hello"))
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_serializes_string_shapes_request_kitchen_sink_operation_sync() -> None:
+    """Serializes string shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(string="abc xyz")
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"String":"abc xyz"}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_string_shapes_with_jsonvalue_trait_request_kitchen_sink_operation_sync() -> (
+    None
+):
+    """Serializes string shapes with jsonvalue trait"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(
+        json_value='{"string":"value","number":1234.5,"boolTrue":true,"boolFalse":false,"array":[1,2,3,4],"object":{"key":"value"},"null":null}'
+    )
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"JsonValue":"{\\"string\\":\\"value\\",\\"number\\":1234.5,\\"boolTrue\\":true,\\"boolFalse\\":false,\\"array\\":[1,2,3,4],\\"object\\":{\\"key\\":\\"value\\"},\\"null\\":null}"}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_integer_shapes_request_kitchen_sink_operation_sync() -> None:
+    """Serializes integer shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(integer=1234)
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"Integer":1234}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_long_shapes_request_kitchen_sink_operation_sync() -> None:
+    """Serializes long shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(long=999999999999)
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"Long":999999999999}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_float_shapes_request_kitchen_sink_operation_sync() -> None:
+    """Serializes float shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(float_=float(1234.5))
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"Float":1234.5}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_double_shapes_request_kitchen_sink_operation_sync() -> None:
+    """Serializes double shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(double=float(1234.5))
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"Double":1234.5}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_blob_shapes_request_kitchen_sink_operation_sync() -> None:
+    """Serializes blob shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(blob=b"binary-value")
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"Blob":"YmluYXJ5LXZhbHVl"}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_boolean_shapes_true_request_kitchen_sink_operation_sync() -> None:
+    """Serializes boolean shapes (true)"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(boolean=True)
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"Boolean":true}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_boolean_shapes_false_request_kitchen_sink_operation_sync() -> None:
+    """Serializes boolean shapes (false)"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(boolean=False)
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"Boolean":false}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_timestamp_shapes_request_kitchen_sink_operation_sync() -> None:
+    """Serializes timestamp shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(
+        timestamp=datetime(2000, 1, 2, 20, 34, 56, 0, timezone.utc)
+    )
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"Timestamp":946845296}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_timestamp_shapes_with_iso8601_timestampformat_request_kitchen_sink_operation_sync() -> (
+    None
+):
+    """Serializes timestamp shapes with iso8601 timestampFormat"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(
+        iso8601_timestamp=datetime(2000, 1, 2, 20, 34, 56, 0, timezone.utc)
+    )
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"Iso8601Timestamp":"2000-01-02T20:34:56Z"}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_timestamp_shapes_with_httpdate_timestampformat_request_kitchen_sink_operation_sync() -> (
+    None
+):
+    """Serializes timestamp shapes with httpdate timestampFormat"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(
+        httpdate_timestamp=datetime(2000, 1, 2, 20, 34, 56, 0, timezone.utc)
+    )
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"HttpdateTimestamp":"Sun, 02 Jan 2000 20:34:56 GMT"}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_timestamp_shapes_with_unixtimestamp_timestampformat_request_kitchen_sink_operation_sync() -> (
+    None
+):
+    """Serializes timestamp shapes with unixTimestamp timestampFormat"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(
+        unix_timestamp=datetime(2000, 1, 2, 20, 34, 56, 0, timezone.utc)
+    )
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"UnixTimestamp":946845296}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_list_shapes_request_kitchen_sink_operation_sync() -> None:
+    """Serializes list shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(list_of_strings=["abc", "mno", "xyz"])
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"ListOfStrings":["abc","mno","xyz"]}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_empty_list_shapes_request_kitchen_sink_operation_sync() -> None:
+    """Serializes empty list shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(list_of_strings=[])
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"ListOfStrings":[]}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_list_of_map_shapes_request_kitchen_sink_operation_sync() -> None:
+    """Serializes list of map shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(
+        list_of_maps_of_strings=[{"foo": "bar"}, {"abc": "xyz"}, {"red": "blue"}]
+    )
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b'{"ListOfMapsOfStrings":[{"foo":"bar"},{"abc":"xyz"},{"red":"blue"}]}'
+        )
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_list_of_structure_shapes_request_kitchen_sink_operation_sync() -> (
+    None
+):
+    """Serializes list of structure shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(
+        list_of_structs=[
+            SimpleStruct(value="abc"),
+            SimpleStruct(value="mno"),
+            SimpleStruct(value="xyz"),
+        ]
+    )
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b'{"ListOfStructs":[{"Value":"abc"},{"Value":"mno"},{"Value":"xyz"}]}'
+        )
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_list_of_recursive_structure_shapes_request_kitchen_sink_operation_sync() -> (
+    None
+):
+    """Serializes list of recursive structure shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(
+        recursive_list=[
+            KitchenSink(
+                recursive_list=[KitchenSink(recursive_list=[KitchenSink(integer=123)])]
+            )
+        ]
+    )
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"RecursiveList":[{"RecursiveList":[{"RecursiveList":[{"Integer":123}]}]}]}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_map_shapes_request_kitchen_sink_operation_sync() -> None:
+    """Serializes map shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(map_of_strings={"abc": "xyz", "mno": "hjk"})
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"MapOfStrings":{"abc":"xyz","mno":"hjk"}}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_empty_map_shapes_request_kitchen_sink_operation_sync() -> None:
+    """Serializes empty map shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(map_of_strings={})
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"MapOfStrings":{}}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_map_of_list_shapes_request_kitchen_sink_operation_sync() -> None:
+    """Serializes map of list shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(
+        map_of_lists_of_strings={"abc": ["abc", "xyz"], "mno": ["xyz", "abc"]}
+    )
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b'{"MapOfListsOfStrings":{"abc":["abc","xyz"],"mno":["xyz","abc"]}}'
+        )
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_map_of_structure_shapes_request_kitchen_sink_operation_sync() -> (
+    None
+):
+    """Serializes map of structure shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(
+        map_of_structs={
+            "key1": SimpleStruct(value="value-1"),
+            "key2": SimpleStruct(value="value-2"),
+        }
+    )
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b'{"MapOfStructs":{"key1":{"Value":"value-1"},"key2":{"Value":"value-2"}}}'
+        )
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_map_of_recursive_structure_shapes_request_kitchen_sink_operation_sync() -> (
+    None
+):
+    """Serializes map of recursive structure shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(
+        recursive_map={
+            "key1": KitchenSink(
+                recursive_map={
+                    "key2": KitchenSink(
+                        recursive_map={"key3": KitchenSink(boolean=False)}
+                    )
+                }
+            )
+        }
+    )
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"RecursiveMap":{"key1":{"RecursiveMap":{"key2":{"RecursiveMap":{"key3":{"Boolean":false}}}}}}}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_structure_shapes_request_kitchen_sink_operation_sync() -> None:
+    """Serializes structure shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(simple_struct=SimpleStruct(value="abc"))
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"SimpleStruct":{"Value":"abc"}}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_structure_members_with_locationname_traits_request_kitchen_sink_operation_sync() -> (
+    None
+):
+    """Serializes structure members with locationName traits"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(
+        struct_with_json_name=StructWithJsonName(value="some-value")
+    )
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"StructWithJsonName":{"Value":"some-value"}}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_empty_structure_shapes_request_kitchen_sink_operation_sync() -> (
+    None
+):
+    """Serializes empty structure shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(simple_struct=SimpleStruct())
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"SimpleStruct":{}}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_structure_which_have_no_members_request_kitchen_sink_operation_sync() -> (
+    None
+):
+    """Serializes structure which have no members"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(empty_struct=EmptyStruct())
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"EmptyStruct":{}}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_serializes_recursive_structure_shapes_request_kitchen_sink_operation_sync() -> (
+    None
+):
+    """Serializes recursive structure shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput(
+        boolean=False,
+        recursive_struct=KitchenSink(
+            boolean=True,
+            recursive_list=[
+                KitchenSink(string="string-only"),
+                KitchenSink(
+                    recursive_struct=KitchenSink(
+                        map_of_strings={"color": "red", "size": "large"}
+                    )
+                ),
+            ],
+            string="nested-value",
+        ),
+        string="top-value",
+    )
+
+    try:
+        client.kitchen_sink_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.KitchenSinkOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"String":"top-value","Boolean":false,"RecursiveStruct":{"String":"nested-value","Boolean":true,"RecursiveList":[{"String":"string-only"},{"RecursiveStruct":{"MapOfStrings":{"color":"red","size":"large"}}}]}}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_parses_operations_with_empty_json_bodies_response_kitchen_sink_operation_sync() -> (
+    None
+):
+    """Parses operations with empty JSON bodies"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b"{}",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput()
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_string_shapes_response_kitchen_sink_operation_sync() -> None:
+    """Parses string shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"String":"string-value"}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(string="string-value")
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_integer_shapes_response_kitchen_sink_operation_sync() -> None:
+    """Parses integer shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"Integer":1234}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(integer=1234)
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_long_shapes_response_kitchen_sink_operation_sync() -> None:
+    """Parses long shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"Long":1234567890123456789}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(long=1234567890123456789)
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_float_shapes_response_kitchen_sink_operation_sync() -> None:
+    """Parses float shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"Float":1234.5}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(float_=float(1234.5))
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_double_shapes_response_kitchen_sink_operation_sync() -> None:
+    """Parses double shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"Double":123456789.12345679}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(double=float(1.2345678912345679e8))
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_boolean_shapes_true_response_kitchen_sink_operation_sync() -> None:
+    """Parses boolean shapes (true)"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"Boolean":true}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(boolean=True)
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_boolean_false_response_kitchen_sink_operation_sync() -> None:
+    """Parses boolean (false)"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"Boolean":false}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(boolean=False)
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_blob_shapes_response_kitchen_sink_operation_sync() -> None:
+    """Parses blob shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"Blob":"YmluYXJ5LXZhbHVl"}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(blob=b"binary-value")
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_timestamp_shapes_response_kitchen_sink_operation_sync() -> None:
+    """Parses timestamp shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"Timestamp":946845296}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(
+            timestamp=datetime(2000, 1, 2, 20, 34, 56, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_iso8601_timestamps_response_kitchen_sink_operation_sync() -> None:
+    """Parses iso8601 timestamps"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"Iso8601Timestamp":"2000-01-02T20:34:56Z"}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(
+            iso8601_timestamp=datetime(2000, 1, 2, 20, 34, 56, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_httpdate_timestamps_response_kitchen_sink_operation_sync() -> None:
+    """Parses httpdate timestamps"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"HttpdateTimestamp":"Sun, 02 Jan 2000 20:34:56 GMT"}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(
+            httpdate_timestamp=datetime(2000, 1, 2, 20, 34, 56, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_list_shapes_response_kitchen_sink_operation_sync() -> None:
+    """Parses list shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"ListOfStrings":["abc","mno","xyz"]}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(list_of_strings=["abc", "mno", "xyz"])
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_list_of_map_shapes_response_kitchen_sink_operation_sync() -> None:
+    """Parses list of map shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"ListOfMapsOfStrings":[{"size":"large"},{"color":"red"}]}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(
+            list_of_maps_of_strings=[{"size": "large"}, {"color": "red"}]
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_list_of_list_shapes_response_kitchen_sink_operation_sync() -> None:
+    """Parses list of list shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"ListOfLists":[["abc","mno","xyz"],["hjk","qrs","tuv"]]}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(
+            list_of_lists=[["abc", "mno", "xyz"], ["hjk", "qrs", "tuv"]]
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_list_of_structure_shapes_response_kitchen_sink_operation_sync() -> None:
+    """Parses list of structure shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"ListOfStructs":[{"Value":"value-1"},{"Value":"value-2"}]}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(
+            list_of_structs=[
+                SimpleStruct(value="value-1"),
+                SimpleStruct(value="value-2"),
+            ]
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_list_of_recursive_structure_shapes_response_kitchen_sink_operation_sync() -> (
+    None
+):
+    """Parses list of recursive structure shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"RecursiveList":[{"RecursiveList":[{"RecursiveList":[{"String":"value"}]}]}]}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(
+            recursive_list=[
+                KitchenSink(
+                    recursive_list=[
+                        KitchenSink(recursive_list=[KitchenSink(string="value")])
+                    ]
+                )
+            ]
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_map_shapes_response_kitchen_sink_operation_sync() -> None:
+    """Parses map shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"MapOfStrings":{"size":"large","color":"red"}}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(
+            map_of_strings={"size": "large", "color": "red"}
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_map_of_list_shapes_response_kitchen_sink_operation_sync() -> None:
+    """Parses map of list shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"MapOfListsOfStrings":{"sizes":["large","small"],"colors":["red","green"]}}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(
+            map_of_lists_of_strings={
+                "sizes": ["large", "small"],
+                "colors": ["red", "green"],
+            }
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_map_of_map_shapes_response_kitchen_sink_operation_sync() -> None:
+    """Parses map of map shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"MapOfMaps":{"sizes":{"large":"L","medium":"M"},"colors":{"red":"R","blue":"B"}}}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(
+            map_of_maps={
+                "sizes": {"large": "L", "medium": "M"},
+                "colors": {"red": "R", "blue": "B"},
+            }
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_map_of_structure_shapes_response_kitchen_sink_operation_sync() -> None:
+    """Parses map of structure shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"MapOfStructs":{"size":{"Value":"small"},"color":{"Value":"red"}}}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(
+            map_of_structs={
+                "size": SimpleStruct(value="small"),
+                "color": SimpleStruct(value="red"),
+            }
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_map_of_recursive_structure_shapes_response_kitchen_sink_operation_sync() -> (
+    None
+):
+    """Parses map of recursive structure shapes"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{"RecursiveMap":{"key-1":{"RecursiveMap":{"key-2":{"RecursiveMap":{"key-3":{"String":"value"}}}}}}}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput(
+            recursive_map={
+                "key-1": KitchenSink(
+                    recursive_map={
+                        "key-2": KitchenSink(
+                            recursive_map={"key-3": KitchenSink(string="value")}
+                        )
+                    }
+                )
+            }
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_parses_the_request_id_from_the_response_response_kitchen_sink_operation_sync() -> (
+    None
+):
+    """Parses the request id from the response"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[
+                    ("Content-Type", "application/x-amz-json-1.1"),
+                    ("X-Amzn-Requestid", "amazon-uniq-request-id"),
+                ],
+                body=b"{}",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = KitchenSinkOperationInput()
+
+    try:
+        actual = client.kitchen_sink_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = KitchenSinkOperationOutput()
+
+        assert deep_equal(actual, expected)
+
+
+def test_aws_json11_structures_dont_serialize_null_values_request_null_operation_sync() -> (
+    None
+):
+    """Null structure values are dropped"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = NullOperationInput(string=None)
+
+    try:
+        client.null_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.NullOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"{}"
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_structures_dont_deserialize_null_values_response_null_operation_sync() -> (
+    None
+):
+    """Null structure values are dropped"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "string": null\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = NullOperationInput()
+
+    try:
+        actual = client.null_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = NullOperationOutput()
+
+        assert deep_equal(actual, expected)
+
+
+def test_can_call_operation_with_no_input_or_output_request_operation_with_optional_input_output_sync() -> (
+    None
+):
+    """Can call operations with no input or output"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = OperationWithOptionalInputOutputInput()
+
+    try:
+        client.operation_with_optional_input_output(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.OperationWithOptionalInputOutput"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"{}"
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_can_call_operation_with_optional_input_request_operation_with_optional_input_output_sync() -> (
+    None
+):
+    """Can invoke operations with optional input"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = OperationWithOptionalInputOutputInput(value="Hi")
+
+    try:
+        client.operation_with_optional_input_output(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.OperationWithOptionalInputOutput"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{"Value":"Hi"}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_put_and_get_inline_documents_input_request_put_and_get_inline_documents_sync() -> (
+    None
+):
+    """Serializes inline documents in a JSON request."""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = PutAndGetInlineDocumentsInput(inline_document=Document({"foo": "bar"}))
+
+    try:
+        client.put_and_get_inline_documents(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.PutAndGetInlineDocuments"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{\n    "inlineDocument": {"foo": "bar"}\n}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_put_and_get_inline_documents_input_response_put_and_get_inline_documents_sync() -> (
+    None
+):
+    """Serializes inline documents in a JSON response."""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "inlineDocument": {"foo": "bar"}\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = PutAndGetInlineDocumentsInput()
+
+    try:
+        actual = client.put_and_get_inline_documents(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = PutAndGetInlineDocumentsOutput(
+            inline_document=Document({"foo": "bar"})
+        )
+
+        assert deep_equal(actual, expected)
+
+
+@mark.xfail()
+def test_sdk_applied_content_encoding_aws_json1_1_request_put_with_content_encoding_sync() -> (
+    None
+):
+    """
+    Compression algorithm encoding is appended to the Content-Encoding
+    header.
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = PutWithContentEncodingInput(
+        data="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\n"
+    )
+
+    try:
+        client.put_with_content_encoding(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-encoding", "gzip")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+@mark.xfail()
+def test_sdk_appends_gzip_and_ignores_http_provided_encoding_aws_json1_1_request_put_with_content_encoding_sync() -> (
+    None
+):
+    """
+    Compression algorithm encoding is appended to the Content-Encoding
+    header, and the user-provided content-encoding is NOT in the
+    Content-Encoding header since HTTP binding traits are ignored in the
+    awsJson1_1 protocol.
+    """
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = PutWithContentEncodingInput(
+        encoding="custom",
+        data="RjCEL3kBwqPivZUXGiyA5JCujtWgJAkKRlnTEsNYfBRGOS0f7LT6R3bCSOXeJ4auSHzQ4BEZZTklUyj5\n1HEojihShQC2jkQJrNdGOZNSW49yRO0XbnGmeczUHbZqZRelLFKW4xjru9uTuB8lFCtwoGgciFsgqTF8\n5HYcoqINTRxuAwGuRUMoNO473QT0BtCQoKUkAyVaypG0hBZdGNoJhunBfW0d3HWTYlzz9pXElyZhq3C1\n2PDB17GEoOYXmTxDecysmPOdo5z6T0HFhujfeJFIQQ8dirmXcG4F3v0bZdf6AZ3jsiVh6RnEXIPxPbOi\ngIXDWTMUr4Pg3f2LdYCM01eAb2qTdgsEN0MUDhEIfn68I2tnWvcozyUFpg1ez6pyWP8ssWVfFrckREIM\nMb0cTUVqSVSM8bnFiF9SoXM6ZoGMKfX1mT708OYk7SqZ1JlCTkecDJDoR5ED2q2MWKUGR6jjnEV0GtD8\nWJO6AcF0DptY9Hk16Bav3z6c5FeBvrGDrxTFVgRUk8SychzjrcqJ4qskwN8rL3zslC0oqobQRnLFOvwJ\nprSzBIwdH2yAuxokXAdVRa1u9NGNRvfWJfKkwbbVz8yV76RUF9KNhAUmwyYDrLnxNj8ROl8B7dv8Gans\n7Bit52wcdiJyjBW1pAodB7zqqVwtBx5RaSpF7kEMXexYXp9N0J1jlXzdeg5Wgg4pO7TJNr2joiPVAiFf\nefwMMCNBkYx2z7cRxVxCJZMXXzxSKMGgdTN24bJ5UgE0TxyV52RC0wGWG49S1x5jGrvmxKCIgYPs0w3Z\n0I3XcdB0WEj4x4xRztB9Cx2Mc4qFYQdzS9kOioAgNBti1rBySZ8lFZM2zqxvBsJTTJsmcKPr1crqiXjM\noVWdM4ObOO6QA7Pu4c1hT68CrTmbcecjFcxHkgsqdixnFtN6keMGL9Z2YMjZOjYYzbUEwLJqUVWalkIB\nBkgBRqZpzxx5nB5t0qDH35KjsfKM5cinQaFoRq9y9Z82xdCoKZOsUbxZkk1kVmy1jPDCBhkhixkc5PKS\nFoSKTbeK7kuCEZCtR9OfF2k2MqbygGFsFu2sgb1Zn2YdDbaRwRGeaLhswta09UNSMUo8aTixgoYVHxwy\nvraLB6olPSPegeLOnmBeWyKmEfPdbpdGm4ev4vA2AUFuLIeFz0LkCSN0NgQMrr8ALEm1UNpJLReg1ZAX\nzZh7gtQTZUaBVdMJokaJpLk6FPxSA6zkwB5TegSqhrFIsmvpY3VNWmTUq7H0iADdh3dRQ8Is97bTsbwu\nvAEOjh4FQ9wPSFzEtcSJeYQft5GfWYPisDImjjvHVFshFFkNy2nN18pJmhVPoJc456tgbdfEIdGhIADC\n6UPcSSzE1FxlPpILqZrp3i4NvvKoiOa4a8tnALd2XRHHmsvALn2Wmfu07b86gZlu4yOyuUFNoWI6tFvd\nbHnqSJYNQlFESv13gJw609DBzNnrIgBGYBAcDRrIGAnflRKwVDUnDFrUQmE8xNG6jRlyb1p2Y2RrfBtG\ncKqhuGNiT2DfxpY89ektZ98waPhJrFEPJToNH8EADzBorh3T0h4YP1IeLmaI7SOxeuVrk1kjRqMK0rUB\nlUJgJNtCE35jCyoHMwPQlyi78ZaVv8COVQ24zcGpw0MTy6JUsDzAC3jLNY6xCb40SZV9XzG7nWvXA5Ej\nYC1gTXxF4AtFexIdDZ4RJbtYMyXt8LsEJerwwpkfqvDwsiFuqYC6vIn9RoZO5kI0F35XtUITDQYKZ4eq\nWBV0itxTyyR5Rp6g30pZEmEqOusDaIh96CEmHpOBYAQZ7u1QTfzRdysIGMpzbx5gj9Dxm2PO1glWzY7P\nlVqQiBlXSGDOkBkrB6SkiAxknt9zsPdTTsf3r3nid4hdiPrZmGWNgjOO1khSxZSzBdltrCESNnQmlnP5\nZOHA0eSYXwy8j4od5ZmjA3IpFOEPW2MutMbxIbJpg5dIx2x7WxespftenRLgl3CxcpPDcnb9w8LCHBg7\nSEjrEer6Y8wVLFWsQiv6nTdCPZz9cGqwgtCaiHRy8lTWFgdfWd397vw9rduGld3uUFeFRGjYrphqEmHi\nhiG0GhE6wRFVUsGJtvOCYkVREvbEdxPFeJvlAvOcs9HKbtptlTusvYB86vR2bNcIY4f5JZu2X6sGa354\n7LRk0ps2zqYjat3hMR7XDC8KiKceBteFsXoDjfVxTYKelpedTxqWAafrKhaoAVuNM98PSnkuIWGzjSUC\nNsDJTt6vt1D1afBVPWVmnQ7ZQdtEtLIEwAWYjemAztreELIr1E9fPEILm1Ke4KctP9I0I72Dh4eylNZD\n0DEr2Hg7cWFckuZ0Av5d0IPRARXikEGDHl8uh12TXL9v2Uh0ZVSJMEYvxGSbZvkWz8TjWSk3hKA2a7GL\nJm3Ho7e1C34gE1XRGcEthxvURxt4OKBqN3ZNaMIuDTWinoQAutMcUqtm4MoL7RGPiCHUrvTwQPSirsmA\nQmOEu8nOpnP77Fivh9jLGx5ta7nL6jrsWUsBqiN1lzpdPYLRR4mUIAj6sNWiDEk4pkbHSMEcqbWw6Zl7\npsEyPDHalCNhWMA3RSK3skURzQDZ0oBV5W7vjVIZ4d3uCKsk6zrzEI9u5mx7p9RdNKodXfzqYt0ULdtc\n3RW0hIfw2KvrO3BD2QrtgAkfrFBGVvlJSUoh0MvLz8DeXxfuiuq9Ttu7wvsqVI4Piah6WNEXtHHGPJO3\nGhc75Bnv2To4VS2v8rmyKAPIIVTuYBHZN6sZ4FhFzbrslCIdk0eadaU60naqiNWU3CsxplIYGyeThmJ7\n9u4h6Y2OmiPZjFPS2bAzwgAozYTVefII9aEaWZ0hxHZeu1FW7r79dkdO73ZqRfas9u8Z7LLBPCw5pV0F\n5I0pHDgNb6MogoxF4NZJfVtIX1vCHhhVLrXjrYNJU2fD9Fw8kT8Ie2HDBJnqAvYKmryQ1r9ulo3Me3rH\nq9s2Y5uCDxu9iQNhnpwIm57WYGFeqd2fnQeY2IziD3Jgx0KSrmOH0jgi0RwJyfGXaORPq3bQQqljuACo\nkO6io9t5VI8PbNxSHTRbtYiPciUslbT0g7SpCLrRPOBRJ4DDk56pjghpeoUagJ5xJ4wjBzBuXnAGkNnP\nTfpiuz2r3oSBAi8sB9wiYK2z9sp4gZyQsqdVNzAEgKatOxBRBmJCBYpjO98ZQrF83XApPpfFg0ujB2PW\n1iYF9NkgwIKB5oB6KVTOmSKJk11mVermPgeugHbzdd2zUP6fP8fWbhseqk2t8ahGvqjs2CDHFIWXl5jc\nfCknbykE3ANt7lnAfJQ2ddduLGiqrX4HWx6jcWw08Es6BkleO0IDbaWrb95d5isvFlzJsf0TyDIXF4uq\nbBDCi0XPWqtRJ2iqmnJa2GbBe9GmAOWMkBFSilMyC4sR395WSDpD56fx0NGoU6cHrRu9xF2Bgh7RGSfl\nch2GXEeE02fDpSHFNvJBlOEqqfkIX6oCa6KY9NThqeIjYsT184XR2ZI7akXRaw1gMOGpk4FmUxk6WIuX\n4ei1SLQgSdl7OEdRtJklZ76eFrMbkJQ2TDhu8f7mVuiy53GUMIvCrP9xYGZGmCIDm2e4U2BDi3F7C5xK\n3bDZXwlQp6z4BSqTy2OVEWxXUJfjPMOL5Mc7AvDeKtxAS73pVIv0HgHIa4NBAdC7uLG0zXuu1FF6z2XY\nyUhk03fMZhYe7vVxsul3WE7U01fuN8z2y0eKwBW1RFBE1eKIaR9Y01sIWQWbSrfHfDrdZiElhmhHehfs\n0EfrR4sLYdQshJuvhTeKGJDaEhtPQwwJ9mUYGtuCL9RozWx1XI4bHNlzBTW0BVokYiJGlPe7wdxNzJD7\nJgS7Lwv6jGKngVf86imGZyzqwiteWFPdNUoWdTvUPSMO5xIUK9mo5QpwbBOAmyYzVq42o3Qs90N9khEV\nU36LB99fw8PtGHH5wsCHshfauwnNPj0blGXzke0kQ4JNCVH7Jtn0Y0aeejkSxFtwtxoYs6zHl1Lxxpsd\nsw5vBy49CEtoltDW367lVAwDjWdx20msGB7qJCkEDrzu7EXSO22782QX9NBRcN9ppX0C25I0FMA4Wnhz\n9zIpiXRrsTH35jzM8Cjt4EVLGNU3O0HuEvAer3cENnMJtngdrT86ox3fihMQbiuy4Bh4DEcP5in2VjbT\n3qbnoCNvOi8Fmmf7KlGlWAOceL5OHVE5lljjQEMzEQOCEgrk5mDKgwSBJQBNauIDSC1a5iEQjB8Xxp4C\nqeKyyWY9IOntNrtU5ny4lNprHJd36dKFeBLKcGCOvgHBXdOZloMF0YTRExw7hreEO9IoTGVHJ4teWsNr\nHdtagUHjkeZkdMMfnUGNv5aBNtFMqhcZH6EitEa9lGPkKBbJpoom3u8D8EHSIF1H5EZqqx9TLY5hWAIG\nPwJ4qwkpCGw5rCLVrjw7ARKukIFzNULANqjHUMcJ002TlUosJM4xJ4aAgckpLVGOGuPDhGAAexEcQmbg\nUsZdmqQrtuVUyyLteLbLbqtR6CTlcAIwY3xyMCmPgyefE0FEUODBoxQtRUuYTL9RC5o1sYb2PvcxUQfb\niJFi2CAl99pAzcckU2qVCxniARslIxM5pmMRGsQX9ZzYAfZrbg6ce6S74I8UMlgRQ2QVyvUjKKOE6IrJ\nLng370emHfe5m6LZULD5YiZutkD5ipjL2Bz77DvTE5kNPUhuoKBcTJcUgytfXAKUTWOcRKNlq0GImrxM\nJfr7AWbLFFNKGLeTrVDBwpcokJCv0zcOKWe8fd2xkeXkZTdmM66IgM27cyYmtQ6YF26Kd0qrWJeVZJV9\n3fyLYYvKN5csbRY2BHoYE5ERARRW65IrpkXMf48OrCXMtDIP0Z7wxI9DiTeKKeH4uuguhCJnwzR3WxLA\nVU6eBJEd7ZjS6JA83w7decq8uDI7LGKjcz1FySp3B7fE9DkHRGXxbsL7Fjar6vW2mAv8CuvI20B6jctp\n2yLDs24sPfB3sSxrrlhbuT1m6DZqiN0dl6umKx7NGZhmOTVGr20jfcxhqPQwTJfd7kel4rvxip4BqkvT\n7STy8knJ2BXGyJeNgwo1PXUZRDVy0LCTsSF1RFuRZe8cktHl9lgw8ntdPn1pVFL0MwJkJfdXBNUp5gNv\n50FTkrpo1t6wq4CVbcfj2XOrOzvBUzNH26sXGABI1gGxCdp2jEZrHgqQaWIaTJVTuguZhxqDvdYsrwFW\nYN58uuNcKHIrGdRSigyZInwQDYk0pjcqdSeU0WVU3Y9htzZBR7XRaCJr5YTZvq7fwermb5tuwb37lPLq\nB2IGg0iftkVbXaSyfCwVaRbfLBb88so0QqpmJGirFu8FcDiXOV1zTr8yW9XLdYQuUjh43xrXLdgsuYff\nCagInUk1eU1aLjVZoJRsNmStmOEpAqlYMwTvx7w6j2f421Cxr5cNZBIVlAxlXN2QiDqJ9v3sHhHkTanc\nlQuH8ptUyX8qncpBuXXBn7cSez9N0EoxCBl1GHUagbjstgJo4gzLvTmVIY6MiWYOBitzNUHfyqKwtKUr\nVoSCdZcGeA9lHUPA7PUprRRaT3m1hGKPyshtVS2ikG48w3oVerln1N1qGdtz46gZCrndw3LZ1B362RfW\nzDPuXbpsyLsRMTt1Rz1oKHRXp3iE41hkhQH6pxlvyCW2INnHt5XU8zRamOB3oW0udOhMpQFDjRkOcy06\nb4t0QTHvoRqmBna3WXzIMZyeK3GChF5eF8oDXRbjhk7BB6YKCgqwWUzEJ5K47HMSlhFkBUjaPRjdGM0z\nzOMwhW6b1NvSwP7XM1P5yi1oPvOspts1vr29SXqrMMrBhVogeodWyd69NqrO4jkyBxKmlXifoTowpfiY\n2cUCE0XMZqxUN39LCP09JqZifaEcBEo3mgtm1tWu5QR2GNq7UyQf4RIPSDOpDCAtwoPhRgdT1lJdcj4U\nlnH0wrJ8Uwu7c08L7ErnIrDATqCrOjpSbzGP1xHENABYONC4TknFPrJ8pe40A8fzGT0qBw9mAM1SKcHO\nfoiLcMC9AjHTqJzDG3xplSLPG9or2rMeq7Fzp9r0y7uJRMxgg51EbjfvYlH466A3ggvL2WQlDXjJqPW3\nBJGWAWDNN9LK8f46bADKPxakpkx23S9O47rGSXfDhVSIZsDympxWX1UOzWwMZRHkofVeKqizgbKkGgUT\nWykE9gRoRAOd9wfHZDYKa9i0LaPDiaUMvnU1gdBIqIoiVsdJ9swX47oxvMtOxtcS0zlD6llDkBuIiU5g\nPwRCYmtkkb25c8iRJXwGFPjI1wJ34I1z1ENicPdosPiUe9ZC2jnXIKzEdv01x2ER7DNDF3yxOwOhxNxI\nGqsmC92j25UQQFu9ZstOZ28AoCkuOYs0Uycm5u8jR1T39dMBwrko09rC65ENLnsxM8oebmyFCPiGJ1ED\n5Xqc9qZ237f1OnETAoEOwqUSvrdPTv56U7hV91EMTyC812MLQpr2710E3VVpsUCUMNhIxdt7UXZ1UNFb\njgzpZLXnf4DHrv6B7kq6UI50KMxcw1HZE2GpODfUTzNFLaqdrvzxKe5eUWdcojBaRbD4fFdVYJTElYDH\nNNVh6ofkoeWcs9CWGFmSBe0T4K8phFeygQg0prKMELNEy6qENzVtG9ZDcqj3a7L6ZLtvq50anWp7fAVu\nfwz55g4iM2Z2fA0pnwHDL7tt67zTxGITvsnJsZSpeq1EQsZcwtkBV9liu7Rl7jiVT1IIRtchB8TsTiaA\nwVHIQQ9RIOTiPQdKNqi1kC9iGlUqWK93gblNWlBw1eYB9Wk8FQogutwTf0caNMx8D4nPbANcmOOlskIy\nzALh15OlTrWnhP95rf08AN2J026zDE2DUF9k0eCevYBQIDjqKNW4XCZnjbHoIcKzbY5VzPbMs3ZyMz8K\nSucBmgPg6wrSK5ykbkapS5vuqvXc9GbjQJ8bPNzoxoWGyjbZvDs2OBrIqBmcQb2DLJ8v38McQ4mC4UsS\njf4PyfSCtpk274QZjvLCZbLiCBxQegk7jUU0NmTFJAcYCxd9xMWdlFkiszcltT2YzwuFFz7iA6aa4n5L\nHpBNfUA01GcAi1aCMYhmooS4zSlYcSOZkovMz36U3Fd9WtqIEOJLi7HMgHQDgNMdK6DTzAdHQtxerxVF\nHJnPrfNVG7270r3bp0bPnLNYLhObbAn6zqSAUeLtI2Y4KJDjBKCAh2vvYGbu0e2REYJWRj7MkGevsSSy\nb1kCXLt6tKGWAb7lt5c0xyJgUIJW7pdtnwgT0ZCa24BecCAwNnG5U2EwQbcjZGsFxqNGfaemd3oFEhES\nBaE0Fxms9UKTnMafu8wvZ2xymMrUduuRzOjDeX7oD5YsLC88V8CGMLxbbxIpt94KGykbr6e7L0R4oZl1\ntKMgFwQ2p9Txdbp0Y293LcsJymKizqI0F2xEp7y4SmWOJqHZtsbz80wVV9nv41CvtfxuSoGZJ5cNB7pI\nBgzNcQCeH3Jt0RaGGwboxxpuFbzilmkMFXxJm87tD4WNgu01nHfGCKeQcySEBZpVfJgi6sDFJ8uWnvKm\n9mPLHurtWzEfKqUEa1iC71bXjw5wrvhv9BYW8JSUELHmDquftQyKdq0DZXhULMHGQLf4e95WIaoA14LL\nbThz77kuhKULPTu2MNrBUKGorurhGugo5gs4ZUezSsUOe3KxYdrFMdGgny1GgTxMSMTp2RAZytKjv4kQ\nVx7XgzvpQLIbDjUPAkJv6lScwIRq1W3Ne0Rh0V6Bmn6U5uIuWnJjULmbaQiSODj3z0mAZvak0mSWIGwT\nTX83HztcC4W7e1f6a1thmcc5K61Icehla2hBELWPpixTkyC4eEVmk9Rq0m0ZXtx0JX2ZQXqXDEyePyMe\nJ70sdSzXk72zusqhY4yuOMGgbYNHqxOToK6NxujR7e4dV3Wk5JnSUthym8scjcPeCiKDNY4cHfTMnDXJ\n9zLVy01LtNKYpJ1s8FxVxigmxQNKEbIamxhx6yqwGC4aiISVOOUEjvNOdaUfXfUsE6jEwtwxyGxjlRK1\ncLyxXttq4QWN6PehgHv7jXykzPjInbEysebFvvPOOMdunmJvcCNMSvjUda8fL6xfGo0FDrLg8XZipd6S\noPVdYtyIM1Dg40KbBA3JuumPYtXuJaHrZnjZmdnM5OVo4ZNxktfCVT0c6bnD4bAeyn4bYt1ZPaX6hQHh\nJtvNYfpD0ONYlmqKuToQAMlz52Fh6bj45EbX89L5eLlSpWeyBlGotzriB0EPlclrGi5l2B5oPb1aB1ag\nyyYuu44l0F1oOVYnBIZsxIsHVITxi9lEuVPFkWASOUNuVQXfM4n5hxWR9qtuKnIcPsvbJsv1U10XlKh3\nKisqPhHU15xrCLr5gwFxPUKiNTLUBrkzgBOHXPVsHcLCiSD0YU56TRGfvEom43TWUKPPfl9Z54tgVQuT\njCRlaljAzeniQIcbbHZnn3f0HxbDG3DFYqWSxNrXabHhRsIOhhUHSPENyhGSTVO5t0XX5CdMspJPCd02\n3Oqv32ccbUK4O3YH6LEvp0WO3kSl5n50odVkI9B0i0iq4UPFGMkM8bEQJbgJoOH71P10vtdevJFQE4g2\nyhimiM53ZJRWgSZveHtENZc0Gjo0F9eioak9BnPpY1QxAFPC817svuhEstcU69bLCA4D1rO5R8AuIIBq\nyQJcifFLvbpAEYTLKJqysZrU8EEl3TSdC13A9hZvk4NC8VGEDAxcNrKw313dZp17kZPO5HSd1y6sljAW\nA9M1d6FMYV5SlBWf3WZNCUPS7qKNlda2YBsC6IUVB363f5RLGQOQHwbaijBSRCkrVoRxBHtc0Bd5J9V9\nP5uMTXkpZOxRcCQvImGgcmGuxxLb5zTqfS2xu7v3Sf3IIesSt9tVzcEcdbEvLGVJkLk4mb3G30DbIbri\nPZ09JkweDvMaQ3bxT2nfkz3Ilihkw9jqikkCCCz7E8h6z6KbhQErEW9VzJZzMCgJsyPjFam6iNwpe07S\nhyOvNVw2t9wpzL5xM11DvVzQwDaWEytNRHzDBs4KwEtpI2IpjUyVZHSwA0UGqqkzoCgrJFlNOvPlXqcS\nIcREouUIBmuttkrhPWJtSxOOgpsdvBR3kTOzAXNzSKxoaBAb0c5SDMUc6FIyGA8x5wg5DkUgjFUUodEt\nOYaB2VHVePW9mxHeBTdKWLzJow4ZZvjnoBuVigXljKCNh137ckV2y3Yg3Xi4UzJEI2V5Rw9AfnMs7xUw\nVHOFCg189maD3bmZAe7b4eaGZhyy4HVKjqCXmIH7vsEjRvbnfB0SQxxpuqBDJbHNCtW4vM643ZQQBVPP\na7oXSQIq9w2dHp0A7dtkocCZdQp9FKR9XdJAFIbVSHzIF1ZogeZlc0pXuNE0tagvD57xwDRFkAuoQyMu\nYDdZasXrpSmEE5UjHVkyYsISn8QsfXurzDybX468aoRoks654jjmRY5zi1oB8TcMdC2c3sicNaqfeuhd\nH1nPX7l4RpdqWMR7gGx9slXtG8S3KxpOi4qCD7yg3saD66nun4dzksQURoTUdXyrJR5UpHsfIlTF1aJa\nMdXyQtQnrkl00TeghQd00rRFZsCnhi0qrCSKiBfB2EVrd9RPpbgwJGZHuIQecdBmNetc2ylSEClqVBPR\nGOPPIxrnswEZjmnS0jxKW9VSM1QVxSPJnPFswCqT95SoKD6CP4xdX28WIUGiNaIKodXXJHEIsXBCxLsr\nPwWPCtoplC6hhpKmW5dQo92iCTyY2KioKzO8XR6FKm6qonMKVEwQNtlYE9c97KMtEnp25VOdMP46SQXS\nYsSVp7vm8LP87VYI8SOKcW3s2oedYFtt45rvDzoTF0GmS6wELQ9uo98HhjQAI1Dt91cgjJOwygNmLoZE\nX5K2zQiNA163uMCl5xzaBqY4YTL0wgALg3IFdYSp0RFYLWdt6IxoGI1tnoxcjlUEPo5eGIc3mS3SmaLn\nOdumfUQQ4Jgmgaa5anUVQsfBDrlAN5oaX7O0JO71SSPSWiHBsT9WIPy2J1Cace9ZZLRxblFPSXcvsuHh\nhvnhWQltEDAe7MgvkFQ8lGVFa8jhzijoF9kLmMhMILSzYnfXnZPNP7TlAAwlLHK1RqlpHskJqb6CPpGP\nQvOAhEMsM3zJ2KejZx0esxkjxA0ZufVvGAMN3vTUMplQaF4RiQkp9fzBXf3CMk01dWjOMMIEXTeKzIQe\nEcffzjixWU9FpAyGp2rVl4ETRgqljOGw4UgK31r0ZIEGnH0xGz1FtbW1OcQM008JVujRqulCucEMmntr\n",
+    )
+
+    try:
+        client.put_with_content_encoding(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-encoding", "gzip")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_supports_na_n_float_inputs_request_simple_scalar_properties_sync() -> (
+    None
+):
+    """Supports handling NaN float values."""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput(
+        float_value=float("nan"), double_value=float("nan")
+    )
+
+    try:
+        client.simple_scalar_properties(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.SimpleScalarProperties"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b'{\n    "floatValue": "NaN",\n    "doubleValue": "NaN"\n}'
+        )
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_supports_infinity_float_inputs_request_simple_scalar_properties_sync() -> (
+    None
+):
+    """Supports handling Infinity float values."""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput(
+        float_value=float("inf"), double_value=float("inf")
+    )
+
+    try:
+        client.simple_scalar_properties(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.SimpleScalarProperties"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b'{\n    "floatValue": "Infinity",\n    "doubleValue": "Infinity"\n}'
+        )
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_supports_negative_infinity_float_inputs_request_simple_scalar_properties_sync() -> (
+    None
+):
+    """Supports handling -Infinity float values."""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput(
+        float_value=float("-inf"), double_value=float("-inf")
+    )
+
+    try:
+        client.simple_scalar_properties(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.SimpleScalarProperties"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b'{\n    "floatValue": "-Infinity",\n    "doubleValue": "-Infinity"\n}'
+        )
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_supports_na_n_float_inputs_response_simple_scalar_properties_sync() -> (
+    None
+):
+    """Supports handling NaN float values."""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "floatValue": "NaN",\n    "doubleValue": "NaN"\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput()
+
+    try:
+        actual = client.simple_scalar_properties(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SimpleScalarPropertiesOutput(
+            float_value=float("nan"), double_value=float("nan")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_aws_json11_supports_infinity_float_inputs_response_simple_scalar_properties_sync() -> (
+    None
+):
+    """Supports handling Infinity float values."""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "floatValue": "Infinity",\n    "doubleValue": "Infinity"\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput()
+
+    try:
+        actual = client.simple_scalar_properties(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SimpleScalarPropertiesOutput(
+            float_value=float("inf"), double_value=float("inf")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_aws_json11_supports_negative_infinity_float_inputs_response_simple_scalar_properties_sync() -> (
+    None
+):
+    """Supports handling -Infinity float values."""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "floatValue": "-Infinity",\n    "doubleValue": "-Infinity"\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = SimpleScalarPropertiesInput()
+
+    try:
+        actual = client.simple_scalar_properties(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SimpleScalarPropertiesOutput(
+            float_value=float("-inf"), double_value=float("-inf")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_aws_json11_sparse_maps_serialize_null_values_request_sparse_nulls_operation_sync() -> (
+    None
+):
+    """Serializes null values in maps"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = SparseNullsOperationInput(sparse_string_map={"foo": None})
+
+    try:
+        client.sparse_nulls_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.SparseNullsOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b'{\n    "sparseStringMap": {\n        "foo": null\n    }\n}'
+        )
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_sparse_lists_serialize_null_request_sparse_nulls_operation_sync() -> (
+    None
+):
+    """Serializes null values in lists"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = SparseNullsOperationInput(sparse_string_list=[None])
+
+    try:
+        client.sparse_nulls_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-amz-json-1.1"),
+            ("x-amz-target", "JsonProtocol.SparseNullsOperation"),
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b'{\n    "sparseStringList": [\n        null\n    ]\n}'
+        actual_body = json.loads(actual_body_content) if actual_body_content else ""
+        expected_body = json.loads(expected_body_content)
+        assert actual_body == expected_body
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_aws_json11_sparse_maps_deserialize_null_values_response_sparse_nulls_operation_sync() -> (
+    None
+):
+    """Deserializes null values in maps"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "sparseStringMap": {\n        "foo": null\n    }\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = SparseNullsOperationInput()
+
+    try:
+        actual = client.sparse_nulls_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SparseNullsOperationOutput(sparse_string_map={"foo": None})
+
+        assert deep_equal(actual, expected)
+
+
+def test_aws_json11_sparse_lists_deserialize_null_response_sparse_nulls_operation_sync() -> (
+    None
+):
+    """Deserializes null values in lists"""
+    client = JsonProtocolClient(
+        config=JsonProtocolConfig.resolve(
+            protocol=AwsJson11ClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "application/x-amz-json-1.1")],
+                body=b'{\n    "sparseStringList": [\n        null\n    ]\n}',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="jsonprotocol")
+            },
+        )
+    )
+
+    input_ = SparseNullsOperationInput()
+
+    try:
+        actual = client.sparse_nulls_operation(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SparseNullsOperationOutput(sparse_string_list=[None])
+
+        assert deep_equal(actual, expected)
+
+
+class RequestTestHTTPClient:
+    """A synchronous HTTP client solely for testing purposes."""
+
+    TIMEOUT_EXCEPTIONS = ()
+
+    def __init__(self, *, client_config: HTTPClientConfiguration | None = None):
+        self._client_config = client_config
+
+    def send(
+        self,
+        request: HTTPRequest,
+        *,
+        request_config: HTTPRequestConfiguration | None = None,
+    ) -> _smithy_http_aio_interfaces_HTTPResponse:
+        # Raise the exception with the request object to bypass actual request handling
+        raise TestHttpServiceError(request)
+
+
+class ResponseTestHTTPClient:
+    """A synchronous HTTP client solely for testing purposes."""
+
+    TIMEOUT_EXCEPTIONS = ()
+
+    def __init__(
+        self,
+        *,
+        client_config: HTTPClientConfiguration | None = None,
+        status: int = 200,
+        headers: list[tuple[str, str]] | None = None,
+        body: bytes = b"",
+    ):
+        self._client_config = client_config
+        self.status = status
+        self.fields = tuples_to_fields(headers or [])
+        self.body = body
+
+    def send(
+        self,
+        request: HTTPRequest,
+        *,
+        request_config: HTTPRequestConfiguration | None = None,
+    ) -> _smithy_http_aio_HTTPResponse:
+        # Pre-construct the response from the request and return it
+        return _smithy_http_aio_HTTPResponse(
+            status=self.status, fields=self.fields, body=self.body
         )

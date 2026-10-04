@@ -8,16 +8,27 @@ from typing import Any, Self, cast
 from smithy_aws_core.config import ConfigSource
 from smithy_aws_core.identity import AWSCredentialsIdentity
 from smithy_aws_core.identity.chain import IdentityChain
-from smithy_core.aio.client import ClientCall, RequestPipeline
-from smithy_core.aio.retries import RetryStrategyResolver
-from smithy_core.aio.utils import close
+from smithy_core.aio.client import (
+    ClientCall,
+    RequestPipeline as _smithy_core_aio_client_RequestPipeline,
+)
+from smithy_core.aio.retries import AsyncRetryStrategyResolver
+from smithy_core.aio.utils import close as _smithy_core_aio_utils_close
+from smithy_core.client import RequestPipeline as _smithy_core_client_RequestPipeline
 from smithy_core.exceptions import ExpectationNotMetError
 from smithy_core.interceptors import InterceptorChain
+from smithy_core.interfaces import ClientProtocol, ClientTransport
+from smithy_core.retries import RetryStrategyResolver
 from smithy_core.types import TypedProperties
+from smithy_core.utils import close as _smithy_core_utils_close
 from smithy_http.aio.interfaces import HTTPClient
 from smithy_http.plugins import user_agent_plugin
 
-from .config import AsyncRestXmlProtocolNamespaceConfig, Plugin
+from .config import (
+    AsyncRestXmlProtocolNamespaceConfig,
+    Plugin,
+    RestXmlProtocolNamespaceConfig,
+)
 from .models import (
     SIMPLE_SCALAR_PROPERTIES,
     SimpleScalarPropertiesInput,
@@ -59,7 +70,7 @@ class AsyncRestXmlProtocolNamespaceClient:
         self._derive_lock = asyncio.Lock()
         self._setup_done = False
         self._closed = False
-        self._retry_strategy_resolver = RetryStrategyResolver()
+        self._retry_strategy_resolver = AsyncRetryStrategyResolver()
         self._client_plugins: list[Plugin] = [aws_user_agent_plugin, user_agent_plugin]
 
     async def _ensure_setup(self) -> None:
@@ -108,7 +119,7 @@ class AsyncRestXmlProtocolNamespaceClient:
                 return
             self._closed = True
             if self._setup_done and self._config is not None:
-                await close(self._config.transport)
+                await _smithy_core_aio_utils_close(self._config.transport)
 
     async def __aenter__(self) -> Self:
         if self._closed:
@@ -171,7 +182,9 @@ class AsyncRestXmlProtocolNamespaceClient:
             max_attempts=config.max_attempts,
         )
 
-        pipeline = RequestPipeline(protocol=config.protocol, transport=config.transport)
+        pipeline = _smithy_core_aio_client_RequestPipeline(
+            protocol=config.protocol, transport=config.transport
+        )
         call = ClientCall(
             input=input,
             operation=SIMPLE_SCALAR_PROPERTIES,
@@ -184,3 +197,135 @@ class AsyncRestXmlProtocolNamespaceClient:
         )
 
         return await pipeline(call)
+
+
+class RestXmlProtocolNamespaceClient:
+    """
+    A REST XML service that sends XML requests and responses. This service
+    and test case is complementary to the test cases in the `restXml`
+    directory, but the service under test here has the `xmlNamespace`
+    trait applied to it. See
+    https://github.com/smithy-lang/smithy/issues/616
+    """
+
+    def __init__(
+        self,
+        config: RestXmlProtocolNamespaceConfig | None = None,
+        plugins: list[Plugin] | None = None,
+    ):
+        """
+        Constructor for `RestXmlProtocolNamespaceClient`.
+
+        Args:
+            config:
+                Optional configuration for the client. Here you can set things like
+                the endpoint for HTTP services or auth credentials.
+            plugins:
+                A list of callables applied once to the client's base configuration.
+                Their changes are inherited by every operation invocation.
+        """
+        self._config = config
+        self._plugins = plugins
+        self._setup_done = False
+        self._closed = False
+        self._retry_strategy_resolver = RetryStrategyResolver()
+        self._client_plugins: list[Plugin] = [aws_user_agent_plugin, user_agent_plugin]
+
+    def _ensure_setup(self) -> None:
+        if not self._setup_done:
+            if self._config is None:
+                config = RestXmlProtocolNamespaceConfig.resolve()
+            else:
+                # Copy so plugins don't mutate the caller's config.
+                config = deepcopy(self._config)
+            for plugin in self._client_plugins:
+                plugin(config)
+            if self._plugins:
+                for plugin in self._plugins:
+                    plugin(config)
+            self._config = config
+            self._setup_done = True
+
+    def close(self) -> None:
+        """Close this client and any resources held by its transport."""
+        if self._closed:
+            return
+        self._closed = True
+        if self._setup_done and self._config is not None:
+            _smithy_core_utils_close(self._config.transport)
+
+    def __enter__(self) -> Self:
+        if self._closed:
+            raise RuntimeError("Cannot enter a client that has been closed.")
+        return self
+
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+        self.close()
+
+    def simple_scalar_properties(
+        self, input: SimpleScalarPropertiesInput, plugins: list[Plugin] | None = None
+    ) -> SimpleScalarPropertiesOutput:
+        """
+        Invokes the SimpleScalarProperties operation.
+
+        Args:
+            input:
+                An instance of `SimpleScalarPropertiesInput`.
+            plugins:
+                A list of callables that modify the configuration dynamically.
+                Changes made by these plugins only apply for the duration of the
+                operation execution and will not affect any other operation
+                invocations.
+
+        Returns:
+            An instance of `SimpleScalarPropertiesOutput`.
+        """
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
+
+        operation_plugins: list[Plugin] = []
+        if plugins:
+            operation_plugins.extend(plugins)
+        self._ensure_setup()
+        assert self._config is not None
+        if operation_plugins:
+            # Keep operation-plugin mutations scoped to this call.
+            config = deepcopy(self._config)
+            for plugin in operation_plugins:
+                plugin(config)
+        else:
+            config = self._config
+        if (
+            config.protocol is None
+            or config.transport is None
+            or config.endpoint_resolver is None
+            or config.auth_scheme_resolver is None
+            or config.auth_schemes is None
+        ):
+            raise ExpectationNotMetError(
+                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                " and auth_schemes MUST be set on the config to make calls."
+            )
+
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+            retry_strategy=config.retry_strategy
+        )
+
+        pipeline = _smithy_core_client_RequestPipeline(
+            protocol=cast("ClientProtocol[Any, Any]", config.protocol),
+            transport=cast("ClientTransport[Any, Any]", config.transport),
+        )
+        call = ClientCall(
+            input=input,
+            operation=SIMPLE_SCALAR_PROPERTIES,
+            context=TypedProperties({"config": config}),
+            interceptor=InterceptorChain(config.interceptors),
+            auth_scheme_resolver=config.auth_scheme_resolver,
+            supported_auth_schemes=config.auth_schemes,
+            endpoint_resolver=config.endpoint_resolver,
+            retry_strategy=retry_strategy,
+        )
+
+        return pipeline(call)

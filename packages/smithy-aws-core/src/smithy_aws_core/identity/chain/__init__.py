@@ -245,7 +245,7 @@ class IdentityChain[I: Identity](IdentityResolver[I, Mapping[str, Any]]):
             unclaimed_sources=self._unclaimed_sources,
         )
 
-    async def invalidate(self) -> None:
+    def invalidate(self) -> None:
         """Invalidate every resolver in the chain."""
         for resolver in self._resolvers:
-            await resolver.invalidate()
+            resolver.invalidate()

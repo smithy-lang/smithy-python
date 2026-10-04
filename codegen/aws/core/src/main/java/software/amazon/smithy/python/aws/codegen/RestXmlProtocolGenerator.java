@@ -56,6 +56,12 @@ public final class RestXmlProtocolGenerator implements ProtocolGenerator {
     }
 
     @Override
+    public void initializeSyncProtocol(GenerationContext context, PythonWriter writer) {
+        writer.addDependency(AwsPythonDependency.SMITHY_AWS_CORE.withOptionalDependencies("xml"));
+        writer.write("$T(_PROTOCOL_SETTINGS)", AwsRuntimeTypes.REST_XML_SYNC_CLIENT_PROTOCOL);
+    }
+
+    @Override
     public Set<ProtocolSettingsField> requiredProtocolSettings(GenerationContext context) {
         // The service's @xmlNamespace is the default namespace of request payloads.
         return Set.of(ProtocolSettingsField.XML_NAMESPACE);

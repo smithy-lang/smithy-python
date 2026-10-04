@@ -3,7 +3,7 @@
 from smithy_core.interfaces.identity import Identity
 
 from ...components import AWSCredentialsIdentity
-from ...static import StaticCredentialsResolver
+from ...static import AsyncStaticCredentialsResolver
 from ..ordering import Standard, StandardProvider
 from ..provider import ChainSetup
 
@@ -52,7 +52,7 @@ class ProfileSessionCredentialsProvider:
             session_token=session_token,
             account_id=config_file.get(profile_name, _ACCOUNT_ID),
         )
-        setup.add_terminal_resolver(StaticCredentialsResolver(identity))
+        setup.add_terminal_resolver(AsyncStaticCredentialsResolver(identity))
 
 
 class ProfileStaticCredentialsProvider:
@@ -91,4 +91,4 @@ class ProfileStaticCredentialsProvider:
             secret_access_key=secret_access_key,
             account_id=config_file.get(profile_name, _ACCOUNT_ID),
         )
-        setup.add_terminal_resolver(StaticCredentialsResolver(identity))
+        setup.add_terminal_resolver(AsyncStaticCredentialsResolver(identity))
