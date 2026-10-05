@@ -6,6 +6,7 @@ from io import BytesIO
 from typing import Any
 
 import pytest
+from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.prelude import (
     BIG_DECIMAL,
     BLOB,
@@ -21,6 +22,7 @@ from smithy_core.shapes import ShapeID
 from smithy_core.traits import (
     ORIGINAL_SHAPE_ID,
     DynamicTrait,
+    Trait,
     XMLAttributeTrait,
     XMLNamespaceTrait,
     XMLNameTrait,
@@ -180,3 +182,41 @@ def test_prefixed_attribute_round_trip() -> None:
         ),
     )
     assert found == {"attr": "v"}
+
+
+def _sse_traits() -> list[Trait | DynamicTrait]:
+    # Generated schemas create separate trait instances for a member and its target.
+    return [
+        XMLNameTrait("SSE-S3"),
+        XMLNamespaceTrait({"uri": "https://sse.example.com"}),
+    ]
+
+
+_SSE = Schema.collection(id=ShapeID("smithy.example#SSES3"), traits=_sse_traits())
+_ENCRYPTION = Schema.collection(
+    id=ShapeID("smithy.example#Encryption"),
+    members={"SSES3": {"target": _SSE, "traits": _sse_traits()}},
+)
+
+
+def test_member_traits_equal_to_target_traits_round_trip() -> None:
+    # S3's InventoryEncryption.SSES3 member and the structure it targets are both
+    # named SSE-S3, and the member's own name must still be used.
+    member = _ENCRYPTION.members["SSES3"]
+    sink = BytesIO()
+    with XMLCodec().create_serializer(sink).begin_struct(_ENCRYPTION) as s:
+        with s.begin_struct(member):
+            pass
+    actual = sink.getvalue()
+    assert actual == (
+        b'<Encryption><SSE-S3 xmlns="https://sse.example.com"></SSE-S3></Encryption>'
+    )
+
+    found: list[str] = []
+
+    def _consumer(schema: Schema, de: ShapeDeserializer) -> None:
+        de.read_struct(schema, lambda _s, _de: None)
+        found.append(schema.expect_member_name())
+
+    XMLCodec().create_deserializer(actual).read_struct(_ENCRYPTION, _consumer)
+    assert found == ["SSES3"]

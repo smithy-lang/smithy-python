@@ -163,9 +163,8 @@ else:
 class _AWSResponseMetadataMixin:
     """Adds AWS request identifiers to extracted response metadata.
 
-    Mixed into each AWS protocol ahead of its HTTP base class, which supplies
-    only the status code. AWS protocols do not share a common base, so this is
-    applied per protocol.
+    Mixed in ahead of the HTTP base class, which supplies only the status code.
+    AWS protocols built on different HTTP bases each include it.
     """
 
     def extract_response_metadata(
@@ -177,50 +176,15 @@ class _AWSResponseMetadataMixin:
         return parse_response_metadata(response)
 
 
-class RestJsonClientProtocol(_AWSResponseMetadataMixin, HttpBindingClientProtocol):
-    """An implementation of the aws.protocols#restJson1 protocol."""
+class _AWSHttpBindingClientProtocol(
+    _AWSResponseMetadataMixin, HttpBindingClientProtocol
+):
+    """Base for the AWS protocols that use HTTP bindings: restJson1 and restXml.
 
-    _id: Final = RestJson1Trait.id
-    _content_type: Final = "application/json"
-    _error_identifier: Final = AWSErrorIdentifier()
-
-    def __init__(self, settings: ProtocolSettings) -> None:
-        _assert_json()
-        self._codec: Final = JSONCodec(
-            document_class=AWSJSONDocument,
-            default_namespace=settings.namespace,
-            default_timestamp_format=TimestampFormat.EPOCH_SECONDS,
-        )
-
-    @property
-    def id(self) -> ShapeID:
-        return self._id
-
-    @property
-    def payload_codec(self) -> Codec:
-        return self._codec
-
-    @property
-    def content_type(self) -> str:
-        return self._content_type
-
-    @property
-    def error_identifier(self) -> HTTPErrorIdentifier:
-        return self._error_identifier
-
-    def _retry_after(self, response: HTTPResponse) -> float | None:
-        return parse_retry_after(response)
-
-    def _resolve_error_id(
-        self,
-        *,
-        operation: APIOperation[Any, Any],
-        error_id: ShapeID,
-    ) -> ShapeID:
-        for error_schema in operation.error_schemas:
-            if error_schema.id.name == error_id.name:
-                return error_schema.id
-        return error_id
+    Adds AWS response metadata and event streams. Events are framed as
+    ``application/vnd.amazon.eventstream``, and structured event payloads use the
+    protocol's payload codec.
+    """
 
     def create_event_publisher[
         OperationInput: SerializeableShape,
@@ -286,7 +250,53 @@ class RestJsonClientProtocol(_AWSResponseMetadataMixin, HttpBindingClientProtoco
         )
 
 
-class RestXmlClientProtocol(_AWSResponseMetadataMixin, HttpBindingClientProtocol):
+class RestJsonClientProtocol(_AWSHttpBindingClientProtocol):
+    """An implementation of the aws.protocols#restJson1 protocol."""
+
+    _id: Final = RestJson1Trait.id
+    _content_type: Final = "application/json"
+    _error_identifier: Final = AWSErrorIdentifier()
+
+    def __init__(self, settings: ProtocolSettings) -> None:
+        _assert_json()
+        self._codec: Final = JSONCodec(
+            document_class=AWSJSONDocument,
+            default_namespace=settings.namespace,
+            default_timestamp_format=TimestampFormat.EPOCH_SECONDS,
+        )
+
+    @property
+    def id(self) -> ShapeID:
+        return self._id
+
+    @property
+    def payload_codec(self) -> Codec:
+        return self._codec
+
+    @property
+    def content_type(self) -> str:
+        return self._content_type
+
+    @property
+    def error_identifier(self) -> HTTPErrorIdentifier:
+        return self._error_identifier
+
+    def _retry_after(self, response: HTTPResponse) -> float | None:
+        return parse_retry_after(response)
+
+    def _resolve_error_id(
+        self,
+        *,
+        operation: APIOperation[Any, Any],
+        error_id: ShapeID,
+    ) -> ShapeID:
+        for error_schema in operation.error_schemas:
+            if error_schema.id.name == error_id.name:
+                return error_schema.id
+        return error_id
+
+
+class RestXmlClientProtocol(_AWSHttpBindingClientProtocol):
     """An implementation of the aws.protocols#restXml protocol."""
 
     _id: Final = RestXmlTrait.id
@@ -351,6 +361,9 @@ class RestXmlClientProtocol(_AWSResponseMetadataMixin, HttpBindingClientProtocol
             modeled_error = error_shape.deserialize(deserializer)
             if not modeled_error.message and error_info.message:
                 modeled_error.message = error_info.message
+                # The exception's args were taken from the empty message when it
+                # was constructed, so they're replaced for the message to display.
+                modeled_error.args = (error_info.message,)
             if retry_after is not None:
                 modeled_error.retry_after = retry_after
             return modeled_error

@@ -15,7 +15,9 @@ def direct_trait[T: Trait](schema: Schema, trait: type[T]) -> T | None:
     value = schema.get_trait(trait)
     if value is None or schema.member_target is None:
         return value
-    if schema.member_target.get_trait(trait) == value:
+    # Member schemas share their target's trait instances, so identity separates an
+    # inherited trait from one applied to the member that happens to be equal.
+    if schema.member_target.get_trait(trait) is value:
         return None
     return value
 
