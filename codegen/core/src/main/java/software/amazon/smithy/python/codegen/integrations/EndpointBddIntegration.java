@@ -7,13 +7,9 @@ package software.amazon.smithy.python.codegen.integrations;
 import software.amazon.smithy.model.Model;
 import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.python.codegen.PythonSettings;
-import software.amazon.smithy.rulesengine.language.EndpointRuleSet;
-import software.amazon.smithy.rulesengine.logic.bdd.CostOptimization;
-import software.amazon.smithy.rulesengine.logic.bdd.NodeReversal;
-import software.amazon.smithy.rulesengine.logic.bdd.SiftingOptimization;
-import software.amazon.smithy.rulesengine.logic.cfg.Cfg;
 import software.amazon.smithy.rulesengine.traits.EndpointBddTrait;
 import software.amazon.smithy.rulesengine.traits.EndpointRuleSetTrait;
+import software.amazon.smithy.rulesengine.transforms.CompileBdd;
 import software.amazon.smithy.utils.SmithyInternalApi;
 
 /**
@@ -41,20 +37,12 @@ public final class EndpointBddIntegration implements PythonIntegration {
                 .orElseGet(() -> EndpointRuleSetTrait.builder()
                         .ruleSet(Node.parse(MANUAL_ENDPOINT_RULE_SET))
                         .build());
-        var bdd = toBdd(ruleSetTrait.getEndpointRuleSet());
+        var bdd = CompileBdd.compileBdd(ruleSetTrait.getEndpointRuleSet());
 
         return model.toBuilder()
                 .removeShape(service.toShapeId())
                 .addShape(service.toBuilder().addTrait(bdd).build())
                 .build();
-    }
-
-    private static EndpointBddTrait toBdd(EndpointRuleSet ruleSet) {
-        var cfg = Cfg.from(ruleSet);
-        var bdd = EndpointBddTrait.from(cfg);
-        bdd = SiftingOptimization.builder().cfg(cfg).build().apply(bdd);
-        bdd = CostOptimization.builder().cfg(cfg).build().apply(bdd);
-        return new NodeReversal().apply(bdd);
     }
 
     // Verbatim from smithy-typescript AddDefaultEndpointRuleSet.DEFAULT_RULESET.
