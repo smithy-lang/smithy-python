@@ -220,6 +220,6 @@ class ContainerCredentialsResolver(
         )
         return self._credentials
 
-    async def invalidate(self) -> None:
+    def invalidate(self) -> None:
         """Discard cached credentials so the next resolution re-queries the endpoint."""
         self._credentials = None
