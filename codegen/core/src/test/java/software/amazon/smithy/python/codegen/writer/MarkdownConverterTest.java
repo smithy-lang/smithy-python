@@ -197,11 +197,11 @@ public class MarkdownConverterTest {
 
     @Test
     public void testConvertEscapesTrailingQuote() {
-        // A quote at the very end would run into the closing quotes of a
-        // single-line docstring.
+        // Pandoc escapes code-block quotes to \" and renders pre-block spaces as
+        // non-breaking spaces.
         String html = "<pre>x = \"a\"</pre>";
         String result = MarkdownConverter.convertForDocstring(html, createMockContext(true)).trim();
-        assertEquals("x = \"a\\\"", result);
+        assertEquals("x\u00a0=\u00a0\\\"a\\\"", result);
     }
 
     @Test
