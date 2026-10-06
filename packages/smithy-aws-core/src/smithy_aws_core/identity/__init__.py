@@ -20,12 +20,13 @@ from .container import ContainerCredentialsResolver
 from .environment import EnvironmentCredentialsResolver
 from .imds import IMDSCredentialsResolver
 from .process import ProcessCredentialsResolver
-from .static import StaticCredentialsResolver
+from .static import AsyncStaticCredentialsResolver, StaticCredentialsResolver
 
 __all__ = (
     "AWSCredentialsIdentity",
     "AWSCredentialsResolver",
     "AWSIdentityProperties",
+    "AsyncStaticCredentialsResolver",
     "ContainerCredentialsResolver",
     "EnvironmentCredentialsProvider",
     "EnvironmentCredentialsResolver",

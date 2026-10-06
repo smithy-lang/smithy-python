@@ -1,19 +1,18 @@
 #  Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 
-from smithy_core.exceptions import SmithyError
+from smithy_core.config.exceptions import ConfigError, ConfigValidationError
 
-
-class ConfigError(SmithyError):
-    """Base error for AWS shared configuration failures."""
+__all__ = [
+    "ConfigError",
+    "ConfigParseError",
+    "ConfigValidationError",
+    "ProfileNotFoundError",
+]
 
 
 class ConfigParseError(ConfigError):
     """Raised when a config file cannot be parsed due to invalid syntax."""
-
-
-class ConfigValidationError(ConfigError):
-    """Raised when a config value cannot be validated"""
 
 
 class ProfileNotFoundError(ConfigError):

@@ -14,23 +14,19 @@ from ..retries import (
     StandardRetryQuota,
     StandardRetryToken,
 )
-from .interfaces.retries import RetryStrategy
+from .interfaces.retries import AsyncRetryStrategy
 
 
-class RetryStrategyResolver:
-    """Retry strategy resolver that caches retry strategies based on configuration options.
-
-    This resolver caches retry strategy instances based on their configuration to reuse existing
-    instances of RetryStrategy with the same settings. Uses LRU cache for thread-safe caching.
-    """
+class AsyncRetryStrategyResolver:
+    """Resolves and caches asynchronous retry strategies from configuration options."""
 
     async def resolve_retry_strategy(
         self,
         *,
-        retry_strategy: RetryStrategy | RetryStrategyOptions | None,
+        retry_strategy: AsyncRetryStrategy | RetryStrategyOptions | None,
         retry_mode: RetryStrategyType | None = None,
         max_attempts: int | None = None,
-    ) -> RetryStrategy:
+    ) -> AsyncRetryStrategy:
         """Resolve a retry strategy from the provided options, using cache when possible.
 
         :param retry_strategy: An explicitly configured retry strategy or options for
@@ -40,17 +36,16 @@ class RetryStrategyResolver:
         :param max_attempts: Maximum attempts to fall back on when ``retry_strategy`` is
             None, typically resolved from ``AWS_MAX_ATTEMPTS`` or a config profile.
         """
-        if isinstance(retry_strategy, RetryStrategy):
+        if isinstance(retry_strategy, AsyncRetryStrategy):
             return retry_strategy
         elif retry_strategy is None:
-            # Fall back to the separately-resolved config values.
             retry_strategy = RetryStrategyOptions(
                 retry_mode=retry_mode if retry_mode is not None else "standard",
                 max_attempts=max_attempts,
             )
         elif not isinstance(retry_strategy, RetryStrategyOptions):  # type: ignore[reportUnnecessaryIsInstance]
             raise TypeError(
-                f"retry_strategy must be RetryStrategy, RetryStrategyOptions, or None, "
+                f"retry_strategy must be AsyncRetryStrategy, RetryStrategyOptions, or None, "
                 f"got {type(retry_strategy).__name__}"
             )
         return self._create_retry_strategy(
@@ -60,21 +55,21 @@ class RetryStrategyResolver:
     @lru_cache
     def _create_retry_strategy(
         self, retry_mode: RetryStrategyType, max_attempts: int | None
-    ) -> RetryStrategy:
+    ) -> AsyncRetryStrategy:
         kwargs: dict[str, Any] = {"max_attempts": max_attempts}
         filtered_kwargs: dict[str, Any] = {
             k: v for k, v in kwargs.items() if v is not None
         }
         match retry_mode:
             case "simple":
-                return SimpleRetryStrategy(**filtered_kwargs)
+                return AsyncSimpleRetryStrategy(**filtered_kwargs)
             case "standard":
-                return StandardRetryStrategy(**filtered_kwargs)
+                return AsyncStandardRetryStrategy(**filtered_kwargs)
             case _:
                 raise ValueError(f"Unknown retry mode: {retry_mode}")
 
 
-class SimpleRetryStrategy:
+class AsyncSimpleRetryStrategy:
     def __init__(
         self,
         *,
@@ -128,11 +123,11 @@ class SimpleRetryStrategy:
     async def record_success(self, *, token: retries_interface.RetryToken) -> None:
         """Not used by this retry strategy."""
 
-    def __deepcopy__(self, memo: Any) -> "SimpleRetryStrategy":
+    def __deepcopy__(self, memo: Any) -> "AsyncSimpleRetryStrategy":
         return self
 
 
-class StandardRetryStrategy:
+class AsyncStandardRetryStrategy:
     _RETRY_AFTER_MAX_ADDITIONAL: float = 5
     """Upper bound (seconds) for additional delay beyond the computed backoff."""
 
@@ -218,7 +213,7 @@ class StandardRetryStrategy:
         """
         if not isinstance(token_to_renew, StandardRetryToken):
             raise TypeError(
-                f"StandardRetryStrategy requires StandardRetryToken, got {type(token_to_renew).__name__}"
+                f"AsyncStandardRetryStrategy requires StandardRetryToken, got {type(token_to_renew).__name__}"
             )
 
         if isinstance(error, retries_interface.ErrorRetryInfo) and error.is_retry_safe:
@@ -266,9 +261,9 @@ class StandardRetryStrategy:
         """
         if not isinstance(token, StandardRetryToken):
             raise TypeError(
-                f"StandardRetryStrategy requires StandardRetryToken, got {type(token).__name__}"
+                f"AsyncStandardRetryStrategy requires StandardRetryToken, got {type(token).__name__}"
             )
         self._retry_quota.release(release_amount=token.quota_acquired)
 
-    def __deepcopy__(self, memo: Any) -> "StandardRetryStrategy":
+    def __deepcopy__(self, memo: Any) -> "AsyncStandardRetryStrategy":
         return self

@@ -40,6 +40,23 @@ public interface PythonIntegration extends SmithyIntegration<PythonSettings, Pyt
         return Collections.emptyList();
     }
 
+    /**
+     * Supplies the resolution backend the generated config classes build on.
+     *
+     * <p>At most one integration may return a backend for a given service; the
+     * core config generator uses it to choose the config base classes, extra
+     * {@code resolve()} parameters, and extra {@code _FIELDS}. Returning empty
+     * leaves the generic {@code smithy_core.config} backend in place.
+     *
+     * @param context The generation context.
+     * @return The config backend, or empty to use the generic default.
+     */
+    default java.util.Optional<software.amazon.smithy.python.codegen.generators.ConfigBackend> configBackend(
+            GenerationContext context
+    ) {
+        return java.util.Optional.empty();
+    }
+
     default Model preprocessModel(Model model, PythonSettings settings) {
         return model;
     }

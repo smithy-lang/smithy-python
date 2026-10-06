@@ -5,6 +5,7 @@ from base64 import b64decode
 from collections.abc import Callable
 from decimal import Decimal
 from inspect import iscoroutinefunction
+from io import BytesIO
 from typing import TYPE_CHECKING, Any, TypeGuard
 
 from smithy_core.aio.interfaces import AsyncByteStream
@@ -301,6 +302,13 @@ class RawPayloadDeserializer(SpecificShapeDeserializer):
     def read_data_stream(self, schema: Schema) -> "AsyncStreamingBlob":
         if self._is_async_reader(self._payload):
             return self._payload
+        # A buffered/sync payload (the sync pipeline's body: bytes or a sync reader)
+        # is already a usable sync stream; wrapping it would hide its sync read behind
+        # a coroutine. Async streaming bodies are async readers, caught above.
+        if isinstance(self._payload, bytes | bytearray):
+            return BytesIO(bytes(self._payload))
+        if is_bytes_reader(self._payload):
+            return self._payload  # type: ignore[return-value]
         return AsyncBytesReader(self._payload)
 
     def _is_async_reader(self, obj: Any) -> TypeGuard[AsyncByteStream]:

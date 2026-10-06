@@ -9,6 +9,7 @@ from typing import Any
 from .file_parser import (
     FileType,
     parse_config_file,
+    parse_config_file_sync,
     standardize,
 )
 from .filesystem import DefaultFileSystem, FileSystem
@@ -80,6 +81,34 @@ async def load_config(
 
     raw_config = await parse_config_file(str(config_path), filesystem)
     raw_credentials = await parse_config_file(str(credentials_path), filesystem)
+
+    std_config = standardize(raw_config, FileType.CONFIG)
+    std_credentials = standardize(raw_credentials, FileType.CREDENTIALS)
+
+    return MergedConfig(std_config, std_credentials)
+
+
+def load_config_sync(
+    config_file_path: Path | None = None,
+    credentials_file_path: Path | None = None,
+    fs: FileSystem | None = None,
+) -> MergedConfig:
+    """Synchronously load and merge AWS config and credentials files.
+
+    The synchronous counterpart to :py:func:`load_config`.
+
+    :param config_file_path: Override path for config file.
+    :param credentials_file_path: Override path for credentials file.
+    :param fs: FileSystem to use for reading files.
+    :returns: A MergedConfig with merged profiles from both files.
+    """
+    filesystem = fs or DefaultFileSystem()
+    config_path, credentials_path = _resolve_config_paths(
+        config_file_path, credentials_file_path
+    )
+
+    raw_config = parse_config_file_sync(str(config_path), filesystem)
+    raw_credentials = parse_config_file_sync(str(credentials_path), filesystem)
 
     std_config = standardize(raw_config, FileType.CONFIG)
     std_credentials = standardize(raw_credentials, FileType.CREDENTIALS)
@@ -190,6 +219,19 @@ class SharedConfigContext:
         """
         if self._cached_config_file is None:
             self._cached_config_file = await load_config(
+                config_file_path=self._config_file_path,
+                credentials_file_path=self._credentials_file_path,
+                fs=self._fs,
+            )
+        return self._cached_config_file
+
+    def parsed_profiles_sync(self) -> MergedConfig:
+        """Synchronously get the parsed and merged config/credentials file data.
+
+        Shares the per-context cache with :py:meth:`parsed_profiles`.
+        """
+        if self._cached_config_file is None:
+            self._cached_config_file = load_config_sync(
                 config_file_path=self._config_file_path,
                 credentials_file_path=self._credentials_file_path,
                 fs=self._fs,

@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING, Any, cast
 from smithy_core import URI as _URI
 from smithy_core.aio.interfaces import AsyncByteStream, ClientProtocol, ProtocolSettings
 from smithy_core.aio.interfaces import StreamingBlob as AsyncStreamingBlob
-from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import DeserializeableShape
 from smithy_core.documents import TypeRegistry
@@ -155,7 +154,7 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         context: TypedProperties,
     ) -> OperationOutput:
         if not self._is_success(operation, context, response):
-            raise await self._create_error(
+            raise self._create_error(
                 operation=operation,
                 request=request,
                 response=response,
@@ -168,6 +167,40 @@ class HttpBindingClientProtocol(HttpClientProtocol):
         body: SyncStreamingBlob | None = None
         if not operation.output_stream_member and not is_streaming_blob(body):
             body = await self._buffer_async_body(response.body)
+
+        return self._deserialize_from_body(
+            operation=operation,
+            request=request,
+            response=response,
+            body=body,
+            error_registry=error_registry,
+            context=context,
+        )
+
+    def _deserialize_from_body[
+        OperationInput: "SerializeableShape",
+        OperationOutput: "DeserializeableShape",
+    ](
+        self,
+        *,
+        operation: APIOperation[OperationInput, OperationOutput],
+        request: HTTPRequest,
+        response: HTTPResponse,
+        body: "SyncStreamingBlob | None",
+        error_registry: TypeRegistry,
+        context: TypedProperties,
+    ) -> OperationOutput:
+        # Mode-agnostic tail: body already buffered (sync or async). The success
+        # check is repeated so the sync path can call this directly after a sync read.
+        if not self._is_success(operation, context, response):
+            raise self._create_error(
+                operation=operation,
+                request=request,
+                response=response,
+                response_body=body if body is not None else b"",
+                error_registry=error_registry,
+                context=context,
+            )
 
         # TODO(optimization): response binding cache like done in SJ
         deserializer = HTTPResponseDeserializer(
@@ -201,7 +234,7 @@ class HttpBindingClientProtocol(HttpClientProtocol):
     ) -> bool:
         return 200 <= response.status < 300
 
-    async def _create_error(
+    def _create_error(
         self,
         operation: APIOperation[Any, Any],
         request: HTTPRequest,
@@ -400,7 +433,7 @@ class _RpcV2ClientProtocol(HttpClientProtocol):
             method="POST",
             destination=_URI(host="", path=path),
             fields=tuples_to_fields(fields),
-            body=AsyncBytesReader(payload),
+            body=payload,
         )
 
     async def deserialize_response[
@@ -416,6 +449,28 @@ class _RpcV2ClientProtocol(HttpClientProtocol):
         context: TypedProperties,
     ) -> OperationOutput:
         body = await response.consume_body_async()
+        return self._deserialize_from_body(
+            body=body,
+            operation=operation,
+            response=response,
+            error_registry=error_registry,
+            context=context,
+        )
+
+    def _deserialize_from_body[
+        OperationInput: SerializeableShape,
+        OperationOutput: DeserializeableShape,
+    ](
+        self,
+        *,
+        body: bytes,
+        operation: APIOperation[OperationInput, OperationOutput],
+        response: HTTPResponse,
+        error_registry: TypeRegistry,
+        context: TypedProperties,
+    ) -> OperationOutput:
+        # Mode-agnostic tail of deserialization: the body has already been read
+        # (sync or async). Shared by both the async and sync protocol variants.
         if response.status != 200:
             raise self._create_error(
                 operation=operation,

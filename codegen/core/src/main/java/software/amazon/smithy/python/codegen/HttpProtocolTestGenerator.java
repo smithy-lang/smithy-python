@@ -74,10 +74,10 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
     private static final Logger LOGGER = Logger.getLogger(HttpProtocolTestGenerator.class.getName());
     private static final Symbol REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL = Symbol.builder()
-            .name("RequestTestHTTPClient")
+            .name("RequestTestAsyncHTTPClient")
             .build();
     private static final Symbol RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL = Symbol.builder()
-            .name("ResponseTestHTTPClient")
+            .name("ResponseTestAsyncHTTPClient")
             .build();
     private static final Symbol TEST_HTTP_SERVICE_ERR_SYMBOL = Symbol.builder()
             .name("TestHttpServiceError")
@@ -90,6 +90,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
     private final PythonWriter writer;
     private final GenerationContext context;
     private final BiPredicate<Shape, HttpMessageTestCase> testFilter;
+    // When true, the current emission pass writes the SYNCHRONOUS client test suite
+    // (sync client class, no await, sync body reads, sync transport fakes).
+    private boolean sync = false;
 
     /**
      * Constructor.
@@ -132,6 +135,22 @@ public final class HttpProtocolTestGenerator implements Runnable {
         }
         // Write the testing implementations for various objects
         writeUtilStubs(context.symbolProvider().toSymbol(service));
+
+        // Emit a parallel synchronous suite.
+        {
+            this.sync = true;
+            var eventStreamIndex = software.amazon.smithy.model.knowledge.EventStreamIndex.of(model);
+            for (OperationShape operation : new TreeSet<>(topDownIndex.getContainedOperations(service))) {
+                // The sync client omits streaming operations, so skip their tests too.
+                if (eventStreamIndex.getInputInfo(operation).isPresent()
+                        || eventStreamIndex.getOutputInfo(operation).isPresent()) {
+                    continue;
+                }
+                generateOperationTests(AppliesTo.CLIENT, operation, operationIndex);
+            }
+            writeSyncUtilStubs(context.symbolProvider().toSymbol(service));
+            this.sync = false;
+        }
     }
 
     private void generateOperationTests(
@@ -185,18 +204,21 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
                         var configPrefix = getTestConfigPrefix();
                         writer.write("""
-                                $L
-                                    endpoint_uri="https://$L/$L",
-                                    transport = $T(),
-                                    retry_strategy=$T(max_attempts=1),
-                                    ${C|}
+                                $1L
+                                    ${6C|}endpoint_uri="https://$2L/$3L",
+                                    transport = $4L(),
+                                    retry_strategy=$5T(max_attempts=1),
+                                    ${7C|}
                                 )
                                 """,
                                 configPrefix,
                                 host,
                                 path,
-                                REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
-                                RuntimeTypes.SIMPLE_RETRY_STRATEGY,
+                                requestTestClientName(),
+                                sync
+                                        ? RuntimeTypes.SIMPLE_RETRY_STRATEGY
+                                        : RuntimeTypes.ASYNC_SIMPLE_RETRY_STRATEGY,
+                                (Runnable) this::writeSyncProtocolConfig,
                                 (Runnable) this::writeSigV4TestConfig);
                     }));
 
@@ -209,9 +231,10 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail");
                     writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "raises");
                     writer.addStdlibImport("urllib.parse", "parse_qsl");
+                    writer.putContext("awaitKw", awaitKw());
                     writer.write("""
                             try:
-                                await client.$1T(input_)
+                                ${awaitKw:L}client.$1T(input_)
                                 fail("Expected '$2T' exception to be thrown!")
                             except $2T as err:
                                 actual = err.request
@@ -280,6 +303,38 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
     private List<String> toLowerCase(List<String> given) {
         return given.stream().map(str -> str.toLowerCase(Locale.US)).collect(Collectors.toList());
+    }
+
+    // ``await `` in the async pass, empty in the sync pass.
+    private String awaitKw() {
+        return sync ? "" : "await ";
+    }
+
+    // The client class to instantiate: the async service client, or its unprefixed twin.
+    private String clientName() {
+        var name = context.symbolProvider().toSymbol(service).getName();
+        return sync ? stripAsync(name) : name;
+    }
+
+    // A proper symbol for the generated sync client, so it is imported from the
+    // client module rather than treated as locally defined in the test module.
+    private Symbol syncClientSymbol() {
+        var serviceSymbol = context.symbolProvider().toSymbol(service);
+        return serviceSymbol.toBuilder()
+                .name(stripAsync(serviceSymbol.getName()))
+                .build();
+    }
+
+    private static String stripAsync(String name) {
+        return name.startsWith("Async") ? name.substring("Async".length()) : name;
+    }
+
+    private String requestTestClientName() {
+        return sync ? "RequestTestHTTPClient" : REQUEST_TEST_ASYNC_HTTP_CLIENT_SYMBOL.getName();
+    }
+
+    private String responseTestClientName() {
+        return sync ? "ResponseTestHTTPClient" : RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL.getName();
     }
 
     private void writeExpectedHeaders(
@@ -404,7 +459,12 @@ public final class HttpProtocolTestGenerator implements Runnable {
             return;
         }
         writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-        writer.write("actual_body_content = await $T(actual.body or b'').read()", RuntimeTypes.ASYNC_BYTES_READER);
+        if (sync) {
+            writer.write("actual_body_content = actual.consume_body()");
+        } else {
+            writer.write("actual_body_content = await $T(actual.body or b'').read()",
+                    RuntimeTypes.ASYNC_BYTES_READER);
+        }
         writer.write("expected_body_content = $C", (Runnable) () -> writeTestBody(testCase, writer));
         compareMediaBlob(testCase, writer);
     }
@@ -487,21 +547,22 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
                         var configPrefix = getTestConfigPrefix();
                         writer.write("""
-                                $L
-                                    endpoint_uri="https://example.com",
-                                    transport = $T(
-                                        status=$L,
-                                        headers=$J,
-                                        body=$C,
+                                $1L
+                                    ${6C|}endpoint_uri="https://example.com",
+                                    transport = $2L(
+                                        status=$3L,
+                                        headers=$4J,
+                                        body=$5C,
                                     ),
-                                    ${C|}
+                                    ${7C|}
                                 )
                                 """,
                                 configPrefix,
-                                RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
+                                responseTestClientName(),
                                 testCase.getCode(),
                                 CodegenUtils.toTuples(testCase.getHeaders()),
                                 (Runnable) () -> writeTestBody(testCase, writer),
+                                (Runnable) this::writeSyncProtocolConfig,
                                 (Runnable) this::writeSigV4TestConfig);
                     }));
                     // Create an empty input object to pass
@@ -512,9 +573,10 @@ public final class HttpProtocolTestGenerator implements Runnable {
 
                     // Execute the command, fail if unexpected exception
                     writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail", "fail");
+                    writer.putContext("awaitKw", awaitKw());
                     writer.write("""
                             try:
-                                actual = await client.$T(input_)
+                                actual = ${awaitKw:L}client.$T(input_)
                             except Exception as err:
                                 fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
                             else:
@@ -543,21 +605,22 @@ public final class HttpProtocolTestGenerator implements Runnable {
                     writeClientBlock(context.symbolProvider().toSymbol(service), testCase, Optional.of(() -> {
                         var configPrefix = getTestConfigPrefix();
                         writer.write("""
-                                $L
-                                    endpoint_uri="https://example.com",
-                                    transport = $T(
-                                        status=$L,
-                                        headers=$J,
-                                        body=$C,
+                                $1L
+                                    ${6C|}endpoint_uri="https://example.com",
+                                    transport = $2L(
+                                        status=$3L,
+                                        headers=$4J,
+                                        body=$5C,
                                     ),
-                                    ${C|}
+                                    ${7C|}
                                 )
                                 """,
                                 configPrefix,
-                                RESPONSE_TEST_ASYNC_HTTP_CLIENT_SYMBOL,
+                                responseTestClientName(),
                                 testCase.getCode(),
                                 CodegenUtils.toTuples(testCase.getHeaders()),
                                 (Runnable) () -> writeTestBody(testCase, writer),
+                                (Runnable) this::writeSyncProtocolConfig,
                                 (Runnable) this::writeSigV4TestConfig);
                     }));
                     // Create an empty input object to pass
@@ -566,10 +629,11 @@ public final class HttpProtocolTestGenerator implements Runnable {
                             (Runnable) () -> (Node.objectNode()).accept(new ValueNodeVisitor(inputShape)));
                     // Execute the command, fail if unexpected exception
                     writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "fail", "fail");
+                    writer.putContext("awaitKw", awaitKw());
                     writer.write(
                             """
                                     try:
-                                        await client.$1T(input_)
+                                        ${awaitKw:L}client.$1T(input_)
                                         fail("Expected '$2L' exception to be thrown!")
                                     except Exception as err:
                                         if type(err).__name__ != $2S:
@@ -608,11 +672,19 @@ public final class HttpProtocolTestGenerator implements Runnable {
             var memberName = context.symbolProvider().toMemberName(member);
             if (member.equals(streamingMember)) {
                 writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-                writer.write("""
-                        assert isinstance(actual.$1L, $2T)
-                        actual_body_content = await actual.$1L.read()
-                        expected_body_content = await $3T(expected.$1L).read()
-                        """, memberName, RuntimeTypes.ASYNC_BYTE_STREAM, RuntimeTypes.ASYNC_BYTES_READER);
+                if (sync) {
+                    writer.addStdlibImport("io", "BytesIO");
+                    writer.write("""
+                            actual_body_content = actual.$1L.read()
+                            expected_body_content = BytesIO(expected.$1L).read()
+                            """, memberName);
+                } else {
+                    writer.write("""
+                            assert isinstance(actual.$1L, $2T)
+                            actual_body_content = await actual.$1L.read()
+                            expected_body_content = await $3T(expected.$1L).read()
+                            """, memberName, RuntimeTypes.ASYNC_BYTE_STREAM, RuntimeTypes.ASYNC_BYTES_READER);
+                }
                 compareMediaBlob(testCase, writer);
                 continue;
             }
@@ -652,7 +724,9 @@ public final class HttpProtocolTestGenerator implements Runnable {
             writer.addImport(SmithyPythonDependency.PYTEST.packageName(), "mark", "mark");
             writer.write("@mark.xfail()");
         }
-        writer.openBlock("async def test_$L() -> None:", "", CaseUtils.toSnakeCase(testName), () -> {
+        var defKeyword = sync ? "def" : "async def";
+        var suffixedName = sync ? testName + "_sync" : testName;
+        writer.openBlock("$L test_$L() -> None:", "", defKeyword, CaseUtils.toSnakeCase(suffixedName), () -> {
             testCase.getDocumentation().ifPresent(docs -> writer.writeDocs(docs, context));
             f.run();
         });
@@ -668,23 +742,46 @@ public final class HttpProtocolTestGenerator implements Runnable {
         LOGGER.fine(String.format("Writing client block for %s in %s", serviceSymbol.getName(), testCase.getId()));
 
         // Set up the test http client, which is used to "handle" the requests
-        writer.openBlock("client = $T(", ")\n", serviceSymbol, () -> {
-            additionalConfigurator.ifPresent(Runnable::run);
-        });
+        if (sync) {
+            writer.openBlock("client = $T(", ")\n", syncClientSymbol(), () -> {
+                additionalConfigurator.ifPresent(Runnable::run);
+            });
+        } else {
+            writer.openBlock("client = $T(", ")\n", serviceSymbol, () -> {
+                additionalConfigurator.ifPresent(Runnable::run);
+            });
+        }
     }
 
     /**
      * Returns the config construction prefix for test code.
      * For AWS services: "config = await AsyncConfig.resolve("
      * For non-AWS services: "config = Config("
+     * In the sync pass the config also pins the synchronous protocol so the sync
+     * pipeline deserializes synchronously.
      */
     private String getTestConfigPrefix() {
-        var configSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), model)
-                .orElse(CodegenUtils.getConfigSymbol(context.settings()));
+        if (sync) {
+            var syncConfigSymbol = CodegenUtils.getConfigSymbol(context.settings(), model);
+            writer.addImport(syncConfigSymbol.getNamespace(), syncConfigSymbol.getName());
+            return "config = %s.resolve(".formatted(syncConfigSymbol.getName());
+        }
+        var configSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), model);
         writer.addImport(configSymbol.getNamespace(), configSymbol.getName());
-        return CodegenUtils.getAsyncConfigSymbol(context.settings(), model).isPresent()
-                ? "config = await %s.resolve(".formatted(configSymbol.getName())
-                : "config = %s(".formatted(configSymbol.getName());
+        return "config = await %s.resolve(".formatted(configSymbol.getName());
+    }
+
+    // In the sync pass, pin the synchronous protocol so the sync pipeline deserializes
+    // synchronously (the config default is the async protocol).
+    private void writeSyncProtocolConfig() {
+        if (!sync) {
+            return;
+        }
+        // _PROTOCOL_SETTINGS is a module global in the generated config module.
+        var configSymbol = CodegenUtils.getConfigSymbol(context.settings(), model);
+        writer.addImport(configSymbol.getNamespace(), "_PROTOCOL_SETTINGS");
+        writer.write("protocol=$C,",
+                (Runnable) () -> context.protocolGenerator().initializeSyncProtocol(context, writer));
     }
 
     private void writeSigV4TestConfig() {
@@ -696,7 +793,25 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 aws_access_key_id="test-access-key-id",
                 aws_secret_access_key="test-secret-access-key",
                 aws_credentials_identity_resolver=$T(),
-                """, RuntimeTypes.STATIC_CREDENTIALS_RESOLVER);
+                """,
+                sync
+                        ? RuntimeTypes.SYNC_STATIC_CREDENTIALS_RESOLVER
+                        : RuntimeTypes.STATIC_CREDENTIALS_RESOLVER);
+
+        // The sync pipeline needs a sync signer; the config default is the async
+        // AsyncSigV4AuthScheme, so pin the sync scheme explicitly for the sync tests.
+        if (sync) {
+            var syncScheme = Symbol.builder()
+                    .name("SigV4AuthScheme")
+                    .namespace("smithy_aws_core.auth.sigv4", ".")
+                    .build();
+            var sigv4Name = service.expectTrait(SigV4Trait.class).getName();
+            writer.write("auth_schemes={$T($S): $T(service=$S)},",
+                    RuntimeTypes.SHAPE_ID,
+                    SigV4Trait.ID.toString(),
+                    syncScheme,
+                    sigv4Name);
+        }
     }
 
     private void writeUtilStubs(Symbol serviceSymbol) {
@@ -771,6 +886,71 @@ public final class HttpProtocolTestGenerator implements Runnable {
                 RuntimeTypes.TUPLES_TO_FIELDS,
                 RuntimeTypes.HTTP_RESPONSE_IMPL,
                 RuntimeTypes.ASYNC_LIST);
+    }
+
+    private void writeSyncUtilStubs(Symbol serviceSymbol) {
+        var requestClient = Symbol.builder().name("RequestTestHTTPClient").build();
+        var responseClient = Symbol.builder().name("ResponseTestHTTPClient").build();
+        // The sync fakes are defined in this test module; the sync client is
+        // imported from the client module where writeClientBlock references it.
+        writer.addLocallyDefinedSymbol(requestClient);
+        writer.addLocallyDefinedSymbol(responseClient);
+        writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+        writer.addDependency(SmithyPythonDependency.SMITHY_HTTP);
+
+        writer.write("""
+                class $1L:
+                    ""\"A synchronous HTTP client solely for testing purposes.""\"
+
+                    TIMEOUT_EXCEPTIONS = ()
+
+                    def __init__(self, *, client_config: $4T | None = None):
+                        self._client_config = client_config
+
+                    def send(
+                        self, request: $2T, *, request_config: $5T | None = None
+                    ) -> $6T:
+                        # Raise the exception with the request object to bypass actual request handling
+                        raise $3T(request)
+
+
+                class $7L:
+                    ""\"A synchronous HTTP client solely for testing purposes.""\"
+
+                    TIMEOUT_EXCEPTIONS = ()
+
+                    def __init__(
+                        self,
+                        *,
+                        client_config: $4T | None = None,
+                        status: int = 200,
+                        headers: list[tuple[str, str]] | None = None,
+                        body: bytes = b"",
+                    ):
+                        self._client_config = client_config
+                        self.status = status
+                        self.fields = $8T(headers or [])
+                        self.body = body
+
+                    def send(
+                        self, request: $2T, *, request_config: $5T | None = None
+                    ) -> ${9T}:
+                        # Pre-construct the response from the request and return it
+                        return ${9T}(
+                            status=self.status,
+                            fields=self.fields,
+                            body=self.body,
+                        )
+                """,
+                requestClient.getName(),
+                RuntimeTypes.HTTP_REQUEST,
+                TEST_HTTP_SERVICE_ERR_SYMBOL,
+                RuntimeTypes.HTTP_CLIENT_CONFIGURATION,
+                RuntimeTypes.HTTP_REQUEST_CONFIGURATION,
+                RuntimeTypes.HTTP_RESPONSE,
+                responseClient.getName(),
+                RuntimeTypes.TUPLES_TO_FIELDS,
+                RuntimeTypes.HTTP_RESPONSE_IMPL);
     }
 
     /**

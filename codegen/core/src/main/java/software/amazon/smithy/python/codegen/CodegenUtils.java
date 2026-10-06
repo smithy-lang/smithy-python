@@ -78,14 +78,44 @@ public final class CodegenUtils {
 
     /**
      * @param settings The client settings, used to account for module configuration.
-     * @return Returns the client's configuration object symbol.
+     * @param model The model containing the service shape.
+     * @return Returns the client's synchronous configuration object symbol.
+     *
+     * <p>Non-AWS services use the canonical {@code Config}; AWS services use the
+     * SDK-ID-prefixed name (e.g. {@code STSConfig}).
      */
-    public static Symbol getConfigSymbol(PythonSettings settings) {
-        return Symbol.builder()
-                .name("Config")
-                .namespace(String.format("%s.config", settings.moduleName()), ".")
-                .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
-                .build();
+    public static Symbol getConfigSymbol(PythonSettings settings, Model model) {
+        return configSymbol(settings, model, "", "Config");
+    }
+
+    /**
+     * Gets the asynchronous configuration object symbol for the service.
+     *
+     * <p>Every service generates both a sync and an async config. Non-AWS services
+     * use {@code AsyncConfig}; AWS services use the SDK-ID-prefixed name (e.g.
+     * {@code AsyncSTSConfig}).
+     *
+     * @param settings The client settings.
+     * @param model The model containing the service shape.
+     * @return Returns the async config symbol.
+     */
+    public static Symbol getAsyncConfigSymbol(PythonSettings settings, Model model) {
+        return configSymbol(settings, model, "Async", "Config");
+    }
+
+    /**
+     * The shared config base class symbol (e.g. {@code _ConfigBase} / {@code _STSConfigBase}).
+     *
+     * <p>Carries the resolvable fields and {@code _FIELDS}; the sync and async config
+     * classes mix it with the resolve engine. Underscore-prefixed: it is codegen
+     * scaffolding, never named or subclassed outside the generated module.
+     *
+     * @param settings The client settings.
+     * @param model The model containing the service shape.
+     * @return Returns the shared config base symbol.
+     */
+    public static Symbol getConfigBaseSymbol(PythonSettings settings, Model model) {
+        return configSymbol(settings, model, "_", "ConfigBase");
     }
 
     /**
@@ -101,54 +131,38 @@ public final class CodegenUtils {
     }
 
     /**
-     * Gets the async configuration object symbol for the service, if one is generated.
-     *
-     * <p>This is the new async-resolved config class that inherits from AsyncAwsConfig.
-     * Derives the name from the SDK ID (e.g., "Bedrock Runtime" becomes
-     * "AsyncBedrockRuntimeConfig").
-     *
-     * <p>The async config class lives in {@code smithy-aws-core} and is only generated
-     * for AWS services, so this returns an empty {@code Optional} otherwise. This is the
-     * single source of truth for whether the class exists: generators must not emit
-     * references to it when this is empty, and the integration that defines it gates
-     * itself on this same result. Callers that need the name unconditionally would
-     * reintroduce references to a class nobody defines.
+     * The human-facing service name used in generated docstrings.
      *
      * @param settings The client settings.
      * @param model The model containing the service shape.
-     * @return Returns the async config symbol, or empty if none is generated.
+     * @return The SDK ID for AWS services, else the service shape name.
      */
-    public static Optional<Symbol> getAsyncConfigSymbol(PythonSettings settings, Model model) {
-        return asyncConfigSymbolName(settings, model, "Config");
+    public static String getServiceIdName(PythonSettings settings, Model model) {
+        if (isAwsService(settings, model)) {
+            return settings.service(model).expectTrait(ServiceTrait.class).getSdkId();
+        }
+        return settings.service(model).getId().getName();
     }
 
-    /**
-     * Gets the async plugin type hint symbol for the service, if one is generated.
-     *
-     * @param settings The client settings.
-     * @param model The model containing the service shape.
-     * @return Returns the async plugin symbol, or empty if none is generated.
-     * @see #getAsyncConfigSymbol(PythonSettings, Model)
-     */
-    public static Optional<Symbol> getAsyncPluginSymbol(PythonSettings settings, Model model) {
-        return asyncConfigSymbolName(settings, model, "Plugin");
-    }
-
-    private static Optional<Symbol> asyncConfigSymbolName(
+    private static Symbol configSymbol(
             PythonSettings settings,
             Model model,
+            String prefix,
             String suffix
     ) {
-        if (!isAwsService(settings, model)) {
-            return Optional.empty();
+        String name;
+        String serviceName;
+        if (isAwsService(settings, model)) {
+            serviceName = settings.service(model).expectTrait(ServiceTrait.class).getSdkId();
+        } else {
+            serviceName = settings.service(model).getId().getName();
         }
-        var sdkId = settings.service(model).expectTrait(ServiceTrait.class).getSdkId();
-        var name = "Async" + StringUtils.capitalize(sdkId).replace(" ", "") + suffix;
-        return Optional.of(Symbol.builder()
+        name = prefix + StringUtils.capitalize(serviceName).replace(" ", "") + suffix;
+        return Symbol.builder()
                 .name(name)
                 .namespace(String.format("%s.config", settings.moduleName()), ".")
                 .definitionFile(String.format("./src/%s/config.py", settings.moduleName()))
-                .build());
+                .build();
     }
 
     /**

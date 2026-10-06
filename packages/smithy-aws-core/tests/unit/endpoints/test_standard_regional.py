@@ -40,7 +40,7 @@ async def test_resolve_endpoint_with_valid_sdk_endpoint_string():
     resolver = StandardRegionalEndpointsResolver(endpoint_prefix="service")
     params = EndpointConfig.params("https://example.com/path?query=123")
 
-    endpoint = await resolver.resolve_endpoint(params)
+    endpoint = resolver.resolve_endpoint(params)
 
     assert endpoint.uri.host == "example.com"
     assert endpoint.uri.path == "/path"
@@ -55,7 +55,7 @@ async def test_resolve_endpoint_with_sdk_endpoint_uri():
     )
     params = EndpointConfig.params(parsed_uri)
 
-    endpoint = await resolver.resolve_endpoint(params)
+    endpoint = resolver.resolve_endpoint(params)
 
     assert endpoint.uri == parsed_uri
 
@@ -65,14 +65,14 @@ async def test_resolve_endpoint_with_invalid_sdk_endpoint():
     params = EndpointConfig.params("invalid_uri")
 
     with pytest.raises(EndpointResolutionError):
-        await resolver.resolve_endpoint(params)
+        resolver.resolve_endpoint(params)
 
 
 async def test_resolve_endpoint_with_region():
     resolver = StandardRegionalEndpointsResolver(endpoint_prefix="service")
     params = EndpointConfig.params(region="us-west-2")
 
-    endpoint = await resolver.resolve_endpoint(params)
+    endpoint = resolver.resolve_endpoint(params)
 
     assert endpoint.uri.host == "service.us-west-2.amazonaws.com"
 
@@ -82,7 +82,7 @@ async def test_resolve_endpoint_with_no_sdk_endpoint_or_region():
     params = EndpointConfig.params()
 
     with pytest.raises(EndpointResolutionError):
-        await resolver.resolve_endpoint(params)
+        resolver.resolve_endpoint(params)
 
 
 async def test_resolve_endpoint_with_sdk_endpoint_and_region():
@@ -91,6 +91,6 @@ async def test_resolve_endpoint_with_sdk_endpoint_and_region():
         endpoint_uri="https://example.com", region="us-west-2"
     )
 
-    endpoint = await resolver.resolve_endpoint(params)
+    endpoint = resolver.resolve_endpoint(params)
 
     assert endpoint.uri.host == "example.com"

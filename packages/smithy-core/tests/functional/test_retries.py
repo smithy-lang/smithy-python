@@ -5,7 +5,7 @@ from asyncio import gather, sleep
 
 import pytest
 from smithy_core.aio.interfaces import retries as retries_interface
-from smithy_core.aio.retries import StandardRetryStrategy
+from smithy_core.aio.retries import AsyncStandardRetryStrategy
 from smithy_core.exceptions import CallError, ClientTimeoutError, RetryError
 from smithy_core.retries import (
     ExponentialBackoffJitterType,
@@ -16,7 +16,7 @@ from smithy_core.retries import (
 
 # TODO: Refactor this to use a smithy-testing generated client
 async def retry_operation(
-    strategy: retries_interface.RetryStrategy,
+    strategy: retries_interface.AsyncRetryStrategy,
     responses: list[int | Exception],
 ) -> tuple[str, int]:
     token = await strategy.acquire_initial_retry_token()
@@ -54,7 +54,7 @@ async def retry_operation(
 
 async def test_standard_retry_eventually_succeeds():
     quota = StandardRetryQuota(initial_capacity=500)
-    strategy = StandardRetryStrategy(max_attempts=3, retry_quota=quota)
+    strategy = AsyncStandardRetryStrategy(max_attempts=3, retry_quota=quota)
 
     result, attempts = await retry_operation(strategy, [500, 500, 200])
 
@@ -65,7 +65,7 @@ async def test_standard_retry_eventually_succeeds():
 
 async def test_standard_retry_fails_due_to_max_attempts():
     quota = StandardRetryQuota(initial_capacity=500)
-    strategy = StandardRetryStrategy(max_attempts=3, retry_quota=quota)
+    strategy = AsyncStandardRetryStrategy(max_attempts=3, retry_quota=quota)
 
     with pytest.raises(CallError, match="502"):
         await retry_operation(strategy, [502, 502, 502])
@@ -75,7 +75,7 @@ async def test_standard_retry_fails_due_to_max_attempts():
 
 async def test_retry_quota_exhausted_after_single_retry():
     quota = StandardRetryQuota(initial_capacity=14)
-    strategy = StandardRetryStrategy(max_attempts=3, retry_quota=quota)
+    strategy = AsyncStandardRetryStrategy(max_attempts=3, retry_quota=quota)
 
     with pytest.raises(CallError, match="502"):
         await retry_operation(strategy, [500, 502])
@@ -85,7 +85,7 @@ async def test_retry_quota_exhausted_after_single_retry():
 
 async def test_retry_quota_prevents_retries_when_quota_zero():
     quota = StandardRetryQuota(initial_capacity=0)
-    strategy = StandardRetryStrategy(max_attempts=3, retry_quota=quota)
+    strategy = AsyncStandardRetryStrategy(max_attempts=3, retry_quota=quota)
 
     with pytest.raises(CallError, match="500"):
         await retry_operation(strategy, [500])
@@ -95,7 +95,7 @@ async def test_retry_quota_prevents_retries_when_quota_zero():
 
 async def test_retry_quota_stops_retries_when_exhausted():
     quota = StandardRetryQuota(initial_capacity=20)
-    strategy = StandardRetryStrategy(max_attempts=5, retry_quota=quota)
+    strategy = AsyncStandardRetryStrategy(max_attempts=5, retry_quota=quota)
 
     with pytest.raises(CallError, match="502"):
         await retry_operation(strategy, [500, 502])
@@ -105,7 +105,7 @@ async def test_retry_quota_stops_retries_when_exhausted():
 
 async def test_retry_quota_recovers_after_successful_responses():
     quota = StandardRetryQuota(initial_capacity=30)
-    strategy = StandardRetryStrategy(max_attempts=5, retry_quota=quota)
+    strategy = AsyncStandardRetryStrategy(max_attempts=5, retry_quota=quota)
 
     # First operation: 2 retries then success
     await retry_operation(strategy, [500, 502, 200])
@@ -123,7 +123,7 @@ async def test_retry_quota_shared_across_concurrent_operations():
         max_backoff=10,
         jitter_type=ExponentialBackoffJitterType.FULL,
     )
-    strategy = StandardRetryStrategy(
+    strategy = AsyncStandardRetryStrategy(
         max_attempts=5,
         retry_quota=quota,
         backoff_strategy=backoff,
@@ -141,7 +141,7 @@ async def test_retry_quota_shared_across_concurrent_operations():
 
 async def test_retry_quota_handles_timeout_errors():
     quota = StandardRetryQuota(initial_capacity=500)
-    strategy = StandardRetryStrategy(max_attempts=3, retry_quota=quota)
+    strategy = AsyncStandardRetryStrategy(max_attempts=3, retry_quota=quota)
 
     timeout1 = ClientTimeoutError()
     timeout2 = ClientTimeoutError()

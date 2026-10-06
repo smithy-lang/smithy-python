@@ -60,12 +60,8 @@ public final class HttpApiKeyAuth implements PythonIntegration {
                                                 .namespace("smithy_http.aio.identity.apikey", ".")
                                                 .build())
                                         .build())
-                                .initialize(writer -> {
-                                    writer.write("""
-                                            self.api_key_identity_resolver = (
-                                                api_key_identity_resolver or $T()
-                                            )
-                                            """, RuntimeTypes.API_KEY_IDENTITY_RESOLVER);
+                                .defaultFactory(writer -> {
+                                    writer.writeInline("$T()", RuntimeTypes.API_KEY_IDENTITY_RESOLVER);
                                 })
                                 .build())
                         .authScheme(new ApiKeyAuthScheme())

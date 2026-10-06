@@ -45,6 +45,15 @@ public interface ProtocolGenerator {
     void initializeProtocol(GenerationContext context, PythonWriter writer);
 
     /**
+     * Writes an expression constructing the SYNCHRONOUS protocol instance, used by the
+     * generated sync client's config. Defaults to the async initializer; protocols with
+     * a distinct sync implementation override this.
+     */
+    default void initializeSyncProtocol(GenerationContext context, PythonWriter writer) {
+        initializeProtocol(context, writer);
+    }
+
+    /**
      * Declares the extra {@code _PROTOCOL_SETTINGS} fields this protocol's constructor reads.
      *
      * @param context Generation context

@@ -4,10 +4,17 @@ from datetime import datetime, timezone
 from urllib.parse import parse_qsl
 
 from pytest import fail, mark, raises
-from smithy_aws_core.identity import StaticCredentialsResolver
-from smithy_core.aio.retries import SimpleRetryStrategy
+from smithy_aws_core.auth.sigv4 import SigV4AuthScheme
+from smithy_aws_core.identity.static import (
+    AsyncStaticCredentialsResolver,
+    StaticCredentialsResolver,
+)
+from smithy_aws_core.protocols import Ec2QueryClientProtocol
+from smithy_core.aio.retries import AsyncSimpleRetryStrategy
 from smithy_core.aio.types import AsyncBytesReader
 from smithy_core.aio.utils import async_list
+from smithy_core.retries import SimpleRetryStrategy
+from smithy_core.shapes import ShapeID
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPResponse as _smithy_http_aio_HTTPResponse
 from smithy_http.aio.interfaces import (
@@ -17,8 +24,12 @@ from smithy_http.aio.interfaces import (
 from smithy_http.interfaces import HTTPClientConfiguration, HTTPRequestConfiguration
 from smithy_test import deep_equal
 
-from ec2query.client import AsyncEC2ProtocolClient
-from ec2query.config import AsyncEC2ProtocolConfig
+from ec2query.client import AsyncEC2ProtocolClient, EC2ProtocolClient
+from ec2query.config import (
+    AsyncEC2ProtocolConfig,
+    EC2ProtocolConfig,
+    _PROTOCOL_SETTINGS,
+)
 from ec2query.models import (
     DatetimeOffsetsInput,
     DatetimeOffsetsOutput,
@@ -82,7 +93,7 @@ async def test_ec2_query_date_time_with_negative_offset_response_datetime_offset
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<DatetimeOffsetsResponse xmlns="https://example.com/">\n    <datetime>2019-12-16T22:48:18-01:00</datetime>\n    <requestId>requestid</requestId>\n</DatetimeOffsetsResponse>\n',
@@ -90,7 +101,7 @@ async def test_ec2_query_date_time_with_negative_offset_response_datetime_offset
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -118,7 +129,7 @@ async def test_ec2_query_date_time_with_positive_offset_response_datetime_offset
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<DatetimeOffsetsResponse xmlns="https://example.com/">\n    <datetime>2019-12-17T00:48:18+01:00</datetime>\n    <requestId>requestid</requestId>\n</DatetimeOffsetsResponse>\n',
@@ -126,7 +137,7 @@ async def test_ec2_query_date_time_with_positive_offset_response_datetime_offset
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -151,12 +162,12 @@ async def test_ec2_query_empty_input_and_empty_output_request_empty_input_and_em
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -231,7 +242,7 @@ async def test_ec2_query_empty_input_and_empty_output_response_empty_input_and_e
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<EmptyInputAndEmptyOutputResponse xmlns="https://example.com/">\n    <requestId>requestid</requestId>\n</EmptyInputAndEmptyOutputResponse>\n',
@@ -239,7 +250,7 @@ async def test_ec2_query_empty_input_and_empty_output_response_empty_input_and_e
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -264,12 +275,12 @@ async def test_ec2_query_endpoint_trait_request_endpoint_operation() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -349,12 +360,12 @@ async def test_ec2_query_endpoint_trait_with_host_label_request_endpoint_with_ho
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -434,7 +445,7 @@ async def test_ec2_query_date_time_with_fractional_seconds_response_fractional_s
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<FractionalSecondsResponse xmlns="https://example.com/">\n    <datetime>2000-01-02T20:34:56.123Z</datetime>\n    <requestId>requestid</requestId>\n</FractionalSecondsResponse>\n',
@@ -442,7 +453,7 @@ async def test_ec2_query_date_time_with_fractional_seconds_response_fractional_s
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -468,7 +479,7 @@ async def test_ec2_greeting_with_errors_response_greeting_with_errors() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<GreetingWithErrorsResponse xmlns="https://example.com/">\n    <greeting>Hello</greeting>\n    <requestId>requestid</requestId>\n</GreetingWithErrorsResponse>\n',
@@ -476,7 +487,7 @@ async def test_ec2_greeting_with_errors_response_greeting_with_errors() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -497,7 +508,7 @@ async def test_ec2_invalid_greeting_error_error_greeting_with_errors() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=400,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b"<Response>\n    <Errors>\n        <Error>\n            <Code>InvalidGreeting</Code>\n            <Message>Hi</Message>\n        </Error>\n    </Errors>\n    <RequestID>foo-id</RequestID>\n</Response>\n",
@@ -505,7 +516,7 @@ async def test_ec2_invalid_greeting_error_error_greeting_with_errors() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -525,7 +536,7 @@ async def test_ec2_complex_error_error_greeting_with_errors() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=400,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b"<Response>\n    <Errors>\n        <Error>\n            <Code>ComplexError</Code>\n            <Message>Hi</Message>\n            <TopLevel>Top level</TopLevel>\n            <Nested>\n                <Foo>bar</Foo>\n            </Nested>\n        </Error>\n    </Errors>\n    <RequestID>foo-id</RequestID>\n</Response>\n",
@@ -533,7 +544,7 @@ async def test_ec2_complex_error_error_greeting_with_errors() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -554,12 +565,12 @@ async def test_ec2_query_host_with_path_request_host_with_path_operation() -> No
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/custom",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -626,7 +637,7 @@ async def test_ec2_ignores_wrapping_xml_name_response_ignores_wrapping_xml_name(
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<IgnoresWrappingXmlNameResponse xmlns="https://example.com/">\n    <foo>bar</foo>\n    <requestId>requestid</requestId>\n</IgnoresWrappingXmlNameResponse>\n',
@@ -634,7 +645,7 @@ async def test_ec2_ignores_wrapping_xml_name_response_ignores_wrapping_xml_name(
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -655,12 +666,12 @@ async def test_ec2_nested_structures_request_nested_structures() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -737,12 +748,12 @@ async def test_ec2_query_no_input_and_output_request_no_input_and_output() -> No
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -815,7 +826,7 @@ async def test_ec2_query_no_input_and_output_response_no_input_and_output() -> N
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<NoInputAndOutputResponse xmlns="https://example.com/">\n    <requestId>requestid</requestId>\n</NoInputAndOutputResponse>\n',
@@ -823,7 +834,7 @@ async def test_ec2_query_no_input_and_output_response_no_input_and_output() -> N
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -850,12 +861,12 @@ async def test_sdk_applied_content_encoding_ec2_query_request_put_with_content_e
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -926,12 +937,12 @@ async def test_sdk_appends_gzip_and_ignores_http_provided_encoding_ec2_query_req
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -998,12 +1009,12 @@ async def test_ec2_protocol_idempotency_token_auto_fill_request_query_idempotenc
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1078,12 +1089,12 @@ async def test_ec2_protocol_idempotency_token_auto_fill_is_set_request_query_ide
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1158,12 +1169,12 @@ async def test_ec2_lists_request_query_lists() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1239,12 +1250,12 @@ async def test_ec2_empty_query_lists_request_query_lists() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1320,12 +1331,12 @@ async def test_ec2_list_arg_with_xml_name_member_request_query_lists() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1398,12 +1409,12 @@ async def test_ec2_list_member_with_xml_name_request_query_lists() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1476,12 +1487,12 @@ async def test_ec2_list_nested_struct_with_list_request_query_lists() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1554,12 +1565,12 @@ async def test_ec2_timestamps_input_request_query_timestamps() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1636,7 +1647,7 @@ async def test_ec2_recursive_shapes_response_recursive_xml_shapes() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<RecursiveXmlShapesResponse xmlns="https://example.com/">\n    <nested>\n        <foo>Foo1</foo>\n        <nested>\n            <bar>Bar1</bar>\n            <recursiveMember>\n                <foo>Foo2</foo>\n                <nested>\n                    <bar>Bar2</bar>\n                </nested>\n            </recursiveMember>\n        </nested>\n    </nested>\n    <requestId>requestid</requestId>\n</RecursiveXmlShapesResponse>\n',
@@ -1644,7 +1655,7 @@ async def test_ec2_recursive_shapes_response_recursive_xml_shapes() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1675,12 +1686,12 @@ async def test_ec2_simple_input_params_strings_request_simple_input_params() -> 
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1757,12 +1768,12 @@ async def test_ec2_simple_input_params_string_and_boolean_true_request_simple_in
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1839,12 +1850,12 @@ async def test_ec2_simple_input_params_strings_and_boolean_false_request_simple_
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1917,12 +1928,12 @@ async def test_ec2_simple_input_params_integer_request_simple_input_params() -> 
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -1995,12 +2006,12 @@ async def test_ec2_simple_input_params_float_request_simple_input_params() -> No
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2073,12 +2084,12 @@ async def test_ec2_simple_input_params_blob_request_simple_input_params() -> Non
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2153,12 +2164,12 @@ async def test_ec2_enums_request_simple_input_params() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2233,12 +2244,12 @@ async def test_ec2_query_request_simple_input_params() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2313,12 +2324,12 @@ async def test_ec2_query_is_preferred_request_simple_input_params() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2396,12 +2407,12 @@ async def test_ec2_xml_name_is_uppercased_request_simple_input_params() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2481,12 +2492,12 @@ async def test_ec2_query_name_distinct_from_xml_name_and_member_name_request_sim
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2565,12 +2576,12 @@ async def test_ec2_query_supports_na_n_float_inputs_request_simple_input_params(
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2647,12 +2658,12 @@ async def test_ec2_query_supports_infinity_float_inputs_request_simple_input_par
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2727,12 +2738,12 @@ async def test_ec2_query_supports_negative_infinity_float_inputs_request_simple_
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com/",
-            transport=RequestTestHTTPClient(),
-            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            transport=RequestTestAsyncHTTPClient(),
+            retry_strategy=AsyncSimpleRetryStrategy(max_attempts=1),
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2807,7 +2818,7 @@ async def test_ec2_simple_scalar_properties_response_simple_scalar_xml_propertie
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<SimpleScalarXmlPropertiesResponse xmlns="https://example.com/">\n    <stringValue>string</stringValue>\n    <emptyStringValue/>\n    <trueBooleanValue>true</trueBooleanValue>\n    <falseBooleanValue>false</falseBooleanValue>\n    <byteValue>1</byteValue>\n    <shortValue>2</shortValue>\n    <integerValue>3</integerValue>\n    <longValue>4</longValue>\n    <floatValue>5.5</floatValue>\n    <DoubleDribble>6.5</DoubleDribble>\n    <requestId>requestid</requestId>\n</SimpleScalarXmlPropertiesResponse>\n',
@@ -2815,7 +2826,7 @@ async def test_ec2_simple_scalar_properties_response_simple_scalar_xml_propertie
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2849,7 +2860,7 @@ async def test_ec2_query_supports_na_n_float_outputs_response_simple_scalar_xml_
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<SimpleScalarXmlPropertiesResponse xmlns="https://example.com/">\n    <floatValue>NaN</floatValue>\n    <DoubleDribble>NaN</DoubleDribble>\n</SimpleScalarXmlPropertiesResponse>\n',
@@ -2857,7 +2868,7 @@ async def test_ec2_query_supports_na_n_float_outputs_response_simple_scalar_xml_
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2882,7 +2893,7 @@ async def test_ec2_query_supports_infinity_float_outputs_response_simple_scalar_
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<SimpleScalarXmlPropertiesResponse xmlns="https://example.com/">\n    <floatValue>Infinity</floatValue>\n    <DoubleDribble>Infinity</DoubleDribble>\n</SimpleScalarXmlPropertiesResponse>\n',
@@ -2890,7 +2901,7 @@ async def test_ec2_query_supports_infinity_float_outputs_response_simple_scalar_
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2915,7 +2926,7 @@ async def test_ec2_query_supports_negative_infinity_float_outputs_response_simpl
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<SimpleScalarXmlPropertiesResponse xmlns="https://example.com/">\n    <floatValue>-Infinity</floatValue>\n    <DoubleDribble>-Infinity</DoubleDribble>\n</SimpleScalarXmlPropertiesResponse>\n',
@@ -2923,7 +2934,7 @@ async def test_ec2_query_supports_negative_infinity_float_outputs_response_simpl
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2946,7 +2957,7 @@ async def test_ec2_xml_blobs_response_xml_blobs() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<XmlBlobsResponse xmlns="https://example.com/">\n    <data>dmFsdWU=</data>\n    <requestId>requestid</requestId>\n</XmlBlobsResponse>\n',
@@ -2954,7 +2965,7 @@ async def test_ec2_xml_blobs_response_xml_blobs() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -2975,7 +2986,7 @@ async def test_ec2_xml_empty_blobs_response_xml_empty_blobs() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<XmlEmptyBlobsResponse xmlns="https://example.com/">\n    <data></data>\n    <requestId>requestid</requestId>\n</XmlEmptyBlobsResponse>\n',
@@ -2983,7 +2994,7 @@ async def test_ec2_xml_empty_blobs_response_xml_empty_blobs() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3004,7 +3015,7 @@ async def test_ec2_xml_empty_self_closed_blobs_response_xml_empty_blobs() -> Non
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<XmlEmptyBlobsResponse xmlns="https://example.com/">\n    <data/>\n    <requestId>requestid</requestId>\n</XmlEmptyBlobsResponse>\n',
@@ -3012,7 +3023,7 @@ async def test_ec2_xml_empty_self_closed_blobs_response_xml_empty_blobs() -> Non
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3033,7 +3044,7 @@ async def test_ec2_xml_empty_lists_response_xml_empty_lists() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml")],
                 body=b'<XmlEmptyListsResponse xmlns="https://example.com/">\n  <stringList/>\n  <stringSet></stringSet>\n</XmlEmptyListsResponse>\n',
@@ -3041,7 +3052,7 @@ async def test_ec2_xml_empty_lists_response_xml_empty_lists() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3062,7 +3073,7 @@ async def test_ec2_xml_enums_response_xml_enums() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<XmlEnumsResponse xmlns="https://example.com/">\n    <fooEnum1>Foo</fooEnum1>\n    <fooEnum2>0</fooEnum2>\n    <fooEnum3>1</fooEnum3>\n    <fooEnumList>\n        <member>Foo</member>\n        <member>0</member>\n    </fooEnumList>\n    <fooEnumSet>\n        <member>Foo</member>\n        <member>0</member>\n    </fooEnumSet>\n    <fooEnumMap>\n        <entry>\n            <key>hi</key>\n            <value>Foo</value>\n        </entry>\n        <entry>\n            <key>zero</key>\n            <value>0</value>\n        </entry>\n    </fooEnumMap>\n    <requestId>requestid</requestId>\n</XmlEnumsResponse>\n',
@@ -3070,7 +3081,7 @@ async def test_ec2_xml_enums_response_xml_enums() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3098,7 +3109,7 @@ async def test_ec2_xml_int_enums_response_xml_int_enums() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<XmlIntEnumsResponse xmlns="https://example.com/">\n    <intEnum1>1</intEnum1>\n    <intEnum2>2</intEnum2>\n    <intEnum3>3</intEnum3>\n    <intEnumList>\n        <member>1</member>\n        <member>2</member>\n    </intEnumList>\n    <intEnumSet>\n        <member>1</member>\n        <member>2</member>\n    </intEnumSet>\n    <intEnumMap>\n        <entry>\n            <key>a</key>\n            <value>1</value>\n        </entry>\n        <entry>\n            <key>b</key>\n            <value>2</value>\n        </entry>\n    </intEnumMap>\n    <requestId>requestid</requestId>\n</XmlIntEnumsResponse>\n',
@@ -3106,7 +3117,7 @@ async def test_ec2_xml_int_enums_response_xml_int_enums() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3134,7 +3145,7 @@ async def test_ec2_xml_lists_response_xml_lists() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<XmlListsResponse xmlns="https://example.com/">\n    <stringList>\n        <member>foo</member>\n        <member>bar</member>\n    </stringList>\n    <stringSet>\n        <member>foo</member>\n        <member>bar</member>\n    </stringSet>\n    <integerList>\n        <member>1</member>\n        <member>2</member>\n    </integerList>\n    <booleanList>\n        <member>true</member>\n        <member>false</member>\n    </booleanList>\n    <timestampList>\n        <member>2014-04-29T18:30:38Z</member>\n        <member>2014-04-29T18:30:38Z</member>\n    </timestampList>\n    <enumList>\n        <member>Foo</member>\n        <member>0</member>\n    </enumList>\n    <intEnumList>\n        <member>1</member>\n        <member>2</member>\n    </intEnumList>\n    <nestedStringList>\n        <member>\n            <member>foo</member>\n            <member>bar</member>\n        </member>\n        <member>\n            <member>baz</member>\n            <member>qux</member>\n        </member>\n    </nestedStringList>\n    <renamed>\n        <item>foo</item>\n        <item>bar</item>\n    </renamed>\n    <flattenedList>hi</flattenedList>\n    <flattenedList>bye</flattenedList>\n    <customName>yep</customName>\n    <customName>nope</customName>\n    <flattenedListWithMemberNamespace xmlns="https://xml-member.example.com">a</flattenedListWithMemberNamespace>\n    <flattenedListWithMemberNamespace xmlns="https://xml-member.example.com">b</flattenedListWithMemberNamespace>\n    <flattenedListWithNamespace>a</flattenedListWithNamespace>\n    <flattenedListWithNamespace>b</flattenedListWithNamespace>\n    <myStructureList>\n        <item>\n            <value>1</value>\n            <other>2</other>\n        </item>\n        <item>\n            <value>3</value>\n            <other>4</other>\n        </item>\n    </myStructureList>\n    <requestId>requestid</requestId>\n</XmlListsResponse>\n',
@@ -3142,7 +3153,7 @@ async def test_ec2_xml_lists_response_xml_lists() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3184,7 +3195,7 @@ async def test_ec2_xml_namespaces_response_xml_namespaces() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<XmlNamespacesResponse xmlns="https://example.com/">\n    <nested>\n        <foo xmlns:baz="http://baz.com">Foo</foo>\n        <values xmlns="http://qux.com">\n            <member xmlns="http://bux.com">Bar</member>\n            <member xmlns="http://bux.com">Baz</member>\n        </values>\n    </nested>\n    <requestId>requestid</requestId>\n</XmlNamespacesResponse>\n',
@@ -3192,7 +3203,7 @@ async def test_ec2_xml_namespaces_response_xml_namespaces() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3215,7 +3226,7 @@ async def test_ec2_xml_timestamps_response_xml_timestamps() -> None:
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<XmlTimestampsResponse xmlns="https://example.com/">\n    <normal>2014-04-29T18:30:38Z</normal>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
@@ -3223,7 +3234,7 @@ async def test_ec2_xml_timestamps_response_xml_timestamps() -> None:
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3251,7 +3262,7 @@ async def test_ec2_xml_timestamps_with_date_time_format_response_xml_timestamps(
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<XmlTimestampsResponse xmlns="https://example.com/">\n    <dateTime>2014-04-29T18:30:38Z</dateTime>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
@@ -3259,7 +3270,7 @@ async def test_ec2_xml_timestamps_with_date_time_format_response_xml_timestamps(
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3287,7 +3298,7 @@ async def test_ec2_xml_timestamps_with_date_time_on_target_format_response_xml_t
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<XmlTimestampsResponse xmlns="https://example.com/">\n    <dateTimeOnTarget>2014-04-29T18:30:38Z</dateTimeOnTarget>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
@@ -3295,7 +3306,7 @@ async def test_ec2_xml_timestamps_with_date_time_on_target_format_response_xml_t
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3320,7 +3331,7 @@ async def test_ec2_xml_timestamps_with_epoch_seconds_format_response_xml_timesta
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<XmlTimestampsResponse xmlns="https://example.com/">\n    <epochSeconds>1398796238</epochSeconds>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
@@ -3328,7 +3339,7 @@ async def test_ec2_xml_timestamps_with_epoch_seconds_format_response_xml_timesta
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3356,7 +3367,7 @@ async def test_ec2_xml_timestamps_with_epoch_seconds_on_target_format_response_x
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<XmlTimestampsResponse xmlns="https://example.com/">\n    <epochSecondsOnTarget>1398796238</epochSecondsOnTarget>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
@@ -3364,7 +3375,7 @@ async def test_ec2_xml_timestamps_with_epoch_seconds_on_target_format_response_x
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3389,7 +3400,7 @@ async def test_ec2_xml_timestamps_with_http_date_format_response_xml_timestamps(
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<XmlTimestampsResponse xmlns="https://example.com/">\n    <httpDate>Tue, 29 Apr 2014 18:30:38 GMT</httpDate>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
@@ -3397,7 +3408,7 @@ async def test_ec2_xml_timestamps_with_http_date_format_response_xml_timestamps(
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3422,7 +3433,7 @@ async def test_ec2_xml_timestamps_with_http_date_on_target_format_response_xml_t
     client = AsyncEC2ProtocolClient(
         config=await AsyncEC2ProtocolConfig.resolve(
             endpoint_uri="https://example.com",
-            transport=ResponseTestHTTPClient(
+            transport=ResponseTestAsyncHTTPClient(
                 status=200,
                 headers=[("Content-Type", "text/xml;charset=UTF-8")],
                 body=b'<XmlTimestampsResponse xmlns="https://example.com/">\n    <httpDateOnTarget>Tue, 29 Apr 2014 18:30:38 GMT</httpDateOnTarget>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
@@ -3430,7 +3441,7 @@ async def test_ec2_xml_timestamps_with_http_date_on_target_format_response_xml_t
             region="us-east-1",
             aws_access_key_id="test-access-key-id",
             aws_secret_access_key="test-secret-access-key",
-            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            aws_credentials_identity_resolver=AsyncStaticCredentialsResolver(),
         )
     )
 
@@ -3455,7 +3466,7 @@ class TestHttpServiceError(ServiceError):
         self.request = request
 
 
-class RequestTestHTTPClient:
+class RequestTestAsyncHTTPClient:
     """An asynchronous HTTP client solely for testing purposes."""
 
     TIMEOUT_EXCEPTIONS = ()
@@ -3474,7 +3485,7 @@ class RequestTestHTTPClient:
         raise TestHttpServiceError(request)
 
 
-class ResponseTestHTTPClient:
+class ResponseTestAsyncHTTPClient:
     """An asynchronous HTTP client solely for testing purposes."""
 
     TIMEOUT_EXCEPTIONS = ()
@@ -3502,4 +3513,3664 @@ class ResponseTestHTTPClient:
         # Pre-construct the response from the request and return it
         return _smithy_http_aio_HTTPResponse(
             status=self.status, fields=self.fields, body=async_list([self.body])
+        )
+
+
+def test_ec2_query_date_time_with_negative_offset_response_datetime_offsets_sync() -> (
+    None
+):
+    """
+    Ensures that clients can correctly parse datetime (timestamps) with
+    offsets
+    """
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<DatetimeOffsetsResponse xmlns="https://example.com/">\n    <datetime>2019-12-16T22:48:18-01:00</datetime>\n    <requestId>requestid</requestId>\n</DatetimeOffsetsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = DatetimeOffsetsInput()
+
+    try:
+        actual = client.datetime_offsets(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = DatetimeOffsetsOutput(
+            datetime_=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_query_date_time_with_positive_offset_response_datetime_offsets_sync() -> (
+    None
+):
+    """
+    Ensures that clients can correctly parse datetime (timestamps) with
+    offsets
+    """
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<DatetimeOffsetsResponse xmlns="https://example.com/">\n    <datetime>2019-12-17T00:48:18+01:00</datetime>\n    <requestId>requestid</requestId>\n</DatetimeOffsetsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = DatetimeOffsetsInput()
+
+    try:
+        actual = client.datetime_offsets(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = DatetimeOffsetsOutput(
+            datetime_=datetime(2019, 12, 16, 23, 48, 18, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_query_empty_input_and_empty_output_request_empty_input_and_empty_output_sync() -> (
+    None
+):
+    """Empty input serializes no extra query params"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = EmptyInputAndEmptyOutputInput()
+
+    try:
+        client.empty_input_and_empty_output(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=EmptyInputAndEmptyOutput&Version=2020-01-08"
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_query_empty_input_and_empty_output_response_empty_input_and_empty_output_sync() -> (
+    None
+):
+    """Empty output"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<EmptyInputAndEmptyOutputResponse xmlns="https://example.com/">\n    <requestId>requestid</requestId>\n</EmptyInputAndEmptyOutputResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = EmptyInputAndEmptyOutputInput()
+
+    try:
+        actual = client.empty_input_and_empty_output(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = EmptyInputAndEmptyOutputOutput()
+
+        assert deep_equal(actual, expected)
+
+
+@mark.xfail()
+def test_ec2_query_endpoint_trait_request_endpoint_operation_sync() -> None:
+    """
+    Operations can prepend to the given host if they define the endpoint
+    trait.
+    """
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = EndpointOperationInput()
+
+    try:
+        client.endpoint_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "foo.example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=EndpointOperation&Version=2020-01-08"
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+@mark.xfail()
+def test_ec2_query_endpoint_trait_with_host_label_request_endpoint_with_host_label_operation_sync() -> (
+    None
+):
+    """
+    Operations can prepend to the given host if they define the endpoint
+    trait, and can use the host label trait to define further customization
+    based on user input.
+    """
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = EndpointWithHostLabelOperationInput(label="bar")
+
+    try:
+        client.endpoint_with_host_label_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "foo.bar.example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b"Action=EndpointWithHostLabelOperation&Version=2020-01-08&Label=bar"
+        )
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_query_date_time_with_fractional_seconds_response_fractional_seconds_sync() -> (
+    None
+):
+    """
+    Ensures that clients can correctly parse datetime timestamps with
+    fractional seconds
+    """
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<FractionalSecondsResponse xmlns="https://example.com/">\n    <datetime>2000-01-02T20:34:56.123Z</datetime>\n    <requestId>requestid</requestId>\n</FractionalSecondsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = FractionalSecondsInput()
+
+    try:
+        actual = client.fractional_seconds(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = FractionalSecondsOutput(
+            datetime_=datetime(2000, 1, 2, 20, 34, 56, 123000, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_greeting_with_errors_response_greeting_with_errors_sync() -> None:
+    """
+    Ensures that operations with errors successfully know how to deserialize
+    the successful response
+    """
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<GreetingWithErrorsResponse xmlns="https://example.com/">\n    <greeting>Hello</greeting>\n    <requestId>requestid</requestId>\n</GreetingWithErrorsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        actual = client.greeting_with_errors(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = GreetingWithErrorsOutput(greeting="Hello")
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_invalid_greeting_error_error_greeting_with_errors_sync() -> None:
+    """Parses simple XML errors"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=400,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b"<Response>\n    <Errors>\n        <Error>\n            <Code>InvalidGreeting</Code>\n            <Message>Hi</Message>\n        </Error>\n    </Errors>\n    <RequestID>foo-id</RequestID>\n</Response>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        client.greeting_with_errors(input_)
+        fail("Expected 'InvalidGreeting' exception to be thrown!")
+    except Exception as err:
+        if type(err).__name__ != "InvalidGreeting":
+            fail(
+                f"Expected 'InvalidGreeting' exception to be thrown, but received {type(err).__name__}: {err}"
+            )
+
+
+def test_ec2_complex_error_error_greeting_with_errors_sync() -> None:
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=400,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b"<Response>\n    <Errors>\n        <Error>\n            <Code>ComplexError</Code>\n            <Message>Hi</Message>\n            <TopLevel>Top level</TopLevel>\n            <Nested>\n                <Foo>bar</Foo>\n            </Nested>\n        </Error>\n    </Errors>\n    <RequestID>foo-id</RequestID>\n</Response>\n",
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = GreetingWithErrorsInput()
+
+    try:
+        client.greeting_with_errors(input_)
+        fail("Expected 'ComplexError' exception to be thrown!")
+    except Exception as err:
+        if type(err).__name__ != "ComplexError":
+            fail(
+                f"Expected 'ComplexError' exception to be thrown, but received {type(err).__name__}: {err}"
+            )
+
+
+def test_ec2_query_host_with_path_request_host_with_path_operation_sync() -> None:
+    """Custom endpoints supplied by users can have paths"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/custom",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = HostWithPathOperationInput()
+
+    try:
+        client.host_with_path_operation(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/custom/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = []
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=HostWithPathOperation&Version=2020-01-08"
+        assert actual_body_content == expected_body_content
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_ignores_wrapping_xml_name_response_ignores_wrapping_xml_name_sync() -> (
+    None
+):
+    """The xmlName trait on the output structure is ignored in the ec2 protocol"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<IgnoresWrappingXmlNameResponse xmlns="https://example.com/">\n    <foo>bar</foo>\n    <requestId>requestid</requestId>\n</IgnoresWrappingXmlNameResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = IgnoresWrappingXmlNameInput()
+
+    try:
+        actual = client.ignores_wrapping_xml_name(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = IgnoresWrappingXmlNameOutput(foo="bar")
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_nested_structures_request_nested_structures_sync() -> None:
+    """Serializes nested structures using dots"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = NestedStructuresInput(
+        nested=StructArg(
+            string_arg="foo", other_arg=True, recursive_arg=StructArg(string_arg="baz")
+        )
+    )
+
+    try:
+        client.nested_structures(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=NestedStructures&Version=2020-01-08&Nested.StringArg=foo&Nested.OtherArg=true&Nested.RecursiveArg.StringArg=baz"
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_query_no_input_and_output_request_no_input_and_output_sync() -> None:
+    """No input serializes no payload"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = NoInputAndOutputInput()
+
+    try:
+        client.no_input_and_output(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=NoInputAndOutput&Version=2020-01-08"
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_query_no_input_and_output_response_no_input_and_output_sync() -> None:
+    """Empty output"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<NoInputAndOutputResponse xmlns="https://example.com/">\n    <requestId>requestid</requestId>\n</NoInputAndOutputResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = NoInputAndOutputInput()
+
+    try:
+        actual = client.no_input_and_output(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = NoInputAndOutputOutput()
+
+        assert deep_equal(actual, expected)
+
+
+@mark.xfail()
+def test_sdk_applied_content_encoding_ec2_query_request_put_with_content_encoding_sync() -> (
+    None
+):
+    """
+    Compression algorithm encoding is appended to the Content-Encoding
+    header.
+    """
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = PutWithContentEncodingInput(
+        data="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\n"
+    )
+
+    try:
+        client.put_with_content_encoding(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-encoding", "gzip")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+@mark.xfail()
+def test_sdk_appends_gzip_and_ignores_http_provided_encoding_ec2_query_request_put_with_content_encoding_sync() -> (
+    None
+):
+    """
+    Compression algorithm encoding is appended to the Content-Encoding
+    header, and the user-provided content-encoding is NOT in the
+    Content-Encoding header since HTTP binding traits are ignored in the
+    ec2Query protocol.
+    """
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = PutWithContentEncodingInput(
+        encoding="custom",
+        data="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\n",
+    )
+
+    try:
+        client.put_with_content_encoding(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [("content-encoding", "gzip")]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+@mark.xfail()
+def test_ec2_protocol_idempotency_token_auto_fill_request_query_idempotency_token_auto_fill_sync() -> (
+    None
+):
+    """Automatically adds idempotency token when not set"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = QueryIdempotencyTokenAutoFillInput()
+
+    try:
+        client.query_idempotency_token_auto_fill(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=QueryIdempotencyTokenAutoFill&Version=2020-01-08&Token=00000000-0000-4000-8000-000000000000"
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_protocol_idempotency_token_auto_fill_is_set_request_query_idempotency_token_auto_fill_sync() -> (
+    None
+):
+    """Uses the given idempotency token as-is"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = QueryIdempotencyTokenAutoFillInput(
+        token="00000000-0000-4000-8000-000000000123"
+    )
+
+    try:
+        client.query_idempotency_token_auto_fill(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=QueryIdempotencyTokenAutoFill&Version=2020-01-08&Token=00000000-0000-4000-8000-000000000123"
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_lists_request_query_lists_sync() -> None:
+    """Serializes query lists. All EC2 lists are flattened."""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = QueryListsInput(
+        list_arg=["foo", "bar", "baz"],
+        complex_list_arg=[GreetingStruct(hi="hello"), GreetingStruct(hi="hola")],
+    )
+
+    try:
+        client.query_lists(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=QueryLists&Version=2020-01-08&ListArg.1=foo&ListArg.2=bar&ListArg.3=baz&ComplexListArg.1.Hi=hello&ComplexListArg.2.Hi=hola"
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_empty_query_lists_request_query_lists_sync() -> None:
+    """Does not serialize empty query lists."""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = QueryListsInput(list_arg=[])
+
+    try:
+        client.query_lists(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=QueryLists&Version=2020-01-08"
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_list_arg_with_xml_name_member_request_query_lists_sync() -> None:
+    """
+    An xmlName trait in the member of a list has no effect on the list
+    serialization.
+    """
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = QueryListsInput(list_arg_with_xml_name_member=["A", "B"])
+
+    try:
+        client.query_lists(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=QueryLists&Version=2020-01-08&ListArgWithXmlNameMember.1=A&ListArgWithXmlNameMember.2=B"
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_list_member_with_xml_name_request_query_lists_sync() -> None:
+    """Changes the name of the list using the xmlName trait"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = QueryListsInput(list_arg_with_xml_name=["A", "B"])
+
+    try:
+        client.query_lists(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=QueryLists&Version=2020-01-08&Hi.1=A&Hi.2=B"
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_list_nested_struct_with_list_request_query_lists_sync() -> None:
+    """Nested structure with a list member"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = QueryListsInput(nested_with_list=NestedStructWithList(list_arg=["A", "B"]))
+
+    try:
+        client.query_lists(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = []
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=QueryLists&Version=2020-01-08&NestedWithList.ListArg.1=A&NestedWithList.ListArg.2=B"
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_timestamps_input_request_query_timestamps_sync() -> None:
+    """Serializes timestamps"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = QueryTimestampsInput(
+        normal_format=datetime(2015, 1, 25, 8, 0, 0, 0, timezone.utc),
+        epoch_member=datetime(2015, 1, 25, 8, 0, 0, 0, timezone.utc),
+        epoch_target=datetime(2015, 1, 25, 8, 0, 0, 0, timezone.utc),
+    )
+
+    try:
+        client.query_timestamps(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=QueryTimestamps&Version=2020-01-08&NormalFormat=2015-01-25T08%3A00%3A00Z&EpochMember=1422172800&EpochTarget=1422172800"
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_recursive_shapes_response_recursive_xml_shapes_sync() -> None:
+    """Serializes recursive structures"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<RecursiveXmlShapesResponse xmlns="https://example.com/">\n    <nested>\n        <foo>Foo1</foo>\n        <nested>\n            <bar>Bar1</bar>\n            <recursiveMember>\n                <foo>Foo2</foo>\n                <nested>\n                    <bar>Bar2</bar>\n                </nested>\n            </recursiveMember>\n        </nested>\n    </nested>\n    <requestId>requestid</requestId>\n</RecursiveXmlShapesResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = RecursiveXmlShapesInput()
+
+    try:
+        actual = client.recursive_xml_shapes(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = RecursiveXmlShapesOutput(
+            nested=RecursiveXmlShapesOutputNested1(
+                foo="Foo1",
+                nested=RecursiveXmlShapesOutputNested2(
+                    bar="Bar1",
+                    recursive_member=RecursiveXmlShapesOutputNested1(
+                        foo="Foo2", nested=RecursiveXmlShapesOutputNested2(bar="Bar2")
+                    ),
+                ),
+            )
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_simple_input_params_strings_request_simple_input_params_sync() -> None:
+    """Serializes strings"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = SimpleInputParamsInput(foo="val1", bar="val2")
+
+    try:
+        client.simple_input_params(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b"Action=SimpleInputParams&Version=2020-01-08&Foo=val1&Bar=val2"
+        )
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_simple_input_params_string_and_boolean_true_request_simple_input_params_sync() -> (
+    None
+):
+    """Serializes booleans that are true"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = SimpleInputParamsInput(foo="val1", baz=True)
+
+    try:
+        client.simple_input_params(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b"Action=SimpleInputParams&Version=2020-01-08&Foo=val1&Baz=true"
+        )
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_simple_input_params_strings_and_boolean_false_request_simple_input_params_sync() -> (
+    None
+):
+    """Serializes booleans that are false"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = SimpleInputParamsInput(baz=False)
+
+    try:
+        client.simple_input_params(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=SimpleInputParams&Version=2020-01-08&Baz=false"
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_simple_input_params_integer_request_simple_input_params_sync() -> None:
+    """Serializes integers"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = SimpleInputParamsInput(bam=10)
+
+    try:
+        client.simple_input_params(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=SimpleInputParams&Version=2020-01-08&Bam=10"
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_simple_input_params_float_request_simple_input_params_sync() -> None:
+    """Serializes floats"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = SimpleInputParamsInput(boo=float(10.8))
+
+    try:
+        client.simple_input_params(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=SimpleInputParams&Version=2020-01-08&Boo=10.8"
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_simple_input_params_blob_request_simple_input_params_sync() -> None:
+    """Blobs are base64 encoded in the query string"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = SimpleInputParamsInput(qux=b"value")
+
+    try:
+        client.simple_input_params(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b"Action=SimpleInputParams&Version=2020-01-08&Qux=dmFsdWU%3D"
+        )
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_enums_request_simple_input_params_sync() -> None:
+    """Serializes enums in the query string"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = SimpleInputParamsInput(foo_enum="Foo")
+
+    try:
+        client.simple_input_params(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b"Action=SimpleInputParams&Version=2020-01-08&FooEnum=Foo"
+        )
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_query_request_simple_input_params_sync() -> None:
+    """Serializes query using ec2QueryName trait."""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = SimpleInputParamsInput(has_query_name="Hi")
+
+    try:
+        client.simple_input_params(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b"Action=SimpleInputParams&Version=2020-01-08&HasQueryName=Hi"
+        )
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_query_is_preferred_request_simple_input_params_sync() -> None:
+    """ec2QueryName trait is preferred over xmlName."""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = SimpleInputParamsInput(has_query_and_xml_name="Hi")
+
+    try:
+        client.simple_input_params(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b"Action=SimpleInputParams&Version=2020-01-08&HasQueryAndXmlName=Hi"
+        )
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_xml_name_is_uppercased_request_simple_input_params_sync() -> None:
+    """
+    xmlName is used with the ec2 protocol, but the first character is
+    uppercased
+    """
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = SimpleInputParamsInput(uses_xml_name="Hi")
+
+    try:
+        client.simple_input_params(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b"Action=SimpleInputParams&Version=2020-01-08&UsesXmlName=Hi"
+        )
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_query_name_distinct_from_xml_name_and_member_name_request_simple_input_params_sync() -> (
+    None
+):
+    """
+    ec2QueryName trait takes precedence when xmlName, default name, and
+    ec2QueryName all have distinct values.
+    """
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = SimpleInputParamsInput(
+        distinct_query_name="value1",
+        distinct_query_and_xml_name="value2",
+        distinct_xml_name="value3",
+    )
+
+    try:
+        client.simple_input_params(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=SimpleInputParams&Version=2020-01-08&QueryName=value1&queryAndXmlName=value2&XmlNameOnly=value3"
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_query_supports_na_n_float_inputs_request_simple_input_params_sync() -> (
+    None
+):
+    """Supports handling NaN float values."""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = SimpleInputParamsInput(float_value=float("nan"), boo=float("nan"))
+
+    try:
+        client.simple_input_params(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = (
+            b"Action=SimpleInputParams&Version=2020-01-08&FloatValue=NaN&Boo=NaN"
+        )
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_query_supports_infinity_float_inputs_request_simple_input_params_sync() -> (
+    None
+):
+    """Supports handling Infinity float values."""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = SimpleInputParamsInput(float_value=float("inf"), boo=float("inf"))
+
+    try:
+        client.simple_input_params(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=SimpleInputParams&Version=2020-01-08&FloatValue=Infinity&Boo=Infinity"
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_query_supports_negative_infinity_float_inputs_request_simple_input_params_sync() -> (
+    None
+):
+    """Supports handling -Infinity float values."""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com/",
+            transport=RequestTestHTTPClient(),
+            retry_strategy=SimpleRetryStrategy(max_attempts=1),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = SimpleInputParamsInput(float_value=float("-inf"), boo=float("-inf"))
+
+    try:
+        client.simple_input_params(input_)
+        fail("Expected 'TestHttpServiceError' exception to be thrown!")
+    except TestHttpServiceError as err:
+        actual = err.request
+
+        assert actual.method == "POST"
+        assert actual.destination.path == "/"
+        assert actual.destination.host == "example.com"
+
+        query = actual.destination.query
+        actual_query_segments: list[str] = query.split("&") if query else []
+        expected_query_segments: list[str] = []
+        for expected_query_segment in expected_query_segments:
+            assert expected_query_segment in actual_query_segments
+            actual_query_segments.remove(expected_query_segment)
+
+        actual_query_keys: list[str] = [k.lower() for k, v in parse_qsl(query)]
+        forbidden_query_keys: set[str] = set([])
+        for forbidden_key in forbidden_query_keys:
+            assert forbidden_key.lower() not in actual_query_keys
+
+        required_query_keys: list[str] = []
+        for required_query_key in required_query_keys:
+            assert required_query_key.lower() in actual_query_keys
+            # These are removed because the required list could require more than one
+            # value. By removing each value after we assert that it's there, we can
+            # effectively validate that without having to have a more complex comparator.
+            actual_query_keys.remove(required_query_key)
+
+        expected_headers: list[tuple[str, str]] = [
+            ("content-type", "application/x-www-form-urlencoded")
+        ]
+        for expected_key, expected_val in expected_headers:
+            assert expected_val in actual.fields[expected_key].values
+
+        forbidden_headers: set[str] = set([])
+        for forbidden_key in forbidden_headers:
+            with raises(KeyError):
+                actual.fields[forbidden_key]
+
+        required_headers: list[str] = ["content-length"]
+        for required_key in required_headers:
+            # del Fields[required_key] raises KeyError if key does not exist
+            del actual.fields[required_key]
+
+        actual_body_content = actual.consume_body()
+        expected_body_content = b"Action=SimpleInputParams&Version=2020-01-08&FloatValue=-Infinity&Boo=-Infinity"
+        actual_params = sorted(
+            parse_qsl(actual_body_content.decode(), keep_blank_values=True)
+        )
+        expected_params = sorted(
+            parse_qsl(expected_body_content.decode(), keep_blank_values=True)
+        )
+        assert actual_params == expected_params
+
+    except Exception as err:
+        fail(
+            f"Expected 'TestHttpServiceError' exception to be thrown, but received {type(err).__name__}: {err}"
+        )
+
+
+def test_ec2_simple_scalar_properties_response_simple_scalar_xml_properties_sync() -> (
+    None
+):
+    """Serializes simple scalar properties"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<SimpleScalarXmlPropertiesResponse xmlns="https://example.com/">\n    <stringValue>string</stringValue>\n    <emptyStringValue/>\n    <trueBooleanValue>true</trueBooleanValue>\n    <falseBooleanValue>false</falseBooleanValue>\n    <byteValue>1</byteValue>\n    <shortValue>2</shortValue>\n    <integerValue>3</integerValue>\n    <longValue>4</longValue>\n    <floatValue>5.5</floatValue>\n    <DoubleDribble>6.5</DoubleDribble>\n    <requestId>requestid</requestId>\n</SimpleScalarXmlPropertiesResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = SimpleScalarXmlPropertiesInput()
+
+    try:
+        actual = client.simple_scalar_xml_properties(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SimpleScalarXmlPropertiesOutput(
+            string_value="string",
+            empty_string_value="",
+            true_boolean_value=True,
+            false_boolean_value=False,
+            byte_value=1,
+            short_value=2,
+            integer_value=3,
+            long_value=4,
+            float_value=float(5.5),
+            double_value=float(6.5),
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_query_supports_na_n_float_outputs_response_simple_scalar_xml_properties_sync() -> (
+    None
+):
+    """Supports handling NaN float values."""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<SimpleScalarXmlPropertiesResponse xmlns="https://example.com/">\n    <floatValue>NaN</floatValue>\n    <DoubleDribble>NaN</DoubleDribble>\n</SimpleScalarXmlPropertiesResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = SimpleScalarXmlPropertiesInput()
+
+    try:
+        actual = client.simple_scalar_xml_properties(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SimpleScalarXmlPropertiesOutput(
+            float_value=float("nan"), double_value=float("nan")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_query_supports_infinity_float_outputs_response_simple_scalar_xml_properties_sync() -> (
+    None
+):
+    """Supports handling Infinity float values."""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<SimpleScalarXmlPropertiesResponse xmlns="https://example.com/">\n    <floatValue>Infinity</floatValue>\n    <DoubleDribble>Infinity</DoubleDribble>\n</SimpleScalarXmlPropertiesResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = SimpleScalarXmlPropertiesInput()
+
+    try:
+        actual = client.simple_scalar_xml_properties(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SimpleScalarXmlPropertiesOutput(
+            float_value=float("inf"), double_value=float("inf")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_query_supports_negative_infinity_float_outputs_response_simple_scalar_xml_properties_sync() -> (
+    None
+):
+    """Supports handling -Infinity float values."""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<SimpleScalarXmlPropertiesResponse xmlns="https://example.com/">\n    <floatValue>-Infinity</floatValue>\n    <DoubleDribble>-Infinity</DoubleDribble>\n</SimpleScalarXmlPropertiesResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = SimpleScalarXmlPropertiesInput()
+
+    try:
+        actual = client.simple_scalar_xml_properties(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = SimpleScalarXmlPropertiesOutput(
+            float_value=float("-inf"), double_value=float("-inf")
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_xml_blobs_response_xml_blobs_sync() -> None:
+    """Blobs are base64 encoded"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<XmlBlobsResponse xmlns="https://example.com/">\n    <data>dmFsdWU=</data>\n    <requestId>requestid</requestId>\n</XmlBlobsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = XmlBlobsInput()
+
+    try:
+        actual = client.xml_blobs(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlBlobsOperationOutput(data=b"value")
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_xml_empty_blobs_response_xml_empty_blobs_sync() -> None:
+    """Empty blobs are deserialized as empty string"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<XmlEmptyBlobsResponse xmlns="https://example.com/">\n    <data></data>\n    <requestId>requestid</requestId>\n</XmlEmptyBlobsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = XmlEmptyBlobsInput()
+
+    try:
+        actual = client.xml_empty_blobs(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlEmptyBlobsOutput(data=b"")
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_xml_empty_self_closed_blobs_response_xml_empty_blobs_sync() -> None:
+    """Empty self closed blobs are deserialized as empty string"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<XmlEmptyBlobsResponse xmlns="https://example.com/">\n    <data/>\n    <requestId>requestid</requestId>\n</XmlEmptyBlobsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = XmlEmptyBlobsInput()
+
+    try:
+        actual = client.xml_empty_blobs(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlEmptyBlobsOutput(data=b"")
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_xml_empty_lists_response_xml_empty_lists_sync() -> None:
+    """Deserializes empty XML lists"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml")],
+                body=b'<XmlEmptyListsResponse xmlns="https://example.com/">\n  <stringList/>\n  <stringSet></stringSet>\n</XmlEmptyListsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = XmlEmptyListsInput()
+
+    try:
+        actual = client.xml_empty_lists(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlEmptyListsOutput(string_list=[], string_set=[])
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_xml_enums_response_xml_enums_sync() -> None:
+    """Serializes simple scalar properties"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<XmlEnumsResponse xmlns="https://example.com/">\n    <fooEnum1>Foo</fooEnum1>\n    <fooEnum2>0</fooEnum2>\n    <fooEnum3>1</fooEnum3>\n    <fooEnumList>\n        <member>Foo</member>\n        <member>0</member>\n    </fooEnumList>\n    <fooEnumSet>\n        <member>Foo</member>\n        <member>0</member>\n    </fooEnumSet>\n    <fooEnumMap>\n        <entry>\n            <key>hi</key>\n            <value>Foo</value>\n        </entry>\n        <entry>\n            <key>zero</key>\n            <value>0</value>\n        </entry>\n    </fooEnumMap>\n    <requestId>requestid</requestId>\n</XmlEnumsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = XmlEnumsInput()
+
+    try:
+        actual = client.xml_enums(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlEnumsOutput(
+            foo_enum1="Foo",
+            foo_enum2="0",
+            foo_enum3="1",
+            foo_enum_list=["Foo", "0"],
+            foo_enum_set=["Foo", "0"],
+            foo_enum_map={"hi": "Foo", "zero": "0"},
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_xml_int_enums_response_xml_int_enums_sync() -> None:
+    """Serializes simple scalar properties"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<XmlIntEnumsResponse xmlns="https://example.com/">\n    <intEnum1>1</intEnum1>\n    <intEnum2>2</intEnum2>\n    <intEnum3>3</intEnum3>\n    <intEnumList>\n        <member>1</member>\n        <member>2</member>\n    </intEnumList>\n    <intEnumSet>\n        <member>1</member>\n        <member>2</member>\n    </intEnumSet>\n    <intEnumMap>\n        <entry>\n            <key>a</key>\n            <value>1</value>\n        </entry>\n        <entry>\n            <key>b</key>\n            <value>2</value>\n        </entry>\n    </intEnumMap>\n    <requestId>requestid</requestId>\n</XmlIntEnumsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = XmlIntEnumsInput()
+
+    try:
+        actual = client.xml_int_enums(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlIntEnumsOutput(
+            int_enum1=1,
+            int_enum2=2,
+            int_enum3=3,
+            int_enum_list=[1, 2],
+            int_enum_set=[1, 2],
+            int_enum_map={"a": 1, "b": 2},
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_xml_lists_response_xml_lists_sync() -> None:
+    """Tests for XML list serialization"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<XmlListsResponse xmlns="https://example.com/">\n    <stringList>\n        <member>foo</member>\n        <member>bar</member>\n    </stringList>\n    <stringSet>\n        <member>foo</member>\n        <member>bar</member>\n    </stringSet>\n    <integerList>\n        <member>1</member>\n        <member>2</member>\n    </integerList>\n    <booleanList>\n        <member>true</member>\n        <member>false</member>\n    </booleanList>\n    <timestampList>\n        <member>2014-04-29T18:30:38Z</member>\n        <member>2014-04-29T18:30:38Z</member>\n    </timestampList>\n    <enumList>\n        <member>Foo</member>\n        <member>0</member>\n    </enumList>\n    <intEnumList>\n        <member>1</member>\n        <member>2</member>\n    </intEnumList>\n    <nestedStringList>\n        <member>\n            <member>foo</member>\n            <member>bar</member>\n        </member>\n        <member>\n            <member>baz</member>\n            <member>qux</member>\n        </member>\n    </nestedStringList>\n    <renamed>\n        <item>foo</item>\n        <item>bar</item>\n    </renamed>\n    <flattenedList>hi</flattenedList>\n    <flattenedList>bye</flattenedList>\n    <customName>yep</customName>\n    <customName>nope</customName>\n    <flattenedListWithMemberNamespace xmlns="https://xml-member.example.com">a</flattenedListWithMemberNamespace>\n    <flattenedListWithMemberNamespace xmlns="https://xml-member.example.com">b</flattenedListWithMemberNamespace>\n    <flattenedListWithNamespace>a</flattenedListWithNamespace>\n    <flattenedListWithNamespace>b</flattenedListWithNamespace>\n    <myStructureList>\n        <item>\n            <value>1</value>\n            <other>2</other>\n        </item>\n        <item>\n            <value>3</value>\n            <other>4</other>\n        </item>\n    </myStructureList>\n    <requestId>requestid</requestId>\n</XmlListsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = XmlListsInput()
+
+    try:
+        actual = client.xml_lists(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlListsOperationOutput(
+            string_list=["foo", "bar"],
+            string_set=["foo", "bar"],
+            integer_list=[1, 2],
+            boolean_list=[True, False],
+            timestamp_list=[
+                datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc),
+                datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc),
+            ],
+            enum_list=["Foo", "0"],
+            int_enum_list=[1, 2],
+            nested_string_list=[["foo", "bar"], ["baz", "qux"]],
+            renamed_list_members=["foo", "bar"],
+            flattened_list=["hi", "bye"],
+            flattened_list2=["yep", "nope"],
+            flattened_list_with_member_namespace=["a", "b"],
+            flattened_list_with_namespace=["a", "b"],
+            structure_list=[
+                StructureListMember(a="1", b="2"),
+                StructureListMember(a="3", b="4"),
+            ],
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_xml_namespaces_response_xml_namespaces_sync() -> None:
+    """Serializes XML namespaces"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<XmlNamespacesResponse xmlns="https://example.com/">\n    <nested>\n        <foo xmlns:baz="http://baz.com">Foo</foo>\n        <values xmlns="http://qux.com">\n            <member xmlns="http://bux.com">Bar</member>\n            <member xmlns="http://bux.com">Baz</member>\n        </values>\n    </nested>\n    <requestId>requestid</requestId>\n</XmlNamespacesResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = XmlNamespacesInput()
+
+    try:
+        actual = client.xml_namespaces(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlNamespacesOutput(
+            nested=XmlNamespaceNested(foo="Foo", values=["Bar", "Baz"])
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_xml_timestamps_response_xml_timestamps_sync() -> None:
+    """Tests how normal timestamps are serialized"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<XmlTimestampsResponse xmlns="https://example.com/">\n    <normal>2014-04-29T18:30:38Z</normal>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput()
+
+    try:
+        actual = client.xml_timestamps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlTimestampsOutput(
+            normal=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_xml_timestamps_with_date_time_format_response_xml_timestamps_sync() -> (
+    None
+):
+    """
+    Ensures that the timestampFormat of date-time works like normal
+    timestamps
+    """
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<XmlTimestampsResponse xmlns="https://example.com/">\n    <dateTime>2014-04-29T18:30:38Z</dateTime>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput()
+
+    try:
+        actual = client.xml_timestamps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlTimestampsOutput(
+            date_time=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_xml_timestamps_with_date_time_on_target_format_response_xml_timestamps_sync() -> (
+    None
+):
+    """
+    Ensures that the timestampFormat of date-time on the target shape works
+    like normal timestamps
+    """
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<XmlTimestampsResponse xmlns="https://example.com/">\n    <dateTimeOnTarget>2014-04-29T18:30:38Z</dateTimeOnTarget>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput()
+
+    try:
+        actual = client.xml_timestamps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlTimestampsOutput(
+            date_time_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_xml_timestamps_with_epoch_seconds_format_response_xml_timestamps_sync() -> (
+    None
+):
+    """Ensures that the timestampFormat of epoch-seconds works"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<XmlTimestampsResponse xmlns="https://example.com/">\n    <epochSeconds>1398796238</epochSeconds>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput()
+
+    try:
+        actual = client.xml_timestamps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlTimestampsOutput(
+            epoch_seconds=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_xml_timestamps_with_epoch_seconds_on_target_format_response_xml_timestamps_sync() -> (
+    None
+):
+    """
+    Ensures that the timestampFormat of epoch-seconds on the target shape
+    works
+    """
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<XmlTimestampsResponse xmlns="https://example.com/">\n    <epochSecondsOnTarget>1398796238</epochSecondsOnTarget>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput()
+
+    try:
+        actual = client.xml_timestamps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlTimestampsOutput(
+            epoch_seconds_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_xml_timestamps_with_http_date_format_response_xml_timestamps_sync() -> (
+    None
+):
+    """Ensures that the timestampFormat of http-date works"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<XmlTimestampsResponse xmlns="https://example.com/">\n    <httpDate>Tue, 29 Apr 2014 18:30:38 GMT</httpDate>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput()
+
+    try:
+        actual = client.xml_timestamps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlTimestampsOutput(
+            http_date=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+def test_ec2_xml_timestamps_with_http_date_on_target_format_response_xml_timestamps_sync() -> (
+    None
+):
+    """Ensures that the timestampFormat of http-date on the target shape works"""
+    client = EC2ProtocolClient(
+        config=EC2ProtocolConfig.resolve(
+            protocol=Ec2QueryClientProtocol(_PROTOCOL_SETTINGS),
+            endpoint_uri="https://example.com",
+            transport=ResponseTestHTTPClient(
+                status=200,
+                headers=[("Content-Type", "text/xml;charset=UTF-8")],
+                body=b'<XmlTimestampsResponse xmlns="https://example.com/">\n    <httpDateOnTarget>Tue, 29 Apr 2014 18:30:38 GMT</httpDateOnTarget>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
+            ),
+            region="us-east-1",
+            aws_access_key_id="test-access-key-id",
+            aws_secret_access_key="test-secret-access-key",
+            aws_credentials_identity_resolver=StaticCredentialsResolver(),
+            auth_schemes={
+                ShapeID("aws.auth#sigv4"): SigV4AuthScheme(service="ec2query")
+            },
+        )
+    )
+
+    input_ = XmlTimestampsInput()
+
+    try:
+        actual = client.xml_timestamps(input_)
+    except Exception as err:
+        fail(f"Expected a valid response, but received: {type(err).__name__}: {err}")
+    else:
+        expected = XmlTimestampsOutput(
+            http_date_on_target=datetime(2014, 4, 29, 18, 30, 38, 0, timezone.utc)
+        )
+
+        assert deep_equal(actual, expected)
+
+
+class RequestTestHTTPClient:
+    """A synchronous HTTP client solely for testing purposes."""
+
+    TIMEOUT_EXCEPTIONS = ()
+
+    def __init__(self, *, client_config: HTTPClientConfiguration | None = None):
+        self._client_config = client_config
+
+    def send(
+        self,
+        request: HTTPRequest,
+        *,
+        request_config: HTTPRequestConfiguration | None = None,
+    ) -> _smithy_http_aio_interfaces_HTTPResponse:
+        # Raise the exception with the request object to bypass actual request handling
+        raise TestHttpServiceError(request)
+
+
+class ResponseTestHTTPClient:
+    """A synchronous HTTP client solely for testing purposes."""
+
+    TIMEOUT_EXCEPTIONS = ()
+
+    def __init__(
+        self,
+        *,
+        client_config: HTTPClientConfiguration | None = None,
+        status: int = 200,
+        headers: list[tuple[str, str]] | None = None,
+        body: bytes = b"",
+    ):
+        self._client_config = client_config
+        self.status = status
+        self.fields = tuples_to_fields(headers or [])
+        self.body = body
+
+    def send(
+        self,
+        request: HTTPRequest,
+        *,
+        request_config: HTTPRequestConfiguration | None = None,
+    ) -> _smithy_http_aio_HTTPResponse:
+        # Pre-construct the response from the request and return it
+        return _smithy_http_aio_HTTPResponse(
+            status=self.status, fields=self.fields, body=self.body
         )

@@ -47,12 +47,12 @@ final class ClientGenerator implements Runnable {
     @Override
     public void run() {
         context.writerDelegator().useShapeWriter(service, this::generateService);
+        context.writerDelegator().useShapeWriter(service, this::generateSyncService);
     }
 
     private void generateService(PythonWriter writer) {
         var serviceSymbol = symbolProvider.toSymbol(service);
         writer.addLocallyDefinedSymbol(serviceSymbol);
-        var configSymbol = CodegenUtils.getConfigSymbol(context.settings());
         var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
         writer.addLogger();
 
@@ -63,9 +63,8 @@ final class ClientGenerator implements Runnable {
             writer.writeDocs(docs, context);
 
             writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
-            // Services with a generated async config resolve lazily on first use;
-            // the rest keep the synchronous constructor with old Config.
-            var asyncConfigSymbol = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
+            // The async client always resolves its async config lazily on first use.
+            var configSym = CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model());
 
             // Collect service-scoped plugins applied once during setup.
             var servicePlugins = new LinkedHashSet<SymbolReference>();
@@ -77,9 +76,6 @@ final class ClientGenerator implements Runnable {
                 }
             }
 
-            // Resolve or construct the config lazily before applying plugins once.
-            var isAsyncConfig = asyncConfigSymbol.isPresent();
-            var configSym = asyncConfigSymbol.orElse(configSymbol);
             writer.addStdlibImport("asyncio");
             writer.addStdlibImport("copy", "deepcopy");
 
@@ -121,14 +117,10 @@ final class ClientGenerator implements Runnable {
                     configSym,
                     pluginSymbol,
                     writer.consumer(w -> writeConstructorDocs(w, serviceSymbol.getName())),
-                    RuntimeTypes.RETRY_STRATEGY_RESOLVER,
+                    RuntimeTypes.ASYNC_RETRY_STRATEGY_RESOLVER,
                     writer.consumer(w -> writeDefaultPlugins(w, servicePlugins)),
                     writer.consumer(w -> {
-                        if (isAsyncConfig) {
-                            w.write("config = await $T.resolve()", configSym);
-                        } else {
-                            w.write("config = $T()", configSym);
-                        }
+                        w.write("config = await $T.resolve()", configSym);
                     }),
                     writer.consumer(w -> {
                         w.pushState(new ClientSetupSection());
@@ -183,6 +175,254 @@ final class ClientGenerator implements Runnable {
         for (SymbolReference plugin : plugins) {
             writer.write("$T,", plugin);
         }
+    }
+
+    /**
+     * Generates the synchronous client, a second class in the same module whose
+     * operations drive the synchronous {@code RequestPipeline}. Streaming operations
+     * are async-only and are omitted here.
+     */
+    private void generateSyncService(PythonWriter writer) {
+        var serviceSymbol = symbolProvider.toSymbol(service);
+        // The service symbol is Async-prefixed; the sync client takes the canonical
+        // unprefixed name in the same module.
+        var syncName = serviceSymbol.getName().startsWith("Async")
+                ? serviceSymbol.getName().substring("Async".length())
+                : serviceSymbol.getName();
+        var syncConfig = CodegenUtils.getConfigSymbol(context.settings(), context.model());
+        var configSymbol = syncConfig;
+        var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
+
+        var servicePlugins = new LinkedHashSet<SymbolReference>();
+        for (PythonIntegration integration : context.integrations()) {
+            for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins(context)) {
+                if (runtimeClientPlugin.matchesService(model, service)) {
+                    runtimeClientPlugin.getPythonPlugin().ifPresent(servicePlugins::add);
+                }
+            }
+        }
+
+        writer.openBlock("class $L:", "", syncName, () -> {
+            var docs = service.getTrait(DocumentationTrait.class)
+                    .map(StringTrait::getValue)
+                    .orElse("Synchronous client for " + service.getId().getName());
+            writer.writeDocs(docs, context);
+
+            var configConstruction = configSymbol.getName() + ".resolve()";
+
+            writer.addImport(configSymbol.getNamespace(), configSymbol.getName());
+
+            writer.addDependency(SmithyPythonDependency.SMITHY_CORE);
+            writer.addStdlibImport("copy", "deepcopy");
+            writer.write("""
+                    def __init__(
+                        self,
+                        config: $1T | None = None,
+                        plugins: list[$2T] | None = None,
+                    ):
+                        ${3C|}
+                        self._config = config
+                        self._plugins = plugins
+                        self._setup_done = False
+                        self._closed = False
+                        self._retry_strategy_resolver = $4T()
+                        self._client_plugins: list[$2T] = [
+                            ${5C|}
+                        ]
+
+                    def _ensure_setup(self) -> None:
+                        if not self._setup_done:
+                            if self._config is None:
+                                config = $6L
+                            else:
+                                # Copy so plugins don't mutate the caller's config.
+                                config = deepcopy(self._config)
+                            for plugin in self._client_plugins:
+                                plugin(config)
+                            if self._plugins:
+                                for plugin in self._plugins:
+                                    plugin(config)
+                            self._config = config
+                            self._setup_done = True
+                    """,
+                    configSymbol,
+                    pluginSymbol,
+                    writer.consumer(w -> writeConstructorDocs(w, syncName)),
+                    RuntimeTypes.RETRY_STRATEGY_RESOLVER,
+                    writer.consumer(w -> writeDefaultPlugins(w, servicePlugins)),
+                    configConstruction);
+
+            writer.addStdlibImport("typing", "Any");
+            writer.addStdlibImport("typing", "Self");
+            writer.write("""
+
+                    def close(self) -> None:
+                        \"\"\"Close this client and any resources held by its transport.\"\"\"
+                        if self._closed:
+                            return
+                        self._closed = True
+                        if self._setup_done and self._config is not None:
+                            $1T(self._config.transport)
+
+                    def __enter__(self) -> Self:
+                        if self._closed:
+                            raise RuntimeError("Cannot enter a client that has been closed.")
+                        return self
+
+                    def __exit__(
+                        self,
+                        exc_type: Any,
+                        exc_value: Any,
+                        traceback: Any,
+                    ) -> None:
+                        self.close()
+                    """,
+                    RuntimeTypes.SYNC_CLOSE);
+
+            var topDownIndex = TopDownIndex.of(model);
+            var eventStreamIndex = EventStreamIndex.of(model);
+            for (OperationShape operation : topDownIndex.getContainedOperations(service)) {
+                // Streaming operations are async-only; the sync client omits them.
+                if (eventStreamIndex.getInputInfo(operation).isPresent()
+                        || eventStreamIndex.getOutputInfo(operation).isPresent()) {
+                    continue;
+                }
+                generateSyncOperation(writer, operation);
+            }
+        });
+    }
+
+    private void generateSyncOperation(PythonWriter writer, OperationShape operation) {
+        var operationSymbol = symbolProvider.toSymbol(operation);
+        var operationMethodSymbol = operationSymbol.expectProperty(OPERATION_METHOD);
+        var pluginSymbol = CodegenUtils.getPluginSymbol(context.settings());
+
+        var input = model.expectShape(operation.getInputShape());
+        var inputSymbol = symbolProvider.toSymbol(input);
+        var output = model.expectShape(operation.getOutputShape());
+        var outputSymbol = symbolProvider.toSymbol(output);
+
+        writer.putContext("input", inputSymbol);
+        writer.putContext("output", outputSymbol);
+        writer.putContext("plugin", pluginSymbol);
+        writer.putContext("operationName", operationMethodSymbol.getName());
+        writer.write("""
+                def ${operationName:L}(
+                    self,
+                    input: ${input:T},
+                    plugins: list[${plugin:T}] | None = None
+                ) -> ${output:T}:
+                    ${C|}
+                    return pipeline(call)
+                """,
+                writer.consumer(w -> writeSharedSyncOperationInit(w, operation, input, output)));
+    }
+
+    private void writeSharedSyncOperationInit(
+            PythonWriter writer,
+            OperationShape operation,
+            Shape input,
+            Shape output
+    ) {
+        writer.writeMultiLineDocs(() -> {
+            var operationDocs = writer.formatDocs(operation.getTrait(DocumentationTrait.class)
+                    .map(StringTrait::getValue)
+                    .orElse(String.format("Invokes the %s operation.", operation.getId().getName())),
+                    context);
+            var inputDocs = String.format("An instance of `%s`.",
+                    symbolProvider.toSymbol(input).getName());
+            var outputDocs = String.format("An instance of `%s`.",
+                    symbolProvider.toSymbol(output).getName());
+            writer.write("""
+                    $L
+
+                    Args:
+                        input:
+                            $L
+                        plugins:
+                            A list of callables that modify the configuration dynamically.
+                            Changes made by these plugins only apply for the duration of the
+                            operation execution and will not affect any other operation
+                            invocations.
+
+                    Returns:
+                        ${L|}
+                    """, operationDocs, inputDocs, outputDocs);
+        });
+
+        var defaultPlugins = new LinkedHashSet<SymbolReference>();
+        for (PythonIntegration integration : context.integrations()) {
+            for (RuntimeClientPlugin runtimeClientPlugin : integration.getClientPlugins(context)) {
+                if (runtimeClientPlugin.matchesOperation(model, service, operation)) {
+                    runtimeClientPlugin.getPythonPlugin().ifPresent(defaultPlugins::add);
+                }
+            }
+        }
+
+        writer.putContext("operation", symbolProvider.toSymbol(operation));
+        writer.addStdlibImport("copy", "deepcopy");
+        writer.addStdlibImport("typing", "Any");
+        writer.addStdlibImport("typing", "cast");
+        writer.write(
+                """
+                        if self._closed:
+                            raise RuntimeError(
+                                "Cannot invoke an operation on a client that has been closed."
+                            )
+
+                        operation_plugins: list[Plugin] = [
+                            $1C
+                        ]
+                        if plugins:
+                            operation_plugins.extend(plugins)
+                        self._ensure_setup()
+                        assert self._config is not None
+                        if operation_plugins:
+                            # Keep operation-plugin mutations scoped to this call.
+                            config = deepcopy(self._config)
+                            for plugin in operation_plugins:
+                                plugin(config)
+                        else:
+                            config = self._config
+                        if (
+                            config.protocol is None
+                            or config.transport is None
+                            or config.endpoint_resolver is None
+                            or config.auth_scheme_resolver is None
+                            or config.auth_schemes is None
+                        ):
+                            raise $2T(
+                                "protocol, transport, endpoint_resolver, auth_scheme_resolver,"
+                                " and auth_schemes MUST be set on the config to make calls."
+                            )
+
+                        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
+                            retry_strategy=config.retry_strategy,
+                        )
+
+                        pipeline = $3T(
+                            protocol=cast("$7T[Any, Any]", config.protocol),
+                            transport=cast("$8T[Any, Any]", config.transport),
+                        )
+                        call = $4T(
+                            input=input,
+                            operation=${operation:T},
+                            context=$5T({"config": config}),
+                            interceptor=$6T(config.interceptors),
+                            auth_scheme_resolver=config.auth_scheme_resolver,
+                            supported_auth_schemes=config.auth_schemes,
+                            endpoint_resolver=config.endpoint_resolver,
+                            retry_strategy=retry_strategy,
+                        )
+                        """,
+                writer.consumer(w -> writeDefaultPlugins(w, defaultPlugins)),
+                RuntimeTypes.EXPECTATION_NOT_MET_ERROR,
+                RuntimeTypes.SYNC_REQUEST_PIPELINE,
+                RuntimeTypes.CLIENT_CALL,
+                RuntimeTypes.TYPED_PROPERTIES,
+                RuntimeTypes.INTERCEPTOR_CHAIN,
+                RuntimeTypes.SYNC_CLIENT_PROTOCOL,
+                RuntimeTypes.SYNC_CLIENT_TRANSPORT);
     }
 
     private void writeConstructorDocs(PythonWriter writer, String clientName) {
@@ -346,7 +586,9 @@ final class ClientGenerator implements Runnable {
                 RuntimeTypes.TYPED_PROPERTIES,
                 RuntimeTypes.INTERCEPTOR_CHAIN,
                 writer.consumer(w -> {
-                    if (CodegenUtils.getAsyncConfigSymbol(context.settings(), context.model()).isPresent()) {
+                    // retry_mode/max_attempts are AWS config content, absent on the
+                    // generic core config.
+                    if (CodegenUtils.isAwsService(context.settings(), context.model())) {
                         w.write("retry_mode=config.retry_mode,");
                         w.write("max_attempts=config.max_attempts,");
                     }
