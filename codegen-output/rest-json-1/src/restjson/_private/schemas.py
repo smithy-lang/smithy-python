@@ -36,26 +36,11 @@ FOO_ENUM = Schema.collection(
     id=ShapeID("aws.protocoltests.shared#FooEnum"),
     shape_type=ShapeType.ENUM,
     members={
-        "FOO": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value="Foo")],
-        },
-        "BAZ": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value="Baz")],
-        },
-        "BAR": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value="Bar")],
-        },
-        "ONE": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value="1")],
-        },
-        "ZERO": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value="0")],
-        },
+        "FOO": {"target": UNIT},
+        "BAZ": {"target": UNIT},
+        "BAR": {"target": UNIT},
+        "ONE": {"target": UNIT},
+        "ZERO": {"target": UNIT},
     },
 )
 
@@ -68,21 +53,7 @@ FOO_ENUM_LIST = Schema.collection(
 INTEGER_ENUM = Schema.collection(
     id=ShapeID("aws.protocoltests.shared#IntegerEnum"),
     shape_type=ShapeType.INT_ENUM,
-    traits=[Trait.new(id=ShapeID("smithy.api#box"))],
-    members={
-        "A": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value=1)],
-        },
-        "B": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value=2)],
-        },
-        "C": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value=3)],
-        },
-    },
+    members={"A": {"target": UNIT}, "B": {"target": UNIT}, "C": {"target": UNIT}},
 )
 
 INTEGER_ENUM_LIST = Schema.collection(
@@ -100,7 +71,6 @@ INTEGER_LIST = Schema.collection(
 INTEGER_SET = Schema.collection(
     id=ShapeID("aws.protocoltests.shared#IntegerSet"),
     shape_type=ShapeType.LIST,
-    traits=[Trait.new(id=ShapeID("smithy.api#uniqueItems"))],
     members={"member": {"target": INTEGER}},
 )
 
@@ -119,7 +89,6 @@ STRING_LIST_MAP = Schema.collection(
 STRING_SET = Schema.collection(
     id=ShapeID("aws.protocoltests.shared#StringSet"),
     shape_type=ShapeType.LIST,
-    traits=[Trait.new(id=ShapeID("smithy.api#uniqueItems"))],
     members={"member": {"target": STRING}},
 )
 
@@ -131,10 +100,6 @@ TIMESTAMP_LIST = Schema.collection(
 
 ALL_QUERY_STRING_TYPES_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#AllQueryStringTypesInput"),
-    traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("HttpQueryParamsTrait",)),
-        Trait.new(id=ShapeID("smithy.api#input")),
-    ],
     members={
         "queryString": {
             "target": STRING,
@@ -248,8 +213,7 @@ ALL_QUERY_STRING_TYPES_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -258,244 +222,11 @@ ALL_QUERY_STRING_TYPES = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonAllQueryStringTypes",
-                        "documentation": "Serializes query string parameters with all supported types",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/AllQueryStringTypesInput",
-                        "body": "",
-                        "queryParams": (
-                            "String=Hello%20there",
-                            "StringList=a",
-                            "StringList=b",
-                            "StringList=c",
-                            "StringSet=a",
-                            "StringSet=b",
-                            "StringSet=c",
-                            "Byte=1",
-                            "Short=2",
-                            "Integer=3",
-                            "IntegerList=1",
-                            "IntegerList=2",
-                            "IntegerList=3",
-                            "IntegerSet=1",
-                            "IntegerSet=2",
-                            "IntegerSet=3",
-                            "Long=4",
-                            "Float=1.1",
-                            "Double=1.1",
-                            "DoubleList=1.1",
-                            "DoubleList=2.1",
-                            "DoubleList=3.1",
-                            "Boolean=true",
-                            "BooleanList=true",
-                            "BooleanList=false",
-                            "BooleanList=true",
-                            "Timestamp=1970-01-01T00%3A00%3A01Z",
-                            "TimestampList=1970-01-01T00%3A00%3A01Z",
-                            "TimestampList=1970-01-01T00%3A00%3A02Z",
-                            "TimestampList=1970-01-01T00%3A00%3A03Z",
-                            "Enum=Foo",
-                            "EnumList=Foo",
-                            "EnumList=Baz",
-                            "EnumList=Bar",
-                            "IntegerEnum=1",
-                            "IntegerEnumList=1",
-                            "IntegerEnumList=2",
-                            "IntegerEnumList=3",
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "queryString": "Hello there",
-                                "queryStringList": ("a", "b", "c"),
-                                "queryStringSet": ("a", "b", "c"),
-                                "queryByte": 1,
-                                "queryShort": 2,
-                                "queryInteger": 3,
-                                "queryIntegerList": (1, 2, 3),
-                                "queryIntegerSet": (1, 2, 3),
-                                "queryLong": 4,
-                                "queryFloat": 1.1,
-                                "queryDouble": 1.1,
-                                "queryDoubleList": (1.1, 2.1, 3.1),
-                                "queryBoolean": True,
-                                "queryBooleanList": (True, False, True),
-                                "queryTimestamp": 1,
-                                "queryTimestampList": (1, 2, 3),
-                                "queryEnum": "Foo",
-                                "queryEnumList": ("Foo", "Baz", "Bar"),
-                                "queryIntegerEnum": 1,
-                                "queryIntegerEnumList": (1, 2, 3),
-                                "queryParamsMapOfStringList": MappingProxyType(
-                                    {
-                                        "String": ("Hello there",),
-                                        "StringList": ("a", "b", "c"),
-                                        "StringSet": ("a", "b", "c"),
-                                        "Byte": ("1",),
-                                        "Short": ("2",),
-                                        "Integer": ("3",),
-                                        "IntegerList": ("1", "2", "3"),
-                                        "IntegerSet": ("1", "2", "3"),
-                                        "Long": ("4",),
-                                        "Float": ("1.1",),
-                                        "Double": ("1.1",),
-                                        "DoubleList": ("1.1", "2.1", "3.1"),
-                                        "Boolean": ("true",),
-                                        "BooleanList": ("true", "false", "true"),
-                                        "Timestamp": ("1970-01-01T00:00:01Z",),
-                                        "TimestampList": (
-                                            "1970-01-01T00:00:01Z",
-                                            "1970-01-01T00:00:02Z",
-                                            "1970-01-01T00:00:03Z",
-                                        ),
-                                        "Enum": ("Foo",),
-                                        "EnumList": ("Foo", "Baz", "Bar"),
-                                        "IntegerEnum": ("1",),
-                                        "IntegerEnumList": ("1", "2", "3"),
-                                    }
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryStringMap",
-                        "documentation": "Handles query string maps",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/AllQueryStringTypesInput",
-                        "body": "",
-                        "queryParams": (
-                            "QueryParamsStringKeyA=Foo",
-                            "QueryParamsStringKeyB=Bar",
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "queryParamsMapOfStringList": MappingProxyType(
-                                    {
-                                        "QueryParamsStringKeyA": ("Foo",),
-                                        "QueryParamsStringKeyB": ("Bar",),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryStringEscaping",
-                        "documentation": "Handles escaping all required characters in the query string.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/AllQueryStringTypesInput",
-                        "body": "",
-                        "queryParams": (
-                            "String=%20%25%3A%2F%3F%23%5B%5D%40%21%24%26%27%28%29%2A%2B%2C%3B%3D%F0%9F%98%B9",
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "queryString": " %:/?#[]@!$&'()*+,;=😹",
-                                "queryParamsMapOfStringList": MappingProxyType(
-                                    {"String": (" %:/?#[]@!$&'()*+,;=😹",)}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSupportsNaNFloatQueryValues",
-                        "documentation": "Supports handling NaN float query values.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/AllQueryStringTypesInput",
-                        "body": "",
-                        "queryParams": ("Float=NaN", "Double=NaN"),
-                        "params": MappingProxyType(
-                            {
-                                "queryFloat": "NaN",
-                                "queryDouble": "NaN",
-                                "queryParamsMapOfStringList": MappingProxyType(
-                                    {"Float": ("NaN",), "Double": ("NaN",)}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSupportsInfinityFloatQueryValues",
-                        "documentation": "Supports handling Infinity float query values.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/AllQueryStringTypesInput",
-                        "body": "",
-                        "queryParams": ("Float=Infinity", "Double=Infinity"),
-                        "params": MappingProxyType(
-                            {
-                                "queryFloat": "Infinity",
-                                "queryDouble": "Infinity",
-                                "queryParamsMapOfStringList": MappingProxyType(
-                                    {"Float": ("Infinity",), "Double": ("Infinity",)}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSupportsNegativeInfinityFloatQueryValues",
-                        "documentation": "Supports handling -Infinity float query values.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/AllQueryStringTypesInput",
-                        "body": "",
-                        "queryParams": ("Float=-Infinity", "Double=-Infinity"),
-                        "params": MappingProxyType(
-                            {
-                                "queryFloat": "-Infinity",
-                                "queryDouble": "-Infinity",
-                                "queryParamsMapOfStringList": MappingProxyType(
-                                    {"Float": ("-Infinity",), "Double": ("-Infinity",)}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonZeroAndFalseQueryValues",
-                        "documentation": "Query values of 0 and false are serialized",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/AllQueryStringTypesInput",
-                        "body": "",
-                        "queryParams": ("Integer=0", "Boolean=false"),
-                        "params": MappingProxyType(
-                            {
-                                "queryInteger": 0,
-                                "queryBoolean": False,
-                                "queryParamsMapOfStringList": MappingProxyType(
-                                    {"Integer": ("0",), "Boolean": ("false",)}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/AllQueryStringTypesInput", "method": "GET"}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
@@ -514,10 +245,7 @@ CLIENT_OPTIONAL_DEFAULTS = Schema.collection(
     members={
         "member": {
             "target": INTEGER,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#default"), value=0),
-                Trait.new(id=ShapeID("smithy.api#clientOptional")),
-            ],
+            "traits": [Trait.new(id=ShapeID("smithy.api#default"), value=0)],
         }
     },
 )
@@ -535,51 +263,6 @@ COMPLEX_NESTED_ERROR_DATA = Schema.collection(
 COMPLEX_ERROR = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#ComplexError"),
     traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonComplexErrorWithNoMessage",
-                        "documentation": "Serializes a complex error with no message member",
-                        "protocol": "aws.protocols#restJson1",
-                        "params": MappingProxyType(
-                            {
-                                "Header": "Header",
-                                "TopLevel": "Top level",
-                                "Nested": MappingProxyType({"Foo": "bar"}),
-                            }
-                        ),
-                        "code": 403,
-                        "headers": MappingProxyType(
-                            {
-                                "Content-Type": "application/json",
-                                "X-Header": "Header",
-                                "X-Amzn-Errortype": "ComplexError",
-                            }
-                        ),
-                        "body": '{\n    "TopLevel": "Top level",\n    "Nested": {\n        "Fooooo": "bar"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonEmptyComplexErrorWithNoMessage",
-                        "protocol": "aws.protocols#restJson1",
-                        "params": MappingProxyType({}),
-                        "code": 403,
-                        "headers": MappingProxyType(
-                            {
-                                "Content-Type": "application/json",
-                                "X-Amzn-Errortype": "ComplexError",
-                            }
-                        ),
-                        "body": "{}",
-                        "bodyMediaType": "application/json",
-                    }
-                ),
-            ),
-        ),
         Trait.new(id=ShapeID("smithy.api#error"), value="client"),
         Trait.new(id=ShapeID("smithy.api#httpError"), value=403),
     ],
@@ -597,7 +280,6 @@ COMPLEX_ERROR = Schema.collection(
 
 CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#ConstantAndVariableQueryStringInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "baz": {
             "target": STRING,
@@ -615,8 +297,7 @@ CONSTANT_AND_VARIABLE_QUERY_STRING_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -625,48 +306,16 @@ CONSTANT_AND_VARIABLE_QUERY_STRING = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonConstantAndVariableQueryStringMissingOneValue",
-                        "documentation": "Mixes constant and variable query string parameters",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/ConstantAndVariableQueryString",
-                        "queryParams": ("foo=bar", "baz=bam"),
-                        "forbidQueryParams": ("maybeSet",),
-                        "body": "",
-                        "params": MappingProxyType({"baz": "bam"}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonConstantAndVariableQueryStringAllValues",
-                        "documentation": "Mixes constant and variable query string parameters",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/ConstantAndVariableQueryString",
-                        "queryParams": ("foo=bar", "baz=bam", "maybeSet=yes"),
-                        "body": "",
-                        "params": MappingProxyType({"baz": "bam", "maybeSet": "yes"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/ConstantAndVariableQueryString?foo=bar", "method": "GET"}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
 CONSTANT_QUERY_STRING_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#ConstantQueryStringInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "hello": {
             "target": STRING,
@@ -683,8 +332,7 @@ CONSTANT_QUERY_STRING_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -693,41 +341,21 @@ CONSTANT_QUERY_STRING = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonConstantQueryString",
-                        "documentation": "Includes constant query string parameters",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/ConstantQueryString/hi",
-                        "queryParams": ("foo=bar", "hello"),
-                        "body": "",
-                        "params": MappingProxyType({"hello": "hi"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/ConstantQueryString/{hello}?foo=bar&hello", "method": "GET"}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
 CONTENT_TYPE_PARAMETERS_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#ContentTypeParametersInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={"value": {"target": INTEGER}},
 )
 
 CONTENT_TYPE_PARAMETERS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#ContentTypeParametersOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
+    id=ShapeID("aws.protocoltests.restjson#ContentTypeParametersOutput")
 )
 
 CONTENT_TYPE_PARAMETERS = Schema(
@@ -735,29 +363,9 @@ CONTENT_TYPE_PARAMETERS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonMustSupportParametersInContentType",
-                        "documentation": "A server should ignore parameters added to the content type",
-                        "uri": "/ContentTypeParameters",
-                        "method": "POST",
-                        "protocol": "aws.protocols#restJson1",
-                        "body": '{"value":5}',
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json; charset=utf-8"}
-                        ),
-                        "params": MappingProxyType({"value": 5}),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/ContentTypeParameters", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -766,8 +374,7 @@ DATETIME_OFFSETS_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -779,7 +386,6 @@ DATE_TIME = Schema(
 
 DATETIME_OFFSETS_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#DatetimeOffsetsOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={"datetime": {"target": DATE_TIME}},
 )
 
@@ -787,40 +393,10 @@ DATETIME_OFFSETS = Schema(
     id=ShapeID("aws.protocoltests.restjson#DatetimeOffsets"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDateTimeWithNegativeOffset",
-                        "documentation": "Ensures that clients can correctly parse datetime (timestamps) with offsets",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '      {\n          "datetime": "2019-12-16T22:48:18-01:00"\n      }\n',
-                        "params": MappingProxyType({"datetime": 1576540098}),
-                        "bodyMediaType": "application/json",
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDateTimeWithPositiveOffset",
-                        "documentation": "Ensures that clients can correctly parse datetime (timestamps) with offsets",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '      {\n          "datetime": "2019-12-17T00:48:18+01:00"\n      }\n',
-                        "params": MappingProxyType({"datetime": 1576540098}),
-                        "bodyMediaType": "application/json",
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/DatetimeOffsets", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -831,36 +407,13 @@ DOCUMENT = Schema(
 TEST_ENUM = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#TestEnum"),
     shape_type=ShapeType.ENUM,
-    members={
-        "FOO": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value="FOO")],
-        },
-        "BAR": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value="BAR")],
-        },
-        "BAZ": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value="BAZ")],
-        },
-    },
+    members={"FOO": {"target": UNIT}, "BAR": {"target": UNIT}, "BAZ": {"target": UNIT}},
 )
 
 TEST_INT_ENUM = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#TestIntEnum"),
     shape_type=ShapeType.INT_ENUM,
-    traits=[Trait.new(id=ShapeID("smithy.api#box"))],
-    members={
-        "ONE": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value=1)],
-        },
-        "TWO": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value=2)],
-        },
-    },
+    members={"ONE": {"target": UNIT}, "TWO": {"target": UNIT}},
 )
 
 TEST_STRING_LIST = Schema.collection(
@@ -1068,8 +621,7 @@ DOCUMENT_TYPE_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#DocumentTypeInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={"stringValue": {"target": STRING}, "documentValue": {"target": DOCUMENT}},
 )
@@ -1080,8 +632,7 @@ DOCUMENT_TYPE_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#DocumentTypeInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={"stringValue": {"target": STRING}, "documentValue": {"target": DOCUMENT}},
 )
@@ -1091,201 +642,9 @@ DOCUMENT_TYPE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "DocumentTypeInputWithObject",
-                        "documentation": "Serializes document types as part of the JSON request payload with no escaping.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/DocumentType",
-                        "body": '{\n    "stringValue": "string",\n    "documentValue": {\n        "foo": "bar"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "stringValue": "string",
-                                "documentValue": MappingProxyType({"foo": "bar"}),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DocumentInputWithString",
-                        "documentation": "Serializes document types using a string.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/DocumentType",
-                        "body": '{\n    "stringValue": "string",\n    "documentValue": "hello"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"stringValue": "string", "documentValue": "hello"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DocumentInputWithNumber",
-                        "documentation": "Serializes document types using a number.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/DocumentType",
-                        "body": '{\n    "stringValue": "string",\n    "documentValue": 10\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"stringValue": "string", "documentValue": 10}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DocumentInputWithBoolean",
-                        "documentation": "Serializes document types using a boolean.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/DocumentType",
-                        "body": '{\n    "stringValue": "string",\n    "documentValue": true\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"stringValue": "string", "documentValue": True}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DocumentInputWithList",
-                        "documentation": "Serializes document types using a list.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/DocumentType",
-                        "body": '{\n    "stringValue": "string",\n    "documentValue": [\n        true,\n        "hi",\n        [\n            1,\n            2\n        ],\n        {\n            "foo": {\n                "baz": [\n                    3,\n                    4\n                ]\n            }\n        }\n    ]\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "stringValue": "string",
-                                "documentValue": (
-                                    True,
-                                    "hi",
-                                    (1, 2),
-                                    MappingProxyType(
-                                        {"foo": MappingProxyType({"baz": (3, 4)})}
-                                    ),
-                                ),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "DocumentOutput",
-                        "documentation": "Serializes documents as part of the JSON response payload with no escaping.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "stringValue": "string",\n    "documentValue": {\n        "foo": "bar"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "stringValue": "string",
-                                "documentValue": MappingProxyType({"foo": "bar"}),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DocumentOutputString",
-                        "documentation": "Document types can be JSON scalars too.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "stringValue": "string",\n    "documentValue": "hello"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"stringValue": "string", "documentValue": "hello"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DocumentOutputNumber",
-                        "documentation": "Document types can be JSON scalars too.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "stringValue": "string",\n    "documentValue": 10\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"stringValue": "string", "documentValue": 10}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DocumentOutputBoolean",
-                        "documentation": "Document types can be JSON scalars too.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "stringValue": "string",\n    "documentValue": false\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"stringValue": "string", "documentValue": False}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DocumentOutputArray",
-                        "documentation": "Document types can be JSON arrays.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "stringValue": "string",\n    "documentValue": [\n        true,\n        false\n    ]\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"stringValue": "string", "documentValue": (True, False)}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/DocumentType", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -1301,8 +660,7 @@ DOCUMENT_TYPE_AS_MAP_VALUE_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#DocumentTypeAsMapValueInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={"docValuedMap": {"target": DOCUMENT_VALUED_MAP}},
 )
@@ -1313,8 +671,7 @@ DOCUMENT_TYPE_AS_MAP_VALUE_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#DocumentTypeAsMapValueInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={"docValuedMap": {"target": DOCUMENT_VALUED_MAP}},
 )
@@ -1324,69 +681,9 @@ DOCUMENT_TYPE_AS_MAP_VALUE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "DocumentTypeAsMapValueInput",
-                        "documentation": "Serializes a map that uses documents as the value.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/DocumentTypeAsMapValue",
-                        "body": '{\n    "docValuedMap": {\n        "foo": { "f": 1, "o": 2 },\n        "bar": [ "b", "a", "r" ],\n        "baz": "BAZ"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "docValuedMap": MappingProxyType(
-                                    {
-                                        "foo": MappingProxyType({"f": 1, "o": 2}),
-                                        "bar": ("b", "a", "r"),
-                                        "baz": "BAZ",
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "DocumentTypeAsMapValueOutput",
-                        "documentation": "Serializes a map that uses documents as the value.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "docValuedMap": {\n        "foo": { "f": 1, "o": 2 },\n        "bar": [ "b", "a", "r" ],\n        "baz": "BAZ"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "docValuedMap": MappingProxyType(
-                                    {
-                                        "foo": MappingProxyType({"f": 1, "o": 2}),
-                                        "bar": ("b", "a", "r"),
-                                        "baz": "BAZ",
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/DocumentTypeAsMapValue", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -1396,8 +693,7 @@ DOCUMENT_TYPE_AS_PAYLOAD_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#DocumentTypeAsPayloadInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "documentValue": {
@@ -1413,8 +709,7 @@ DOCUMENT_TYPE_AS_PAYLOAD_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#DocumentTypeAsPayloadInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "documentValue": {
@@ -1429,82 +724,9 @@ DOCUMENT_TYPE_AS_PAYLOAD = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "DocumentTypeAsPayloadInput",
-                        "documentation": "Serializes a document as the target of the httpPayload trait.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/DocumentTypeAsPayload",
-                        "body": '{\n    "foo": "bar"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"documentValue": MappingProxyType({"foo": "bar"})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DocumentTypeAsPayloadInputString",
-                        "documentation": "Serializes a document as the target of the httpPayload trait using a string.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/DocumentTypeAsPayload",
-                        "body": '"hello"',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"documentValue": "hello"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "DocumentTypeAsPayloadOutput",
-                        "documentation": "Serializes a document as the target of the httpPayload trait.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "foo": "bar"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"documentValue": MappingProxyType({"foo": "bar"})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DocumentTypeAsPayloadOutputString",
-                        "documentation": "Serializes a document as a payload string.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '"hello"',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"documentValue": "hello"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/DocumentTypeAsPayload", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -1636,7 +858,6 @@ EVENT_STREAM = Schema.collection(
 
 DUPLEX_STREAM_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#DuplexStreamInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "stream": {
             "target": EVENT_STREAM,
@@ -1647,7 +868,6 @@ DUPLEX_STREAM_INPUT = Schema.collection(
 
 DUPLEX_STREAM_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#DuplexStreamOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "stream": {
             "target": EVENT_STREAM,
@@ -1663,1698 +883,12 @@ DUPLEX_STREAM = Schema(
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"method": "POST", "uri": "/DuplexStream"}),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#eventStreamTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "DuplexBooleanHeaderInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"booleanHeader": True}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "booleanHeader": MappingProxyType(
-                                                {"boolean": True}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAASwAAADv7Cl8VDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMNYm9vbGVhbkhlYWRlcgC4J9Ws",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexByteHeaderInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {"headers": MappingProxyType({"byteHeader": 1})}
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "byteHeader": MappingProxyType({"byte": 1}),
-                                        }
-                                    ),
-                                    "bytes": "AAAASQAAADlvxG1ZDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMKYnl0ZUhlYWRlcgIBKFTmjg==",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexShortHeaderInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"shortHeader": 2}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "shortHeader": MappingProxyType(
-                                                {"short": 2}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAASwAAADv7Cl8VDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMLc2hvcnRIZWFkZXIDAAL1ETsK",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexIntegerHeaderInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {"headers": MappingProxyType({"intHeader": 3})}
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "intHeader": MappingProxyType(
-                                                {"integer": 3}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAASwAAADv7Cl8VDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMJaW50SGVhZGVyBAAAAAPlyUrb",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexLongHeaderInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"longHeader": 4294967294}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "longHeader": MappingProxyType(
-                                                {"long": 4294967294}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAAUAAAAEAr7VEyDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMKbG9uZ0hlYWRlcgUAAAAA/////udnd/I=",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexBlobHeaderInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"blobHeader": "foo"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "blobHeader": MappingProxyType(
-                                                {"blob": "Zm9v"}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAATQAAAD2dKQ+ADTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMKYmxvYkhlYWRlcgYAA2Zvb5sbbGM=",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexStringHeaderInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"stringHeader": "foo"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "stringHeader": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAATwAAAD8J5z3MDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMMc3RyaW5nSGVhZGVyBwADZm9vxT+2MA==",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexTimestampHeaderInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {
-                                                    "timestampHeader": "2024-10-31T14:15:14Z"
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "timestampHeader": MappingProxyType(
-                                                {"timestamp": "2024-10-31T14:15:14Z"}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAAVQAAAEWTZyrNDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMPdGltZXN0YW1wSGVhZGVyCAAAAZLi7jFQ6uV3Eg==",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexMultipleHeaderInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {
-                                                    "booleanHeader": True,
-                                                    "stringHeader": "foo",
-                                                    "blobHeader": "bar",
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "booleanHeader": MappingProxyType(
-                                                {"boolean": True}
-                                            ),
-                                            "stringHeader": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                            "blobHeader": MappingProxyType(
-                                                {"blob": "YmFy"}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAAbwAAAF+FlHOQDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMNYm9vbGVhbkhlYWRlcgAMc3RyaW5nSGVhZGVyBwADZm9vCmJsb2JIZWFkZXIGAANiYXIDXbo7",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexStringPayloadInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "stringPayload": MappingProxyType(
-                                                {"payload": "foo"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "stringPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "text/plain"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": "foo",
-                                    "bodyMediaType": "text/plain",
-                                    "bytes": "AAAAYAAAAE30fZUJDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcADXN0cmluZ1BheWxvYWQNOmNvbnRlbnQtdHlwZQcACnRleHQvcGxhaW5mb29G1ELr",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexBlobPayloadInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "blobPayload": MappingProxyType(
-                                                {"payload": "bar"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "blobPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/octet-stream"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": "bar",
-                                    "bodyMediaType": "application/octet-stream",
-                                    "bytes": "AAAAbAAAAFkrV6x1DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAC2Jsb2JQYXlsb2FkDTpjb250ZW50LXR5cGUHABhhcHBsaWNhdGlvbi9vY3RldC1zdHJlYW1iYXJv5nGJ",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexStructurePayloadInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "structurePayload": MappingProxyType(
-                                                {
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "foo"}
-                                                    )
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "structurePayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"foo"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAfwAAAFacqFy2DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAEHN0cnVjdHVyZVBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb257InN0cnVjdHVyZU1lbWJlciI6ImZvbyJ9rcIRVA==",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexUnionPayloadInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "unionPayload": MappingProxyType(
-                                                {
-                                                    "payload": MappingProxyType(
-                                                        {"unionMember": "bar"}
-                                                    )
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "unionPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"unionMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAdwAAAFKrtdNuDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcADHVuaW9uUGF5bG9hZA06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbnsidW5pb25NZW1iZXIiOiJiYXIifcZDMD4=",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexHeadersAndExplicitPayloadInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headersAndExplicitPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAlQAAAGw4wFp6DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAGWhlYWRlcnNBbmRFeHBsaWNpdFBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24GaGVhZGVyBwADZm9veyJzdHJ1Y3R1cmVNZW1iZXIiOiJiYXIifTafKXs=",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexHeadersAndImplicitPayloadInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndImplicitPayload": MappingProxyType(
-                                                {"header": "foo", "payload": "bar"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headersAndImplicitPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"payload":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAjQAAAGxoUIY5DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAGWhlYWRlcnNBbmRJbXBsaWNpdFBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24GaGVhZGVyBwADZm9veyJwYXlsb2FkIjoiYmFyIn15lZtT",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexServerErrorInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {"error": MappingProxyType({"message": "foo"})}
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "exception"}
-                                            ),
-                                            ":exception-type": MappingProxyType(
-                                                {"string": "error"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"message":"foo"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAdAAAAFObEpkoDTptZXNzYWdlLXR5cGUHAAlleGNlcHRpb24POmV4Y2VwdGlvbi10eXBlBwAFZXJyb3INOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb257Im1lc3NhZ2UiOiJmb28ifTua1S8=",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {
-                                "failure": MappingProxyType(
-                                    {"errorId": "aws.protocoltests.restjson#ErrorEvent"}
-                                )
-                            }
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexClientErrorInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {"error": MappingProxyType({"message": "foo"})}
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "exception"}
-                                            ),
-                                            ":exception-type": MappingProxyType(
-                                                {"string": "error"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"message":"foo"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAdAAAAFObEpkoDTptZXNzYWdlLXR5cGUHAAlleGNlcHRpb24POmV4Y2VwdGlvbi10eXBlBwAFZXJyb3INOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb257Im1lc3NhZ2UiOiJmb28ifTua1S8=",
-                                }
-                            ),
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexServerUnexpectedErrorInput",
-                        "documentation": "Servers must be able to handle structured, but unmodeled errors.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "error"}
-                                            ),
-                                            ":error-code": MappingProxyType(
-                                                {"string": "internal-error"}
-                                            ),
-                                            ":error-message": MappingProxyType(
-                                                {"string": "An unknown error occurred."}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAAbwAAAF+FlHOQDTptZXNzYWdlLXR5cGUHAAVlcnJvcgs6ZXJyb3ItY29kZQcADmludGVybmFsLWVycm9yDjplcnJvci1tZXNzYWdlBwAaQW4gdW5rbm93biBlcnJvciBvY2N1cnJlZC4kun0t",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexMissingMessageTypeInput",
-                        "documentation": "Servers must reject events that don't contain a :message-type header.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headersAndExplicitPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAfwAAAFacqFy2CzpldmVudC10eXBlBwAZaGVhZGVyc0FuZEV4cGxpY2l0UGF5bG9hZA06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbgZoZWFkZXIHAANmb297InN0cnVjdHVyZU1lbWJlciI6ImJhciJ98LexJg==",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexMalformedMessageTypeInput",
-                        "documentation": "Servers must reject events that contain a malformed :message-type header.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"blob": "ZXZlbnQ="}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headersAndExplicitPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAlQAAAGw4wFp6DTptZXNzYWdlLXR5cGUGAAVldmVudAs6ZXZlbnQtdHlwZQcAGWhlYWRlcnNBbmRFeHBsaWNpdFBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24GaGVhZGVyBwADZm9veyJzdHJ1Y3R1cmVNZW1iZXIiOiJiYXIifVwdfzU=",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexMissingEventTypeInput",
-                        "documentation": "Servers must reject message events that don't contain an :event-type header.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAbQAAAER1MekcDTptZXNzYWdlLXR5cGUHAAVldmVudA06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbgZoZWFkZXIHAANmb297InN0cnVjdHVyZU1lbWJlciI6ImJhciJ9riy0Gg==",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexMalformedEventTypeInput",
-                        "documentation": "Servers must reject message events that contain a malformed :event-type header.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {
-                                                    "blob": "aGVhZGVyc0FuZEV4cGxpY2l0UGF5bG9hZA=="
-                                                }
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAlQAAAGw4wFp6DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQYAGWhlYWRlcnNBbmRFeHBsaWNpdFBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24GaGVhZGVyBwADZm9veyJzdHJ1Y3R1cmVNZW1iZXIiOiJiYXIifcP6KLk=",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexBooleanHeaderOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"booleanHeader": True}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "booleanHeader": MappingProxyType(
-                                                {"boolean": True}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAASwAAADv7Cl8VDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMNYm9vbGVhbkhlYWRlcgC4J9Ws",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexByteHeaderOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {"headers": MappingProxyType({"byteHeader": 1})}
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "byteHeader": MappingProxyType({"byte": 1}),
-                                        }
-                                    ),
-                                    "bytes": "AAAASQAAADlvxG1ZDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMKYnl0ZUhlYWRlcgIBKFTmjg==",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexShortHeaderOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"shortHeader": 2}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "shortHeader": MappingProxyType(
-                                                {"short": 2}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAASwAAADv7Cl8VDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMLc2hvcnRIZWFkZXIDAAL1ETsK",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexIntegerHeaderOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {"headers": MappingProxyType({"intHeader": 3})}
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "intHeader": MappingProxyType(
-                                                {"integer": 3}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAASwAAADv7Cl8VDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMJaW50SGVhZGVyBAAAAAPlyUrb",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexLongHeaderOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"longHeader": 4294967294}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "longHeader": MappingProxyType(
-                                                {"long": 4294967294}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAAUAAAAEAr7VEyDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMKbG9uZ0hlYWRlcgUAAAAA/////udnd/I=",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexBlobHeaderOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"blobHeader": "foo"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "blobHeader": MappingProxyType(
-                                                {"blob": "Zm9v"}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAATQAAAD2dKQ+ADTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMKYmxvYkhlYWRlcgYAA2Zvb5sbbGM=",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexStringHeaderOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"stringHeader": "foo"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "stringHeader": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAATwAAAD8J5z3MDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMMc3RyaW5nSGVhZGVyBwADZm9vxT+2MA==",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexTimestampHeaderOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {
-                                                    "timestampHeader": "2024-10-31T14:15:14Z"
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "timestampHeader": MappingProxyType(
-                                                {"timestamp": "2024-10-31T14:15:14Z"}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAAVQAAAEWTZyrNDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMPdGltZXN0YW1wSGVhZGVyCAAAAZLi7jFQ6uV3Eg==",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexMultipleHeaderOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {
-                                                    "booleanHeader": True,
-                                                    "stringHeader": "foo",
-                                                    "blobHeader": "bar",
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "booleanHeader": MappingProxyType(
-                                                {"boolean": True}
-                                            ),
-                                            "stringHeader": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                            "blobHeader": MappingProxyType(
-                                                {"blob": "YmFy"}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAAbwAAAF+FlHOQDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMNYm9vbGVhbkhlYWRlcgAMc3RyaW5nSGVhZGVyBwADZm9vCmJsb2JIZWFkZXIGAANiYXIDXbo7",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexStringPayloadOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "stringPayload": MappingProxyType(
-                                                {"payload": "foo"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "stringPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "text/plain"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": "foo",
-                                    "bodyMediaType": "text/plain",
-                                    "bytes": "AAAAYAAAAE30fZUJDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcADXN0cmluZ1BheWxvYWQNOmNvbnRlbnQtdHlwZQcACnRleHQvcGxhaW5mb29G1ELr",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexBlobPayloadOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "blobPayload": MappingProxyType(
-                                                {"payload": "bar"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "blobPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/octet-stream"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": "bar",
-                                    "bodyMediaType": "application/octet-stream",
-                                    "bytes": "AAAAbAAAAFkrV6x1DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAC2Jsb2JQYXlsb2FkDTpjb250ZW50LXR5cGUHABhhcHBsaWNhdGlvbi9vY3RldC1zdHJlYW1iYXJv5nGJ",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexStructurePayloadOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "structurePayload": MappingProxyType(
-                                                {
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "foo"}
-                                                    )
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "structurePayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"foo"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAfwAAAFacqFy2DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAEHN0cnVjdHVyZVBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb257InN0cnVjdHVyZU1lbWJlciI6ImZvbyJ9rcIRVA==",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexUnionPayloadOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "unionPayload": MappingProxyType(
-                                                {
-                                                    "payload": MappingProxyType(
-                                                        {"unionMember": "bar"}
-                                                    )
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "unionPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"unionMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAdwAAAFKrtdNuDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcADHVuaW9uUGF5bG9hZA06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbnsidW5pb25NZW1iZXIiOiJiYXIifcZDMD4=",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexHeadersAndExplicitPayloadOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headersAndExplicitPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAlQAAAGw4wFp6DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAGWhlYWRlcnNBbmRFeHBsaWNpdFBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24GaGVhZGVyBwADZm9veyJzdHJ1Y3R1cmVNZW1iZXIiOiJiYXIifTafKXs=",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexHeadersAndImplicitPayloadOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndImplicitPayload": MappingProxyType(
-                                                {"header": "foo", "payload": "bar"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headersAndImplicitPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"payload":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAjQAAAGxoUIY5DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAGWhlYWRlcnNBbmRJbXBsaWNpdFBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24GaGVhZGVyBwADZm9veyJwYXlsb2FkIjoiYmFyIn15lZtT",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexServerErrorOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {"error": MappingProxyType({"message": "foo"})}
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "exception"}
-                                            ),
-                                            ":exception-type": MappingProxyType(
-                                                {"string": "error"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"message":"foo"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAdAAAAFObEpkoDTptZXNzYWdlLXR5cGUHAAlleGNlcHRpb24POmV4Y2VwdGlvbi10eXBlBwAFZXJyb3INOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb257Im1lc3NhZ2UiOiJmb28ifTua1S8=",
-                                }
-                            ),
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexClientErrorOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {"error": MappingProxyType({"message": "foo"})}
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "exception"}
-                                            ),
-                                            ":exception-type": MappingProxyType(
-                                                {"string": "error"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"message":"foo"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAdAAAAFObEpkoDTptZXNzYWdlLXR5cGUHAAlleGNlcHRpb24POmV4Y2VwdGlvbi10eXBlBwAFZXJyb3INOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb257Im1lc3NhZ2UiOiJmb28ifTua1S8=",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {
-                                "failure": MappingProxyType(
-                                    {"errorId": "aws.protocoltests.restjson#ErrorEvent"}
-                                )
-                            }
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexClientUnexpectedErrorOutput",
-                        "documentation": "Clients must be able to handle structured, but unmodeled errors.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "error"}
-                                            ),
-                                            ":error-code": MappingProxyType(
-                                                {"string": "internal-error"}
-                                            ),
-                                            ":error-message": MappingProxyType(
-                                                {"string": "An unknown error occurred."}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAAbwAAAF+FlHOQDTptZXNzYWdlLXR5cGUHAAVlcnJvcgs6ZXJyb3ItY29kZQcADmludGVybmFsLWVycm9yDjplcnJvci1tZXNzYWdlBwAaQW4gdW5rbm93biBlcnJvciBvY2N1cnJlZC4kun0t",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexMissingMessageTypeOutput",
-                        "documentation": "Clients must reject events that don't contain a :message-type header.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headersAndExplicitPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAfwAAAFacqFy2CzpldmVudC10eXBlBwAZaGVhZGVyc0FuZEV4cGxpY2l0UGF5bG9hZA06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbgZoZWFkZXIHAANmb297InN0cnVjdHVyZU1lbWJlciI6ImJhciJ98LexJg==",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexMalformedMessageTypeOutput",
-                        "documentation": "Client must reject events that contain a malformed :message-type header.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"blob": "ZXZlbnQ="}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headersAndExplicitPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAlQAAAGw4wFp6DTptZXNzYWdlLXR5cGUGAAVldmVudAs6ZXZlbnQtdHlwZQcAGWhlYWRlcnNBbmRFeHBsaWNpdFBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24GaGVhZGVyBwADZm9veyJzdHJ1Y3R1cmVNZW1iZXIiOiJiYXIifVwdfzU=",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexMissingEventTypeOutput",
-                        "documentation": "Clients must reject message events that don't contain an :event-type header.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAbQAAAER1MekcDTptZXNzYWdlLXR5cGUHAAVldmVudA06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbgZoZWFkZXIHAANmb297InN0cnVjdHVyZU1lbWJlciI6ImJhciJ9riy0Gg==",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexMalformedEventTypeOutput",
-                        "documentation": "Clients must reject message events that contain a malformed :event-type header.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {
-                                                    "blob": "aGVhZGVyc0FuZEV4cGxpY2l0UGF5bG9hZA=="
-                                                }
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAlQAAAGw4wFp6DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQYAGWhlYWRlcnNBbmRFeHBsaWNpdFBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24GaGVhZGVyBwADZm9veyJzdHJ1Y3R1cmVNZW1iZXIiOiJiYXIifcP6KLk=",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
+        )
     ],
 )
 
 DUPLEX_STREAM_WITH_DISTINCT_STREAMS_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#DuplexStreamWithDistinctStreamsInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "stream": {
             "target": EVENT_STREAM,
@@ -3376,7 +910,6 @@ SINGLETON_EVENT_STREAM = Schema.collection(
 
 DUPLEX_STREAM_WITH_DISTINCT_STREAMS_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#DuplexStreamWithDistinctStreamsOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "stream": {
             "target": SINGLETON_EVENT_STREAM,
@@ -3400,7 +933,6 @@ DUPLEX_STREAM_WITH_DISTINCT_STREAMS = Schema(
 
 DUPLEX_STREAM_WITH_INITIAL_MESSAGES_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#DuplexStreamWithInitialMessagesInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "initialRequestMember": {
             "target": STRING,
@@ -3420,7 +952,6 @@ DUPLEX_STREAM_WITH_INITIAL_MESSAGES_INPUT = Schema.collection(
 
 DUPLEX_STREAM_WITH_INITIAL_MESSAGES_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#DuplexStreamWithInitialMessagesOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "initialResponseMember": {
             "target": STRING,
@@ -3456,187 +987,16 @@ DUPLEX_STREAM_WITH_INITIAL_MESSAGES = Schema(
             value=MappingProxyType(
                 {"method": "POST", "uri": "/DuplexStreamWithInitialMessages"}
             ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#eventStreamTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "DuplexInitialRequestInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "initialRequestParams": MappingProxyType(
-                            {"initialRequestMember": "foo"}
-                        ),
-                        "initialRequest": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/DuplexStreamWithInitialMessages",
-                                "headers": MappingProxyType(
-                                    {"initial-request-member": "foo"}
-                                ),
-                            }
-                        ),
-                        "initialRequestShape": "smithy.test#InitialHttpRequest",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexMissingRequiredInitialRequestInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"booleanHeader": True}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "booleanHeader": MappingProxyType(
-                                                {"boolean": True}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAASwAAADv7Cl8VDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMNYm9vbGVhbkhlYWRlcgC4J9Ws",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexInitialResponseOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "initialResponseParams": MappingProxyType(
-                            {"initialResponseMember": "foo"}
-                        ),
-                        "initialResponse": MappingProxyType(
-                            {
-                                "code": 200,
-                                "headers": MappingProxyType(
-                                    {"initial-response-member": "foo"}
-                                ),
-                            }
-                        ),
-                        "initialResponseShape": "smithy.test#InitialHttpResponse",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexMissingRequiredInitialResponseOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"booleanHeader": True}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "booleanHeader": MappingProxyType(
-                                                {"boolean": True}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAASwAAADv7Cl8VDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMNYm9vbGVhbkhlYWRlcgC4J9Ws",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexModeledProtocolError",
-                        "protocol": "aws.protocols#restJson1",
-                        "initialResponse": MappingProxyType(
-                            {
-                                "code": 500,
-                                "headers": MappingProxyType(
-                                    {
-                                        "Content-Type": "application/json",
-                                        "X-Amzn-Errortype": "ServiceUnavailableError",
-                                    }
-                                ),
-                                "body": '{"message": "foo"}',
-                                "bodyMediaType": "application/json",
-                            }
-                        ),
-                        "initialResponseShape": "smithy.test#InitialHttpResponse",
-                        "expectation": MappingProxyType(
-                            {
-                                "failure": MappingProxyType(
-                                    {
-                                        "errorId": "aws.protocoltests.restjson#ServiceUnavailableError"
-                                    }
-                                )
-                            }
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "DuplexUnmodeledProtocolError",
-                        "protocol": "aws.protocols#restJson1",
-                        "initialResponse": MappingProxyType(
-                            {
-                                "code": 500,
-                                "headers": MappingProxyType(
-                                    {"Content-Type": "text/plain"}
-                                ),
-                                "body": "service unavailable",
-                                "bodyMediaType": "text/plain",
-                            }
-                        ),
-                        "initialResponseShape": "smithy.test#InitialHttpResponse",
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
+        )
     ],
 )
 
 EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#EmptyInputAndEmptyOutputInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
+    id=ShapeID("aws.protocoltests.restjson#EmptyInputAndEmptyOutputInput")
 )
 
 EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#EmptyInputAndEmptyOutputOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
+    id=ShapeID("aws.protocoltests.restjson#EmptyInputAndEmptyOutputOutput")
 )
 
 EMPTY_INPUT_AND_EMPTY_OUTPUT = Schema(
@@ -3644,69 +1004,11 @@ EMPTY_INPUT_AND_EMPTY_OUTPUT = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonEmptyInputAndEmptyOutput",
-                        "documentation": "Clients should not serialize a JSON payload when no parameters\nare given that are sent in the body. A service will tolerate\nclients that omit a payload or that send a JSON object.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/EmptyInputAndEmptyOutput",
-                        "body": "",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonEmptyInputAndEmptyOutputWithJson",
-                        "documentation": "Similar to RestJsonEmptyInputAndEmptyOutput, but ensures that\nservices gracefully handles receiving a JSON object.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/EmptyInputAndEmptyOutput",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": "{}",
-                        "bodyMediaType": "application/json",
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonEmptyInputAndEmptyOutput",
-                        "documentation": "As of January 2021, server implementations are expected to\nrespond with a JSON object regardless of if the output\nparameters are empty.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": "{}",
-                        "bodyMediaType": "application/json",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonEmptyInputAndEmptyOutputJsonObjectOutput",
-                        "documentation": "This test ensures that clients can gracefully handle\nsituations where a service omits a JSON payload entirely.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": "",
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/EmptyInputAndEmptyOutput", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -3715,8 +1017,7 @@ ENDPOINT_OPERATION_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -3725,8 +1026,7 @@ ENDPOINT_OPERATION_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -3734,23 +1034,6 @@ ENDPOINT_OPERATION = Schema(
     id=ShapeID("aws.protocoltests.restjson#EndpointOperation"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonEndpointTrait",
-                        "documentation": "Operations can prepend to the given host if they define the\nendpoint trait.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/EndpointOperation",
-                        "body": "",
-                        "host": "example.com",
-                        "resolvedHost": "foo.example.com",
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#endpoint"),
             value=MappingProxyType({"hostPrefix": "foo."}),
@@ -3768,8 +1051,7 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#HostLabelInput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "label": {
@@ -3787,8 +1069,7 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -3796,25 +1077,6 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION = Schema(
     id=ShapeID("aws.protocoltests.restjson#EndpointWithHostLabelOperation"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonEndpointTraitWithHostLabel",
-                        "documentation": "Operations can prepend to the given host if they define the\nendpoint trait, and can use the host label trait to define\nfurther customization based on user input.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/EndpointWithHostLabelOperation",
-                        "body": '{"label": "bar"}',
-                        "bodyMediaType": "application/json",
-                        "host": "example.com",
-                        "resolvedHost": "foo.bar.example.com",
-                        "params": MappingProxyType({"label": "bar"}),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#endpoint"),
             value=MappingProxyType({"hostPrefix": "foo.{label}."}),
@@ -3840,162 +1102,6 @@ FINITE_STREAMING_BLOB = Schema(
 FOO_ERROR = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#FooError"),
     traits=[
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonFooErrorUsingXAmznErrorType",
-                        "documentation": "Serializes the X-Amzn-ErrorType header. For an example service, see Amazon EKS.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 500,
-                        "headers": MappingProxyType({"X-Amzn-Errortype": "FooError"}),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonFooErrorUsingXAmznErrorTypeWithUri",
-                        "documentation": "Some X-Amzn-Errortype headers contain URLs. Clients need to split the URL on ':' and take only the first half of the string. For example, 'ValidationException:http://internal.amazon.com/coral/com.amazon.coral.validate/'\nis to be interpreted as 'ValidationException'.\n\nFor an example service see Amazon Polly.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 500,
-                        "headers": MappingProxyType(
-                            {
-                                "X-Amzn-Errortype": "FooError:http://internal.amazon.com/coral/com.amazon.coral.validate/"
-                            }
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonFooErrorUsingXAmznErrorTypeWithUriAndNamespace",
-                        "documentation": "X-Amzn-Errortype might contain a URL and a namespace. Client should extract only the shape name. This is a pathalogical case that might not actually happen in any deployed AWS service.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 500,
-                        "headers": MappingProxyType(
-                            {
-                                "X-Amzn-Errortype": "aws.protocoltests.restjson#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate/"
-                            }
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonFooErrorUsingXAmznErrorTypeWithUriAndDifferentNamespace",
-                        "documentation": "Because namespace and URL are ignored, an unrecognized namespace should not make a difference.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 500,
-                        "headers": MappingProxyType(
-                            {
-                                "X-Amzn-Errortype": "aws.different.namespace#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate/"
-                            }
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonFooErrorUsingCode",
-                        "documentation": "This example uses the 'code' property in the output rather than X-Amzn-Errortype. Some services do this though it's preferable to send the X-Amzn-Errortype. Client implementations must first check for the X-Amzn-Errortype and then check for a top-level 'code' property.\n\nFor example service see Amazon S3 Glacier.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 500,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": '{\n    "code": "FooError"\n}',
-                        "bodyMediaType": "application/json",
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonFooErrorUsingCodeAndNamespace",
-                        "documentation": "Some services serialize errors using code, and it might contain a namespace. Clients should just take the last part of the string after '#'.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 500,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": '{\n    "code": "aws.protocoltests.restjson#FooError"\n}',
-                        "bodyMediaType": "application/json",
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonFooErrorUsingCodeUriAndNamespace",
-                        "documentation": "Some services serialize errors using code, and it might contain a namespace. It also might contain a URI. Clients should just take the last part of the string after '#' and before \":\". This is a pathalogical case that might not occur in any deployed AWS service.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 500,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": '{\n    "code": "aws.protocoltests.restjson#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate/"\n}',
-                        "bodyMediaType": "application/json",
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonFooErrorWithDunderType",
-                        "documentation": "Some services serialize errors using __type.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 500,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": '{\n    "__type": "FooError"\n}',
-                        "bodyMediaType": "application/json",
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonFooErrorWithDunderTypeAndNamespace",
-                        "documentation": "Some services serialize errors using __type, and it might contain a namespace. Clients should just take the last part of the string after '#'.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 500,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": '{\n    "__type": "aws.protocoltests.restjson#FooError"\n}',
-                        "bodyMediaType": "application/json",
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonFooErrorWithDunderTypeUriAndNamespace",
-                        "documentation": "Some services serialize errors using __type, and it might contain a namespace. It also might contain a URI. Clients should just take the last part of the string after '#' and before \":\". This is a pathalogical case that might not occur in any deployed AWS service.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 500,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": '{\n    "__type": "aws.protocoltests.restjson#FooError:http://internal.amazon.com/coral/com.amazon.coral.validate/"\n}',
-                        "bodyMediaType": "application/json",
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonFooErrorWithNestedTypeProperty",
-                        "documentation": "Some services serialize errors using __type, and if the response includes additional shapes that belong to a different namespace there'll be a nested __type property that must not be considered when determining which error to be surfaced.\n\nFor an example service see Amazon DynamoDB.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 500,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": '{\n    "__type": "aws.protocoltests.restjson#FooError",\n    "ErrorDetails": [\n      {\n          "__type": "com.amazon.internal#ErrorDetails",\n          "reason": "Some reason"\n      }\n    ]\n}',
-                        "bodyMediaType": "application/json",
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
         Trait.new(id=ShapeID("smithy.api#error"), value="server"),
         Trait.new(id=ShapeID("smithy.api#httpError"), value=500),
     ],
@@ -4006,14 +1112,12 @@ FRACTIONAL_SECONDS_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 FRACTIONAL_SECONDS_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#FractionalSecondsOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={"datetime": {"target": DATE_TIME}},
 )
 
@@ -4021,28 +1125,10 @@ FRACTIONAL_SECONDS = Schema(
     id=ShapeID("aws.protocoltests.restjson#FractionalSeconds"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDateTimeWithFractionalSeconds",
-                        "documentation": "Ensures that clients can correctly parse datetime timestamps with fractional seconds",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '      {\n          "datetime": "2000-01-02T20:34:56.123Z"\n      }\n',
-                        "params": MappingProxyType({"datetime": 9.46845296123e8}),
-                        "bodyMediaType": "application/json",
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/FractionalSeconds", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -4051,14 +1137,12 @@ GREETING_WITH_ERRORS_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 GREETING_WITH_ERRORS_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#GreetingWithErrorsOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "greeting": {
             "target": STRING,
@@ -4072,28 +1156,6 @@ GREETING_WITH_ERRORS_OUTPUT = Schema.collection(
 INVALID_GREETING = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#InvalidGreeting"),
     traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonInvalidGreetingError",
-                        "documentation": "Parses simple JSON errors",
-                        "protocol": "aws.protocols#restJson1",
-                        "params": MappingProxyType({"Message": "Hi"}),
-                        "code": 400,
-                        "headers": MappingProxyType(
-                            {
-                                "Content-Type": "application/json",
-                                "X-Amzn-Errortype": "InvalidGreeting",
-                            }
-                        ),
-                        "body": '{\n    "Message": "Hi"\n}',
-                        "bodyMediaType": "application/json",
-                    }
-                ),
-            ),
-        ),
         Trait.new(id=ShapeID("smithy.api#error"), value="client"),
         Trait.new(id=ShapeID("smithy.api#httpError"), value=400),
     ],
@@ -4104,40 +1166,10 @@ GREETING_WITH_ERRORS = Schema(
     id=ShapeID("aws.protocoltests.restjson#GreetingWithErrors"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonGreetingWithErrors",
-                        "documentation": "Ensures that operations with errors successfully know how\nto deserialize a successful response. As of January 2021,\nserver implementations are expected to respond with a\nJSON object regardless of if the output parameters are\nempty.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": "{}",
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType({"X-Greeting": "Hello"}),
-                        "params": MappingProxyType({"greeting": "Hello"}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonGreetingWithErrorsNoPayload",
-                        "documentation": "This test is similar to RestJsonGreetingWithErrors, but it\nensures that clients can gracefully deal with a server\nomitting a response payload.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": "",
-                        "headers": MappingProxyType({"X-Greeting": "Hello"}),
-                        "params": MappingProxyType({"greeting": "Hello"}),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/GreetingWithErrors", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -4146,8 +1178,7 @@ HOST_WITH_PATH_OPERATION_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -4156,8 +1187,7 @@ HOST_WITH_PATH_OPERATION_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -4166,27 +1196,9 @@ HOST_WITH_PATH_OPERATION = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHostWithPath",
-                        "documentation": "Custom endpoints supplied by users can have paths",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/custom/HostWithPathOperation",
-                        "body": "",
-                        "host": "example.com/custom",
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/HostWithPathOperation", "method": "GET"}),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
@@ -4196,8 +1208,7 @@ HTTP_CHECKSUM_REQUIRED_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#HttpChecksumRequiredInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={"foo": {"target": STRING}},
 )
@@ -4208,8 +1219,7 @@ HTTP_CHECKSUM_REQUIRED_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#HttpChecksumRequiredInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={"foo": {"target": STRING}},
 )
@@ -4218,32 +1228,6 @@ HTTP_CHECKSUM_REQUIRED = Schema(
     id=ShapeID("aws.protocoltests.restjson#HttpChecksumRequired"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpChecksumRequired",
-                        "documentation": "Adds Content-MD5 header",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/HttpChecksumRequired",
-                        "body": '{\n    "foo":"base64 encoded md5 checksum"\n}\n',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {
-                                "Content-Type": "application/json",
-                                "Content-MD5": "iB0/3YSo7maijL0IGOgA9g==",
-                            }
-                        ),
-                        "params": MappingProxyType(
-                            {"foo": "base64 encoded md5 checksum"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/HttpChecksumRequired", "method": "POST"}),
@@ -4260,7 +1244,6 @@ STRING_MAP = Schema.collection(
 
 HTTP_EMPTY_PREFIX_HEADERS_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#HttpEmptyPrefixHeadersInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "prefixHeaders": {
             "target": STRING_MAP,
@@ -4275,7 +1258,6 @@ HTTP_EMPTY_PREFIX_HEADERS_INPUT = Schema.collection(
 
 HTTP_EMPTY_PREFIX_HEADERS_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#HttpEmptyPrefixHeadersOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "prefixHeaders": {
             "target": STRING_MAP,
@@ -4293,110 +1275,16 @@ HTTP_EMPTY_PREFIX_HEADERS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpEmptyPrefixHeadersRequestClient",
-                        "documentation": "Serializes all request headers, using specific when present",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/HttpEmptyPrefixHeaders",
-                        "body": "",
-                        "headers": MappingProxyType({"x-foo": "Foo", "hello": "There"}),
-                        "params": MappingProxyType(
-                            {
-                                "prefixHeaders": MappingProxyType(
-                                    {"x-foo": "Foo", "hello": "Hello"}
-                                ),
-                                "specificHeader": "There",
-                            }
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpEmptyPrefixHeadersRequestServer",
-                        "documentation": "Deserializes all request headers with the same for prefix and specific",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/HttpEmptyPrefixHeaders",
-                        "body": "",
-                        "headers": MappingProxyType({"x-foo": "Foo", "hello": "There"}),
-                        "params": MappingProxyType(
-                            {
-                                "prefixHeaders": MappingProxyType(
-                                    {"x-foo": "Foo", "hello": "There"}
-                                ),
-                                "specificHeader": "There",
-                            }
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpEmptyPrefixHeadersResponseClient",
-                        "documentation": "Deserializes all response headers with the same for prefix and specific",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType({"x-foo": "Foo", "hello": "There"}),
-                        "params": MappingProxyType(
-                            {
-                                "prefixHeaders": MappingProxyType(
-                                    {"x-foo": "Foo", "hello": "There"}
-                                ),
-                                "specificHeader": "There",
-                            }
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpEmptyPrefixHeadersResponseServer",
-                        "documentation": "Serializes all response headers, using specific when present",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType({"x-foo": "Foo", "hello": "There"}),
-                        "params": MappingProxyType(
-                            {
-                                "prefixHeaders": MappingProxyType(
-                                    {"x-foo": "Foo", "hello": "Hello"}
-                                ),
-                                "specificHeader": "There",
-                            }
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/HttpEmptyPrefixHeaders", "method": "GET"}),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
 STRING_ENUM = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#StringEnum"),
     shape_type=ShapeType.ENUM,
-    members={
-        "V": {
-            "target": UNIT,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#enumValue"), value="enumvalue")
-            ],
-        }
-    },
+    members={"V": {"target": UNIT}},
 )
 
 HTTP_ENUM_PAYLOAD_INPUT = Schema.collection(
@@ -4405,8 +1293,7 @@ HTTP_ENUM_PAYLOAD_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#EnumPayloadInput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "payload": {
@@ -4422,8 +1309,7 @@ HTTP_ENUM_PAYLOAD_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#EnumPayloadInput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "payload": {
@@ -4438,40 +1324,9 @@ HTTP_ENUM_PAYLOAD = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonEnumPayloadRequest",
-                        "uri": "/EnumPayload",
-                        "headers": MappingProxyType({"Content-Type": "text/plain"}),
-                        "body": "enumvalue",
-                        "params": MappingProxyType({"payload": "enumvalue"}),
-                        "method": "POST",
-                        "protocol": "aws.protocols#restJson1",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonEnumPayloadResponse",
-                        "headers": MappingProxyType({"Content-Type": "text/plain"}),
-                        "body": "enumvalue",
-                        "params": MappingProxyType({"payload": "enumvalue"}),
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/EnumPayload", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -4481,8 +1336,7 @@ HTTP_PAYLOAD_TRAITS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#HttpPayloadTraitsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "foo": {
@@ -4502,8 +1356,7 @@ HTTP_PAYLOAD_TRAITS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#HttpPayloadTraitsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "foo": {
@@ -4522,129 +1375,9 @@ HTTP_PAYLOAD_TRAITS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPayloadTraitsWithBlob",
-                        "documentation": "Serializes a blob in the HTTP payload",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/HttpPayloadTraits",
-                        "body": "blobby blob blob",
-                        "bodyMediaType": "application/octet-stream",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/octet-stream", "X-Foo": "Foo"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "blob": "blobby blob blob"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPayloadTraitsWithNoBlobBody",
-                        "documentation": "Serializes an empty blob in the HTTP payload",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/HttpPayloadTraits",
-                        "body": "",
-                        "bodyMediaType": "application/octet-stream",
-                        "headers": MappingProxyType({"X-Foo": "Foo"}),
-                        "params": MappingProxyType({"foo": "Foo"}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPayloadTraitsWithBlobAcceptsAllContentTypes",
-                        "documentation": "Servers must accept any content type for blob inputs\nwithout the media type trait.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/HttpPayloadTraits",
-                        "body": "This is definitely a jpeg",
-                        "bodyMediaType": "application/octet-stream",
-                        "headers": MappingProxyType(
-                            {"X-Foo": "Foo", "Content-Type": "image/jpeg"}
-                        ),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "blob": "This is definitely a jpeg"}
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPayloadTraitsWithBlobAcceptsNoContentType",
-                        "documentation": "Servers must accept no content type for blob inputs\nwithout the media type trait.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/HttpPayloadTraits",
-                        "body": "This is definitely a jpeg",
-                        "bodyMediaType": "application/octet-stream",
-                        "headers": MappingProxyType({"X-Foo": "Foo"}),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "blob": "This is definitely a jpeg"}
-                        ),
-                        "appliesTo": "server",
-                        "tags": ("content-type",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPayloadTraitsWithBlobAcceptsAllAccepts",
-                        "documentation": "Servers must accept any accept header for blob inputs\nwithout the media type trait.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/HttpPayloadTraits",
-                        "body": "This is definitely a jpeg",
-                        "bodyMediaType": "application/octet-stream",
-                        "headers": MappingProxyType(
-                            {"X-Foo": "Foo", "Accept": "image/jpeg"}
-                        ),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "blob": "This is definitely a jpeg"}
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPayloadTraitsWithBlob",
-                        "documentation": "Serializes a blob in the HTTP payload",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": "blobby blob blob",
-                        "bodyMediaType": "application/octet-stream",
-                        "headers": MappingProxyType({"X-Foo": "Foo"}),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "blob": "blobby blob blob"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPayloadTraitsWithNoBlobBody",
-                        "documentation": "Serializes an empty blob in the HTTP payload",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": "",
-                        "bodyMediaType": "application/octet-stream",
-                        "headers": MappingProxyType({"X-Foo": "Foo"}),
-                        "params": MappingProxyType({"foo": "Foo"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/HttpPayloadTraits", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -4660,8 +1393,7 @@ HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#HttpPayloadTraitsWithMediaTypeInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "foo": {
@@ -4681,8 +1413,7 @@ HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#HttpPayloadTraitsWithMediaTypeInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "foo": {
@@ -4701,55 +1432,11 @@ HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPayloadTraitsWithMediaTypeWithBlob",
-                        "documentation": "Serializes a blob in the HTTP payload with a content-type",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/HttpPayloadTraitsWithMediaType",
-                        "body": "blobby blob blob",
-                        "bodyMediaType": "application/octet-stream",
-                        "headers": MappingProxyType(
-                            {"X-Foo": "Foo", "Content-Type": "text/plain"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "blob": "blobby blob blob"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPayloadTraitsWithMediaTypeWithBlob",
-                        "documentation": "Serializes a blob in the HTTP payload with a content-type",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": "blobby blob blob",
-                        "bodyMediaType": "application/octet-stream",
-                        "headers": MappingProxyType(
-                            {"X-Foo": "Foo", "Content-Type": "text/plain"}
-                        ),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "blob": "blobby blob blob"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/HttpPayloadTraitsWithMediaType", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -4764,8 +1451,7 @@ HTTP_PAYLOAD_WITH_STRUCTURE_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#HttpPayloadWithStructureInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "nested": {
@@ -4781,8 +1467,7 @@ HTTP_PAYLOAD_WITH_STRUCTURE_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#HttpPayloadWithStructureInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "nested": {
@@ -4797,74 +1482,11 @@ HTTP_PAYLOAD_WITH_STRUCTURE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPayloadWithStructure",
-                        "documentation": "Serializes a structure in the payload",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/HttpPayloadWithStructure",
-                        "body": '{\n    "greeting": "hello",\n    "name": "Phreddy"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {
-                                "nested": MappingProxyType(
-                                    {"greeting": "hello", "name": "Phreddy"}
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPayloadWithStructure",
-                        "documentation": "Serializes a structure in the payload",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "greeting": "hello",\n    "name": "Phreddy"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "nested": MappingProxyType(
-                                    {"greeting": "hello", "name": "Phreddy"}
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPayloadWithStructureAndEmptyResponseBody",
-                        "documentation": "Serializes a structure in the payload",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": "",
-                        "params": MappingProxyType({"nested": None}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/HttpPayloadWithStructure", "method": "PUT"}
             ),
-        ),
+        )
     ],
 )
 
@@ -4880,8 +1502,7 @@ HTTP_PAYLOAD_WITH_UNION_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#HttpPayloadWithUnionInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "nested": {
@@ -4897,8 +1518,7 @@ HTTP_PAYLOAD_WITH_UNION_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#HttpPayloadWithUnionInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "nested": {
@@ -4913,82 +1533,14 @@ HTTP_PAYLOAD_WITH_UNION = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPayloadWithUnion",
-                        "documentation": "Serializes a union in the payload.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/HttpPayloadWithUnion",
-                        "body": '{\n    "greeting": "hello"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {"nested": MappingProxyType({"greeting": "hello"})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPayloadWithUnsetUnion",
-                        "documentation": "No payload is sent if the union has no value.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/HttpPayloadWithUnion",
-                        "body": "",
-                        "params": MappingProxyType({}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPayloadWithUnion",
-                        "documentation": "Serializes a union in the payload.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "greeting": "hello"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"nested": MappingProxyType({"greeting": "hello"})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPayloadWithUnsetUnion",
-                        "documentation": "No payload is sent if the union has no value.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": "",
-                        "headers": MappingProxyType({"Content-Length": "0"}),
-                        "params": MappingProxyType({}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/HttpPayloadWithUnion", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
 HTTP_PREFIX_HEADERS_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#HttpPrefixHeadersInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "foo": {
             "target": STRING,
@@ -5005,7 +1557,6 @@ HTTP_PREFIX_HEADERS_INPUT = Schema.collection(
 
 HTTP_PREFIX_HEADERS_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#HttpPrefixHeadersOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "foo": {
             "target": STRING,
@@ -5025,117 +1576,18 @@ HTTP_PREFIX_HEADERS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPrefixHeadersArePresent",
-                        "documentation": "Adds headers by prefix",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/HttpPrefixHeaders",
-                        "body": "",
-                        "headers": MappingProxyType(
-                            {
-                                "x-foo": "Foo",
-                                "x-foo-abc": "Abc value",
-                                "x-foo-def": "Def value",
-                            }
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "foo": "Foo",
-                                "fooMap": MappingProxyType(
-                                    {"abc": "Abc value", "def": "Def value"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPrefixHeadersAreNotPresent",
-                        "documentation": "No prefix headers are serialized because the value is not present",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/HttpPrefixHeaders",
-                        "body": "",
-                        "headers": MappingProxyType({"x-foo": "Foo"}),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "fooMap": MappingProxyType({})}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPrefixEmptyHeaders",
-                        "documentation": "Serialize prefix headers were the value is present but empty",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/HttpPrefixHeaders",
-                        "body": "",
-                        "params": MappingProxyType(
-                            {"fooMap": MappingProxyType({"abc": ""})}
-                        ),
-                        "headers": MappingProxyType({"x-foo-abc": ""}),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPrefixHeadersArePresent",
-                        "documentation": "Adds headers by prefix",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {
-                                "x-foo": "Foo",
-                                "x-foo-abc": "Abc value",
-                                "x-foo-def": "Def value",
-                            }
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "foo": "Foo",
-                                "fooMap": MappingProxyType(
-                                    {"abc": "Abc value", "def": "Def value"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.api#externalDocumentation"),
-            value=MappingProxyType(
-                {
-                    "httpPrefixHeaders Trait": "https://smithy.io/2.0/spec/http-bindings.html#httpprefixheaders-trait"
-                }
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/HttpPrefixHeaders", "method": "GET"}),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
 HTTP_PREFIX_HEADERS_IN_RESPONSE_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#HttpPrefixHeadersInResponseInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
+    id=ShapeID("aws.protocoltests.restjson#HttpPrefixHeadersInResponseInput")
 )
 
 HTTP_PREFIX_HEADERS_IN_RESPONSE_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#HttpPrefixHeadersInResponseOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "prefixHeaders": {
             "target": STRING_MAP,
@@ -5149,33 +1601,11 @@ HTTP_PREFIX_HEADERS_IN_RESPONSE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpPrefixHeadersResponse",
-                        "documentation": "(de)serializes all response headers",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType({"x-foo": "Foo", "hello": "Hello"}),
-                        "params": MappingProxyType(
-                            {
-                                "prefixHeaders": MappingProxyType(
-                                    {"x-foo": "Foo", "hello": "Hello"}
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/HttpPrefixHeadersResponse", "method": "GET"}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
@@ -5191,8 +1621,7 @@ HTTP_QUERY_PARAMS_ONLY_OPERATION_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#HttpQueryParamsOnlyInput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "queryMap": {
@@ -5207,8 +1636,7 @@ HTTP_QUERY_PARAMS_ONLY_OPERATION_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -5217,46 +1645,14 @@ HTTP_QUERY_PARAMS_ONLY_OPERATION = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpQueryParamsOnlyRequest",
-                        "documentation": "Test that httpQueryParams are included in request when no other query parameters exist",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/http-query-params-only",
-                        "queryParams": ("a=b", "c=d"),
-                        "params": MappingProxyType(
-                            {"queryMap": MappingProxyType({"a": "b", "c": "d"})}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "HttpQueryParamsOnlyEmptyRequest",
-                        "documentation": "Test that empty httpQueryParams map results in no query parameters",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/http-query-params-only",
-                        "params": MappingProxyType({"queryMap": MappingProxyType({})}),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/http-query-params-only", "method": "GET"}),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
 HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#HttpRequestWithFloatLabelsInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "float": {
             "target": FLOAT,
@@ -5280,8 +1676,7 @@ HTTP_REQUEST_WITH_FLOAT_LABELS_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -5290,60 +1685,16 @@ HTTP_REQUEST_WITH_FLOAT_LABELS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSupportsNaNFloatLabels",
-                        "documentation": "Supports handling NaN float label values.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/FloatHttpLabels/NaN/NaN",
-                        "body": "",
-                        "params": MappingProxyType({"float": "NaN", "double": "NaN"}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSupportsInfinityFloatLabels",
-                        "documentation": "Supports handling Infinity float label values.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/FloatHttpLabels/Infinity/Infinity",
-                        "body": "",
-                        "params": MappingProxyType(
-                            {"float": "Infinity", "double": "Infinity"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSupportsNegativeInfinityFloatLabels",
-                        "documentation": "Supports handling -Infinity float label values.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/FloatHttpLabels/-Infinity/-Infinity",
-                        "body": "",
-                        "params": MappingProxyType(
-                            {"float": "-Infinity", "double": "-Infinity"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"method": "GET", "uri": "/FloatHttpLabels/{float}/{double}"}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
 HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#HttpRequestWithGreedyLabelInPathInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "foo": {
             "target": STRING,
@@ -5367,8 +1718,7 @@ HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -5377,24 +1727,6 @@ HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpRequestWithGreedyLabelInPath",
-                        "documentation": "Serializes greedy labels and normal labels",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/HttpRequestWithGreedyLabelInPath/foo/hello%2Fescape/baz/there/guy",
-                        "body": "",
-                        "params": MappingProxyType(
-                            {"foo": "hello/escape", "baz": "there/guy"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {
@@ -5402,14 +1734,12 @@ HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH = Schema(
                     "uri": "/HttpRequestWithGreedyLabelInPath/foo/{foo}/baz/{baz+}",
                 }
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
 HTTP_REQUEST_WITH_LABELS_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#HttpRequestWithLabelsInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "string": {
             "target": STRING,
@@ -5475,8 +1805,7 @@ HTTP_REQUEST_WITH_LABELS_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -5485,55 +1814,6 @@ HTTP_REQUEST_WITH_LABELS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonInputWithHeadersAndAllParams",
-                        "documentation": "Sends a GET request that uses URI label bindings",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/HttpRequestWithLabels/string/1/2/3/4.1/5.1/true/2019-12-16T23%3A48%3A18Z",
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "string": "string",
-                                "short": 1,
-                                "integer": 2,
-                                "long": 3,
-                                "float": 4.1,
-                                "double": 5.1,
-                                "boolean": True,
-                                "timestamp": 1576540098,
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpRequestLabelEscaping",
-                        "documentation": "Sends a GET request that uses URI label bindings",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/HttpRequestWithLabels/%20%25%3A%2F%3F%23%5B%5D%40%21%24%26%27%28%29%2A%2B%2C%3B%3D%F0%9F%98%B9/1/2/3/4.1/5.1/true/2019-12-16T23%3A48%3A18Z",
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "string": " %:/?#[]@!$&'()*+,;=😹",
-                                "short": 1,
-                                "integer": 2,
-                                "long": 3,
-                                "float": 4.1,
-                                "double": 5.1,
-                                "boolean": True,
-                                "timestamp": 1576540098,
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {
@@ -5541,8 +1821,7 @@ HTTP_REQUEST_WITH_LABELS = Schema(
                     "uri": "/HttpRequestWithLabels/{string}/{short}/{integer}/{long}/{float}/{double}/{boolean}/{timestamp}",
                 }
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
@@ -5562,7 +1841,6 @@ HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT = Schema.collection(
     id=ShapeID(
         "aws.protocoltests.restjson#HttpRequestWithLabelsAndTimestampFormatInput"
     ),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "memberEpochSeconds": {
             "target": TIMESTAMP,
@@ -5628,8 +1906,7 @@ HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -5638,32 +1915,6 @@ HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpRequestWithLabelsAndTimestampFormat",
-                        "documentation": "Serializes different timestamp formats in URI labels",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/HttpRequestWithLabelsAndTimestampFormat/1576540098/Mon%2C%2016%20Dec%202019%2023%3A48%3A18%20GMT/2019-12-16T23%3A48%3A18Z/2019-12-16T23%3A48%3A18Z/1576540098/Mon%2C%2016%20Dec%202019%2023%3A48%3A18%20GMT/2019-12-16T23%3A48%3A18Z",
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "memberEpochSeconds": 1576540098,
-                                "memberHttpDate": 1576540098,
-                                "memberDateTime": 1576540098,
-                                "defaultFormat": 1576540098,
-                                "targetEpochSeconds": 1576540098,
-                                "targetHttpDate": 1576540098,
-                                "targetDateTime": 1576540098,
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {
@@ -5671,14 +1922,12 @@ HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT = Schema(
                     "uri": "/HttpRequestWithLabelsAndTimestampFormat/{memberEpochSeconds}/{memberHttpDate}/{memberDateTime}/{defaultFormat}/{targetEpochSeconds}/{targetHttpDate}/{targetDateTime}",
                 }
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
 HTTP_REQUEST_WITH_REGEX_LITERAL_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#HttpRequestWithRegexLiteralInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "str": {
             "target": STRING,
@@ -5695,8 +1944,7 @@ HTTP_REQUEST_WITH_REGEX_LITERAL_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -5705,28 +1953,11 @@ HTTP_REQUEST_WITH_REGEX_LITERAL = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonToleratesRegexCharsInSegments",
-                        "documentation": "Path matching is not broken by regex expressions in literal segments",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/ReDosLiteral/abc/(a+)+",
-                        "body": "",
-                        "params": MappingProxyType({"str": "abc"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"method": "GET", "uri": "/ReDosLiteral/{str}/(a+)+"}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
@@ -5735,14 +1966,12 @@ HTTP_RESPONSE_CODE_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 HTTP_RESPONSE_CODE_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#HttpResponseCodeOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "Status": {
             "target": INTEGER,
@@ -5755,56 +1984,10 @@ HTTP_RESPONSE_CODE = Schema(
     id=ShapeID("aws.protocoltests.restjson#HttpResponseCode"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpResponseCode",
-                        "documentation": "Binds the http response code to an output structure. Note that\neven though all members are bound outside of the payload, an\nempty JSON object is serialized in the response. However,\nclients should be able to handle an empty JSON object or an\nempty payload without failing to deserialize a response.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 201,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": "{}",
-                        "bodyMediaType": "application/json",
-                        "params": MappingProxyType({"Status": 201}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpResponseCodeDefaultsToModeledCode",
-                        "documentation": "Binds the http response code to the http trait's code if the\ncode isn't explicitly set. A client would be parsing the\nhttp response code, so this would always be present, but\na server doesn't require it to be set to serialize a request.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": "{}",
-                        "bodyMediaType": "application/json",
-                        "params": MappingProxyType({}),
-                        "appliesTo": "server",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpResponseCodeWithNoPayload",
-                        "documentation": "This test ensures that clients gracefully handle cases where\nthe service responds with no payload rather than an empty JSON\nobject.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 201,
-                        "body": "",
-                        "params": MappingProxyType({"Status": 201}),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/HttpResponseCode", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -5814,8 +1997,7 @@ HTTP_STRING_PAYLOAD_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#StringPayloadInput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "payload": {
@@ -5831,8 +2013,7 @@ HTTP_STRING_PAYLOAD_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#StringPayloadInput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "payload": {
@@ -5847,131 +2028,9 @@ HTTP_STRING_PAYLOAD = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonStringPayloadRequest",
-                        "uri": "/StringPayload",
-                        "body": "rawstring",
-                        "bodyMediaType": "text/plain",
-                        "headers": MappingProxyType({"Content-Type": "text/plain"}),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType({"payload": "rawstring"}),
-                        "method": "POST",
-                        "protocol": "aws.protocols#restJson1",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonStringPayloadResponse",
-                        "headers": MappingProxyType({"Content-Type": "text/plain"}),
-                        "body": "rawstring",
-                        "bodyMediaType": "text/plain",
-                        "params": MappingProxyType({"payload": "rawstring"}),
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonStringPayloadNoContentType",
-                        "documentation": "Serializes a string in the HTTP payload without a content-type header",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/StringPayload",
-                                "body": "rawstring",
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 415,
-                                "headers": MappingProxyType(
-                                    {
-                                        "x-amzn-errortype": "UnsupportedMediaTypeException"
-                                    }
-                                ),
-                            }
-                        ),
-                        "tags": ("content-type",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonStringPayloadWrongContentType",
-                        "documentation": "Serializes a string in the HTTP payload without the expected content-type header",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/StringPayload",
-                                "body": "rawstring",
-                                "headers": MappingProxyType(
-                                    {"Content-Type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 415,
-                                "headers": MappingProxyType(
-                                    {
-                                        "x-amzn-errortype": "UnsupportedMediaTypeException"
-                                    }
-                                ),
-                            }
-                        ),
-                        "tags": ("content-type",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonStringPayloadUnsatisfiableAccept",
-                        "documentation": "Serializes a string in the HTTP payload with an unstatisfiable accept header",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/StringPayload",
-                                "body": "rawstring",
-                                "headers": MappingProxyType(
-                                    {
-                                        "Content-Type": "text/plain",
-                                        "Accept": "application/json",
-                                    }
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 406,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "NotAcceptableException"}
-                                ),
-                            }
-                        ),
-                        "tags": ("accept",),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/StringPayload", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -5980,24 +2039,16 @@ IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#IgnoreQueryParamsInResponseOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "baz": {
             "target": STRING,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#suppress"),
-                    value=("HttpBindingTraitIgnored",),
-                ),
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="baz"),
-            ],
+            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="baz")],
         }
     },
 )
@@ -6007,31 +2058,11 @@ IGNORE_QUERY_PARAMS_IN_RESPONSE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonIgnoreQueryParamsInResponse",
-                        "documentation": "Query parameters must be ignored when serializing the output\nof an operation. As of January 2021, server implementations\nare expected to respond with a JSON object regardless of\nif the output parameters are empty.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": '{"baz":"bam"}',
-                        "bodyMediaType": "application/json",
-                        "params": MappingProxyType({"baz": "bam"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/IgnoreQueryParamsInResponse", "method": "GET"}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
@@ -6041,8 +2072,7 @@ INPUT_AND_OUTPUT_WITH_HEADERS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#InputAndOutputWithHeadersIO",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "headerString": {
@@ -6154,8 +2184,7 @@ INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#InputAndOutputWithHeadersIO",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "headerString": {
@@ -6266,401 +2295,16 @@ INPUT_AND_OUTPUT_WITH_HEADERS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonInputAndOutputWithStringHeaders",
-                        "documentation": "Tests requests with string header bindings",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/InputAndOutputWithHeaders",
-                        "headers": MappingProxyType(
-                            {
-                                "X-String": "Hello",
-                                "X-StringList": "a, b, c",
-                                "X-StringSet": "a, b, c",
-                            }
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "headerString": "Hello",
-                                "headerStringList": ("a", "b", "c"),
-                                "headerStringSet": ("a", "b", "c"),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonInputAndOutputWithQuotedStringHeaders",
-                        "documentation": "Tests requests with string list header bindings that require quoting",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/InputAndOutputWithHeaders",
-                        "headers": MappingProxyType(
-                            {"X-StringList": '"b,c", "\\"def\\"", a'}
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {"headerStringList": ("b,c", '"def"', "a")}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonInputAndOutputWithNumericHeaders",
-                        "documentation": "Tests requests with numeric header bindings",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/InputAndOutputWithHeaders",
-                        "headers": MappingProxyType(
-                            {
-                                "X-Byte": "1",
-                                "X-Short": "123",
-                                "X-Integer": "123",
-                                "X-Long": "123",
-                                "X-Float": "1.1",
-                                "X-Double": "1.1",
-                                "X-IntegerList": "1, 2, 3",
-                            }
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "headerByte": 1,
-                                "headerShort": 123,
-                                "headerInteger": 123,
-                                "headerLong": 123,
-                                "headerFloat": 1.1,
-                                "headerDouble": 1.1,
-                                "headerIntegerList": (1, 2, 3),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonInputAndOutputWithBooleanHeaders",
-                        "documentation": "Tests requests with boolean header bindings",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/InputAndOutputWithHeaders",
-                        "headers": MappingProxyType(
-                            {
-                                "X-Boolean1": "true",
-                                "X-Boolean2": "false",
-                                "X-BooleanList": "true, false, true",
-                            }
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "headerTrueBool": True,
-                                "headerFalseBool": False,
-                                "headerBooleanList": (True, False, True),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonInputAndOutputWithTimestampHeaders",
-                        "documentation": "Tests requests with timestamp header bindings",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/InputAndOutputWithHeaders",
-                        "headers": MappingProxyType(
-                            {
-                                "X-TimestampList": "Mon, 16 Dec 2019 23:48:18 GMT, Mon, 16 Dec 2019 23:48:18 GMT"
-                            }
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {"headerTimestampList": (1576540098, 1576540098)}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonInputAndOutputWithEnumHeaders",
-                        "documentation": "Tests requests with enum header bindings",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/InputAndOutputWithHeaders",
-                        "headers": MappingProxyType(
-                            {"X-Enum": "Foo", "X-EnumList": "Foo, Bar, Baz"}
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "headerEnum": "Foo",
-                                "headerEnumList": ("Foo", "Bar", "Baz"),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonInputAndOutputWithIntEnumHeaders",
-                        "documentation": "Tests requests with intEnum header bindings",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/InputAndOutputWithHeaders",
-                        "headers": MappingProxyType(
-                            {"X-IntegerEnum": "1", "X-IntegerEnumList": "1, 2, 3"}
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {"headerIntegerEnum": 1, "headerIntegerEnumList": (1, 2, 3)}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSupportsNaNFloatHeaderInputs",
-                        "documentation": "Supports handling NaN float header values.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/InputAndOutputWithHeaders",
-                        "body": "",
-                        "headers": MappingProxyType(
-                            {"X-Float": "NaN", "X-Double": "NaN"}
-                        ),
-                        "params": MappingProxyType(
-                            {"headerFloat": "NaN", "headerDouble": "NaN"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSupportsInfinityFloatHeaderInputs",
-                        "documentation": "Supports handling Infinity float header values.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/InputAndOutputWithHeaders",
-                        "body": "",
-                        "headers": MappingProxyType(
-                            {"X-Float": "Infinity", "X-Double": "Infinity"}
-                        ),
-                        "params": MappingProxyType(
-                            {"headerFloat": "Infinity", "headerDouble": "Infinity"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSupportsNegativeInfinityFloatHeaderInputs",
-                        "documentation": "Supports handling -Infinity float header values.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/InputAndOutputWithHeaders",
-                        "body": "",
-                        "headers": MappingProxyType(
-                            {"X-Float": "-Infinity", "X-Double": "-Infinity"}
-                        ),
-                        "params": MappingProxyType(
-                            {"headerFloat": "-Infinity", "headerDouble": "-Infinity"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonInputAndOutputWithStringHeaders",
-                        "documentation": "Tests responses with string header bindings",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {
-                                "X-String": "Hello",
-                                "X-StringList": "a, b, c",
-                                "X-StringSet": "a, b, c",
-                            }
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "headerString": "Hello",
-                                "headerStringList": ("a", "b", "c"),
-                                "headerStringSet": ("a", "b", "c"),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonInputAndOutputWithQuotedStringHeaders",
-                        "documentation": "Tests responses with string list header bindings that require quoting",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {"X-StringList": '"b,c", "\\"def\\"", a'}
-                        ),
-                        "params": MappingProxyType(
-                            {"headerStringList": ("b,c", '"def"', "a")}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonInputAndOutputWithNumericHeaders",
-                        "documentation": "Tests responses with numeric header bindings",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {
-                                "X-Byte": "1",
-                                "X-Short": "123",
-                                "X-Integer": "123",
-                                "X-Long": "123",
-                                "X-Float": "1.1",
-                                "X-Double": "1.1",
-                                "X-IntegerList": "1, 2, 3",
-                            }
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "headerByte": 1,
-                                "headerShort": 123,
-                                "headerInteger": 123,
-                                "headerLong": 123,
-                                "headerFloat": 1.1,
-                                "headerDouble": 1.1,
-                                "headerIntegerList": (1, 2, 3),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonInputAndOutputWithBooleanHeaders",
-                        "documentation": "Tests responses with boolean header bindings",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {
-                                "X-Boolean1": "true",
-                                "X-Boolean2": "false",
-                                "X-BooleanList": "true, false, true",
-                            }
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "headerTrueBool": True,
-                                "headerFalseBool": False,
-                                "headerBooleanList": (True, False, True),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonInputAndOutputWithTimestampHeaders",
-                        "documentation": "Tests responses with timestamp header bindings",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {
-                                "X-TimestampList": "Mon, 16 Dec 2019 23:48:18 GMT, Mon, 16 Dec 2019 23:48:18 GMT"
-                            }
-                        ),
-                        "params": MappingProxyType(
-                            {"headerTimestampList": (1576540098, 1576540098)}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonInputAndOutputWithEnumHeaders",
-                        "documentation": "Tests responses with enum header bindings",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {"X-Enum": "Foo", "X-EnumList": "Foo, Bar, Baz"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "headerEnum": "Foo",
-                                "headerEnumList": ("Foo", "Bar", "Baz"),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonInputAndOutputWithIntEnumHeaders",
-                        "documentation": "Tests responses with intEnum header bindings",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {"X-IntegerEnum": "1", "X-IntegerEnumList": "1, 2, 3"}
-                        ),
-                        "params": MappingProxyType(
-                            {"headerIntegerEnum": 1, "headerIntegerEnumList": (1, 2, 3)}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSupportsNaNFloatHeaderOutputs",
-                        "documentation": "Supports handling NaN float header values.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {"X-Float": "NaN", "X-Double": "NaN"}
-                        ),
-                        "params": MappingProxyType(
-                            {"headerFloat": "NaN", "headerDouble": "NaN"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSupportsInfinityFloatHeaderOutputs",
-                        "documentation": "Supports handling Infinity float header values.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {"X-Float": "Infinity", "X-Double": "Infinity"}
-                        ),
-                        "params": MappingProxyType(
-                            {"headerFloat": "Infinity", "headerDouble": "Infinity"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSupportsNegativeInfinityFloatHeaderOutputs",
-                        "documentation": "Supports handling -Infinity float header values.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {"X-Float": "-Infinity", "X-Double": "-Infinity"}
-                        ),
-                        "params": MappingProxyType(
-                            {"headerFloat": "-Infinity", "headerDouble": "-Infinity"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/InputAndOutputWithHeaders", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
 INPUT_STREAM_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#InputStreamInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "stream": {
             "target": EVENT_STREAM,
@@ -6674,8 +2318,7 @@ INPUT_STREAM_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -6686,858 +2329,12 @@ INPUT_STREAM = Schema(
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"method": "POST", "uri": "/InputStream"}),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#eventStreamTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "BooleanHeaderInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"booleanHeader": True}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "booleanHeader": MappingProxyType(
-                                                {"boolean": True}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAASwAAADv7Cl8VDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMNYm9vbGVhbkhlYWRlcgC4J9Ws",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "ByteHeaderInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {"headers": MappingProxyType({"byteHeader": 1})}
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "byteHeader": MappingProxyType({"byte": 1}),
-                                        }
-                                    ),
-                                    "bytes": "AAAASQAAADlvxG1ZDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMKYnl0ZUhlYWRlcgIBKFTmjg==",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "ShortHeaderInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"shortHeader": 2}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "shortHeader": MappingProxyType(
-                                                {"short": 2}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAASwAAADv7Cl8VDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMLc2hvcnRIZWFkZXIDAAL1ETsK",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "IntegerHeaderInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {"headers": MappingProxyType({"intHeader": 3})}
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "intHeader": MappingProxyType(
-                                                {"integer": 3}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAASwAAADv7Cl8VDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMJaW50SGVhZGVyBAAAAAPlyUrb",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "LongHeaderInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"longHeader": 4294967294}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "longHeader": MappingProxyType(
-                                                {"long": 4294967294}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAAUAAAAEAr7VEyDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMKbG9uZ0hlYWRlcgUAAAAA/////udnd/I=",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "BlobHeaderInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"blobHeader": "foo"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "blobHeader": MappingProxyType(
-                                                {"blob": "Zm9v"}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAATQAAAD2dKQ+ADTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMKYmxvYkhlYWRlcgYAA2Zvb5sbbGM=",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "StringHeaderInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"stringHeader": "foo"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "stringHeader": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAATwAAAD8J5z3MDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMMc3RyaW5nSGVhZGVyBwADZm9vxT+2MA==",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "TimestampHeaderInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {
-                                                    "timestampHeader": "2024-10-31T14:15:14Z"
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "timestampHeader": MappingProxyType(
-                                                {"timestamp": "2024-10-31T14:15:14Z"}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAAVQAAAEWTZyrNDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMPdGltZXN0YW1wSGVhZGVyCAAAAZLi7jFQ6uV3Eg==",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "MultipleHeaderInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {
-                                                    "booleanHeader": True,
-                                                    "stringHeader": "foo",
-                                                    "blobHeader": "bar",
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "booleanHeader": MappingProxyType(
-                                                {"boolean": True}
-                                            ),
-                                            "stringHeader": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                            "blobHeader": MappingProxyType(
-                                                {"blob": "YmFy"}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAAbwAAAF+FlHOQDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMNYm9vbGVhbkhlYWRlcgAMc3RyaW5nSGVhZGVyBwADZm9vCmJsb2JIZWFkZXIGAANiYXIDXbo7",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "StringPayloadInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "stringPayload": MappingProxyType(
-                                                {"payload": "foo"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "stringPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "text/plain"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": "foo",
-                                    "bodyMediaType": "text/plain",
-                                    "bytes": "AAAAYAAAAE30fZUJDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcADXN0cmluZ1BheWxvYWQNOmNvbnRlbnQtdHlwZQcACnRleHQvcGxhaW5mb29G1ELr",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "BlobPayloadInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "blobPayload": MappingProxyType(
-                                                {"payload": "bar"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "blobPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/octet-stream"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": "bar",
-                                    "bodyMediaType": "application/octet-stream",
-                                    "bytes": "AAAAbAAAAFkrV6x1DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAC2Jsb2JQYXlsb2FkDTpjb250ZW50LXR5cGUHABhhcHBsaWNhdGlvbi9vY3RldC1zdHJlYW1iYXJv5nGJ",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "StructurePayloadInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "structurePayload": MappingProxyType(
-                                                {
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "foo"}
-                                                    )
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "structurePayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"foo"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAfwAAAFacqFy2DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAEHN0cnVjdHVyZVBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb257InN0cnVjdHVyZU1lbWJlciI6ImZvbyJ9rcIRVA==",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "UnionPayloadInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "unionPayload": MappingProxyType(
-                                                {
-                                                    "payload": MappingProxyType(
-                                                        {"unionMember": "bar"}
-                                                    )
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "unionPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"unionMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAdwAAAFKrtdNuDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcADHVuaW9uUGF5bG9hZA06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbnsidW5pb25NZW1iZXIiOiJiYXIifcZDMD4=",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "HeadersAndExplicitPayloadInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headersAndExplicitPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAlQAAAGw4wFp6DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAGWhlYWRlcnNBbmRFeHBsaWNpdFBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24GaGVhZGVyBwADZm9veyJzdHJ1Y3R1cmVNZW1iZXIiOiJiYXIifTafKXs=",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "HeadersAndImplicitPayloadInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndImplicitPayload": MappingProxyType(
-                                                {"header": "foo", "payload": "bar"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headersAndImplicitPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"payload":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAjQAAAGxoUIY5DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAGWhlYWRlcnNBbmRJbXBsaWNpdFBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24GaGVhZGVyBwADZm9veyJwYXlsb2FkIjoiYmFyIn15lZtT",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "ServerErrorInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {"error": MappingProxyType({"message": "foo"})}
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "exception"}
-                                            ),
-                                            ":exception-type": MappingProxyType(
-                                                {"string": "error"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"message":"foo"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAdAAAAFObEpkoDTptZXNzYWdlLXR5cGUHAAlleGNlcHRpb24POmV4Y2VwdGlvbi10eXBlBwAFZXJyb3INOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb257Im1lc3NhZ2UiOiJmb28ifTua1S8=",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {
-                                "failure": MappingProxyType(
-                                    {"errorId": "aws.protocoltests.restjson#ErrorEvent"}
-                                )
-                            }
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "ClientErrorInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {"error": MappingProxyType({"message": "foo"})}
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "exception"}
-                                            ),
-                                            ":exception-type": MappingProxyType(
-                                                {"string": "error"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"message":"foo"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAdAAAAFObEpkoDTptZXNzYWdlLXR5cGUHAAlleGNlcHRpb24POmV4Y2VwdGlvbi10eXBlBwAFZXJyb3INOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb257Im1lc3NhZ2UiOiJmb28ifTua1S8=",
-                                }
-                            ),
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "ServerUnexpectedErrorInput",
-                        "documentation": "Servers must be able to handle structured, but unmodeled errors.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "error"}
-                                            ),
-                                            ":error-code": MappingProxyType(
-                                                {"string": "internal-error"}
-                                            ),
-                                            ":error-message": MappingProxyType(
-                                                {"string": "An unknown error occurred."}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAAbwAAAF+FlHOQDTptZXNzYWdlLXR5cGUHAAVlcnJvcgs6ZXJyb3ItY29kZQcADmludGVybmFsLWVycm9yDjplcnJvci1tZXNzYWdlBwAaQW4gdW5rbm93biBlcnJvciBvY2N1cnJlZC4kun0t",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "MissingMessageTypeInput",
-                        "documentation": "Servers must reject events that don't contain a :message-type header.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headersAndExplicitPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAfwAAAFacqFy2CzpldmVudC10eXBlBwAZaGVhZGVyc0FuZEV4cGxpY2l0UGF5bG9hZA06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbgZoZWFkZXIHAANmb297InN0cnVjdHVyZU1lbWJlciI6ImJhciJ98LexJg==",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "MalformedMessageTypeInput",
-                        "documentation": "Servers must reject events that contain a malformed :message-type header.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"blob": "ZXZlbnQ="}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headersAndExplicitPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAlQAAAGw4wFp6DTptZXNzYWdlLXR5cGUGAAVldmVudAs6ZXZlbnQtdHlwZQcAGWhlYWRlcnNBbmRFeHBsaWNpdFBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24GaGVhZGVyBwADZm9veyJzdHJ1Y3R1cmVNZW1iZXIiOiJiYXIifVwdfzU=",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "MissingEventTypeInput",
-                        "documentation": "Servers must reject message events that don't contain an :event-type header.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAbQAAAER1MekcDTptZXNzYWdlLXR5cGUHAAVldmVudA06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbgZoZWFkZXIHAANmb297InN0cnVjdHVyZU1lbWJlciI6ImJhciJ9riy0Gg==",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "MalformedEventTypeInput",
-                        "documentation": "Servers must reject message events that contain a malformed :event-type header.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {
-                                                    "blob": "aGVhZGVyc0FuZEV4cGxpY2l0UGF5bG9hZA=="
-                                                }
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAlQAAAGw4wFp6DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQYAGWhlYWRlcnNBbmRFeHBsaWNpdFBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24GaGVhZGVyBwADZm9veyJzdHJ1Y3R1cmVNZW1iZXIiOiJiYXIifcP6KLk=",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
+        )
     ],
 )
 
 INPUT_STREAM_WITH_INITIAL_REQUEST_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#InputStreamWithInitialRequestInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "initialRequestMember": {
             "target": STRING,
@@ -7560,8 +2357,7 @@ INPUT_STREAM_WITH_INITIAL_REQUEST_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -7574,69 +2370,7 @@ INPUT_STREAM_WITH_INITIAL_REQUEST = Schema(
             value=MappingProxyType(
                 {"method": "POST", "uri": "/InputStreamWithInitialRequest"}
             ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#eventStreamTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "InitialRequestInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "initialRequestParams": MappingProxyType(
-                            {"initialRequestMember": "foo"}
-                        ),
-                        "initialRequest": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/InputStreamWithInitialRequest",
-                                "headers": MappingProxyType(
-                                    {"initial-request-member": "foo"}
-                                ),
-                            }
-                        ),
-                        "initialRequestShape": "smithy.test#InitialHttpRequest",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "MissingRequiredInitialRequestInput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "request",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"booleanHeader": True}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "booleanHeader": MappingProxyType(
-                                                {"boolean": True}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAASwAAADv7Cl8VDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMNYm9vbGVhbkhlYWRlcgC4J9Ws",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
+        )
     ],
 )
 
@@ -7646,8 +2380,7 @@ JSON_BLOBS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#JsonBlobsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={"data": {"target": BLOB}},
 )
@@ -7658,8 +2391,7 @@ JSON_BLOBS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#JsonBlobsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={"data": {"target": BLOB}},
 )
@@ -7669,48 +2401,9 @@ JSON_BLOBS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonBlobs",
-                        "documentation": "Blobs are base64 encoded",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/JsonBlobs",
-                        "body": '{\n    "data": "dmFsdWU="\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"data": "value"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonBlobs",
-                        "documentation": "Blobs are base64 encoded",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "data": "dmFsdWU="\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"data": "value"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/JsonBlobs", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -7723,7 +2416,6 @@ FOO_ENUM_MAP = Schema.collection(
 FOO_ENUM_SET = Schema.collection(
     id=ShapeID("aws.protocoltests.shared#FooEnumSet"),
     shape_type=ShapeType.LIST,
-    traits=[Trait.new(id=ShapeID("smithy.api#uniqueItems"))],
     members={"member": {"target": FOO_ENUM}},
 )
 
@@ -7733,8 +2425,7 @@ JSON_ENUMS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#JsonEnumsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "fooEnum1": {"target": FOO_ENUM},
@@ -7752,8 +2443,7 @@ JSON_ENUMS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#JsonEnumsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "fooEnum1": {"target": FOO_ENUM},
@@ -7770,71 +2460,9 @@ JSON_ENUMS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonEnums",
-                        "documentation": "Serializes simple scalar properties",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/JsonEnums",
-                        "body": '{\n    "fooEnum1": "Foo",\n    "fooEnum2": "0",\n    "fooEnum3": "1",\n    "fooEnumList": [\n        "Foo",\n        "0"\n    ],\n    "fooEnumSet": [\n        "Foo",\n        "0"\n    ],\n    "fooEnumMap": {\n        "hi": "Foo",\n        "zero": "0"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "fooEnum1": "Foo",
-                                "fooEnum2": "0",
-                                "fooEnum3": "1",
-                                "fooEnumList": ("Foo", "0"),
-                                "fooEnumSet": ("Foo", "0"),
-                                "fooEnumMap": MappingProxyType(
-                                    {"hi": "Foo", "zero": "0"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonEnums",
-                        "documentation": "Serializes simple scalar properties",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "fooEnum1": "Foo",\n    "fooEnum2": "0",\n    "fooEnum3": "1",\n    "fooEnumList": [\n        "Foo",\n        "0"\n    ],\n    "fooEnumSet": [\n        "Foo",\n        "0"\n    ],\n    "fooEnumMap": {\n        "hi": "Foo",\n        "zero": "0"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "fooEnum1": "Foo",
-                                "fooEnum2": "0",
-                                "fooEnum3": "1",
-                                "fooEnumList": ("Foo", "0"),
-                                "fooEnumSet": ("Foo", "0"),
-                                "fooEnumMap": MappingProxyType(
-                                    {"hi": "Foo", "zero": "0"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/JsonEnums", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -7853,7 +2481,6 @@ INTEGER_ENUM_MAP = Schema.collection(
 INTEGER_ENUM_SET = Schema.collection(
     id=ShapeID("aws.protocoltests.shared#IntegerEnumSet"),
     shape_type=ShapeType.LIST,
-    traits=[Trait.new(id=ShapeID("smithy.api#uniqueItems"))],
     members={"member": {"target": INTEGER_ENUM}},
 )
 
@@ -7863,8 +2490,7 @@ JSON_INT_ENUMS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#JsonIntEnumsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "integerEnum1": {"target": INTEGER_ENUM},
@@ -7882,8 +2508,7 @@ JSON_INT_ENUMS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#JsonIntEnumsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "integerEnum1": {"target": INTEGER_ENUM},
@@ -7900,71 +2525,9 @@ JSON_INT_ENUMS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonIntEnums",
-                        "documentation": "Serializes intEnums as integers",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/JsonIntEnums",
-                        "body": '{\n    "integerEnum1": 1,\n    "integerEnum2": 2,\n    "integerEnum3": 3,\n    "integerEnumList": [\n        1,\n        2,\n        3\n    ],\n    "integerEnumSet": [\n        1,\n        2\n    ],\n    "integerEnumMap": {\n        "abc": 1,\n        "def": 2\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "integerEnum1": 1,
-                                "integerEnum2": 2,
-                                "integerEnum3": 3,
-                                "integerEnumList": (1, 2, 3),
-                                "integerEnumSet": (1, 2),
-                                "integerEnumMap": MappingProxyType(
-                                    {"abc": 1, "def": 2}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonIntEnums",
-                        "documentation": "Serializes intEnums as integers",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "integerEnum1": 1,\n    "integerEnum2": 2,\n    "integerEnum3": 3,\n    "integerEnumList": [\n        1,\n        2,\n        3\n    ],\n    "integerEnumSet": [\n        1,\n        2\n    ],\n    "integerEnumMap": {\n        "abc": 1,\n        "def": 2\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "integerEnum1": 1,
-                                "integerEnum2": 2,
-                                "integerEnum3": 3,
-                                "integerEnumList": (1, 2, 3),
-                                "integerEnumSet": (1, 2),
-                                "integerEnumMap": MappingProxyType(
-                                    {"abc": 1, "def": 2}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/JsonIntEnums", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -8000,8 +2563,7 @@ JSON_LISTS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#JsonListsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "stringList": {"target": STRING_LIST},
@@ -8027,8 +2589,7 @@ JSON_LISTS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#JsonListsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "stringList": {"target": STRING_LIST},
@@ -8053,108 +2614,9 @@ JSON_LISTS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonLists",
-                        "documentation": "Serializes JSON lists",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/JsonLists",
-                        "body": '{\n    "stringList": [\n        "foo",\n        "bar"\n    ],\n    "stringSet": [\n        "foo",\n        "bar"\n    ],\n    "integerList": [\n        1,\n        2\n    ],\n    "booleanList": [\n        true,\n        false\n    ],\n    "timestampList": [\n        1398796238,\n        1398796238\n    ],\n    "enumList": [\n        "Foo",\n        "0"\n    ],\n    "intEnumList": [\n        1,\n        2\n    ],\n    "nestedStringList": [\n        [\n            "foo",\n            "bar"\n        ],\n        [\n            "baz",\n            "qux"\n        ]\n    ],\n    "myStructureList": [\n        {\n            "value": "1",\n            "other": "2"\n        },\n        {\n            "value": "3",\n            "other": "4"\n        }\n    ]\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "stringList": ("foo", "bar"),
-                                "stringSet": ("foo", "bar"),
-                                "integerList": (1, 2),
-                                "booleanList": (True, False),
-                                "timestampList": (1398796238, 1398796238),
-                                "enumList": ("Foo", "0"),
-                                "intEnumList": (1, 2),
-                                "nestedStringList": (("foo", "bar"), ("baz", "qux")),
-                                "structureList": (
-                                    MappingProxyType({"a": "1", "b": "2"}),
-                                    MappingProxyType({"a": "3", "b": "4"}),
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonListsEmpty",
-                        "documentation": "Serializes empty JSON lists",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/JsonLists",
-                        "body": '{\n    "stringList": []\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"stringList": ()}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonLists",
-                        "documentation": "Serializes JSON lists",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "stringList": [\n        "foo",\n        "bar"\n    ],\n    "stringSet": [\n        "foo",\n        "bar"\n    ],\n    "integerList": [\n        1,\n        2\n    ],\n    "booleanList": [\n        true,\n        false\n    ],\n    "timestampList": [\n        1398796238,\n        1398796238\n    ],\n    "enumList": [\n        "Foo",\n        "0"\n    ],\n    "intEnumList": [\n        1,\n        2\n    ],\n    "nestedStringList": [\n        [\n            "foo",\n            "bar"\n        ],\n        [\n            "baz",\n            "qux"\n        ]\n    ],\n    "myStructureList": [\n        {\n            "value": "1",\n            "other": "2"\n        },\n        {\n            "value": "3",\n            "other": "4"\n        }\n    ]\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "stringList": ("foo", "bar"),
-                                "stringSet": ("foo", "bar"),
-                                "integerList": (1, 2),
-                                "booleanList": (True, False),
-                                "timestampList": (1398796238, 1398796238),
-                                "enumList": ("Foo", "0"),
-                                "intEnumList": (1, 2),
-                                "nestedStringList": (("foo", "bar"), ("baz", "qux")),
-                                "structureList": (
-                                    MappingProxyType({"a": "1", "b": "2"}),
-                                    MappingProxyType({"a": "3", "b": "4"}),
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonListsEmpty",
-                        "documentation": "Serializes empty JSON lists",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "stringList": []\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"stringList": ()}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/JsonLists", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -8164,8 +2626,7 @@ JSON_MAPS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#JsonMapsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "denseStructMap": {"target": DENSE_STRUCT_MAP},
@@ -8182,8 +2643,7 @@ JSON_MAPS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#JsonMapsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "denseStructMap": {"target": DENSE_STRUCT_MAP},
@@ -8199,146 +2659,9 @@ JSON_MAPS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonMaps",
-                        "documentation": "Serializes JSON maps",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/JsonMaps",
-                        "body": '{\n    "denseStructMap": {\n        "foo": {\n            "hi": "there"\n        },\n        "baz": {\n            "hi": "bye"\n        }\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "denseStructMap": MappingProxyType(
-                                    {
-                                        "foo": MappingProxyType({"hi": "there"}),
-                                        "baz": MappingProxyType({"hi": "bye"}),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSerializesZeroValuesInMaps",
-                        "documentation": "Ensure that 0 and false are sent over the wire in all maps and lists",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/JsonMaps",
-                        "body": '{\n    "denseNumberMap": {\n        "x": 0\n    },\n    "denseBooleanMap": {\n        "x": false\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "denseNumberMap": MappingProxyType({"x": 0}),
-                                "denseBooleanMap": MappingProxyType({"x": False}),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSerializesDenseSetMap",
-                        "documentation": "A request that contains a dense map of sets.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/JsonMaps",
-                        "body": '{\n    "denseSetMap": {\n        "x": [],\n        "y": ["a", "b"]\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "denseSetMap": MappingProxyType(
-                                    {"x": (), "y": ("a", "b")}
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonMaps",
-                        "documentation": "Deserializes JSON maps",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "denseStructMap": {\n        "foo": {\n            "hi": "there"\n        },\n        "baz": {\n            "hi": "bye"\n        }\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "denseStructMap": MappingProxyType(
-                                    {
-                                        "foo": MappingProxyType({"hi": "there"}),
-                                        "baz": MappingProxyType({"hi": "bye"}),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDeserializesZeroValuesInMaps",
-                        "documentation": "Ensure that 0 and false are sent over the wire in all maps and lists",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "denseNumberMap": {\n        "x": 0\n    },\n    "denseBooleanMap": {\n        "x": false\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "denseNumberMap": MappingProxyType({"x": 0}),
-                                "denseBooleanMap": MappingProxyType({"x": False}),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDeserializesDenseSetMap",
-                        "documentation": "A response that contains a dense map of sets.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "denseSetMap": {\n        "x": [],\n        "y": ["a", "b"]\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "denseSetMap": MappingProxyType(
-                                    {"x": (), "y": ("a", "b")}
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/JsonMaps", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -8348,8 +2671,7 @@ JSON_TIMESTAMPS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#JsonTimestampsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "normal": {"target": TIMESTAMP},
@@ -8385,8 +2707,7 @@ JSON_TIMESTAMPS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#JsonTimestampsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "normal": {"target": TIMESTAMP},
@@ -8421,226 +2742,9 @@ JSON_TIMESTAMPS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonTimestamps",
-                        "documentation": "Tests how normal timestamps are serialized",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/JsonTimestamps",
-                        "body": '{\n    "normal": 1398796238\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"normal": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonTimestampsWithDateTimeFormat",
-                        "documentation": "Ensures that the timestampFormat of date-time works like normal timestamps",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/JsonTimestamps",
-                        "body": '{\n    "dateTime": "2014-04-29T18:30:38Z"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"dateTime": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonTimestampsWithDateTimeOnTargetFormat",
-                        "documentation": "Ensures that the timestampFormat of date-time on the target shape works like normal timestamps",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/JsonTimestamps",
-                        "body": '{\n    "dateTimeOnTarget": "2014-04-29T18:30:38Z"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"dateTimeOnTarget": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonTimestampsWithEpochSecondsFormat",
-                        "documentation": "Ensures that the timestampFormat of epoch-seconds works",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/JsonTimestamps",
-                        "body": '{\n    "epochSeconds": 1398796238\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"epochSeconds": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonTimestampsWithEpochSecondsOnTargetFormat",
-                        "documentation": "Ensures that the timestampFormat of epoch-seconds on the target shape works",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/JsonTimestamps",
-                        "body": '{\n    "epochSecondsOnTarget": 1398796238\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"epochSecondsOnTarget": 1398796238}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonTimestampsWithHttpDateFormat",
-                        "documentation": "Ensures that the timestampFormat of http-date works",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/JsonTimestamps",
-                        "body": '{\n    "httpDate": "Tue, 29 Apr 2014 18:30:38 GMT"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"httpDate": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonTimestampsWithHttpDateOnTargetFormat",
-                        "documentation": "Ensures that the timestampFormat of http-date on the target shape works",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/JsonTimestamps",
-                        "body": '{\n    "httpDateOnTarget": "Tue, 29 Apr 2014 18:30:38 GMT"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"httpDateOnTarget": 1398796238}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonTimestamps",
-                        "documentation": "Tests how normal timestamps are serialized",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "normal": 1398796238\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"normal": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonTimestampsWithDateTimeFormat",
-                        "documentation": "Ensures that the timestampFormat of date-time works like normal timestamps",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "dateTime": "2014-04-29T18:30:38Z"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"dateTime": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonTimestampsWithDateTimeOnTargetFormat",
-                        "documentation": "Ensures that the timestampFormat of date-time on the target shape works like normal timestamps",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "dateTimeOnTarget": "2014-04-29T18:30:38Z"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"dateTimeOnTarget": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonTimestampsWithEpochSecondsFormat",
-                        "documentation": "Ensures that the timestampFormat of epoch-seconds works",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "epochSeconds": 1398796238\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"epochSeconds": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonTimestampsWithEpochSecondsOnTargetFormat",
-                        "documentation": "Ensures that the timestampFormat of epoch-seconds on the target shape works",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "epochSecondsOnTarget": 1398796238\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"epochSecondsOnTarget": 1398796238}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonTimestampsWithHttpDateFormat",
-                        "documentation": "Ensures that the timestampFormat of http-date works",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "httpDate": "Tue, 29 Apr 2014 18:30:38 GMT"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"httpDate": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonJsonTimestampsWithHttpDateOnTargetFormat",
-                        "documentation": "Ensures that the timestampFormat of http-date on the target shape works",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "httpDateOnTarget": "Tue, 29 Apr 2014 18:30:38 GMT"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"httpDateOnTarget": 1398796238}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/JsonTimestamps", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -8679,8 +2783,7 @@ JSON_UNIONS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#UnionInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={"contents": {"target": MY_UNION}},
 )
@@ -8691,8 +2794,7 @@ JSON_UNIONS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#UnionInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={"contents": {"target": MY_UNION}},
 )
@@ -8702,464 +2804,9 @@ JSON_UNIONS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSerializeStringUnionValue",
-                        "documentation": "Serializes a string union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/JsonUnions",
-                        "body": '{\n    "contents": {\n        "stringValue": "foo"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"contents": MappingProxyType({"stringValue": "foo"})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSerializeBooleanUnionValue",
-                        "documentation": "Serializes a boolean union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/JsonUnions",
-                        "body": '{\n    "contents": {\n        "booleanValue": true\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"contents": MappingProxyType({"booleanValue": True})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSerializeNumberUnionValue",
-                        "documentation": "Serializes a number union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/JsonUnions",
-                        "body": '{\n    "contents": {\n        "numberValue": 1\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"contents": MappingProxyType({"numberValue": 1})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSerializeBlobUnionValue",
-                        "documentation": "Serializes a blob union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/JsonUnions",
-                        "body": '{\n    "contents": {\n        "blobValue": "Zm9v"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"contents": MappingProxyType({"blobValue": "foo"})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSerializeTimestampUnionValue",
-                        "documentation": "Serializes a timestamp union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/JsonUnions",
-                        "body": '{\n    "contents": {\n        "timestampValue": 1398796238\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "contents": MappingProxyType(
-                                    {"timestampValue": 1398796238}
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSerializeEnumUnionValue",
-                        "documentation": "Serializes an enum union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/JsonUnions",
-                        "body": '{\n    "contents": {\n        "enumValue": "Foo"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"contents": MappingProxyType({"enumValue": "Foo"})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSerializeListUnionValue",
-                        "documentation": "Serializes a list union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/JsonUnions",
-                        "body": '{\n    "contents": {\n        "listValue": ["foo", "bar"]\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "contents": MappingProxyType(
-                                    {"listValue": ("foo", "bar")}
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSerializeMapUnionValue",
-                        "documentation": "Serializes a map union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/JsonUnions",
-                        "body": '{\n    "contents": {\n        "mapValue": {\n            "foo": "bar",\n            "spam": "eggs"\n        }\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "contents": MappingProxyType(
-                                    {
-                                        "mapValue": MappingProxyType(
-                                            {"foo": "bar", "spam": "eggs"}
-                                        )
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSerializeStructureUnionValue",
-                        "documentation": "Serializes a structure union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/JsonUnions",
-                        "body": '{\n    "contents": {\n        "structureValue": {\n            "hi": "hello"\n        }\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "contents": MappingProxyType(
-                                    {
-                                        "structureValue": MappingProxyType(
-                                            {"hi": "hello"}
-                                        )
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSerializeRenamedStructureUnionValue",
-                        "documentation": "Serializes a renamed structure union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/JsonUnions",
-                        "body": '{\n    "contents": {\n        "renamedStructureValue": {\n            "salutation": "hello!"\n        }\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "contents": MappingProxyType(
-                                    {
-                                        "renamedStructureValue": MappingProxyType(
-                                            {"salutation": "hello!"}
-                                        )
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSerializeNestedUnionValue",
-                        "documentation": "Serializes a nested union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/JsonUnions",
-                        "body": '{\n    "contents": {\n        "unionValue": {\n            "stringValue": "foo"\n        }\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "contents": MappingProxyType(
-                                    {
-                                        "unionValue": MappingProxyType(
-                                            {"stringValue": "foo"}
-                                        )
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDeserializeStringUnionValue",
-                        "documentation": "Deserializes a string union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "contents": {\n        "stringValue": "foo"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"contents": MappingProxyType({"stringValue": "foo"})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDeserializeBooleanUnionValue",
-                        "documentation": "Deserializes a boolean union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "contents": {\n        "booleanValue": true\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"contents": MappingProxyType({"booleanValue": True})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDeserializeNumberUnionValue",
-                        "documentation": "Deserializes a number union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "contents": {\n        "numberValue": 1\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"contents": MappingProxyType({"numberValue": 1})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDeserializeBlobUnionValue",
-                        "documentation": "Deserializes a blob union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "contents": {\n        "blobValue": "Zm9v"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"contents": MappingProxyType({"blobValue": "foo"})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDeserializeTimestampUnionValue",
-                        "documentation": "Deserializes a timestamp union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "contents": {\n        "timestampValue": 1398796238\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "contents": MappingProxyType(
-                                    {"timestampValue": 1398796238}
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDeserializeEnumUnionValue",
-                        "documentation": "Deserializes an enum union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "contents": {\n        "enumValue": "Foo"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"contents": MappingProxyType({"enumValue": "Foo"})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDeserializeListUnionValue",
-                        "documentation": "Deserializes a list union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "contents": {\n        "listValue": ["foo", "bar"]\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "contents": MappingProxyType(
-                                    {"listValue": ("foo", "bar")}
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDeserializeMapUnionValue",
-                        "documentation": "Deserializes a map union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "contents": {\n        "mapValue": {\n            "foo": "bar",\n            "spam": "eggs"\n        }\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "contents": MappingProxyType(
-                                    {
-                                        "mapValue": MappingProxyType(
-                                            {"foo": "bar", "spam": "eggs"}
-                                        )
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDeserializeStructureUnionValue",
-                        "documentation": "Deserializes a structure union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "contents": {\n        "structureValue": {\n            "hi": "hello"\n        }\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "contents": MappingProxyType(
-                                    {
-                                        "structureValue": MappingProxyType(
-                                            {"hi": "hello"}
-                                        )
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDeserializeNestedUnionValue",
-                        "documentation": "Deserializes a nested union value",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "contents": {\n        "unionValue": {\n            "stringValue": "foo"\n        }\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "contents": MappingProxyType(
-                                    {
-                                        "unionValue": MappingProxyType(
-                                            {"stringValue": "foo"}
-                                        )
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDeserializeIgnoreType",
-                        "appliesTo": "client",
-                        "documentation": "Ignores an unrecognized __type property",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "contents": {\n        "__type": "aws.protocoltests.json10#MyUnion",\n        "structureValue": {\n            "hi": "hello"\n        }\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "contents": MappingProxyType(
-                                    {
-                                        "structureValue": MappingProxyType(
-                                            {"hi": "hello"}
-                                        )
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/JsonUnions", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -9174,8 +2821,7 @@ MALFORMED_ACCEPT_WITH_BODY_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -9185,8 +2831,7 @@ MALFORMED_ACCEPT_WITH_BODY_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.shared#GreetingStruct",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={"hi": {"target": STRING}},
 )
@@ -9195,43 +2840,12 @@ MALFORMED_ACCEPT_WITH_BODY = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedAcceptWithBody"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonWithBodyExpectsApplicationJsonAccept",
-                        "documentation": "When there is modeled output, the accept must be application/json",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedAcceptWithBody",
-                                "headers": MappingProxyType(
-                                    {"accept": "application/hal+json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 406,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "NotAcceptableException"}
-                                ),
-                            }
-                        ),
-                        "tags": ("accept",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"method": "POST", "uri": "/MalformedAcceptWithBody"}
             ),
-        ),
+        )
     ],
 )
 
@@ -9240,14 +2854,12 @@ MALFORMED_ACCEPT_WITH_GENERIC_STRING_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 MALFORMED_ACCEPT_WITH_GENERIC_STRING_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedAcceptWithGenericStringOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "payload": {
             "target": STRING,
@@ -9260,43 +2872,12 @@ MALFORMED_ACCEPT_WITH_GENERIC_STRING = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedAcceptWithGenericString"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonWithPayloadExpectsImpliedAccept",
-                        "documentation": "When there is a payload without a mediaType trait, the accept must match the\nimplied content type of the shape.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedAcceptWithGenericString",
-                                "headers": MappingProxyType(
-                                    {"accept": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 406,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "NotAcceptableException"}
-                                ),
-                            }
-                        ),
-                        "tags": ("accept",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"method": "POST", "uri": "/MalformedAcceptWithGenericString"}
             ),
-        ),
+        )
     ],
 )
 
@@ -9305,8 +2886,7 @@ MALFORMED_ACCEPT_WITH_PAYLOAD_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -9318,7 +2898,6 @@ JPEG_BLOB = Schema(
 
 MALFORMED_ACCEPT_WITH_PAYLOAD_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedAcceptWithPayloadOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "payload": {
             "target": JPEG_BLOB,
@@ -9331,49 +2910,17 @@ MALFORMED_ACCEPT_WITH_PAYLOAD = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedAcceptWithPayload"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonWithPayloadExpectsModeledAccept",
-                        "documentation": "When there is a payload with a mediaType trait, the accept must match.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedAcceptWithPayload",
-                                "headers": MappingProxyType(
-                                    {"accept": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 406,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "NotAcceptableException"}
-                                ),
-                            }
-                        ),
-                        "tags": ("accept",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"method": "POST", "uri": "/MalformedAcceptWithPayload"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_BLOB_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedBlobInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={"blob": {"target": BLOB}},
 )
 
@@ -9382,8 +2929,7 @@ MALFORMED_BLOB_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -9391,62 +2937,15 @@ MALFORMED_BLOB = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedBlob"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyMalformedBlobInvalidBase64",
-                        "documentation": "When a blob member is not properly base64 encoded, or not encoded at\nall, the response should be a 400 SerializationException.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedBlob",
-                                "body": '{ "blob" : $value:L }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "blob",
-                                    '"xyz"',
-                                    '"YmxvYg="',
-                                    "[98, 108, 11, 98]",
-                                    '["b", "l","o","b"]',
-                                    "981081198",
-                                    "true",
-                                    "[][]",
-                                    "-_==",
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/MalformedBlob", "method": "POST"}),
-        ),
+        )
     ],
 )
 
 MALFORMED_BOOLEAN_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedBooleanInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "booleanInBody": {"target": BOOLEAN},
         "booleanInPath": {
@@ -9476,8 +2975,7 @@ MALFORMED_BOOLEAN_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -9485,280 +2983,17 @@ MALFORMED_BOOLEAN = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedBoolean"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyBooleanStringCoercion",
-                        "documentation": "Attempted string coercion should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedBoolean/true",
-                                "body": '{ "booleanInBody" : $value:S }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "true",
-                                    "True",
-                                    "TRUE",
-                                    "y",
-                                    "Y",
-                                    "yes",
-                                    "Yes",
-                                    "YES",
-                                    "1",
-                                    "on",
-                                    "On",
-                                    "ON",
-                                    "false",
-                                    "False",
-                                    "FALSE",
-                                    "n",
-                                    "N",
-                                    "no",
-                                    "No",
-                                    "NO",
-                                    "0",
-                                    "off",
-                                    "Off",
-                                    "OFF",
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyBooleanBadLiteral",
-                        "documentation": "YAML-style alternate boolean literals should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedBoolean/true",
-                                "body": '{ "booleanInBody" : $value:L }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "True",
-                                    "TRUE",
-                                    "y",
-                                    "Y",
-                                    "yes",
-                                    "Yes",
-                                    "YES",
-                                    "1",
-                                    "on",
-                                    "On",
-                                    "ON",
-                                    "False",
-                                    "FALSE",
-                                    "n",
-                                    "N",
-                                    "no",
-                                    "No",
-                                    "NO",
-                                    "0",
-                                    "off",
-                                    "Off",
-                                    "OFF",
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathBooleanStringCoercion",
-                        "documentation": "Attempted string coercion should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {"method": "POST", "uri": "/MalformedBoolean/$value:L"}
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "True",
-                                    "TRUE",
-                                    "y",
-                                    "Y",
-                                    "yes",
-                                    "Yes",
-                                    "YES",
-                                    "1",
-                                    "on",
-                                    "On",
-                                    "ON",
-                                    "False",
-                                    "FALSE",
-                                    "n",
-                                    "N",
-                                    "no",
-                                    "No",
-                                    "NO",
-                                    "0",
-                                    "off",
-                                    "Off",
-                                    "OFF",
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryBooleanStringCoercion",
-                        "documentation": "Attempted string coercion should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedBoolean/true",
-                                "queryParams": ("booleanInQuery=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "True",
-                                    "TRUE",
-                                    "y",
-                                    "Y",
-                                    "yes",
-                                    "Yes",
-                                    "YES",
-                                    "1",
-                                    "on",
-                                    "On",
-                                    "ON",
-                                    "False",
-                                    "FALSE",
-                                    "n",
-                                    "N",
-                                    "no",
-                                    "No",
-                                    "NO",
-                                    "0",
-                                    "off",
-                                    "Off",
-                                    "OFF",
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderBooleanStringCoercion",
-                        "documentation": "Attempted string coercion should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedBoolean/true",
-                                "headers": MappingProxyType(
-                                    {"booleanInHeader": "$value:L"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "True",
-                                    "TRUE",
-                                    "y",
-                                    "Y",
-                                    "yes",
-                                    "Yes",
-                                    "YES",
-                                    "1",
-                                    "on",
-                                    "On",
-                                    "ON",
-                                    "False",
-                                    "FALSE",
-                                    "n",
-                                    "N",
-                                    "no",
-                                    "No",
-                                    "NO",
-                                    "0",
-                                    "off",
-                                    "Off",
-                                    "OFF",
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedBoolean/{booleanInPath}", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_BYTE_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedByteInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "byteInBody": {"target": BYTE},
         "byteInPath": {
@@ -9788,8 +3023,7 @@ MALFORMED_BYTE_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -9797,344 +3031,12 @@ MALFORMED_BYTE = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedByte"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyByteUnderflowOverflow",
-                        "documentation": "Underflow or overflow should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedByte/1",
-                                "body": '{ "byteInBody" : $value:L }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "256",
-                                    "-256",
-                                    "-9223372000000000000",
-                                    "9223372000000000000",
-                                    "123000000000000000000000",
-                                )
-                            }
-                        ),
-                        "tags": ("underflow/overflow",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathByteUnderflowOverflow",
-                        "documentation": "Underflow or overflow should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {"method": "POST", "uri": "/MalformedByte/$value:L"}
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "256",
-                                    "-256",
-                                    "-9223372000000000000",
-                                    "9223372000000000000",
-                                    "123000000000000000000000",
-                                )
-                            }
-                        ),
-                        "tags": ("underflow/overflow",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryByteUnderflowOverflow",
-                        "documentation": "Underflow or overflow should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedByte/1",
-                                "queryParams": ("byteInQuery=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "256",
-                                    "-256",
-                                    "-9223372000000000000",
-                                    "9223372000000000000",
-                                    "123000000000000000000000",
-                                )
-                            }
-                        ),
-                        "tags": ("underflow/overflow",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderByteUnderflowOverflow",
-                        "documentation": "Underflow or overflow should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedByte/1",
-                                "headers": MappingProxyType(
-                                    {"byteInHeader": "$value:L"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "256",
-                                    "-256",
-                                    "-9223372000000000000",
-                                    "9223372000000000000",
-                                    "123000000000000000000000",
-                                )
-                            }
-                        ),
-                        "tags": ("underflow/overflow",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyByteMalformedValueRejected",
-                        "documentation": "Malformed values in the body should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedByte/1",
-                                "body": '{ "byteInBody" : $value:L }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    '"123"',
-                                    "true",
-                                    "1.001",
-                                    "2ABC",
-                                    "0x42",
-                                    "Infinity",
-                                    '"Infinity"',
-                                    "-Infinity",
-                                    '"-Infinity"',
-                                    "NaN",
-                                    '"NaN"',
-                                ),
-                                "tag": (
-                                    "string_coercion",
-                                    "boolean_coercion",
-                                    "float_truncation",
-                                    "trailing_chars",
-                                    "hex",
-                                    "inf",
-                                    "string_inf",
-                                    "negative_inf",
-                                    "string_negative_inf",
-                                    "nan",
-                                    "string_nan",
-                                ),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathByteMalformedValueRejected",
-                        "documentation": "Malformed values in the path should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {"method": "POST", "uri": "/MalformedByte/$value:L"}
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "true",
-                                    "1.001",
-                                    "2ABC",
-                                    "0x42",
-                                    "Infinity",
-                                    "-Infinity",
-                                    "NaN",
-                                ),
-                                "tag": (
-                                    "boolean_coercion",
-                                    "float_truncation",
-                                    "trailing_chars",
-                                    "hex",
-                                    "inf",
-                                    "negative_inf",
-                                    "nan",
-                                ),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryByteMalformedValueRejected",
-                        "documentation": "Malformed values in query parameters should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedByte/1",
-                                "queryParams": ("byteInQuery=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "true",
-                                    "1.001",
-                                    "2ABC",
-                                    "0x42",
-                                    "Infinity",
-                                    "-Infinity",
-                                    "NaN",
-                                ),
-                                "tag": (
-                                    "boolean_coercion",
-                                    "float_truncation",
-                                    "trailing_chars",
-                                    "hex",
-                                    "inf",
-                                    "negative_inf",
-                                    "nan",
-                                ),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderByteMalformedValueRejected",
-                        "documentation": "Malformed values in headers should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedByte/1",
-                                "headers": MappingProxyType(
-                                    {"byteInHeader": "$value:L"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "true",
-                                    "1.001",
-                                    "2ABC",
-                                    "0x42",
-                                    "Infinity",
-                                    "-Infinity",
-                                    "NaN",
-                                ),
-                                "tag": (
-                                    "boolean_coercion",
-                                    "float_truncation",
-                                    "trailing_chars",
-                                    "hex",
-                                    "inf",
-                                    "negative_inf",
-                                    "nan",
-                                ),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedByte/{byteInPath}", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -10144,8 +3046,7 @@ MALFORMED_CONTENT_TYPE_WITH_BODY_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.shared#GreetingStruct",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={"hi": {"target": STRING}},
 )
@@ -10155,8 +3056,7 @@ MALFORMED_CONTENT_TYPE_WITH_BODY_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -10164,77 +3064,17 @@ MALFORMED_CONTENT_TYPE_WITH_BODY = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithBody"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonWithBodyExpectsApplicationJsonContentType",
-                        "documentation": "When there is modeled input, the content type must be application/json",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedContentTypeWithBody",
-                                "body": "{}",
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/hal+json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 415,
-                                "headers": MappingProxyType(
-                                    {
-                                        "x-amzn-errortype": "UnsupportedMediaTypeException"
-                                    }
-                                ),
-                            }
-                        ),
-                        "tags": ("content-type",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonWithBodyExpectsApplicationJsonContentTypeNoHeaders",
-                        "documentation": "When there is modeled input, the content type must be application/json",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedContentTypeWithBody",
-                                "body": "{}",
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 415,
-                                "headers": MappingProxyType(
-                                    {
-                                        "x-amzn-errortype": "UnsupportedMediaTypeException"
-                                    }
-                                ),
-                            }
-                        ),
-                        "tags": ("content-type",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"method": "POST", "uri": "/MalformedContentTypeWithBody"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithGenericStringInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "payload": {
             "target": STRING,
@@ -10250,8 +3090,7 @@ MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -10259,13 +3098,12 @@ MALFORMED_CONTENT_TYPE_WITH_GENERIC_STRING = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithGenericString"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"method": "POST", "uri": "/MalformedContentTypeWithGenericString"}
             ),
-        ),
+        )
     ],
 )
 
@@ -10274,8 +3112,7 @@ MALFORMED_CONTENT_TYPE_WITHOUT_BODY_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -10284,8 +3121,7 @@ MALFORMED_CONTENT_TYPE_WITHOUT_BODY_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -10293,46 +3129,12 @@ MALFORMED_CONTENT_TYPE_WITHOUT_BODY = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithoutBody"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonWithoutBodyExpectsEmptyContentType",
-                        "documentation": "When there is no modeled input, content type must not be set and the body must be empty.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedContentTypeWithoutBody",
-                                "body": "{}",
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 415,
-                                "headers": MappingProxyType(
-                                    {
-                                        "x-amzn-errortype": "UnsupportedMediaTypeException"
-                                    }
-                                ),
-                            }
-                        ),
-                        "tags": ("content-type",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"method": "POST", "uri": "/MalformedContentTypeWithoutBody"}
             ),
-        ),
+        )
     ],
 )
 
@@ -10340,7 +3142,6 @@ MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT_INPUT = Schema.collection(
     id=ShapeID(
         "aws.protocoltests.restjson#MalformedContentTypeWithoutBodyEmptyInputInput"
     ),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "header": {
             "target": STRING,
@@ -10356,8 +3157,7 @@ MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -10365,52 +3165,17 @@ MALFORMED_CONTENT_TYPE_WITHOUT_BODY_EMPTY_INPUT = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithoutBodyEmptyInput"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonWithoutBodyEmptyInputExpectsEmptyContentType",
-                        "documentation": "When there is no modeled body input, content type must not be set and the body must be empty.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedContentTypeWithoutBodyEmptyInput",
-                                "body": "{}",
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 415,
-                                "headers": MappingProxyType(
-                                    {
-                                        "x-amzn-errortype": "UnsupportedMediaTypeException"
-                                    }
-                                ),
-                            }
-                        ),
-                        "tags": ("content-type",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"method": "POST", "uri": "/MalformedContentTypeWithoutBodyEmptyInput"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_CONTENT_TYPE_WITH_PAYLOAD_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithPayloadInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "payload": {
             "target": JPEG_BLOB,
@@ -10424,8 +3189,7 @@ MALFORMED_CONTENT_TYPE_WITH_PAYLOAD_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -10433,80 +3197,17 @@ MALFORMED_CONTENT_TYPE_WITH_PAYLOAD = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedContentTypeWithPayload"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonWithPayloadExpectsModeledContentType",
-                        "documentation": "When there is a payload with a mediaType trait, the content type must match.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedContentTypeWithPayload",
-                                "body": "{}",
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 415,
-                                "headers": MappingProxyType(
-                                    {
-                                        "x-amzn-errortype": "UnsupportedMediaTypeException"
-                                    }
-                                ),
-                            }
-                        ),
-                        "tags": ("content-type",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonWithPayloadExpectsImpliedContentType",
-                        "documentation": "When there is a payload without a mediaType trait, the content type must match the\nimplied content type of the shape.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedContentTypeWithPayload",
-                                "body": "{}",
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 415,
-                                "headers": MappingProxyType(
-                                    {
-                                        "x-amzn-errortype": "UnsupportedMediaTypeException"
-                                    }
-                                ),
-                            }
-                        ),
-                        "tags": ("content-type",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"method": "POST", "uri": "/MalformedContentTypeWithPayload"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_DOUBLE_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedDoubleInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "doubleInBody": {"target": DOUBLE},
         "doubleInPath": {
@@ -10536,8 +3237,7 @@ MALFORMED_DOUBLE_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -10545,157 +3245,17 @@ MALFORMED_DOUBLE = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedDouble"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyDoubleMalformedValueRejected",
-                        "documentation": "Malformed values in the body should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedDouble/1",
-                                "body": '{ "doubleInBody" : $value:L }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    '"123"',
-                                    "true",
-                                    "2ABC",
-                                    "0x42",
-                                    "Infinity",
-                                    "-Infinity",
-                                    "NaN",
-                                ),
-                                "tag": (
-                                    "string_coercion",
-                                    "boolean_coercion",
-                                    "trailing_chars",
-                                    "hex",
-                                    "inf",
-                                    "negative_inf",
-                                    "nan",
-                                ),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathDoubleMalformedValueRejected",
-                        "documentation": "Malformed values in the path should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {"method": "POST", "uri": "/MalformedDouble/$value:L"}
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": ("true", "2ABC", "0x42"),
-                                "tag": ("boolean_coercion", "trailing_chars", "hex"),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryDoubleMalformedValueRejected",
-                        "documentation": "Malformed values in query parameters should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedDouble/1",
-                                "queryParams": ("doubleInQuery=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": ("true", "2ABC", "0x42"),
-                                "tag": ("boolean_coercion", "trailing_chars", "hex"),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderDoubleMalformedValueRejected",
-                        "documentation": "Malformed values in headers should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedDouble/1",
-                                "headers": MappingProxyType(
-                                    {"doubleInHeader": "$value:L"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": ("true", "2ABC", "0x42"),
-                                "tag": ("boolean_coercion", "trailing_chars", "hex"),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedDouble/{doubleInPath}", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_FLOAT_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedFloatInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "floatInBody": {"target": FLOAT},
         "floatInPath": {
@@ -10725,8 +3285,7 @@ MALFORMED_FLOAT_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -10734,157 +3293,17 @@ MALFORMED_FLOAT = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedFloat"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyFloatMalformedValueRejected",
-                        "documentation": "Malformed values in the body should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedFloat/1",
-                                "body": '{ "floatInBody" : $value:L }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    '"123"',
-                                    "true",
-                                    "2ABC",
-                                    "0x42",
-                                    "Infinity",
-                                    "-Infinity",
-                                    "NaN",
-                                ),
-                                "tag": (
-                                    "string_coercion",
-                                    "boolean_coercion",
-                                    "trailing_chars",
-                                    "hex",
-                                    "inf",
-                                    "negative_inf",
-                                    "nan",
-                                ),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathFloatMalformedValueRejected",
-                        "documentation": "Malformed values in the path should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {"method": "POST", "uri": "/MalformedFloat/$value:L"}
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": ("true", "2ABC", "0x42"),
-                                "tag": ("boolean_coercion", "trailing_chars", "hex"),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryFloatMalformedValueRejected",
-                        "documentation": "Malformed values in query parameters should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedFloat/1",
-                                "queryParams": ("floatInQuery=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": ("true", "2ABC", "0x42"),
-                                "tag": ("boolean_coercion", "trailing_chars", "hex"),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderFloatMalformedValueRejected",
-                        "documentation": "Malformed values in headers should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedFloat/1",
-                                "headers": MappingProxyType(
-                                    {"floatInHeader": "$value:L"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": ("true", "2ABC", "0x42"),
-                                "tag": ("boolean_coercion", "trailing_chars", "hex"),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedFloat/{floatInPath}", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_INTEGER_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedIntegerInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "integerInBody": {"target": INTEGER},
         "integerInPath": {
@@ -10914,8 +3333,7 @@ MALFORMED_INTEGER_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -10923,336 +3341,12 @@ MALFORMED_INTEGER = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedInteger"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyIntegerUnderflowOverflow",
-                        "documentation": "Underflow or overflow should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedInteger/1",
-                                "body": '{ "integerInBody" : $value:L }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "-9223372000000000000",
-                                    "9223372000000000000",
-                                    "123000000000000000000000",
-                                )
-                            }
-                        ),
-                        "tags": ("underflow/overflow",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathIntegerUnderflowOverflow",
-                        "documentation": "Underflow or overflow should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {"method": "POST", "uri": "/MalformedInteger/$value:L"}
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "-9223372000000000000",
-                                    "9223372000000000000",
-                                    "123000000000000000000000",
-                                )
-                            }
-                        ),
-                        "tags": ("underflow/overflow",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryIntegerUnderflowOverflow",
-                        "documentation": "Underflow or overflow should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedInteger/1",
-                                "queryParams": ("integerInQuery=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "-9223372000000000000",
-                                    "9223372000000000000",
-                                    "123000000000000000000000",
-                                )
-                            }
-                        ),
-                        "tags": ("underflow/overflow",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderIntegerUnderflowOverflow",
-                        "documentation": "Underflow or overflow should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedInteger/1",
-                                "headers": MappingProxyType(
-                                    {"integerInHeader": "$value:L"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "-9223372000000000000",
-                                    "9223372000000000000",
-                                    "123000000000000000000000",
-                                )
-                            }
-                        ),
-                        "tags": ("underflow/overflow",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyIntegerMalformedValueRejected",
-                        "documentation": "Malformed values in the body should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedInteger/1",
-                                "body": '{ "integerInBody" : $value:L }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    '"123"',
-                                    "true",
-                                    "1.001",
-                                    "2ABC",
-                                    "0x42",
-                                    "Infinity",
-                                    '"Infinity"',
-                                    "-Infinity",
-                                    '"-Infinity"',
-                                    "NaN",
-                                    '"NaN"',
-                                ),
-                                "tag": (
-                                    "string_coercion",
-                                    "boolean_coercion",
-                                    "float_truncation",
-                                    "trailing_chars",
-                                    "hex",
-                                    "inf",
-                                    "string_inf",
-                                    "negative_inf",
-                                    "string_negative_inf",
-                                    "nan",
-                                    "string_nan",
-                                ),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathIntegerMalformedValueRejected",
-                        "documentation": "Malformed values in the path should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {"method": "POST", "uri": "/MalformedInteger/$value:L"}
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "true",
-                                    "1.001",
-                                    "2ABC",
-                                    "0x42",
-                                    "Infinity",
-                                    "-Infinity",
-                                    "NaN",
-                                ),
-                                "tag": (
-                                    "boolean_coercion",
-                                    "float_truncation",
-                                    "trailing_chars",
-                                    "hex",
-                                    "inf",
-                                    "negative_inf",
-                                    "nan",
-                                ),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryIntegerMalformedValueRejected",
-                        "documentation": "Malformed values in query parameters should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedInteger/1",
-                                "queryParams": ("integerInQuery=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "true",
-                                    "1.001",
-                                    "2ABC",
-                                    "0x42",
-                                    "Infinity",
-                                    "-Infinity",
-                                    "NaN",
-                                ),
-                                "tag": (
-                                    "boolean_coercion",
-                                    "float_truncation",
-                                    "trailing_chars",
-                                    "hex",
-                                    "inf",
-                                    "negative_inf",
-                                    "nan",
-                                ),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderIntegerMalformedValueRejected",
-                        "documentation": "Malformed values in headers should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedInteger/1",
-                                "headers": MappingProxyType(
-                                    {"integerInHeader": "$value:L"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "true",
-                                    "1.001",
-                                    "2ABC",
-                                    "0x42",
-                                    "Infinity",
-                                    "-Infinity",
-                                    "NaN",
-                                ),
-                                "tag": (
-                                    "boolean_coercion",
-                                    "float_truncation",
-                                    "trailing_chars",
-                                    "hex",
-                                    "inf",
-                                    "negative_inf",
-                                    "nan",
-                                ),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedInteger/{integerInPath}", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -11264,7 +3358,6 @@ SIMPLE_LIST = Schema.collection(
 
 MALFORMED_LIST_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedListInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={"bodyList": {"target": SIMPLE_LIST}},
 )
 
@@ -11273,8 +3366,7 @@ MALFORMED_LIST_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -11282,72 +3374,15 @@ MALFORMED_LIST = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedList"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyMalformedListNullItem",
-                        "documentation": "When a dense list contains null, the response should be a 400\nSerializationException.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedList",
-                                "body": '{ "bodyList" : ["a", null, "b", "c"] }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyMalformedListUnclosed",
-                        "documentation": "When a list does not have a closing bracket, the response should be\na 400 SerializationException.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedList",
-                                "body": '{ "bodyList" : ["a", "b", "c" }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/MalformedList", "method": "POST"}),
-        ),
+        )
     ],
 )
 
 MALFORMED_LONG_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedLongInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "longInBody": {"target": LONG},
         "longInPath": {
@@ -11377,8 +3412,7 @@ MALFORMED_LONG_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -11386,336 +3420,12 @@ MALFORMED_LONG = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedLong"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyLongUnderflowOverflow",
-                        "documentation": "Underflow or overflow should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedLong/1",
-                                "body": '{ "longInBody" : $value:L }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "-184467440737095500000",
-                                    "184467440737095500000",
-                                    "123000000000000000000000",
-                                )
-                            }
-                        ),
-                        "tags": ("underflow/overflow",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathLongUnderflowOverflow",
-                        "documentation": "Underflow or overflow should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {"method": "POST", "uri": "/MalformedLong/$value:L"}
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "-184467440737095500000",
-                                    "184467440737095500000",
-                                    "123000000000000000000000",
-                                )
-                            }
-                        ),
-                        "tags": ("underflow/overflow",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryLongUnderflowOverflow",
-                        "documentation": "Underflow or overflow should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedLong/1",
-                                "queryParams": ("longInQuery=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "-184467440737095500000",
-                                    "184467440737095500000",
-                                    "123000000000000000000000",
-                                )
-                            }
-                        ),
-                        "tags": ("underflow/overflow",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderLongUnderflowOverflow",
-                        "documentation": "Underflow or overflow should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedLong/1",
-                                "headers": MappingProxyType(
-                                    {"longInHeader": "$value:L"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "-184467440737095500000",
-                                    "184467440737095500000",
-                                    "123000000000000000000000",
-                                )
-                            }
-                        ),
-                        "tags": ("underflow/overflow",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyLongMalformedValueRejected",
-                        "documentation": "Malformed values in the body should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedLong/1",
-                                "body": '{ "longInBody" : $value:L }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    '"123"',
-                                    "true",
-                                    "1.001",
-                                    "2ABC",
-                                    "0x42",
-                                    "Infinity",
-                                    '"Infinity"',
-                                    "-Infinity",
-                                    '"-Infinity"',
-                                    "NaN",
-                                    '"NaN"',
-                                ),
-                                "tag": (
-                                    "string_coercion",
-                                    "boolean_coercion",
-                                    "float_truncation",
-                                    "trailing_chars",
-                                    "hex",
-                                    "inf",
-                                    "string_inf",
-                                    "negative_inf",
-                                    "string_negative_inf",
-                                    "nan",
-                                    "string_nan",
-                                ),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathLongMalformedValueRejected",
-                        "documentation": "Malformed values in the path should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {"method": "POST", "uri": "/MalformedLong/$value:L"}
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "true",
-                                    "1.001",
-                                    "2ABC",
-                                    "0x42",
-                                    "Infinity",
-                                    "-Infinity",
-                                    "NaN",
-                                ),
-                                "tag": (
-                                    "boolean_coercion",
-                                    "float_truncation",
-                                    "trailing_chars",
-                                    "hex",
-                                    "inf",
-                                    "negative_inf",
-                                    "nan",
-                                ),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryLongMalformedValueRejected",
-                        "documentation": "Malformed values in query parameters should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedLong/1",
-                                "queryParams": ("longInQuery=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "true",
-                                    "1.001",
-                                    "2ABC",
-                                    "0x42",
-                                    "Infinity",
-                                    "-Infinity",
-                                    "NaN",
-                                ),
-                                "tag": (
-                                    "boolean_coercion",
-                                    "float_truncation",
-                                    "trailing_chars",
-                                    "hex",
-                                    "inf",
-                                    "negative_inf",
-                                    "nan",
-                                ),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderLongMalformedValueRejected",
-                        "documentation": "Malformed values in headers should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedLong/1",
-                                "headers": MappingProxyType(
-                                    {"longInHeader": "$value:L"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "true",
-                                    "1.001",
-                                    "2ABC",
-                                    "0x42",
-                                    "Infinity",
-                                    "-Infinity",
-                                    "NaN",
-                                ),
-                                "tag": (
-                                    "boolean_coercion",
-                                    "float_truncation",
-                                    "trailing_chars",
-                                    "hex",
-                                    "inf",
-                                    "negative_inf",
-                                    "nan",
-                                ),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedLong/{longInPath}", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -11727,7 +3437,6 @@ SIMPLE_MAP = Schema.collection(
 
 MALFORMED_MAP_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedMapInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={"bodyMap": {"target": SIMPLE_MAP}},
 )
 
@@ -11736,8 +3445,7 @@ MALFORMED_MAP_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -11745,72 +3453,15 @@ MALFORMED_MAP = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedMap"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyMalformedMapNullKey",
-                        "documentation": "When a map contains a null key, the response should be a 400\nSerializationException.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedMap",
-                                "body": '{ "bodyMap" : { null: "abc" }  }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyMalformedMapNullValue",
-                        "documentation": "When a dense map contains a null value, the response should be a 400\nSerializationException.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedMap",
-                                "body": '{ "bodyMap" : { "abc": null }  }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/MalformedMap", "method": "POST"}),
-        ),
+        )
     ],
 )
 
 MALFORMED_REQUEST_BODY_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedRequestBodyInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={"int": {"target": INTEGER}, "float": {"target": FLOAT}},
 )
 
@@ -11819,8 +3470,7 @@ MALFORMED_REQUEST_BODY_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -11828,90 +3478,15 @@ MALFORMED_REQUEST_BODY = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedRequestBody"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonInvalidJsonBody",
-                        "documentation": "When the request body is not valid JSON, the response should be a 400\nSerializationException.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedRequestBody",
-                                "body": "$value:L",
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "{[",
-                                    '{ "int": 10 }abc',
-                                    'abc{ "int": 10 }',
-                                    '{\n    "int": 10 // the integer should be 10\n}',
-                                    '{\n    "int": 10 /* the integer should be 10 */\n}',
-                                    '{"int" :\f10}',
-                                    "{'int': 10}",
-                                    '{"int": 10,}',
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonTechnicallyValidJsonBody",
-                        "documentation": "When the request body is technically valid, but cannot map to a Smithy structure,\nthe response should be a 400 SerializationException.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedRequestBody",
-                                "body": "$value:L",
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {"value": ('[{ "int": 10}]', "10", "null")}
-                        ),
-                        "tags": ("technically_valid_json_body",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/MalformedRequestBody", "method": "POST"}),
-        ),
+        )
     ],
 )
 
 MALFORMED_SHORT_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedShortInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "shortInBody": {"target": SHORT},
         "shortInPath": {
@@ -11941,8 +3516,7 @@ MALFORMED_SHORT_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -11950,350 +3524,17 @@ MALFORMED_SHORT = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedShort"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyShortUnderflowOverflow",
-                        "documentation": "Underflow or overflow should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedShort/1",
-                                "body": '{ "shortInBody" : $value:L }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "40000",
-                                    "-40000",
-                                    "-9223372000000000000",
-                                    "9223372000000000000",
-                                    "123000000000000000000000",
-                                )
-                            }
-                        ),
-                        "tags": ("underflow/overflow",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathShortUnderflowOverflow",
-                        "documentation": "Underflow or overflow should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {"method": "POST", "uri": "/MalformedShort/$value:L"}
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "40000",
-                                    "-40000",
-                                    "-9223372000000000000",
-                                    "9223372000000000000",
-                                    "123000000000000000000000",
-                                )
-                            }
-                        ),
-                        "tags": ("underflow/overflow",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryShortUnderflowOverflow",
-                        "documentation": "Underflow or overflow should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedShort/1",
-                                "queryParams": ("shortInQuery=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "40000",
-                                    "-40000",
-                                    "-9223372000000000000",
-                                    "9223372000000000000",
-                                    "123000000000000000000000",
-                                )
-                            }
-                        ),
-                        "tags": ("underflow/overflow",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderShortUnderflowOverflow",
-                        "documentation": "Underflow or overflow should result in SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedShort/1",
-                                "headers": MappingProxyType(
-                                    {"shortInHeader": "$value:L"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "40000",
-                                    "-40000",
-                                    "-9223372000000000000",
-                                    "9223372000000000000",
-                                    "123000000000000000000000",
-                                )
-                            }
-                        ),
-                        "tags": ("underflow/overflow",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyShortMalformedValueRejected",
-                        "documentation": "Malformed values in the body should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedShort/1",
-                                "body": '{ "shortInBody" : $value:L }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    '"123"',
-                                    "true",
-                                    "1.001",
-                                    "2ABC",
-                                    "0x42",
-                                    "Infinity",
-                                    '"Infinity"',
-                                    "-Infinity",
-                                    '"-Infinity"',
-                                    "NaN",
-                                    '"NaN"',
-                                ),
-                                "tag": (
-                                    "string_coercion",
-                                    "boolean_coercion",
-                                    "float_truncation",
-                                    "trailing_chars",
-                                    "hex",
-                                    "inf",
-                                    "string_inf",
-                                    "negative_inf",
-                                    "string_negative_inf",
-                                    "nan",
-                                    "string_nan",
-                                ),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathShortMalformedValueRejected",
-                        "documentation": "Malformed values in the path should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {"method": "POST", "uri": "/MalformedShort/$value:L"}
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "true",
-                                    "1.001",
-                                    "2ABC",
-                                    "0x42",
-                                    "Infinity",
-                                    "-Infinity",
-                                    "NaN",
-                                ),
-                                "tag": (
-                                    "boolean_coercion",
-                                    "float_truncation",
-                                    "trailing_chars",
-                                    "hex",
-                                    "inf",
-                                    "negative_inf",
-                                    "nan",
-                                ),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryShortMalformedValueRejected",
-                        "documentation": "Malformed values in query parameters should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedShort/1",
-                                "queryParams": ("shortInQuery=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "true",
-                                    "1.001",
-                                    "2ABC",
-                                    "0x42",
-                                    "Infinity",
-                                    "-Infinity",
-                                    "NaN",
-                                ),
-                                "tag": (
-                                    "boolean_coercion",
-                                    "float_truncation",
-                                    "trailing_chars",
-                                    "hex",
-                                    "inf",
-                                    "negative_inf",
-                                    "nan",
-                                ),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderShortMalformedValueRejected",
-                        "documentation": "Malformed values in headers should be rejected",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedShort/1",
-                                "headers": MappingProxyType(
-                                    {"shortInHeader": "$value:L"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "true",
-                                    "1.001",
-                                    "2ABC",
-                                    "0x42",
-                                    "Infinity",
-                                    "-Infinity",
-                                    "NaN",
-                                ),
-                                "tag": (
-                                    "boolean_coercion",
-                                    "float_truncation",
-                                    "trailing_chars",
-                                    "hex",
-                                    "inf",
-                                    "negative_inf",
-                                    "nan",
-                                ),
-                            }
-                        ),
-                        "tags": ("$tag:L",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedShort/{shortInPath}", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_STRING_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedStringInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "blob": {
             "target": JSON_HEADER_STRING,
@@ -12311,8 +3552,7 @@ MALFORMED_STRING_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -12320,52 +3560,15 @@ MALFORMED_STRING = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedString"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderMalformedStringInvalidBase64MediaType",
-                        "documentation": "When string with the mediaType trait is bound to a header, its value\nmust be base64 encoded. The server should reject values that aren't\nvalid base64 out of hand.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedString",
-                                "headers": MappingProxyType(
-                                    {
-                                        "content-type": "application/json",
-                                        "amz-media-typed-header": "$value:L",
-                                    }
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {"value": ("xyz", "YmxvYg=", "[][]", "-_==")}
-                        ),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/MalformedString", "method": "POST"}),
-        ),
+        )
     ],
 )
 
 MALFORMED_TIMESTAMP_BODY_DATE_TIME_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampBodyDateTimeInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "timestamp": {
             "target": TIMESTAMP,
@@ -12382,8 +3585,7 @@ MALFORMED_TIMESTAMP_BODY_DATE_TIME_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -12391,158 +3593,17 @@ MALFORMED_TIMESTAMP_BODY_DATE_TIME = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampBodyDateTime"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyTimestampDateTimeRejectsHttpDate",
-                        "documentation": "When the format is date-time, IMF-fixdate timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampBodyDateTime",
-                                "body": '{ "timestamp": $value:S }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {"value": ("Tue, 29 Apr 2014 18:30:38 GMT",)}
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyTimestampDateTimeRejectsEpochSeconds",
-                        "documentation": "When the format is date-time, epoch-seconds timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampBodyDateTime",
-                                "body": '{ "timestamp": $value:L }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {"value": ("1515531081.1234", "1515531081")}
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyTimestampDateTimeRejectsUTCOffsets",
-                        "documentation": "When the format is date-time, RFC 3339 timestamps with a UTC offset are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampBodyDateTime",
-                                "body": '{ "timestamp": $value:S }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {"value": ("1996-12-19T16:39:57-08:00",)}
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyTimestampDateTimeRejectsDifferent8601Formats",
-                        "documentation": "When the format is date-time, maybe-valid ISO-8601 date-times not conforming to RFC 3339\nare rejected with a 400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampBodyDateTime",
-                                "body": '{ "timestamp": $value:S }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "1996-12-19T16:39:57+00",
-                                    "1996-12-19T16:39:57+00Z",
-                                    "1996-12-19T16:39:57",
-                                    "1996-12-19T163957",
-                                    "19961219T163957Z",
-                                    "19961219T163957",
-                                    "19961219T16:39:57Z",
-                                    "19961219T16:39:57",
-                                    "1996-12-19T16:39Z",
-                                    "1996-12-19T16:39",
-                                    "1996-12-19T1639",
-                                    "1996-12-19T16Z",
-                                    "1996-12-19T16",
-                                    "1996-12-19 16:39:57Z",
-                                    "2011-12-03T10:15:30+01:00[Europe/Paris]",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedTimestampBodyDateTime", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_TIMESTAMP_BODY_DEFAULT_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampBodyDefaultInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "timestamp": {
             "target": TIMESTAMP,
@@ -12556,8 +3617,7 @@ MALFORMED_TIMESTAMP_BODY_DEFAULT_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -12565,159 +3625,17 @@ MALFORMED_TIMESTAMP_BODY_DEFAULT = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampBodyDefault"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyTimestampDefaultRejectsDateTime",
-                        "documentation": "By default, RFC3339 timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampBodyDefault",
-                                "body": '{ "timestamp": $value:S }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "1985-04-12T23:20:50.52Z",
-                                    "1985-04-12T23:20:50Z",
-                                    "1996-12-19T16:39:57-08:00",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyTimestampDefaultRejectsStringifiedEpochSeconds",
-                        "documentation": "By default, epoch second timestamps as strings are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampBodyDefault",
-                                "body": '{ "timestamp": $value:S }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {"value": ("1515531081.1234", "1515531081")}
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyTimestampDefaultRejectsMalformedEpochSeconds",
-                        "documentation": "Invalid values for epoch seconds are rejected with a 400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampBodyDefault",
-                                "body": '{ "timestamp": $value:L }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "true",
-                                    "1515531081ABC",
-                                    "0x42",
-                                    "1515531081.123.456",
-                                    "Infinity",
-                                    '"Infinity"',
-                                    "-Infinity",
-                                    '"-Infinity"',
-                                    "NaN",
-                                    '"NaN"',
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyTimestampDefaultRejectsHttpDate",
-                        "documentation": "By default, IMF-fixdate timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampBodyDefault",
-                                "body": '{ "timestamp": $value:S }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {"value": ("Tue, 29 Apr 2014 18:30:38 GMT",)}
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedTimestampBodyDefault", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_TIMESTAMP_BODY_HTTP_DATE_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampBodyHttpDateInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "timestamp": {
             "target": TIMESTAMP,
@@ -12734,8 +3652,7 @@ MALFORMED_TIMESTAMP_BODY_HTTP_DATE_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -12743,88 +3660,17 @@ MALFORMED_TIMESTAMP_BODY_HTTP_DATE = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampBodyHttpDate"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyTimestampHttpDateRejectsDateTime",
-                        "documentation": "When the format is http-date, RFC3339 timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampBodyHttpDate",
-                                "body": '{ "timestamp": $value:S }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "1985-04-12T23:20:50.52Z",
-                                    "1985-04-12T23:20:50Z",
-                                    "1996-12-19T16:39:57-08:00",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonBodyTimestampHttpDateRejectsEpoch",
-                        "documentation": "When the format is http-date, epoch-seconds timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampBodyHttpDate",
-                                "body": '{ "timestamp": $value:L }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {"value": ("1515531081.1234", "1515531081")}
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedTimestampBodyHttpDate", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_TIMESTAMP_HEADER_DATE_TIME_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampHeaderDateTimeInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "timestamp": {
             "target": TIMESTAMP,
@@ -12842,8 +3688,7 @@ MALFORMED_TIMESTAMP_HEADER_DATE_TIME_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -12851,120 +3696,17 @@ MALFORMED_TIMESTAMP_HEADER_DATE_TIME = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampHeaderDateTime"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderTimestampDateTimeRejectsHttpDate",
-                        "documentation": "When the format is date-time, IMF-fixdate timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampHeaderDateTime",
-                                "headers": MappingProxyType({"timestamp": "$value:L"}),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {"value": ("Tue, 29 Apr 2014 18:30:38 GMT",)}
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderTimestampDateTimeRejectsEpochSeconds",
-                        "documentation": "When the format is date-time, epoch-seconds timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampHeaderDateTime",
-                                "headers": MappingProxyType({"timestamp": "$value:L"}),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {"value": ("1515531081.1234", "1515531081")}
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderTimestampDateTimeRejectsDifferent8601Formats",
-                        "documentation": "When the format is date-time, maybe-valid ISO-8601 date-times not conforming to RFC 3339\nare rejected with a 400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampHeaderDateTime",
-                                "headers": MappingProxyType({"timestamp": "$value:L"}),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "1996-12-19T16:39:57+00",
-                                    "1996-12-19T16:39:57+00Z",
-                                    "1996-12-19T16:39:57",
-                                    "1996-12-19T163957",
-                                    "19961219T163957Z",
-                                    "19961219T163957",
-                                    "19961219T16:39:57Z",
-                                    "19961219T16:39:57",
-                                    "1996-12-19T16:39Z",
-                                    "1996-12-19T16:39",
-                                    "1996-12-19T1639",
-                                    "1996-12-19T16Z",
-                                    "1996-12-19T16",
-                                    "1996-12-19 16:39:57Z",
-                                    "2011-12-03T10:15:30+01:00[Europe/Paris]",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedTimestampHeaderDateTime", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_TIMESTAMP_HEADER_DEFAULT_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampHeaderDefaultInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "timestamp": {
             "target": TIMESTAMP,
@@ -12981,8 +3723,7 @@ MALFORMED_TIMESTAMP_HEADER_DEFAULT_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -12990,82 +3731,17 @@ MALFORMED_TIMESTAMP_HEADER_DEFAULT = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampHeaderDefault"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderTimestampDefaultRejectsDateTime",
-                        "documentation": "By default, RFC3339 timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampHeaderDefault",
-                                "headers": MappingProxyType({"timestamp": "$value:L"}),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "1985-04-12T23:20:50.52Z",
-                                    "1985-04-12T23:20:50Z",
-                                    "1996-12-19T16:39:57-08:00",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderTimestampDefaultRejectsEpochSeconds",
-                        "documentation": "By default, epoch second timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampHeaderDefault",
-                                "headers": MappingProxyType({"timestamp": "$value:L"}),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {"value": ("1515531081.1234", "1515531081")}
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedTimestampHeaderDefault", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_TIMESTAMP_HEADER_EPOCH_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampHeaderEpochInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "timestamp": {
             "target": TIMESTAMP,
@@ -13085,8 +3761,7 @@ MALFORMED_TIMESTAMP_HEADER_EPOCH_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -13094,118 +3769,17 @@ MALFORMED_TIMESTAMP_HEADER_EPOCH = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampHeaderEpoch"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderTimestampEpochRejectsDateTime",
-                        "documentation": "When the format is epoch-seconds, RFC3339 timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampHeaderEpoch",
-                                "headers": MappingProxyType({"timestamp": "$value:L"}),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "1985-04-12T23:20:50.52Z",
-                                    "1985-04-12T23:20:50Z",
-                                    "1996-12-19T16:39:57-08:00",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderTimestampEpochRejectsHttpDate",
-                        "documentation": "When the format is epoch-seconds, IMF-fixdate timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampHeaderEpoch",
-                                "headers": MappingProxyType({"timestamp": "$value:L"}),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {"value": ("Tue, 29 Apr 2014 18:30:38 GMT",)}
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHeaderTimestampEpochRejectsMalformedValues",
-                        "documentation": "Invalid values for epoch seconds are rejected with a 400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampHeaderEpoch",
-                                "headers": MappingProxyType({"timestamp": "$value:L"}),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "true",
-                                    "1515531081ABC",
-                                    "0x42",
-                                    "1515531081.123.456",
-                                    "Infinity",
-                                    "-Infinity",
-                                    "NaN",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedTimestampHeaderEpoch", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_TIMESTAMP_PATH_DEFAULT_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampPathDefaultInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "timestamp": {
             "target": TIMESTAMP,
@@ -13222,8 +3796,7 @@ MALFORMED_TIMESTAMP_PATH_DEFAULT_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -13231,144 +3804,17 @@ MALFORMED_TIMESTAMP_PATH_DEFAULT = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampPathDefault"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathTimestampDefaultRejectsHttpDate",
-                        "documentation": "By default, IMF-fixdate timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampPathDefault/$value:L",
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "Tue%2C%2029%20Apr%202014%2018%3A30%3A38%20GMT",
-                                    "Sun%2C%2002%20Jan%202000%2020%3A34%3A56.000%20GMT",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathTimestampDefaultRejectsEpochSeconds",
-                        "documentation": "By default, epoch second timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampPathDefault/$value:L",
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {"value": ("1515531081.1234", "1515531081")}
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathTimestampDefaultRejectsUTCOffsets",
-                        "documentation": "UTC offsets must be rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampPathDefault/1996-12-19T16%3A39%3A57-08%3A00",
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathTimestampDefaultRejectsDifferent8601Formats",
-                        "documentation": "By default, maybe-valid ISO-8601 date-times not conforming to RFC 3339\nare rejected with a 400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampPathDefault/$value:L",
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "1996-12-19T16%3A39%3A57%2B00",
-                                    "1996-12-19T16%3A39%3A57%2B00Z",
-                                    "1996-12-19T16%3A39%3A57",
-                                    "1996-12-19T163957",
-                                    "19961219T163957Z",
-                                    "19961219T163957",
-                                    "19961219T16%3A39%3A57Z",
-                                    "19961219T16%3A39%3A57",
-                                    "1996-12-19T16%3A39Z",
-                                    "1996-12-19T16%3A39",
-                                    "1996-12-19T1639",
-                                    "1996-12-19T16Z",
-                                    "1996-12-19T16",
-                                    "1996-12-19%2016%3A39%3A57Z",
-                                    "2011-12-03T10%3A15%3A30%2B01%3A00%5BEurope%2FParis%5D",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedTimestampPathDefault/{timestamp}", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_TIMESTAMP_PATH_EPOCH_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampPathEpochInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "timestamp": {
             "target": TIMESTAMP,
@@ -13388,8 +3834,7 @@ MALFORMED_TIMESTAMP_PATH_EPOCH_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -13397,120 +3842,17 @@ MALFORMED_TIMESTAMP_PATH_EPOCH = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampPathEpoch"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathTimestampEpochRejectsDateTime",
-                        "documentation": "When the format is epoch-seconds, RFC3339 timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampPathEpoch/$value:L",
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "1985-04-12T23%3A20%3A50.52Z",
-                                    "1985-04-12T23%3A20%3A50Z",
-                                    "1996-12-19T16%3A39%3A57-08%3A00",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathTimestampEpochRejectsHttpDate",
-                        "documentation": "When the format is epoch-seconds, IMF-fixdate timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampPathEpoch/$value:L",
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "Tue%2C%2029%20Apr%202014%2018%3A30%3A38%20GMT",
-                                    "Sun%2C%2002%20Jan%202000%2020%3A34%3A56.000%20GMT",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathTimestampEpochRejectsMalformedValues",
-                        "documentation": "Invalid values for epoch seconds are rejected with a 400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampPathEpoch/$value:L",
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "true",
-                                    "1515531081ABC",
-                                    "0x42",
-                                    "1515531081.123.456",
-                                    "Infinity",
-                                    "-Infinity",
-                                    "NaN",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedTimestampPathEpoch/{timestamp}", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_TIMESTAMP_PATH_HTTP_DATE_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampPathHttpDateInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "timestamp": {
             "target": TIMESTAMP,
@@ -13528,8 +3870,7 @@ MALFORMED_TIMESTAMP_PATH_HTTP_DATE_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -13537,80 +3878,17 @@ MALFORMED_TIMESTAMP_PATH_HTTP_DATE = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampPathHttpDate"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathTimestampHttpDateRejectsDateTime",
-                        "documentation": "When the format is http-date, RFC3339 timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampPathHttpDate/$value:L",
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "1985-04-12T23%3A20%3A50.52Z",
-                                    "1985-04-12T23%3A20%3A50Z",
-                                    "1996-12-19T16%3A39%3A57-08%3A00",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonPathTimestampHttpDateRejectsEpochSeconds",
-                        "documentation": "When the format is http-date,  epoch second timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampPathHttpDate/$value:L",
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {"value": ("1515531081.1234", "1515531081")}
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedTimestampPathHttpDate/{timestamp}", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_TIMESTAMP_QUERY_DEFAULT_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampQueryDefaultInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "timestamp": {
             "target": TIMESTAMP,
@@ -13627,8 +3905,7 @@ MALFORMED_TIMESTAMP_QUERY_DEFAULT_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -13636,148 +3913,17 @@ MALFORMED_TIMESTAMP_QUERY_DEFAULT = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampQueryDefault"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryTimestampDefaultRejectsHttpDate",
-                        "documentation": "By default, IMF-fixdate timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampQueryDefault",
-                                "queryParams": ("timestamp=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "Tue%2C%2029%20Apr%202014%2018%3A30%3A38%20GMT",
-                                    "Sun%2C%2002%20Jan%202000%2020%3A34%3A56.000%20GMT",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryTimestampDefaultRejectsEpochSeconds",
-                        "documentation": "By default, epoch second timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampQueryDefault",
-                                "queryParams": ("timestamp=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {"value": ("1515531081.1234", "1515531081")}
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryTimestampDefaultRejectsUTCOffsets",
-                        "documentation": "UTC offsets must be rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampQueryDefault",
-                                "queryParams": ("timestamp=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryTimestampDefaultRejectsDifferent8601Formats",
-                        "documentation": "By default, maybe-valid ISO-8601 date-times not conforming to RFC 3339\nare rejected with a 400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampQueryDefault",
-                                "queryParams": ("timestamp=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "1996-12-19T16:39:57+00",
-                                    "1996-12-19T16:39:57+00Z",
-                                    "1996-12-19T16:39:57",
-                                    "1996-12-19T163957",
-                                    "19961219T163957Z",
-                                    "19961219T163957",
-                                    "19961219T16:39:57Z",
-                                    "19961219T16:39:57",
-                                    "1996-12-19T16:39Z",
-                                    "1996-12-19T16:39",
-                                    "1996-12-19T1639",
-                                    "1996-12-19T16Z",
-                                    "1996-12-19T16",
-                                    "1996-12-19%2016:39:57Z",
-                                    "2011-12-03T10:15:30+01:00[Europe/Paris]",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedTimestampQueryDefault", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_TIMESTAMP_QUERY_EPOCH_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampQueryEpochInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "timestamp": {
             "target": TIMESTAMP,
@@ -13797,8 +3943,7 @@ MALFORMED_TIMESTAMP_QUERY_EPOCH_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -13806,123 +3951,17 @@ MALFORMED_TIMESTAMP_QUERY_EPOCH = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampQueryEpoch"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryTimestampEpochRejectsDateTime",
-                        "documentation": "When the format is epoch-seconds, RFC3339 timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampQueryEpoch",
-                                "queryParams": ("timestamp=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "1985-04-12T23%3A20%3A50.52Z",
-                                    "1985-04-12T23%3A20%3A50Z",
-                                    "1996-12-19T16%3A39%3A57-08%3A00",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryTimestampEpochRejectsHttpDate",
-                        "documentation": "When the format is epoch-seconds, IMF-fixdate timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampQueryEpoch",
-                                "queryParams": ("timestamp=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "Tue%2C%2029%20Apr%202014%2018%3A30%3A38%20GMT",
-                                    "Sun%2C%2002%20Jan%202000%2020%3A34%3A56.000%20GMT",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryTimestampEpochRejectsMalformedValues",
-                        "documentation": "Invalid values for epoch seconds are rejected with a 400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampQueryEpoch",
-                                "queryParams": ("timestamp=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "true",
-                                    "1515531081ABC",
-                                    "0x42",
-                                    "1515531081.123.456",
-                                    "Infinity",
-                                    "-Infinity",
-                                    "NaN",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedTimestampQueryEpoch", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
 MALFORMED_TIMESTAMP_QUERY_HTTP_DATE_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampQueryHttpDateInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "timestamp": {
             "target": TIMESTAMP,
@@ -13940,8 +3979,7 @@ MALFORMED_TIMESTAMP_QUERY_HTTP_DATE_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -13949,76 +3987,12 @@ MALFORMED_TIMESTAMP_QUERY_HTTP_DATE = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedTimestampQueryHttpDate"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryTimestampHttpDateRejectsDateTime",
-                        "documentation": "When the format is http-date, RFC3339 timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampQueryHttpDate",
-                                "queryParams": ("timestamp=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {
-                                "value": (
-                                    "1985-04-12T23%3A20%3A50.52Z",
-                                    "1985-04-12T23%3A20%3A50Z",
-                                    "1996-12-19T16%3A39%3A57-08%3A00",
-                                )
-                            }
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryTimestampHttpDateRejectsEpochSeconds",
-                        "documentation": "When the format is http-date, epoch second timestamps are rejected with a\n400 SerializationException",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedTimestampQueryHttpDate",
-                                "queryParams": ("timestamp=$value:L",),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                        "testParameters": MappingProxyType(
-                            {"value": ("1515531081.1234", "1515531081")}
-                        ),
-                        "tags": ("timestamp",),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/MalformedTimestampQueryHttpDate", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -14030,7 +4004,6 @@ SIMPLE_UNION = Schema.collection(
 
 MALFORMED_UNION_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MalformedUnionInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={"union": {"target": SIMPLE_UNION}},
 )
 
@@ -14039,8 +4012,7 @@ MALFORMED_UNION_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -14048,172 +4020,15 @@ MALFORMED_UNION = Schema(
     id=ShapeID("aws.protocoltests.restjson#MalformedUnion"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("UnstableTrait",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpMalformedRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonMalformedUnionMultipleFieldsSet",
-                        "documentation": "When the union has multiple fields set, the response should be a 400\nSerializationException.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedUnion",
-                                "body": '{ "union" : { "int": 2, "string": "three" } }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonMalformedUnionKnownAndUnknownFieldsSet",
-                        "documentation": "When the union has multiple fields set, even when only one is modeled,\nthe response should be a 400 SerializationException.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedUnion",
-                                "body": '{ "union" : { "int": 2, "unknownField": "three" } }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonMalformedUnionNoFieldsSet",
-                        "documentation": "When the union has no fields set, the response should be a 400\nSerializationException.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedUnion",
-                                "body": '{ "union" : { "int": null } }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonMalformedUnionEmptyObjectNoFieldsSet",
-                        "documentation": "When the union is an empty object, it has no fields set, so the\nresponse should be a 400 SerializationException.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedUnion",
-                                "body": '{ "union" : {  } }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonMalformedUnionValueIsArray",
-                        "documentation": "When the union value is actually an array, the response should be a 400\nSerializationException.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedUnion",
-                                "body": '{ "union" : ["int"] }',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonMalformedUnionUnknownMember",
-                        "documentation": "When an unknown union member is received, the response should be a 400\nSerializationException.",
-                        "protocol": "aws.protocols#restJson1",
-                        "request": MappingProxyType(
-                            {
-                                "method": "POST",
-                                "uri": "/MalformedUnion",
-                                "body": '{\n    "union": {\n        "unknown": "hello"\n    }\n}',
-                                "headers": MappingProxyType(
-                                    {"content-type": "application/json"}
-                                ),
-                            }
-                        ),
-                        "response": MappingProxyType(
-                            {
-                                "code": 400,
-                                "headers": MappingProxyType(
-                                    {"x-amzn-errortype": "SerializationException"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/MalformedUnion", "method": "POST"}),
-        ),
+        )
     ],
 )
 
 MEDIA_TYPE_HEADER_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MediaTypeHeaderInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "json": {
             "target": JSON_VALUE,
@@ -14224,7 +4039,6 @@ MEDIA_TYPE_HEADER_INPUT = Schema.collection(
 
 MEDIA_TYPE_HEADER_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#MediaTypeHeaderOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "json": {
             "target": JSON_VALUE,
@@ -14238,42 +4052,9 @@ MEDIA_TYPE_HEADER = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "MediaTypeHeaderInputBase64",
-                        "documentation": "Headers that target strings with a mediaType are base64 encoded",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/MediaTypeHeader",
-                        "headers": MappingProxyType({"X-Json": "dHJ1ZQ=="}),
-                        "body": "",
-                        "params": MappingProxyType({"json": "true"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "MediaTypeHeaderOutputBase64",
-                        "documentation": "Headers that target strings with a mediaType are base64 encoded",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType({"X-Json": "dHJ1ZQ=="}),
-                        "params": MappingProxyType({"json": "true"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/MediaTypeHeader", "method": "GET"}),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
@@ -14282,8 +4063,7 @@ NO_INPUT_AND_NO_OUTPUT_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -14292,8 +4072,7 @@ NO_INPUT_AND_NO_OUTPUT_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -14302,50 +4081,9 @@ NO_INPUT_AND_NO_OUTPUT = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonNoInputAndNoOutput",
-                        "documentation": "No input serializes no payload. When clients do not need to\nserialize any data in the payload, they should omit a payload\naltogether.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/NoInputAndNoOutput",
-                        "body": "",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonNoInputAllowsAccept",
-                        "documentation": "Servers should allow the accept header to be set to the\ndefault content-type.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/NoInputAndNoOutput",
-                        "body": "",
-                        "headers": MappingProxyType({"Accept": "application/json"}),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonNoInputAndNoOutput",
-                        "documentation": "When an operation does not define output, the service will respond\nwith an empty payload, and may optionally include the content-type\nheader.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": "",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/NoInputAndNoOutput", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -14354,14 +4092,12 @@ NO_INPUT_AND_OUTPUT_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 NO_INPUT_AND_OUTPUT_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restjson#NoInputAndOutputOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
+    id=ShapeID("aws.protocoltests.restjson#NoInputAndOutputOutput")
 )
 
 NO_INPUT_AND_OUTPUT = Schema(
@@ -14369,66 +4105,11 @@ NO_INPUT_AND_OUTPUT = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonNoInputAndOutput",
-                        "documentation": "No input serializes no payload. When clients do not need to\nserialize any data in the payload, they should omit a payload\naltogether.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/NoInputAndOutputOutput",
-                        "body": "",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonNoInputAndOutputAllowsAccept",
-                        "documentation": "Servers should allow the accept header to be set to the\ndefault content-type.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/NoInputAndOutputOutput",
-                        "body": "",
-                        "headers": MappingProxyType({"Accept": "application/json"}),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonNoInputAndOutputWithJson",
-                        "documentation": "Operations that define output and do not bind anything to\nthe payload return a JSON object in the response.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": "{}",
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonNoInputAndOutputNoPayload",
-                        "documentation": "This test is similar to RestJsonNoInputAndOutputWithJson, but\nit ensures that clients can gracefully handle responses that\nomit a JSON payload.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": "",
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/NoInputAndOutputOutput", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -14438,8 +4119,7 @@ NULL_AND_EMPTY_HEADERS_CLIENT_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#NullAndEmptyHeadersIO",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "a": {
@@ -14463,8 +4143,7 @@ NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#NullAndEmptyHeadersIO",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "a": {
@@ -14487,32 +4166,11 @@ NULL_AND_EMPTY_HEADERS_CLIENT = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonNullAndEmptyHeaders",
-                        "documentation": "Do not send null values, but do send empty strings and empty lists over the wire in headers",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/NullAndEmptyHeadersClient",
-                        "forbidHeaders": ("X-A",),
-                        "headers": MappingProxyType({"X-B": "", "X-C": ""}),
-                        "body": "",
-                        "params": MappingProxyType({"a": None, "b": "", "c": ()}),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/NullAndEmptyHeadersClient", "method": "GET"}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
@@ -14522,8 +4180,7 @@ NULL_AND_EMPTY_HEADERS_SERVER_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#NullAndEmptyHeadersIO",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "a": {
@@ -14547,8 +4204,7 @@ NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#NullAndEmptyHeadersIO",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "a": {
@@ -14570,37 +4226,17 @@ NULL_AND_EMPTY_HEADERS_SERVER = Schema(
     id=ShapeID("aws.protocoltests.restjson#NullAndEmptyHeadersServer"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("server-only",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonNullAndEmptyHeaders",
-                        "documentation": "Do not send null values, but do send empty strings and empty lists over the wire in headers",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "forbidHeaders": ("X-A",),
-                        "headers": MappingProxyType({"X-B": "", "X-C": ""}),
-                        "params": MappingProxyType({"a": None, "b": "", "c": ()}),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/NullAndEmptyHeadersServer", "method": "GET"}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
 OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#OmitsNullSerializesEmptyStringInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "nullValue": {
             "target": STRING,
@@ -14618,8 +4254,7 @@ OMITS_NULL_SERIALIZES_EMPTY_STRING_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -14628,60 +4263,16 @@ OMITS_NULL_SERIALIZES_EMPTY_STRING = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonOmitsNullQuery",
-                        "documentation": "Omits null query values",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/OmitsNullSerializesEmptyString",
-                        "body": "",
-                        "params": MappingProxyType({"nullValue": None}),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSerializesEmptyQueryValue",
-                        "documentation": "Serializes empty query strings",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/OmitsNullSerializesEmptyString",
-                        "body": "",
-                        "queryParams": ("Empty=",),
-                        "params": MappingProxyType({"emptyString": ""}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonServersAcceptStaticQueryParamAsEmptyString",
-                        "documentation": "Servers accept static query params as empty strings.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/OmitsNullSerializesEmptyString",
-                        "body": "",
-                        "queryParams": ("Empty",),
-                        "params": MappingProxyType({"emptyString": ""}),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/OmitsNullSerializesEmptyString", "method": "GET"}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
 OMITS_SERIALIZING_EMPTY_LISTS_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#OmitsSerializingEmptyListsInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "queryStringList": {
             "target": STRING_LIST,
@@ -14731,8 +4322,7 @@ OMITS_SERIALIZING_EMPTY_LISTS_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -14741,45 +4331,16 @@ OMITS_SERIALIZING_EMPTY_LISTS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonOmitsEmptyListQueryValues",
-                        "documentation": "Supports omitting empty lists.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/OmitsSerializingEmptyLists",
-                        "body": "",
-                        "queryParams": (),
-                        "params": MappingProxyType(
-                            {
-                                "queryStringList": (),
-                                "queryIntegerList": (),
-                                "queryDoubleList": (),
-                                "queryBooleanList": (),
-                                "queryTimestampList": (),
-                                "queryEnumList": (),
-                                "queryIntegerEnumList": (),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/OmitsSerializingEmptyLists", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
 OPERATION_WITH_DEFAULTS_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#OperationWithDefaultsInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "defaults": {"target": DEFAULTS},
         "clientOptionalDefaults": {"target": CLIENT_OPTIONAL_DEFAULTS},
@@ -14796,7 +4357,6 @@ OPERATION_WITH_DEFAULTS_INPUT = Schema.collection(
 
 OPERATION_WITH_DEFAULTS_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#OperationWithDefaultsOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "defaultString": {
             "target": STRING,
@@ -14918,311 +4478,9 @@ OPERATION_WITH_DEFAULTS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonClientPopulatesDefaultValuesInInput",
-                        "documentation": "Client populates default values in input.",
-                        "appliesTo": "client",
-                        "tags": ("defaults",),
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "bodyMediaType": "application/json",
-                        "uri": "/OperationWithDefaults",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": '{\n    "defaults": {\n        "defaultString": "hi",\n        "defaultBoolean": true,\n        "defaultList": [],\n        "defaultDocumentMap": {},\n        "defaultDocumentString": "hi",\n        "defaultDocumentBoolean": true,\n        "defaultDocumentList": [],\n        "defaultTimestamp": 0,\n        "defaultBlob": "YWJj",\n        "defaultByte": 1,\n        "defaultShort": 1,\n        "defaultInteger": 10,\n        "defaultLong": 100,\n        "defaultFloat": 1.0,\n        "defaultDouble": 1.0,\n        "defaultMap": {},\n        "defaultEnum": "FOO",\n        "defaultIntEnum": 1,\n        "emptyString": "",\n        "falseBoolean": false,\n        "emptyBlob": "",\n        "zeroByte": 0,\n        "zeroShort": 0,\n        "zeroInteger": 0,\n        "zeroLong": 0,\n        "zeroFloat": 0.0,\n        "zeroDouble": 0.0\n    }\n}',
-                        "params": MappingProxyType({"defaults": MappingProxyType({})}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonClientSkipsTopLevelDefaultValuesInInput",
-                        "documentation": "Client skips top level default values in input.",
-                        "appliesTo": "client",
-                        "tags": ("defaults",),
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "bodyMediaType": "application/json",
-                        "uri": "/OperationWithDefaults",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": "{\n}",
-                        "params": MappingProxyType({}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonClientUsesExplicitlyProvidedMemberValuesOverDefaults",
-                        "documentation": "Client uses explicitly provided member values over defaults",
-                        "appliesTo": "client",
-                        "tags": ("defaults",),
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "bodyMediaType": "application/json",
-                        "uri": "/OperationWithDefaults",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "defaults": MappingProxyType(
-                                    {
-                                        "defaultString": "bye",
-                                        "defaultBoolean": True,
-                                        "defaultList": ("a",),
-                                        "defaultDocumentMap": MappingProxyType(
-                                            {"name": "Jack"}
-                                        ),
-                                        "defaultDocumentString": "bye",
-                                        "defaultDocumentBoolean": True,
-                                        "defaultDocumentList": ("b",),
-                                        "defaultNullDocument": "notNull",
-                                        "defaultTimestamp": 1,
-                                        "defaultBlob": "hi",
-                                        "defaultByte": 2,
-                                        "defaultShort": 2,
-                                        "defaultInteger": 20,
-                                        "defaultLong": 200,
-                                        "defaultFloat": 2.0,
-                                        "defaultDouble": 2.0,
-                                        "defaultMap": MappingProxyType(
-                                            {"name": "Jack"}
-                                        ),
-                                        "defaultEnum": "BAR",
-                                        "defaultIntEnum": 2,
-                                        "emptyString": "foo",
-                                        "falseBoolean": True,
-                                        "emptyBlob": "hi",
-                                        "zeroByte": 1,
-                                        "zeroShort": 1,
-                                        "zeroInteger": 1,
-                                        "zeroLong": 1,
-                                        "zeroFloat": 1.0,
-                                        "zeroDouble": 1.0,
-                                    }
-                                )
-                            }
-                        ),
-                        "body": '{\n    "defaults": {\n        "defaultString": "bye",\n        "defaultBoolean": true,\n        "defaultList": ["a"],\n        "defaultDocumentMap": {"name": "Jack"},\n        "defaultDocumentString": "bye",\n        "defaultDocumentBoolean": true,\n        "defaultDocumentList": ["b"],\n        "defaultNullDocument": "notNull",\n        "defaultTimestamp": 1,\n        "defaultBlob": "aGk=",\n        "defaultByte": 2,\n        "defaultShort": 2,\n        "defaultInteger": 20,\n        "defaultLong": 200,\n        "defaultFloat": 2.0,\n        "defaultDouble": 2.0,\n        "defaultMap": {"name": "Jack"},\n        "defaultEnum": "BAR",\n        "defaultIntEnum": 2,\n        "emptyString": "foo",\n        "falseBoolean": true,\n        "emptyBlob": "aGk=",\n        "zeroByte": 1,\n        "zeroShort": 1,\n        "zeroInteger": 1,\n        "zeroLong": 1,\n        "zeroFloat": 1.0,\n        "zeroDouble": 1.0\n    }\n}',
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonServerPopulatesDefaultsWhenMissingInRequestBody",
-                        "documentation": "Server populates default values when missing in request body.",
-                        "appliesTo": "server",
-                        "tags": ("defaults",),
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "bodyMediaType": "application/json",
-                        "uri": "/OperationWithDefaults",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": '{\n"defaults": {}\n}',
-                        "params": MappingProxyType(
-                            {
-                                "defaults": MappingProxyType(
-                                    {
-                                        "defaultString": "hi",
-                                        "defaultBoolean": True,
-                                        "defaultList": (),
-                                        "defaultDocumentMap": MappingProxyType({}),
-                                        "defaultDocumentString": "hi",
-                                        "defaultDocumentBoolean": True,
-                                        "defaultDocumentList": (),
-                                        "defaultTimestamp": 0,
-                                        "defaultBlob": "abc",
-                                        "defaultByte": 1,
-                                        "defaultShort": 1,
-                                        "defaultInteger": 10,
-                                        "defaultLong": 100,
-                                        "defaultFloat": 1.0,
-                                        "defaultDouble": 1.0,
-                                        "defaultMap": MappingProxyType({}),
-                                        "defaultEnum": "FOO",
-                                        "defaultIntEnum": 1,
-                                        "emptyString": "",
-                                        "falseBoolean": False,
-                                        "emptyBlob": "",
-                                        "zeroByte": 0,
-                                        "zeroShort": 0,
-                                        "zeroInteger": 0,
-                                        "zeroLong": 0,
-                                        "zeroFloat": 0.0,
-                                        "zeroDouble": 0.0,
-                                    }
-                                ),
-                                "topLevelDefault": "hi",
-                                "otherTopLevelDefault": 0,
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonClientUsesExplicitlyProvidedValuesInTopLevel",
-                        "documentation": "Any time a value is provided for a member in the top level of input, it is used, regardless of if its the default.",
-                        "appliesTo": "client",
-                        "tags": ("defaults",),
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "bodyMediaType": "application/json",
-                        "uri": "/OperationWithDefaults",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": '{\n    "topLevelDefault": "hi",\n    "otherTopLevelDefault": 0\n}',
-                        "params": MappingProxyType(
-                            {"topLevelDefault": "hi", "otherTopLevelDefault": 0}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonClientIgnoresNonTopLevelDefaultsOnMembersWithClientOptional",
-                        "documentation": "Typically, non top-level members would have defaults filled in, but if they have the clientOptional trait, the defaults should be ignored.",
-                        "appliesTo": "client",
-                        "tags": ("defaults",),
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "bodyMediaType": "application/json",
-                        "uri": "/OperationWithDefaults",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": '{\n    "clientOptionalDefaults": {}\n}',
-                        "params": MappingProxyType(
-                            {"clientOptionalDefaults": MappingProxyType({})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonClientPopulatesDefaultsValuesWhenMissingInResponse",
-                        "documentation": "Client populates default values when missing in response.",
-                        "appliesTo": "client",
-                        "tags": ("defaults",),
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": "{}",
-                        "params": MappingProxyType(
-                            {
-                                "defaultString": "hi",
-                                "defaultBoolean": True,
-                                "defaultList": (),
-                                "defaultDocumentMap": MappingProxyType({}),
-                                "defaultDocumentString": "hi",
-                                "defaultDocumentBoolean": True,
-                                "defaultDocumentList": (),
-                                "defaultTimestamp": 0,
-                                "defaultBlob": "abc",
-                                "defaultByte": 1,
-                                "defaultShort": 1,
-                                "defaultInteger": 10,
-                                "defaultLong": 100,
-                                "defaultFloat": 1.0,
-                                "defaultDouble": 1.0,
-                                "defaultMap": MappingProxyType({}),
-                                "defaultEnum": "FOO",
-                                "defaultIntEnum": 1,
-                                "emptyString": "",
-                                "falseBoolean": False,
-                                "emptyBlob": "",
-                                "zeroByte": 0,
-                                "zeroShort": 0,
-                                "zeroInteger": 0,
-                                "zeroLong": 0,
-                                "zeroFloat": 0.0,
-                                "zeroDouble": 0.0,
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonClientIgnoresDefaultValuesIfMemberValuesArePresentInResponse",
-                        "documentation": "Client ignores default values if member values are present in the response.",
-                        "appliesTo": "client",
-                        "tags": ("defaults",),
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": '{\n    "defaultString": "bye",\n    "defaultBoolean": false,\n    "defaultList": ["a"],\n    "defaultDocumentMap": {"name": "Jack"},\n    "defaultDocumentString": "bye",\n    "defaultDocumentBoolean": false,\n    "defaultDocumentList": ["b"],\n    "defaultNullDocument": "notNull",\n    "defaultTimestamp": 2,\n    "defaultBlob": "aGk=",\n    "defaultByte": 2,\n    "defaultShort": 2,\n    "defaultInteger": 20,\n    "defaultLong": 200,\n    "defaultFloat": 2.0,\n    "defaultDouble": 2.0,\n    "defaultMap": {"name": "Jack"},\n    "defaultEnum": "BAR",\n    "defaultIntEnum": 2,\n    "emptyString": "foo",\n    "falseBoolean": true,\n    "emptyBlob": "aGk=",\n    "zeroByte": 1,\n    "zeroShort": 1,\n    "zeroInteger": 1,\n    "zeroLong": 1,\n    "zeroFloat": 1.0,\n    "zeroDouble": 1.0\n}',
-                        "params": MappingProxyType(
-                            {
-                                "defaultString": "bye",
-                                "defaultBoolean": False,
-                                "defaultList": ("a",),
-                                "defaultDocumentMap": MappingProxyType(
-                                    {"name": "Jack"}
-                                ),
-                                "defaultDocumentString": "bye",
-                                "defaultDocumentBoolean": False,
-                                "defaultDocumentList": ("b",),
-                                "defaultNullDocument": "notNull",
-                                "defaultTimestamp": 2,
-                                "defaultBlob": "hi",
-                                "defaultByte": 2,
-                                "defaultShort": 2,
-                                "defaultInteger": 20,
-                                "defaultLong": 200,
-                                "defaultFloat": 2.0,
-                                "defaultDouble": 2.0,
-                                "defaultMap": MappingProxyType({"name": "Jack"}),
-                                "defaultEnum": "BAR",
-                                "defaultIntEnum": 2,
-                                "emptyString": "foo",
-                                "falseBoolean": True,
-                                "emptyBlob": "hi",
-                                "zeroByte": 1,
-                                "zeroShort": 1,
-                                "zeroInteger": 1,
-                                "zeroLong": 1,
-                                "zeroFloat": 1.0,
-                                "zeroDouble": 1.0,
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonServerPopulatesDefaultsInResponseWhenMissingInParams",
-                        "documentation": "Server populates default values in response when missing in params.",
-                        "appliesTo": "server",
-                        "tags": ("defaults",),
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": '{\n    "defaultString": "hi",\n    "defaultBoolean": true,\n    "defaultList": [],\n    "defaultDocumentMap": {},\n    "defaultDocumentString": "hi",\n    "defaultDocumentBoolean": true,\n    "defaultDocumentList": [],\n    "defaultTimestamp": 0,\n    "defaultBlob": "YWJj",\n    "defaultByte": 1,\n    "defaultShort": 1,\n    "defaultInteger": 10,\n    "defaultLong": 100,\n    "defaultFloat": 1.0,\n    "defaultDouble": 1.0,\n    "defaultMap": {},\n    "defaultEnum": "FOO",\n    "defaultIntEnum": 1,\n    "emptyString": "",\n    "falseBoolean": false,\n    "emptyBlob": "",\n    "zeroByte": 0,\n    "zeroShort": 0,\n    "zeroInteger": 0,\n    "zeroLong": 0,\n    "zeroFloat": 0.0,\n    "zeroDouble": 0.0\n}',
-                        "params": MappingProxyType({}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/OperationWithDefaults", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -15246,7 +4504,6 @@ TOP_LEVEL = Schema.collection(
 
 OPERATION_WITH_NESTED_STRUCTURE_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#OperationWithNestedStructureInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "topLevel": {
             "target": TOP_LEVEL,
@@ -15257,7 +4514,6 @@ OPERATION_WITH_NESTED_STRUCTURE_INPUT = Schema.collection(
 
 OPERATION_WITH_NESTED_STRUCTURE_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#OperationWithNestedStructureOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "dialog": {
             "target": DIALOG,
@@ -15279,273 +4535,11 @@ OPERATION_WITH_NESTED_STRUCTURE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonClientPopulatesNestedDefaultValuesWhenMissing",
-                        "documentation": "Client populates nested default values when missing.",
-                        "appliesTo": "client",
-                        "tags": ("defaults",),
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "bodyMediaType": "application/json",
-                        "uri": "/OperationWithNestedStructure",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": '{\n    "topLevel": {\n        "dialog": {\n            "language": "en",\n            "greeting": "hi"\n        },\n        "dialogList": [\n            {\n                "greeting": "hi"\n            },\n            {\n                "greeting": "hi",\n                "farewell": {\n                    "phrase": "bye"\n                }\n            },\n            {\n                "language": "it",\n                "greeting": "ciao",\n                "farewell": {\n                    "phrase": "arrivederci"\n                }\n            }\n        ],\n        "dialogMap": {\n            "emptyDialog": {\n                "greeting": "hi"\n            },\n            "partialEmptyDialog": {\n                "language": "en",\n                "greeting": "hi",\n                "farewell": {\n                    "phrase": "bye"\n                }\n            },\n            "nonEmptyDialog": {\n                "greeting": "konnichiwa",\n                "farewell": {\n                    "phrase": "sayonara"\n                }\n            }\n        }\n    }\n}',
-                        "params": MappingProxyType(
-                            {
-                                "topLevel": MappingProxyType(
-                                    {
-                                        "dialog": MappingProxyType({"language": "en"}),
-                                        "dialogList": (
-                                            MappingProxyType({}),
-                                            MappingProxyType(
-                                                {"farewell": MappingProxyType({})}
-                                            ),
-                                            MappingProxyType(
-                                                {
-                                                    "language": "it",
-                                                    "greeting": "ciao",
-                                                    "farewell": MappingProxyType(
-                                                        {"phrase": "arrivederci"}
-                                                    ),
-                                                }
-                                            ),
-                                        ),
-                                        "dialogMap": MappingProxyType(
-                                            {
-                                                "emptyDialog": MappingProxyType({}),
-                                                "partialEmptyDialog": MappingProxyType(
-                                                    {
-                                                        "language": "en",
-                                                        "farewell": MappingProxyType(
-                                                            {}
-                                                        ),
-                                                    }
-                                                ),
-                                                "nonEmptyDialog": MappingProxyType(
-                                                    {
-                                                        "greeting": "konnichiwa",
-                                                        "farewell": MappingProxyType(
-                                                            {"phrase": "sayonara"}
-                                                        ),
-                                                    }
-                                                ),
-                                            }
-                                        ),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonServerPopulatesNestedDefaultsWhenMissingInRequestBody",
-                        "documentation": "Server populates nested default values when missing in request body.",
-                        "appliesTo": "server",
-                        "tags": ("defaults",),
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "bodyMediaType": "application/json",
-                        "uri": "/OperationWithNestedStructure",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": '{\n    "topLevel": {\n        "dialog": {\n            "language": "en"\n        },\n        "dialogList": [\n            {\n            },\n            {\n                "farewell": {}\n            },\n            {\n                "language": "it",\n                "greeting": "ciao",\n                "farewell": {\n                    "phrase": "arrivederci"\n                }\n            }\n        ],\n        "dialogMap": {\n            "emptyDialog": {\n            },\n            "partialEmptyDialog": {\n                "language": "en",\n                "farewell": {}\n            },\n            "nonEmptyDialog": {\n                "greeting": "konnichiwa",\n                "farewell": {\n                    "phrase": "sayonara"\n                }\n            }\n        }\n    }\n}',
-                        "params": MappingProxyType(
-                            {
-                                "topLevel": MappingProxyType(
-                                    {
-                                        "dialog": MappingProxyType(
-                                            {"language": "en", "greeting": "hi"}
-                                        ),
-                                        "dialogList": (
-                                            MappingProxyType({"greeting": "hi"}),
-                                            MappingProxyType(
-                                                {
-                                                    "greeting": "hi",
-                                                    "farewell": MappingProxyType(
-                                                        {"phrase": "bye"}
-                                                    ),
-                                                }
-                                            ),
-                                            MappingProxyType(
-                                                {
-                                                    "language": "it",
-                                                    "greeting": "ciao",
-                                                    "farewell": MappingProxyType(
-                                                        {"phrase": "arrivederci"}
-                                                    ),
-                                                }
-                                            ),
-                                        ),
-                                        "dialogMap": MappingProxyType(
-                                            {
-                                                "emptyDialog": MappingProxyType(
-                                                    {"greeting": "hi"}
-                                                ),
-                                                "partialEmptyDialog": MappingProxyType(
-                                                    {
-                                                        "language": "en",
-                                                        "greeting": "hi",
-                                                        "farewell": MappingProxyType(
-                                                            {"phrase": "bye"}
-                                                        ),
-                                                    }
-                                                ),
-                                                "nonEmptyDialog": MappingProxyType(
-                                                    {
-                                                        "greeting": "konnichiwa",
-                                                        "farewell": MappingProxyType(
-                                                            {"phrase": "sayonara"}
-                                                        ),
-                                                    }
-                                                ),
-                                            }
-                                        ),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonClientPopulatesNestedDefaultsWhenMissingInResponseBody",
-                        "documentation": "Client populates nested default values when missing in response body.",
-                        "appliesTo": "client",
-                        "tags": ("defaults",),
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": '{\n    "dialog": {\n        "language": "en"\n    },\n    "dialogList": [\n        {\n        },\n        {\n            "farewell": {}\n        },\n        {\n            "language": "it",\n            "greeting": "ciao",\n            "farewell": {\n                "phrase": "arrivederci"\n            }\n        }\n    ],\n    "dialogMap": {\n        "emptyDialog": {\n        },\n        "partialEmptyDialog": {\n            "language": "en",\n            "farewell": {}\n        },\n        "nonEmptyDialog": {\n            "greeting": "konnichiwa",\n            "farewell": {\n                "phrase": "sayonara"\n            }\n        }\n    }\n}',
-                        "params": MappingProxyType(
-                            {
-                                "dialog": MappingProxyType(
-                                    {"language": "en", "greeting": "hi"}
-                                ),
-                                "dialogList": (
-                                    MappingProxyType({"greeting": "hi"}),
-                                    MappingProxyType(
-                                        {
-                                            "greeting": "hi",
-                                            "farewell": MappingProxyType(
-                                                {"phrase": "bye"}
-                                            ),
-                                        }
-                                    ),
-                                    MappingProxyType(
-                                        {
-                                            "language": "it",
-                                            "greeting": "ciao",
-                                            "farewell": MappingProxyType(
-                                                {"phrase": "arrivederci"}
-                                            ),
-                                        }
-                                    ),
-                                ),
-                                "dialogMap": MappingProxyType(
-                                    {
-                                        "emptyDialog": MappingProxyType(
-                                            {"greeting": "hi"}
-                                        ),
-                                        "partialEmptyDialog": MappingProxyType(
-                                            {
-                                                "language": "en",
-                                                "greeting": "hi",
-                                                "farewell": MappingProxyType(
-                                                    {"phrase": "bye"}
-                                                ),
-                                            }
-                                        ),
-                                        "nonEmptyDialog": MappingProxyType(
-                                            {
-                                                "greeting": "konnichiwa",
-                                                "farewell": MappingProxyType(
-                                                    {"phrase": "sayonara"}
-                                                ),
-                                            }
-                                        ),
-                                    }
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonServerPopulatesNestedDefaultValuesWhenMissingInInResponseParams",
-                        "documentation": "Server populates nested default values when missing in response params.",
-                        "appliesTo": "server",
-                        "tags": ("defaults",),
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": '{\n    "dialog": {\n        "language": "en",\n        "greeting": "hi"\n    },\n    "dialogList": [\n        {\n            "greeting": "hi"\n        },\n        {\n            "greeting": "hi",\n            "farewell": {\n                "phrase": "bye"\n            }\n        },\n        {\n            "language": "it",\n            "greeting": "ciao",\n            "farewell": {\n                "phrase": "arrivederci"\n            }\n        }\n    ],\n    "dialogMap": {\n        "emptyDialog": {\n            "greeting": "hi"\n        },\n        "partialEmptyDialog": {\n            "language": "en",\n            "greeting": "hi",\n            "farewell": {\n                "phrase": "bye"\n            }\n        },\n        "nonEmptyDialog": {\n            "greeting": "konnichiwa",\n            "farewell": {\n                "phrase": "sayonara"\n            }\n        }\n    }\n}',
-                        "params": MappingProxyType(
-                            {
-                                "dialog": MappingProxyType({"language": "en"}),
-                                "dialogList": (
-                                    MappingProxyType({}),
-                                    MappingProxyType(
-                                        {"farewell": MappingProxyType({})}
-                                    ),
-                                    MappingProxyType(
-                                        {
-                                            "language": "it",
-                                            "greeting": "ciao",
-                                            "farewell": MappingProxyType(
-                                                {"phrase": "arrivederci"}
-                                            ),
-                                        }
-                                    ),
-                                ),
-                                "dialogMap": MappingProxyType(
-                                    {
-                                        "emptyDialog": MappingProxyType({}),
-                                        "partialEmptyDialog": MappingProxyType(
-                                            {
-                                                "language": "en",
-                                                "farewell": MappingProxyType({}),
-                                            }
-                                        ),
-                                        "nonEmptyDialog": MappingProxyType(
-                                            {
-                                                "greeting": "konnichiwa",
-                                                "farewell": MappingProxyType(
-                                                    {"phrase": "sayonara"}
-                                                ),
-                                            }
-                                        ),
-                                    }
-                                ),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/OperationWithNestedStructure", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -15554,14 +4548,12 @@ OUTPUT_STREAM_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 OUTPUT_STREAM_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#OutputStreamOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "stream": {
             "target": EVENT_STREAM,
@@ -15577,903 +4569,7 @@ OUTPUT_STREAM = Schema(
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"method": "POST", "uri": "/OutputStream"}),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#eventStreamTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "BooleanHeaderOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"booleanHeader": True}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "booleanHeader": MappingProxyType(
-                                                {"boolean": True}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAASwAAADv7Cl8VDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMNYm9vbGVhbkhlYWRlcgC4J9Ws",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "ByteHeaderOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {"headers": MappingProxyType({"byteHeader": 1})}
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "byteHeader": MappingProxyType({"byte": 1}),
-                                        }
-                                    ),
-                                    "bytes": "AAAASQAAADlvxG1ZDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMKYnl0ZUhlYWRlcgIBKFTmjg==",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "ShortHeaderOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"shortHeader": 2}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "shortHeader": MappingProxyType(
-                                                {"short": 2}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAASwAAADv7Cl8VDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMLc2hvcnRIZWFkZXIDAAL1ETsK",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "IntegerHeaderOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {"headers": MappingProxyType({"intHeader": 3})}
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "intHeader": MappingProxyType(
-                                                {"integer": 3}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAASwAAADv7Cl8VDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMJaW50SGVhZGVyBAAAAAPlyUrb",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "LongHeaderOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"longHeader": 4294967294}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "longHeader": MappingProxyType(
-                                                {"long": 4294967294}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAAUAAAAEAr7VEyDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMKbG9uZ0hlYWRlcgUAAAAA/////udnd/I=",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "BlobHeaderOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"blobHeader": "foo"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "blobHeader": MappingProxyType(
-                                                {"blob": "Zm9v"}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAATQAAAD2dKQ+ADTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMKYmxvYkhlYWRlcgYAA2Zvb5sbbGM=",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "StringHeaderOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"stringHeader": "foo"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "stringHeader": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAATwAAAD8J5z3MDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMMc3RyaW5nSGVhZGVyBwADZm9vxT+2MA==",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "TimestampHeaderOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {
-                                                    "timestampHeader": "2024-10-31T14:15:14Z"
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "timestampHeader": MappingProxyType(
-                                                {"timestamp": "2024-10-31T14:15:14Z"}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAAVQAAAEWTZyrNDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMPdGltZXN0YW1wSGVhZGVyCAAAAZLi7jFQ6uV3Eg==",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "MultipleHeaderOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {
-                                                    "booleanHeader": True,
-                                                    "stringHeader": "foo",
-                                                    "blobHeader": "bar",
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "booleanHeader": MappingProxyType(
-                                                {"boolean": True}
-                                            ),
-                                            "stringHeader": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                            "blobHeader": MappingProxyType(
-                                                {"blob": "YmFy"}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAAbwAAAF+FlHOQDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMNYm9vbGVhbkhlYWRlcgAMc3RyaW5nSGVhZGVyBwADZm9vCmJsb2JIZWFkZXIGAANiYXIDXbo7",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "StringPayloadOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "stringPayload": MappingProxyType(
-                                                {"payload": "foo"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "stringPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "text/plain"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": "foo",
-                                    "bodyMediaType": "text/plain",
-                                    "bytes": "AAAAYAAAAE30fZUJDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcADXN0cmluZ1BheWxvYWQNOmNvbnRlbnQtdHlwZQcACnRleHQvcGxhaW5mb29G1ELr",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "BlobPayloadOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "blobPayload": MappingProxyType(
-                                                {"payload": "bar"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "blobPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/octet-stream"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": "bar",
-                                    "bodyMediaType": "application/octet-stream",
-                                    "bytes": "AAAAbAAAAFkrV6x1DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAC2Jsb2JQYXlsb2FkDTpjb250ZW50LXR5cGUHABhhcHBsaWNhdGlvbi9vY3RldC1zdHJlYW1iYXJv5nGJ",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "StructurePayloadOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "structurePayload": MappingProxyType(
-                                                {
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "foo"}
-                                                    )
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "structurePayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"foo"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAfwAAAFacqFy2DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAEHN0cnVjdHVyZVBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb257InN0cnVjdHVyZU1lbWJlciI6ImZvbyJ9rcIRVA==",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "UnionPayloadOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "unionPayload": MappingProxyType(
-                                                {
-                                                    "payload": MappingProxyType(
-                                                        {"unionMember": "bar"}
-                                                    )
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "unionPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"unionMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAdwAAAFKrtdNuDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcADHVuaW9uUGF5bG9hZA06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbnsidW5pb25NZW1iZXIiOiJiYXIifcZDMD4=",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "HeadersAndExplicitPayloadOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headersAndExplicitPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAlQAAAGw4wFp6DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAGWhlYWRlcnNBbmRFeHBsaWNpdFBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24GaGVhZGVyBwADZm9veyJzdHJ1Y3R1cmVNZW1iZXIiOiJiYXIifTafKXs=",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "HeadersAndImplicitPayloadOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndImplicitPayload": MappingProxyType(
-                                                {"header": "foo", "payload": "bar"}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headersAndImplicitPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"payload":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAjQAAAGxoUIY5DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAGWhlYWRlcnNBbmRJbXBsaWNpdFBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24GaGVhZGVyBwADZm9veyJwYXlsb2FkIjoiYmFyIn15lZtT",
-                                }
-                            ),
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "ServerErrorOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {"error": MappingProxyType({"message": "foo"})}
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "exception"}
-                                            ),
-                                            ":exception-type": MappingProxyType(
-                                                {"string": "error"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"message":"foo"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAdAAAAFObEpkoDTptZXNzYWdlLXR5cGUHAAlleGNlcHRpb24POmV4Y2VwdGlvbi10eXBlBwAFZXJyb3INOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb257Im1lc3NhZ2UiOiJmb28ifTua1S8=",
-                                }
-                            ),
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "ClientErrorOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {"error": MappingProxyType({"message": "foo"})}
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "exception"}
-                                            ),
-                                            ":exception-type": MappingProxyType(
-                                                {"string": "error"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"message":"foo"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAdAAAAFObEpkoDTptZXNzYWdlLXR5cGUHAAlleGNlcHRpb24POmV4Y2VwdGlvbi10eXBlBwAFZXJyb3INOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb257Im1lc3NhZ2UiOiJmb28ifTua1S8=",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {
-                                "failure": MappingProxyType(
-                                    {"errorId": "aws.protocoltests.restjson#ErrorEvent"}
-                                )
-                            }
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "ClientUnexpectedErrorOutput",
-                        "documentation": "Clients must be able to handle structured, but unmodeled errors.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "error"}
-                                            ),
-                                            ":error-code": MappingProxyType(
-                                                {"string": "internal-error"}
-                                            ),
-                                            ":error-message": MappingProxyType(
-                                                {"string": "An unknown error occurred."}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAAbwAAAF+FlHOQDTptZXNzYWdlLXR5cGUHAAVlcnJvcgs6ZXJyb3ItY29kZQcADmludGVybmFsLWVycm9yDjplcnJvci1tZXNzYWdlBwAaQW4gdW5rbm93biBlcnJvciBvY2N1cnJlZC4kun0t",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "MissingMessageTypeOutput",
-                        "documentation": "Clients must reject events that don't contain a :message-type header.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headersAndExplicitPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAfwAAAFacqFy2CzpldmVudC10eXBlBwAZaGVhZGVyc0FuZEV4cGxpY2l0UGF5bG9hZA06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbgZoZWFkZXIHAANmb297InN0cnVjdHVyZU1lbWJlciI6ImJhciJ98LexJg==",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "MalformedMessageTypeOutput",
-                        "documentation": "Client must reject events that contain a malformed :message-type header.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"blob": "ZXZlbnQ="}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headersAndExplicitPayload"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAlQAAAGw4wFp6DTptZXNzYWdlLXR5cGUGAAVldmVudAs6ZXZlbnQtdHlwZQcAGWhlYWRlcnNBbmRFeHBsaWNpdFBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24GaGVhZGVyBwADZm9veyJzdHJ1Y3R1cmVNZW1iZXIiOiJiYXIifVwdfzU=",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "MissingEventTypeOutput",
-                        "documentation": "Clients must reject message events that don't contain an :event-type header.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAbQAAAER1MekcDTptZXNzYWdlLXR5cGUHAAVldmVudA06Y29udGVudC10eXBlBwAQYXBwbGljYXRpb24vanNvbgZoZWFkZXIHAANmb297InN0cnVjdHVyZU1lbWJlciI6ImJhciJ9riy0Gg==",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "MalformedEventTypeOutput",
-                        "documentation": "Clients must reject message events that contain a malformed :event-type header.",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headersAndExplicitPayload": MappingProxyType(
-                                                {
-                                                    "header": "foo",
-                                                    "payload": MappingProxyType(
-                                                        {"structureMember": "bar"}
-                                                    ),
-                                                }
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {
-                                                    "blob": "aGVhZGVyc0FuZEV4cGxpY2l0UGF5bG9hZA=="
-                                                }
-                                            ),
-                                            ":content-type": MappingProxyType(
-                                                {"string": "application/json"}
-                                            ),
-                                            "header": MappingProxyType(
-                                                {"string": "foo"}
-                                            ),
-                                        }
-                                    ),
-                                    "body": '{"structureMember":"bar"}',
-                                    "bodyMediaType": "application/json",
-                                    "bytes": "AAAAlQAAAGw4wFp6DTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQYAGWhlYWRlcnNBbmRFeHBsaWNpdFBheWxvYWQNOmNvbnRlbnQtdHlwZQcAEGFwcGxpY2F0aW9uL2pzb24GaGVhZGVyBwADZm9veyJzdHJ1Y3R1cmVNZW1iZXIiOiJiYXIifcP6KLk=",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "ModeledProtocolError",
-                        "protocol": "aws.protocols#restJson1",
-                        "initialResponse": MappingProxyType(
-                            {
-                                "code": 500,
-                                "headers": MappingProxyType(
-                                    {
-                                        "Content-Type": "application/json",
-                                        "X-Amzn-Errortype": "ServiceUnavailableError",
-                                    }
-                                ),
-                                "body": '{"message": "foo"}',
-                                "bodyMediaType": "application/json",
-                            }
-                        ),
-                        "initialResponseShape": "smithy.test#InitialHttpResponse",
-                        "expectation": MappingProxyType(
-                            {
-                                "failure": MappingProxyType(
-                                    {
-                                        "errorId": "aws.protocoltests.restjson#ServiceUnavailableError"
-                                    }
-                                )
-                            }
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "UnmodeledProtocolError",
-                        "protocol": "aws.protocols#restJson1",
-                        "initialResponse": MappingProxyType(
-                            {
-                                "code": 500,
-                                "headers": MappingProxyType(
-                                    {"Content-Type": "text/plain"}
-                                ),
-                                "body": "service unavailable",
-                                "bodyMediaType": "text/plain",
-                            }
-                        ),
-                        "initialResponseShape": "smithy.test#InitialHttpResponse",
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
+        )
     ],
 )
 
@@ -16482,14 +4578,12 @@ OUTPUT_STREAM_WITH_INITIAL_RESPONSE_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 OUTPUT_STREAM_WITH_INITIAL_RESPONSE_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#OutputStreamWithInitialResponseOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "initialResponseMember": {
             "target": STRING,
@@ -16516,68 +4610,7 @@ OUTPUT_STREAM_WITH_INITIAL_RESPONSE = Schema(
             value=MappingProxyType(
                 {"method": "POST", "uri": "/OutputStreamWithInitialResponse"}
             ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#eventStreamTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "InitialResponseOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "initialResponseParams": MappingProxyType(
-                            {"initialResponseMember": "foo"}
-                        ),
-                        "initialResponse": MappingProxyType(
-                            {
-                                "code": 200,
-                                "headers": MappingProxyType(
-                                    {"initial-response-member": "foo"}
-                                ),
-                            }
-                        ),
-                        "initialResponseShape": "smithy.test#InitialHttpResponse",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "MissingRequiredInitialResponseOutput",
-                        "protocol": "aws.protocols#restJson1",
-                        "events": (
-                            MappingProxyType(
-                                {
-                                    "type": "response",
-                                    "params": MappingProxyType(
-                                        {
-                                            "headers": MappingProxyType(
-                                                {"booleanHeader": True}
-                                            )
-                                        }
-                                    ),
-                                    "headers": MappingProxyType(
-                                        {
-                                            ":message-type": MappingProxyType(
-                                                {"string": "event"}
-                                            ),
-                                            ":event-type": MappingProxyType(
-                                                {"string": "headers"}
-                                            ),
-                                            "booleanHeader": MappingProxyType(
-                                                {"boolean": True}
-                                            ),
-                                        }
-                                    ),
-                                    "bytes": "AAAASwAAADv7Cl8VDTptZXNzYWdlLXR5cGUHAAVldmVudAs6ZXZlbnQtdHlwZQcAB2hlYWRlcnMNYm9vbGVhbkhlYWRlcgC4J9Ws",
-                                }
-                            ),
-                        ),
-                        "expectation": MappingProxyType(
-                            {"failure": MappingProxyType({})}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
+        )
     ],
 )
 
@@ -16594,13 +4627,11 @@ PLAYER_ACTION = Schema.collection(
 
 POST_PLAYER_ACTION_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#PostPlayerActionInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={"action": {"target": PLAYER_ACTION}},
 )
 
 POST_PLAYER_ACTION_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#PostPlayerActionOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "action": {
             "target": PLAYER_ACTION,
@@ -16614,52 +4645,9 @@ POST_PLAYER_ACTION = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonInputUnionWithUnitMember",
-                        "documentation": "Unit types in unions are serialized like normal structures in requests.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/PostPlayerAction",
-                        "body": '{\n    "action": {\n        "quit": {}\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"action": MappingProxyType({"quit": MappingProxyType({})})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonOutputUnionWithUnitMember",
-                        "documentation": "Unit types in unions are serialized like normal structures in responses.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "action": {\n        "quit": {}\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"action": MappingProxyType({"quit": MappingProxyType({})})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/PostPlayerAction", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -16681,13 +4669,11 @@ UNION_WITH_JSON_NAME = Schema.collection(
 
 POST_UNION_WITH_JSON_NAME_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#PostUnionWithJsonNameInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={"value": {"target": UNION_WITH_JSON_NAME}},
 )
 
 POST_UNION_WITH_JSON_NAME_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#PostUnionWithJsonNameOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "value": {
             "target": UNION_WITH_JSON_NAME,
@@ -16701,124 +4687,14 @@ POST_UNION_WITH_JSON_NAME = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "PostUnionWithJsonNameRequest1",
-                        "documentation": "Tests that jsonName works with union members.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/PostUnionWithJsonName",
-                        "body": '{\n    "value": {\n        "FOO": "hi"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"value": MappingProxyType({"foo": "hi"})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "PostUnionWithJsonNameRequest2",
-                        "documentation": "Tests that jsonName works with union members.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/PostUnionWithJsonName",
-                        "body": '{\n    "value": {\n        "_baz": "hi"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"value": MappingProxyType({"baz": "hi"})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "PostUnionWithJsonNameRequest3",
-                        "documentation": "Tests that jsonName works with union members.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/PostUnionWithJsonName",
-                        "body": '{\n    "value": {\n        "bar": "hi"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"value": MappingProxyType({"bar": "hi"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "PostUnionWithJsonNameResponse1",
-                        "documentation": "Tests that jsonName works with union members.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "value": {\n        "FOO": "hi"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"value": MappingProxyType({"foo": "hi"})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "PostUnionWithJsonNameResponse2",
-                        "documentation": "Tests that jsonName works with union members.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "value": {\n        "_baz": "hi"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"value": MappingProxyType({"baz": "hi"})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "PostUnionWithJsonNameResponse3",
-                        "documentation": "Tests that jsonName works with union members.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "value": {\n        "bar": "hi"\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"value": MappingProxyType({"bar": "hi"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/PostUnionWithJsonName", "method": "POST"}),
-        ),
+        )
     ],
 )
 
 PUT_WITH_CONTENT_ENCODING_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#PutWithContentEncodingInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "encoding": {
             "target": STRING,
@@ -16835,8 +4711,7 @@ PUT_WITH_CONTENT_ENCODING_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -16844,44 +4719,6 @@ PUT_WITH_CONTENT_ENCODING = Schema(
     id=ShapeID("aws.protocoltests.restjson#PutWithContentEncoding"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "SDKAppliedContentEncoding_restJson1",
-                        "documentation": "Compression algorithm encoding is appended to the Content-Encoding header.",
-                        "protocol": "aws.protocols#restJson1",
-                        "params": MappingProxyType(
-                            {
-                                "data": "RjCEL3kBwqPivZUXGiyA5JCujtWgJAkKRlnTEsNYfBRGOS0f7LT6R3bCSOXeJ4auSHzQ4BEZZTklUyj5\n1HEojihShQC2jkQJrNdGOZNSW49yRO0XbnGmeczUHbZqZRelLFKW4xjru9uTuB8lFCtwoGgciFsgqTF8\n5HYcoqINTRxuAwGuRUMoNO473QT0BtCQoKUkAyVaypG0hBZdGNoJhunBfW0d3HWTYlzz9pXElyZhq3C1\n2PDB17GEoOYXmTxDecysmPOdo5z6T0HFhujfeJFIQQ8dirmXcG4F3v0bZdf6AZ3jsiVh6RnEXIPxPbOi\ngIXDWTMUr4Pg3f2LdYCM01eAb2qTdgsEN0MUDhEIfn68I2tnWvcozyUFpg1ez6pyWP8ssWVfFrckREIM\nMb0cTUVqSVSM8bnFiF9SoXM6ZoGMKfX1mT708OYk7SqZ1JlCTkecDJDoR5ED2q2MWKUGR6jjnEV0GtD8\nWJO6AcF0DptY9Hk16Bav3z6c5FeBvrGDrxTFVgRUk8SychzjrcqJ4qskwN8rL3zslC0oqobQRnLFOvwJ\nprSzBIwdH2yAuxokXAdVRa1u9NGNRvfWJfKkwbbVz8yV76RUF9KNhAUmwyYDrLnxNj8ROl8B7dv8Gans\n7Bit52wcdiJyjBW1pAodB7zqqVwtBx5RaSpF7kEMXexYXp9N0J1jlXzdeg5Wgg4pO7TJNr2joiPVAiFf\nefwMMCNBkYx2z7cRxVxCJZMXXzxSKMGgdTN24bJ5UgE0TxyV52RC0wGWG49S1x5jGrvmxKCIgYPs0w3Z\n0I3XcdB0WEj4x4xRztB9Cx2Mc4qFYQdzS9kOioAgNBti1rBySZ8lFZM2zqxvBsJTTJsmcKPr1crqiXjM\noVWdM4ObOO6QA7Pu4c1hT68CrTmbcecjFcxHkgsqdixnFtN6keMGL9Z2YMjZOjYYzbUEwLJqUVWalkIB\nBkgBRqZpzxx5nB5t0qDH35KjsfKM5cinQaFoRq9y9Z82xdCoKZOsUbxZkk1kVmy1jPDCBhkhixkc5PKS\nFoSKTbeK7kuCEZCtR9OfF2k2MqbygGFsFu2sgb1Zn2YdDbaRwRGeaLhswta09UNSMUo8aTixgoYVHxwy\nvraLB6olPSPegeLOnmBeWyKmEfPdbpdGm4ev4vA2AUFuLIeFz0LkCSN0NgQMrr8ALEm1UNpJLReg1ZAX\nzZh7gtQTZUaBVdMJokaJpLk6FPxSA6zkwB5TegSqhrFIsmvpY3VNWmTUq7H0iADdh3dRQ8Is97bTsbwu\nvAEOjh4FQ9wPSFzEtcSJeYQft5GfWYPisDImjjvHVFshFFkNy2nN18pJmhVPoJc456tgbdfEIdGhIADC\n6UPcSSzE1FxlPpILqZrp3i4NvvKoiOa4a8tnALd2XRHHmsvALn2Wmfu07b86gZlu4yOyuUFNoWI6tFvd\nbHnqSJYNQlFESv13gJw609DBzNnrIgBGYBAcDRrIGAnflRKwVDUnDFrUQmE8xNG6jRlyb1p2Y2RrfBtG\ncKqhuGNiT2DfxpY89ektZ98waPhJrFEPJToNH8EADzBorh3T0h4YP1IeLmaI7SOxeuVrk1kjRqMK0rUB\nlUJgJNtCE35jCyoHMwPQlyi78ZaVv8COVQ24zcGpw0MTy6JUsDzAC3jLNY6xCb40SZV9XzG7nWvXA5Ej\nYC1gTXxF4AtFexIdDZ4RJbtYMyXt8LsEJerwwpkfqvDwsiFuqYC6vIn9RoZO5kI0F35XtUITDQYKZ4eq\nWBV0itxTyyR5Rp6g30pZEmEqOusDaIh96CEmHpOBYAQZ7u1QTfzRdysIGMpzbx5gj9Dxm2PO1glWzY7P\nlVqQiBlXSGDOkBkrB6SkiAxknt9zsPdTTsf3r3nid4hdiPrZmGWNgjOO1khSxZSzBdltrCESNnQmlnP5\nZOHA0eSYXwy8j4od5ZmjA3IpFOEPW2MutMbxIbJpg5dIx2x7WxespftenRLgl3CxcpPDcnb9w8LCHBg7\nSEjrEer6Y8wVLFWsQiv6nTdCPZz9cGqwgtCaiHRy8lTWFgdfWd397vw9rduGld3uUFeFRGjYrphqEmHi\nhiG0GhE6wRFVUsGJtvOCYkVREvbEdxPFeJvlAvOcs9HKbtptlTusvYB86vR2bNcIY4f5JZu2X6sGa354\n7LRk0ps2zqYjat3hMR7XDC8KiKceBteFsXoDjfVxTYKelpedTxqWAafrKhaoAVuNM98PSnkuIWGzjSUC\nNsDJTt6vt1D1afBVPWVmnQ7ZQdtEtLIEwAWYjemAztreELIr1E9fPEILm1Ke4KctP9I0I72Dh4eylNZD\n0DEr2Hg7cWFckuZ0Av5d0IPRARXikEGDHl8uh12TXL9v2Uh0ZVSJMEYvxGSbZvkWz8TjWSk3hKA2a7GL\nJm3Ho7e1C34gE1XRGcEthxvURxt4OKBqN3ZNaMIuDTWinoQAutMcUqtm4MoL7RGPiCHUrvTwQPSirsmA\nQmOEu8nOpnP77Fivh9jLGx5ta7nL6jrsWUsBqiN1lzpdPYLRR4mUIAj6sNWiDEk4pkbHSMEcqbWw6Zl7\npsEyPDHalCNhWMA3RSK3skURzQDZ0oBV5W7vjVIZ4d3uCKsk6zrzEI9u5mx7p9RdNKodXfzqYt0ULdtc\n3RW0hIfw2KvrO3BD2QrtgAkfrFBGVvlJSUoh0MvLz8DeXxfuiuq9Ttu7wvsqVI4Piah6WNEXtHHGPJO3\nGhc75Bnv2To4VS2v8rmyKAPIIVTuYBHZN6sZ4FhFzbrslCIdk0eadaU60naqiNWU3CsxplIYGyeThmJ7\n9u4h6Y2OmiPZjFPS2bAzwgAozYTVefII9aEaWZ0hxHZeu1FW7r79dkdO73ZqRfas9u8Z7LLBPCw5pV0F\n5I0pHDgNb6MogoxF4NZJfVtIX1vCHhhVLrXjrYNJU2fD9Fw8kT8Ie2HDBJnqAvYKmryQ1r9ulo3Me3rH\nq9s2Y5uCDxu9iQNhnpwIm57WYGFeqd2fnQeY2IziD3Jgx0KSrmOH0jgi0RwJyfGXaORPq3bQQqljuACo\nkO6io9t5VI8PbNxSHTRbtYiPciUslbT0g7SpCLrRPOBRJ4DDk56pjghpeoUagJ5xJ4wjBzBuXnAGkNnP\nTfpiuz2r3oSBAi8sB9wiYK2z9sp4gZyQsqdVNzAEgKatOxBRBmJCBYpjO98ZQrF83XApPpfFg0ujB2PW\n1iYF9NkgwIKB5oB6KVTOmSKJk11mVermPgeugHbzdd2zUP6fP8fWbhseqk2t8ahGvqjs2CDHFIWXl5jc\nfCknbykE3ANt7lnAfJQ2ddduLGiqrX4HWx6jcWw08Es6BkleO0IDbaWrb95d5isvFlzJsf0TyDIXF4uq\nbBDCi0XPWqtRJ2iqmnJa2GbBe9GmAOWMkBFSilMyC4sR395WSDpD56fx0NGoU6cHrRu9xF2Bgh7RGSfl\nch2GXEeE02fDpSHFNvJBlOEqqfkIX6oCa6KY9NThqeIjYsT184XR2ZI7akXRaw1gMOGpk4FmUxk6WIuX\n4ei1SLQgSdl7OEdRtJklZ76eFrMbkJQ2TDhu8f7mVuiy53GUMIvCrP9xYGZGmCIDm2e4U2BDi3F7C5xK\n3bDZXwlQp6z4BSqTy2OVEWxXUJfjPMOL5Mc7AvDeKtxAS73pVIv0HgHIa4NBAdC7uLG0zXuu1FF6z2XY\nyUhk03fMZhYe7vVxsul3WE7U01fuN8z2y0eKwBW1RFBE1eKIaR9Y01sIWQWbSrfHfDrdZiElhmhHehfs\n0EfrR4sLYdQshJuvhTeKGJDaEhtPQwwJ9mUYGtuCL9RozWx1XI4bHNlzBTW0BVokYiJGlPe7wdxNzJD7\nJgS7Lwv6jGKngVf86imGZyzqwiteWFPdNUoWdTvUPSMO5xIUK9mo5QpwbBOAmyYzVq42o3Qs90N9khEV\nU36LB99fw8PtGHH5wsCHshfauwnNPj0blGXzke0kQ4JNCVH7Jtn0Y0aeejkSxFtwtxoYs6zHl1Lxxpsd\nsw5vBy49CEtoltDW367lVAwDjWdx20msGB7qJCkEDrzu7EXSO22782QX9NBRcN9ppX0C25I0FMA4Wnhz\n9zIpiXRrsTH35jzM8Cjt4EVLGNU3O0HuEvAer3cENnMJtngdrT86ox3fihMQbiuy4Bh4DEcP5in2VjbT\n3qbnoCNvOi8Fmmf7KlGlWAOceL5OHVE5lljjQEMzEQOCEgrk5mDKgwSBJQBNauIDSC1a5iEQjB8Xxp4C\nqeKyyWY9IOntNrtU5ny4lNprHJd36dKFeBLKcGCOvgHBXdOZloMF0YTRExw7hreEO9IoTGVHJ4teWsNr\nHdtagUHjkeZkdMMfnUGNv5aBNtFMqhcZH6EitEa9lGPkKBbJpoom3u8D8EHSIF1H5EZqqx9TLY5hWAIG\nPwJ4qwkpCGw5rCLVrjw7ARKukIFzNULANqjHUMcJ002TlUosJM4xJ4aAgckpLVGOGuPDhGAAexEcQmbg\nUsZdmqQrtuVUyyLteLbLbqtR6CTlcAIwY3xyMCmPgyefE0FEUODBoxQtRUuYTL9RC5o1sYb2PvcxUQfb\niJFi2CAl99pAzcckU2qVCxniARslIxM5pmMRGsQX9ZzYAfZrbg6ce6S74I8UMlgRQ2QVyvUjKKOE6IrJ\nLng370emHfe5m6LZULD5YiZutkD5ipjL2Bz77DvTE5kNPUhuoKBcTJcUgytfXAKUTWOcRKNlq0GImrxM\nJfr7AWbLFFNKGLeTrVDBwpcokJCv0zcOKWe8fd2xkeXkZTdmM66IgM27cyYmtQ6YF26Kd0qrWJeVZJV9\n3fyLYYvKN5csbRY2BHoYE5ERARRW65IrpkXMf48OrCXMtDIP0Z7wxI9DiTeKKeH4uuguhCJnwzR3WxLA\nVU6eBJEd7ZjS6JA83w7decq8uDI7LGKjcz1FySp3B7fE9DkHRGXxbsL7Fjar6vW2mAv8CuvI20B6jctp\n2yLDs24sPfB3sSxrrlhbuT1m6DZqiN0dl6umKx7NGZhmOTVGr20jfcxhqPQwTJfd7kel4rvxip4BqkvT\n7STy8knJ2BXGyJeNgwo1PXUZRDVy0LCTsSF1RFuRZe8cktHl9lgw8ntdPn1pVFL0MwJkJfdXBNUp5gNv\n50FTkrpo1t6wq4CVbcfj2XOrOzvBUzNH26sXGABI1gGxCdp2jEZrHgqQaWIaTJVTuguZhxqDvdYsrwFW\nYN58uuNcKHIrGdRSigyZInwQDYk0pjcqdSeU0WVU3Y9htzZBR7XRaCJr5YTZvq7fwermb5tuwb37lPLq\nB2IGg0iftkVbXaSyfCwVaRbfLBb88so0QqpmJGirFu8FcDiXOV1zTr8yW9XLdYQuUjh43xrXLdgsuYff\nCagInUk1eU1aLjVZoJRsNmStmOEpAqlYMwTvx7w6j2f421Cxr5cNZBIVlAxlXN2QiDqJ9v3sHhHkTanc\nlQuH8ptUyX8qncpBuXXBn7cSez9N0EoxCBl1GHUagbjstgJo4gzLvTmVIY6MiWYOBitzNUHfyqKwtKUr\nVoSCdZcGeA9lHUPA7PUprRRaT3m1hGKPyshtVS2ikG48w3oVerln1N1qGdtz46gZCrndw3LZ1B362RfW\nzDPuXbpsyLsRMTt1Rz1oKHRXp3iE41hkhQH6pxlvyCW2INnHt5XU8zRamOB3oW0udOhMpQFDjRkOcy06\nb4t0QTHvoRqmBna3WXzIMZyeK3GChF5eF8oDXRbjhk7BB6YKCgqwWUzEJ5K47HMSlhFkBUjaPRjdGM0z\nzOMwhW6b1NvSwP7XM1P5yi1oPvOspts1vr29SXqrMMrBhVogeodWyd69NqrO4jkyBxKmlXifoTowpfiY\n2cUCE0XMZqxUN39LCP09JqZifaEcBEo3mgtm1tWu5QR2GNq7UyQf4RIPSDOpDCAtwoPhRgdT1lJdcj4U\nlnH0wrJ8Uwu7c08L7ErnIrDATqCrOjpSbzGP1xHENABYONC4TknFPrJ8pe40A8fzGT0qBw9mAM1SKcHO\nfoiLcMC9AjHTqJzDG3xplSLPG9or2rMeq7Fzp9r0y7uJRMxgg51EbjfvYlH466A3ggvL2WQlDXjJqPW3\nBJGWAWDNN9LK8f46bADKPxakpkx23S9O47rGSXfDhVSIZsDympxWX1UOzWwMZRHkofVeKqizgbKkGgUT\nWykE9gRoRAOd9wfHZDYKa9i0LaPDiaUMvnU1gdBIqIoiVsdJ9swX47oxvMtOxtcS0zlD6llDkBuIiU5g\nPwRCYmtkkb25c8iRJXwGFPjI1wJ34I1z1ENicPdosPiUe9ZC2jnXIKzEdv01x2ER7DNDF3yxOwOhxNxI\nGqsmC92j25UQQFu9ZstOZ28AoCkuOYs0Uycm5u8jR1T39dMBwrko09rC65ENLnsxM8oebmyFCPiGJ1ED\n5Xqc9qZ237f1OnETAoEOwqUSvrdPTv56U7hV91EMTyC812MLQpr2710E3VVpsUCUMNhIxdt7UXZ1UNFb\njgzpZLXnf4DHrv6B7kq6UI50KMxcw1HZE2GpODfUTzNFLaqdrvzxKe5eUWdcojBaRbD4fFdVYJTElYDH\nNNVh6ofkoeWcs9CWGFmSBe0T4K8phFeygQg0prKMELNEy6qENzVtG9ZDcqj3a7L6ZLtvq50anWp7fAVu\nfwz55g4iM2Z2fA0pnwHDL7tt67zTxGITvsnJsZSpeq1EQsZcwtkBV9liu7Rl7jiVT1IIRtchB8TsTiaA\nwVHIQQ9RIOTiPQdKNqi1kC9iGlUqWK93gblNWlBw1eYB9Wk8FQogutwTf0caNMx8D4nPbANcmOOlskIy\nzALh15OlTrWnhP95rf08AN2J026zDE2DUF9k0eCevYBQIDjqKNW4XCZnjbHoIcKzbY5VzPbMs3ZyMz8K\nSucBmgPg6wrSK5ykbkapS5vuqvXc9GbjQJ8bPNzoxoWGyjbZvDs2OBrIqBmcQb2DLJ8v38McQ4mC4UsS\njf4PyfSCtpk274QZjvLCZbLiCBxQegk7jUU0NmTFJAcYCxd9xMWdlFkiszcltT2YzwuFFz7iA6aa4n5L\nHpBNfUA01GcAi1aCMYhmooS4zSlYcSOZkovMz36U3Fd9WtqIEOJLi7HMgHQDgNMdK6DTzAdHQtxerxVF\nHJnPrfNVG7270r3bp0bPnLNYLhObbAn6zqSAUeLtI2Y4KJDjBKCAh2vvYGbu0e2REYJWRj7MkGevsSSy\nb1kCXLt6tKGWAb7lt5c0xyJgUIJW7pdtnwgT0ZCa24BecCAwNnG5U2EwQbcjZGsFxqNGfaemd3oFEhES\nBaE0Fxms9UKTnMafu8wvZ2xymMrUduuRzOjDeX7oD5YsLC88V8CGMLxbbxIpt94KGykbr6e7L0R4oZl1\ntKMgFwQ2p9Txdbp0Y293LcsJymKizqI0F2xEp7y4SmWOJqHZtsbz80wVV9nv41CvtfxuSoGZJ5cNB7pI\nBgzNcQCeH3Jt0RaGGwboxxpuFbzilmkMFXxJm87tD4WNgu01nHfGCKeQcySEBZpVfJgi6sDFJ8uWnvKm\n9mPLHurtWzEfKqUEa1iC71bXjw5wrvhv9BYW8JSUELHmDquftQyKdq0DZXhULMHGQLf4e95WIaoA14LL\nbThz77kuhKULPTu2MNrBUKGorurhGugo5gs4ZUezSsUOe3KxYdrFMdGgny1GgTxMSMTp2RAZytKjv4kQ\nVx7XgzvpQLIbDjUPAkJv6lScwIRq1W3Ne0Rh0V6Bmn6U5uIuWnJjULmbaQiSODj3z0mAZvak0mSWIGwT\nTX83HztcC4W7e1f6a1thmcc5K61Icehla2hBELWPpixTkyC4eEVmk9Rq0m0ZXtx0JX2ZQXqXDEyePyMe\nJ70sdSzXk72zusqhY4yuOMGgbYNHqxOToK6NxujR7e4dV3Wk5JnSUthym8scjcPeCiKDNY4cHfTMnDXJ\n9zLVy01LtNKYpJ1s8FxVxigmxQNKEbIamxhx6yqwGC4aiISVOOUEjvNOdaUfXfUsE6jEwtwxyGxjlRK1\ncLyxXttq4QWN6PehgHv7jXykzPjInbEysebFvvPOOMdunmJvcCNMSvjUda8fL6xfGo0FDrLg8XZipd6S\noPVdYtyIM1Dg40KbBA3JuumPYtXuJaHrZnjZmdnM5OVo4ZNxktfCVT0c6bnD4bAeyn4bYt1ZPaX6hQHh\nJtvNYfpD0ONYlmqKuToQAMlz52Fh6bj45EbX89L5eLlSpWeyBlGotzriB0EPlclrGi5l2B5oPb1aB1ag\nyyYuu44l0F1oOVYnBIZsxIsHVITxi9lEuVPFkWASOUNuVQXfM4n5hxWR9qtuKnIcPsvbJsv1U10XlKh3\nKisqPhHU15xrCLr5gwFxPUKiNTLUBrkzgBOHXPVsHcLCiSD0YU56TRGfvEom43TWUKPPfl9Z54tgVQuT\njCRlaljAzeniQIcbbHZnn3f0HxbDG3DFYqWSxNrXabHhRsIOhhUHSPENyhGSTVO5t0XX5CdMspJPCd02\n3Oqv32ccbUK4O3YH6LEvp0WO3kSl5n50odVkI9B0i0iq4UPFGMkM8bEQJbgJoOH71P10vtdevJFQE4g2\nyhimiM53ZJRWgSZveHtENZc0Gjo0F9eioak9BnPpY1QxAFPC817svuhEstcU69bLCA4D1rO5R8AuIIBq\nyQJcifFLvbpAEYTLKJqysZrU8EEl3TSdC13A9hZvk4NC8VGEDAxcNrKw313dZp17kZPO5HSd1y6sljAW\nA9M1d6FMYV5SlBWf3WZNCUPS7qKNlda2YBsC6IUVB363f5RLGQOQHwbaijBSRCkrVoRxBHtc0Bd5J9V9\nP5uMTXkpZOxRcCQvImGgcmGuxxLb5zTqfS2xu7v3Sf3IIesSt9tVzcEcdbEvLGVJkLk4mb3G30DbIbri\nPZ09JkweDvMaQ3bxT2nfkz3Ilihkw9jqikkCCCz7E8h6z6KbhQErEW9VzJZzMCgJsyPjFam6iNwpe07S\nhyOvNVw2t9wpzL5xM11DvVzQwDaWEytNRHzDBs4KwEtpI2IpjUyVZHSwA0UGqqkzoCgrJFlNOvPlXqcS\nIcREouUIBmuttkrhPWJtSxOOgpsdvBR3kTOzAXNzSKxoaBAb0c5SDMUc6FIyGA8x5wg5DkUgjFUUodEt\nOYaB2VHVePW9mxHeBTdKWLzJow4ZZvjnoBuVigXljKCNh137ckV2y3Yg3Xi4UzJEI2V5Rw9AfnMs7xUw\nVHOFCg189maD3bmZAe7b4eaGZhyy4HVKjqCXmIH7vsEjRvbnfB0SQxxpuqBDJbHNCtW4vM643ZQQBVPP\na7oXSQIq9w2dHp0A7dtkocCZdQp9FKR9XdJAFIbVSHzIF1ZogeZlc0pXuNE0tagvD57xwDRFkAuoQyMu\nYDdZasXrpSmEE5UjHVkyYsISn8QsfXurzDybX468aoRoks654jjmRY5zi1oB8TcMdC2c3sicNaqfeuhd\nH1nPX7l4RpdqWMR7gGx9slXtG8S3KxpOi4qCD7yg3saD66nun4dzksQURoTUdXyrJR5UpHsfIlTF1aJa\nMdXyQtQnrkl00TeghQd00rRFZsCnhi0qrCSKiBfB2EVrd9RPpbgwJGZHuIQecdBmNetc2ylSEClqVBPR\nGOPPIxrnswEZjmnS0jxKW9VSM1QVxSPJnPFswCqT95SoKD6CP4xdX28WIUGiNaIKodXXJHEIsXBCxLsr\nPwWPCtoplC6hhpKmW5dQo92iCTyY2KioKzO8XR6FKm6qonMKVEwQNtlYE9c97KMtEnp25VOdMP46SQXS\nYsSVp7vm8LP87VYI8SOKcW3s2oedYFtt45rvDzoTF0GmS6wELQ9uo98HhjQAI1Dt91cgjJOwygNmLoZE\nX5K2zQiNA163uMCl5xzaBqY4YTL0wgALg3IFdYSp0RFYLWdt6IxoGI1tnoxcjlUEPo5eGIc3mS3SmaLn\nOdumfUQQ4Jgmgaa5anUVQsfBDrlAN5oaX7O0JO71SSPSWiHBsT9WIPy2J1Cace9ZZLRxblFPSXcvsuHh\nhvnhWQltEDAe7MgvkFQ8lGVFa8jhzijoF9kLmMhMILSzYnfXnZPNP7TlAAwlLHK1RqlpHskJqb6CPpGP\nQvOAhEMsM3zJ2KejZx0esxkjxA0ZufVvGAMN3vTUMplQaF4RiQkp9fzBXf3CMk01dWjOMMIEXTeKzIQe\nEcffzjixWU9FpAyGp2rVl4ETRgqljOGw4UgK31r0ZIEGnH0xGz1FtbW1OcQM008JVujRqulCucEMmntr\n"
-                            }
-                        ),
-                        "method": "POST",
-                        "uri": "/requestcompression/putcontentwithencoding",
-                        "headers": MappingProxyType({"Content-Encoding": "gzip"}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "SDKAppendedGzipAfterProvidedEncoding_restJson1",
-                        "documentation": "Compression algorithm encoding is appended to the Content-Encoding header, and the\nuser-provided content-encoding is in the Content-Encoding header before the\nrequest compression encoding from the HTTP binding.\n",
-                        "protocol": "aws.protocols#restJson1",
-                        "params": MappingProxyType(
-                            {
-                                "encoding": "custom",
-                                "data": "RjCEL3kBwqPivZUXGiyA5JCujtWgJAkKRlnTEsNYfBRGOS0f7LT6R3bCSOXeJ4auSHzQ4BEZZTklUyj5\n1HEojihShQC2jkQJrNdGOZNSW49yRO0XbnGmeczUHbZqZRelLFKW4xjru9uTuB8lFCtwoGgciFsgqTF8\n5HYcoqINTRxuAwGuRUMoNO473QT0BtCQoKUkAyVaypG0hBZdGNoJhunBfW0d3HWTYlzz9pXElyZhq3C1\n2PDB17GEoOYXmTxDecysmPOdo5z6T0HFhujfeJFIQQ8dirmXcG4F3v0bZdf6AZ3jsiVh6RnEXIPxPbOi\ngIXDWTMUr4Pg3f2LdYCM01eAb2qTdgsEN0MUDhEIfn68I2tnWvcozyUFpg1ez6pyWP8ssWVfFrckREIM\nMb0cTUVqSVSM8bnFiF9SoXM6ZoGMKfX1mT708OYk7SqZ1JlCTkecDJDoR5ED2q2MWKUGR6jjnEV0GtD8\nWJO6AcF0DptY9Hk16Bav3z6c5FeBvrGDrxTFVgRUk8SychzjrcqJ4qskwN8rL3zslC0oqobQRnLFOvwJ\nprSzBIwdH2yAuxokXAdVRa1u9NGNRvfWJfKkwbbVz8yV76RUF9KNhAUmwyYDrLnxNj8ROl8B7dv8Gans\n7Bit52wcdiJyjBW1pAodB7zqqVwtBx5RaSpF7kEMXexYXp9N0J1jlXzdeg5Wgg4pO7TJNr2joiPVAiFf\nefwMMCNBkYx2z7cRxVxCJZMXXzxSKMGgdTN24bJ5UgE0TxyV52RC0wGWG49S1x5jGrvmxKCIgYPs0w3Z\n0I3XcdB0WEj4x4xRztB9Cx2Mc4qFYQdzS9kOioAgNBti1rBySZ8lFZM2zqxvBsJTTJsmcKPr1crqiXjM\noVWdM4ObOO6QA7Pu4c1hT68CrTmbcecjFcxHkgsqdixnFtN6keMGL9Z2YMjZOjYYzbUEwLJqUVWalkIB\nBkgBRqZpzxx5nB5t0qDH35KjsfKM5cinQaFoRq9y9Z82xdCoKZOsUbxZkk1kVmy1jPDCBhkhixkc5PKS\nFoSKTbeK7kuCEZCtR9OfF2k2MqbygGFsFu2sgb1Zn2YdDbaRwRGeaLhswta09UNSMUo8aTixgoYVHxwy\nvraLB6olPSPegeLOnmBeWyKmEfPdbpdGm4ev4vA2AUFuLIeFz0LkCSN0NgQMrr8ALEm1UNpJLReg1ZAX\nzZh7gtQTZUaBVdMJokaJpLk6FPxSA6zkwB5TegSqhrFIsmvpY3VNWmTUq7H0iADdh3dRQ8Is97bTsbwu\nvAEOjh4FQ9wPSFzEtcSJeYQft5GfWYPisDImjjvHVFshFFkNy2nN18pJmhVPoJc456tgbdfEIdGhIADC\n6UPcSSzE1FxlPpILqZrp3i4NvvKoiOa4a8tnALd2XRHHmsvALn2Wmfu07b86gZlu4yOyuUFNoWI6tFvd\nbHnqSJYNQlFESv13gJw609DBzNnrIgBGYBAcDRrIGAnflRKwVDUnDFrUQmE8xNG6jRlyb1p2Y2RrfBtG\ncKqhuGNiT2DfxpY89ektZ98waPhJrFEPJToNH8EADzBorh3T0h4YP1IeLmaI7SOxeuVrk1kjRqMK0rUB\nlUJgJNtCE35jCyoHMwPQlyi78ZaVv8COVQ24zcGpw0MTy6JUsDzAC3jLNY6xCb40SZV9XzG7nWvXA5Ej\nYC1gTXxF4AtFexIdDZ4RJbtYMyXt8LsEJerwwpkfqvDwsiFuqYC6vIn9RoZO5kI0F35XtUITDQYKZ4eq\nWBV0itxTyyR5Rp6g30pZEmEqOusDaIh96CEmHpOBYAQZ7u1QTfzRdysIGMpzbx5gj9Dxm2PO1glWzY7P\nlVqQiBlXSGDOkBkrB6SkiAxknt9zsPdTTsf3r3nid4hdiPrZmGWNgjOO1khSxZSzBdltrCESNnQmlnP5\nZOHA0eSYXwy8j4od5ZmjA3IpFOEPW2MutMbxIbJpg5dIx2x7WxespftenRLgl3CxcpPDcnb9w8LCHBg7\nSEjrEer6Y8wVLFWsQiv6nTdCPZz9cGqwgtCaiHRy8lTWFgdfWd397vw9rduGld3uUFeFRGjYrphqEmHi\nhiG0GhE6wRFVUsGJtvOCYkVREvbEdxPFeJvlAvOcs9HKbtptlTusvYB86vR2bNcIY4f5JZu2X6sGa354\n7LRk0ps2zqYjat3hMR7XDC8KiKceBteFsXoDjfVxTYKelpedTxqWAafrKhaoAVuNM98PSnkuIWGzjSUC\nNsDJTt6vt1D1afBVPWVmnQ7ZQdtEtLIEwAWYjemAztreELIr1E9fPEILm1Ke4KctP9I0I72Dh4eylNZD\n0DEr2Hg7cWFckuZ0Av5d0IPRARXikEGDHl8uh12TXL9v2Uh0ZVSJMEYvxGSbZvkWz8TjWSk3hKA2a7GL\nJm3Ho7e1C34gE1XRGcEthxvURxt4OKBqN3ZNaMIuDTWinoQAutMcUqtm4MoL7RGPiCHUrvTwQPSirsmA\nQmOEu8nOpnP77Fivh9jLGx5ta7nL6jrsWUsBqiN1lzpdPYLRR4mUIAj6sNWiDEk4pkbHSMEcqbWw6Zl7\npsEyPDHalCNhWMA3RSK3skURzQDZ0oBV5W7vjVIZ4d3uCKsk6zrzEI9u5mx7p9RdNKodXfzqYt0ULdtc\n3RW0hIfw2KvrO3BD2QrtgAkfrFBGVvlJSUoh0MvLz8DeXxfuiuq9Ttu7wvsqVI4Piah6WNEXtHHGPJO3\nGhc75Bnv2To4VS2v8rmyKAPIIVTuYBHZN6sZ4FhFzbrslCIdk0eadaU60naqiNWU3CsxplIYGyeThmJ7\n9u4h6Y2OmiPZjFPS2bAzwgAozYTVefII9aEaWZ0hxHZeu1FW7r79dkdO73ZqRfas9u8Z7LLBPCw5pV0F\n5I0pHDgNb6MogoxF4NZJfVtIX1vCHhhVLrXjrYNJU2fD9Fw8kT8Ie2HDBJnqAvYKmryQ1r9ulo3Me3rH\nq9s2Y5uCDxu9iQNhnpwIm57WYGFeqd2fnQeY2IziD3Jgx0KSrmOH0jgi0RwJyfGXaORPq3bQQqljuACo\nkO6io9t5VI8PbNxSHTRbtYiPciUslbT0g7SpCLrRPOBRJ4DDk56pjghpeoUagJ5xJ4wjBzBuXnAGkNnP\nTfpiuz2r3oSBAi8sB9wiYK2z9sp4gZyQsqdVNzAEgKatOxBRBmJCBYpjO98ZQrF83XApPpfFg0ujB2PW\n1iYF9NkgwIKB5oB6KVTOmSKJk11mVermPgeugHbzdd2zUP6fP8fWbhseqk2t8ahGvqjs2CDHFIWXl5jc\nfCknbykE3ANt7lnAfJQ2ddduLGiqrX4HWx6jcWw08Es6BkleO0IDbaWrb95d5isvFlzJsf0TyDIXF4uq\nbBDCi0XPWqtRJ2iqmnJa2GbBe9GmAOWMkBFSilMyC4sR395WSDpD56fx0NGoU6cHrRu9xF2Bgh7RGSfl\nch2GXEeE02fDpSHFNvJBlOEqqfkIX6oCa6KY9NThqeIjYsT184XR2ZI7akXRaw1gMOGpk4FmUxk6WIuX\n4ei1SLQgSdl7OEdRtJklZ76eFrMbkJQ2TDhu8f7mVuiy53GUMIvCrP9xYGZGmCIDm2e4U2BDi3F7C5xK\n3bDZXwlQp6z4BSqTy2OVEWxXUJfjPMOL5Mc7AvDeKtxAS73pVIv0HgHIa4NBAdC7uLG0zXuu1FF6z2XY\nyUhk03fMZhYe7vVxsul3WE7U01fuN8z2y0eKwBW1RFBE1eKIaR9Y01sIWQWbSrfHfDrdZiElhmhHehfs\n0EfrR4sLYdQshJuvhTeKGJDaEhtPQwwJ9mUYGtuCL9RozWx1XI4bHNlzBTW0BVokYiJGlPe7wdxNzJD7\nJgS7Lwv6jGKngVf86imGZyzqwiteWFPdNUoWdTvUPSMO5xIUK9mo5QpwbBOAmyYzVq42o3Qs90N9khEV\nU36LB99fw8PtGHH5wsCHshfauwnNPj0blGXzke0kQ4JNCVH7Jtn0Y0aeejkSxFtwtxoYs6zHl1Lxxpsd\nsw5vBy49CEtoltDW367lVAwDjWdx20msGB7qJCkEDrzu7EXSO22782QX9NBRcN9ppX0C25I0FMA4Wnhz\n9zIpiXRrsTH35jzM8Cjt4EVLGNU3O0HuEvAer3cENnMJtngdrT86ox3fihMQbiuy4Bh4DEcP5in2VjbT\n3qbnoCNvOi8Fmmf7KlGlWAOceL5OHVE5lljjQEMzEQOCEgrk5mDKgwSBJQBNauIDSC1a5iEQjB8Xxp4C\nqeKyyWY9IOntNrtU5ny4lNprHJd36dKFeBLKcGCOvgHBXdOZloMF0YTRExw7hreEO9IoTGVHJ4teWsNr\nHdtagUHjkeZkdMMfnUGNv5aBNtFMqhcZH6EitEa9lGPkKBbJpoom3u8D8EHSIF1H5EZqqx9TLY5hWAIG\nPwJ4qwkpCGw5rCLVrjw7ARKukIFzNULANqjHUMcJ002TlUosJM4xJ4aAgckpLVGOGuPDhGAAexEcQmbg\nUsZdmqQrtuVUyyLteLbLbqtR6CTlcAIwY3xyMCmPgyefE0FEUODBoxQtRUuYTL9RC5o1sYb2PvcxUQfb\niJFi2CAl99pAzcckU2qVCxniARslIxM5pmMRGsQX9ZzYAfZrbg6ce6S74I8UMlgRQ2QVyvUjKKOE6IrJ\nLng370emHfe5m6LZULD5YiZutkD5ipjL2Bz77DvTE5kNPUhuoKBcTJcUgytfXAKUTWOcRKNlq0GImrxM\nJfr7AWbLFFNKGLeTrVDBwpcokJCv0zcOKWe8fd2xkeXkZTdmM66IgM27cyYmtQ6YF26Kd0qrWJeVZJV9\n3fyLYYvKN5csbRY2BHoYE5ERARRW65IrpkXMf48OrCXMtDIP0Z7wxI9DiTeKKeH4uuguhCJnwzR3WxLA\nVU6eBJEd7ZjS6JA83w7decq8uDI7LGKjcz1FySp3B7fE9DkHRGXxbsL7Fjar6vW2mAv8CuvI20B6jctp\n2yLDs24sPfB3sSxrrlhbuT1m6DZqiN0dl6umKx7NGZhmOTVGr20jfcxhqPQwTJfd7kel4rvxip4BqkvT\n7STy8knJ2BXGyJeNgwo1PXUZRDVy0LCTsSF1RFuRZe8cktHl9lgw8ntdPn1pVFL0MwJkJfdXBNUp5gNv\n50FTkrpo1t6wq4CVbcfj2XOrOzvBUzNH26sXGABI1gGxCdp2jEZrHgqQaWIaTJVTuguZhxqDvdYsrwFW\nYN58uuNcKHIrGdRSigyZInwQDYk0pjcqdSeU0WVU3Y9htzZBR7XRaCJr5YTZvq7fwermb5tuwb37lPLq\nB2IGg0iftkVbXaSyfCwVaRbfLBb88so0QqpmJGirFu8FcDiXOV1zTr8yW9XLdYQuUjh43xrXLdgsuYff\nCagInUk1eU1aLjVZoJRsNmStmOEpAqlYMwTvx7w6j2f421Cxr5cNZBIVlAxlXN2QiDqJ9v3sHhHkTanc\nlQuH8ptUyX8qncpBuXXBn7cSez9N0EoxCBl1GHUagbjstgJo4gzLvTmVIY6MiWYOBitzNUHfyqKwtKUr\nVoSCdZcGeA9lHUPA7PUprRRaT3m1hGKPyshtVS2ikG48w3oVerln1N1qGdtz46gZCrndw3LZ1B362RfW\nzDPuXbpsyLsRMTt1Rz1oKHRXp3iE41hkhQH6pxlvyCW2INnHt5XU8zRamOB3oW0udOhMpQFDjRkOcy06\nb4t0QTHvoRqmBna3WXzIMZyeK3GChF5eF8oDXRbjhk7BB6YKCgqwWUzEJ5K47HMSlhFkBUjaPRjdGM0z\nzOMwhW6b1NvSwP7XM1P5yi1oPvOspts1vr29SXqrMMrBhVogeodWyd69NqrO4jkyBxKmlXifoTowpfiY\n2cUCE0XMZqxUN39LCP09JqZifaEcBEo3mgtm1tWu5QR2GNq7UyQf4RIPSDOpDCAtwoPhRgdT1lJdcj4U\nlnH0wrJ8Uwu7c08L7ErnIrDATqCrOjpSbzGP1xHENABYONC4TknFPrJ8pe40A8fzGT0qBw9mAM1SKcHO\nfoiLcMC9AjHTqJzDG3xplSLPG9or2rMeq7Fzp9r0y7uJRMxgg51EbjfvYlH466A3ggvL2WQlDXjJqPW3\nBJGWAWDNN9LK8f46bADKPxakpkx23S9O47rGSXfDhVSIZsDympxWX1UOzWwMZRHkofVeKqizgbKkGgUT\nWykE9gRoRAOd9wfHZDYKa9i0LaPDiaUMvnU1gdBIqIoiVsdJ9swX47oxvMtOxtcS0zlD6llDkBuIiU5g\nPwRCYmtkkb25c8iRJXwGFPjI1wJ34I1z1ENicPdosPiUe9ZC2jnXIKzEdv01x2ER7DNDF3yxOwOhxNxI\nGqsmC92j25UQQFu9ZstOZ28AoCkuOYs0Uycm5u8jR1T39dMBwrko09rC65ENLnsxM8oebmyFCPiGJ1ED\n5Xqc9qZ237f1OnETAoEOwqUSvrdPTv56U7hV91EMTyC812MLQpr2710E3VVpsUCUMNhIxdt7UXZ1UNFb\njgzpZLXnf4DHrv6B7kq6UI50KMxcw1HZE2GpODfUTzNFLaqdrvzxKe5eUWdcojBaRbD4fFdVYJTElYDH\nNNVh6ofkoeWcs9CWGFmSBe0T4K8phFeygQg0prKMELNEy6qENzVtG9ZDcqj3a7L6ZLtvq50anWp7fAVu\nfwz55g4iM2Z2fA0pnwHDL7tt67zTxGITvsnJsZSpeq1EQsZcwtkBV9liu7Rl7jiVT1IIRtchB8TsTiaA\nwVHIQQ9RIOTiPQdKNqi1kC9iGlUqWK93gblNWlBw1eYB9Wk8FQogutwTf0caNMx8D4nPbANcmOOlskIy\nzALh15OlTrWnhP95rf08AN2J026zDE2DUF9k0eCevYBQIDjqKNW4XCZnjbHoIcKzbY5VzPbMs3ZyMz8K\nSucBmgPg6wrSK5ykbkapS5vuqvXc9GbjQJ8bPNzoxoWGyjbZvDs2OBrIqBmcQb2DLJ8v38McQ4mC4UsS\njf4PyfSCtpk274QZjvLCZbLiCBxQegk7jUU0NmTFJAcYCxd9xMWdlFkiszcltT2YzwuFFz7iA6aa4n5L\nHpBNfUA01GcAi1aCMYhmooS4zSlYcSOZkovMz36U3Fd9WtqIEOJLi7HMgHQDgNMdK6DTzAdHQtxerxVF\nHJnPrfNVG7270r3bp0bPnLNYLhObbAn6zqSAUeLtI2Y4KJDjBKCAh2vvYGbu0e2REYJWRj7MkGevsSSy\nb1kCXLt6tKGWAb7lt5c0xyJgUIJW7pdtnwgT0ZCa24BecCAwNnG5U2EwQbcjZGsFxqNGfaemd3oFEhES\nBaE0Fxms9UKTnMafu8wvZ2xymMrUduuRzOjDeX7oD5YsLC88V8CGMLxbbxIpt94KGykbr6e7L0R4oZl1\ntKMgFwQ2p9Txdbp0Y293LcsJymKizqI0F2xEp7y4SmWOJqHZtsbz80wVV9nv41CvtfxuSoGZJ5cNB7pI\nBgzNcQCeH3Jt0RaGGwboxxpuFbzilmkMFXxJm87tD4WNgu01nHfGCKeQcySEBZpVfJgi6sDFJ8uWnvKm\n9mPLHurtWzEfKqUEa1iC71bXjw5wrvhv9BYW8JSUELHmDquftQyKdq0DZXhULMHGQLf4e95WIaoA14LL\nbThz77kuhKULPTu2MNrBUKGorurhGugo5gs4ZUezSsUOe3KxYdrFMdGgny1GgTxMSMTp2RAZytKjv4kQ\nVx7XgzvpQLIbDjUPAkJv6lScwIRq1W3Ne0Rh0V6Bmn6U5uIuWnJjULmbaQiSODj3z0mAZvak0mSWIGwT\nTX83HztcC4W7e1f6a1thmcc5K61Icehla2hBELWPpixTkyC4eEVmk9Rq0m0ZXtx0JX2ZQXqXDEyePyMe\nJ70sdSzXk72zusqhY4yuOMGgbYNHqxOToK6NxujR7e4dV3Wk5JnSUthym8scjcPeCiKDNY4cHfTMnDXJ\n9zLVy01LtNKYpJ1s8FxVxigmxQNKEbIamxhx6yqwGC4aiISVOOUEjvNOdaUfXfUsE6jEwtwxyGxjlRK1\ncLyxXttq4QWN6PehgHv7jXykzPjInbEysebFvvPOOMdunmJvcCNMSvjUda8fL6xfGo0FDrLg8XZipd6S\noPVdYtyIM1Dg40KbBA3JuumPYtXuJaHrZnjZmdnM5OVo4ZNxktfCVT0c6bnD4bAeyn4bYt1ZPaX6hQHh\nJtvNYfpD0ONYlmqKuToQAMlz52Fh6bj45EbX89L5eLlSpWeyBlGotzriB0EPlclrGi5l2B5oPb1aB1ag\nyyYuu44l0F1oOVYnBIZsxIsHVITxi9lEuVPFkWASOUNuVQXfM4n5hxWR9qtuKnIcPsvbJsv1U10XlKh3\nKisqPhHU15xrCLr5gwFxPUKiNTLUBrkzgBOHXPVsHcLCiSD0YU56TRGfvEom43TWUKPPfl9Z54tgVQuT\njCRlaljAzeniQIcbbHZnn3f0HxbDG3DFYqWSxNrXabHhRsIOhhUHSPENyhGSTVO5t0XX5CdMspJPCd02\n3Oqv32ccbUK4O3YH6LEvp0WO3kSl5n50odVkI9B0i0iq4UPFGMkM8bEQJbgJoOH71P10vtdevJFQE4g2\nyhimiM53ZJRWgSZveHtENZc0Gjo0F9eioak9BnPpY1QxAFPC817svuhEstcU69bLCA4D1rO5R8AuIIBq\nyQJcifFLvbpAEYTLKJqysZrU8EEl3TSdC13A9hZvk4NC8VGEDAxcNrKw313dZp17kZPO5HSd1y6sljAW\nA9M1d6FMYV5SlBWf3WZNCUPS7qKNlda2YBsC6IUVB363f5RLGQOQHwbaijBSRCkrVoRxBHtc0Bd5J9V9\nP5uMTXkpZOxRcCQvImGgcmGuxxLb5zTqfS2xu7v3Sf3IIesSt9tVzcEcdbEvLGVJkLk4mb3G30DbIbri\nPZ09JkweDvMaQ3bxT2nfkz3Ilihkw9jqikkCCCz7E8h6z6KbhQErEW9VzJZzMCgJsyPjFam6iNwpe07S\nhyOvNVw2t9wpzL5xM11DvVzQwDaWEytNRHzDBs4KwEtpI2IpjUyVZHSwA0UGqqkzoCgrJFlNOvPlXqcS\nIcREouUIBmuttkrhPWJtSxOOgpsdvBR3kTOzAXNzSKxoaBAb0c5SDMUc6FIyGA8x5wg5DkUgjFUUodEt\nOYaB2VHVePW9mxHeBTdKWLzJow4ZZvjnoBuVigXljKCNh137ckV2y3Yg3Xi4UzJEI2V5Rw9AfnMs7xUw\nVHOFCg189maD3bmZAe7b4eaGZhyy4HVKjqCXmIH7vsEjRvbnfB0SQxxpuqBDJbHNCtW4vM643ZQQBVPP\na7oXSQIq9w2dHp0A7dtkocCZdQp9FKR9XdJAFIbVSHzIF1ZogeZlc0pXuNE0tagvD57xwDRFkAuoQyMu\nYDdZasXrpSmEE5UjHVkyYsISn8QsfXurzDybX468aoRoks654jjmRY5zi1oB8TcMdC2c3sicNaqfeuhd\nH1nPX7l4RpdqWMR7gGx9slXtG8S3KxpOi4qCD7yg3saD66nun4dzksQURoTUdXyrJR5UpHsfIlTF1aJa\nMdXyQtQnrkl00TeghQd00rRFZsCnhi0qrCSKiBfB2EVrd9RPpbgwJGZHuIQecdBmNetc2ylSEClqVBPR\nGOPPIxrnswEZjmnS0jxKW9VSM1QVxSPJnPFswCqT95SoKD6CP4xdX28WIUGiNaIKodXXJHEIsXBCxLsr\nPwWPCtoplC6hhpKmW5dQo92iCTyY2KioKzO8XR6FKm6qonMKVEwQNtlYE9c97KMtEnp25VOdMP46SQXS\nYsSVp7vm8LP87VYI8SOKcW3s2oedYFtt45rvDzoTF0GmS6wELQ9uo98HhjQAI1Dt91cgjJOwygNmLoZE\nX5K2zQiNA163uMCl5xzaBqY4YTL0wgALg3IFdYSp0RFYLWdt6IxoGI1tnoxcjlUEPo5eGIc3mS3SmaLn\nOdumfUQQ4Jgmgaa5anUVQsfBDrlAN5oaX7O0JO71SSPSWiHBsT9WIPy2J1Cace9ZZLRxblFPSXcvsuHh\nhvnhWQltEDAe7MgvkFQ8lGVFa8jhzijoF9kLmMhMILSzYnfXnZPNP7TlAAwlLHK1RqlpHskJqb6CPpGP\nQvOAhEMsM3zJ2KejZx0esxkjxA0ZufVvGAMN3vTUMplQaF4RiQkp9fzBXf3CMk01dWjOMMIEXTeKzIQe\nEcffzjixWU9FpAyGp2rVl4ETRgqljOGw4UgK31r0ZIEGnH0xGz1FtbW1OcQM008JVujRqulCucEMmntr\n",
-                            }
-                        ),
-                        "method": "POST",
-                        "uri": "/requestcompression/putcontentwithencoding",
-                        "headers": MappingProxyType(
-                            {"Content-Encoding": "custom, gzip"}
-                        ),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#requestCompression"),
             value=MappingProxyType({"encodings": ("gzip",)}),
@@ -16897,7 +4734,6 @@ PUT_WITH_CONTENT_ENCODING = Schema(
 
 QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#QueryIdempotencyTokenAutoFillInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "token": {
             "target": STRING,
@@ -16914,8 +4750,7 @@ QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -16924,53 +4759,16 @@ QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryIdempotencyTokenAutoFill",
-                        "documentation": "Automatically adds idempotency token when not set",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/QueryIdempotencyTokenAutoFill",
-                        "body": "",
-                        "queryParams": ("token=00000000-0000-4000-8000-000000000000",),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryIdempotencyTokenAutoFillIsSet",
-                        "documentation": "Uses the given idempotency token as-is",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/QueryIdempotencyTokenAutoFill",
-                        "body": "",
-                        "queryParams": ("token=00000000-0000-4000-8000-000000000000",),
-                        "params": MappingProxyType(
-                            {"token": "00000000-0000-4000-8000-000000000000"}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/QueryIdempotencyTokenAutoFill", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
 QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#QueryParamsAsStringListMapInput"),
-    traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("HttpQueryParamsTrait",)),
-        Trait.new(id=ShapeID("smithy.api#input")),
-    ],
     members={
         "qux": {
             "target": STRING,
@@ -16988,8 +4786,7 @@ QUERY_PARAMS_AS_STRING_LIST_MAP_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -16998,61 +4795,14 @@ QUERY_PARAMS_AS_STRING_LIST_MAP = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryParamsStringListMap",
-                        "documentation": "Serialize query params from map of list strings",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/StringListMap",
-                        "body": "",
-                        "queryParams": ("corge=named", "baz=bar", "baz=qux"),
-                        "params": MappingProxyType(
-                            {
-                                "qux": "named",
-                                "foo": MappingProxyType({"baz": ("bar", "qux")}),
-                            }
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonServersQueryParamsStringListMap",
-                        "documentation": "Servers put all query params in map",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/StringListMap",
-                        "body": "",
-                        "queryParams": ("corge=named", "baz=bar", "baz=qux"),
-                        "params": MappingProxyType(
-                            {
-                                "qux": "named",
-                                "foo": MappingProxyType(
-                                    {"corge": ("named",), "baz": ("bar", "qux")}
-                                ),
-                            }
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/StringListMap", "method": "POST"}),
-        ),
+        )
     ],
 )
 
 QUERY_PRECEDENCE_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#QueryPrecedenceInput"),
-    traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("HttpQueryParamsTrait",)),
-        Trait.new(id=ShapeID("smithy.api#input")),
-    ],
     members={
         "foo": {
             "target": STRING,
@@ -17070,8 +4820,7 @@ QUERY_PRECEDENCE_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -17080,54 +4829,9 @@ QUERY_PRECEDENCE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonQueryPrecedence",
-                        "documentation": "Prefer named query parameters when serializing",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/Precedence",
-                        "body": "",
-                        "queryParams": ("bar=named", "qux=alsoFromMap"),
-                        "params": MappingProxyType(
-                            {
-                                "foo": "named",
-                                "baz": MappingProxyType(
-                                    {"bar": "fromMap", "qux": "alsoFromMap"}
-                                ),
-                            }
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonServersPutAllQueryParamsInMap",
-                        "documentation": "Servers put all query params in map",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/Precedence",
-                        "body": "",
-                        "queryParams": ("bar=named", "qux=fromMap"),
-                        "params": MappingProxyType(
-                            {
-                                "foo": "named",
-                                "baz": MappingProxyType(
-                                    {"bar": "named", "qux": "fromMap"}
-                                ),
-                            }
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/Precedence", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -17137,8 +4841,7 @@ RESPONSE_CODE_HTTP_FALLBACK_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#ResponseCodeHttpFallbackInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -17148,8 +4851,7 @@ RESPONSE_CODE_HTTP_FALLBACK_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#ResponseCodeHttpFallbackInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -17158,31 +4860,11 @@ RESPONSE_CODE_HTTP_FALLBACK = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpResponseCodeNotSetFallsBackToHttpCode",
-                        "documentation": "This test ensures that servers fall back to the code set\nby @http if @httpResponseCode is not set.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 201,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": "{}",
-                        "bodyMediaType": "application/json",
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"method": "GET", "uri": "/responseCodeHttpFallback", "code": 201}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
@@ -17191,14 +4873,12 @@ RESPONSE_CODE_REQUIRED_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 RESPONSE_CODE_REQUIRED_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#ResponseCodeRequiredOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "responseCode": {
             "target": INTEGER,
@@ -17215,32 +4895,11 @@ RESPONSE_CODE_REQUIRED = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpResponseCodeRequired",
-                        "documentation": "This test ensures that servers handle @httpResponseCode being @required.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 201,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "body": "{}",
-                        "bodyMediaType": "application/json",
-                        "params": MappingProxyType({"responseCode": 201}),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"method": "GET", "uri": "/responseCodeRequired", "code": 200}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
@@ -17250,8 +4909,7 @@ SIMPLE_SCALAR_PROPERTIES_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#SimpleScalarPropertiesInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "foo": {
@@ -17281,8 +4939,7 @@ SIMPLE_SCALAR_PROPERTIES_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#SimpleScalarPropertiesInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "foo": {
@@ -17311,236 +4968,9 @@ SIMPLE_SCALAR_PROPERTIES = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSimpleScalarProperties",
-                        "documentation": "Serializes simple scalar properties",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/SimpleScalarProperties",
-                        "body": '{\n    "stringValue": "string",\n    "trueBooleanValue": true,\n    "falseBooleanValue": false,\n    "byteValue": 1,\n    "shortValue": 2,\n    "integerValue": 3,\n    "longValue": 4,\n    "floatValue": 5.5,\n    "DoubleDribble": 6.5\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json", "X-Foo": "Foo"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "foo": "Foo",
-                                "stringValue": "string",
-                                "trueBooleanValue": True,
-                                "falseBooleanValue": False,
-                                "byteValue": 1,
-                                "shortValue": 2,
-                                "integerValue": 3,
-                                "longValue": 4,
-                                "floatValue": 5.5,
-                                "doubleValue": 6.5,
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDoesntSerializeNullStructureValues",
-                        "documentation": "Rest Json should not serialize null structure values",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/SimpleScalarProperties",
-                        "body": "{}",
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"stringValue": None}),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonServersDontSerializeNullStructureValues",
-                        "documentation": "Rest Json should not deserialize null structure values",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/SimpleScalarProperties",
-                        "body": '{\n    "stringValue": null\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({}),
-                        "appliesTo": "server",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSupportsNaNFloatInputs",
-                        "documentation": "Supports handling NaN float values.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/SimpleScalarProperties",
-                        "body": '{\n    "floatValue": "NaN",\n    "DoubleDribble": "NaN"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"floatValue": "NaN", "doubleValue": "NaN"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSupportsInfinityFloatInputs",
-                        "documentation": "Supports handling Infinity float values.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/SimpleScalarProperties",
-                        "body": '{\n    "floatValue": "Infinity",\n    "DoubleDribble": "Infinity"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"floatValue": "Infinity", "doubleValue": "Infinity"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSupportsNegativeInfinityFloatInputs",
-                        "documentation": "Supports handling -Infinity float values.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/SimpleScalarProperties",
-                        "body": '{\n    "floatValue": "-Infinity",\n    "DoubleDribble": "-Infinity"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"floatValue": "-Infinity", "doubleValue": "-Infinity"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSimpleScalarProperties",
-                        "documentation": "Serializes simple scalar properties",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "stringValue": "string",\n    "trueBooleanValue": true,\n    "falseBooleanValue": false,\n    "byteValue": 1,\n    "shortValue": 2,\n    "integerValue": 3,\n    "longValue": 4,\n    "floatValue": 5.5,\n    "DoubleDribble": 6.5\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json", "X-Foo": "Foo"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "foo": "Foo",
-                                "stringValue": "string",
-                                "trueBooleanValue": True,
-                                "falseBooleanValue": False,
-                                "byteValue": 1,
-                                "shortValue": 2,
-                                "integerValue": 3,
-                                "longValue": 4,
-                                "floatValue": 5.5,
-                                "doubleValue": 6.5,
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDoesntDeserializeNullStructureValues",
-                        "documentation": "Rest Json should not deserialize null structure values",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "stringValue": null\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({}),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonServersDontSerializeNullStructureValues",
-                        "documentation": "Rest Json should not serialize null structure values",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": "{}",
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType({"stringValue": None}),
-                        "appliesTo": "server",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSupportsNaNFloatInputs",
-                        "documentation": "Supports handling NaN float values.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "floatValue": "NaN",\n    "DoubleDribble": "NaN"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"floatValue": "NaN", "doubleValue": "NaN"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSupportsInfinityFloatInputs",
-                        "documentation": "Supports handling Infinity float values.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "floatValue": "Infinity",\n    "DoubleDribble": "Infinity"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"floatValue": "Infinity", "doubleValue": "Infinity"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSupportsNegativeInfinityFloatInputs",
-                        "documentation": "Supports handling -Infinity float values.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "floatValue": "-Infinity",\n    "DoubleDribble": "-Infinity"\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {"floatValue": "-Infinity", "doubleValue": "-Infinity"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/SimpleScalarProperties", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -17564,8 +4994,7 @@ SPARSE_JSON_LISTS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#SparseJsonListsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "sparseStringList": {"target": SPARSE_STRING_LIST},
@@ -17579,8 +5008,7 @@ SPARSE_JSON_LISTS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#SparseJsonListsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "sparseStringList": {"target": SPARSE_STRING_LIST},
@@ -17593,59 +5021,9 @@ SPARSE_JSON_LISTS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSparseListsSerializeNull",
-                        "documentation": "Serializes null values in sparse lists",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/SparseJsonLists",
-                        "body": '{\n    "sparseStringList": [\n        null,\n        "hi"\n    ],\n    "sparseShortList": [\n        null,\n        2\n    ]\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "sparseStringList": (None, "hi"),
-                                "sparseShortList": (None, 2),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSparseListsSerializeNull",
-                        "documentation": "Serializes null values in sparse lists",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "sparseStringList": [\n        null,\n        "hi"\n    ],\n    "sparseShortList": [\n        null,\n        2\n    ]\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "sparseStringList": (None, "hi"),
-                                "sparseShortList": (None, 2),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/SparseJsonLists", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -17690,8 +5068,7 @@ SPARSE_JSON_MAPS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#SparseJsonMapsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "sparseStructMap": {"target": SPARSE_STRUCT_MAP},
@@ -17708,8 +5085,7 @@ SPARSE_JSON_MAPS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#SparseJsonMapsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "sparseStructMap": {"target": SPARSE_STRUCT_MAP},
@@ -17725,230 +5101,9 @@ SPARSE_JSON_MAPS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSparseJsonMaps",
-                        "documentation": "Serializes JSON maps",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/SparseJsonMaps",
-                        "body": '{\n    "sparseStructMap": {\n        "foo": {\n            "hi": "there"\n        },\n        "baz": {\n            "hi": "bye"\n        }\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "sparseStructMap": MappingProxyType(
-                                    {
-                                        "foo": MappingProxyType({"hi": "there"}),
-                                        "baz": MappingProxyType({"hi": "bye"}),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSerializesSparseNullMapValues",
-                        "documentation": "Serializes JSON map values in sparse maps",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/SparseJsonMaps",
-                        "body": '{\n    "sparseBooleanMap": {\n        "x": null\n    },\n    "sparseNumberMap": {\n        "x": null\n    },\n    "sparseStringMap": {\n        "x": null\n    },\n    "sparseStructMap": {\n        "x": null\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "sparseBooleanMap": MappingProxyType({"x": None}),
-                                "sparseNumberMap": MappingProxyType({"x": None}),
-                                "sparseStringMap": MappingProxyType({"x": None}),
-                                "sparseStructMap": MappingProxyType({"x": None}),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSerializesZeroValuesInSparseMaps",
-                        "documentation": "Ensure that 0 and false are sent over the wire in all maps and lists",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/SparseJsonMaps",
-                        "body": '{\n    "sparseNumberMap": {\n        "x": 0\n    },\n    "sparseBooleanMap": {\n        "x": false\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "sparseNumberMap": MappingProxyType({"x": 0}),
-                                "sparseBooleanMap": MappingProxyType({"x": False}),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSerializesSparseSetMap",
-                        "documentation": "A request that contains a sparse map of sets",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/SparseJsonMaps",
-                        "body": '{\n    "sparseSetMap": {\n        "x": [],\n        "y": ["a", "b"]\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "sparseSetMap": MappingProxyType(
-                                    {"x": (), "y": ("a", "b")}
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSerializesSparseSetMapAndRetainsNull",
-                        "documentation": "A request that contains a sparse map of sets.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/SparseJsonMaps",
-                        "body": '{\n    "sparseSetMap": {\n        "x": [],\n        "y": ["a", "b"],\n        "z": null\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "sparseSetMap": MappingProxyType(
-                                    {"x": (), "y": ("a", "b"), "z": None}
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonSparseJsonMaps",
-                        "documentation": "Deserializes JSON maps",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "sparseStructMap": {\n        "foo": {\n            "hi": "there"\n        },\n        "baz": {\n            "hi": "bye"\n        }\n   }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "sparseStructMap": MappingProxyType(
-                                    {
-                                        "foo": MappingProxyType({"hi": "there"}),
-                                        "baz": MappingProxyType({"hi": "bye"}),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDeserializesSparseNullMapValues",
-                        "documentation": "Deserializes null JSON map values",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "sparseBooleanMap": {\n        "x": null\n    },\n    "sparseNumberMap": {\n        "x": null\n    },\n    "sparseStringMap": {\n        "x": null\n    },\n    "sparseStructMap": {\n        "x": null\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "sparseBooleanMap": MappingProxyType({"x": None}),
-                                "sparseNumberMap": MappingProxyType({"x": None}),
-                                "sparseStringMap": MappingProxyType({"x": None}),
-                                "sparseStructMap": MappingProxyType({"x": None}),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDeserializesZeroValuesInSparseMaps",
-                        "documentation": "Ensure that 0 and false are sent over the wire in all maps and lists",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "sparseNumberMap": {\n        "x": 0\n    },\n    "sparseBooleanMap": {\n        "x": false\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "sparseNumberMap": MappingProxyType({"x": 0}),
-                                "sparseBooleanMap": MappingProxyType({"x": False}),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDeserializesSparseSetMap",
-                        "documentation": "A response that contains a sparse map of sets",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "sparseSetMap": {\n        "x": [],\n        "y": ["a", "b"]\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "sparseSetMap": MappingProxyType(
-                                    {"x": (), "y": ("a", "b")}
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonDeserializesSparseSetMapAndRetainsNull",
-                        "documentation": "A response that contains a sparse map of sets.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "sparseSetMap": {\n        "x": [],\n        "y": ["a", "b"],\n        "z": null\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "sparseSetMap": MappingProxyType(
-                                    {"x": (), "y": ("a", "b"), "z": None}
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/SparseJsonMaps", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -17964,8 +5119,7 @@ STREAMING_TRAITS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#StreamingTraitsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "foo": {
@@ -17988,8 +5142,7 @@ STREAMING_TRAITS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#StreamingTraitsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "foo": {
@@ -18011,83 +5164,14 @@ STREAMING_TRAITS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonStreamingTraitsWithBlob",
-                        "documentation": "Serializes a blob in the HTTP payload",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/StreamingTraits",
-                        "body": "blobby blob blob",
-                        "bodyMediaType": "application/octet-stream",
-                        "headers": MappingProxyType(
-                            {"X-Foo": "Foo", "Content-Type": "application/octet-stream"}
-                        ),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "blob": "blobby blob blob"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonStreamingTraitsWithNoBlobBody",
-                        "documentation": "Serializes an empty blob in the HTTP payload",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/StreamingTraits",
-                        "body": "",
-                        "bodyMediaType": "application/octet-stream",
-                        "headers": MappingProxyType({"X-Foo": "Foo"}),
-                        "params": MappingProxyType({"foo": "Foo"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonStreamingTraitsWithBlob",
-                        "documentation": "Serializes a blob in the HTTP payload",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": "blobby blob blob",
-                        "bodyMediaType": "application/octet-stream",
-                        "headers": MappingProxyType(
-                            {"X-Foo": "Foo", "Content-Type": "application/octet-stream"}
-                        ),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "blob": "blobby blob blob"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonStreamingTraitsWithNoBlobBody",
-                        "documentation": "Serializes an empty blob in the HTTP payload",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": "",
-                        "bodyMediaType": "application/octet-stream",
-                        "headers": MappingProxyType({"X-Foo": "Foo"}),
-                        "params": MappingProxyType({"foo": "Foo"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/StreamingTraits", "method": "POST"}),
-        ),
+        )
     ],
 )
 
 STREAMING_TRAITS_REQUIRE_LENGTH_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restjson#StreamingTraitsRequireLengthInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "foo": {
             "target": STRING,
@@ -18108,8 +5192,7 @@ STREAMING_TRAITS_REQUIRE_LENGTH_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -18118,47 +5201,11 @@ STREAMING_TRAITS_REQUIRE_LENGTH = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonStreamingTraitsRequireLengthWithBlob",
-                        "documentation": "Serializes a blob in the HTTP payload with a required length",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/StreamingTraitsRequireLength",
-                        "body": "blobby blob blob",
-                        "bodyMediaType": "application/octet-stream",
-                        "headers": MappingProxyType(
-                            {"X-Foo": "Foo", "Content-Type": "application/octet-stream"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "blob": "blobby blob blob"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonStreamingTraitsRequireLengthWithNoBlobBody",
-                        "documentation": "Serializes an empty blob in the HTTP payload",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/StreamingTraitsRequireLength",
-                        "body": "",
-                        "bodyMediaType": "application/octet-stream",
-                        "headers": MappingProxyType({"X-Foo": "Foo"}),
-                        "params": MappingProxyType({"foo": "Foo"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/StreamingTraitsRequireLength", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -18177,8 +5224,7 @@ STREAMING_TRAITS_WITH_MEDIA_TYPE_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#StreamingTraitsWithMediaTypeInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "foo": {
@@ -18201,8 +5247,7 @@ STREAMING_TRAITS_WITH_MEDIA_TYPE_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#StreamingTraitsWithMediaTypeInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "foo": {
@@ -18224,54 +5269,11 @@ STREAMING_TRAITS_WITH_MEDIA_TYPE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonStreamingTraitsWithMediaTypeWithBlob",
-                        "documentation": "Serializes a blob in the HTTP payload with a content-type",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/StreamingTraitsWithMediaType",
-                        "body": "blobby blob blob",
-                        "bodyMediaType": "application/octet-stream",
-                        "headers": MappingProxyType(
-                            {"X-Foo": "Foo", "Content-Type": "text/plain"}
-                        ),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "blob": "blobby blob blob"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonStreamingTraitsWithMediaTypeWithBlob",
-                        "documentation": "Serializes a blob in the HTTP payload with a content-type",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": "blobby blob blob",
-                        "bodyMediaType": "application/octet-stream",
-                        "headers": MappingProxyType(
-                            {"X-Foo": "Foo", "Content-Type": "text/plain"}
-                        ),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "blob": "blobby blob blob"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/StreamingTraitsWithMediaType", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -18286,8 +5288,7 @@ TEST_BODY_STRUCTURE_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#TestBodyStructureInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "testId": {
@@ -18306,8 +5307,7 @@ TEST_BODY_STRUCTURE_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#TestBodyStructureInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "testId": {
@@ -18325,49 +5325,9 @@ TEST_BODY_STRUCTURE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonTestBodyStructure",
-                        "documentation": "Serializes a structure",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/body",
-                        "body": '{"testConfig":\n    {"timeout": 10}\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {"testConfig": MappingProxyType({"timeout": 10})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpWithEmptyBody",
-                        "documentation": "Serializes an empty structure in the body",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/body",
-                        "body": "{}",
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType({}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/body", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -18376,8 +5336,7 @@ TEST_GET_NO_INPUT_NO_PAYLOAD_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -18387,8 +5346,7 @@ TEST_GET_NO_INPUT_NO_PAYLOAD_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#TestNoPayloadInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "testId": {
@@ -18405,27 +5363,9 @@ TEST_GET_NO_INPUT_NO_PAYLOAD = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpGetWithNoInput",
-                        "documentation": "Serializes a GET request for an operation with no input, and therefore no modeled body",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/no_input_no_payload",
-                        "body": "",
-                        "forbidHeaders": ("Content-Type", "Content-Length"),
-                        "params": MappingProxyType({}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/no_input_no_payload", "method": "GET"}),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
@@ -18435,8 +5375,7 @@ TEST_GET_NO_PAYLOAD_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#TestNoPayloadInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "testId": {
@@ -18454,8 +5393,7 @@ TEST_GET_NO_PAYLOAD_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#TestNoPayloadInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "testId": {
@@ -18472,40 +5410,9 @@ TEST_GET_NO_PAYLOAD = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpGetWithNoModeledBody",
-                        "documentation": "Serializes a GET request with no modeled body",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/no_payload",
-                        "body": "",
-                        "forbidHeaders": ("Content-Length", "Content-Type"),
-                        "params": MappingProxyType({}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpGetWithHeaderMemberNoModeledBody",
-                        "documentation": "Serializes a GET request with header member but no modeled body",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "GET",
-                        "uri": "/no_payload",
-                        "body": "",
-                        "headers": MappingProxyType({"X-Amz-Test-Id": "t-12345"}),
-                        "forbidHeaders": ("Content-Length", "Content-Type"),
-                        "params": MappingProxyType({"testId": "t-12345"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/no_payload", "method": "GET"}),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
@@ -18515,8 +5422,7 @@ TEST_PAYLOAD_BLOB_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#TestPayloadBlobInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "contentType": {
@@ -18538,8 +5444,7 @@ TEST_PAYLOAD_BLOB_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#TestPayloadBlobInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "contentType": {
@@ -18560,44 +5465,9 @@ TEST_PAYLOAD_BLOB = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpWithEmptyBlobPayload",
-                        "documentation": "Serializes a payload targeting an empty blob",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/blob_payload",
-                        "body": "",
-                        "bodyMediaType": "application/octet-stream",
-                        "headers": MappingProxyType({}),
-                        "params": MappingProxyType({}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonTestPayloadBlob",
-                        "documentation": "Serializes a payload targeting a blob",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/blob_payload",
-                        "body": "1234",
-                        "bodyMediaType": "image/jpg",
-                        "headers": MappingProxyType({"Content-Type": "image/jpg"}),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {"contentType": "image/jpg", "data": "1234"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/blob_payload", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -18607,8 +5477,7 @@ TEST_PAYLOAD_STRUCTURE_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#TestPayloadStructureInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "testId": {
@@ -18630,8 +5499,7 @@ TEST_PAYLOAD_STRUCTURE_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#TestPayloadStructureInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "testId": {
@@ -18652,68 +5520,9 @@ TEST_PAYLOAD_STRUCTURE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpWithEmptyStructurePayload",
-                        "documentation": "Serializes a payload targeting an empty structure",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/payload",
-                        "body": "{}",
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType({}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonTestPayloadStructure",
-                        "documentation": "Serializes a payload targeting a structure",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/payload",
-                        "body": '{"data": 25\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {"payloadConfig": MappingProxyType({"data": 25})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpWithHeadersButNoPayload",
-                        "documentation": "Serializes an request with header members but no payload",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/payload",
-                        "body": "{}",
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {
-                                "Content-Type": "application/json",
-                                "X-Amz-Test-Id": "t-12345",
-                            }
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType({"testId": "t-12345"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/payload", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -18722,8 +5531,7 @@ TEST_POST_NO_INPUT_NO_PAYLOAD_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -18733,8 +5541,7 @@ TEST_POST_NO_INPUT_NO_PAYLOAD_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#TestNoPayloadInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "testId": {
@@ -18751,26 +5558,9 @@ TEST_POST_NO_INPUT_NO_PAYLOAD = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPostWithNoInput",
-                        "documentation": "Serializes a POST request for an operation with no input, and therefore no modeled body",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/no_input_no_payload",
-                        "body": "",
-                        "forbidHeaders": ("Content-Type",),
-                        "params": MappingProxyType({}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/no_input_no_payload", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -18780,8 +5570,7 @@ TEST_POST_NO_PAYLOAD_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#TestNoPayloadInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "testId": {
@@ -18799,8 +5588,7 @@ TEST_POST_NO_PAYLOAD_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#TestNoPayloadInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "testId": {
@@ -18817,39 +5605,9 @@ TEST_POST_NO_PAYLOAD = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpPostWithNoModeledBody",
-                        "documentation": "Serializes a POST request with no modeled body",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/no_payload",
-                        "body": "",
-                        "forbidHeaders": ("Content-Type",),
-                        "params": MappingProxyType({}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonHttpWithPostHeaderMemberNoModeledBody",
-                        "documentation": "Serializes a POST request with header member but no modeled body",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/no_payload",
-                        "body": "",
-                        "headers": MappingProxyType({"X-Amz-Test-Id": "t-12345"}),
-                        "forbidHeaders": ("Content-Type",),
-                        "params": MappingProxyType({"testId": "t-12345"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/no_payload", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -18859,8 +5617,7 @@ TIMESTAMP_FORMAT_HEADERS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#TimestampFormatHeadersIO",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "memberEpochSeconds": {
@@ -18927,8 +5684,7 @@ TIMESTAMP_FORMAT_HEADERS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#TimestampFormatHeadersIO",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "memberEpochSeconds": {
@@ -18994,83 +5750,11 @@ TIMESTAMP_FORMAT_HEADERS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonTimestampFormatHeaders",
-                        "documentation": "Tests how timestamp request headers are serialized",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/TimestampFormatHeaders",
-                        "headers": MappingProxyType(
-                            {
-                                "X-memberEpochSeconds": "1576540098",
-                                "X-memberHttpDate": "Mon, 16 Dec 2019 23:48:18 GMT",
-                                "X-memberDateTime": "2019-12-16T23:48:18Z",
-                                "X-defaultFormat": "Mon, 16 Dec 2019 23:48:18 GMT",
-                                "X-targetEpochSeconds": "1576540098",
-                                "X-targetHttpDate": "Mon, 16 Dec 2019 23:48:18 GMT",
-                                "X-targetDateTime": "2019-12-16T23:48:18Z",
-                            }
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "memberEpochSeconds": 1576540098,
-                                "memberHttpDate": 1576540098,
-                                "memberDateTime": 1576540098,
-                                "defaultFormat": 1576540098,
-                                "targetEpochSeconds": 1576540098,
-                                "targetHttpDate": 1576540098,
-                                "targetDateTime": 1576540098,
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonTimestampFormatHeaders",
-                        "documentation": "Tests how timestamp response headers are serialized",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {
-                                "X-memberEpochSeconds": "1576540098",
-                                "X-memberHttpDate": "Mon, 16 Dec 2019 23:48:18 GMT",
-                                "X-memberDateTime": "2019-12-16T23:48:18Z",
-                                "X-defaultFormat": "Mon, 16 Dec 2019 23:48:18 GMT",
-                                "X-targetEpochSeconds": "1576540098",
-                                "X-targetHttpDate": "Mon, 16 Dec 2019 23:48:18 GMT",
-                                "X-targetDateTime": "2019-12-16T23:48:18Z",
-                            }
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "memberEpochSeconds": 1576540098,
-                                "memberHttpDate": 1576540098,
-                                "memberDateTime": 1576540098,
-                                "defaultFormat": 1576540098,
-                                "targetEpochSeconds": 1576540098,
-                                "targetHttpDate": 1576540098,
-                                "targetDateTime": 1576540098,
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/TimestampFormatHeaders", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -19079,8 +5763,7 @@ UNIT_INPUT_AND_OUTPUT_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -19089,8 +5772,7 @@ UNIT_INPUT_AND_OUTPUT_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -19099,50 +5781,9 @@ UNIT_INPUT_AND_OUTPUT = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonUnitInputAndOutput",
-                        "documentation": "A unit type input serializes no payload. When clients do not\nneed to serialize any data in the payload, they should omit\na payload altogether.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/UnitInputAndOutput",
-                        "body": "",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestJsonUnitInputAllowsAccept",
-                        "documentation": "Servers should allow the accept header to be set to the\ndefault content-type.",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "POST",
-                        "uri": "/UnitInputAndOutput",
-                        "body": "",
-                        "headers": MappingProxyType({"Accept": "application/json"}),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonUnitInputAndOutputNoOutput",
-                        "documentation": "When an operation defines Unit output, the service will respond\nwith an empty payload, and may optionally include the content-type\nheader.",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": "",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/UnitInputAndOutput", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -19170,8 +5811,7 @@ RECURSIVE_SHAPES_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#RecursiveShapesInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={"nested": {"target": RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1}},
 )
@@ -19182,8 +5822,7 @@ RECURSIVE_SHAPES_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restjson#RecursiveShapesInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={"nested": {"target": RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1}},
 )
@@ -19193,374 +5832,14 @@ RECURSIVE_SHAPES = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonRecursiveShapes",
-                        "documentation": "Serializes recursive structures",
-                        "protocol": "aws.protocols#restJson1",
-                        "method": "PUT",
-                        "uri": "/RecursiveShapes",
-                        "body": '{\n    "nested": {\n        "foo": "Foo1",\n        "nested": {\n            "bar": "Bar1",\n            "recursiveMember": {\n                "foo": "Foo2",\n                "nested": {\n                    "bar": "Bar2"\n                }\n            }\n        }\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "nested": MappingProxyType(
-                                    {
-                                        "foo": "Foo1",
-                                        "nested": MappingProxyType(
-                                            {
-                                                "bar": "Bar1",
-                                                "recursiveMember": MappingProxyType(
-                                                    {
-                                                        "foo": "Foo2",
-                                                        "nested": MappingProxyType(
-                                                            {"bar": "Bar2"}
-                                                        ),
-                                                    }
-                                                ),
-                                            }
-                                        ),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestJsonRecursiveShapes",
-                        "documentation": "Serializes recursive structures",
-                        "protocol": "aws.protocols#restJson1",
-                        "code": 200,
-                        "body": '{\n    "nested": {\n        "foo": "Foo1",\n        "nested": {\n            "bar": "Bar1",\n            "recursiveMember": {\n                "foo": "Foo2",\n                "nested": {\n                    "bar": "Bar2"\n                }\n            }\n        }\n    }\n}',
-                        "bodyMediaType": "application/json",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/json"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "nested": MappingProxyType(
-                                    {
-                                        "foo": "Foo1",
-                                        "nested": MappingProxyType(
-                                            {
-                                                "bar": "Bar1",
-                                                "recursiveMember": MappingProxyType(
-                                                    {
-                                                        "foo": "Foo2",
-                                                        "nested": MappingProxyType(
-                                                            {"bar": "Bar2"}
-                                                        ),
-                                                    }
-                                                ),
-                                            }
-                                        ),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/RecursiveShapes", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
 REST_JSON = Schema(
-    id=ShapeID("aws.protocoltests.restjson#RestJson"),
-    shape_type=ShapeType.SERVICE,
-    traits=[
-        Trait.new(
-            id=ShapeID("aws.auth#sigv4"), value=MappingProxyType({"name": "restjson"})
-        ),
-        Trait.new(
-            id=ShapeID("smithy.api#title"), value="Sample Rest Json Protocol Service"
-        ),
-        Trait.new(
-            id=ShapeID("smithy.rules#endpointBdd"),
-            value=MappingProxyType(
-                {
-                    "version": "1.1",
-                    "parameters": MappingProxyType(
-                        {
-                            "Region": MappingProxyType(
-                                {
-                                    "builtIn": "AWS::Region",
-                                    "required": False,
-                                    "documentation": "The AWS Region. This is a default regional AWS endpointRuleSet.",
-                                    "type": "string",
-                                }
-                            ),
-                            "UseDualStack": MappingProxyType(
-                                {
-                                    "builtIn": "AWS::UseDualStack",
-                                    "required": True,
-                                    "default": False,
-                                    "documentation": "Whether to use dual-stack.",
-                                    "type": "boolean",
-                                }
-                            ),
-                            "UseFIPS": MappingProxyType(
-                                {
-                                    "builtIn": "AWS::UseFIPS",
-                                    "required": True,
-                                    "default": False,
-                                    "documentation": "Whether to use FIPS-compliant regional endpoint.",
-                                    "type": "boolean",
-                                }
-                            ),
-                            "Endpoint": MappingProxyType(
-                                {
-                                    "builtIn": "SDK::Endpoint",
-                                    "required": False,
-                                    "documentation": "Override the endpoint.",
-                                    "type": "string",
-                                }
-                            ),
-                        }
-                    ),
-                    "conditions": (
-                        MappingProxyType(
-                            {
-                                "fn": "isSet",
-                                "argv": (MappingProxyType({"ref": "Endpoint"}),),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "isSet",
-                                "argv": (MappingProxyType({"ref": "Region"}),),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "aws.partition",
-                                "argv": (MappingProxyType({"ref": "Region"}),),
-                                "assign": "PartitionResult",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (MappingProxyType({"ref": "UseFIPS"}), True),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (
-                                    MappingProxyType({"ref": "UseDualStack"}),
-                                    True,
-                                ),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (
-                                    MappingProxyType(
-                                        {
-                                            "fn": "getAttr",
-                                            "argv": (
-                                                MappingProxyType(
-                                                    {"ref": "PartitionResult"}
-                                                ),
-                                                "supportsDualStack",
-                                            ),
-                                        }
-                                    ),
-                                    True,
-                                ),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (
-                                    MappingProxyType(
-                                        {
-                                            "fn": "getAttr",
-                                            "argv": (
-                                                MappingProxyType(
-                                                    {"ref": "PartitionResult"}
-                                                ),
-                                                "supportsFIPS",
-                                            ),
-                                        }
-                                    ),
-                                    True,
-                                ),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "stringEquals",
-                                "argv": (
-                                    MappingProxyType(
-                                        {
-                                            "fn": "getAttr",
-                                            "argv": (
-                                                MappingProxyType(
-                                                    {"ref": "PartitionResult"}
-                                                ),
-                                                "name",
-                                            ),
-                                        }
-                                    ),
-                                    "aws-us-gov",
-                                ),
-                            }
-                        ),
-                    ),
-                    "results": (
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "Invalid Configuration: FIPS and custom endpoint are not supported",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "Invalid Configuration: Dualstack and custom endpoint are not supported",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": MappingProxyType({"ref": "Endpoint"}),
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restjson-fips.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "FIPS and DualStack are enabled, but this partition does not support one or both",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restjson.{Region}.amazonaws.com",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restjson-fips.{Region}.{PartitionResult#dnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "FIPS is enabled but this partition does not support FIPS",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restjson.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "DualStack is enabled but this partition does not support DualStack",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restjson.{Region}.{PartitionResult#dnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "Invalid Configuration: Missing Region",
-                                "type": "error",
-                            }
-                        ),
-                    ),
-                    "root": 2,
-                    "nodeCount": 14,
-                    "nodes": "/////wAAAAH/////AAAAAAAAAA0AAAADAAAAAQAAAAQF9eEMAAAAAgAAAAUF9eEMAAAAAwAAAAgAAAAGAAAABAAAAAcF9eELAAAABQX14QkF9eEKAAAABAAAAAsAAAAJAAAABgAAAAoF9eEIAAAABwX14QYF9eEHAAAABQAAAAwF9eEFAAAABgX14QQF9eEFAAAAAwX14QEAAAAOAAAABAX14QIF9eED",
-                }
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("aws.api#service"),
-            value=MappingProxyType({"sdkId": "Rest Json Protocol"}),
-        ),
-        Trait.new(id=ShapeID("aws.protocols#restJson1")),
-    ],
+    id=ShapeID("aws.protocoltests.restjson#RestJson"), shape_type=ShapeType.SERVICE
 )
 
 RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1.members["nested"] = Schema.member(

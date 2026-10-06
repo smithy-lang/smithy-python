@@ -36,26 +36,11 @@ FOO_ENUM = Schema.collection(
     id=ShapeID("aws.protocoltests.shared#FooEnum"),
     shape_type=ShapeType.ENUM,
     members={
-        "FOO": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value="Foo")],
-        },
-        "BAZ": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value="Baz")],
-        },
-        "BAR": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value="Bar")],
-        },
-        "ONE": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value="1")],
-        },
-        "ZERO": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value="0")],
-        },
+        "FOO": {"target": UNIT},
+        "BAZ": {"target": UNIT},
+        "BAR": {"target": UNIT},
+        "ONE": {"target": UNIT},
+        "ZERO": {"target": UNIT},
     },
 )
 
@@ -68,21 +53,7 @@ FOO_ENUM_LIST = Schema.collection(
 INTEGER_ENUM = Schema.collection(
     id=ShapeID("aws.protocoltests.shared#IntegerEnum"),
     shape_type=ShapeType.INT_ENUM,
-    traits=[Trait.new(id=ShapeID("smithy.api#box"))],
-    members={
-        "A": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value=1)],
-        },
-        "B": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value=2)],
-        },
-        "C": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value=3)],
-        },
-    },
+    members={"A": {"target": UNIT}, "B": {"target": UNIT}, "C": {"target": UNIT}},
 )
 
 INTEGER_ENUM_LIST = Schema.collection(
@@ -100,7 +71,6 @@ INTEGER_LIST = Schema.collection(
 INTEGER_SET = Schema.collection(
     id=ShapeID("aws.protocoltests.shared#IntegerSet"),
     shape_type=ShapeType.LIST,
-    traits=[Trait.new(id=ShapeID("smithy.api#uniqueItems"))],
     members={"member": {"target": INTEGER}},
 )
 
@@ -119,7 +89,6 @@ STRING_LIST = Schema.collection(
 STRING_SET = Schema.collection(
     id=ShapeID("aws.protocoltests.shared#StringSet"),
     shape_type=ShapeType.LIST,
-    traits=[Trait.new(id=ShapeID("smithy.api#uniqueItems"))],
     members={"member": {"target": STRING}},
 )
 
@@ -131,10 +100,6 @@ TIMESTAMP_LIST = Schema.collection(
 
 ALL_QUERY_STRING_TYPES_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#AllQueryStringTypesInput"),
-    traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("HttpQueryParamsTrait",)),
-        Trait.new(id=ShapeID("smithy.api#input")),
-    ],
     members={
         "queryString": {
             "target": STRING,
@@ -248,8 +213,7 @@ ALL_QUERY_STRING_TYPES_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -258,186 +222,11 @@ ALL_QUERY_STRING_TYPES = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "AllQueryStringTypes",
-                        "documentation": "Serializes query string parameters with all supported types",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/AllQueryStringTypesInput",
-                        "body": "",
-                        "queryParams": (
-                            "String=Hello%20there",
-                            "StringList=a",
-                            "StringList=b",
-                            "StringList=c",
-                            "StringSet=a",
-                            "StringSet=b",
-                            "StringSet=c",
-                            "Byte=1",
-                            "Short=2",
-                            "Integer=3",
-                            "IntegerList=1",
-                            "IntegerList=2",
-                            "IntegerList=3",
-                            "IntegerSet=1",
-                            "IntegerSet=2",
-                            "IntegerSet=3",
-                            "Long=4",
-                            "Float=1.1",
-                            "Double=1.1",
-                            "DoubleList=1.1",
-                            "DoubleList=2.1",
-                            "DoubleList=3.1",
-                            "Boolean=true",
-                            "BooleanList=true",
-                            "BooleanList=false",
-                            "BooleanList=true",
-                            "Timestamp=1970-01-01T00%3A00%3A01Z",
-                            "TimestampList=1970-01-01T00%3A00%3A01Z",
-                            "TimestampList=1970-01-01T00%3A00%3A02Z",
-                            "TimestampList=1970-01-01T00%3A00%3A03Z",
-                            "Enum=Foo",
-                            "EnumList=Foo",
-                            "EnumList=Baz",
-                            "EnumList=Bar",
-                            "IntegerEnum=1",
-                            "IntegerEnumList=1",
-                            "IntegerEnumList=2",
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "queryString": "Hello there",
-                                "queryStringList": ("a", "b", "c"),
-                                "queryStringSet": ("a", "b", "c"),
-                                "queryByte": 1,
-                                "queryShort": 2,
-                                "queryInteger": 3,
-                                "queryIntegerList": (1, 2, 3),
-                                "queryIntegerSet": (1, 2, 3),
-                                "queryLong": 4,
-                                "queryFloat": 1.1,
-                                "queryDouble": 1.1,
-                                "queryDoubleList": (1.1, 2.1, 3.1),
-                                "queryBoolean": True,
-                                "queryBooleanList": (True, False, True),
-                                "queryTimestamp": 1,
-                                "queryTimestampList": (1, 2, 3),
-                                "queryEnum": "Foo",
-                                "queryEnumList": ("Foo", "Baz", "Bar"),
-                                "queryIntegerEnum": 1,
-                                "queryIntegerEnumList": (1, 2),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlQueryStringMap",
-                        "documentation": "Handles query string maps",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/AllQueryStringTypesInput",
-                        "body": "",
-                        "queryParams": (
-                            "QueryParamsStringKeyA=Foo",
-                            "QueryParamsStringKeyB=Bar",
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "queryParamsMapOfStrings": MappingProxyType(
-                                    {
-                                        "QueryParamsStringKeyA": "Foo",
-                                        "QueryParamsStringKeyB": "Bar",
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlQueryStringEscaping",
-                        "documentation": "Handles escaping all required characters in the query string.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/AllQueryStringTypesInput",
-                        "body": "",
-                        "queryParams": (
-                            "String=%20%25%3A%2F%3F%23%5B%5D%40%21%24%26%27%28%29%2A%2B%2C%3B%3D%F0%9F%98%B9",
-                        ),
-                        "params": MappingProxyType(
-                            {"queryString": " %:/?#[]@!$&'()*+,;=😹"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSupportsNaNFloatQueryValues",
-                        "documentation": "Supports handling NaN float query values.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/AllQueryStringTypesInput",
-                        "body": "",
-                        "queryParams": ("Float=NaN", "Double=NaN"),
-                        "params": MappingProxyType(
-                            {"queryFloat": "NaN", "queryDouble": "NaN"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSupportsInfinityFloatQueryValues",
-                        "documentation": "Supports handling Infinity float query values.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/AllQueryStringTypesInput",
-                        "body": "",
-                        "queryParams": ("Float=Infinity", "Double=Infinity"),
-                        "params": MappingProxyType(
-                            {"queryFloat": "Infinity", "queryDouble": "Infinity"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSupportsNegativeInfinityFloatQueryValues",
-                        "documentation": "Supports handling -Infinity float query values.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/AllQueryStringTypesInput",
-                        "body": "",
-                        "queryParams": ("Float=-Infinity", "Double=-Infinity"),
-                        "params": MappingProxyType(
-                            {"queryFloat": "-Infinity", "queryDouble": "-Infinity"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlZeroAndFalseQueryValues",
-                        "documentation": "Query values of 0 and false are serialized",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/AllQueryStringTypesInput",
-                        "body": "",
-                        "queryParams": ("Integer=0", "Boolean=false"),
-                        "params": MappingProxyType(
-                            {"queryInteger": 0, "queryBoolean": False}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/AllQueryStringTypesInput", "method": "GET"}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
@@ -455,7 +244,6 @@ BODY_WITH_XML_NAME_INPUT = Schema.collection(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#BodyWithXmlNameInputOutput",
         ),
-        Trait.new(id=ShapeID("smithy.api#input")),
     ],
     members={"nested": {"target": PAYLOAD_WITH_XML_NAME}},
 )
@@ -468,7 +256,6 @@ BODY_WITH_XML_NAME_OUTPUT = Schema.collection(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#BodyWithXmlNameInputOutput",
         ),
-        Trait.new(id=ShapeID("smithy.api#output")),
     ],
     members={"nested": {"target": PAYLOAD_WITH_XML_NAME}},
 )
@@ -478,54 +265,9 @@ BODY_WITH_XML_NAME = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "BodyWithXmlName",
-                        "documentation": "Serializes a payload using a wrapper name based on the xmlName",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/BodyWithXmlName",
-                        "body": "<Ahoy><nested><name>Phreddy</name></nested></Ahoy>",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {"nested": MappingProxyType({"name": "Phreddy"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "BodyWithXmlName",
-                        "documentation": "Serializes a payload using a wrapper name based on the xmlName",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<Ahoy><nested><name>Phreddy</name></nested></Ahoy>",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"nested": MappingProxyType({"name": "Phreddy"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/BodyWithXmlName", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -537,30 +279,6 @@ COMPLEX_NESTED_ERROR_DATA = Schema.collection(
 COMPLEX_ERROR = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#ComplexError"),
     traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "ComplexError",
-                        "protocol": "aws.protocols#restXml",
-                        "params": MappingProxyType(
-                            {
-                                "Header": "Header",
-                                "TopLevel": "Top level",
-                                "Nested": MappingProxyType({"Foo": "bar"}),
-                            }
-                        ),
-                        "code": 403,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml", "X-Header": "Header"}
-                        ),
-                        "body": "<ErrorResponse>\n   <Error>\n      <Type>Sender</Type>\n      <Code>ComplexError</Code>\n      <Message>Hi</Message>\n      <TopLevel>Top level</TopLevel>\n      <Nested>\n          <Foo>bar</Foo>\n      </Nested>\n   </Error>\n   <RequestId>foo-id</RequestId>\n</ErrorResponse>\n",
-                        "bodyMediaType": "application/xml",
-                    }
-                ),
-            ),
-        ),
         Trait.new(id=ShapeID("smithy.api#error"), value="client"),
         Trait.new(id=ShapeID("smithy.api#httpError"), value=403),
     ],
@@ -578,7 +296,6 @@ COMPLEX_ERROR = Schema.collection(
 
 CONSTANT_AND_VARIABLE_QUERY_STRING_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#ConstantAndVariableQueryStringInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "baz": {
             "target": STRING,
@@ -596,8 +313,7 @@ CONSTANT_AND_VARIABLE_QUERY_STRING_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -606,48 +322,16 @@ CONSTANT_AND_VARIABLE_QUERY_STRING = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "ConstantAndVariableQueryStringMissingOneValue",
-                        "documentation": "Mixes constant and variable query string parameters",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/ConstantAndVariableQueryString",
-                        "queryParams": ("foo=bar", "baz=bam"),
-                        "forbidQueryParams": ("maybeSet",),
-                        "body": "",
-                        "params": MappingProxyType({"baz": "bam"}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "ConstantAndVariableQueryStringAllValues",
-                        "documentation": "Mixes constant and variable query string parameters",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/ConstantAndVariableQueryString",
-                        "queryParams": ("foo=bar", "baz=bam", "maybeSet=yes"),
-                        "body": "",
-                        "params": MappingProxyType({"baz": "bam", "maybeSet": "yes"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/ConstantAndVariableQueryString?foo=bar", "method": "GET"}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
 CONSTANT_QUERY_STRING_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#ConstantQueryStringInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "hello": {
             "target": STRING,
@@ -664,8 +348,7 @@ CONSTANT_QUERY_STRING_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -674,41 +357,21 @@ CONSTANT_QUERY_STRING = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "ConstantQueryString",
-                        "documentation": "Includes constant query string parameters",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/ConstantQueryString/hi",
-                        "queryParams": ("foo=bar", "hello"),
-                        "body": "",
-                        "params": MappingProxyType({"hello": "hi"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/ConstantQueryString/{hello}?foo=bar&hello", "method": "GET"}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
 CONTENT_TYPE_PARAMETERS_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#ContentTypeParametersInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={"value": {"target": INTEGER}},
 )
 
 CONTENT_TYPE_PARAMETERS_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restxml#ContentTypeParametersOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
+    id=ShapeID("aws.protocoltests.restxml#ContentTypeParametersOutput")
 )
 
 CONTENT_TYPE_PARAMETERS = Schema(
@@ -716,31 +379,9 @@ CONTENT_TYPE_PARAMETERS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlMustSupportParametersInContentType",
-                        "documentation": "A server should ignore parameters added to the content type",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml; charset=utf-8"}
-                        ),
-                        "uri": "/ContentTypeParameters",
-                        "body": "<ContentTypeParametersInput><value>5</value></ContentTypeParametersInput>",
-                        "bodyMediaType": "application/xml",
-                        "params": MappingProxyType({"value": 5}),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/ContentTypeParameters", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -749,8 +390,7 @@ DATETIME_OFFSETS_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -762,7 +402,6 @@ DATE_TIME = Schema(
 
 DATETIME_OFFSETS_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#DatetimeOffsetsOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={"datetime": {"target": DATE_TIME}},
 )
 
@@ -770,55 +409,19 @@ DATETIME_OFFSETS = Schema(
     id=ShapeID("aws.protocoltests.restxml#DatetimeOffsets"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlDateTimeWithNegativeOffset",
-                        "documentation": "Ensures that clients can correctly parse datetime (timestamps) with offsets",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<DatetimeOffsetsOutput>\n    <datetime>2019-12-16T22:48:18-01:00</datetime>\n</DatetimeOffsetsOutput>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"datetime": 1576540098}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlDateTimeWithPositiveOffset",
-                        "documentation": "Ensures that clients can correctly parse datetime (timestamps) with offsets",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<DatetimeOffsetsOutput>\n    <datetime>2019-12-17T00:48:18+01:00</datetime>\n</DatetimeOffsetsOutput>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"datetime": 1576540098}),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/DatetimeOffsets", "method": "POST"}),
-        ),
+        )
     ],
 )
 
 EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restxml#EmptyInputAndEmptyOutputInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
+    id=ShapeID("aws.protocoltests.restxml#EmptyInputAndEmptyOutputInput")
 )
 
 EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restxml#EmptyInputAndEmptyOutputOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
+    id=ShapeID("aws.protocoltests.restxml#EmptyInputAndEmptyOutputOutput")
 )
 
 EMPTY_INPUT_AND_EMPTY_OUTPUT = Schema(
@@ -826,40 +429,11 @@ EMPTY_INPUT_AND_EMPTY_OUTPUT = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "EmptyInputAndEmptyOutput",
-                        "documentation": "Empty input serializes no payload",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/EmptyInputAndEmptyOutput",
-                        "body": "",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "EmptyInputAndEmptyOutput",
-                        "documentation": "Empty output serializes no payload",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/EmptyInputAndEmptyOutput", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -868,8 +442,7 @@ ENDPOINT_OPERATION_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -878,8 +451,7 @@ ENDPOINT_OPERATION_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -887,23 +459,6 @@ ENDPOINT_OPERATION = Schema(
     id=ShapeID("aws.protocoltests.restxml#EndpointOperation"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlEndpointTrait",
-                        "documentation": "Operations can prepend to the given host if they define the\nendpoint trait.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/EndpointOperation",
-                        "body": "",
-                        "host": "example.com",
-                        "resolvedHost": "foo.example.com",
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#endpoint"),
             value=MappingProxyType({"hostPrefix": "foo."}),
@@ -921,8 +476,7 @@ ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HostLabelHeaderInput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "accountId": {
@@ -943,8 +497,7 @@ ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -952,26 +505,6 @@ ENDPOINT_WITH_HOST_LABEL_HEADER_OPERATION = Schema(
     id=ShapeID("aws.protocoltests.restxml#EndpointWithHostLabelHeaderOperation"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlEndpointTraitWithHostLabelAndHttpBinding",
-                        "documentation": "Operations can prepend to the given host if they define the\nendpoint trait, and can use the host label trait to define\nfurther customization based on user input. The label must also\nbe serialized in into any other location it is bound to, such\nas the body or in this case an http header.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/EndpointWithHostLabelHeaderOperation",
-                        "body": "",
-                        "bodyMediaType": "application/xml",
-                        "host": "example.com",
-                        "resolvedHost": "bar.example.com",
-                        "headers": MappingProxyType({"X-Amz-Account-Id": "bar"}),
-                        "params": MappingProxyType({"accountId": "bar"}),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#endpoint"),
             value=MappingProxyType({"hostPrefix": "{accountId}."}),
@@ -991,8 +524,7 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#EndpointWithHostLabelOperationRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "label": {
@@ -1010,8 +542,7 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -1019,25 +550,6 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION = Schema(
     id=ShapeID("aws.protocoltests.restxml#EndpointWithHostLabelOperation"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlEndpointTraitWithHostLabel",
-                        "documentation": "Operations can prepend to the given host if they define the\nendpoint trait, and can use the host label trait to define\nfurther customization based on user input.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/EndpointWithHostLabelOperation",
-                        "body": "<EndpointWithHostLabelOperationRequest>\n    <label>bar</label>\n</EndpointWithHostLabelOperationRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "host": "example.com",
-                        "resolvedHost": "foo.bar.example.com",
-                        "params": MappingProxyType({"label": "bar"}),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#endpoint"),
             value=MappingProxyType({"hostPrefix": "foo.{label}."}),
@@ -1063,8 +575,7 @@ FLATTENED_XML_MAP_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#FlattenedXmlMapRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "myMap": {
@@ -1080,8 +591,7 @@ FLATTENED_XML_MAP_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#FlattenedXmlMapResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "myMap": {
@@ -1096,52 +606,9 @@ FLATTENED_XML_MAP = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "FlattenedXmlMap",
-                        "documentation": "Serializes flattened XML maps in requests",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/FlattenedXmlMap",
-                        "body": "<FlattenedXmlMapRequest>\n    <myMap>\n        <key>foo</key>\n        <value>Foo</value>\n    </myMap>\n    <myMap>\n        <key>baz</key>\n        <value>Baz</value>\n    </myMap>\n</FlattenedXmlMapRequest>",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"myMap": MappingProxyType({"foo": "Foo", "baz": "Baz"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "FlattenedXmlMap",
-                        "documentation": "Serializes flattened XML maps in responses",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<FlattenedXmlMapResponse>\n    <myMap>\n        <key>foo</key>\n        <value>Foo</value>\n    </myMap>\n    <myMap>\n        <key>baz</key>\n        <value>Baz</value>\n    </myMap>\n</FlattenedXmlMapResponse>",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"myMap": MappingProxyType({"foo": "Foo", "baz": "Baz"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/FlattenedXmlMap", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -1166,8 +633,7 @@ FLATTENED_XML_MAP_WITH_XML_NAME_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#FlattenedXmlMapWithXmlNameRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "myMap": {
@@ -1186,8 +652,7 @@ FLATTENED_XML_MAP_WITH_XML_NAME_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#FlattenedXmlMapWithXmlNameResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "myMap": {
@@ -1205,54 +670,11 @@ FLATTENED_XML_MAP_WITH_XML_NAME = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "FlattenedXmlMapWithXmlName",
-                        "documentation": "Serializes flattened XML maps in requests that have xmlName on members",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/FlattenedXmlMapWithXmlName",
-                        "body": "<FlattenedXmlMapWithXmlNameRequest>\n    <KVP>\n        <K>a</K>\n        <V>A</V>\n    </KVP>\n    <KVP>\n        <K>b</K>\n        <V>B</V>\n    </KVP>\n</FlattenedXmlMapWithXmlNameRequest>",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"myMap": MappingProxyType({"a": "A", "b": "B"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "FlattenedXmlMapWithXmlName",
-                        "documentation": "Serializes flattened XML maps in responses that have xmlName on members",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<FlattenedXmlMapWithXmlNameResponse>\n    <KVP>\n        <K>a</K>\n        <V>A</V>\n    </KVP>\n    <KVP>\n        <K>b</K>\n        <V>B</V>\n    </KVP>\n</FlattenedXmlMapWithXmlNameResponse>",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"myMap": MappingProxyType({"a": "A", "b": "B"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/FlattenedXmlMapWithXmlName", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -1261,8 +683,7 @@ FLATTENED_XML_MAP_WITH_XML_NAMESPACE_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -1295,7 +716,6 @@ FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT_MAP = Schema.collection(
 
 FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#FlattenedXmlMapWithXmlNamespaceOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "myMap": {
             "target": FLATTENED_XML_MAP_WITH_XML_NAMESPACE_OUTPUT_MAP,
@@ -1316,32 +736,11 @@ FLATTENED_XML_MAP_WITH_XML_NAMESPACE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlFlattenedXmlMapWithXmlNamespace",
-                        "documentation": "Serializes flattened XML maps in responses that have xmlNamespace and xmlName on members",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": '<FlattenedXmlMapWithXmlNamespaceOutput>\n    <KVP xmlns="https://the-member.example.com">\n        <K xmlns="https://the-key.example.com">a</K>\n        <V xmlns="https://the-value.example.com">A</V>\n    </KVP>\n    <KVP xmlns="https://the-member.example.com">\n        <K xmlns="https://the-key.example.com">b</K>\n        <V xmlns="https://the-value.example.com">B</V>\n    </KVP>\n</FlattenedXmlMapWithXmlNamespaceOutput>',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"myMap": MappingProxyType({"a": "A", "b": "B"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/FlattenedXmlMapWithXmlNamespace", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -1356,14 +755,12 @@ FRACTIONAL_SECONDS_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 FRACTIONAL_SECONDS_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#FractionalSecondsOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={"datetime": {"target": DATE_TIME}},
 )
 
@@ -1371,30 +768,10 @@ FRACTIONAL_SECONDS = Schema(
     id=ShapeID("aws.protocoltests.restxml#FractionalSeconds"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlDateTimeWithFractionalSeconds",
-                        "documentation": "Ensures that clients can correctly parse datetime timestamps with fractional seconds",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<FractionalSecondsOutput>\n    <datetime>2000-01-02T20:34:56.123Z</datetime>\n</FractionalSecondsOutput>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"datetime": 9.46845296123e8}),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/FractionalSeconds", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -1403,14 +780,12 @@ GREETING_WITH_ERRORS_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 GREETING_WITH_ERRORS_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#GreetingWithErrorsOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "greeting": {
             "target": STRING,
@@ -1424,25 +799,6 @@ GREETING_WITH_ERRORS_OUTPUT = Schema.collection(
 INVALID_GREETING = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#InvalidGreeting"),
     traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "InvalidGreetingError",
-                        "documentation": "Parses simple XML errors",
-                        "protocol": "aws.protocols#restXml",
-                        "params": MappingProxyType({"Message": "Hi"}),
-                        "code": 400,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "body": "<ErrorResponse>\n   <Error>\n      <Type>Sender</Type>\n      <Code>InvalidGreeting</Code>\n      <Message>Hi</Message>\n      <AnotherSetting>setting</AnotherSetting>\n   </Error>\n   <RequestId>foo-id</RequestId>\n</ErrorResponse>\n",
-                        "bodyMediaType": "application/xml",
-                    }
-                ),
-            ),
-        ),
         Trait.new(id=ShapeID("smithy.api#error"), value="client"),
         Trait.new(id=ShapeID("smithy.api#httpError"), value=400),
     ],
@@ -1453,33 +809,15 @@ GREETING_WITH_ERRORS = Schema(
     id=ShapeID("aws.protocoltests.restxml#GreetingWithErrors"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "GreetingWithErrors",
-                        "documentation": "Ensures that operations with errors successfully know how to deserialize the successful response",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "",
-                        "headers": MappingProxyType({"X-Greeting": "Hello"}),
-                        "params": MappingProxyType({"greeting": "Hello"}),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/GreetingWithErrors", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
 HTTP_EMPTY_PREFIX_HEADERS_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#HttpEmptyPrefixHeadersInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "prefixHeaders": {
             "target": STRING_MAP,
@@ -1494,7 +832,6 @@ HTTP_EMPTY_PREFIX_HEADERS_INPUT = Schema.collection(
 
 HTTP_EMPTY_PREFIX_HEADERS_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#HttpEmptyPrefixHeadersOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "prefixHeaders": {
             "target": STRING_MAP,
@@ -1512,110 +849,16 @@ HTTP_EMPTY_PREFIX_HEADERS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpEmptyPrefixHeadersRequestClient",
-                        "documentation": "Serializes all request headers, using specific when present",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/HttpEmptyPrefixHeaders",
-                        "body": "",
-                        "headers": MappingProxyType({"x-foo": "Foo", "hello": "There"}),
-                        "params": MappingProxyType(
-                            {
-                                "prefixHeaders": MappingProxyType(
-                                    {"x-foo": "Foo", "hello": "Hello"}
-                                ),
-                                "specificHeader": "There",
-                            }
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "HttpEmptyPrefixHeadersRequestServer",
-                        "documentation": "Deserializes all request headers with the same for prefix and specific",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/HttpEmptyPrefixHeaders",
-                        "body": "",
-                        "headers": MappingProxyType({"x-foo": "Foo", "hello": "There"}),
-                        "params": MappingProxyType(
-                            {
-                                "prefixHeaders": MappingProxyType(
-                                    {"x-foo": "Foo", "hello": "There"}
-                                ),
-                                "specificHeader": "There",
-                            }
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpEmptyPrefixHeadersResponseClient",
-                        "documentation": "Deserializes all response headers with the same for prefix and specific",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "headers": MappingProxyType({"x-foo": "Foo", "hello": "There"}),
-                        "params": MappingProxyType(
-                            {
-                                "prefixHeaders": MappingProxyType(
-                                    {"x-foo": "Foo", "hello": "There"}
-                                ),
-                                "specificHeader": "There",
-                            }
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "HttpEmptyPrefixHeadersResponseServer",
-                        "documentation": "Serializes all response headers, using specific when present",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "headers": MappingProxyType({"x-foo": "Foo", "hello": "There"}),
-                        "params": MappingProxyType(
-                            {
-                                "prefixHeaders": MappingProxyType(
-                                    {"x-foo": "Foo", "hello": "Hello"}
-                                ),
-                                "specificHeader": "There",
-                            }
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/HttpEmptyPrefixHeaders", "method": "GET"}),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
 STRING_ENUM = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#StringEnum"),
     shape_type=ShapeType.ENUM,
-    members={
-        "V": {
-            "target": UNIT,
-            "traits": [
-                Trait.new(id=ShapeID("smithy.api#enumValue"), value="enumvalue")
-            ],
-        }
-    },
+    members={"V": {"target": UNIT}},
 )
 
 HTTP_ENUM_PAYLOAD_INPUT = Schema.collection(
@@ -1624,8 +867,7 @@ HTTP_ENUM_PAYLOAD_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#EnumPayloadInput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "payload": {
@@ -1641,8 +883,7 @@ HTTP_ENUM_PAYLOAD_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#EnumPayloadInput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "payload": {
@@ -1657,40 +898,9 @@ HTTP_ENUM_PAYLOAD = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlEnumPayloadRequest",
-                        "uri": "/EnumPayload",
-                        "headers": MappingProxyType({"Content-Type": "text/plain"}),
-                        "body": "enumvalue",
-                        "params": MappingProxyType({"payload": "enumvalue"}),
-                        "method": "POST",
-                        "protocol": "aws.protocols#restXml",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlEnumPayloadResponse",
-                        "headers": MappingProxyType({"Content-Type": "text/plain"}),
-                        "body": "enumvalue",
-                        "params": MappingProxyType({"payload": "enumvalue"}),
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/EnumPayload", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -1700,8 +910,7 @@ HTTP_PAYLOAD_TRAITS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HttpPayloadTraitsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "foo": {
@@ -1721,8 +930,7 @@ HTTP_PAYLOAD_TRAITS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HttpPayloadTraitsInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "foo": {
@@ -1741,70 +949,9 @@ HTTP_PAYLOAD_TRAITS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpPayloadTraitsWithBlob",
-                        "documentation": "Serializes a blob in the HTTP payload",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/HttpPayloadTraits",
-                        "body": "blobby blob blob",
-                        "headers": MappingProxyType({"X-Foo": "Foo"}),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "blob": "blobby blob blob"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "HttpPayloadTraitsWithNoBlobBody",
-                        "documentation": "Serializes an empty blob in the HTTP payload",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/HttpPayloadTraits",
-                        "body": "",
-                        "headers": MappingProxyType({"X-Foo": "Foo"}),
-                        "params": MappingProxyType({"foo": "Foo"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpPayloadTraitsWithBlob",
-                        "documentation": "Serializes a blob in the HTTP payload",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "blobby blob blob",
-                        "headers": MappingProxyType({"X-Foo": "Foo"}),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "blob": "blobby blob blob"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "HttpPayloadTraitsWithNoBlobBody",
-                        "documentation": "Serializes an empty blob in the HTTP payload",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "",
-                        "headers": MappingProxyType({"X-Foo": "Foo"}),
-                        "params": MappingProxyType({"foo": "Foo"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/HttpPayloadTraits", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -1820,8 +967,7 @@ HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HttpPayloadTraitsWithMediaTypeInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "foo": {
@@ -1841,8 +987,7 @@ HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HttpPayloadTraitsWithMediaTypeInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "foo": {
@@ -1861,53 +1006,11 @@ HTTP_PAYLOAD_TRAITS_WITH_MEDIA_TYPE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpPayloadTraitsWithMediaTypeWithBlob",
-                        "documentation": "Serializes a blob in the HTTP payload with a content-type",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/HttpPayloadTraitsWithMediaType",
-                        "body": "blobby blob blob",
-                        "headers": MappingProxyType(
-                            {"X-Foo": "Foo", "Content-Type": "text/plain"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "blob": "blobby blob blob"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpPayloadTraitsWithMediaTypeWithBlob",
-                        "documentation": "Serializes a blob in the HTTP payload with a content-type",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "blobby blob blob",
-                        "headers": MappingProxyType(
-                            {"X-Foo": "Foo", "Content-Type": "text/plain"}
-                        ),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "blob": "blobby blob blob"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/HttpPayloadTraitsWithMediaType", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -1917,8 +1020,7 @@ HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HttpPayloadWithMemberXmlNameInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "nested": {
@@ -1937,8 +1039,7 @@ HTTP_PAYLOAD_WITH_MEMBER_XML_NAME_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HttpPayloadWithMemberXmlNameInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "nested": {
@@ -1956,56 +1057,11 @@ HTTP_PAYLOAD_WITH_MEMBER_XML_NAME = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpPayloadWithMemberXmlName",
-                        "documentation": "Serializes a structure in the payload using a wrapper name based on member xmlName",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/HttpPayloadWithMemberXmlName",
-                        "body": "<Hola><name>Phreddy</name></Hola>",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {"nested": MappingProxyType({"name": "Phreddy"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpPayloadWithMemberXmlName",
-                        "documentation": "Serializes a structure in the payload using a wrapper name based on member xmlName",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<Hola><name>Phreddy</name></Hola>",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"nested": MappingProxyType({"name": "Phreddy"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/HttpPayloadWithMemberXmlName", "method": "PUT"}
             ),
-        ),
+        )
     ],
 )
 
@@ -2020,8 +1076,7 @@ HTTP_PAYLOAD_WITH_STRUCTURE_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HttpPayloadWithStructureInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "nested": {
@@ -2037,8 +1092,7 @@ HTTP_PAYLOAD_WITH_STRUCTURE_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HttpPayloadWithStructureInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "nested": {
@@ -2053,64 +1107,11 @@ HTTP_PAYLOAD_WITH_STRUCTURE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpPayloadWithStructure",
-                        "documentation": "Serializes a structure in the payload",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/HttpPayloadWithStructure",
-                        "body": "<NestedPayload>\n    <greeting>hello</greeting>\n    <name>Phreddy</name>\n</NestedPayload>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {
-                                "nested": MappingProxyType(
-                                    {"greeting": "hello", "name": "Phreddy"}
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpPayloadWithStructure",
-                        "documentation": "Serializes a structure in the payload",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<NestedPayload>\n    <greeting>hello</greeting>\n    <name>Phreddy</name>\n</NestedPayload>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "nested": MappingProxyType(
-                                    {"greeting": "hello", "name": "Phreddy"}
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/HttpPayloadWithStructure", "method": "PUT"}
             ),
-        ),
+        )
     ],
 )
 
@@ -2126,8 +1127,7 @@ HTTP_PAYLOAD_WITH_UNION_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HttpPayloadWithUnionInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "nested": {
@@ -2143,8 +1143,7 @@ HTTP_PAYLOAD_WITH_UNION_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HttpPayloadWithUnionInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "nested": {
@@ -2159,76 +1158,9 @@ HTTP_PAYLOAD_WITH_UNION = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlHttpPayloadWithUnion",
-                        "documentation": "Serializes a union in the payload.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/HttpPayloadWithUnion",
-                        "body": "<UnionPayload>\n    <greeting>hello</greeting>\n</UnionPayload>",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {"nested": MappingProxyType({"greeting": "hello"})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlHttpPayloadWithUnsetUnion",
-                        "documentation": "No payload is sent if the union has no value.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/HttpPayloadWithUnion",
-                        "body": "",
-                        "params": MappingProxyType({}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlHttpPayloadWithUnion",
-                        "documentation": "Serializes a union in the payload.",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<UnionPayload>\n    <greeting>hello</greeting>\n</UnionPayload>",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"nested": MappingProxyType({"greeting": "hello"})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlHttpPayloadWithUnsetUnion",
-                        "documentation": "No payload is sent if the union has no value.",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "",
-                        "headers": MappingProxyType({"Content-Length": "0"}),
-                        "params": MappingProxyType({}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/HttpPayloadWithUnion", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -2238,8 +1170,7 @@ HTTP_PAYLOAD_WITH_XML_NAME_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HttpPayloadWithXmlNameInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "nested": {
@@ -2255,8 +1186,7 @@ HTTP_PAYLOAD_WITH_XML_NAME_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HttpPayloadWithXmlNameInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "nested": {
@@ -2271,54 +1201,9 @@ HTTP_PAYLOAD_WITH_XML_NAME = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpPayloadWithXmlName",
-                        "documentation": "Serializes a structure in the payload using a wrapper name based on xmlName",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/HttpPayloadWithXmlName",
-                        "body": "<Hello><name>Phreddy</name></Hello>",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {"nested": MappingProxyType({"name": "Phreddy"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpPayloadWithXmlName",
-                        "documentation": "Serializes a structure in the payload using a wrapper name based on xmlName",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<Hello><name>Phreddy</name></Hello>",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"nested": MappingProxyType({"name": "Phreddy"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/HttpPayloadWithXmlName", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -2339,8 +1224,7 @@ HTTP_PAYLOAD_WITH_XML_NAMESPACE_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HttpPayloadWithXmlNamespaceInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "nested": {
@@ -2356,8 +1240,7 @@ HTTP_PAYLOAD_WITH_XML_NAMESPACE_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HttpPayloadWithXmlNamespaceInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "nested": {
@@ -2372,56 +1255,11 @@ HTTP_PAYLOAD_WITH_XML_NAMESPACE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpPayloadWithXmlNamespace",
-                        "documentation": "Serializes a structure in the payload using a wrapper with an XML namespace",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/HttpPayloadWithXmlNamespace",
-                        "body": '<PayloadWithXmlNamespace xmlns="http://foo.com">\n    <name>Phreddy</name>\n</PayloadWithXmlNamespace>',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {"nested": MappingProxyType({"name": "Phreddy"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpPayloadWithXmlNamespace",
-                        "documentation": "Serializes a structure in the payload using a wrapper with an XML namespace",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": '<PayloadWithXmlNamespace xmlns="http://foo.com">\n    <name>Phreddy</name>\n</PayloadWithXmlNamespace>',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"nested": MappingProxyType({"name": "Phreddy"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/HttpPayloadWithXmlNamespace", "method": "PUT"}
             ),
-        ),
+        )
     ],
 )
 
@@ -2442,8 +1280,7 @@ HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HttpPayloadWithXmlNamespaceAndPrefixInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "nested": {
@@ -2459,8 +1296,7 @@ HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HttpPayloadWithXmlNamespaceAndPrefixInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "nested": {
@@ -2475,56 +1311,11 @@ HTTP_PAYLOAD_WITH_XML_NAMESPACE_AND_PREFIX = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpPayloadWithXmlNamespaceAndPrefix",
-                        "documentation": "Serializes a structure in the payload using a wrapper with an XML namespace",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/HttpPayloadWithXmlNamespaceAndPrefix",
-                        "body": '<PayloadWithXmlNamespaceAndPrefix xmlns:baz="http://foo.com">\n    <name>Phreddy</name>\n</PayloadWithXmlNamespaceAndPrefix>',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {"nested": MappingProxyType({"name": "Phreddy"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpPayloadWithXmlNamespaceAndPrefix",
-                        "documentation": "Serializes a structure in the payload using a wrapper with an XML namespace",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": '<PayloadWithXmlNamespaceAndPrefix xmlns:baz="http://foo.com">\n    <name>Phreddy</name>\n</PayloadWithXmlNamespaceAndPrefix>',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"nested": MappingProxyType({"name": "Phreddy"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/HttpPayloadWithXmlNamespaceAndPrefix", "method": "PUT"}
             ),
-        ),
+        )
     ],
 )
 
@@ -2534,8 +1325,7 @@ HTTP_PREFIX_HEADERS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HttpPrefixHeadersInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "foo": {
@@ -2557,8 +1347,7 @@ HTTP_PREFIX_HEADERS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#HttpPrefixHeadersInputOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "foo": {
@@ -2579,126 +1368,14 @@ HTTP_PREFIX_HEADERS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpPrefixHeadersArePresent",
-                        "documentation": "Adds headers by prefix",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/HttpPrefixHeaders",
-                        "body": "",
-                        "headers": MappingProxyType(
-                            {
-                                "x-foo": "Foo",
-                                "x-foo-abc": "Abc value",
-                                "x-foo-def": "Def value",
-                            }
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "foo": "Foo",
-                                "fooMap": MappingProxyType(
-                                    {"abc": "Abc value", "def": "Def value"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "HttpPrefixHeadersAreNotPresent",
-                        "documentation": "No prefix headers are serialized because the value is not present",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/HttpPrefixHeaders",
-                        "body": "",
-                        "headers": MappingProxyType({"x-foo": "Foo"}),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "fooMap": MappingProxyType({})}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "HttpPrefixEmptyHeaders",
-                        "documentation": "Serialize prefix headers were the value is present but empty",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/HttpPrefixHeaders",
-                        "body": "",
-                        "params": MappingProxyType(
-                            {"fooMap": MappingProxyType({"abc": ""})}
-                        ),
-                        "headers": MappingProxyType({"x-foo-abc": ""}),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpPrefixHeadersArePresent",
-                        "documentation": "Adds headers by prefix",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "",
-                        "headers": MappingProxyType(
-                            {
-                                "x-foo": "Foo",
-                                "x-foo-abc": "Abc value",
-                                "x-foo-def": "Def value",
-                            }
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "foo": "Foo",
-                                "fooMap": MappingProxyType(
-                                    {"abc": "Abc value", "def": "Def value"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "HttpPrefixHeadersAreNotPresent",
-                        "documentation": "No prefix headers are serialized because the value is empty",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "",
-                        "headers": MappingProxyType({"x-foo": "Foo"}),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "fooMap": MappingProxyType({})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.api#externalDocumentation"),
-            value=MappingProxyType(
-                {
-                    "httpPrefixHeaders Trait": "https://smithy.io/2.0/spec/http-bindings.html#httpprefixheaders-trait"
-                }
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/HttpPrefixHeaders", "method": "GET"}),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
 HTTP_REQUEST_WITH_FLOAT_LABELS_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#HttpRequestWithFloatLabelsInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "float": {
             "target": FLOAT,
@@ -2722,8 +1399,7 @@ HTTP_REQUEST_WITH_FLOAT_LABELS_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -2732,60 +1408,16 @@ HTTP_REQUEST_WITH_FLOAT_LABELS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSupportsNaNFloatLabels",
-                        "documentation": "Supports handling NaN float label values.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/FloatHttpLabels/NaN/NaN",
-                        "body": "",
-                        "params": MappingProxyType({"float": "NaN", "double": "NaN"}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSupportsInfinityFloatLabels",
-                        "documentation": "Supports handling Infinity float label values.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/FloatHttpLabels/Infinity/Infinity",
-                        "body": "",
-                        "params": MappingProxyType(
-                            {"float": "Infinity", "double": "Infinity"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSupportsNegativeInfinityFloatLabels",
-                        "documentation": "Supports handling -Infinity float label values.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/FloatHttpLabels/-Infinity/-Infinity",
-                        "body": "",
-                        "params": MappingProxyType(
-                            {"float": "-Infinity", "double": "-Infinity"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"method": "GET", "uri": "/FloatHttpLabels/{float}/{double}"}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
 HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#HttpRequestWithGreedyLabelInPathInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "foo": {
             "target": STRING,
@@ -2809,8 +1441,7 @@ HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -2819,24 +1450,6 @@ HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpRequestWithGreedyLabelInPath",
-                        "documentation": "Serializes greedy labels and normal labels",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/HttpRequestWithGreedyLabelInPath/foo/hello/baz/there/guy",
-                        "body": "",
-                        "params": MappingProxyType(
-                            {"foo": "hello", "baz": "there/guy"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {
@@ -2844,14 +1457,12 @@ HTTP_REQUEST_WITH_GREEDY_LABEL_IN_PATH = Schema(
                     "uri": "/HttpRequestWithGreedyLabelInPath/foo/{foo}/baz/{baz+}",
                 }
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
 HTTP_REQUEST_WITH_LABELS_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#HttpRequestWithLabelsInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "string": {
             "target": STRING,
@@ -2917,8 +1528,7 @@ HTTP_REQUEST_WITH_LABELS_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -2927,55 +1537,6 @@ HTTP_REQUEST_WITH_LABELS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "InputWithHeadersAndAllParams",
-                        "documentation": "Sends a GET request that uses URI label bindings",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/HttpRequestWithLabels/string/1/2/3/4.1/5.1/true/2019-12-16T23%3A48%3A18Z",
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "string": "string",
-                                "short": 1,
-                                "integer": 2,
-                                "long": 3,
-                                "float": 4.1,
-                                "double": 5.1,
-                                "boolean": True,
-                                "timestamp": 1576540098,
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "HttpRequestLabelEscaping",
-                        "documentation": "Sends a GET request that uses URI label bindings",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/HttpRequestWithLabels/%20%25%3A%2F%3F%23%5B%5D%40%21%24%26%27%28%29%2A%2B%2C%3B%3D%F0%9F%98%B9/1/2/3/4.1/5.1/true/2019-12-16T23%3A48%3A18Z",
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "string": " %:/?#[]@!$&'()*+,;=😹",
-                                "short": 1,
-                                "integer": 2,
-                                "long": 3,
-                                "float": 4.1,
-                                "double": 5.1,
-                                "boolean": True,
-                                "timestamp": 1576540098,
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {
@@ -2983,8 +1544,7 @@ HTTP_REQUEST_WITH_LABELS = Schema(
                     "uri": "/HttpRequestWithLabels/{string}/{short}/{integer}/{long}/{float}/{double}/{boolean}/{timestamp}",
                 }
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
@@ -3004,7 +1564,6 @@ HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_INPUT = Schema.collection(
     id=ShapeID(
         "aws.protocoltests.restxml#HttpRequestWithLabelsAndTimestampFormatInput"
     ),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "memberEpochSeconds": {
             "target": TIMESTAMP,
@@ -3070,8 +1629,7 @@ HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -3080,32 +1638,6 @@ HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "HttpRequestWithLabelsAndTimestampFormat",
-                        "documentation": "Serializes different timestamp formats in URI labels",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/HttpRequestWithLabelsAndTimestampFormat/1576540098/Mon%2C%2016%20Dec%202019%2023%3A48%3A18%20GMT/2019-12-16T23%3A48%3A18Z/2019-12-16T23%3A48%3A18Z/1576540098/Mon%2C%2016%20Dec%202019%2023%3A48%3A18%20GMT/2019-12-16T23%3A48%3A18Z",
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "memberEpochSeconds": 1576540098,
-                                "memberHttpDate": 1576540098,
-                                "memberDateTime": 1576540098,
-                                "defaultFormat": 1576540098,
-                                "targetEpochSeconds": 1576540098,
-                                "targetHttpDate": 1576540098,
-                                "targetDateTime": 1576540098,
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {
@@ -3113,8 +1645,7 @@ HTTP_REQUEST_WITH_LABELS_AND_TIMESTAMP_FORMAT = Schema(
                     "uri": "/HttpRequestWithLabelsAndTimestampFormat/{memberEpochSeconds}/{memberHttpDate}/{memberDateTime}/{defaultFormat}/{targetEpochSeconds}/{targetHttpDate}/{targetDateTime}",
                 }
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
@@ -3123,14 +1654,12 @@ HTTP_RESPONSE_CODE_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 HTTP_RESPONSE_CODE_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#HttpResponseCodeOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "Status": {
             "target": INTEGER,
@@ -3143,30 +1672,10 @@ HTTP_RESPONSE_CODE = Schema(
     id=ShapeID("aws.protocoltests.restxml#HttpResponseCode"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlHttpResponseCode",
-                        "documentation": "Binds the http response code to an output structure.",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 201,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "body": "",
-                        "bodyMediaType": "application/xml",
-                        "params": MappingProxyType({"Status": 201}),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/HttpResponseCode", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -3176,8 +1685,7 @@ HTTP_STRING_PAYLOAD_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#StringPayloadInput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "payload": {
@@ -3193,8 +1701,7 @@ HTTP_STRING_PAYLOAD_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#StringPayloadInput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "payload": {
@@ -3209,40 +1716,9 @@ HTTP_STRING_PAYLOAD = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlStringPayloadRequest",
-                        "uri": "/StringPayload",
-                        "headers": MappingProxyType({"Content-Type": "text/plain"}),
-                        "body": "rawstring",
-                        "params": MappingProxyType({"payload": "rawstring"}),
-                        "method": "POST",
-                        "protocol": "aws.protocols#restXml",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlStringPayloadResponse",
-                        "headers": MappingProxyType({"Content-Type": "text/plain"}),
-                        "body": "rawstring",
-                        "params": MappingProxyType({"payload": "rawstring"}),
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/StringPayload", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -3251,24 +1727,16 @@ IGNORE_QUERY_PARAMS_IN_RESPONSE_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 IGNORE_QUERY_PARAMS_IN_RESPONSE_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#IgnoreQueryParamsInResponseOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "baz": {
             "target": STRING,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#suppress"),
-                    value=("HttpBindingTraitIgnored",),
-                ),
-                Trait.new(id=ShapeID("smithy.api#httpQuery"), value="baz"),
-            ],
+            "traits": [Trait.new(id=ShapeID("smithy.api#httpQuery"), value="baz")],
         }
     },
 )
@@ -3278,31 +1746,11 @@ IGNORE_QUERY_PARAMS_IN_RESPONSE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "IgnoreQueryParamsInResponse",
-                        "documentation": "Query parameters must be ignored when serializing the output of an operation",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "body": "<IgnoreQueryParamsInResponseOutput><baz>bam</baz></IgnoreQueryParamsInResponseOutput>",
-                        "bodyMediaType": "application/xml",
-                        "params": MappingProxyType({"baz": "bam"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/IgnoreQueryParamsInResponse", "method": "GET"}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
@@ -3312,8 +1760,7 @@ INPUT_AND_OUTPUT_WITH_HEADERS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#InputAndOutputWithHeadersIO",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "headerString": {
@@ -3411,8 +1858,7 @@ INPUT_AND_OUTPUT_WITH_HEADERS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#InputAndOutputWithHeadersIO",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "headerString": {
@@ -3509,343 +1955,11 @@ INPUT_AND_OUTPUT_WITH_HEADERS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "InputAndOutputWithStringHeaders",
-                        "documentation": "Tests requests with string header bindings",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/InputAndOutputWithHeaders",
-                        "headers": MappingProxyType(
-                            {
-                                "X-String": "Hello",
-                                "X-StringList": "a, b, c",
-                                "X-StringSet": "a, b, c",
-                            }
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "headerString": "Hello",
-                                "headerStringList": ("a", "b", "c"),
-                                "headerStringSet": ("a", "b", "c"),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "InputAndOutputWithNumericHeaders",
-                        "documentation": "Tests requests with numeric header bindings",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/InputAndOutputWithHeaders",
-                        "headers": MappingProxyType(
-                            {
-                                "X-Byte": "1",
-                                "X-Short": "123",
-                                "X-Integer": "123",
-                                "X-Long": "123",
-                                "X-Float": "1.1",
-                                "X-Double": "1.1",
-                                "X-IntegerList": "1, 2, 3",
-                            }
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "headerByte": 1,
-                                "headerShort": 123,
-                                "headerInteger": 123,
-                                "headerLong": 123,
-                                "headerFloat": 1.1,
-                                "headerDouble": 1.1,
-                                "headerIntegerList": (1, 2, 3),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "InputAndOutputWithBooleanHeaders",
-                        "documentation": "Tests requests with boolean header bindings",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/InputAndOutputWithHeaders",
-                        "headers": MappingProxyType(
-                            {
-                                "X-Boolean1": "true",
-                                "X-Boolean2": "false",
-                                "X-BooleanList": "true, false, true",
-                            }
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "headerTrueBool": True,
-                                "headerFalseBool": False,
-                                "headerBooleanList": (True, False, True),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "InputAndOutputWithTimestampHeaders",
-                        "documentation": "Tests requests with timestamp header bindings",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/InputAndOutputWithHeaders",
-                        "headers": MappingProxyType(
-                            {
-                                "X-TimestampList": "Mon, 16 Dec 2019 23:48:18 GMT, Mon, 16 Dec 2019 23:48:18 GMT"
-                            }
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {"headerTimestampList": (1576540098, 1576540098)}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "InputAndOutputWithEnumHeaders",
-                        "documentation": "Tests requests with enum header bindings",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/InputAndOutputWithHeaders",
-                        "headers": MappingProxyType(
-                            {"X-Enum": "Foo", "X-EnumList": "Foo, Bar, Baz"}
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "headerEnum": "Foo",
-                                "headerEnumList": ("Foo", "Bar", "Baz"),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSupportsNaNFloatHeaderInputs",
-                        "documentation": "Supports handling NaN float header values.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/InputAndOutputWithHeaders",
-                        "body": "",
-                        "headers": MappingProxyType(
-                            {"X-Float": "NaN", "X-Double": "NaN"}
-                        ),
-                        "params": MappingProxyType(
-                            {"headerFloat": "NaN", "headerDouble": "NaN"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSupportsInfinityFloatHeaderInputs",
-                        "documentation": "Supports handling Infinity float header values.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/InputAndOutputWithHeaders",
-                        "body": "",
-                        "headers": MappingProxyType(
-                            {"X-Float": "Infinity", "X-Double": "Infinity"}
-                        ),
-                        "params": MappingProxyType(
-                            {"headerFloat": "Infinity", "headerDouble": "Infinity"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSupportsNegativeInfinityFloatHeaderInputs",
-                        "documentation": "Supports handling -Infinity float header values.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/InputAndOutputWithHeaders",
-                        "body": "",
-                        "headers": MappingProxyType(
-                            {"X-Float": "-Infinity", "X-Double": "-Infinity"}
-                        ),
-                        "params": MappingProxyType(
-                            {"headerFloat": "-Infinity", "headerDouble": "-Infinity"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "InputAndOutputWithStringHeaders",
-                        "documentation": "Tests responses with string header bindings",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {
-                                "X-String": "Hello",
-                                "X-StringList": "a, b, c",
-                                "X-StringSet": "a, b, c",
-                            }
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "headerString": "Hello",
-                                "headerStringList": ("a", "b", "c"),
-                                "headerStringSet": ("a", "b", "c"),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "InputAndOutputWithNumericHeaders",
-                        "documentation": "Tests responses with numeric header bindings",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {
-                                "X-Byte": "1",
-                                "X-Short": "123",
-                                "X-Integer": "123",
-                                "X-Long": "123",
-                                "X-Float": "1.1",
-                                "X-Double": "1.1",
-                                "X-IntegerList": "1, 2, 3",
-                            }
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "headerByte": 1,
-                                "headerShort": 123,
-                                "headerInteger": 123,
-                                "headerLong": 123,
-                                "headerFloat": 1.1,
-                                "headerDouble": 1.1,
-                                "headerIntegerList": (1, 2, 3),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "InputAndOutputWithBooleanHeaders",
-                        "documentation": "Tests responses with boolean header bindings",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {
-                                "X-Boolean1": "true",
-                                "X-Boolean2": "false",
-                                "X-BooleanList": "true, false, true",
-                            }
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "headerTrueBool": True,
-                                "headerFalseBool": False,
-                                "headerBooleanList": (True, False, True),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "InputAndOutputWithTimestampHeaders",
-                        "documentation": "Tests responses with timestamp header bindings",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {
-                                "X-TimestampList": "Mon, 16 Dec 2019 23:48:18 GMT, Mon, 16 Dec 2019 23:48:18 GMT"
-                            }
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {"headerTimestampList": (1576540098, 1576540098)}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "InputAndOutputWithEnumHeaders",
-                        "documentation": "Tests responses with enum header bindings",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {"X-Enum": "Foo", "X-EnumList": "Foo, Bar, Baz"}
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "headerEnum": "Foo",
-                                "headerEnumList": ("Foo", "Bar", "Baz"),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSupportsNaNFloatHeaderOutputs",
-                        "documentation": "Supports handling NaN float header values.",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {"X-Float": "NaN", "X-Double": "NaN"}
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {"headerFloat": "NaN", "headerDouble": "NaN"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSupportsInfinityFloatHeaderOutputs",
-                        "documentation": "Supports handling Infinity float header values.",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {"X-Float": "Infinity", "X-Double": "Infinity"}
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {"headerFloat": "Infinity", "headerDouble": "Infinity"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSupportsNegativeInfinityFloatHeaderOutputs",
-                        "documentation": "Supports handling -Infinity float header values.",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {"X-Float": "-Infinity", "X-Double": "-Infinity"}
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {"headerFloat": "-Infinity", "headerDouble": "-Infinity"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/InputAndOutputWithHeaders", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -3895,8 +2009,7 @@ NESTED_XML_MAPS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#NestedXmlMapsRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "nestedMap": {"target": NESTED_MAP},
@@ -3913,8 +2026,7 @@ NESTED_XML_MAPS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#NestedXmlMapsResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "nestedMap": {"target": NESTED_MAP},
@@ -3930,101 +2042,9 @@ NESTED_XML_MAPS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "NestedXmlMapRequest",
-                        "documentation": "Tests requests with nested maps.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/NestedXmlMaps",
-                        "body": "<NestedXmlMapsRequest>\n    <nestedMap>\n        <entry>\n            <key>foo</key>\n            <value>\n                <entry>\n                    <key>bar</key>\n                    <value>Bar</value>\n                </entry>\n            </value>\n        </entry>\n    </nestedMap>\n</NestedXmlMapsRequest>",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "nestedMap": MappingProxyType(
-                                    {"foo": MappingProxyType({"bar": "Bar"})}
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "FlatNestedXmlMapRequest",
-                        "documentation": "Tests requests with nested flat maps. Since maps can only be\nflattened when they're structure members, only the outer map is flat.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/NestedXmlMaps",
-                        "body": "<NestedXmlMapsRequest>\n    <flatNestedMap>\n        <key>foo</key>\n        <value>\n            <entry>\n                <key>bar</key>\n                <value>Bar</value>\n            </entry>\n        </value>\n    </flatNestedMap>\n</NestedXmlMapsRequest>",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "flatNestedMap": MappingProxyType(
-                                    {"foo": MappingProxyType({"bar": "Bar"})}
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "NestedXmlMapResponse",
-                        "documentation": "Tests responses with nested maps.",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<NestedXmlMapsResponse>\n    <nestedMap>\n        <entry>\n            <key>foo</key>\n            <value>\n                <entry>\n                    <key>bar</key>\n                    <value>Bar</value>\n                </entry>\n            </value>\n        </entry>\n    </nestedMap>\n</NestedXmlMapsResponse>",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "nestedMap": MappingProxyType(
-                                    {"foo": MappingProxyType({"bar": "Bar"})}
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "FlatNestedXmlMapResponse",
-                        "documentation": "Tests responses with nested flat maps. Since maps can only be\nflattened when they're structure members, only the outer map is flat.",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<NestedXmlMapsResponse>\n    <flatNestedMap>\n        <key>foo</key>\n        <value>\n            <entry>\n                <key>bar</key>\n                <value>Bar</value>\n            </entry>\n        </value>\n    </flatNestedMap>\n</NestedXmlMapsResponse>",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "flatNestedMap": MappingProxyType(
-                                    {"foo": MappingProxyType({"bar": "Bar"})}
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/NestedXmlMaps", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -4061,8 +2081,7 @@ NESTED_XML_MAP_WITH_XML_NAME_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#NestedXmlMapWithXmlNameRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "nestedXmlMapWithXmlNameMap": {"target": NESTED_XML_MAP_WITH_XML_NAME_MAP}
@@ -4075,8 +2094,7 @@ NESTED_XML_MAP_WITH_XML_NAME_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#NestedXmlMapWithXmlNameResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "nestedXmlMapWithXmlNameMap": {"target": NESTED_XML_MAP_WITH_XML_NAME_MAP}
@@ -4088,76 +2106,11 @@ NESTED_XML_MAP_WITH_XML_NAME = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "NestedXmlMapWithXmlNameSerializes",
-                        "documentation": "Serializes nested XML Maps in requests that have xmlName on members",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/NestedXmlMapWithXmlName",
-                        "body": "    <NestedXmlMapWithXmlNameRequest>\n        <nestedXmlMapWithXmlNameMap>\n            <entry>\n                <OuterKey>foo</OuterKey>\n                <value>\n                    <entry>\n                        <InnerKey>bar</InnerKey>\n                        <InnerValue>Baz</InnerValue>\n                    </entry>\n                    <entry>\n                        <InnerKey>fizz</InnerKey>\n                        <InnerValue>Buzz</InnerValue>\n                    </entry>\n                </value>\n            </entry>\n            <entry>\n                <OuterKey>qux</OuterKey>\n                <value>\n                    <entry>\n                        <InnerKey>foobar</InnerKey>\n                        <InnerValue>Bar</InnerValue>\n                    </entry>\n                    <entry>\n                        <InnerKey>fizzbuzz</InnerKey>\n                        <InnerValue>Buzz</InnerValue>\n                    </entry>\n                </value>\n            </entry>\n        </nestedXmlMapWithXmlNameMap>\n    </NestedXmlMapWithXmlNameRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "nestedXmlMapWithXmlNameMap": MappingProxyType(
-                                    {
-                                        "foo": MappingProxyType(
-                                            {"bar": "Baz", "fizz": "Buzz"}
-                                        ),
-                                        "qux": MappingProxyType(
-                                            {"foobar": "Bar", "fizzbuzz": "Buzz"}
-                                        ),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "NestedXmlMapWithXmlNameDeserializes",
-                        "documentation": "Serializes nested XML maps in responses that have xmlName on members",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "    <NestedXmlMapWithXmlNameResponse>\n        <nestedXmlMapWithXmlNameMap>\n            <entry>\n                <OuterKey>foo</OuterKey>\n                <value>\n                    <entry>\n                        <InnerKey>bar</InnerKey>\n                        <InnerValue>Baz</InnerValue>\n                    </entry>\n                    <entry>\n                        <InnerKey>fizz</InnerKey>\n                        <InnerValue>Buzz</InnerValue>\n                    </entry>\n                </value>\n            </entry>\n            <entry>\n                <OuterKey>qux</OuterKey>\n                <value>\n                    <entry>\n                        <InnerKey>foobar</InnerKey>\n                        <InnerValue>Bar</InnerValue>\n                    </entry>\n                    <entry>\n                        <InnerKey>fizzbuzz</InnerKey>\n                        <InnerValue>Buzz</InnerValue>\n                    </entry>\n                </value>\n            </entry>\n        </nestedXmlMapWithXmlNameMap>\n    </NestedXmlMapWithXmlNameResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "nestedXmlMapWithXmlNameMap": MappingProxyType(
-                                    {
-                                        "foo": MappingProxyType(
-                                            {"bar": "Baz", "fizz": "Buzz"}
-                                        ),
-                                        "qux": MappingProxyType(
-                                            {"foobar": "Bar", "fizzbuzz": "Buzz"}
-                                        ),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/NestedXmlMapWithXmlName", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -4166,8 +2119,7 @@ NO_INPUT_AND_NO_OUTPUT_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -4176,8 +2128,7 @@ NO_INPUT_AND_NO_OUTPUT_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -4186,38 +2137,9 @@ NO_INPUT_AND_NO_OUTPUT = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "NoInputAndNoOutput",
-                        "documentation": "No input serializes no payload",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/NoInputAndNoOutput",
-                        "body": "",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "NoInputAndNoOutput",
-                        "documentation": "No output serializes no payload",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/NoInputAndNoOutput", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -4226,14 +2148,12 @@ NO_INPUT_AND_OUTPUT_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 NO_INPUT_AND_OUTPUT_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.restxml#NoInputAndOutputOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
+    id=ShapeID("aws.protocoltests.restxml#NoInputAndOutputOutput")
 )
 
 NO_INPUT_AND_OUTPUT = Schema(
@@ -4241,40 +2161,11 @@ NO_INPUT_AND_OUTPUT = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "NoInputAndOutput",
-                        "documentation": "No input serializes no payload",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/NoInputAndOutputOutput",
-                        "body": "",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "NoInputAndOutput",
-                        "documentation": "Empty output serializes no payload",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/NoInputAndOutputOutput", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -4284,8 +2175,7 @@ NULL_AND_EMPTY_HEADERS_CLIENT_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#NullAndEmptyHeadersIO",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "a": {
@@ -4309,8 +2199,7 @@ NULL_AND_EMPTY_HEADERS_CLIENT_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#NullAndEmptyHeadersIO",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "a": {
@@ -4333,32 +2222,11 @@ NULL_AND_EMPTY_HEADERS_CLIENT = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "NullAndEmptyHeaders",
-                        "documentation": "Do not send null values, but do send empty strings and empty lists over the wire in headers",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/NullAndEmptyHeadersClient",
-                        "forbidHeaders": ("X-A",),
-                        "headers": MappingProxyType({"X-B": "", "X-C": ""}),
-                        "body": "",
-                        "params": MappingProxyType({"a": None, "b": "", "c": ()}),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/NullAndEmptyHeadersClient", "method": "GET"}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
@@ -4368,8 +2236,7 @@ NULL_AND_EMPTY_HEADERS_SERVER_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#NullAndEmptyHeadersIO",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "a": {
@@ -4393,8 +2260,7 @@ NULL_AND_EMPTY_HEADERS_SERVER_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#NullAndEmptyHeadersIO",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "a": {
@@ -4416,38 +2282,17 @@ NULL_AND_EMPTY_HEADERS_SERVER = Schema(
     id=ShapeID("aws.protocoltests.restxml#NullAndEmptyHeadersServer"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("server-only",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "NullAndEmptyHeaders",
-                        "documentation": "Do not send null values, but do send empty strings and empty lists over the wire in headers",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "forbidHeaders": ("X-A",),
-                        "headers": MappingProxyType({"X-B": "", "X-C": ""}),
-                        "body": "",
-                        "params": MappingProxyType({"a": None, "b": "", "c": ()}),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/NullAndEmptyHeadersServer", "method": "GET"}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
 OMITS_NULL_SERIALIZES_EMPTY_STRING_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#OmitsNullSerializesEmptyStringInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "nullValue": {
             "target": STRING,
@@ -4465,8 +2310,7 @@ OMITS_NULL_SERIALIZES_EMPTY_STRING_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -4475,47 +2319,16 @@ OMITS_NULL_SERIALIZES_EMPTY_STRING = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlOmitsNullQuery",
-                        "documentation": "Omits null query values",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/OmitsNullSerializesEmptyString",
-                        "body": "",
-                        "params": MappingProxyType({"nullValue": None}),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSerializesEmptyString",
-                        "documentation": "Serializes empty query strings",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "GET",
-                        "uri": "/OmitsNullSerializesEmptyString",
-                        "body": "",
-                        "queryParams": ("Empty=",),
-                        "params": MappingProxyType({"emptyString": ""}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/OmitsNullSerializesEmptyString", "method": "GET"}
             ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#readonly")),
+        )
     ],
 )
 
 PUT_WITH_CONTENT_ENCODING_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#PutWithContentEncodingInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "encoding": {
             "target": STRING,
@@ -4532,8 +2345,7 @@ PUT_WITH_CONTENT_ENCODING_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -4541,44 +2353,6 @@ PUT_WITH_CONTENT_ENCODING = Schema(
     id=ShapeID("aws.protocoltests.restxml#PutWithContentEncoding"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "SDKAppliedContentEncoding_restXml",
-                        "documentation": "Compression algorithm encoding is appended to the Content-Encoding header.",
-                        "protocol": "aws.protocols#restXml",
-                        "params": MappingProxyType(
-                            {
-                                "data": "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\n"
-                            }
-                        ),
-                        "method": "POST",
-                        "uri": "/requestcompression/putcontentwithencoding",
-                        "headers": MappingProxyType({"Content-Encoding": "gzip"}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "SDKAppendedGzipAfterProvidedEncoding_restXml",
-                        "documentation": "Compression algorithm encoding is appended to the Content-Encoding header, and the\nuser-provided content-encoding is in the Content-Encoding header before the\nrequest compression encoding from the HTTP binding.\n",
-                        "protocol": "aws.protocols#restXml",
-                        "params": MappingProxyType(
-                            {
-                                "encoding": "custom",
-                                "data": "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\n",
-                            }
-                        ),
-                        "method": "POST",
-                        "uri": "/requestcompression/putcontentwithencoding",
-                        "headers": MappingProxyType(
-                            {"Content-Encoding": "custom, gzip"}
-                        ),
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#requestCompression"),
             value=MappingProxyType({"encodings": ("gzip",)}),
@@ -4594,7 +2368,6 @@ PUT_WITH_CONTENT_ENCODING = Schema(
 
 QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#QueryIdempotencyTokenAutoFillInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "token": {
             "target": STRING,
@@ -4611,8 +2384,7 @@ QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -4621,44 +2393,11 @@ QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "QueryIdempotencyTokenAutoFill",
-                        "documentation": "Automatically adds idempotency token when not set",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/QueryIdempotencyTokenAutoFill",
-                        "body": "",
-                        "queryParams": ("token=00000000-0000-4000-8000-000000000000",),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "QueryIdempotencyTokenAutoFillIsSet",
-                        "documentation": "Uses the given idempotency token as-is",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/QueryIdempotencyTokenAutoFill",
-                        "body": "",
-                        "queryParams": ("token=00000000-0000-4000-8000-000000000000",),
-                        "params": MappingProxyType(
-                            {"token": "00000000-0000-4000-8000-000000000000"}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/QueryIdempotencyTokenAutoFill", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -4670,10 +2409,6 @@ STRING_LIST_MAP = Schema.collection(
 
 QUERY_PARAMS_AS_STRING_LIST_MAP_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#QueryParamsAsStringListMapInput"),
-    traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("HttpQueryParamsTrait",)),
-        Trait.new(id=ShapeID("smithy.api#input")),
-    ],
     members={
         "qux": {
             "target": STRING,
@@ -4691,8 +2426,7 @@ QUERY_PARAMS_AS_STRING_LIST_MAP_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -4701,61 +2435,14 @@ QUERY_PARAMS_AS_STRING_LIST_MAP = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlQueryParamsStringListMap",
-                        "documentation": "Serialize query params from map of list strings",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/StringListMap",
-                        "body": "",
-                        "queryParams": ("corge=named", "baz=bar", "baz=qux"),
-                        "params": MappingProxyType(
-                            {
-                                "qux": "named",
-                                "foo": MappingProxyType({"baz": ("bar", "qux")}),
-                            }
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlServersQueryParamsStringListMap",
-                        "documentation": "Servers put all query params in map",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/StringListMap",
-                        "body": "",
-                        "queryParams": ("corge=named", "baz=bar", "baz=qux"),
-                        "params": MappingProxyType(
-                            {
-                                "qux": "named",
-                                "foo": MappingProxyType(
-                                    {"corge": ("named",), "baz": ("bar", "qux")}
-                                ),
-                            }
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/StringListMap", "method": "POST"}),
-        ),
+        )
     ],
 )
 
 QUERY_PRECEDENCE_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.restxml#QueryPrecedenceInput"),
-    traits=[
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("HttpQueryParamsTrait",)),
-        Trait.new(id=ShapeID("smithy.api#input")),
-    ],
     members={
         "foo": {
             "target": STRING,
@@ -4773,8 +2460,7 @@ QUERY_PRECEDENCE_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -4783,54 +2469,9 @@ QUERY_PRECEDENCE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlQueryPrecedence",
-                        "documentation": "Prefer named query parameters when serializing",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/Precedence",
-                        "body": "",
-                        "queryParams": ("bar=named", "qux=alsoFromMap"),
-                        "params": MappingProxyType(
-                            {
-                                "foo": "named",
-                                "baz": MappingProxyType(
-                                    {"bar": "fromMap", "qux": "alsoFromMap"}
-                                ),
-                            }
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlServersPutAllQueryParamsInMap",
-                        "documentation": "Servers put all query params in map",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/Precedence",
-                        "body": "",
-                        "queryParams": ("bar=named", "qux=fromMap"),
-                        "params": MappingProxyType(
-                            {
-                                "foo": "named",
-                                "baz": MappingProxyType(
-                                    {"bar": "named", "qux": "fromMap"}
-                                ),
-                            }
-                        ),
-                        "appliesTo": "server",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/Precedence", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -4851,8 +2492,7 @@ SIMPLE_SCALAR_PROPERTIES_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#SimpleScalarPropertiesRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "foo": {
@@ -4882,8 +2522,7 @@ SIMPLE_SCALAR_PROPERTIES_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#SimpleScalarPropertiesResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "foo": {
@@ -4912,310 +2551,9 @@ SIMPLE_SCALAR_PROPERTIES = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "SimpleScalarProperties",
-                        "documentation": "Serializes simple scalar properties",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/SimpleScalarProperties",
-                        "body": "<SimpleScalarPropertiesRequest>\n    <stringValue>string</stringValue>\n    <trueBooleanValue>true</trueBooleanValue>\n    <falseBooleanValue>false</falseBooleanValue>\n    <byteValue>1</byteValue>\n    <shortValue>2</shortValue>\n    <integerValue>3</integerValue>\n    <longValue>4</longValue>\n    <floatValue>5.5</floatValue>\n    <DoubleDribble>6.5</DoubleDribble>\n</SimpleScalarPropertiesRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml", "X-Foo": "Foo"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "foo": "Foo",
-                                "stringValue": "string",
-                                "trueBooleanValue": True,
-                                "falseBooleanValue": False,
-                                "byteValue": 1,
-                                "shortValue": 2,
-                                "integerValue": 3,
-                                "longValue": 4,
-                                "floatValue": 5.5,
-                                "doubleValue": 6.5,
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "SimpleScalarPropertiesWithEscapedCharacter",
-                        "documentation": "Serializes string with escaping",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/SimpleScalarProperties",
-                        "body": "<SimpleScalarPropertiesRequest>\n    <stringValue>&lt;string&gt;</stringValue>\n</SimpleScalarPropertiesRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml", "X-Foo": "Foo"}
-                        ),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "stringValue": "<string>"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "SimpleScalarPropertiesWithWhiteSpace",
-                        "documentation": "Serializes string containing white space",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/SimpleScalarProperties",
-                        "body": "<SimpleScalarPropertiesRequest>\n    <stringValue>  string with white    space  </stringValue>\n</SimpleScalarPropertiesRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml", "X-Foo": "Foo"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "foo": "Foo",
-                                "stringValue": "  string with white    space  ",
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "SimpleScalarPropertiesPureWhiteSpace",
-                        "documentation": "Serializes string containing exclusively whitespace",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/SimpleScalarProperties",
-                        "body": "<SimpleScalarPropertiesRequest>\n    <stringValue>   </stringValue>\n</SimpleScalarPropertiesRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml", "X-Foo": "Foo"}
-                        ),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "stringValue": "   "}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSupportsNaNFloatInputs",
-                        "documentation": "Supports handling NaN float values.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/SimpleScalarProperties",
-                        "body": "<SimpleScalarPropertiesRequest>\n    <floatValue>NaN</floatValue>\n    <DoubleDribble>NaN</DoubleDribble>\n</SimpleScalarPropertiesRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"floatValue": "NaN", "doubleValue": "NaN"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSupportsInfinityFloatInputs",
-                        "documentation": "Supports handling Infinity float values.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/SimpleScalarProperties",
-                        "body": "<SimpleScalarPropertiesRequest>\n    <floatValue>Infinity</floatValue>\n    <DoubleDribble>Infinity</DoubleDribble>\n</SimpleScalarPropertiesRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"floatValue": "Infinity", "doubleValue": "Infinity"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSupportsNegativeInfinityFloatInputs",
-                        "documentation": "Supports handling -Infinity float values.",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/SimpleScalarProperties",
-                        "body": "<SimpleScalarPropertiesRequest>\n    <floatValue>-Infinity</floatValue>\n    <DoubleDribble>-Infinity</DoubleDribble>\n</SimpleScalarPropertiesRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"floatValue": "-Infinity", "doubleValue": "-Infinity"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "SimpleScalarProperties",
-                        "documentation": "Serializes simple scalar properties",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<SimpleScalarPropertiesResponse>\n    <stringValue>string</stringValue>\n    <trueBooleanValue>true</trueBooleanValue>\n    <falseBooleanValue>false</falseBooleanValue>\n    <byteValue>1</byteValue>\n    <shortValue>2</shortValue>\n    <integerValue>3</integerValue>\n    <longValue>4</longValue>\n    <floatValue>5.5</floatValue>\n    <DoubleDribble>6.5</DoubleDribble>\n</SimpleScalarPropertiesResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml", "X-Foo": "Foo"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "foo": "Foo",
-                                "stringValue": "string",
-                                "trueBooleanValue": True,
-                                "falseBooleanValue": False,
-                                "byteValue": 1,
-                                "shortValue": 2,
-                                "integerValue": 3,
-                                "longValue": 4,
-                                "floatValue": 5.5,
-                                "doubleValue": 6.5,
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "SimpleScalarPropertiesComplexEscapes",
-                        "documentation": "Serializes string with escaping.\n\nThis validates the three escape types: literal, decimal and hexadecimal. It also validates that unescaping properly\nhandles the case where unescaping an & produces a newly formed escape sequence (this should not be re-unescaped).\n\nServers may produce different output, this test is designed different unescapes clients must handle\n",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<SimpleScalarPropertiesResponse>\n    <stringValue>escaped data: &amp;lt;&#xD;&#10;</stringValue>\n</SimpleScalarPropertiesResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml", "X-Foo": "Foo"}
-                        ),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "stringValue": "escaped data: &lt;\r\n"}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "SimpleScalarPropertiesWithEscapedCharacter",
-                        "documentation": "Serializes string with escaping",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<SimpleScalarPropertiesResponse>\n    <stringValue>&lt;string&gt;</stringValue>\n</SimpleScalarPropertiesResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml", "X-Foo": "Foo"}
-                        ),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "stringValue": "<string>"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "SimpleScalarPropertiesWithXMLPreamble",
-                        "documentation": "Serializes simple scalar properties with xml preamble, comments and CDATA",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": '<?xml version = "1.0" encoding = "UTF-8"?>\n<SimpleScalarPropertiesResponse>\n    <![CDATA[characters representing CDATA]]>\n    <stringValue>string</stringValue>\n    <!--xml comment-->\n</SimpleScalarPropertiesResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml", "X-Foo": "Foo"}
-                        ),
-                        "params": MappingProxyType(
-                            {"foo": "Foo", "stringValue": "string"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "SimpleScalarPropertiesWithWhiteSpace",
-                        "documentation": "Serializes string containing white space",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": '<?xml version = "1.0" encoding = "UTF-8"?>\n<SimpleScalarPropertiesResponse>\n    <stringValue> string with white    space </stringValue>\n</SimpleScalarPropertiesResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml", "X-Foo": "Foo"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "foo": "Foo",
-                                "stringValue": " string with white    space ",
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "SimpleScalarPropertiesPureWhiteSpace",
-                        "documentation": "Serializes string containing white space",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": '<?xml version = "1.0" encoding = "UTF-8"?>\n<SimpleScalarPropertiesResponse>\n    <stringValue>  </stringValue>\n</SimpleScalarPropertiesResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml", "X-Foo": "Foo"}
-                        ),
-                        "params": MappingProxyType({"foo": "Foo", "stringValue": "  "}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSupportsNaNFloatOutputs",
-                        "documentation": "Supports handling NaN float values.",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<SimpleScalarPropertiesResponse>\n    <floatValue>NaN</floatValue>\n    <DoubleDribble>NaN</DoubleDribble>\n</SimpleScalarPropertiesResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"floatValue": "NaN", "doubleValue": "NaN"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSupportsInfinityFloatOutputs",
-                        "documentation": "Supports handling Infinity float values.",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<SimpleScalarPropertiesResponse>\n    <floatValue>Infinity</floatValue>\n    <DoubleDribble>Infinity</DoubleDribble>\n</SimpleScalarPropertiesResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"floatValue": "Infinity", "doubleValue": "Infinity"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "RestXmlSupportsNegativeInfinityFloatOutputs",
-                        "documentation": "Supports handling -Infinity float values.",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<SimpleScalarPropertiesResponse>\n    <floatValue>-Infinity</floatValue>\n    <DoubleDribble>-Infinity</DoubleDribble>\n</SimpleScalarPropertiesResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"floatValue": "-Infinity", "doubleValue": "-Infinity"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/SimpleScalarProperties", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -5225,8 +2563,7 @@ TIMESTAMP_FORMAT_HEADERS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#TimestampFormatHeadersIO",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "memberEpochSeconds": {
@@ -5293,8 +2630,7 @@ TIMESTAMP_FORMAT_HEADERS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#TimestampFormatHeadersIO",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "memberEpochSeconds": {
@@ -5360,84 +2696,11 @@ TIMESTAMP_FORMAT_HEADERS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "TimestampFormatHeaders",
-                        "documentation": "Tests how timestamp request headers are serialized",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/TimestampFormatHeaders",
-                        "headers": MappingProxyType(
-                            {
-                                "X-memberEpochSeconds": "1576540098",
-                                "X-memberHttpDate": "Mon, 16 Dec 2019 23:48:18 GMT",
-                                "X-memberDateTime": "2019-12-16T23:48:18Z",
-                                "X-defaultFormat": "Mon, 16 Dec 2019 23:48:18 GMT",
-                                "X-targetEpochSeconds": "1576540098",
-                                "X-targetHttpDate": "Mon, 16 Dec 2019 23:48:18 GMT",
-                                "X-targetDateTime": "2019-12-16T23:48:18Z",
-                            }
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "memberEpochSeconds": 1576540098,
-                                "memberHttpDate": 1576540098,
-                                "memberDateTime": 1576540098,
-                                "defaultFormat": 1576540098,
-                                "targetEpochSeconds": 1576540098,
-                                "targetHttpDate": 1576540098,
-                                "targetDateTime": 1576540098,
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "TimestampFormatHeaders",
-                        "documentation": "Tests how timestamp response headers are serialized",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {
-                                "X-memberEpochSeconds": "1576540098",
-                                "X-memberHttpDate": "Mon, 16 Dec 2019 23:48:18 GMT",
-                                "X-memberDateTime": "2019-12-16T23:48:18Z",
-                                "X-defaultFormat": "Mon, 16 Dec 2019 23:48:18 GMT",
-                                "X-targetEpochSeconds": "1576540098",
-                                "X-targetHttpDate": "Mon, 16 Dec 2019 23:48:18 GMT",
-                                "X-targetDateTime": "2019-12-16T23:48:18Z",
-                            }
-                        ),
-                        "body": "",
-                        "params": MappingProxyType(
-                            {
-                                "memberEpochSeconds": 1576540098,
-                                "memberHttpDate": 1576540098,
-                                "memberDateTime": 1576540098,
-                                "defaultFormat": 1576540098,
-                                "targetEpochSeconds": 1576540098,
-                                "targetHttpDate": 1576540098,
-                                "targetDateTime": 1576540098,
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/TimestampFormatHeaders", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -5447,8 +2710,7 @@ XML_ATTRIBUTES_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlAttributesRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "foo": {"target": STRING},
@@ -5468,8 +2730,7 @@ XML_ATTRIBUTES_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlAttributesResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "foo": {"target": STRING},
@@ -5488,66 +2749,9 @@ XML_ATTRIBUTES = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlAttributes",
-                        "documentation": "Serializes XML attributes on the synthesized document",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/XmlAttributes",
-                        "body": '<XmlAttributesRequest test="test">\n    <foo>hi</foo>\n</XmlAttributesRequest>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"foo": "hi", "attr": "test"}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlAttributesWithEscaping",
-                        "documentation": "Serializes XML attributes with escaped characters on the synthesized document",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/XmlAttributes",
-                        "body": '<XmlAttributesRequest test="&lt;test&amp;mock&gt;">\n    <foo>hi</foo>\n</XmlAttributesRequest>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"foo": "hi", "attr": "<test&mock>"}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlAttributes",
-                        "documentation": "Serializes simple scalar properties",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": '<XmlAttributesResponse test="test">\n    <foo>hi</foo>\n</XmlAttributesResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"foo": "hi", "attr": "test"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/XmlAttributes", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -5572,8 +2776,7 @@ XML_ATTRIBUTES_IN_MIDDLE_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlAttributesInMiddleRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "payload": {
@@ -5604,8 +2807,7 @@ XML_ATTRIBUTES_IN_MIDDLE_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlAttributesInMiddleResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "payload": {
@@ -5620,69 +2822,9 @@ XML_ATTRIBUTES_IN_MIDDLE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlAttributesInMiddle",
-                        "documentation": "Serializes XML attributes on a payload when the xmlAttribute trait targets a member in the middle of the member list",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/XmlAttributesInMiddle",
-                        "body": '<XmlAttributesInMiddlePayloadRequest test="attributeValue">\n    <foo>Foo</foo>\n    <baz>Baz</baz>\n</XmlAttributesInMiddlePayloadRequest>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "payload": MappingProxyType(
-                                    {
-                                        "foo": "Foo",
-                                        "attr": "attributeValue",
-                                        "baz": "Baz",
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlAttributesInMiddle",
-                        "documentation": "Deserializes XML attributes on a payload when the xmlAttribute trait targets a member in the middle of the member list",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": '<XmlAttributesInMiddlePayloadResponse test="attributeValue">\n    <foo>Foo</foo>\n    <baz>Baz</baz>\n</XmlAttributesInMiddlePayloadResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "payload": MappingProxyType(
-                                    {
-                                        "foo": "Foo",
-                                        "attr": "attributeValue",
-                                        "baz": "Baz",
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/XmlAttributesInMiddle", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -5706,8 +2848,7 @@ XML_ATTRIBUTES_ON_PAYLOAD_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlAttributesOnPayloadRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "payload": {
@@ -5737,8 +2878,7 @@ XML_ATTRIBUTES_ON_PAYLOAD_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlAttributesOnPayloadResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "payload": {
@@ -5753,53 +2893,9 @@ XML_ATTRIBUTES_ON_PAYLOAD = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlAttributesOnPayload",
-                        "documentation": "Serializes XML attributes on the synthesized document",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/XmlAttributesOnPayload",
-                        "body": '<XmlAttributesPayloadRequest test="test">\n    <foo>hi</foo>\n</XmlAttributesPayloadRequest>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"payload": MappingProxyType({"foo": "hi", "attr": "test"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlAttributesOnPayload",
-                        "documentation": "Serializes simple scalar properties",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": '<XmlAttributesPayloadResponse test="test">\n    <foo>hi</foo>\n</XmlAttributesPayloadResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"payload": MappingProxyType({"foo": "hi", "attr": "test"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/XmlAttributesOnPayload", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -5809,8 +2905,7 @@ XML_BLOBS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlBlobsRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={"data": {"target": BLOB}},
 )
@@ -5821,8 +2916,7 @@ XML_BLOBS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlBlobsResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={"data": {"target": BLOB}},
 )
@@ -5832,48 +2926,9 @@ XML_BLOBS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlBlobs",
-                        "documentation": "Blobs are base64 encoded",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/XmlBlobs",
-                        "body": "<XmlBlobsRequest>\n    <data>dmFsdWU=</data>\n</XmlBlobsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"data": "value"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlBlobs",
-                        "documentation": "Blobs are base64 encoded",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlBlobsResponse>\n    <data>dmFsdWU=</data>\n</XmlBlobsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"data": "value"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/XmlBlobs", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -5883,8 +2938,7 @@ XML_EMPTY_BLOBS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlEmptyBlobsRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={"data": {"target": BLOB}},
 )
@@ -5895,8 +2949,7 @@ XML_EMPTY_BLOBS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlEmptyBlobsResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={"data": {"target": BLOB}},
 )
@@ -5905,46 +2958,10 @@ XML_EMPTY_BLOBS = Schema(
     id=ShapeID("aws.protocoltests.restxml#XmlEmptyBlobs"),
     shape_type=ShapeType.OPERATION,
     traits=[
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlEmptyBlobs",
-                        "documentation": "Empty blobs are deserialized as empty string",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlEmptyBlobsResponse>\n    <data></data>\n</XmlEmptyBlobsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"data": ""}),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlEmptySelfClosedBlobs",
-                        "documentation": "Empty self closed blobs are deserialized as empty string",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlEmptyBlobsResponse>\n    <data/>\n</XmlEmptyBlobsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"data": ""}),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
         Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/XmlEmptyBlobs", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -5985,8 +3002,7 @@ XML_EMPTY_LISTS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlEmptyListsRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "stringList": {"target": STRING_LIST},
@@ -6003,12 +3019,7 @@ XML_EMPTY_LISTS_INPUT = Schema.collection(
         },
         "flattenedList": {
             "target": RENAMED_LIST_MEMBERS,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#suppress"), value=("XmlFlattenedTrait",)
-                ),
-                Trait.new(id=ShapeID("smithy.api#xmlFlattened")),
-            ],
+            "traits": [Trait.new(id=ShapeID("smithy.api#xmlFlattened"))],
         },
         "flattenedList2": {
             "target": RENAMED_LIST_MEMBERS,
@@ -6033,12 +3044,7 @@ XML_EMPTY_LISTS_INPUT = Schema.collection(
         },
         "flattenedStructureList": {
             "target": STRUCTURE_LIST,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#suppress"), value=("XmlFlattenedTrait",)
-                ),
-                Trait.new(id=ShapeID("smithy.api#xmlFlattened")),
-            ],
+            "traits": [Trait.new(id=ShapeID("smithy.api#xmlFlattened"))],
         },
     },
 )
@@ -6049,8 +3055,7 @@ XML_EMPTY_LISTS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlEmptyListsResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "stringList": {"target": STRING_LIST},
@@ -6067,12 +3072,7 @@ XML_EMPTY_LISTS_OUTPUT = Schema.collection(
         },
         "flattenedList": {
             "target": RENAMED_LIST_MEMBERS,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#suppress"), value=("XmlFlattenedTrait",)
-                ),
-                Trait.new(id=ShapeID("smithy.api#xmlFlattened")),
-            ],
+            "traits": [Trait.new(id=ShapeID("smithy.api#xmlFlattened"))],
         },
         "flattenedList2": {
             "target": RENAMED_LIST_MEMBERS,
@@ -6097,12 +3097,7 @@ XML_EMPTY_LISTS_OUTPUT = Schema.collection(
         },
         "flattenedStructureList": {
             "target": STRUCTURE_LIST,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#suppress"), value=("XmlFlattenedTrait",)
-                ),
-                Trait.new(id=ShapeID("smithy.api#xmlFlattened")),
-            ],
+            "traits": [Trait.new(id=ShapeID("smithy.api#xmlFlattened"))],
         },
     },
 )
@@ -6112,52 +3107,9 @@ XML_EMPTY_LISTS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlEmptyLists",
-                        "documentation": "Serializes Empty XML lists",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/XmlEmptyLists",
-                        "body": "<XmlEmptyListsRequest>\n        <stringList></stringList>\n        <stringSet></stringSet>\n</XmlEmptyListsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"stringList": (), "stringSet": ()}),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlEmptyLists",
-                        "documentation": "Deserializes Empty XML lists",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlEmptyListsResponse>\n        <stringList/>\n        <stringSet></stringSet>\n</XmlEmptyListsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"stringList": (), "stringSet": ()}),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/XmlEmptyLists", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -6178,8 +3130,7 @@ XML_EMPTY_MAPS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlEmptyMapsRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={"myMap": {"target": XML_MAPS_INPUT_OUTPUT_MAP}},
 )
@@ -6190,8 +3141,7 @@ XML_EMPTY_MAPS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlEmptyMapsResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={"myMap": {"target": XML_MAPS_INPUT_OUTPUT_MAP}},
 )
@@ -6201,66 +3151,9 @@ XML_EMPTY_MAPS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlEmptyMaps",
-                        "documentation": "Serializes Empty XML maps",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/XmlEmptyMaps",
-                        "body": "<XmlEmptyMapsRequest>\n    <myMap></myMap>\n</XmlEmptyMapsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"myMap": MappingProxyType({})}),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlEmptyMaps",
-                        "documentation": "Deserializes Empty XML maps",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlEmptyMapsResponse>\n    <myMap></myMap>\n</XmlEmptyMapsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"myMap": MappingProxyType({})}),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlEmptySelfClosedMaps",
-                        "documentation": "Deserializes Empty Self-closed XML maps",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlEmptyMapsResponse>\n    <myMap/>\n</XmlEmptyMapsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"myMap": MappingProxyType({})}),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/XmlEmptyMaps", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -6270,8 +3163,7 @@ XML_EMPTY_STRINGS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlEmptyStringsRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={"emptyString": {"target": STRING}},
 )
@@ -6282,8 +3174,7 @@ XML_EMPTY_STRINGS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlEmptyStringsResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={"emptyString": {"target": STRING}},
 )
@@ -6293,74 +3184,15 @@ XML_EMPTY_STRINGS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlEmptyStrings",
-                        "documentation": "Serializes xml empty strings",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/XmlEmptyStrings",
-                        "body": "<XmlEmptyStringsRequest>\n    <emptyString></emptyString>\n</XmlEmptyStringsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"emptyString": ""}),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlEmptyStrings",
-                        "documentation": "Deserializes xml empty strings",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlEmptyStringsResponse>\n    <emptyString></emptyString>\n</XmlEmptyStringsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"emptyString": ""}),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlEmptySelfClosedStrings",
-                        "documentation": "Empty self closed string are deserialized as empty string",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlEmptyStringsResponse>\n    <emptyString/>\n</XmlEmptyStringsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"emptyString": ""}),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/XmlEmptyStrings", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
 FOO_ENUM_SET = Schema.collection(
     id=ShapeID("aws.protocoltests.shared#FooEnumSet"),
     shape_type=ShapeType.LIST,
-    traits=[Trait.new(id=ShapeID("smithy.api#uniqueItems"))],
     members={"member": {"target": FOO_ENUM}},
 )
 
@@ -6370,8 +3202,7 @@ XML_ENUMS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlEnumsRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "fooEnum1": {"target": FOO_ENUM},
@@ -6389,8 +3220,7 @@ XML_ENUMS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlEnumsResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "fooEnum1": {"target": FOO_ENUM},
@@ -6407,71 +3237,9 @@ XML_ENUMS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlEnums",
-                        "documentation": "Serializes simple scalar properties",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/XmlEnums",
-                        "body": "<XmlEnumsRequest>\n    <fooEnum1>Foo</fooEnum1>\n    <fooEnum2>0</fooEnum2>\n    <fooEnum3>1</fooEnum3>\n    <fooEnumList>\n        <member>Foo</member>\n        <member>0</member>\n    </fooEnumList>\n    <fooEnumSet>\n        <member>Foo</member>\n        <member>0</member>\n    </fooEnumSet>\n    <fooEnumMap>\n        <entry>\n            <key>hi</key>\n            <value>Foo</value>\n        </entry>\n        <entry>\n            <key>zero</key>\n            <value>0</value>\n        </entry>\n    </fooEnumMap>\n</XmlEnumsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "fooEnum1": "Foo",
-                                "fooEnum2": "0",
-                                "fooEnum3": "1",
-                                "fooEnumList": ("Foo", "0"),
-                                "fooEnumSet": ("Foo", "0"),
-                                "fooEnumMap": MappingProxyType(
-                                    {"hi": "Foo", "zero": "0"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlEnums",
-                        "documentation": "Serializes simple scalar properties",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlEnumsResponse>\n    <fooEnum1>Foo</fooEnum1>\n    <fooEnum2>0</fooEnum2>\n    <fooEnum3>1</fooEnum3>\n    <fooEnumList>\n        <member>Foo</member>\n        <member>0</member>\n    </fooEnumList>\n    <fooEnumSet>\n        <member>Foo</member>\n        <member>0</member>\n    </fooEnumSet>\n    <fooEnumMap>\n        <entry>\n            <key>hi</key>\n            <value>Foo</value>\n        </entry>\n        <entry>\n            <key>zero</key>\n            <value>0</value>\n        </entry>\n    </fooEnumMap>\n</XmlEnumsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "fooEnum1": "Foo",
-                                "fooEnum2": "0",
-                                "fooEnum3": "1",
-                                "fooEnumList": ("Foo", "0"),
-                                "fooEnumSet": ("Foo", "0"),
-                                "fooEnumMap": MappingProxyType(
-                                    {"hi": "Foo", "zero": "0"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/XmlEnums", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -6484,7 +3252,6 @@ INTEGER_ENUM_MAP = Schema.collection(
 INTEGER_ENUM_SET = Schema.collection(
     id=ShapeID("aws.protocoltests.shared#IntegerEnumSet"),
     shape_type=ShapeType.LIST,
-    traits=[Trait.new(id=ShapeID("smithy.api#uniqueItems"))],
     members={"member": {"target": INTEGER_ENUM}},
 )
 
@@ -6494,8 +3261,7 @@ XML_INT_ENUMS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlIntEnumsRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "intEnum1": {"target": INTEGER_ENUM},
@@ -6513,8 +3279,7 @@ XML_INT_ENUMS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlIntEnumsResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "intEnum1": {"target": INTEGER_ENUM},
@@ -6531,67 +3296,9 @@ XML_INT_ENUMS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlIntEnums",
-                        "documentation": "Serializes simple scalar properties",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/XmlIntEnums",
-                        "body": "<XmlIntEnumsRequest>\n    <intEnum1>1</intEnum1>\n    <intEnum2>2</intEnum2>\n    <intEnum3>3</intEnum3>\n    <intEnumList>\n        <member>1</member>\n        <member>2</member>\n    </intEnumList>\n    <intEnumSet>\n        <member>1</member>\n        <member>2</member>\n    </intEnumSet>\n    <intEnumMap>\n        <entry>\n            <key>a</key>\n            <value>1</value>\n        </entry>\n        <entry>\n            <key>b</key>\n            <value>2</value>\n        </entry>\n    </intEnumMap>\n</XmlIntEnumsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "intEnum1": 1,
-                                "intEnum2": 2,
-                                "intEnum3": 3,
-                                "intEnumList": (1, 2),
-                                "intEnumSet": (1, 2),
-                                "intEnumMap": MappingProxyType({"a": 1, "b": 2}),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlIntEnums",
-                        "documentation": "Serializes simple scalar properties",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlIntEnumsResponse>\n    <intEnum1>1</intEnum1>\n    <intEnum2>2</intEnum2>\n    <intEnum3>3</intEnum3>\n    <intEnumList>\n        <member>1</member>\n        <member>2</member>\n    </intEnumList>\n    <intEnumSet>\n        <member>1</member>\n        <member>2</member>\n    </intEnumSet>\n    <intEnumMap>\n        <entry>\n            <key>a</key>\n            <value>1</value>\n        </entry>\n        <entry>\n            <key>b</key>\n            <value>2</value>\n        </entry>\n    </intEnumMap>\n</XmlIntEnumsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "intEnum1": 1,
-                                "intEnum2": 2,
-                                "intEnum3": 3,
-                                "intEnumList": (1, 2),
-                                "intEnumSet": (1, 2),
-                                "intEnumMap": MappingProxyType({"a": 1, "b": 2}),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/XmlIntEnums", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -6601,8 +3308,7 @@ XML_LISTS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlListsRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "stringList": {"target": STRING_LIST},
@@ -6619,12 +3325,7 @@ XML_LISTS_INPUT = Schema.collection(
         },
         "flattenedList": {
             "target": RENAMED_LIST_MEMBERS,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#suppress"), value=("XmlFlattenedTrait",)
-                ),
-                Trait.new(id=ShapeID("smithy.api#xmlFlattened")),
-            ],
+            "traits": [Trait.new(id=ShapeID("smithy.api#xmlFlattened"))],
         },
         "flattenedList2": {
             "target": RENAMED_LIST_MEMBERS,
@@ -6649,12 +3350,7 @@ XML_LISTS_INPUT = Schema.collection(
         },
         "flattenedStructureList": {
             "target": STRUCTURE_LIST,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#suppress"), value=("XmlFlattenedTrait",)
-                ),
-                Trait.new(id=ShapeID("smithy.api#xmlFlattened")),
-            ],
+            "traits": [Trait.new(id=ShapeID("smithy.api#xmlFlattened"))],
         },
     },
 )
@@ -6665,8 +3361,7 @@ XML_LISTS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlListsResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "stringList": {"target": STRING_LIST},
@@ -6683,12 +3378,7 @@ XML_LISTS_OUTPUT = Schema.collection(
         },
         "flattenedList": {
             "target": RENAMED_LIST_MEMBERS,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#suppress"), value=("XmlFlattenedTrait",)
-                ),
-                Trait.new(id=ShapeID("smithy.api#xmlFlattened")),
-            ],
+            "traits": [Trait.new(id=ShapeID("smithy.api#xmlFlattened"))],
         },
         "flattenedList2": {
             "target": RENAMED_LIST_MEMBERS,
@@ -6713,12 +3403,7 @@ XML_LISTS_OUTPUT = Schema.collection(
         },
         "flattenedStructureList": {
             "target": STRUCTURE_LIST,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#suppress"), value=("XmlFlattenedTrait",)
-                ),
-                Trait.new(id=ShapeID("smithy.api#xmlFlattened")),
-            ],
+            "traits": [Trait.new(id=ShapeID("smithy.api#xmlFlattened"))],
         },
     },
 )
@@ -6728,95 +3413,9 @@ XML_LISTS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlLists",
-                        "documentation": "Tests for XML list serialization",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/XmlLists",
-                        "body": "<XmlListsRequest>\n    <stringList>\n        <member>foo</member>\n        <member>bar</member>\n    </stringList>\n    <stringSet>\n        <member>foo</member>\n        <member>bar</member>\n    </stringSet>\n    <integerList>\n        <member>1</member>\n        <member>2</member>\n    </integerList>\n    <booleanList>\n        <member>true</member>\n        <member>false</member>\n    </booleanList>\n    <timestampList>\n        <member>2014-04-29T18:30:38Z</member>\n        <member>2014-04-29T18:30:38Z</member>\n    </timestampList>\n    <enumList>\n        <member>Foo</member>\n        <member>0</member>\n    </enumList>\n    <intEnumList>\n        <member>1</member>\n        <member>2</member>\n    </intEnumList>\n    <nestedStringList>\n        <member>\n            <member>foo</member>\n            <member>bar</member>\n        </member>\n        <member>\n            <member>baz</member>\n            <member>qux</member>\n        </member>\n    </nestedStringList>\n    <renamed>\n        <item>foo</item>\n        <item>bar</item>\n    </renamed>\n    <flattenedList>hi</flattenedList>\n    <flattenedList>bye</flattenedList>\n    <customName>yep</customName>\n    <customName>nope</customName>\n    <myStructureList>\n        <item>\n            <value>1</value>\n            <other>2</other>\n        </item>\n        <item>\n            <value>3</value>\n            <other>4</other>\n        </item>\n    </myStructureList>\n    <flattenedStructureList>\n        <value>5</value>\n        <other>6</other>\n    </flattenedStructureList>\n    <flattenedStructureList>\n        <value>7</value>\n        <other>8</other>\n    </flattenedStructureList>\n</XmlListsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "stringList": ("foo", "bar"),
-                                "stringSet": ("foo", "bar"),
-                                "integerList": (1, 2),
-                                "booleanList": (True, False),
-                                "timestampList": (1398796238, 1398796238),
-                                "enumList": ("Foo", "0"),
-                                "intEnumList": (1, 2),
-                                "nestedStringList": (("foo", "bar"), ("baz", "qux")),
-                                "renamedListMembers": ("foo", "bar"),
-                                "flattenedList": ("hi", "bye"),
-                                "flattenedList2": ("yep", "nope"),
-                                "structureList": (
-                                    MappingProxyType({"a": "1", "b": "2"}),
-                                    MappingProxyType({"a": "3", "b": "4"}),
-                                ),
-                                "flattenedStructureList": (
-                                    MappingProxyType({"a": "5", "b": "6"}),
-                                    MappingProxyType({"a": "7", "b": "8"}),
-                                ),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlLists",
-                        "documentation": "Tests for XML list serialization",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": '<XmlListsResponse>\n    <stringList>\n        <member>foo</member>\n        <member>bar</member>\n    </stringList>\n    <stringSet>\n        <member>foo</member>\n        <member>bar</member>\n    </stringSet>\n    <integerList>\n        <member>1</member>\n        <member>2</member>\n    </integerList>\n    <booleanList>\n        <member>true</member>\n        <member>false</member>\n    </booleanList>\n    <timestampList>\n        <member>2014-04-29T18:30:38Z</member>\n        <member>2014-04-29T18:30:38Z</member>\n    </timestampList>\n    <enumList>\n        <member>Foo</member>\n        <member>0</member>\n    </enumList>\n    <intEnumList>\n        <member>1</member>\n        <member>2</member>\n    </intEnumList>\n    <nestedStringList>\n        <member>\n            <member>foo</member>\n            <member>bar</member>\n        </member>\n        <member>\n            <member>baz</member>\n            <member>qux</member>\n        </member>\n    </nestedStringList>\n    <renamed>\n        <item>foo</item>\n        <item>bar</item>\n    </renamed>\n    <flattenedList>hi</flattenedList>\n    <flattenedList>bye</flattenedList>\n    <customName>yep</customName>\n    <customName>nope</customName>\n    <flattenedListWithMemberNamespace xmlns="https://xml-member.example.com">a</flattenedListWithMemberNamespace>\n    <flattenedListWithMemberNamespace xmlns="https://xml-member.example.com">b</flattenedListWithMemberNamespace>\n    <flattenedListWithNamespace>a</flattenedListWithNamespace>\n    <flattenedListWithNamespace>b</flattenedListWithNamespace>\n    <myStructureList>\n        <item>\n            <value>1</value>\n            <other>2</other>\n        </item>\n        <item>\n            <value>3</value>\n            <other>4</other>\n        </item>\n    </myStructureList>\n    <flattenedStructureList>\n        <value>5</value>\n        <other>6</other>\n    </flattenedStructureList>\n    <flattenedStructureList>\n        <value>7</value>\n        <other>8</other>\n    </flattenedStructureList>\n</XmlListsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "stringList": ("foo", "bar"),
-                                "stringSet": ("foo", "bar"),
-                                "integerList": (1, 2),
-                                "booleanList": (True, False),
-                                "timestampList": (1398796238, 1398796238),
-                                "enumList": ("Foo", "0"),
-                                "intEnumList": (1, 2),
-                                "nestedStringList": (("foo", "bar"), ("baz", "qux")),
-                                "renamedListMembers": ("foo", "bar"),
-                                "flattenedList": ("hi", "bye"),
-                                "flattenedList2": ("yep", "nope"),
-                                "flattenedListWithMemberNamespace": ("a", "b"),
-                                "flattenedListWithNamespace": ("a", "b"),
-                                "structureList": (
-                                    MappingProxyType({"a": "1", "b": "2"}),
-                                    MappingProxyType({"a": "3", "b": "4"}),
-                                ),
-                                "flattenedStructureList": (
-                                    MappingProxyType({"a": "5", "b": "6"}),
-                                    MappingProxyType({"a": "7", "b": "8"}),
-                                ),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/XmlLists", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -6826,8 +3425,7 @@ XML_MAPS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlMapsRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={"myMap": {"target": XML_MAPS_INPUT_OUTPUT_MAP}},
 )
@@ -6838,8 +3436,7 @@ XML_MAPS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlMapsResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={"myMap": {"target": XML_MAPS_INPUT_OUTPUT_MAP}},
 )
@@ -6849,66 +3446,9 @@ XML_MAPS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlMaps",
-                        "documentation": "Tests for XML map serialization",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/XmlMaps",
-                        "body": "<XmlMapsRequest>\n    <myMap>\n        <entry>\n            <key>foo</key>\n            <value>\n                <hi>there</hi>\n            </value>\n        </entry>\n        <entry>\n            <key>baz</key>\n            <value>\n                <hi>bye</hi>\n            </value>\n        </entry>\n    </myMap>\n</XmlMapsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "myMap": MappingProxyType(
-                                    {
-                                        "foo": MappingProxyType({"hi": "there"}),
-                                        "baz": MappingProxyType({"hi": "bye"}),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlMaps",
-                        "documentation": "Tests for XML map serialization",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlMapsResponse>\n    <myMap>\n        <entry>\n            <key>foo</key>\n            <value>\n                <hi>there</hi>\n            </value>\n        </entry>\n        <entry>\n            <key>baz</key>\n            <value>\n                <hi>bye</hi>\n            </value>\n        </entry>\n    </myMap>\n</XmlMapsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "myMap": MappingProxyType(
-                                    {
-                                        "foo": MappingProxyType({"hi": "there"}),
-                                        "baz": MappingProxyType({"hi": "bye"}),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/XmlMaps", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -6933,8 +3473,7 @@ XML_MAPS_XML_NAME_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlMapsXmlNameRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={"myMap": {"target": XML_MAPS_XML_NAME_INPUT_OUTPUT_MAP}},
 )
@@ -6945,8 +3484,7 @@ XML_MAPS_XML_NAME_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlMapsXmlNameResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={"myMap": {"target": XML_MAPS_XML_NAME_INPUT_OUTPUT_MAP}},
 )
@@ -6956,66 +3494,9 @@ XML_MAPS_XML_NAME = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlMapsXmlName",
-                        "documentation": "Serializes XML maps that have xmlName on members",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/XmlMapsXmlName",
-                        "body": "<XmlMapsXmlNameRequest>\n    <myMap>\n        <entry>\n            <Attribute>foo</Attribute>\n            <Setting>\n                <hi>there</hi>\n            </Setting>\n        </entry>\n        <entry>\n            <Attribute>baz</Attribute>\n            <Setting>\n                <hi>bye</hi>\n            </Setting>\n        </entry>\n    </myMap>\n</XmlMapsXmlNameRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "myMap": MappingProxyType(
-                                    {
-                                        "foo": MappingProxyType({"hi": "there"}),
-                                        "baz": MappingProxyType({"hi": "bye"}),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlMapsXmlName",
-                        "documentation": "Serializes XML lists",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlMapsXmlNameResponse>\n    <myMap>\n        <entry>\n            <Attribute>foo</Attribute>\n            <Setting>\n                <hi>there</hi>\n            </Setting>\n        </entry>\n        <entry>\n            <Attribute>baz</Attribute>\n            <Setting>\n                <hi>bye</hi>\n            </Setting>\n        </entry>\n    </myMap>\n</XmlMapsXmlNameResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "myMap": MappingProxyType(
-                                    {
-                                        "foo": MappingProxyType({"hi": "there"}),
-                                        "baz": MappingProxyType({"hi": "bye"}),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/XmlMapsXmlName", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -7052,8 +3533,7 @@ XML_MAP_WITH_XML_NAMESPACE_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlMapWithXmlNamespaceRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "myMap": {
@@ -7075,8 +3555,7 @@ XML_MAP_WITH_XML_NAMESPACE_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlMapWithXmlNamespaceResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "myMap": {
@@ -7097,54 +3576,11 @@ XML_MAP_WITH_XML_NAMESPACE = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlXmlMapWithXmlNamespace",
-                        "documentation": "Serializes XML maps in requests that have xmlNamespace and xmlName on members",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/XmlMapWithXmlNamespace",
-                        "body": '<XmlMapWithXmlNamespaceRequest>\n    <KVP xmlns="https://the-member.example.com">\n        <entry>\n            <K xmlns="https://the-key.example.com">a</K>\n            <V xmlns="https://the-value.example.com">A</V>\n        </entry>\n        <entry>\n            <K xmlns="https://the-key.example.com">b</K>\n            <V xmlns="https://the-value.example.com">B</V>\n        </entry>\n    </KVP>\n</XmlMapWithXmlNamespaceRequest>',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"myMap": MappingProxyType({"a": "A", "b": "B"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RestXmlXmlMapWithXmlNamespace",
-                        "documentation": "Serializes XML maps in responses that have xmlNamespace and xmlName on members",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": '<XmlMapWithXmlNamespaceResponse>\n    <KVP xmlns="https://the-member.example.com">\n        <entry>\n            <K xmlns="https://the-key.example.com">a</K>\n            <V xmlns="https://the-value.example.com">A</V>\n        </entry>\n        <entry>\n            <K xmlns="https://the-key.example.com">b</K>\n            <V xmlns="https://the-value.example.com">B</V>\n        </entry>\n    </KVP>\n</XmlMapWithXmlNamespaceResponse>',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"myMap": MappingProxyType({"a": "A", "b": "B"})}
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType(
                 {"uri": "/XmlMapWithXmlNamespace", "method": "POST"}
             ),
-        ),
+        )
     ],
 )
 
@@ -7201,7 +3637,6 @@ XML_NAMESPACES_INPUT = Schema.collection(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlNamespacesRequest",
         ),
-        Trait.new(id=ShapeID("smithy.api#input")),
         Trait.new(
             id=ShapeID("smithy.api#xmlNamespace"),
             value=MappingProxyType({"uri": "http://foo.com"}),
@@ -7217,7 +3652,6 @@ XML_NAMESPACES_OUTPUT = Schema.collection(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlNamespacesResponse",
         ),
-        Trait.new(id=ShapeID("smithy.api#output")),
         Trait.new(
             id=ShapeID("smithy.api#xmlNamespace"),
             value=MappingProxyType({"uri": "http://foo.com"}),
@@ -7231,60 +3665,9 @@ XML_NAMESPACES = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlNamespaces",
-                        "documentation": "Serializes XML namespaces",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/XmlNamespaces",
-                        "body": '<XmlNamespacesRequest xmlns="http://foo.com">\n    <nested>\n        <foo xmlns:baz="http://baz.com">Foo</foo>\n        <values xmlns="http://qux.com">\n            <member xmlns="http://bux.com">Bar</member>\n            <member xmlns="http://bux.com">Baz</member>\n        </values>\n    </nested>\n</XmlNamespacesRequest>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "nested": MappingProxyType(
-                                    {"foo": "Foo", "values": ("Bar", "Baz")}
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlNamespaces",
-                        "documentation": "Serializes XML namespaces",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": '<XmlNamespacesResponse xmlns="http://foo.com">\n    <nested>\n        <foo xmlns:baz="http://baz.com">Foo</foo>\n        <values xmlns="http://qux.com">\n            <member xmlns="http://bux.com">Bar</member>\n            <member xmlns="http://bux.com">Baz</member>\n        </values>\n    </nested>\n</XmlNamespacesResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "nested": MappingProxyType(
-                                    {"foo": "Foo", "values": ("Bar", "Baz")}
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/XmlNamespaces", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -7294,8 +3677,7 @@ XML_TIMESTAMPS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlTimestampsRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "normal": {"target": TIMESTAMP},
@@ -7331,8 +3713,7 @@ XML_TIMESTAMPS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlTimestampsResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "normal": {"target": TIMESTAMP},
@@ -7367,226 +3748,9 @@ XML_TIMESTAMPS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlTimestamps",
-                        "documentation": "Tests how normal timestamps are serialized",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/XmlTimestamps",
-                        "body": "<XmlTimestampsRequest>\n    <normal>2014-04-29T18:30:38Z</normal>\n</XmlTimestampsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"normal": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlTimestampsWithDateTimeFormat",
-                        "documentation": "Ensures that the timestampFormat of date-time works like normal timestamps",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/XmlTimestamps",
-                        "body": "<XmlTimestampsRequest>\n    <dateTime>2014-04-29T18:30:38Z</dateTime>\n</XmlTimestampsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"dateTime": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlTimestampsWithDateTimeOnTargetFormat",
-                        "documentation": "Ensures that the timestampFormat of date-time on the target shape works like normal timestamps",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/XmlTimestamps",
-                        "body": "<XmlTimestampsRequest>\n    <dateTimeOnTarget>2014-04-29T18:30:38Z</dateTimeOnTarget>\n</XmlTimestampsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"dateTimeOnTarget": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlTimestampsWithEpochSecondsFormat",
-                        "documentation": "Ensures that the timestampFormat of epoch-seconds works",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/XmlTimestamps",
-                        "body": "<XmlTimestampsRequest>\n    <epochSeconds>1398796238</epochSeconds>\n</XmlTimestampsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"epochSeconds": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlTimestampsWithEpochSecondsOnTargetFormat",
-                        "documentation": "Ensures that the timestampFormat of epoch-seconds on the target shape works",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/XmlTimestamps",
-                        "body": "<XmlTimestampsRequest>\n    <epochSecondsOnTarget>1398796238</epochSecondsOnTarget>\n</XmlTimestampsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"epochSecondsOnTarget": 1398796238}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlTimestampsWithHttpDateFormat",
-                        "documentation": "Ensures that the timestampFormat of http-date works",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/XmlTimestamps",
-                        "body": "<XmlTimestampsRequest>\n    <httpDate>Tue, 29 Apr 2014 18:30:38 GMT</httpDate>\n</XmlTimestampsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"httpDate": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlTimestampsWithHttpDateOnTargetFormat",
-                        "documentation": "Ensures that the timestampFormat of http-date on the target shape works",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "POST",
-                        "uri": "/XmlTimestamps",
-                        "body": "<XmlTimestampsRequest>\n    <httpDateOnTarget>Tue, 29 Apr 2014 18:30:38 GMT</httpDateOnTarget>\n</XmlTimestampsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"httpDateOnTarget": 1398796238}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlTimestamps",
-                        "documentation": "Tests how normal timestamps are serialized",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlTimestampsResponse>\n    <normal>2014-04-29T18:30:38Z</normal>\n</XmlTimestampsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"normal": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlTimestampsWithDateTimeFormat",
-                        "documentation": "Ensures that the timestampFormat of date-time works like normal timestamps",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlTimestampsResponse>\n    <dateTime>2014-04-29T18:30:38Z</dateTime>\n</XmlTimestampsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"dateTime": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlTimestampsWithDateTimeOnTargetFormat",
-                        "documentation": "Ensures that the timestampFormat of date-time on the target shape works like normal timestamps",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlTimestampsResponse>\n    <dateTimeOnTarget>2014-04-29T18:30:38Z</dateTimeOnTarget>\n</XmlTimestampsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"dateTimeOnTarget": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlTimestampsWithEpochSecondsFormat",
-                        "documentation": "Ensures that the timestampFormat of epoch-seconds works",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlTimestampsResponse>\n    <epochSeconds>1398796238</epochSeconds>\n</XmlTimestampsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"epochSeconds": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlTimestampsWithEpochSecondsOnTargetFormat",
-                        "documentation": "Ensures that the timestampFormat of epoch-seconds on the target shape works",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlTimestampsResponse>\n    <epochSecondsOnTarget>1398796238</epochSecondsOnTarget>\n</XmlTimestampsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"epochSecondsOnTarget": 1398796238}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlTimestampsWithHttpDateFormat",
-                        "documentation": "Ensures that the timestampFormat of http-date works",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlTimestampsResponse>\n    <httpDate>Tue, 29 Apr 2014 18:30:38 GMT</httpDate>\n</XmlTimestampsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"httpDate": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlTimestampsWithHttpDateOnTargetFormat",
-                        "documentation": "Ensures that the timestampFormat of http-date on the target shape works",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlTimestampsResponse>\n    <httpDateOnTarget>Tue, 29 Apr 2014 18:30:38 GMT</httpDateOnTarget>\n</XmlTimestampsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType({"httpDateOnTarget": 1398796238}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/XmlTimestamps", "method": "POST"}),
-        ),
+        )
     ],
 )
 
@@ -7647,8 +3811,7 @@ XML_UNIONS_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlUnionsRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={"unionValue": {"target": XML_UNION_SHAPE}},
 )
@@ -7659,8 +3822,7 @@ XML_UNIONS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#XmlUnionsResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={"unionValue": {"target": XML_UNION_SHAPE}},
 )
@@ -7671,8 +3833,7 @@ RECURSIVE_SHAPES_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#RecursiveShapesRequest",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={"nested": {"target": RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1}},
 )
@@ -7683,8 +3844,7 @@ RECURSIVE_SHAPES_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.restxml#RecursiveShapesResponse",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={"nested": {"target": RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1}},
 )
@@ -7694,210 +3854,9 @@ XML_UNIONS = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlUnionsWithStructMember",
-                        "documentation": "Serializes union struct member",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/XmlUnions",
-                        "body": "<XmlUnionsRequest>\n    <unionValue>\n       <structValue>\n          <stringValue>string</stringValue>\n          <booleanValue>true</booleanValue>\n          <byteValue>1</byteValue>\n          <shortValue>2</shortValue>\n          <integerValue>3</integerValue>\n          <longValue>4</longValue>\n          <floatValue>5.5</floatValue>\n          <doubleValue>6.5</doubleValue>\n       </structValue>\n    </unionValue>\n</XmlUnionsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "unionValue": MappingProxyType(
-                                    {
-                                        "structValue": MappingProxyType(
-                                            {
-                                                "stringValue": "string",
-                                                "booleanValue": True,
-                                                "byteValue": 1,
-                                                "shortValue": 2,
-                                                "integerValue": 3,
-                                                "longValue": 4,
-                                                "floatValue": 5.5,
-                                                "doubleValue": 6.5,
-                                            }
-                                        )
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlUnionsWithStringMember",
-                        "documentation": "serialize union string member",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/XmlUnions",
-                        "body": "<XmlUnionsRequest>\n   <unionValue>\n      <stringValue>some string</stringValue>\n   </unionValue>\n</XmlUnionsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "unionValue": MappingProxyType(
-                                    {"stringValue": "some string"}
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlUnionsWithBooleanMember",
-                        "documentation": "Serializes union boolean member",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/XmlUnions",
-                        "body": "<XmlUnionsRequest>\n   <unionValue>\n      <booleanValue>true</booleanValue>\n   </unionValue>\n</XmlUnionsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"unionValue": MappingProxyType({"booleanValue": True})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlUnionsWithUnionMember",
-                        "documentation": "Serializes union member",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/XmlUnions",
-                        "body": "<XmlUnionsRequest>\n   <unionValue>\n      <unionValue>\n         <booleanValue>true</booleanValue>\n      </unionValue>\n   </unionValue>\n</XmlUnionsRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "unionValue": MappingProxyType(
-                                    {
-                                        "unionValue": MappingProxyType(
-                                            {"booleanValue": True}
-                                        )
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "XmlUnionsWithStructMember",
-                        "documentation": "Serializes union struct member",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlUnionsResponse>\n    <unionValue>\n       <structValue>\n          <stringValue>string</stringValue>\n          <booleanValue>true</booleanValue>\n          <byteValue>1</byteValue>\n          <shortValue>2</shortValue>\n          <integerValue>3</integerValue>\n          <longValue>4</longValue>\n          <floatValue>5.5</floatValue>\n          <doubleValue>6.5</doubleValue>\n       </structValue>\n    </unionValue>\n</XmlUnionsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "unionValue": MappingProxyType(
-                                    {
-                                        "structValue": MappingProxyType(
-                                            {
-                                                "stringValue": "string",
-                                                "booleanValue": True,
-                                                "byteValue": 1,
-                                                "shortValue": 2,
-                                                "integerValue": 3,
-                                                "longValue": 4,
-                                                "floatValue": 5.5,
-                                                "doubleValue": 6.5,
-                                            }
-                                        )
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlUnionsWithStringMember",
-                        "documentation": "Serializes union string member",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlUnionsResponse>\n   <unionValue>\n      <stringValue>some string</stringValue>\n   </unionValue>\n</XmlUnionsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "unionValue": MappingProxyType(
-                                    {"stringValue": "some string"}
-                                )
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlUnionsWithBooleanMember",
-                        "documentation": "Serializes union boolean member",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlUnionsResponse>\n   <unionValue>\n      <booleanValue>true</booleanValue>\n   </unionValue>\n</XmlUnionsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {"unionValue": MappingProxyType({"booleanValue": True})}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "XmlUnionsWithUnionMember",
-                        "documentation": "Serializes union member",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<XmlUnionsResponse>\n   <unionValue>\n      <unionValue>\n         <booleanValue>true</booleanValue>\n      </unionValue>\n   </unionValue>\n</XmlUnionsResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "unionValue": MappingProxyType(
-                                    {
-                                        "unionValue": MappingProxyType(
-                                            {"booleanValue": True}
-                                        )
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/XmlUnions", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
@@ -7906,374 +3865,14 @@ RECURSIVE_SHAPES = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RecursiveShapes",
-                        "documentation": "Serializes recursive structures",
-                        "protocol": "aws.protocols#restXml",
-                        "method": "PUT",
-                        "uri": "/RecursiveShapes",
-                        "body": "<RecursiveShapesRequest>\n    <nested>\n        <foo>Foo1</foo>\n        <nested>\n            <bar>Bar1</bar>\n            <recursiveMember>\n                <foo>Foo2</foo>\n                <nested>\n                    <bar>Bar2</bar>\n                </nested>\n            </recursiveMember>\n        </nested>\n    </nested>\n</RecursiveShapesRequest>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "nested": MappingProxyType(
-                                    {
-                                        "foo": "Foo1",
-                                        "nested": MappingProxyType(
-                                            {
-                                                "bar": "Bar1",
-                                                "recursiveMember": MappingProxyType(
-                                                    {
-                                                        "foo": "Foo2",
-                                                        "nested": MappingProxyType(
-                                                            {"bar": "Bar2"}
-                                                        ),
-                                                    }
-                                                ),
-                                            }
-                                        ),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#idempotent")),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "RecursiveShapes",
-                        "documentation": "Serializes recursive structures",
-                        "protocol": "aws.protocols#restXml",
-                        "code": 200,
-                        "body": "<RecursiveShapesResponse>\n    <nested>\n        <foo>Foo1</foo>\n        <nested>\n            <bar>Bar1</bar>\n            <recursiveMember>\n                <foo>Foo2</foo>\n                <nested>\n                    <bar>Bar2</bar>\n                </nested>\n            </recursiveMember>\n        </nested>\n    </nested>\n</RecursiveShapesResponse>\n",
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/xml"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "nested": MappingProxyType(
-                                    {
-                                        "foo": "Foo1",
-                                        "nested": MappingProxyType(
-                                            {
-                                                "bar": "Bar1",
-                                                "recursiveMember": MappingProxyType(
-                                                    {
-                                                        "foo": "Foo2",
-                                                        "nested": MappingProxyType(
-                                                            {"bar": "Bar2"}
-                                                        ),
-                                                    }
-                                                ),
-                                            }
-                                        ),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#http"),
             value=MappingProxyType({"uri": "/RecursiveShapes", "method": "PUT"}),
-        ),
+        )
     ],
 )
 
 REST_XML = Schema(
-    id=ShapeID("aws.protocoltests.restxml#RestXml"),
-    shape_type=ShapeType.SERVICE,
-    traits=[
-        Trait.new(
-            id=ShapeID("aws.auth#sigv4"), value=MappingProxyType({"name": "restxml"})
-        ),
-        Trait.new(
-            id=ShapeID("smithy.api#title"), value="Sample Rest Xml Protocol Service"
-        ),
-        Trait.new(id=ShapeID("aws.protocols#restXml")),
-        Trait.new(
-            id=ShapeID("smithy.rules#endpointBdd"),
-            value=MappingProxyType(
-                {
-                    "version": "1.1",
-                    "parameters": MappingProxyType(
-                        {
-                            "Region": MappingProxyType(
-                                {
-                                    "builtIn": "AWS::Region",
-                                    "required": False,
-                                    "documentation": "The AWS Region. This is a default regional AWS endpointRuleSet.",
-                                    "type": "string",
-                                }
-                            ),
-                            "UseDualStack": MappingProxyType(
-                                {
-                                    "builtIn": "AWS::UseDualStack",
-                                    "required": True,
-                                    "default": False,
-                                    "documentation": "Whether to use dual-stack.",
-                                    "type": "boolean",
-                                }
-                            ),
-                            "UseFIPS": MappingProxyType(
-                                {
-                                    "builtIn": "AWS::UseFIPS",
-                                    "required": True,
-                                    "default": False,
-                                    "documentation": "Whether to use FIPS-compliant regional endpoint.",
-                                    "type": "boolean",
-                                }
-                            ),
-                            "Endpoint": MappingProxyType(
-                                {
-                                    "builtIn": "SDK::Endpoint",
-                                    "required": False,
-                                    "documentation": "Override the endpoint.",
-                                    "type": "string",
-                                }
-                            ),
-                        }
-                    ),
-                    "conditions": (
-                        MappingProxyType(
-                            {
-                                "fn": "isSet",
-                                "argv": (MappingProxyType({"ref": "Endpoint"}),),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "isSet",
-                                "argv": (MappingProxyType({"ref": "Region"}),),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "aws.partition",
-                                "argv": (MappingProxyType({"ref": "Region"}),),
-                                "assign": "PartitionResult",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (MappingProxyType({"ref": "UseFIPS"}), True),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (
-                                    MappingProxyType({"ref": "UseDualStack"}),
-                                    True,
-                                ),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (
-                                    MappingProxyType(
-                                        {
-                                            "fn": "getAttr",
-                                            "argv": (
-                                                MappingProxyType(
-                                                    {"ref": "PartitionResult"}
-                                                ),
-                                                "supportsDualStack",
-                                            ),
-                                        }
-                                    ),
-                                    True,
-                                ),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (
-                                    MappingProxyType(
-                                        {
-                                            "fn": "getAttr",
-                                            "argv": (
-                                                MappingProxyType(
-                                                    {"ref": "PartitionResult"}
-                                                ),
-                                                "supportsFIPS",
-                                            ),
-                                        }
-                                    ),
-                                    True,
-                                ),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "stringEquals",
-                                "argv": (
-                                    MappingProxyType(
-                                        {
-                                            "fn": "getAttr",
-                                            "argv": (
-                                                MappingProxyType(
-                                                    {"ref": "PartitionResult"}
-                                                ),
-                                                "name",
-                                            ),
-                                        }
-                                    ),
-                                    "aws-us-gov",
-                                ),
-                            }
-                        ),
-                    ),
-                    "results": (
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "Invalid Configuration: FIPS and custom endpoint are not supported",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "Invalid Configuration: Dualstack and custom endpoint are not supported",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": MappingProxyType({"ref": "Endpoint"}),
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restxml-fips.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "FIPS and DualStack are enabled, but this partition does not support one or both",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restxml.{Region}.amazonaws.com",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restxml-fips.{Region}.{PartitionResult#dnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "FIPS is enabled but this partition does not support FIPS",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restxml.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "DualStack is enabled but this partition does not support DualStack",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://restxml.{Region}.{PartitionResult#dnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "Invalid Configuration: Missing Region",
-                                "type": "error",
-                            }
-                        ),
-                    ),
-                    "root": 2,
-                    "nodeCount": 14,
-                    "nodes": "/////wAAAAH/////AAAAAAAAAA0AAAADAAAAAQAAAAQF9eEMAAAAAgAAAAUF9eEMAAAAAwAAAAgAAAAGAAAABAAAAAcF9eELAAAABQX14QkF9eEKAAAABAAAAAsAAAAJAAAABgAAAAoF9eEIAAAABwX14QYF9eEHAAAABQAAAAwF9eEFAAAABgX14QQF9eEFAAAAAwX14QEAAAAOAAAABAX14QIF9eED",
-                }
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("aws.api#service"),
-            value=MappingProxyType({"sdkId": "Rest Xml Protocol"}),
-        ),
-    ],
+    id=ShapeID("aws.protocoltests.restxml#RestXml"), shape_type=ShapeType.SERVICE
 )
 
 RECURSIVE_SHAPES_INPUT_OUTPUT_NESTED1.members["nested"] = Schema.member(
