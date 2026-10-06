@@ -30,10 +30,14 @@ public final class RuntimeTypes {
     // smithy_core.serializers
     public static final Symbol SHAPE_SERIALIZER =
             createSymbol("serializers", "ShapeSerializer", SmithyPythonDependency.SMITHY_CORE);
+    public static final Symbol SERIALIZEABLE_SHAPE =
+            createSymbol("serializers", "SerializeableShape", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_core.deserializers
     public static final Symbol SHAPE_DESERIALIZER =
             createSymbol("deserializers", "ShapeDeserializer", SmithyPythonDependency.SMITHY_CORE);
+    public static final Symbol DESERIALIZEABLE_SHAPE =
+            createSymbol("deserializers", "DeserializeableShape", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_core.documents
     public static final Symbol DOCUMENT = createSymbol("documents", "Document", SmithyPythonDependency.SMITHY_CORE);
@@ -70,8 +74,6 @@ public final class RuntimeTypes {
             createSymbol("interfaces.auth", "AuthOption", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_core.aio.retries
-    public static final Symbol RETRY_STRATEGY_RESOLVER =
-            createSymbol("aio.retries", "RetryStrategyResolver", SmithyPythonDependency.SMITHY_CORE);
     public static final Symbol RETRY_STRATEGY_OPTIONS =
             createSymbol("retries", "RetryStrategyOptions", SmithyPythonDependency.SMITHY_CORE);
     public static final Symbol SIMPLE_RETRY_STRATEGY =
@@ -82,14 +84,10 @@ public final class RuntimeTypes {
             createSymbol("aio.interfaces.retries", "RetryStrategy", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_core.types
-    public static final Symbol TYPED_PROPERTIES =
-            createSymbol("types", "TypedProperties", SmithyPythonDependency.SMITHY_CORE);
     public static final Symbol UNKNOWN_ENUM_MIXIN =
             createSymbol("types", "UnknownEnumMixin", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_core.interceptors
-    public static final Symbol INTERCEPTOR_CHAIN =
-            createSymbol("interceptors", "InterceptorChain", SmithyPythonDependency.SMITHY_CORE);
     public static final Symbol INTERCEPTOR =
             createSymbol("interceptors", "Interceptor", SmithyPythonDependency.SMITHY_CORE);
 
@@ -125,7 +123,6 @@ public final class RuntimeTypes {
 
     // smithy_core.aio.utils
     public static final Symbol ASYNC_LIST = createSymbol("aio.utils", "async_list", SmithyPythonDependency.SMITHY_CORE);
-    public static final Symbol ASYNC_CLOSE = createSymbol("aio.utils", "close", SmithyPythonDependency.SMITHY_CORE);
 
     // smithy_http
     public static final Symbol TUPLES_TO_FIELDS =

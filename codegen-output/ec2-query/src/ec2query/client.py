@@ -8,8 +8,10 @@ from smithy_aws_core.config import ConfigSource
 from smithy_aws_core.identity import AWSCredentialsIdentity
 from smithy_aws_core.identity.chain import IdentityChain
 from smithy_core.aio.client import AsyncClient, ClientCall, RequestPipeline
+from smithy_core.deserializers import DeserializeableShape
 from smithy_core.exceptions import ExpectationNotMetError
 from smithy_core.schemas import APIOperation
+from smithy_core.serializers import SerializeableShape
 from smithy_http.aio.interfaces import HTTPClient
 from smithy_http.plugins import user_agent_plugin
 
@@ -159,12 +161,13 @@ class AsyncEC2ProtocolClient(AsyncClient):
                 http_client=cast(HTTPClient | None, config.transport),
             )
 
-    async def _prepare_call(
-        self,
-        input: Any,
-        operation: APIOperation[Any, Any],
-        plugins: list[Plugin] | None,
-    ) -> tuple[RequestPipeline[Any, Any], ClientCall[Any, Any]]:
+    async def _prepare_call[I: SerializeableShape, O: DeserializeableShape](
+        self, input: I, operation: APIOperation[I, O], plugins: list[Plugin] | None
+    ) -> tuple[RequestPipeline[Any, Any], ClientCall[I, O]]:
+        if self._closed:
+            raise RuntimeError(
+                "Cannot invoke an operation on a client that has been closed."
+            )
         config = await self._ensure_setup()
         if plugins:
             # Keep operation-plugin mutations scoped to this call.

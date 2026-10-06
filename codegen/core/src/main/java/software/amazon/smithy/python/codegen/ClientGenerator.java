@@ -125,12 +125,18 @@ final class ClientGenerator implements Runnable {
                             async def _post_setup(self, config: $1T) -> None:
                                 ${6C|}
 
-                            async def _prepare_call(
+                            async def _prepare_call[
+                                I: $12T, O: $13T
+                            ](
                                 self,
-                                input: Any,
-                                operation: $8T[Any, Any],
+                                input: I,
+                                operation: $8T[I, O],
                                 plugins: list[$2T] | None,
-                            ) -> tuple[$9T[Any, Any], $10T[Any, Any]]:
+                            ) -> tuple[$9T[Any, Any], $10T[I, O]]:
+                                if self._closed:
+                                    raise RuntimeError(
+                                        "Cannot invoke an operation on a client that has been closed."
+                                    )
                                 config = await self._ensure_setup()
                                 if plugins:
                                     # Keep operation-plugin mutations scoped to this call.
@@ -190,7 +196,9 @@ final class ClientGenerator implements Runnable {
                                     w.write("retry_mode=config.retry_mode,");
                                     w.write("max_attempts=config.max_attempts,");
                                 }
-                            }));
+                            }),
+                            RuntimeTypes.SERIALIZEABLE_SHAPE,
+                            RuntimeTypes.DESERIALIZEABLE_SHAPE);
 
                     var topDownIndex = TopDownIndex.of(model);
                     var eventStreamIndex = EventStreamIndex.of(model);
