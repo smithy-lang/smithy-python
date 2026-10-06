@@ -60,6 +60,22 @@ def aws_request() -> AWSRequest:
     )
 
 
+CANONICAL_PATH_CASES: list[tuple[dict[str, bool], str, str]] = [
+    # Default: normalize the path, then encode it a second time.
+    ({}, "/a/./b/../c//d%20e", "/a/c/d%2520e"),
+    # No double-encoding keeps consecutive slashes but still removes dot segments.
+    ({"uri_encode_path": False}, "/a/./b/../c//d%20e", "/a/c//d%20e"),
+    # No normalization keeps every segment but still encodes a second time.
+    ({"normalize_path": False}, "/a/./b/../c//d%20e", "/a/./b/../c//d%2520e"),
+    # S3 signs the path exactly as it is sent.
+    (
+        {"uri_encode_path": False, "normalize_path": False},
+        "/a/./b/../c//d%20e",
+        "/a/./b/../c//d%20e",
+    ),
+]
+
+
 class TestSigV4Signer:
     SIGV4_SYNC_SIGNER = SigV4Signer()
 
@@ -138,6 +154,16 @@ class TestSigV4Signer:
             query="sync"
         )
         assert canonical_query == "sync="
+
+    @pytest.mark.parametrize("options, path, expected", CANONICAL_PATH_CASES)
+    def test_format_canonical_path(
+        self, options: dict[str, bool], path: str, expected: str
+    ) -> None:
+        properties = SigV4SigningProperties(region="us-west-2", service="s3", **options)  # type: ignore[typeddict-item]
+        canonical_path = self.SIGV4_SYNC_SIGNER._format_canonical_path(  # pyright: ignore[reportPrivateUsage]
+            path=path, signing_properties=properties
+        )
+        assert canonical_path == expected
 
 
 class UnreadableAsyncStream:
@@ -362,3 +388,13 @@ class TestAsyncSigV4Signer:
             query="sync"
         )
         assert canonical_query == "sync="
+
+    @pytest.mark.parametrize("options, path, expected", CANONICAL_PATH_CASES)
+    async def test_format_canonical_path(
+        self, options: dict[str, bool], path: str, expected: str
+    ) -> None:
+        properties = SigV4SigningProperties(region="us-west-2", service="s3", **options)  # type: ignore[typeddict-item]
+        canonical_path = await self.SIGV4_ASYNC_SIGNER._format_canonical_path(  # pyright: ignore[reportPrivateUsage]
+            path=path, signing_properties=properties
+        )
+        assert canonical_path == expected

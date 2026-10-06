@@ -1,0 +1,4 @@
+{
+  "type": "bugfix",
+  "description": "Fixed the request pipeline merging an auth option's identity properties into the signer properties instead of its signer properties."
+}

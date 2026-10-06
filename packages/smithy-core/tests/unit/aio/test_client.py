@@ -1,12 +1,17 @@
 # Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+from dataclasses import replace
 from typing import Any
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 from smithy_core.aio.eventstream import DuplexEventStream, InputEventStream
+from smithy_core.auth import AuthOption
 from smithy_core.exceptions import CallError, UnsupportedTransportError
 from smithy_core.response import EMPTY_RESPONSE_METADATA
+from smithy_core.shapes import ShapeID
+from smithy_core.types import TypedProperties
 
 from ._pipeline_harness import (
     DuplexTransport,
@@ -135,3 +140,31 @@ async def test_response_metadata_attached_when_retries_are_exhausted() -> None:
 
     assert exc_info.value.response_metadata.request_id == "stub-request-id"
     assert exc_info.value.response_metadata.http_status_code == 200
+
+
+async def test_auth_option_signer_properties_override_scheme_defaults() -> None:
+    harness = pipeline_harness(NonDuplexTransport())
+    scheme = Mock()
+    scheme.identity_resolver.return_value.get_identity = AsyncMock()
+    scheme.signer_properties.return_value = {
+        "region": "us-west-2",
+        "service": "default",
+    }
+    sign = scheme.signer.return_value.sign = AsyncMock()
+    option = AuthOption(
+        scheme_id=ShapeID("com.example#auth"),
+        identity_properties=TypedProperties({"identity_only": True}),
+        signer_properties=TypedProperties({"service": "override"}),
+    )
+    call = replace(
+        client_call(),
+        auth_scheme_resolver=Mock(resolve_auth_scheme=Mock(return_value=[option])),
+        supported_auth_schemes={option.scheme_id: scheme},
+    )
+
+    await harness.pipeline(call)
+
+    assert sign.call_args.kwargs["properties"] == {
+        "region": "us-west-2",
+        "service": "override",
+    }
