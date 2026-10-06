@@ -26,6 +26,25 @@ SIGV4_RE = re.compile(
     r"Credential=(?P<access_key>\w+)/\d+/"
     r"(?P<signing_region>[a-z0-9-]+)/"
 )
+SIGNED_HEADERS_RE = re.compile(r"SignedHeaders=(?P<signed_headers>[^,]+)")
+
+# Headers that must not be signed, paired with a representative value. Authorization
+# is also excluded but is omitted here since signing replaces it.
+EXCLUDED_HEADERS = [
+    ("accept", "application/json"),
+    ("accept-encoding", "gzip"),
+    ("connection", "keep-alive"),
+    ("expect", "100-continue"),
+    ("keep-alive", "timeout=5"),
+    ("proxy-authenticate", 'Basic realm="proxy.example.com"'),
+    ("proxy-authorization", "Basic YWxhZGRpbjpvcGVuc2VzYW1l"),
+    ("te", "trailers"),
+    ("trailer", "x-amz-checksum-sha256"),
+    ("transfer-encoding", "chunked"),
+    ("upgrade", "websocket"),
+    ("user-agent", "aws-sdk-python/0.1.0"),
+    ("x-amzn-trace-id", "Root=foo;Parent=bar;Sampleid=1"),
+]
 
 
 @pytest.fixture(scope="module")
@@ -58,6 +77,25 @@ def aws_request() -> AWSRequest:
         body=BytesIO(b"123456"),
         fields=Fields({}),
     )
+
+
+def _request_with_field(name: str, value: str) -> AWSRequest:
+    return AWSRequest(
+        destination=URI(
+            scheme="https",
+            host="127.0.0.1",
+            port=8000,
+        ),
+        method="GET",
+        body=BytesIO(b"123456"),
+        fields=Fields([Field(name=name, values=[value])]),
+    )
+
+
+def _signed_headers(request: AWSRequest) -> list[str]:
+    match = SIGNED_HEADERS_RE.search(request.fields["authorization"].as_string())
+    assert match is not None
+    return match.group("signed_headers").split(";")
 
 
 class TestSigV4Signer:
@@ -126,6 +164,24 @@ class TestSigV4Signer:
                 request=aws_request,
                 identity=identity,
             )
+
+    @pytest.mark.parametrize("name, value", EXCLUDED_HEADERS)
+    def test_sign_excludes_header_from_signed_headers(
+        self,
+        aws_identity: AWSCredentialIdentity,
+        signing_properties: SigV4SigningProperties,
+        name: str,
+        value: str,
+    ) -> None:
+        signed_request = self.SIGV4_SYNC_SIGNER.sign(
+            properties=signing_properties,
+            request=_request_with_field(name, value),
+            identity=aws_identity,
+        )
+        signed_headers = _signed_headers(signed_request)
+        assert "host" in signed_headers
+        assert name not in signed_headers
+        assert signed_request.fields[name].as_string() == value
 
     def test_format_canonical_query_keeps_blank_values(self) -> None:
         canonical_query = self.SIGV4_SYNC_SIGNER._format_canonical_query(  # pyright: ignore[reportPrivateUsage]
@@ -319,6 +375,24 @@ class TestAsyncSigV4Signer:
                 request=aws_request,
                 identity=identity,
             )
+
+    @pytest.mark.parametrize("name, value", EXCLUDED_HEADERS)
+    async def test_sign_excludes_header_from_signed_headers(
+        self,
+        aws_identity: AWSCredentialIdentity,
+        signing_properties: SigV4SigningProperties,
+        name: str,
+        value: str,
+    ) -> None:
+        signed_request = await self.SIGV4_ASYNC_SIGNER.sign(
+            properties=signing_properties,
+            request=_request_with_field(name, value),
+            identity=aws_identity,
+        )
+        signed_headers = _signed_headers(signed_request)
+        assert "host" in signed_headers
+        assert name not in signed_headers
+        assert signed_request.fields[name].as_string() == value
 
     async def test_sign_event_stream(
         self,

@@ -28,6 +28,13 @@ HEADERS_EXCLUDED_FROM_SIGNING: tuple[str, ...] = (
     "authorization",
     "connection",
     "expect",
+    "keep-alive",
+    "proxy-authenticate",
+    "proxy-authorization",
+    "te",
+    "trailer",
+    "transfer-encoding",
+    "upgrade",
     "user-agent",
     "x-amzn-trace-id",
 )
