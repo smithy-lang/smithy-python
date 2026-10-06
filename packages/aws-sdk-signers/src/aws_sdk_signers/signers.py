@@ -54,6 +54,7 @@ class SigV4SigningProperties(TypedDict, total=False):
     payload_signing_enabled: bool
     content_checksum_enabled: bool
     uri_encode_path: bool
+    normalize_path: bool
 
 
 class SigV4Signer:
@@ -311,11 +312,14 @@ class SigV4Signer:
         if path is None:
             path = "/"
 
-        if signing_properties.get("uri_encode_path", True):
-            normalized_path = _remove_dot_segments(path)
-            return quote(string=normalized_path, safe="/")
-        else:
-            return _remove_dot_segments(path, remove_consecutive_slashes=False)
+        uri_encode_path = signing_properties.get("uri_encode_path", True)
+        if signing_properties.get("normalize_path", True):
+            path = _remove_dot_segments(
+                path, remove_consecutive_slashes=uri_encode_path
+            )
+        if uri_encode_path:
+            return quote(string=path, safe="/")
+        return path
 
     def _format_canonical_query(self, *, query: str | None) -> str:
         if query is None:
@@ -685,11 +689,14 @@ class AsyncSigV4Signer:
         if path is None:
             path = "/"
 
-        if signing_properties.get("uri_encode_path", True):
-            normalized_path = _remove_dot_segments(path)
-            return quote(string=normalized_path, safe="/")
-        else:
-            return _remove_dot_segments(path, remove_consecutive_slashes=False)
+        uri_encode_path = signing_properties.get("uri_encode_path", True)
+        if signing_properties.get("normalize_path", True):
+            path = _remove_dot_segments(
+                path, remove_consecutive_slashes=uri_encode_path
+            )
+        if uri_encode_path:
+            return quote(string=path, safe="/")
+        return path
 
     async def _format_canonical_query(self, *, query: str | None) -> str:
         if query is None:
