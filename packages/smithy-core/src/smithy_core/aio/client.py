@@ -384,7 +384,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
             return await self._handle_attempt(call, request_context, request_future)
 
         retry_strategy = call.retry_strategy
-        retry_token = await retry_strategy.acquire_initial_retry_token(
+        retry_token = retry_strategy.acquire_initial_retry_token(
             token_scope=call.retry_scope
         )
 
@@ -403,7 +403,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
 
             if isinstance(output_context.response, Exception):
                 try:
-                    retry_token = await retry_strategy.refresh_retry_token_for_retry(
+                    retry_token = retry_strategy.refresh_retry_token_for_retry(
                         token_to_renew=retry_token,
                         error=output_context.response,
                     )
@@ -427,7 +427,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
 
                 await seek(request_context.transport_request.body, 0)
             else:
-                await retry_strategy.record_success(token=retry_token)
+                retry_strategy.record_success(token=retry_token)
                 return output_context
 
     async def _handle_attempt[I: SerializeableShape, O: DeserializeableShape](
@@ -450,7 +450,7 @@ class RequestPipeline[TRequest: Request, TResponse: Response]:
                 context=request_context.properties,
             )
             _LOGGER.debug("Calling endpoint resolver with params: %s", endpoint_params)
-            endpoint: Endpoint = await call.endpoint_resolver.resolve_endpoint(
+            endpoint: Endpoint = call.endpoint_resolver.resolve_endpoint(
                 endpoint_params
             )
             _LOGGER.debug("Endpoint resolver result: %s", endpoint)

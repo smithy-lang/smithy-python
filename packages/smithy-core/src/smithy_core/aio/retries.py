@@ -24,7 +24,7 @@ class RetryStrategyResolver:
     instances of RetryStrategy with the same settings. Uses LRU cache for thread-safe caching.
     """
 
-    async def resolve_retry_strategy(
+    def resolve_retry_strategy(
         self,
         *,
         retry_strategy: RetryStrategy | RetryStrategyOptions | None,
@@ -92,7 +92,7 @@ class SimpleRetryStrategy:
         self.backoff_strategy = backoff_strategy or ExponentialRetryBackoffStrategy()
         self.max_attempts = max_attempts
 
-    async def acquire_initial_retry_token(
+    def acquire_initial_retry_token(
         self, *, token_scope: str | None = None
     ) -> SimpleRetryToken:
         """Create a base retry token for the start of a request.
@@ -102,7 +102,7 @@ class SimpleRetryStrategy:
         retry_delay = self.backoff_strategy.compute_next_backoff_delay(0)
         return SimpleRetryToken(retry_count=0, retry_delay=retry_delay)
 
-    async def refresh_retry_token_for_retry(
+    def refresh_retry_token_for_retry(
         self, *, token_to_renew: retries_interface.RetryToken, error: Exception
     ) -> SimpleRetryToken:
         """Replace an existing retry token from a failed attempt with a new token.
@@ -125,7 +125,7 @@ class SimpleRetryStrategy:
         else:
             raise RetryError(f"Error is not retryable: {error}") from error
 
-    async def record_success(self, *, token: retries_interface.RetryToken) -> None:
+    def record_success(self, *, token: retries_interface.RetryToken) -> None:
         """Not used by this retry strategy."""
 
     def __deepcopy__(self, memo: Any) -> "SimpleRetryStrategy":
@@ -192,7 +192,7 @@ class StandardRetryStrategy:
         self.max_attempts = max_attempts
         self._retry_quota = retry_quota or StandardRetryQuota()
 
-    async def acquire_initial_retry_token(
+    def acquire_initial_retry_token(
         self, *, token_scope: str | None = None
     ) -> StandardRetryToken:
         """Create a base retry token for the start of a request.
@@ -202,7 +202,7 @@ class StandardRetryStrategy:
         retry_delay = self.backoff_strategy.compute_next_backoff_delay(0)
         return StandardRetryToken(retry_count=0, retry_delay=retry_delay)
 
-    async def refresh_retry_token_for_retry(
+    def refresh_retry_token_for_retry(
         self, *, token_to_renew: retries_interface.RetryToken, error: Exception
     ) -> StandardRetryToken:
         """Replace an existing retry token from a failed attempt with a new token.
@@ -259,7 +259,7 @@ class StandardRetryStrategy:
         else:
             raise RetryError(f"Error is not retryable: {error}") from error
 
-    async def record_success(self, *, token: retries_interface.RetryToken) -> None:
+    def record_success(self, *, token: retries_interface.RetryToken) -> None:
         """Release retry quota back based on the amount consumed by the last retry.
 
         :param token: The token used for the previous successful attempt.

@@ -211,7 +211,7 @@ class AsyncJsonProtocolClient:
                 " and auth_schemes MUST be set on the config to make calls."
             )
 
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
             retry_strategy=config.retry_strategy,
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
@@ -278,7 +278,7 @@ class AsyncJsonProtocolClient:
                 " and auth_schemes MUST be set on the config to make calls."
             )
 
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
             retry_strategy=config.retry_strategy,
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
@@ -345,7 +345,7 @@ class AsyncJsonProtocolClient:
                 " and auth_schemes MUST be set on the config to make calls."
             )
 
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
             retry_strategy=config.retry_strategy,
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
@@ -412,7 +412,7 @@ class AsyncJsonProtocolClient:
                 " and auth_schemes MUST be set on the config to make calls."
             )
 
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
             retry_strategy=config.retry_strategy,
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
@@ -481,7 +481,7 @@ class AsyncJsonProtocolClient:
                 " and auth_schemes MUST be set on the config to make calls."
             )
 
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
             retry_strategy=config.retry_strategy,
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
@@ -548,7 +548,7 @@ class AsyncJsonProtocolClient:
                 " and auth_schemes MUST be set on the config to make calls."
             )
 
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
             retry_strategy=config.retry_strategy,
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
@@ -619,7 +619,7 @@ class AsyncJsonProtocolClient:
                 " and auth_schemes MUST be set on the config to make calls."
             )
 
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
             retry_strategy=config.retry_strategy,
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
@@ -686,7 +686,7 @@ class AsyncJsonProtocolClient:
                 " and auth_schemes MUST be set on the config to make calls."
             )
 
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
             retry_strategy=config.retry_strategy,
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
@@ -754,7 +754,7 @@ class AsyncJsonProtocolClient:
                 " and auth_schemes MUST be set on the config to make calls."
             )
 
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
             retry_strategy=config.retry_strategy,
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
@@ -822,7 +822,7 @@ class AsyncJsonProtocolClient:
                 " and auth_schemes MUST be set on the config to make calls."
             )
 
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
             retry_strategy=config.retry_strategy,
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
@@ -889,7 +889,7 @@ class AsyncJsonProtocolClient:
                 " and auth_schemes MUST be set on the config to make calls."
             )
 
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
             retry_strategy=config.retry_strategy,
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
@@ -956,7 +956,7 @@ class AsyncJsonProtocolClient:
                 " and auth_schemes MUST be set on the config to make calls."
             )
 
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
             retry_strategy=config.retry_strategy,
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
@@ -1023,7 +1023,7 @@ class AsyncJsonProtocolClient:
                 " and auth_schemes MUST be set on the config to make calls."
             )
 
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
             retry_strategy=config.retry_strategy,
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
@@ -1092,7 +1092,7 @@ class AsyncJsonProtocolClient:
                 " and auth_schemes MUST be set on the config to make calls."
             )
 
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
             retry_strategy=config.retry_strategy,
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
@@ -1159,7 +1159,7 @@ class AsyncJsonProtocolClient:
                 " and auth_schemes MUST be set on the config to make calls."
             )
 
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
             retry_strategy=config.retry_strategy,
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
@@ -1226,7 +1226,7 @@ class AsyncJsonProtocolClient:
                 " and auth_schemes MUST be set on the config to make calls."
             )
 
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
             retry_strategy=config.retry_strategy,
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
@@ -1293,7 +1293,7 @@ class AsyncJsonProtocolClient:
                 " and auth_schemes MUST be set on the config to make calls."
             )
 
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
             retry_strategy=config.retry_strategy,
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,
@@ -1360,7 +1360,7 @@ class AsyncJsonProtocolClient:
                 " and auth_schemes MUST be set on the config to make calls."
             )
 
-        retry_strategy = await self._retry_strategy_resolver.resolve_retry_strategy(
+        retry_strategy = self._retry_strategy_resolver.resolve_retry_strategy(
             retry_strategy=config.retry_strategy,
             retry_mode=config.retry_mode,
             max_attempts=config.max_attempts,

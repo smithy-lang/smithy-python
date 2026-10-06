@@ -19,7 +19,7 @@ async def retry_operation(
     strategy: retries_interface.RetryStrategy,
     responses: list[int | Exception],
 ) -> tuple[str, int]:
-    token = await strategy.acquire_initial_retry_token()
+    token = strategy.acquire_initial_retry_token()
     response_iter = iter(responses)
 
     while True:
@@ -31,7 +31,7 @@ async def retry_operation(
 
         # Success case
         if response == 200:
-            await strategy.record_success(token=token)
+            strategy.record_success(token=token)
             return "success", attempt
 
         # Error case - either status code or exception
@@ -45,7 +45,7 @@ async def retry_operation(
             )
 
         try:
-            token = await strategy.refresh_retry_token_for_retry(
+            token = strategy.refresh_retry_token_for_retry(
                 token_to_renew=token, error=error
             )
         except RetryError:

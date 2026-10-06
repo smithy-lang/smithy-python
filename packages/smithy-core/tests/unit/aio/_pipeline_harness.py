@@ -194,7 +194,7 @@ class StubEndpoint:
 
 
 class StubEndpointResolver:
-    async def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Any:
+    def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Any:
         return StubEndpoint()
 
 

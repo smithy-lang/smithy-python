@@ -79,7 +79,7 @@ class Response(Protocol):
 class EndpointResolver(Protocol):
     """Resolves an operation's endpoint based given parameters."""
 
-    async def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Endpoint:
+    def resolve_endpoint(self, params: EndpointResolverParams[Any]) -> Endpoint:
         """Resolve an endpoint for the given operation.
 
         :param params: The parameters available to resolve the endpoint.
