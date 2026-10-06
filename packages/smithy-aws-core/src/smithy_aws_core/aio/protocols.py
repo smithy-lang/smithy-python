@@ -25,12 +25,14 @@ from smithy_core.exceptions import (
     ModeledError,
     UnsupportedStreamError,
 )
-from smithy_core.interfaces import TypedProperties, URI
+from smithy_core.interfaces import BytesReader, BytesWriter, TypedProperties, URI
+from smithy_core.interfaces import StreamingBlob as SyncStreamingBlob
 from smithy_core.prelude import DOCUMENT
 from smithy_core.response import ResponseMetadata
 from smithy_core.schemas import APIOperation
-from smithy_core.serializers import SerializeableShape
+from smithy_core.serializers import SerializeableShape, ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
+from smithy_core.traits import HTTPTrait
 from smithy_core.types import PropertyKey, TimestampFormat
 from smithy_http import tuples_to_fields
 from smithy_http.aio import HTTPRequest as _HTTPRequest
@@ -44,12 +46,14 @@ from smithy_http.deserializers import HTTPResponseDeserializer
 from .._private.query.errors import create_aws_query_error
 from .._private.query.metadata import parse_aws_query_request_id
 from .._private.query.serializers import Ec2QueryShapeSerializer, QueryShapeSerializer
+from .._private.restxml import parse_rest_xml_error
 from ..traits import (
     AwsJson1_0Trait,
     AwsJson1_1Trait,
     AwsQueryTrait,
     Ec2QueryTrait,
     RestJson1Trait,
+    RestXmlTrait,
 )
 from ..utils import (
     parse_document_discriminator,
@@ -159,9 +163,8 @@ else:
 class _AWSResponseMetadataMixin:
     """Adds AWS request identifiers to extracted response metadata.
 
-    Mixed into each AWS protocol ahead of its HTTP base class, which supplies
-    only the status code. AWS protocols do not share a common base, so this is
-    applied per protocol.
+    Mixed in ahead of the HTTP base class, which supplies only the status code.
+    AWS protocols built on different HTTP bases each include it.
     """
 
     def extract_response_metadata(
@@ -173,50 +176,15 @@ class _AWSResponseMetadataMixin:
         return parse_response_metadata(response)
 
 
-class RestJsonClientProtocol(_AWSResponseMetadataMixin, HttpBindingClientProtocol):
-    """An implementation of the aws.protocols#restJson1 protocol."""
+class _AWSHttpBindingClientProtocol(
+    _AWSResponseMetadataMixin, HttpBindingClientProtocol
+):
+    """Base for the AWS protocols that use HTTP bindings: restJson1 and restXml.
 
-    _id: Final = RestJson1Trait.id
-    _content_type: Final = "application/json"
-    _error_identifier: Final = AWSErrorIdentifier()
-
-    def __init__(self, settings: ProtocolSettings) -> None:
-        _assert_json()
-        self._codec: Final = JSONCodec(
-            document_class=AWSJSONDocument,
-            default_namespace=settings.namespace,
-            default_timestamp_format=TimestampFormat.EPOCH_SECONDS,
-        )
-
-    @property
-    def id(self) -> ShapeID:
-        return self._id
-
-    @property
-    def payload_codec(self) -> Codec:
-        return self._codec
-
-    @property
-    def content_type(self) -> str:
-        return self._content_type
-
-    @property
-    def error_identifier(self) -> HTTPErrorIdentifier:
-        return self._error_identifier
-
-    def _retry_after(self, response: HTTPResponse) -> float | None:
-        return parse_retry_after(response)
-
-    def _resolve_error_id(
-        self,
-        *,
-        operation: APIOperation[Any, Any],
-        error_id: ShapeID,
-    ) -> ShapeID:
-        for error_schema in operation.error_schemas:
-            if error_schema.id.name == error_id.name:
-                return error_schema.id
-        return error_id
+    Adds AWS response metadata and event streams. Events are framed as
+    ``application/vnd.amazon.eventstream``, and structured event payloads use the
+    protocol's payload codec.
+    """
 
     def create_event_publisher[
         OperationInput: SerializeableShape,
@@ -279,6 +247,167 @@ class RestJsonClientProtocol(_AWSResponseMetadataMixin, HttpBindingClientProtoco
             payload_codec=self.payload_codec,
             source=AsyncBytesReader(response.body),
             deserializer=event_deserializer,
+        )
+
+
+class RestJsonClientProtocol(_AWSHttpBindingClientProtocol):
+    """An implementation of the aws.protocols#restJson1 protocol."""
+
+    _id: Final = RestJson1Trait.id
+    _content_type: Final = "application/json"
+    _error_identifier: Final = AWSErrorIdentifier()
+
+    def __init__(self, settings: ProtocolSettings) -> None:
+        _assert_json()
+        self._codec: Final = JSONCodec(
+            document_class=AWSJSONDocument,
+            default_namespace=settings.namespace,
+            default_timestamp_format=TimestampFormat.EPOCH_SECONDS,
+        )
+
+    @property
+    def id(self) -> ShapeID:
+        return self._id
+
+    @property
+    def payload_codec(self) -> Codec:
+        return self._codec
+
+    @property
+    def content_type(self) -> str:
+        return self._content_type
+
+    @property
+    def error_identifier(self) -> HTTPErrorIdentifier:
+        return self._error_identifier
+
+    def _retry_after(self, response: HTTPResponse) -> float | None:
+        return parse_retry_after(response)
+
+    def _resolve_error_id(
+        self,
+        *,
+        operation: APIOperation[Any, Any],
+        error_id: ShapeID,
+    ) -> ShapeID:
+        for error_schema in operation.error_schemas:
+            if error_schema.id.name == error_id.name:
+                return error_schema.id
+        return error_id
+
+
+class RestXmlClientProtocol(_AWSHttpBindingClientProtocol):
+    """An implementation of the aws.protocols#restXml protocol."""
+
+    _id: Final = RestXmlTrait.id
+    _content_type: Final = "application/xml"
+
+    def __init__(self, settings: ProtocolSettings) -> None:
+        _assert_xml()
+        self._namespace: Final = settings.namespace
+        self._codec: Final = XMLCodec(default_namespace=settings.xml_namespace)
+
+    @property
+    def id(self) -> ShapeID:
+        return self._id
+
+    @property
+    def payload_codec(self) -> Codec:
+        return self._codec
+
+    @property
+    def content_type(self) -> str:
+        return self._content_type
+
+    async def _create_error(
+        self,
+        operation: APIOperation[Any, Any],
+        request: HTTPRequest,
+        response: HTTPResponse,
+        response_body: SyncStreamingBlob,
+        error_registry: TypeRegistry,
+        context: TypedProperties,
+    ) -> CallError:
+        if isinstance(response_body, bytes | bytearray):
+            body = bytes(response_body)
+        else:
+            body = response_body.read()
+
+        retry_after = parse_retry_after(response)
+        error_info = parse_rest_xml_error(body)
+        code = error_info.code
+        error_id = None
+        if code is not None:
+            error_id = ShapeID.from_parts(namespace=self._namespace, name=code)
+            for error_schema in operation.error_schemas:
+                if error_schema.id.name == code:
+                    error_id = error_schema.id
+                    break
+
+        if error_id is not None and error_id in error_registry:
+            error_shape = error_registry.get(error_id)
+            if not issubclass(error_shape, ModeledError):
+                raise ExpectationNotMetError(
+                    "Modeled errors must be derived from 'ModeledError', "
+                    f"but got {error_shape}"
+                )
+
+            deserializer = HTTPResponseDeserializer(
+                payload_codec=_XMLErrorCodec(self._codec, error_info.wrapper_elements),
+                http_trait=operation.schema.expect_trait(HTTPTrait),
+                response=response,
+                body=body,
+            )
+            modeled_error = error_shape.deserialize(deserializer)
+            if not modeled_error.message and error_info.message:
+                modeled_error.message = error_info.message
+                # The exception's args were taken from the empty message when it
+                # was constructed, so they're replaced for the message to display.
+                modeled_error.args = (error_info.message,)
+            if retry_after is not None:
+                modeled_error.retry_after = retry_after
+            return modeled_error
+
+        message = (
+            f"Unknown error for operation {operation.schema.id} "
+            f"- status: {response.status}"
+        )
+        if code is not None:
+            message += f" - code: {code}"
+        if error_info.message:
+            message += f" - message: {error_info.message}"
+        if response.reason is not None:
+            message += f" - reason: {response.reason}"
+
+        is_timeout = response.status == 408
+        is_throttle = response.status == 429
+        return CallError(
+            message=message,
+            fault="client" if response.status < 500 else "server",
+            is_throttling_error=is_throttle,
+            is_timeout_error=is_timeout,
+            is_retry_safe=is_throttle or is_timeout or None,
+            retry_after=retry_after,
+        )
+
+
+@dataclass(frozen=True)
+class _XMLErrorCodec(Codec):
+    """Reads an error's members from inside its restXml wrapper elements."""
+
+    codec: "XMLCodec"
+    wrapper_elements: tuple[str, ...]
+
+    @property
+    def media_type(self) -> str:
+        return self.codec.media_type
+
+    def create_serializer(self, sink: BytesWriter) -> ShapeSerializer:
+        return self.codec.create_serializer(sink)
+
+    def create_deserializer(self, source: bytes | BytesReader) -> ShapeDeserializer:
+        return self.codec.create_deserializer(
+            source, wrapper_elements=self.wrapper_elements
         )
 
 
@@ -521,7 +650,7 @@ class AwsQueryClientProtocol(_AWSResponseMetadataMixin, HttpClientProtocol):
             )
         self._default_namespace: Final = settings.namespace
         self._version: Final = settings.version
-        self._codec: Final = XMLCodec(default_namespace=self._default_namespace)
+        self._codec: Final = XMLCodec()
 
     @property
     def id(self) -> ShapeID:

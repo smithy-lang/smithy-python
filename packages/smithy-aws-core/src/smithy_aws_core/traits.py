@@ -66,6 +66,11 @@ class RestJson1Trait(Trait, id=ShapeID("aws.protocols#restJson1")):
 
 
 @dataclass(init=False, frozen=True)
+class RestXmlTrait(Trait, id=ShapeID("aws.protocols#restXml")):
+    pass
+
+
+@dataclass(init=False, frozen=True)
 class AwsJson1_0Trait(Trait, id=ShapeID("aws.protocols#awsJson1_0")):
     http: Sequence[str] = field(
         repr=False, hash=False, compare=False, default_factory=tuple

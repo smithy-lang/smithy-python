@@ -2,7 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 import dataclasses
 
-from smithy_test import deep_equal
+from smithy_test import deep_equal, xml_equal
 
 
 @dataclasses.dataclass
@@ -46,3 +46,22 @@ def test_dataclass_type_mismatch() -> None:
         y: float
 
     assert not deep_equal(Point(1.0, 2.0), Other(1.0, 2.0))
+
+
+def test_xml_equal_ignores_formatting_and_member_order() -> None:
+    assert xml_equal(
+        b'<A xmlns="urn:x" b="2" a="1"><y>2</y><x> 1 </x></A>',
+        b'<A a="1" b="2" xmlns="urn:x">\n  <x>1</x>\n  <y>2</y>\n</A>',
+    )
+
+
+def test_xml_equal_keeps_same_named_sibling_order() -> None:
+    assert not xml_equal(
+        b"<L><member>1</member><member>2</member></L>",
+        b"<L><member>2</member><member>1</member></L>",
+    )
+
+
+def test_xml_equal_compares_namespace_declarations() -> None:
+    assert not xml_equal(b'<A xmlns:p="urn:x"/>', b"<A/>")
+    assert not xml_equal(b"<A>1</A>", b"<A>2</A>")

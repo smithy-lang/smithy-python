@@ -20,6 +20,7 @@ public class AwsProtocolsIntegration implements PythonIntegration {
                 new AwsQueryProtocolGenerator(),
                 new Ec2QueryProtocolGenerator(),
                 new AwsJson10ProtocolGenerator(),
-                new AwsJson11ProtocolGenerator());
+                new AwsJson11ProtocolGenerator(),
+                new RestXmlProtocolGenerator());
     }
 }

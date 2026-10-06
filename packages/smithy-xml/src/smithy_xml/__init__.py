@@ -2,16 +2,19 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 from io import BytesIO
+from typing import Any
 from xml.etree.ElementTree import iterparse
 
 from smithy_core.codecs import Codec
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.interfaces import BytesReader, BytesWriter
 from smithy_core.serializers import ShapeSerializer
+from smithy_core.shapes import ShapeID
 from smithy_core.types import TimestampFormat
 
 from ._private.deserializers import XMLShapeDeserializer as _XMLShapeDeserializer
 from ._private.readers import XMLEventReader as _XMLEventReader
+from ._private.serializers import XMLShapeSerializer as _XMLShapeSerializer
 from .settings import XMLSettings
 
 __version__ = "0.1.0"
@@ -41,13 +44,15 @@ class XMLCodec(Codec):
             default_timestamp_format=default_timestamp_format,
             default_namespace=default_namespace,
         )
+        # Member element renderings, shared by every serializer this codec creates.
+        self._elements: dict[ShapeID, Any] = {}
 
     @property
     def media_type(self) -> str:
         return "application/xml"
 
     def create_serializer(self, sink: BytesWriter) -> ShapeSerializer:
-        raise NotImplementedError("XML serialization is not supported")
+        return _XMLShapeSerializer(sink, self._settings, self._elements)
 
     def create_deserializer(
         self,

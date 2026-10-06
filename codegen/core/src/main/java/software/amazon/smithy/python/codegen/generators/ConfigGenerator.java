@@ -15,6 +15,7 @@ import software.amazon.smithy.codegen.core.Symbol;
 import software.amazon.smithy.model.knowledge.ServiceIndex;
 import software.amazon.smithy.model.knowledge.TopDownIndex;
 import software.amazon.smithy.model.shapes.ShapeId;
+import software.amazon.smithy.model.traits.XmlNamespaceTrait;
 import software.amazon.smithy.python.codegen.CodegenUtils;
 import software.amazon.smithy.python.codegen.ConfigProperty;
 import software.amazon.smithy.python.codegen.GenerationContext;
@@ -339,6 +340,11 @@ public final class ConfigGenerator implements Runnable {
         if (required.contains(ProtocolSettingsField.VERSION)) {
             params.append(", version=$S");
             args.add(service.getVersion());
+        }
+        var xmlNamespace = service.getTrait(XmlNamespaceTrait.class);
+        if (required.contains(ProtocolSettingsField.XML_NAMESPACE) && xmlNamespace.isPresent()) {
+            params.append(", xml_namespace=$S");
+            args.add(xmlNamespace.get().getUri());
         }
 
         args.add(0, RuntimeTypes.PROTOCOL_SETTINGS);

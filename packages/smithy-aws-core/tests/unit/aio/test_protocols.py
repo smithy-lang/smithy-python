@@ -13,17 +13,19 @@ from smithy_aws_core.aio.protocols import (
     AWSJSONDocument,
     AwsQueryClientProtocol,
     ProtocolSettings,
+    RestXmlClientProtocol,
 )
+from smithy_aws_event_stream.events import EventMessage
 from smithy_core import URI as _URI
 from smithy_core.deserializers import ShapeDeserializer
 from smithy_core.documents import TypeRegistry
 from smithy_core.exceptions import CallError, DiscriminatorError, ModeledError
 from smithy_core.interfaces import URI
-from smithy_core.prelude import STRING
+from smithy_core.prelude import INTEGER, STRING
 from smithy_core.schemas import APIOperation, Schema
 from smithy_core.serializers import ShapeSerializer
 from smithy_core.shapes import ShapeID, ShapeType
-from smithy_core.traits import Trait
+from smithy_core.traits import HTTPTrait, Trait
 from smithy_core.types import TypedProperties
 from smithy_http import Fields, tuples_to_fields
 from smithy_http.aio import HTTPRequest, HTTPResponse
@@ -754,3 +756,120 @@ async def _deserialize_query_error(
             ),
             context=context,
         )
+
+
+_NO_SUCH_BUCKET_SCHEMA = Schema.collection(
+    id=ShapeID("com.test#NoSuchBucket"),
+    traits=[Trait.new(id=ShapeID("smithy.api#error"), value="client")],
+)
+
+
+class _NoSuchBucket(ModeledError):
+    """S3's NoSuchBucket error, which like every S3 error has no message member."""
+
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> "_NoSuchBucket":
+        deserializer.read_struct(_NO_SUCH_BUCKET_SCHEMA, consumer=lambda _s, _de: None)
+        return cls()
+
+
+def _rest_xml_protocol() -> RestXmlClientProtocol:
+    return RestXmlClientProtocol(
+        ProtocolSettings(
+            namespace="com.test",
+            service_target="XmlService",
+            xml_namespace="https://xml.example.com",
+        )
+    )
+
+
+def _rest_xml_operation() -> APIOperation[Any, Any]:
+    return APIOperation(
+        input=_EmptyInput,
+        output=_EmptyOutput,
+        schema=Schema(
+            id=ShapeID("com.test#GetThing"),
+            shape_type=ShapeType.OPERATION,
+            traits=[HTTPTrait({"method": "GET", "code": 200, "uri": "/"})],
+        ),
+        input_schema=_EMPTY_INPUT_SCHEMA,
+        output_schema=_EMPTY_OUTPUT_SCHEMA,
+        error_registry=TypeRegistry({}),
+        effective_auth_schemes=[],
+        error_schemas=[_NO_SUCH_BUCKET_SCHEMA],
+    )
+
+
+async def test_rest_xml_modeled_error_falls_back_to_message_element() -> None:
+    with pytest.raises(_NoSuchBucket) as exc_info:
+        await _rest_xml_protocol().deserialize_response(
+            operation=_rest_xml_operation(),
+            request=cast(HTTPRequest, Mock()),
+            response=HTTPResponse(
+                status=404,
+                fields=tuples_to_fields([]),
+                body=(
+                    b"<Error><Code>NoSuchBucket</Code>"
+                    b"<Message>The specified bucket does not exist</Message></Error>"
+                ),
+            ),
+            error_registry=TypeRegistry(
+                {ShapeID("com.test#NoSuchBucket"): _NoSuchBucket}
+            ),
+            context=TypedProperties(),
+        )
+
+    assert exc_info.value.message == "The specified bucket does not exist"
+    assert str(exc_info.value) == "The specified bucket does not exist"
+
+
+_STATS_SCHEMA = Schema.collection(
+    id=ShapeID("com.test#Stats"),
+    members={"BytesScanned": {"target": INTEGER}},
+)
+_EVENTS_SCHEMA = Schema.collection(
+    id=ShapeID("com.test#Events"),
+    shape_type=ShapeType.UNION,
+    members={"Stats": {"target": _STATS_SCHEMA}},
+)
+
+
+@dataclass
+class _StatsEvent:
+    bytes_scanned: int | None = None
+
+    @classmethod
+    def deserialize(cls, deserializer: ShapeDeserializer) -> "_StatsEvent":
+        kwargs: dict[str, Any] = {}
+
+        def _stats(schema: Schema, de: ShapeDeserializer) -> None:
+            kwargs["bytes_scanned"] = de.read_integer(schema)
+
+        deserializer.read_struct(
+            _EVENTS_SCHEMA,
+            consumer=lambda member, de: de.read_struct(member, consumer=_stats),
+        )
+        return cls(**kwargs)
+
+
+async def test_rest_xml_receives_events_with_xml_payloads() -> None:
+    message = EventMessage(
+        headers={
+            ":message-type": "event",
+            ":event-type": "Stats",
+            ":content-type": "text/xml",
+        },
+        payload=b"<Stats><BytesScanned>512</BytesScanned></Stats>",
+    )
+    receiver = _rest_xml_protocol().create_event_receiver(
+        operation=_rest_xml_operation(),
+        request=cast(HTTPRequest, Mock()),
+        response=HTTPResponse(
+            status=200, fields=tuples_to_fields([]), body=message.encode()
+        ),
+        event_type=_StatsEvent,
+        event_deserializer=_StatsEvent.deserialize,
+        context=TypedProperties(),
+    )
+
+    assert await receiver.receive() == _StatsEvent(bytes_scanned=512)
