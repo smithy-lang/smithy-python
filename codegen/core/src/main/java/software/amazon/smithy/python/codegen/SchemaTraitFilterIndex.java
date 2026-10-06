@@ -6,6 +6,7 @@ package software.amazon.smithy.python.codegen;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeSet;
@@ -118,12 +119,9 @@ public final class SchemaTraitFilterIndex implements KnowledgeIndex {
 
         for (Shape shape : definitionTraits) {
             shape.getTrait(ProtocolDefinitionTrait.class)
-                    .ifPresent(protocolDefinitionTrait -> protocolDefinitionTrait.getTraits()
-                            .forEach(traitShapeId -> {
-                                if (!EXCLUDED_TRAITS.contains(traitShapeId)) {
-                                    includedTraits.add(traitShapeId);
-                                }
-                            }));
+                    .ifPresent(definition -> addReferencedTraits(definition.getTraits()));
+            shape.getTrait(AuthDefinitionTrait.class)
+                    .ifPresent(definition -> addReferencedTraits(definition.getTraits()));
         }
 
         this.model = model;
@@ -184,5 +182,13 @@ public final class SchemaTraitFilterIndex implements KnowledgeIndex {
 
         cache.put(shape, membersHaveSchemaTraits || targetHasSchemaTraits);
         return cache.get(shape);
+    }
+
+    private void addReferencedTraits(List<ShapeId> traitShapeIds) {
+        for (ShapeId traitShapeId : traitShapeIds) {
+            if (!EXCLUDED_TRAITS.contains(traitShapeId)) {
+                includedTraits.add(traitShapeId);
+            }
+        }
     }
 }
