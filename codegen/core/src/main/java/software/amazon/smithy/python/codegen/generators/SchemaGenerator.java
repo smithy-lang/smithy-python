@@ -23,17 +23,13 @@ import software.amazon.smithy.model.node.Node;
 import software.amazon.smithy.model.shapes.MemberShape;
 import software.amazon.smithy.model.shapes.Shape;
 import software.amazon.smithy.model.shapes.ShapeId;
-import software.amazon.smithy.model.traits.DocumentationTrait;
-import software.amazon.smithy.model.traits.EnumTrait;
 import software.amazon.smithy.model.traits.UnitTypeTrait;
-import software.amazon.smithy.model.traits.synthetic.SyntheticEnumTrait;
 import software.amazon.smithy.python.codegen.GenerationContext;
 import software.amazon.smithy.python.codegen.RuntimeTypes;
+import software.amazon.smithy.python.codegen.SchemaTraitFilterIndex;
 import software.amazon.smithy.python.codegen.SmithyPythonDependency;
 import software.amazon.smithy.python.codegen.SymbolProperties;
 import software.amazon.smithy.python.codegen.writer.PythonWriter;
-import software.amazon.smithy.rulesengine.traits.EndpointRuleSetTrait;
-import software.amazon.smithy.rulesengine.traits.EndpointTestsTrait;
 import software.amazon.smithy.utils.CaseUtils;
 import software.amazon.smithy.utils.SmithyUnstableApi;
 
@@ -45,16 +41,6 @@ import software.amazon.smithy.utils.SmithyUnstableApi;
 @SmithyUnstableApi
 public final class SchemaGenerator implements Consumer<Shape> {
     private static final Logger LOGGER = Logger.getLogger(SchemaGenerator.class.getName());
-
-    // Filter out traits that would overly bloat the definition, which are already part of the
-    // class, such as documentation. Omit the endpoint ruleset and tests because the BDD carries
-    // the same runtime information.
-    private static final Set<ShapeId> DEFAULT_TRAIT_FILTER = Set.of(
-            DocumentationTrait.ID,
-            EnumTrait.ID,
-            SyntheticEnumTrait.ID,
-            EndpointRuleSetTrait.ID,
-            EndpointTestsTrait.ID);
 
     private static final Symbol UNIT_SYMBOL = Symbol.builder()
             .name("UNIT")
@@ -138,10 +124,11 @@ public final class SchemaGenerator implements Consumer<Shape> {
     }
 
     private Map<ShapeId, Optional<Node>> filterTraits(Shape shape) {
+        var traitFilter = SchemaTraitFilterIndex.of(context.model());
         return shape.getAllTraits()
                 .entrySet()
                 .stream()
-                .filter(t -> !DEFAULT_TRAIT_FILTER.contains(t.getKey()))
+                .filter(t -> traitFilter.includeTrait(t.getKey()))
                 .collect(Collectors.toMap(Map.Entry::getKey, e -> {
                     var value = e.getValue().toNode();
                     if (value.isObjectNode() && value.asObjectNode().get().getMembers().isEmpty()) {

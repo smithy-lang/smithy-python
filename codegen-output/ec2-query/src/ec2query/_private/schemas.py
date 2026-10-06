@@ -25,8 +25,7 @@ DATETIME_OFFSETS_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -38,103 +37,24 @@ DATE_TIME = Schema(
 
 DATETIME_OFFSETS_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.ec2#DatetimeOffsetsOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={"datetime": {"target": DATE_TIME}},
 )
 
 DATETIME_OFFSETS = Schema(
-    id=ShapeID("aws.protocoltests.ec2#DatetimeOffsets"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2QueryDateTimeWithNegativeOffset",
-                        "documentation": "Ensures that clients can correctly parse datetime (timestamps) with offsets",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<DatetimeOffsetsResponse xmlns="https://example.com/">\n    <datetime>2019-12-16T22:48:18-01:00</datetime>\n    <requestId>requestid</requestId>\n</DatetimeOffsetsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType({"datetime": 1576540098}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2QueryDateTimeWithPositiveOffset",
-                        "documentation": "Ensures that clients can correctly parse datetime (timestamps) with offsets",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<DatetimeOffsetsResponse xmlns="https://example.com/">\n    <datetime>2019-12-17T00:48:18+01:00</datetime>\n    <requestId>requestid</requestId>\n</DatetimeOffsetsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType({"datetime": 1576540098}),
-                    }
-                ),
-            ),
-        ),
-    ],
+    id=ShapeID("aws.protocoltests.ec2#DatetimeOffsets"), shape_type=ShapeType.OPERATION
 )
 
 EMPTY_INPUT_AND_EMPTY_OUTPUT_INPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.ec2#EmptyInputAndEmptyOutputInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
+    id=ShapeID("aws.protocoltests.ec2#EmptyInputAndEmptyOutputInput")
 )
 
 EMPTY_INPUT_AND_EMPTY_OUTPUT_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.ec2#EmptyInputAndEmptyOutputOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
+    id=ShapeID("aws.protocoltests.ec2#EmptyInputAndEmptyOutputOutput")
 )
 
 EMPTY_INPUT_AND_EMPTY_OUTPUT = Schema(
     id=ShapeID("aws.protocoltests.ec2#EmptyInputAndEmptyOutput"),
     shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2QueryEmptyInputAndEmptyOutput",
-                        "documentation": "Empty input serializes no extra query params",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "body": "Action=EmptyInputAndEmptyOutput&Version=2020-01-08",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2QueryEmptyInputAndEmptyOutput",
-                        "documentation": "Empty output",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "body": '<EmptyInputAndEmptyOutputResponse xmlns="https://example.com/">\n    <requestId>requestid</requestId>\n</EmptyInputAndEmptyOutputResponse>\n',
-                        "bodyMediaType": "application/xml",
-                    }
-                ),
-            ),
-        ),
-    ],
 )
 
 ENDPOINT_OPERATION_INPUT = Schema.collection(
@@ -142,8 +62,7 @@ ENDPOINT_OPERATION_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -152,8 +71,7 @@ ENDPOINT_OPERATION_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -162,30 +80,9 @@ ENDPOINT_OPERATION = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2QueryEndpointTrait",
-                        "documentation": "Operations can prepend to the given host if they define the\nendpoint trait.",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "body": "Action=EndpointOperation&Version=2020-01-08",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "host": "example.com",
-                        "resolvedHost": "foo.example.com",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#endpoint"),
             value=MappingProxyType({"hostPrefix": "foo."}),
-        ),
+        )
     ],
 )
 
@@ -195,8 +92,7 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION_INPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.ec2#HostLabelInput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
     members={
         "label": {
@@ -214,8 +110,7 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -224,31 +119,9 @@ ENDPOINT_WITH_HOST_LABEL_OPERATION = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2QueryEndpointTraitWithHostLabel",
-                        "documentation": "Operations can prepend to the given host if they define the\nendpoint trait, and can use the host label trait to define\nfurther customization based on user input.",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "body": "Action=EndpointWithHostLabelOperation&Version=2020-01-08&Label=bar",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "host": "example.com",
-                        "resolvedHost": "foo.bar.example.com",
-                        "params": MappingProxyType({"label": "bar"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#endpoint"),
             value=MappingProxyType({"hostPrefix": "foo.{label}."}),
-        ),
+        )
     ],
 )
 
@@ -257,42 +130,18 @@ FRACTIONAL_SECONDS_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 FRACTIONAL_SECONDS_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.ec2#FractionalSecondsOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={"datetime": {"target": DATE_TIME}},
 )
 
 FRACTIONAL_SECONDS = Schema(
     id=ShapeID("aws.protocoltests.ec2#FractionalSeconds"),
     shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2QueryDateTimeWithFractionalSeconds",
-                        "documentation": "Ensures that clients can correctly parse datetime timestamps with fractional seconds",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<FractionalSecondsResponse xmlns="https://example.com/">\n    <datetime>2000-01-02T20:34:56.123Z</datetime>\n    <requestId>requestid</requestId>\n</FractionalSecondsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType({"datetime": 9.46845296123e8}),
-                    }
-                ),
-            ),
-        ),
-    ],
 )
 
 COMPLEX_NESTED_ERROR_DATA = Schema.collection(
@@ -302,34 +151,7 @@ COMPLEX_NESTED_ERROR_DATA = Schema.collection(
 
 COMPLEX_ERROR = Schema.collection(
     id=ShapeID("aws.protocoltests.ec2#ComplexError"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2ComplexError",
-                        "protocol": "aws.protocols#ec2Query",
-                        "params": MappingProxyType(
-                            {
-                                "TopLevel": "Top level",
-                                "Nested": MappingProxyType({"Foo": "bar"}),
-                            }
-                        ),
-                        "code": 400,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "body": "<Response>\n    <Errors>\n        <Error>\n            <Code>ComplexError</Code>\n            <Message>Hi</Message>\n            <TopLevel>Top level</TopLevel>\n            <Nested>\n                <Foo>bar</Foo>\n            </Nested>\n        </Error>\n    </Errors>\n    <RequestID>foo-id</RequestID>\n</Response>\n",
-                        "bodyMediaType": "application/xml",
-                        "vendorParamsShape": "aws.protocoltests.config#ErrorCodeParams",
-                        "vendorParams": MappingProxyType({"code": "ComplexError"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#error"), value="client"),
-    ],
+    traits=[Trait.new(id=ShapeID("smithy.api#error"), value="client")],
     members={
         "TopLevel": {"target": STRING},
         "Nested": {"target": COMPLEX_NESTED_ERROR_DATA},
@@ -341,70 +163,24 @@ GREETING_WITH_ERRORS_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 GREETING_WITH_ERRORS_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.ec2#GreetingWithErrorsOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={"greeting": {"target": STRING}},
 )
 
 INVALID_GREETING = Schema.collection(
     id=ShapeID("aws.protocoltests.ec2#InvalidGreeting"),
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2InvalidGreetingError",
-                        "documentation": "Parses simple XML errors",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 400,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "body": "<Response>\n    <Errors>\n        <Error>\n            <Code>InvalidGreeting</Code>\n            <Message>Hi</Message>\n        </Error>\n    </Errors>\n    <RequestID>foo-id</RequestID>\n</Response>\n",
-                        "bodyMediaType": "application/xml",
-                        "params": MappingProxyType({"Message": "Hi"}),
-                        "vendorParamsShape": "aws.protocoltests.config#ErrorCodeParams",
-                        "vendorParams": MappingProxyType({"code": "InvalidGreeting"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#error"), value="client"),
-    ],
+    traits=[Trait.new(id=ShapeID("smithy.api#error"), value="client")],
     members={"Message": {"target": STRING}},
 )
 
 GREETING_WITH_ERRORS = Schema(
     id=ShapeID("aws.protocoltests.ec2#GreetingWithErrors"),
     shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2GreetingWithErrors",
-                        "documentation": "Ensures that operations with errors successfully know how to deserialize the successful response",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "body": '<GreetingWithErrorsResponse xmlns="https://example.com/">\n    <greeting>Hello</greeting>\n    <requestId>requestid</requestId>\n</GreetingWithErrorsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "params": MappingProxyType({"greeting": "Hello"}),
-                    }
-                ),
-            ),
-        )
-    ],
 )
 
 HOST_WITH_PATH_OPERATION_INPUT = Schema.collection(
@@ -412,8 +188,7 @@ HOST_WITH_PATH_OPERATION_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -422,33 +197,13 @@ HOST_WITH_PATH_OPERATION_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
 HOST_WITH_PATH_OPERATION = Schema(
     id=ShapeID("aws.protocoltests.ec2#HostWithPathOperation"),
     shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2QueryHostWithPath",
-                        "documentation": "Custom endpoints supplied by users can have paths",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/custom/",
-                        "body": "Action=HostWithPathOperation&Version=2020-01-08",
-                        "host": "example.com/custom",
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        )
-    ],
 )
 
 IGNORES_WRAPPING_XML_NAME_INPUT = Schema.collection(
@@ -456,44 +211,19 @@ IGNORES_WRAPPING_XML_NAME_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 IGNORES_WRAPPING_XML_NAME_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.ec2#IgnoresWrappingXmlNameOutput"),
-    traits=[
-        Trait.new(id=ShapeID("smithy.api#xmlName"), value="IgnoreMe"),
-        Trait.new(id=ShapeID("smithy.api#output")),
-    ],
+    traits=[Trait.new(id=ShapeID("smithy.api#xmlName"), value="IgnoreMe")],
     members={"foo": {"target": STRING}},
 )
 
 IGNORES_WRAPPING_XML_NAME = Schema(
     id=ShapeID("aws.protocoltests.ec2#IgnoresWrappingXmlName"),
     shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2IgnoresWrappingXmlName",
-                        "documentation": "The xmlName trait on the output structure is ignored in the ec2 protocol",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<IgnoresWrappingXmlNameResponse xmlns="https://example.com/">\n    <foo>bar</foo>\n    <requestId>requestid</requestId>\n</IgnoresWrappingXmlNameResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType({"foo": "bar"}),
-                    }
-                ),
-            ),
-        )
-    ],
 )
 
 NESTED_STRUCTURES_OUTPUT = Schema.collection(
@@ -501,8 +231,7 @@ NESTED_STRUCTURES_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -511,63 +240,20 @@ NO_INPUT_AND_OUTPUT_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 NO_INPUT_AND_OUTPUT_OUTPUT = Schema.collection(
-    id=ShapeID("aws.protocoltests.ec2#NoInputAndOutputOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
+    id=ShapeID("aws.protocoltests.ec2#NoInputAndOutputOutput")
 )
 
 NO_INPUT_AND_OUTPUT = Schema(
-    id=ShapeID("aws.protocoltests.ec2#NoInputAndOutput"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2QueryNoInputAndOutput",
-                        "documentation": "No input serializes no payload",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "body": "Action=NoInputAndOutput&Version=2020-01-08",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2QueryNoInputAndOutput",
-                        "documentation": "Empty output",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "body": '<NoInputAndOutputResponse xmlns="https://example.com/">\n    <requestId>requestid</requestId>\n</NoInputAndOutputResponse>\n',
-                        "bodyMediaType": "application/xml",
-                    }
-                ),
-            ),
-        ),
-    ],
+    id=ShapeID("aws.protocoltests.ec2#NoInputAndOutput"), shape_type=ShapeType.OPERATION
 )
 
 PUT_WITH_CONTENT_ENCODING_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.ec2#PutWithContentEncodingInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "encoding": {
             "target": STRING,
@@ -584,8 +270,7 @@ PUT_WITH_CONTENT_ENCODING_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
@@ -594,51 +279,14 @@ PUT_WITH_CONTENT_ENCODING = Schema(
     shape_type=ShapeType.OPERATION,
     traits=[
         Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "SDKAppliedContentEncoding_ec2Query",
-                        "documentation": "Compression algorithm encoding is appended to the Content-Encoding header.",
-                        "protocol": "aws.protocols#ec2Query",
-                        "params": MappingProxyType(
-                            {
-                                "data": "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\n"
-                            }
-                        ),
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType({"Content-Encoding": "gzip"}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "SDKAppendsGzipAndIgnoresHttpProvidedEncoding_ec2Query",
-                        "documentation": "Compression algorithm encoding is appended to the Content-Encoding header, and the\nuser-provided content-encoding is NOT in the Content-Encoding header since HTTP binding\ntraits are ignored in the ec2Query protocol.\n",
-                        "protocol": "aws.protocols#ec2Query",
-                        "params": MappingProxyType(
-                            {
-                                "encoding": "custom",
-                                "data": "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\n",
-                            }
-                        ),
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType({"Content-Encoding": "gzip"}),
-                    }
-                ),
-            ),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#requestCompression"),
             value=MappingProxyType({"encodings": ("gzip",)}),
-        ),
+        )
     ],
 )
 
 QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.ec2#QueryIdempotencyTokenAutoFillInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "token": {
             "target": STRING,
@@ -652,57 +300,13 @@ QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
 QUERY_IDEMPOTENCY_TOKEN_AUTO_FILL = Schema(
     id=ShapeID("aws.protocoltests.ec2#QueryIdempotencyTokenAutoFill"),
     shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2ProtocolIdempotencyTokenAutoFill",
-                        "documentation": "Automatically adds idempotency token when not set",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "body": "Action=QueryIdempotencyTokenAutoFill&Version=2020-01-08&Token=00000000-0000-4000-8000-000000000000",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2ProtocolIdempotencyTokenAutoFillIsSet",
-                        "documentation": "Uses the given idempotency token as-is",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "body": "Action=QueryIdempotencyTokenAutoFill&Version=2020-01-08&Token=00000000-0000-4000-8000-000000000123",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType(
-                            {"token": "00000000-0000-4000-8000-000000000123"}
-                        ),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-    ],
 )
 
 GREETING_STRUCT = Schema.collection(
@@ -740,7 +344,6 @@ NESTED_STRUCT_WITH_LIST = Schema.collection(
 
 QUERY_LISTS_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.ec2#QueryListsInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "ListArg": {"target": STRING_LIST},
         "ComplexListArg": {"target": GREETING_LIST},
@@ -758,112 +361,12 @@ QUERY_LISTS_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
 QUERY_LISTS = Schema(
-    id=ShapeID("aws.protocoltests.ec2#QueryLists"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2Lists",
-                        "documentation": "Serializes query lists. All EC2 lists are flattened.",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "body": "Action=QueryLists&Version=2020-01-08&ListArg.1=foo&ListArg.2=bar&ListArg.3=baz&ComplexListArg.1.Hi=hello&ComplexListArg.2.Hi=hola",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType(
-                            {
-                                "ListArg": ("foo", "bar", "baz"),
-                                "ComplexListArg": (
-                                    MappingProxyType({"hi": "hello"}),
-                                    MappingProxyType({"hi": "hola"}),
-                                ),
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2EmptyQueryLists",
-                        "documentation": "Does not serialize empty query lists.",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "body": "Action=QueryLists&Version=2020-01-08",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType({"ListArg": ()}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2ListArgWithXmlNameMember",
-                        "documentation": "An xmlName trait in the member of a list has no effect on the list serialization.",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "body": "Action=QueryLists&Version=2020-01-08&ListArgWithXmlNameMember.1=A&ListArgWithXmlNameMember.2=B",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType(
-                            {"ListArgWithXmlNameMember": ("A", "B")}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2ListMemberWithXmlName",
-                        "documentation": "Changes the name of the list using the xmlName trait",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "body": "Action=QueryLists&Version=2020-01-08&Hi.1=A&Hi.2=B",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType({"ListArgWithXmlName": ("A", "B")}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2ListNestedStructWithList",
-                        "documentation": "Nested structure with a list member",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "body": "Action=QueryLists&Version=2020-01-08&NestedWithList.ListArg.1=A&NestedWithList.ListArg.2=B",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType(
-                            {
-                                "NestedWithList": MappingProxyType(
-                                    {"ListArg": ("A", "B")}
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        )
-    ],
+    id=ShapeID("aws.protocoltests.ec2#QueryLists"), shape_type=ShapeType.OPERATION
 )
 
 EPOCH_SECONDS = Schema(
@@ -874,7 +377,6 @@ EPOCH_SECONDS = Schema(
 
 QUERY_TIMESTAMPS_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.ec2#QueryTimestampsInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "normalFormat": {"target": TIMESTAMP},
         "epochMember": {
@@ -894,43 +396,12 @@ QUERY_TIMESTAMPS_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
 QUERY_TIMESTAMPS = Schema(
-    id=ShapeID("aws.protocoltests.ec2#QueryTimestamps"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2TimestampsInput",
-                        "documentation": "Serializes timestamps",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "body": "Action=QueryTimestamps&Version=2020-01-08&NormalFormat=2015-01-25T08%3A00%3A00Z&EpochMember=1422172800&EpochTarget=1422172800",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType(
-                            {
-                                "normalFormat": 1422172800,
-                                "epochMember": 1422172800,
-                                "epochTarget": 1422172800,
-                            }
-                        ),
-                    }
-                ),
-            ),
-        )
-    ],
+    id=ShapeID("aws.protocoltests.ec2#QueryTimestamps"), shape_type=ShapeType.OPERATION
 )
 
 RECURSIVE_XML_SHAPES_INPUT = Schema.collection(
@@ -938,8 +409,7 @@ RECURSIVE_XML_SHAPES_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -947,32 +417,16 @@ FOO_ENUM = Schema.collection(
     id=ShapeID("aws.protocoltests.shared#FooEnum"),
     shape_type=ShapeType.ENUM,
     members={
-        "FOO": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value="Foo")],
-        },
-        "BAZ": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value="Baz")],
-        },
-        "BAR": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value="Bar")],
-        },
-        "ONE": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value="1")],
-        },
-        "ZERO": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value="0")],
-        },
+        "FOO": {"target": UNIT},
+        "BAZ": {"target": UNIT},
+        "BAR": {"target": UNIT},
+        "ONE": {"target": UNIT},
+        "ZERO": {"target": UNIT},
     },
 )
 
 SIMPLE_INPUT_PARAMS_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.ec2#SimpleInputParamsInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={
         "Foo": {"target": STRING},
         "Bar": {"target": STRING},
@@ -1034,256 +488,13 @@ SIMPLE_INPUT_PARAMS_OUTPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
 )
 
 SIMPLE_INPUT_PARAMS = Schema(
     id=ShapeID("aws.protocoltests.ec2#SimpleInputParams"),
     shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2SimpleInputParamsStrings",
-                        "documentation": "Serializes strings",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "body": "Action=SimpleInputParams&Version=2020-01-08&Foo=val1&Bar=val2",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType({"Foo": "val1", "Bar": "val2"}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2SimpleInputParamsStringAndBooleanTrue",
-                        "documentation": "Serializes booleans that are true",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "body": "Action=SimpleInputParams&Version=2020-01-08&Foo=val1&Baz=true",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType({"Foo": "val1", "Baz": True}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2SimpleInputParamsStringsAndBooleanFalse",
-                        "documentation": "Serializes booleans that are false",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "body": "Action=SimpleInputParams&Version=2020-01-08&Baz=false",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType({"Baz": False}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2SimpleInputParamsInteger",
-                        "documentation": "Serializes integers",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "body": "Action=SimpleInputParams&Version=2020-01-08&Bam=10",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType({"Bam": 10}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2SimpleInputParamsFloat",
-                        "documentation": "Serializes floats",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "body": "Action=SimpleInputParams&Version=2020-01-08&Boo=10.8",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType({"Boo": 10.8}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2SimpleInputParamsBlob",
-                        "documentation": "Blobs are base64 encoded in the query string",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "body": "Action=SimpleInputParams&Version=2020-01-08&Qux=dmFsdWU%3D",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType({"Qux": "value"}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2Enums",
-                        "documentation": "Serializes enums in the query string",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "body": "Action=SimpleInputParams&Version=2020-01-08&FooEnum=Foo",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType({"FooEnum": "Foo"}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2Query",
-                        "documentation": "Serializes query using ec2QueryName trait.",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "body": "Action=SimpleInputParams&Version=2020-01-08&HasQueryName=Hi",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType({"HasQueryName": "Hi"}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2QueryIsPreferred",
-                        "documentation": "ec2QueryName trait is preferred over xmlName.",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "body": "Action=SimpleInputParams&Version=2020-01-08&HasQueryAndXmlName=Hi",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType({"HasQueryAndXmlName": "Hi"}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2XmlNameIsUppercased",
-                        "documentation": "xmlName is used with the ec2 protocol, but the first character is uppercased",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "body": "Action=SimpleInputParams&Version=2020-01-08&UsesXmlName=Hi",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType({"UsesXmlName": "Hi"}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2QueryNameDistinctFromXmlNameAndMemberName",
-                        "documentation": "ec2QueryName trait takes precedence when xmlName, default name, and ec2QueryName all have distinct values.",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "body": "Action=SimpleInputParams&Version=2020-01-08&QueryName=value1&queryAndXmlName=value2&XmlNameOnly=value3",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType(
-                            {
-                                "DistinctQueryName": "value1",
-                                "DistinctQueryAndXmlName": "value2",
-                                "DistinctXmlName": "value3",
-                            }
-                        ),
-                        "tags": ("skip-legacy-conversion",),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2QuerySupportsNaNFloatInputs",
-                        "documentation": "Supports handling NaN float values.",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "body": "Action=SimpleInputParams&Version=2020-01-08&FloatValue=NaN&Boo=NaN",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType({"FloatValue": "NaN", "Boo": "NaN"}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2QuerySupportsInfinityFloatInputs",
-                        "documentation": "Supports handling Infinity float values.",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "body": "Action=SimpleInputParams&Version=2020-01-08&FloatValue=Infinity&Boo=Infinity",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {"FloatValue": "Infinity", "Boo": "Infinity"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2QuerySupportsNegativeInfinityFloatInputs",
-                        "documentation": "Supports handling -Infinity float values.",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "body": "Action=SimpleInputParams&Version=2020-01-08&FloatValue=-Infinity&Boo=-Infinity",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "params": MappingProxyType(
-                            {"FloatValue": "-Infinity", "Boo": "-Infinity"}
-                        ),
-                    }
-                ),
-            ),
-        )
-    ],
 )
 
 SIMPLE_SCALAR_XML_PROPERTIES_INPUT = Schema.collection(
@@ -1291,14 +502,12 @@ SIMPLE_SCALAR_XML_PROPERTIES_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
 SIMPLE_SCALAR_XML_PROPERTIES_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.ec2#SimpleScalarXmlPropertiesOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "stringValue": {
             "target": STRING,
@@ -1326,88 +535,6 @@ SIMPLE_SCALAR_XML_PROPERTIES_OUTPUT = Schema.collection(
 SIMPLE_SCALAR_XML_PROPERTIES = Schema(
     id=ShapeID("aws.protocoltests.ec2#SimpleScalarXmlProperties"),
     shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2SimpleScalarProperties",
-                        "documentation": "Serializes simple scalar properties",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<SimpleScalarXmlPropertiesResponse xmlns="https://example.com/">\n    <stringValue>string</stringValue>\n    <emptyStringValue/>\n    <trueBooleanValue>true</trueBooleanValue>\n    <falseBooleanValue>false</falseBooleanValue>\n    <byteValue>1</byteValue>\n    <shortValue>2</shortValue>\n    <integerValue>3</integerValue>\n    <longValue>4</longValue>\n    <floatValue>5.5</floatValue>\n    <DoubleDribble>6.5</DoubleDribble>\n    <requestId>requestid</requestId>\n</SimpleScalarXmlPropertiesResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "stringValue": "string",
-                                "emptyStringValue": "",
-                                "trueBooleanValue": True,
-                                "falseBooleanValue": False,
-                                "byteValue": 1,
-                                "shortValue": 2,
-                                "integerValue": 3,
-                                "longValue": 4,
-                                "floatValue": 5.5,
-                                "doubleValue": 6.5,
-                            }
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2QuerySupportsNaNFloatOutputs",
-                        "documentation": "Supports handling NaN float values.",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<SimpleScalarXmlPropertiesResponse xmlns="https://example.com/">\n    <floatValue>NaN</floatValue>\n    <DoubleDribble>NaN</DoubleDribble>\n</SimpleScalarXmlPropertiesResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType(
-                            {"floatValue": "NaN", "doubleValue": "NaN"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2QuerySupportsInfinityFloatOutputs",
-                        "documentation": "Supports handling Infinity float values.",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<SimpleScalarXmlPropertiesResponse xmlns="https://example.com/">\n    <floatValue>Infinity</floatValue>\n    <DoubleDribble>Infinity</DoubleDribble>\n</SimpleScalarXmlPropertiesResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType(
-                            {"floatValue": "Infinity", "doubleValue": "Infinity"}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2QuerySupportsNegativeInfinityFloatOutputs",
-                        "documentation": "Supports handling -Infinity float values.",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<SimpleScalarXmlPropertiesResponse xmlns="https://example.com/">\n    <floatValue>-Infinity</floatValue>\n    <DoubleDribble>-Infinity</DoubleDribble>\n</SimpleScalarXmlPropertiesResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType(
-                            {"floatValue": "-Infinity", "doubleValue": "-Infinity"}
-                        ),
-                    }
-                ),
-            ),
-        )
-    ],
 )
 
 XML_BLOBS_INPUT = Schema.collection(
@@ -1415,8 +542,7 @@ XML_BLOBS_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -1426,36 +552,13 @@ XML_BLOBS_OPERATION_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.ec2#XmlBlobsOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={"data": {"target": BLOB}},
 )
 
 XML_BLOBS = Schema(
-    id=ShapeID("aws.protocoltests.ec2#XmlBlobs"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2XmlBlobs",
-                        "documentation": "Blobs are base64 encoded",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<XmlBlobsResponse xmlns="https://example.com/">\n    <data>dmFsdWU=</data>\n    <requestId>requestid</requestId>\n</XmlBlobsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType({"data": "value"}),
-                    }
-                ),
-            ),
-        )
-    ],
+    id=ShapeID("aws.protocoltests.ec2#XmlBlobs"), shape_type=ShapeType.OPERATION
 )
 
 XML_EMPTY_BLOBS_INPUT = Schema.collection(
@@ -1463,8 +566,7 @@ XML_EMPTY_BLOBS_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -1474,53 +576,13 @@ XML_EMPTY_BLOBS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.ec2#XmlBlobsOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={"data": {"target": BLOB}},
 )
 
 XML_EMPTY_BLOBS = Schema(
-    id=ShapeID("aws.protocoltests.ec2#XmlEmptyBlobs"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2XmlEmptyBlobs",
-                        "documentation": "Empty blobs are deserialized as empty string",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<XmlEmptyBlobsResponse xmlns="https://example.com/">\n    <data></data>\n    <requestId>requestid</requestId>\n</XmlEmptyBlobsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType({"data": ""}),
-                        "appliesTo": "client",
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2XmlEmptySelfClosedBlobs",
-                        "documentation": "Empty self closed blobs are deserialized as empty string",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<XmlEmptyBlobsResponse xmlns="https://example.com/">\n    <data/>\n    <requestId>requestid</requestId>\n</XmlEmptyBlobsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType({"data": ""}),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-    ],
+    id=ShapeID("aws.protocoltests.ec2#XmlEmptyBlobs"), shape_type=ShapeType.OPERATION
 )
 
 XML_EMPTY_LISTS_INPUT = Schema.collection(
@@ -1528,8 +590,7 @@ XML_EMPTY_LISTS_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -1599,21 +660,7 @@ INTEGER_LIST = Schema.collection(
 INTEGER_ENUM = Schema.collection(
     id=ShapeID("aws.protocoltests.shared#IntegerEnum"),
     shape_type=ShapeType.INT_ENUM,
-    traits=[Trait.new(id=ShapeID("smithy.api#box"))],
-    members={
-        "A": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value=1)],
-        },
-        "B": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value=2)],
-        },
-        "C": {
-            "target": UNIT,
-            "traits": [Trait.new(id=ShapeID("smithy.api#enumValue"), value=3)],
-        },
-    },
+    members={"A": {"target": UNIT}, "B": {"target": UNIT}, "C": {"target": UNIT}},
 )
 
 INTEGER_ENUM_LIST = Schema.collection(
@@ -1631,7 +678,6 @@ NESTED_STRING_LIST = Schema.collection(
 STRING_SET = Schema.collection(
     id=ShapeID("aws.protocoltests.shared#StringSet"),
     shape_type=ShapeType.LIST,
-    traits=[Trait.new(id=ShapeID("smithy.api#uniqueItems"))],
     members={"member": {"target": STRING}},
 )
 
@@ -1672,8 +718,7 @@ XML_EMPTY_LISTS_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.ec2#XmlListsOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "stringList": {"target": STRING_LIST},
@@ -1690,12 +735,7 @@ XML_EMPTY_LISTS_OUTPUT = Schema.collection(
         },
         "flattenedList": {
             "target": RENAMED_LIST_MEMBERS,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#suppress"), value=("XmlFlattenedTrait",)
-                ),
-                Trait.new(id=ShapeID("smithy.api#xmlFlattened")),
-            ],
+            "traits": [Trait.new(id=ShapeID("smithy.api#xmlFlattened"))],
         },
         "flattenedList2": {
             "target": RENAMED_LIST_MEMBERS,
@@ -1722,29 +762,7 @@ XML_EMPTY_LISTS_OUTPUT = Schema.collection(
 )
 
 XML_EMPTY_LISTS = Schema(
-    id=ShapeID("aws.protocoltests.ec2#XmlEmptyLists"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(id=ShapeID("smithy.api#tags"), value=("client-only",)),
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2XmlEmptyLists",
-                        "documentation": "Deserializes empty XML lists",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<XmlEmptyListsResponse xmlns="https://example.com/">\n  <stringList/>\n  <stringSet></stringSet>\n</XmlEmptyListsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType({"Content-Type": "text/xml"}),
-                        "params": MappingProxyType({"stringList": (), "stringSet": ()}),
-                        "appliesTo": "client",
-                    }
-                ),
-            ),
-        ),
-    ],
+    id=ShapeID("aws.protocoltests.ec2#XmlEmptyLists"), shape_type=ShapeType.OPERATION
 )
 
 XML_ENUMS_INPUT = Schema.collection(
@@ -1752,8 +770,7 @@ XML_ENUMS_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -1766,13 +783,11 @@ FOO_ENUM_MAP = Schema.collection(
 FOO_ENUM_SET = Schema.collection(
     id=ShapeID("aws.protocoltests.shared#FooEnumSet"),
     shape_type=ShapeType.LIST,
-    traits=[Trait.new(id=ShapeID("smithy.api#uniqueItems"))],
     members={"member": {"target": FOO_ENUM}},
 )
 
 XML_ENUMS_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.ec2#XmlEnumsOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "fooEnum1": {"target": FOO_ENUM},
         "fooEnum2": {"target": FOO_ENUM},
@@ -1784,40 +799,7 @@ XML_ENUMS_OUTPUT = Schema.collection(
 )
 
 XML_ENUMS = Schema(
-    id=ShapeID("aws.protocoltests.ec2#XmlEnums"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2XmlEnums",
-                        "documentation": "Serializes simple scalar properties",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<XmlEnumsResponse xmlns="https://example.com/">\n    <fooEnum1>Foo</fooEnum1>\n    <fooEnum2>0</fooEnum2>\n    <fooEnum3>1</fooEnum3>\n    <fooEnumList>\n        <member>Foo</member>\n        <member>0</member>\n    </fooEnumList>\n    <fooEnumSet>\n        <member>Foo</member>\n        <member>0</member>\n    </fooEnumSet>\n    <fooEnumMap>\n        <entry>\n            <key>hi</key>\n            <value>Foo</value>\n        </entry>\n        <entry>\n            <key>zero</key>\n            <value>0</value>\n        </entry>\n    </fooEnumMap>\n    <requestId>requestid</requestId>\n</XmlEnumsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "fooEnum1": "Foo",
-                                "fooEnum2": "0",
-                                "fooEnum3": "1",
-                                "fooEnumList": ("Foo", "0"),
-                                "fooEnumSet": ("Foo", "0"),
-                                "fooEnumMap": MappingProxyType(
-                                    {"hi": "Foo", "zero": "0"}
-                                ),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        )
-    ],
+    id=ShapeID("aws.protocoltests.ec2#XmlEnums"), shape_type=ShapeType.OPERATION
 )
 
 XML_INT_ENUMS_INPUT = Schema.collection(
@@ -1825,8 +807,7 @@ XML_INT_ENUMS_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -1839,13 +820,11 @@ INTEGER_ENUM_MAP = Schema.collection(
 INTEGER_ENUM_SET = Schema.collection(
     id=ShapeID("aws.protocoltests.shared#IntegerEnumSet"),
     shape_type=ShapeType.LIST,
-    traits=[Trait.new(id=ShapeID("smithy.api#uniqueItems"))],
     members={"member": {"target": INTEGER_ENUM}},
 )
 
 XML_INT_ENUMS_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.ec2#XmlIntEnumsOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "intEnum1": {"target": INTEGER_ENUM},
         "intEnum2": {"target": INTEGER_ENUM},
@@ -1857,38 +836,7 @@ XML_INT_ENUMS_OUTPUT = Schema.collection(
 )
 
 XML_INT_ENUMS = Schema(
-    id=ShapeID("aws.protocoltests.ec2#XmlIntEnums"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2XmlIntEnums",
-                        "documentation": "Serializes simple scalar properties",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<XmlIntEnumsResponse xmlns="https://example.com/">\n    <intEnum1>1</intEnum1>\n    <intEnum2>2</intEnum2>\n    <intEnum3>3</intEnum3>\n    <intEnumList>\n        <member>1</member>\n        <member>2</member>\n    </intEnumList>\n    <intEnumSet>\n        <member>1</member>\n        <member>2</member>\n    </intEnumSet>\n    <intEnumMap>\n        <entry>\n            <key>a</key>\n            <value>1</value>\n        </entry>\n        <entry>\n            <key>b</key>\n            <value>2</value>\n        </entry>\n    </intEnumMap>\n    <requestId>requestid</requestId>\n</XmlIntEnumsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "intEnum1": 1,
-                                "intEnum2": 2,
-                                "intEnum3": 3,
-                                "intEnumList": (1, 2),
-                                "intEnumSet": (1, 2),
-                                "intEnumMap": MappingProxyType({"a": 1, "b": 2}),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        )
-    ],
+    id=ShapeID("aws.protocoltests.ec2#XmlIntEnums"), shape_type=ShapeType.OPERATION
 )
 
 XML_LISTS_INPUT = Schema.collection(
@@ -1896,8 +844,7 @@ XML_LISTS_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -1907,8 +854,7 @@ XML_LISTS_OPERATION_OUTPUT = Schema.collection(
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"),
             value="aws.protocoltests.ec2#XmlListsOutput",
-        ),
-        Trait.new(id=ShapeID("smithy.api#output")),
+        )
     ],
     members={
         "stringList": {"target": STRING_LIST},
@@ -1925,12 +871,7 @@ XML_LISTS_OPERATION_OUTPUT = Schema.collection(
         },
         "flattenedList": {
             "target": RENAMED_LIST_MEMBERS,
-            "traits": [
-                Trait.new(
-                    id=ShapeID("smithy.api#suppress"), value=("XmlFlattenedTrait",)
-                ),
-                Trait.new(id=ShapeID("smithy.api#xmlFlattened")),
-            ],
+            "traits": [Trait.new(id=ShapeID("smithy.api#xmlFlattened"))],
         },
         "flattenedList2": {
             "target": RENAMED_LIST_MEMBERS,
@@ -1957,49 +898,7 @@ XML_LISTS_OPERATION_OUTPUT = Schema.collection(
 )
 
 XML_LISTS = Schema(
-    id=ShapeID("aws.protocoltests.ec2#XmlLists"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2XmlLists",
-                        "documentation": "Tests for XML list serialization",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<XmlListsResponse xmlns="https://example.com/">\n    <stringList>\n        <member>foo</member>\n        <member>bar</member>\n    </stringList>\n    <stringSet>\n        <member>foo</member>\n        <member>bar</member>\n    </stringSet>\n    <integerList>\n        <member>1</member>\n        <member>2</member>\n    </integerList>\n    <booleanList>\n        <member>true</member>\n        <member>false</member>\n    </booleanList>\n    <timestampList>\n        <member>2014-04-29T18:30:38Z</member>\n        <member>2014-04-29T18:30:38Z</member>\n    </timestampList>\n    <enumList>\n        <member>Foo</member>\n        <member>0</member>\n    </enumList>\n    <intEnumList>\n        <member>1</member>\n        <member>2</member>\n    </intEnumList>\n    <nestedStringList>\n        <member>\n            <member>foo</member>\n            <member>bar</member>\n        </member>\n        <member>\n            <member>baz</member>\n            <member>qux</member>\n        </member>\n    </nestedStringList>\n    <renamed>\n        <item>foo</item>\n        <item>bar</item>\n    </renamed>\n    <flattenedList>hi</flattenedList>\n    <flattenedList>bye</flattenedList>\n    <customName>yep</customName>\n    <customName>nope</customName>\n    <flattenedListWithMemberNamespace xmlns="https://xml-member.example.com">a</flattenedListWithMemberNamespace>\n    <flattenedListWithMemberNamespace xmlns="https://xml-member.example.com">b</flattenedListWithMemberNamespace>\n    <flattenedListWithNamespace>a</flattenedListWithNamespace>\n    <flattenedListWithNamespace>b</flattenedListWithNamespace>\n    <myStructureList>\n        <item>\n            <value>1</value>\n            <other>2</other>\n        </item>\n        <item>\n            <value>3</value>\n            <other>4</other>\n        </item>\n    </myStructureList>\n    <requestId>requestid</requestId>\n</XmlListsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "stringList": ("foo", "bar"),
-                                "stringSet": ("foo", "bar"),
-                                "integerList": (1, 2),
-                                "booleanList": (True, False),
-                                "timestampList": (1398796238, 1398796238),
-                                "enumList": ("Foo", "0"),
-                                "intEnumList": (1, 2),
-                                "nestedStringList": (("foo", "bar"), ("baz", "qux")),
-                                "renamedListMembers": ("foo", "bar"),
-                                "flattenedList": ("hi", "bye"),
-                                "flattenedList2": ("yep", "nope"),
-                                "flattenedListWithMemberNamespace": ("a", "b"),
-                                "flattenedListWithNamespace": ("a", "b"),
-                                "structureList": (
-                                    MappingProxyType({"a": "1", "b": "2"}),
-                                    MappingProxyType({"a": "3", "b": "4"}),
-                                ),
-                            }
-                        ),
-                    }
-                ),
-            ),
-        )
-    ],
+    id=ShapeID("aws.protocoltests.ec2#XmlLists"), shape_type=ShapeType.OPERATION
 )
 
 XML_NAMESPACES_INPUT = Schema.collection(
@@ -2007,8 +906,7 @@ XML_NAMESPACES_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -2061,45 +959,16 @@ XML_NAMESPACE_NESTED = Schema.collection(
 XML_NAMESPACES_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.ec2#XmlNamespacesOutput"),
     traits=[
-        Trait.new(id=ShapeID("smithy.api#output")),
         Trait.new(
             id=ShapeID("smithy.api#xmlNamespace"),
             value=MappingProxyType({"uri": "http://foo.com"}),
-        ),
+        )
     ],
     members={"nested": {"target": XML_NAMESPACE_NESTED}},
 )
 
 XML_NAMESPACES = Schema(
-    id=ShapeID("aws.protocoltests.ec2#XmlNamespaces"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2XmlNamespaces",
-                        "documentation": "Serializes XML namespaces",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<XmlNamespacesResponse xmlns="https://example.com/">\n    <nested>\n        <foo xmlns:baz="http://baz.com">Foo</foo>\n        <values xmlns="http://qux.com">\n            <member xmlns="http://bux.com">Bar</member>\n            <member xmlns="http://bux.com">Baz</member>\n        </values>\n    </nested>\n    <requestId>requestid</requestId>\n</XmlNamespacesResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "nested": MappingProxyType(
-                                    {"foo": "Foo", "values": ("Bar", "Baz")}
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        )
-    ],
+    id=ShapeID("aws.protocoltests.ec2#XmlNamespaces"), shape_type=ShapeType.OPERATION
 )
 
 XML_TIMESTAMPS_INPUT = Schema.collection(
@@ -2107,8 +976,7 @@ XML_TIMESTAMPS_INPUT = Schema.collection(
     traits=[
         Trait.new(
             id=ShapeID("smithy.synthetic#originalShapeId"), value="smithy.api#Unit"
-        ),
-        Trait.new(id=ShapeID("smithy.api#input")),
+        )
     ],
 )
 
@@ -2120,7 +988,6 @@ HTTP_DATE = Schema(
 
 XML_TIMESTAMPS_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.ec2#XmlTimestampsOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={
         "normal": {"target": TIMESTAMP},
         "dateTime": {
@@ -2150,115 +1017,7 @@ XML_TIMESTAMPS_OUTPUT = Schema.collection(
 )
 
 XML_TIMESTAMPS = Schema(
-    id=ShapeID("aws.protocoltests.ec2#XmlTimestamps"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2XmlTimestamps",
-                        "documentation": "Tests how normal timestamps are serialized",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<XmlTimestampsResponse xmlns="https://example.com/">\n    <normal>2014-04-29T18:30:38Z</normal>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType({"normal": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2XmlTimestampsWithDateTimeFormat",
-                        "documentation": "Ensures that the timestampFormat of date-time works like normal timestamps",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<XmlTimestampsResponse xmlns="https://example.com/">\n    <dateTime>2014-04-29T18:30:38Z</dateTime>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType({"dateTime": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2XmlTimestampsWithDateTimeOnTargetFormat",
-                        "documentation": "Ensures that the timestampFormat of date-time on the target shape works like normal timestamps",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<XmlTimestampsResponse xmlns="https://example.com/">\n    <dateTimeOnTarget>2014-04-29T18:30:38Z</dateTimeOnTarget>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType({"dateTimeOnTarget": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2XmlTimestampsWithEpochSecondsFormat",
-                        "documentation": "Ensures that the timestampFormat of epoch-seconds works",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<XmlTimestampsResponse xmlns="https://example.com/">\n    <epochSeconds>1398796238</epochSeconds>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType({"epochSeconds": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2XmlTimestampsWithEpochSecondsOnTargetFormat",
-                        "documentation": "Ensures that the timestampFormat of epoch-seconds on the target shape works",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<XmlTimestampsResponse xmlns="https://example.com/">\n    <epochSecondsOnTarget>1398796238</epochSecondsOnTarget>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType(
-                            {"epochSecondsOnTarget": 1398796238}
-                        ),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2XmlTimestampsWithHttpDateFormat",
-                        "documentation": "Ensures that the timestampFormat of http-date works",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<XmlTimestampsResponse xmlns="https://example.com/">\n    <httpDate>Tue, 29 Apr 2014 18:30:38 GMT</httpDate>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType({"httpDate": 1398796238}),
-                    }
-                ),
-                MappingProxyType(
-                    {
-                        "id": "Ec2XmlTimestampsWithHttpDateOnTargetFormat",
-                        "documentation": "Ensures that the timestampFormat of http-date on the target shape works",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<XmlTimestampsResponse xmlns="https://example.com/">\n    <httpDateOnTarget>Tue, 29 Apr 2014 18:30:38 GMT</httpDateOnTarget>\n    <requestId>requestid</requestId>\n</XmlTimestampsResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType({"httpDateOnTarget": 1398796238}),
-                    }
-                ),
-            ),
-        )
-    ],
+    id=ShapeID("aws.protocoltests.ec2#XmlTimestamps"), shape_type=ShapeType.OPERATION
 )
 
 STRUCT_ARG = Schema.collection(
@@ -2274,7 +1033,6 @@ STRUCT_ARG = Schema.collection(
 
 NESTED_STRUCTURES_INPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.ec2#NestedStructuresInput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#input"))],
     members={"Nested": {"target": STRUCT_ARG}},
 )
 
@@ -2297,96 +1055,17 @@ RECURSIVE_XML_SHAPES_OUTPUT_NESTED2 = Schema.collection(
 )
 
 NESTED_STRUCTURES = Schema(
-    id=ShapeID("aws.protocoltests.ec2#NestedStructures"),
-    shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpRequestTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2NestedStructures",
-                        "documentation": "Serializes nested structures using dots",
-                        "protocol": "aws.protocols#ec2Query",
-                        "method": "POST",
-                        "uri": "/",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "application/x-www-form-urlencoded"}
-                        ),
-                        "requireHeaders": ("Content-Length",),
-                        "body": "Action=NestedStructures&Version=2020-01-08&Nested.StringArg=foo&Nested.OtherArg=true&Nested.RecursiveArg.StringArg=baz",
-                        "bodyMediaType": "application/x-www-form-urlencoded",
-                        "params": MappingProxyType(
-                            {
-                                "Nested": MappingProxyType(
-                                    {
-                                        "StringArg": "foo",
-                                        "OtherArg": True,
-                                        "RecursiveArg": MappingProxyType(
-                                            {"StringArg": "baz"}
-                                        ),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        )
-    ],
+    id=ShapeID("aws.protocoltests.ec2#NestedStructures"), shape_type=ShapeType.OPERATION
 )
 
 RECURSIVE_XML_SHAPES_OUTPUT = Schema.collection(
     id=ShapeID("aws.protocoltests.ec2#RecursiveXmlShapesOutput"),
-    traits=[Trait.new(id=ShapeID("smithy.api#output"))],
     members={"nested": {"target": RECURSIVE_XML_SHAPES_OUTPUT_NESTED1}},
 )
 
 RECURSIVE_XML_SHAPES = Schema(
     id=ShapeID("aws.protocoltests.ec2#RecursiveXmlShapes"),
     shape_type=ShapeType.OPERATION,
-    traits=[
-        Trait.new(
-            id=ShapeID("smithy.test#httpResponseTests"),
-            value=(
-                MappingProxyType(
-                    {
-                        "id": "Ec2RecursiveShapes",
-                        "documentation": "Serializes recursive structures",
-                        "protocol": "aws.protocols#ec2Query",
-                        "code": 200,
-                        "body": '<RecursiveXmlShapesResponse xmlns="https://example.com/">\n    <nested>\n        <foo>Foo1</foo>\n        <nested>\n            <bar>Bar1</bar>\n            <recursiveMember>\n                <foo>Foo2</foo>\n                <nested>\n                    <bar>Bar2</bar>\n                </nested>\n            </recursiveMember>\n        </nested>\n    </nested>\n    <requestId>requestid</requestId>\n</RecursiveXmlShapesResponse>\n',
-                        "bodyMediaType": "application/xml",
-                        "headers": MappingProxyType(
-                            {"Content-Type": "text/xml;charset=UTF-8"}
-                        ),
-                        "params": MappingProxyType(
-                            {
-                                "nested": MappingProxyType(
-                                    {
-                                        "foo": "Foo1",
-                                        "nested": MappingProxyType(
-                                            {
-                                                "bar": "Bar1",
-                                                "recursiveMember": MappingProxyType(
-                                                    {
-                                                        "foo": "Foo2",
-                                                        "nested": MappingProxyType(
-                                                            {"bar": "Bar2"}
-                                                        ),
-                                                    }
-                                                ),
-                                            }
-                                        ),
-                                    }
-                                )
-                            }
-                        ),
-                    }
-                ),
-            ),
-        )
-    ],
 )
 
 AWS_EC2 = Schema(
@@ -2394,283 +1073,9 @@ AWS_EC2 = Schema(
     shape_type=ShapeType.SERVICE,
     traits=[
         Trait.new(
-            id=ShapeID("aws.auth#sigv4"), value=MappingProxyType({"name": "ec2query"})
-        ),
-        Trait.new(id=ShapeID("smithy.api#title"), value="Sample Ec2 Protocol Service"),
-        Trait.new(id=ShapeID("aws.protocols#ec2Query")),
-        Trait.new(id=ShapeID("smithy.api#suppress"), value=("SigV4Traits",)),
-        Trait.new(
-            id=ShapeID("smithy.rules#endpointBdd"),
-            value=MappingProxyType(
-                {
-                    "version": "1.1",
-                    "parameters": MappingProxyType(
-                        {
-                            "Region": MappingProxyType(
-                                {
-                                    "builtIn": "AWS::Region",
-                                    "required": False,
-                                    "documentation": "The AWS Region. This is a default regional AWS endpointRuleSet.",
-                                    "type": "string",
-                                }
-                            ),
-                            "UseDualStack": MappingProxyType(
-                                {
-                                    "builtIn": "AWS::UseDualStack",
-                                    "required": True,
-                                    "default": False,
-                                    "documentation": "Whether to use dual-stack.",
-                                    "type": "boolean",
-                                }
-                            ),
-                            "UseFIPS": MappingProxyType(
-                                {
-                                    "builtIn": "AWS::UseFIPS",
-                                    "required": True,
-                                    "default": False,
-                                    "documentation": "Whether to use FIPS-compliant regional endpoint.",
-                                    "type": "boolean",
-                                }
-                            ),
-                            "Endpoint": MappingProxyType(
-                                {
-                                    "builtIn": "SDK::Endpoint",
-                                    "required": False,
-                                    "documentation": "Override the endpoint.",
-                                    "type": "string",
-                                }
-                            ),
-                        }
-                    ),
-                    "conditions": (
-                        MappingProxyType(
-                            {
-                                "fn": "isSet",
-                                "argv": (MappingProxyType({"ref": "Endpoint"}),),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "isSet",
-                                "argv": (MappingProxyType({"ref": "Region"}),),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "aws.partition",
-                                "argv": (MappingProxyType({"ref": "Region"}),),
-                                "assign": "PartitionResult",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (MappingProxyType({"ref": "UseFIPS"}), True),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (
-                                    MappingProxyType({"ref": "UseDualStack"}),
-                                    True,
-                                ),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (
-                                    MappingProxyType(
-                                        {
-                                            "fn": "getAttr",
-                                            "argv": (
-                                                MappingProxyType(
-                                                    {"ref": "PartitionResult"}
-                                                ),
-                                                "supportsDualStack",
-                                            ),
-                                        }
-                                    ),
-                                    True,
-                                ),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "booleanEquals",
-                                "argv": (
-                                    MappingProxyType(
-                                        {
-                                            "fn": "getAttr",
-                                            "argv": (
-                                                MappingProxyType(
-                                                    {"ref": "PartitionResult"}
-                                                ),
-                                                "supportsFIPS",
-                                            ),
-                                        }
-                                    ),
-                                    True,
-                                ),
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "fn": "stringEquals",
-                                "argv": (
-                                    MappingProxyType(
-                                        {
-                                            "fn": "getAttr",
-                                            "argv": (
-                                                MappingProxyType(
-                                                    {"ref": "PartitionResult"}
-                                                ),
-                                                "name",
-                                            ),
-                                        }
-                                    ),
-                                    "aws-us-gov",
-                                ),
-                            }
-                        ),
-                    ),
-                    "results": (
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "Invalid Configuration: FIPS and custom endpoint are not supported",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "Invalid Configuration: Dualstack and custom endpoint are not supported",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": MappingProxyType({"ref": "Endpoint"}),
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://awsec2-fips.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "FIPS and DualStack are enabled, but this partition does not support one or both",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://awsec2.{Region}.amazonaws.com",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://awsec2-fips.{Region}.{PartitionResult#dnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "FIPS is enabled but this partition does not support FIPS",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://awsec2.{Region}.{PartitionResult#dualStackDnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "DualStack is enabled but this partition does not support DualStack",
-                                "type": "error",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "endpoint": MappingProxyType(
-                                    {
-                                        "url": "https://awsec2.{Region}.{PartitionResult#dnsSuffix}",
-                                        "properties": MappingProxyType({}),
-                                        "headers": MappingProxyType({}),
-                                    }
-                                ),
-                                "type": "endpoint",
-                            }
-                        ),
-                        MappingProxyType(
-                            {
-                                "conditions": (),
-                                "error": "Invalid Configuration: Missing Region",
-                                "type": "error",
-                            }
-                        ),
-                    ),
-                    "root": 2,
-                    "nodeCount": 14,
-                    "nodes": "/////wAAAAH/////AAAAAAAAAA0AAAADAAAAAQAAAAQF9eEMAAAAAgAAAAUF9eEMAAAAAwAAAAgAAAAGAAAABAAAAAcF9eELAAAABQX14QkF9eEKAAAABAAAAAsAAAAJAAAABgAAAAoF9eEIAAAABwX14QYF9eEHAAAABQAAAAwF9eEFAAAABgX14QQF9eEFAAAAAwX14QEAAAAOAAAABAX14QIF9eED",
-                }
-            ),
-        ),
-        Trait.new(
-            id=ShapeID("aws.api#service"),
-            value=MappingProxyType({"sdkId": "EC2 Protocol"}),
-        ),
-        Trait.new(
             id=ShapeID("smithy.api#xmlNamespace"),
             value=MappingProxyType({"uri": "https://example.com/"}),
-        ),
+        )
     ],
 )
 
